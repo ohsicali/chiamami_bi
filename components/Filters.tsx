@@ -13,25 +13,33 @@ interface FiltersProps {
   filtered: number;
 }
 
-function FilterChip({
+function Chip({
   label,
   active,
   onClick,
-  color,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
-  color?: string;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 border ${
+      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150"
+      style={
         active
-          ? color ?? "bg-orange-500 text-white border-orange-500 shadow"
-          : "bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500"
-      }`}
+          ? {
+              background: "linear-gradient(135deg,#ff6b35,#ff3c6e)",
+              color: "#fff",
+              border: "1px solid transparent",
+              boxShadow: "0 0 12px rgba(255,107,53,0.35)",
+            }
+          : {
+              background: "rgba(255,255,255,0.04)",
+              color: "rgba(255,255,255,0.55)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }
+      }
     >
       {label}
     </button>
@@ -48,30 +56,57 @@ export default function Filters({
   total,
   filtered,
 }: FiltersProps) {
+  const hasFilters = selectedCategory || selectedPrice || selectedCuisine;
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
+    <div
+      className="glass rounded-2xl p-4 space-y-4"
+    >
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-800">Filtra i locali</h2>
-        <span className="text-sm text-gray-500">
-          {filtered} / {total} locali
+        <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+          Filtra
         </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+            {filtered}/{total}
+          </span>
+          {hasFilters && (
+            <button
+              onClick={() => {
+                onCategoryChange(null);
+                onPriceChange(null);
+                onCuisineChange(null);
+              }}
+              className="text-xs px-2 py-0.5 rounded-full transition-colors"
+              style={{
+                color: "#ff6b35",
+                border: "1px solid rgba(255,107,53,0.25)",
+                background: "rgba(255,107,53,0.08)",
+              }}
+            >
+              reset
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Category */}
       <div>
-        <p className="text-xs text-gray-400 uppercase tracking-wide mb-2 font-medium">Categoria</p>
-        <div className="flex flex-wrap gap-2">
-          <FilterChip
-            label="Tutti"
-            active={selectedCategory === null}
-            onClick={() => onCategoryChange(null)}
-          />
-          {categories.map((cat) => (
-            <FilterChip
-              key={cat}
-              label={cat}
-              active={selectedCategory === cat}
-              onClick={() => onCategoryChange(selectedCategory === cat ? null : cat)}
+        <p
+          className="text-xs uppercase tracking-widest mb-2"
+          style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}
+        >
+          Categoria
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          <Chip label="Tutti" active={!selectedCategory} onClick={() => onCategoryChange(null)} />
+          {categories.map((c) => (
+            <Chip
+              key={c}
+              label={c}
+              active={selectedCategory === c}
+              onClick={() => onCategoryChange(selectedCategory === c ? null : c)}
             />
           ))}
         </div>
@@ -79,15 +114,16 @@ export default function Filters({
 
       {/* Price */}
       <div>
-        <p className="text-xs text-gray-400 uppercase tracking-wide mb-2 font-medium">Fascia di prezzo</p>
-        <div className="flex flex-wrap gap-2">
-          <FilterChip
-            label="Tutti"
-            active={selectedPrice === null}
-            onClick={() => onPriceChange(null)}
-          />
+        <p
+          className="text-xs uppercase tracking-widest mb-2"
+          style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}
+        >
+          Prezzo
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          <Chip label="Tutti" active={!selectedPrice} onClick={() => onPriceChange(null)} />
           {priceRanges.map((p) => (
-            <FilterChip
+            <Chip
               key={p}
               label={p}
               active={selectedPrice === p}
@@ -99,15 +135,16 @@ export default function Filters({
 
       {/* Cuisine */}
       <div>
-        <p className="text-xs text-gray-400 uppercase tracking-wide mb-2 font-medium">Stile di cucina</p>
-        <div className="flex flex-wrap gap-2">
-          <FilterChip
-            label="Tutti"
-            active={selectedCuisine === null}
-            onClick={() => onCuisineChange(null)}
-          />
+        <p
+          className="text-xs uppercase tracking-widest mb-2"
+          style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}
+        >
+          Cucina
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          <Chip label="Tutti" active={!selectedCuisine} onClick={() => onCuisineChange(null)} />
           {cuisines.map((c) => (
-            <FilterChip
+            <Chip
               key={c}
               label={c}
               active={selectedCuisine === c}
@@ -116,23 +153,6 @@ export default function Filters({
           ))}
         </div>
       </div>
-
-      {/* Reset */}
-      {(selectedCategory || selectedPrice || selectedCuisine) && (
-        <button
-          onClick={() => {
-            onCategoryChange(null);
-            onPriceChange(null);
-            onCuisineChange(null);
-          }}
-          className="text-sm text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Rimuovi filtri
-        </button>
-      )}
     </div>
   );
 }
