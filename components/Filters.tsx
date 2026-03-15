@@ -1,158 +1,106 @@
 "use client";
 
-import { Category, PriceRange, categories, priceRanges, cuisines } from "@/lib/data";
+import { useRef } from "react";
+import { Category, PriceRange, categories, priceRanges, neighborhoods } from "@/lib/data";
 
 interface FiltersProps {
   selectedCategory: Category | null;
   selectedPrice: PriceRange | null;
-  selectedCuisine: string | null;
+  selectedNeighborhood: string | null;
   onCategoryChange: (c: Category | null) => void;
   onPriceChange: (p: PriceRange | null) => void;
-  onCuisineChange: (c: string | null) => void;
-  total: number;
-  filtered: number;
+  onNeighborhoodChange: (n: string | null) => void;
 }
 
-function Chip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150"
-      style={
-        active
-          ? {
-              background: "linear-gradient(135deg,#ff6b35,#ff3c6e)",
-              color: "#fff",
-              border: "1px solid transparent",
-              boxShadow: "0 0 12px rgba(255,107,53,0.35)",
-            }
-          : {
-              background: "rgba(255,255,255,0.04)",
-              color: "rgba(255,255,255,0.55)",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }
-      }
-    >
-      {label}
-    </button>
-  );
-}
+const categoryIcons: Record<string, string> = {
+  Ristorante: "🍽️",
+  Trattoria: "🫕",
+  Pizzeria: "🍕",
+  Osteria: "🍷",
+  Bistrot: "☕",
+  Sushi: "🍣",
+  Fusion: "🌍",
+};
 
 export default function Filters({
   selectedCategory,
   selectedPrice,
-  selectedCuisine,
+  selectedNeighborhood,
   onCategoryChange,
   onPriceChange,
-  onCuisineChange,
-  total,
-  filtered,
+  onNeighborhoodChange,
 }: FiltersProps) {
-  const hasFilters = selectedCategory || selectedPrice || selectedCuisine;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const hasActive = selectedCategory || selectedPrice || selectedNeighborhood;
 
   return (
     <div
-      className="glass rounded-2xl p-4 space-y-4"
+      ref={scrollRef}
+      className="flex items-center gap-2 overflow-x-auto pb-1"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-          Filtra
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
-            {filtered}/{total}
-          </span>
-          {hasFilters && (
-            <button
-              onClick={() => {
-                onCategoryChange(null);
-                onPriceChange(null);
-                onCuisineChange(null);
-              }}
-              className="text-xs px-2 py-0.5 rounded-full transition-colors"
-              style={{
-                color: "#ff6b35",
-                border: "1px solid rgba(255,107,53,0.25)",
-                background: "rgba(255,107,53,0.08)",
-              }}
-            >
-              reset
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Category */}
-      <div>
-        <p
-          className="text-xs uppercase tracking-widest mb-2"
-          style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}
+      {/* Reset all */}
+      {hasActive && (
+        <button
+          onClick={() => {
+            onCategoryChange(null);
+            onPriceChange(null);
+            onNeighborhoodChange(null);
+          }}
+          className="chip flex-shrink-0"
+          style={{ borderColor: "var(--accent)", color: "var(--accent)", background: "var(--accent-light)" }}
         >
-          Categoria
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          <Chip label="Tutti" active={!selectedCategory} onClick={() => onCategoryChange(null)} />
-          {categories.map((c) => (
-            <Chip
-              key={c}
-              label={c}
-              active={selectedCategory === c}
-              onClick={() => onCategoryChange(selectedCategory === c ? null : c)}
-            />
-          ))}
-        </div>
-      </div>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Rimuovi filtri
+        </button>
+      )}
+
+      {/* Separator */}
+      {hasActive && <div className="w-px h-6 flex-shrink-0" style={{ background: "var(--border)" }} />}
+
+      {/* Categories */}
+      {categories.map((c) => (
+        <button
+          key={c}
+          onClick={() => onCategoryChange(selectedCategory === c ? null : c)}
+          className={`chip flex-shrink-0 ${selectedCategory === c ? "active" : ""}`}
+        >
+          <span>{categoryIcons[c]}</span>
+          {c}
+        </button>
+      ))}
+
+      <div className="w-px h-6 flex-shrink-0" style={{ background: "var(--border)" }} />
 
       {/* Price */}
-      <div>
-        <p
-          className="text-xs uppercase tracking-widest mb-2"
-          style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}
+      {priceRanges.map((p) => (
+        <button
+          key={p}
+          onClick={() => onPriceChange(selectedPrice === p ? null : p)}
+          className={`chip flex-shrink-0 ${selectedPrice === p ? "active" : ""}`}
         >
-          Prezzo
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          <Chip label="Tutti" active={!selectedPrice} onClick={() => onPriceChange(null)} />
-          {priceRanges.map((p) => (
-            <Chip
-              key={p}
-              label={p}
-              active={selectedPrice === p}
-              onClick={() => onPriceChange(selectedPrice === p ? null : p)}
-            />
-          ))}
-        </div>
-      </div>
+          {p}
+        </button>
+      ))}
 
-      {/* Cuisine */}
-      <div>
-        <p
-          className="text-xs uppercase tracking-widest mb-2"
-          style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}
+      <div className="w-px h-6 flex-shrink-0" style={{ background: "var(--border)" }} />
+
+      {/* Neighborhoods */}
+      {neighborhoods.map((n) => (
+        <button
+          key={n}
+          onClick={() => onNeighborhoodChange(selectedNeighborhood === n ? null : n)}
+          className={`chip flex-shrink-0 ${selectedNeighborhood === n ? "active" : ""}`}
         >
-          Cucina
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          <Chip label="Tutti" active={!selectedCuisine} onClick={() => onCuisineChange(null)} />
-          {cuisines.map((c) => (
-            <Chip
-              key={c}
-              label={c}
-              active={selectedCuisine === c}
-              onClick={() => onCuisineChange(selectedCuisine === c ? null : c)}
-            />
-          ))}
-        </div>
-      </div>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          </svg>
+          {n}
+        </button>
+      ))}
     </div>
   );
 }
