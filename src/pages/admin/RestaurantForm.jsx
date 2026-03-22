@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -284,20 +284,24 @@ function Toggle({ checked, onChange, label }) {
 /*  Photo management — file upload from device + URL                   */
 /* ------------------------------------------------------------------ */
 function PhotoManager({ photos, onChange }) {
-  const fileInputRef = useRef(null)
   const [newUrl, setNewUrl] = useState('')
 
   const addFromFiles = (e) => {
-    const files = Array.from(e.target.files || [])
-    if (!files.length) return
-    const newPhotos = files.map((file, idx) => ({
-      url: URL.createObjectURL(file),
-      file,
-      caption: '',
-      sort_order: photos.length + idx,
-    }))
-    onChange([...photos, ...newPhotos])
-    e.target.value = ''
+    try {
+      const files = Array.from(e.target.files || [])
+      if (!files.length) return
+      const newPhotos = files.map((file, idx) => ({
+        url: URL.createObjectURL(file),
+        file,
+        caption: '',
+        sort_order: photos.length + idx,
+      }))
+      onChange([...photos, ...newPhotos])
+    } catch (err) {
+      console.error('Errore caricamento foto:', err)
+    } finally {
+      e.target.value = ''
+    }
   }
 
   const addFromUrl = () => {
@@ -334,26 +338,24 @@ function PhotoManager({ photos, onChange }) {
 
   return (
     <div className="space-y-4">
-      {/* Upload from device */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={addFromFiles}
-        className="hidden"
-      />
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.97 }}
-        onClick={() => fileInputRef.current?.click()}
-        className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-gray-300 text-sm font-medium text-secondary hover:border-accent hover:text-accent transition-colors bg-gray-50/50"
+      {/* Upload from device — label+input is more reliable on iOS Safari */}
+      <label
+        htmlFor="photo-upload-input"
+        className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-gray-300 text-sm font-medium text-secondary hover:border-accent hover:text-accent active:scale-[0.97] transition-all bg-gray-50/50 cursor-pointer"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         Carica foto dalla libreria
-      </motion.button>
+        <input
+          id="photo-upload-input"
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={addFromFiles}
+          className="sr-only"
+        />
+      </label>
 
       {/* Or add by URL */}
       <div className="flex gap-2">
