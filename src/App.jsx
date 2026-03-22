@@ -1,6 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, matchPath } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 
@@ -34,13 +33,13 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Determine if we're on a restaurant detail page (overlay on top of map)
-  const isRestaurantPage = location.pathname.startsWith('/restaurant/')
+  // Check if current route is a restaurant detail page
+  const restaurantMatch = matchPath('/restaurant/:slug', location.pathname)
 
   return (
     <Suspense fallback={<PageLoader />}>
-      {/* Base routes — always render, stay mounted under restaurant overlay */}
-      <Routes location={isRestaurantPage ? { ...location, pathname: '/' } : location} key={isRestaurantPage ? '/' : location.pathname}>
+      {/* Base routes — keep HomePage mounted when restaurant overlay is open */}
+      <Routes location={restaurantMatch ? { ...location, pathname: '/' } : location} key={restaurantMatch ? '/' : location.pathname}>
         <Route path="/" element={<HomePage />} />
         <Route path="/list" element={<ListView />} />
         <Route path="/about" element={<AboutPage />} />
@@ -56,12 +55,10 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Restaurant detail — renders as overlay with smooth animation */}
+      {/* Restaurant detail — rendered directly as AnimatePresence child (not inside Routes) */}
       <AnimatePresence>
-        {isRestaurantPage && (
-          <Routes location={location} key="restaurant-overlay">
-            <Route path="/restaurant/:slug" element={<RestaurantPage />} />
-          </Routes>
+        {restaurantMatch && (
+          <RestaurantPage key={restaurantMatch.params.slug} slug={restaurantMatch.params.slug} />
         )}
       </AnimatePresence>
     </Suspense>

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
@@ -23,23 +23,11 @@ const slideTransition = {
   mass: 0.8,
 }
 
-const backdropVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-  exit: { opacity: 0 },
-}
-
-const sheetVariants = {
-  hidden: { y: '100%' },
-  visible: { y: 0 },
-  exit: { y: '100%' },
-}
-
-export default function RestaurantPage() {
-  const { slug } = useParams()
+export default function RestaurantPage({ slug: slugProp }) {
   const navigate = useNavigate()
   const { restaurants, loading } = useRestaurants()
 
+  const slug = slugProp
   const restaurant = restaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
 
   const handleBack = () => {
@@ -53,21 +41,19 @@ export default function RestaurantPage() {
   // Loading state
   if (loading) {
     return (
-      <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 z-40"
+        style={{ willChange: 'opacity' }}
+      >
+        <div className="absolute inset-0 bg-black/30" onClick={handleBack} />
         <motion.div
-          variants={backdropVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-40 bg-black/30"
-          style={{ willChange: 'opacity' }}
-        />
-        <motion.div
-          variants={sheetVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
           transition={slideTransition}
           className="fixed inset-0 z-50 bg-bg"
           style={{ willChange: 'transform' }}
@@ -76,29 +62,26 @@ export default function RestaurantPage() {
             <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#E85D3A] border-t-transparent" />
           </div>
         </motion.div>
-      </>
+      </motion.div>
     )
   }
 
   // 404 state
   if (!restaurant) {
     return (
-      <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 z-40"
+        style={{ willChange: 'opacity' }}
+      >
+        <div className="absolute inset-0 bg-black/30" onClick={handleBack} />
         <motion.div
-          variants={backdropVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-40 bg-black/30"
-          style={{ willChange: 'opacity' }}
-          onClick={handleBack}
-        />
-        <motion.div
-          variants={sheetVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
           transition={slideTransition}
           className="fixed inset-0 z-50 bg-bg"
           style={{ willChange: 'transform' }}
@@ -122,32 +105,30 @@ export default function RestaurantPage() {
             </button>
           </div>
         </motion.div>
-      </>
+      </motion.div>
     )
   }
 
   // Full screen RestaurantSheet with Apple-style slide up
   return (
-    <>
-      {/* Backdrop fade */}
-      <motion.div
-        variants={backdropVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-40 bg-black/30"
-        style={{ willChange: 'opacity' }}
-        onClick={handleBack}
-      />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-40"
+      style={{ willChange: 'opacity' }}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/30" onClick={handleBack} />
 
       {/* Sheet slide-up */}
       <motion.div
-        variants={sheetVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
         transition={slideTransition}
+        className="relative z-10"
         style={{ willChange: 'transform' }}
       >
         <RestaurantSheet
@@ -157,6 +138,6 @@ export default function RestaurantPage() {
           onSelectNearby={handleSelectNearby}
         />
       </motion.div>
-    </>
+    </motion.div>
   )
 }
