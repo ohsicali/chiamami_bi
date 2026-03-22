@@ -25,7 +25,7 @@ export default function Navbar({ view = "map", onToggleView }) {
     <nav className="fixed top-0 left-0 right-0 z-40 glass">
       <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
         {/* Logo */}
-        <LogoFull height={22} />
+        <LogoFull height={28} />
 
         {/* View toggle */}
         <motion.button
