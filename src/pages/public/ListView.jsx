@@ -10,7 +10,6 @@ import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import Badge from '../../components/UI/Badge'
-import RatingStars from '../../components/Restaurant/RatingStars'
 
 function slugify(name) {
   return name
@@ -26,7 +25,6 @@ function slugify(name) {
 
 const SORT_OPTIONS = [
   { value: 'distance', label: 'Vicinanza' },
-  { value: 'rating', label: 'Rating' },
   { value: 'name', label: 'Nome A-Z' },
   { value: 'newest', label: 'Più recenti' },
 ]
@@ -118,14 +116,6 @@ function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
             <Badge color={category.color} className="text-[11px]">
               {category.emoji} {category.name}
             </Badge>
-          )}
-          {restaurant.our_rating != null && (
-            <div className="flex items-center gap-1">
-              <RatingStars rating={restaurant.our_rating} size="sm" />
-              <span className="text-xs font-medium text-gray-500">
-                {restaurant.our_rating.toFixed(1)}
-              </span>
-            </div>
           )}
         </div>
 

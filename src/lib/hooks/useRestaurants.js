@@ -27,6 +27,7 @@ export const CUISINE_CATEGORIES = [
   { name: 'Pasta', emoji: '🍝', color: '#EA580C' },
   { name: 'Insalate', emoji: '🥗', color: '#22C55E' },
   { name: 'Internazionale', emoji: '🌍', color: '#6366F1' },
+  { name: 'Cocktail', emoji: '🍸', color: '#A855F7' },
 ]
 
 export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']

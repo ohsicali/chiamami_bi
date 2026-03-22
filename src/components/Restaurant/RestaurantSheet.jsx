@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef } from 'react'
 import PhotoCarousel from './PhotoCarousel'
-import RatingStars from './RatingStars'
 import NearbySection from './NearbySection'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -165,19 +164,6 @@ export default function RestaurantSheet({
                   )}
                 </motion.div>
 
-                {/* Rating */}
-                {restaurant.our_rating != null && (
-                  <motion.div
-                    className="flex items-center gap-2"
-                    variants={itemVariants}
-                  >
-                    <RatingStars rating={restaurant.our_rating} size="md" animated />
-                    <span className="text-sm font-semibold text-primary">
-                      {restaurant.our_rating.toFixed(1)}
-                    </span>
-                  </motion.div>
-                )}
-
                 {/* La recensione di Bi */}
                 {reviewText && (
                   <motion.div
@@ -195,17 +181,20 @@ export default function RestaurantSheet({
                   </motion.div>
                 )}
 
-                {/* Il tip di Bi */}
+                {/* I suggerimenti di Bi */}
                 {tipText && (
                   <motion.div
                     className="flex flex-col gap-2"
                     variants={itemVariants}
                   >
                     <h2 className="font-display text-lg font-semibold text-primary">
-                      Il tip di Bi
+                      I suggerimenti di Bi
                     </h2>
-                    <div className="rounded-2xl bg-accent-light px-4 py-3.5">
-                      <p className="text-sm font-medium leading-relaxed text-accent">
+                    <div
+                      className="rounded-2xl px-4 py-3.5"
+                      style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a, #fcd34d)' }}
+                    >
+                      <p className="text-sm font-medium leading-relaxed text-amber-900">
                         {tipText}
                       </p>
                     </div>

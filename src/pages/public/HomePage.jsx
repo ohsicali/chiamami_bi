@@ -46,9 +46,13 @@ export default function HomePage() {
 
   const handlePinSelect = useCallback((id) => {
     setSelectedId(id)
-    // Bottom sheet opens to HALF when a pin is tapped
-    // BottomSheet will receive onSnapChange but we manage externally too
-  }, [])
+    const r = restaurants.find((r) => r.id === id)
+    if (r) {
+      setTimeout(() => {
+        navigate(`/restaurant/${r.slug || slugify(r.name)}`)
+      }, 300)
+    }
+  }, [restaurants, navigate])
 
   const handleCardClick = useCallback(
     (restaurant) => {

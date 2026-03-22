@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import RatingStars from './RatingStars'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -108,22 +107,12 @@ export default function RestaurantCard({
           )}
         </div>
 
-        {/* Rating + distance */}
-        <div className="flex items-center gap-2.5">
-          {restaurant.our_rating != null && (
-            <div className="flex items-center gap-1">
-              <RatingStars rating={restaurant.our_rating} size="sm" />
-              <span className="text-xs font-medium text-secondary">
-                {restaurant.our_rating.toFixed(1)}
-              </span>
-            </div>
-          )}
-          {distance != null && (
-            <span className="text-xs text-secondary">
-              {formatDistance(distance)}
-            </span>
-          )}
-        </div>
+        {/* Distance */}
+        {distance != null && (
+          <span className="text-xs text-secondary">
+            {formatDistance(distance)}
+          </span>
+        )}
 
         {/* Address */}
         {restaurant.address && (

@@ -9,6 +9,32 @@ import { geocodeAddress } from '../../lib/utils/geocoding'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 /* ------------------------------------------------------------------ */
+/*  Convert image file to WebP (smaller, faster loading)               */
+/* ------------------------------------------------------------------ */
+function convertToWebP(file, maxWidth = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width)
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('WebP conversion failed'))),
+        'image/webp',
+        quality
+      )
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = URL.createObjectURL(file)
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 const EMPTY_FORM = {
@@ -23,69 +49,11 @@ const EMPTY_FORM = {
   website: '',
   categories: [],
   price_range: 0,
-  rating: 0,
   our_review: '',
   our_tip: '',
   instagram_reel: '',
   published: false,
   photos: [], // { url, caption, sort_order, file? }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Interactive star selector                                          */
-/* ------------------------------------------------------------------ */
-function StarSelector({ value, onChange }) {
-  const [hover, setHover] = useState(null)
-
-  const handleClick = (starIndex, isHalf) => {
-    const newVal = isHalf ? starIndex + 0.5 : starIndex + 1
-    onChange(newVal === value ? 0 : newVal)
-  }
-
-  const display = hover !== null ? hover : value
-
-  return (
-    <div className="inline-flex items-center gap-1">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const filled = display >= i + 1
-        const halfFilled = !filled && display >= i + 0.5
-        return (
-          <div key={i} className="relative cursor-pointer" style={{ width: 28, height: 28 }}>
-            {/* Left half (half-star click) */}
-            <div
-              className="absolute inset-y-0 left-0 w-1/2 z-10"
-              onMouseEnter={() => setHover(i + 0.5)}
-              onMouseLeave={() => setHover(null)}
-              onClick={() => handleClick(i, true)}
-            />
-            {/* Right half (full-star click) */}
-            <div
-              className="absolute inset-y-0 right-0 w-1/2 z-10"
-              onMouseEnter={() => setHover(i + 1)}
-              onMouseLeave={() => setHover(null)}
-              onClick={() => handleClick(i, false)}
-            />
-            <svg width={28} height={28} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              {halfFilled && (
-                <defs>
-                  <linearGradient id={`starGrad-${i}`}>
-                    <stop offset="50%" stopColor="#E85D3A" />
-                    <stop offset="50%" stopColor="#E85D3A" stopOpacity="0.15" />
-                  </linearGradient>
-                </defs>
-              )}
-              <path
-                d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"
-                fill={filled ? '#E85D3A' : halfFilled ? `url(#starGrad-${i})` : '#E85D3A'}
-                opacity={filled ? 1 : halfFilled ? 1 : 0.15}
-              />
-            </svg>
-          </div>
-        )
-      })}
-      <span className="ml-2 text-sm font-medium text-secondary">{value > 0 ? value.toFixed(1) : '--'}</span>
-    </div>
-  )
 }
 
 /* ------------------------------------------------------------------ */
@@ -135,7 +103,7 @@ function CategorySelector({ selected, onChange }) {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm font-medium text-primary hover:border-accent/40 transition-colors"
       >
-        <span>Tipo di cibo</span>
+        <span>Tipo di locale</span>
         <svg className="w-4 h-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
@@ -189,7 +157,7 @@ function CategorySelector({ selected, onChange }) {
             >
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                <h3 className="text-lg font-semibold text-primary">Tipo di cibo</h3>
+                <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -321,11 +289,6 @@ function PhotoManager({ photos, onChange }) {
     onChange(updated)
   }
 
-  const updateCaption = (index, caption) => {
-    const updated = photos.map((p, i) => (i === index ? { ...p, caption } : p))
-    onChange(updated)
-  }
-
   const movePhoto = (index, direction) => {
     const target = index + direction
     if (target < 0 || target >= photos.length) return
@@ -393,17 +356,10 @@ function PhotoManager({ photos, onChange }) {
               className="w-16 h-16 rounded-lg object-cover shrink-0"
               onError={(e) => { e.target.style.display = 'none' }}
             />
-            <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-secondary truncate">
-                {photo.file ? photo.file.name : photo.url}
+                Foto {i + 1}
               </p>
-              <input
-                type="text"
-                value={photo.caption}
-                onChange={(e) => updateCaption(i, e.target.value)}
-                placeholder="Didascalia (opzionale)"
-                className="w-full px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-base text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-1 focus:ring-accent/30"
-              />
             </div>
             <div className="flex flex-col gap-1 shrink-0">
               <button
@@ -502,7 +458,6 @@ export default function RestaurantForm() {
           website: r.website || '',
           categories: r.cuisine_type ? [r.cuisine_type] : (r.categories || []),
           price_range: r.price_range || 0,
-          rating: r.our_rating || 0,
           our_review: r.our_review || r.description || '',
           our_tip: r.our_tip || (Array.isArray(r.tips) ? r.tips.join('\n') : '') || '',
           instagram_reel: r.instagram_reel || '',
@@ -573,7 +528,6 @@ export default function RestaurantForm() {
       cuisine_type: form.categories[0] || null,
       category: form.categories,
       price_range: form.price_range,
-      our_rating: form.rating,
       our_review: form.our_review.trim(),
       our_tip: form.our_tip.trim(),
       instagram_reel: form.instagram_reel.trim() || null,
@@ -599,36 +553,49 @@ export default function RestaurantForm() {
           restaurantId = data.id
         }
 
-        // Handle photos — upload files to storage, then save to restaurant_photos
+        // Handle photos — convert to WebP, upload to storage, save to restaurant_photos
         if (form.photos.length > 0) {
           // Delete old photos if editing
           if (isEditing) {
             await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
           }
 
+          const slug = form.name.trim().toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+
           const photoRows = []
-          for (const photo of form.photos) {
+          for (let idx = 0; idx < form.photos.length; idx++) {
+            const photo = form.photos[idx]
             let photoUrl = photo.url
-            // If it's a file upload, upload to Supabase Storage
+            // If it's a file upload, convert to WebP and upload to Supabase Storage
             if (photo.file) {
-              const ext = photo.file.name.split('.').pop()
-              const path = `restaurants/${restaurantId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-              const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('photos')
-                .upload(path, photo.file, { cacheControl: '3600', upsert: false })
-              if (uploadError) {
-                console.error('Upload error:', uploadError)
-                addToast(`Errore upload foto: ${uploadError.message}`, 'error')
+              try {
+                const webpBlob = await convertToWebP(photo.file)
+                const fileName = `${slug}-${idx + 1}.webp`
+                const path = `restaurants/${restaurantId}/${fileName}`
+                const { error: uploadError } = await supabase.storage
+                  .from('photos')
+                  .upload(path, webpBlob, { contentType: 'image/webp', cacheControl: '3600', upsert: true })
+                if (uploadError) {
+                  console.error('Upload error:', uploadError)
+                  addToast(`Errore upload foto: ${uploadError.message}`, 'error')
+                  continue
+                }
+                const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
+                photoUrl = urlData.publicUrl
+              } catch (convErr) {
+                console.error('Conversion error:', convErr)
+                addToast(`Errore conversione foto ${idx + 1}`, 'error')
                 continue
               }
-              const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
-              photoUrl = urlData.publicUrl
             }
             photoRows.push({
               restaurant_id: restaurantId,
               photo_url: photoUrl,
-              caption: photo.caption || '',
-              sort_order: photo.sort_order,
+              caption: '',
+              sort_order: idx,
             })
           }
 
@@ -860,10 +827,17 @@ export default function RestaurantForm() {
             </Field>
             <Field label="Sito web">
               <input
-                type="url"
+                type="text"
                 value={form.website}
                 onChange={(e) => update('website', e.target.value)}
-                placeholder="https://..."
+                onBlur={(e) => {
+                  let val = e.target.value.trim()
+                  if (val && !/^https?:\/\//i.test(val)) {
+                    val = 'https://' + val
+                  }
+                  update('website', val)
+                }}
+                placeholder="www.ristorante.it"
                 className={inputClass()}
               />
             </Field>
@@ -886,12 +860,6 @@ export default function RestaurantForm() {
               />
             </Field>
 
-            <Field label="Valutazione">
-              <StarSelector
-                value={form.rating}
-                onChange={(v) => update('rating', v)}
-              />
-            </Field>
           </Section>
 
           {/* --- Review & Tip --- */}
@@ -905,12 +873,12 @@ export default function RestaurantForm() {
                 className={inputClass() + ' resize-y'}
               />
             </Field>
-            <Field label="Il nostro consiglio">
+            <Field label="I suggerimenti di Bi">
               <textarea
                 value={form.our_tip}
                 onChange={(e) => update('our_tip', e.target.value)}
                 rows={3}
-                placeholder="Consigli per chi visita il ristorante..."
+                placeholder="I suggerimenti di Bi per chi visita il locale..."
                 className={inputClass() + ' resize-y'}
               />
             </Field>
