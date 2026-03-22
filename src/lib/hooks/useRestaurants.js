@@ -422,21 +422,19 @@ export function useRestaurants(userPosition = null) {
     }
 
     if (filters.category) {
-      result = result.filter(r => r.cuisine_type === filters.category || (r.category || []).includes(filters.category))
+      const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
+      result = result.filter(r => {
+        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+        return selected.some(s => cats.includes(s))
+      })
     }
 
     if (filters.priceRange) {
       result = result.filter(r => r.price_range === filters.priceRange)
     }
 
-    if (filters.minRating) {
-      result = result.filter(r => r.our_rating >= filters.minRating)
-    }
-
     // Sort
-    if (filters.sortBy === 'rating') {
-      result.sort((a, b) => b.our_rating - a.our_rating)
-    } else if (filters.sortBy === 'distance' && userPosition) {
+    if (filters.sortBy === 'distance' && userPosition) {
       result.sort((a, b) => {
         const dA = getDistance(userPosition.lat, userPosition.lng, a.latitude, a.longitude)
         const dB = getDistance(userPosition.lat, userPosition.lng, b.latitude, b.longitude)

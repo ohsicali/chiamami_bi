@@ -5,12 +5,25 @@ import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants
 export default function FilterChips({ filters, onFilterChange }) {
   const [modalOpen, setModalOpen] = useState(false)
 
-  const activeCategory = filters.category || null
+  // Support multi-category as array
+  const selected = filters.category
+    ? (Array.isArray(filters.category) ? filters.category : [filters.category])
+    : []
+
+  function isActive(name) {
+    return selected.includes(name)
+  }
 
   function handleCuisineClick(categoryName) {
+    let next
+    if (isActive(categoryName)) {
+      next = selected.filter(s => s !== categoryName)
+    } else {
+      next = [...selected, categoryName]
+    }
     onFilterChange?.({
       ...filters,
-      category: activeCategory === categoryName ? null : categoryName,
+      category: next.length > 0 ? next : null,
     })
   }
 
@@ -34,7 +47,7 @@ export default function FilterChips({ filters, onFilterChange }) {
       >
         <style>{`.filter-scroll::-webkit-scrollbar { display: none; }`}</style>
         {CUISINE_CATEGORIES.map((cat) => {
-          const active = activeCategory === cat.name
+          const active = isActive(cat.name)
           return (
             <button
               key={cat.name}
@@ -78,14 +91,14 @@ export default function FilterChips({ filters, onFilterChange }) {
           onClick={() => setModalOpen(true)}
           className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
           style={{
-            backgroundColor: activeCategory ? '#E85D3A' : 'rgba(255,255,255,0.85)',
-            color: activeCategory ? '#fff' : '#4B5563',
-            borderColor: activeCategory ? '#E85D3A' : 'rgba(209,213,219,0.6)',
-            backdropFilter: activeCategory ? 'none' : 'blur(8px)',
-            WebkitBackdropFilter: activeCategory ? 'none' : 'blur(8px)',
+            backgroundColor: selected.length ? '#E85D3A' : 'rgba(255,255,255,0.85)',
+            color: selected.length ? '#fff' : '#4B5563',
+            borderColor: selected.length ? '#E85D3A' : 'rgba(209,213,219,0.6)',
+            backdropFilter: selected.length ? 'none' : 'blur(8px)',
+            WebkitBackdropFilter: selected.length ? 'none' : 'blur(8px)',
           }}
         >
-          <span>Tipo di locale</span>
+          <span>{selected.length ? `Tipo di locale (${selected.length})` : 'Tipo di locale'}</span>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
@@ -161,28 +174,25 @@ export default function FilterChips({ filters, onFilterChange }) {
                   >
                     <div
                       className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                        !activeCategory ? 'ring-3 ring-[#E85D3A] shadow-md bg-orange-50' : 'bg-gray-100'
+                        !selected.length ? 'ring-3 ring-[#E85D3A] shadow-md bg-orange-50' : 'bg-gray-100'
                       }`}
                     >
                       🍽️
                     </div>
                     <span className={`text-xs font-medium text-center leading-tight ${
-                      !activeCategory ? 'text-[#E85D3A]' : 'text-gray-900'
+                      !selected.length ? 'text-[#E85D3A]' : 'text-gray-900'
                     }`}>
                       Tutti
                     </span>
                   </button>
 
                   {CUISINE_CATEGORIES.map((cat) => {
-                    const active = activeCategory === cat.name
+                    const active = isActive(cat.name)
                     return (
                       <button
                         key={cat.name}
                         type="button"
-                        onClick={() => {
-                          handleCuisineClick(cat.name)
-                          setModalOpen(false)
-                        }}
+                        onClick={() => handleCuisineClick(cat.name)}
                         className="flex flex-col items-center gap-1.5 py-2"
                       >
                         <div
@@ -211,7 +221,7 @@ export default function FilterChips({ filters, onFilterChange }) {
                   onClick={() => setModalOpen(false)}
                   className="w-full py-3 rounded-xl bg-[#E85D3A] text-white font-medium text-sm shadow-md hover:bg-[#d14e2d] transition-colors"
                 >
-                  {activeCategory ? `Filtra: ${activeCategory}` : 'Mostra tutti'}
+                  {selected.length > 0 ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})` : 'Mostra tutti'}
                 </button>
               </div>
             </motion.div>

@@ -12,7 +12,8 @@ function getCategoryInfo(cuisineType) {
 }
 
 function createPinElement(restaurant) {
-  const { emoji, color } = getCategoryInfo(restaurant.cuisine_type)
+  const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
+  const { emoji, color } = getCategoryInfo(primaryType)
 
   const el = document.createElement('div')
   el.className = 'chiamami-pin'

@@ -46,22 +46,15 @@ export default function HomePage() {
   }, [locate, setFilters])
 
   const handlePinSelect = useCallback((id) => {
-    setSelectedId(id)
     const r = allRestaurants.find((r) => r.id === id)
     if (r) {
-      setTimeout(() => {
-        navigate(`/restaurant/${r.slug || slugify(r.name)}`)
-      }, 300)
+      navigate(`/restaurant/${r.slug || slugify(r.name)}`)
     }
   }, [allRestaurants, navigate])
 
   const handleCardClick = useCallback(
     (restaurant) => {
-      setSelectedId(restaurant.id)
-      // Brief delay so map flies, then navigate
-      setTimeout(() => {
-        navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)
-      }, 300)
+      navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)
     },
     [navigate]
   )

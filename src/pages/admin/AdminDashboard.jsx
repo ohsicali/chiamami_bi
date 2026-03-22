@@ -26,34 +26,6 @@ function AnimatedCounter({ value, duration = 1.2 }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Star display (read-only mini)                                      */
-/* ------------------------------------------------------------------ */
-function MiniStars({ rating }) {
-  const full = Math.floor(rating)
-  const half = rating - full >= 0.25 && rating - full < 0.75
-  const adjusted = rating - full >= 0.75 ? full + 1 : full
-
-  return (
-    <span className="inline-flex items-center gap-px text-accent">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={i < adjusted ? 'currentColor' : (i === adjusted && half ? 'url(#hg)' : 'none')} stroke="currentColor" strokeWidth={i < adjusted || (i === adjusted && half) ? 0 : 1.5}>
-          {i === adjusted && half && (
-            <defs>
-              <linearGradient id="hg">
-                <stop offset="50%" stopColor="currentColor" />
-                <stop offset="50%" stopColor="currentColor" stopOpacity="0.2" />
-              </linearGradient>
-            </defs>
-          )}
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" opacity={i >= adjusted && !(i === adjusted && half) ? 0.2 : 1} />
-        </svg>
-      ))}
-      <span className="ml-1 text-xs text-secondary font-medium">{rating.toFixed(1)}</span>
-    </span>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Admin sidebar / layout shell                                       */
 /* ------------------------------------------------------------------ */
 function AdminLayout({ children, user, onLogout }) {
@@ -221,7 +193,6 @@ export default function AdminDashboard() {
       let cmp = 0
       if (sortCol === 'name') cmp = a.name.localeCompare(b.name, 'it')
       else if (sortCol === 'city') cmp = (a.city || 'Torino').localeCompare(b.city || 'Torino', 'it')
-      else if (sortCol === 'rating') cmp = (a.our_rating || 0) - (b.our_rating || 0)
       else if (sortCol === 'status') cmp = (a.is_published === false ? 1 : 0) - (b.is_published === false ? 1 : 0)
       return sortDir === 'asc' ? cmp : -cmp
     })
@@ -357,14 +328,16 @@ export default function AdminDashboard() {
                 <SortHeader col="name">Nome</SortHeader>
                 <SortHeader col="city">Citta</SortHeader>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Categoria</th>
-                <SortHeader col="rating">Rating</SortHeader>
                 <SortHeader col="status">Stato</SortHeader>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider">Azioni</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {rows.map((r) => {
-                const cat = CUISINE_CATEGORIES.find((c) => c.name === r.cuisine_type)
+                const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
+                  .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+                  .filter(Boolean)
+                const cat = cats[0]
                 const isPublished = r.is_published !== false
                 const thumb = Array.isArray(r.photos) && r.photos.length > 0
                   ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.photo_url)
@@ -393,13 +366,15 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-sm text-secondary">{r.city || 'Torino'}</td>
                     {/* Category */}
                     <td className="px-4 py-3">
-                      <Badge color={cat?.color || '#6B7280'}>
-                        {cat?.emoji} {r.cuisine_type}
-                      </Badge>
-                    </td>
-                    {/* Rating */}
-                    <td className="px-4 py-3">
-                      <MiniStars rating={r.our_rating || 0} />
+                      <div className="flex flex-wrap gap-1">
+                        {cats.length > 0 ? cats.map(c => (
+                          <Badge key={c.name} color={c.color}>
+                            {c.emoji} {c.name}
+                          </Badge>
+                        )) : (
+                          <span className="text-xs text-secondary">—</span>
+                        )}
+                      </div>
                     </td>
                     {/* Status */}
                     <td className="px-4 py-3">

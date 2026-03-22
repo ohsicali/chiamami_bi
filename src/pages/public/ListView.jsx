@@ -49,9 +49,10 @@ function SortChip({ label, active, onClick }) {
 
 function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
   const [imageLoaded, setImageLoaded] = useState(false)
-  const category = CUISINE_CATEGORIES.find(
-    (c) => c.name === restaurant.cuisine_type
-  )
+  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+    .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+    .filter(Boolean)
+  const category = categories[0]
   const photoUrl =
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
       ? typeof restaurant.photos[0] === 'string'
@@ -111,12 +112,12 @@ function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
           {restaurant.name}
         </h3>
 
-        <div className="flex items-center gap-2 mb-2">
-          {category && (
-            <Badge color={category.color} className="text-[11px]">
-              {category.emoji} {category.name}
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          {categories.map(cat => (
+            <Badge key={cat.name} color={cat.color} className="text-[11px]">
+              {cat.emoji} {cat.name}
             </Badge>
-          )}
+          ))}
         </div>
 
         {restaurant.description && (

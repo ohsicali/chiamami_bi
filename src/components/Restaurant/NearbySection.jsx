@@ -19,7 +19,7 @@ const cardVariants = {
 
 function NearbyCard({ restaurant, index, onSelect }) {
   const category = CUISINE_CATEGORIES.find(
-    (c) => c.name === restaurant.cuisine_type
+    (c) => (restaurant.category || []).includes(c.name) || c.name === restaurant.cuisine_type
   )
 
   const photoUrl =

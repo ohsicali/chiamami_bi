@@ -58,9 +58,9 @@ export default function RestaurantSheet({
 
   if (!restaurant) return null
 
-  const category = CUISINE_CATEGORIES.find(
-    (c) => c.name === restaurant.cuisine_type
-  )
+  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+    .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+    .filter(Boolean)
 
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
 
@@ -152,11 +152,11 @@ export default function RestaurantSheet({
                   className="flex flex-wrap items-center gap-2"
                   variants={itemVariants}
                 >
-                  {category && (
-                    <Badge color={category.color}>
-                      {category.emoji} {category.name}
+                  {categories.map(cat => (
+                    <Badge key={cat.name} color={cat.color}>
+                      {cat.emoji} {cat.name}
                     </Badge>
-                  )}
+                  ))}
                   {priceLabel && (
                     <span className="text-sm font-semibold text-secondary">
                       {priceLabel}

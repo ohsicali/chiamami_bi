@@ -25,9 +25,10 @@ export default function RestaurantCard({
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
 
-  const category = CUISINE_CATEGORIES.find(
-    (c) => c.name === restaurant.cuisine_type
-  )
+  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+    .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+    .filter(Boolean)
+  const category = categories[0]
 
   const photoUrl =
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
@@ -93,13 +94,13 @@ export default function RestaurantCard({
           {restaurant.name}
         </h3>
 
-        {/* Category badge + price */}
-        <div className="flex items-center gap-2">
-          {category && (
-            <Badge color={category.color} className="text-[11px]">
-              {category.emoji} {category.name}
+        {/* Category badges + price */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {categories.map(cat => (
+            <Badge key={cat.name} color={cat.color} className="text-[11px]">
+              {cat.emoji} {cat.name}
             </Badge>
-          )}
+          ))}
           {restaurant.price_range != null && (
             <span className="text-xs font-medium text-secondary">
               {PRICE_LABELS[restaurant.price_range] || ''}
