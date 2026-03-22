@@ -1,39 +1,16 @@
-import { useRef } from 'react'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
-function Chip({ label, emoji, active, onClick }) {
-  return (
-    <motion.button
-      whileTap={{ scale: 0.93 }}
-      animate={{
-        backgroundColor: active ? '#E85D3A' : 'rgba(255, 255, 255, 0.85)',
-        color: active ? '#FFFFFF' : '#4B5563',
-      }}
-      transition={{ duration: 0.2 }}
-      onClick={onClick}
-      className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none"
-      style={{
-        borderColor: active ? '#E85D3A' : 'rgba(209, 213, 219, 0.6)',
-        backdropFilter: active ? 'none' : 'blur(8px)',
-        WebkitBackdropFilter: active ? 'none' : 'blur(8px)',
-      }}
-      type="button"
-    >
-      {emoji && <span className="text-base leading-none">{emoji}</span>}
-      <span>{label}</span>
-    </motion.button>
-  )
-}
-
 export default function FilterChips({ filters, onFilterChange }) {
-  const cuisineScrollRef = useRef(null)
-  const priceScrollRef = useRef(null)
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const activeCategory = filters.category || null
 
   function handleCuisineClick(categoryName) {
     onFilterChange?.({
       ...filters,
-      category: filters.category === categoryName ? null : categoryName,
+      category: activeCategory === categoryName ? null : categoryName,
     })
   }
 
@@ -45,57 +22,202 @@ export default function FilterChips({ filters, onFilterChange }) {
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {/* Cuisine categories row */}
+    <div className="flex flex-col gap-3">
+      {/* Scrollable category circles — Glovo style */}
       <div
-        ref={cuisineScrollRef}
-        className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4"
+        className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4"
         style={{
-          scrollSnapType: 'x mandatory',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <style>{`
-          .filter-scroll::-webkit-scrollbar { display: none; }
-        `}</style>
-        {CUISINE_CATEGORIES.map((cat) => (
-          <div key={cat.name} style={{ scrollSnapAlign: 'start' }}>
-            <Chip
-              label={cat.name}
-              emoji={cat.emoji}
-              active={filters.category === cat.name}
-              onClick={() => handleCuisineClick(cat.name)}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Price range row */}
-      <div
-        ref={priceScrollRef}
-        className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4"
-        style={{
-          scrollSnapType: 'x mandatory',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {PRICE_LABELS.slice(1).map((label, idx) => {
-          const priceLevel = idx + 1
+        <style>{`.filter-scroll::-webkit-scrollbar { display: none; }`}</style>
+        {CUISINE_CATEGORIES.map((cat) => {
+          const active = activeCategory === cat.name
           return (
-            <div key={priceLevel} style={{ scrollSnapAlign: 'start' }}>
-              <Chip
-                label={label}
-                active={filters.priceRange === priceLevel}
-                onClick={() => handlePriceClick(priceLevel)}
-              />
-            </div>
+            <button
+              key={cat.name}
+              type="button"
+              onClick={() => handleCuisineClick(cat.name)}
+              className="flex flex-col items-center gap-1 flex-shrink-0"
+              style={{ width: 64 }}
+            >
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-all duration-200"
+                style={{
+                  backgroundColor: active ? cat.color + '25' : '#f3f4f6',
+                  boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
+                }}
+              >
+                {cat.emoji}
+              </div>
+              <span
+                className="text-[10px] font-medium text-center leading-tight line-clamp-1 transition-colors"
+                style={{ color: active ? cat.color : '#6B7280' }}
+              >
+                {cat.name}
+              </span>
+            </button>
           )
         })}
       </div>
+
+      {/* Filter buttons row */}
+      <div
+        className="flex gap-2 overflow-x-auto -mx-4 px-4"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {/* "Tipo di locale" button — opens full modal */}
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
+          style={{
+            backgroundColor: activeCategory ? '#E85D3A' : 'rgba(255,255,255,0.85)',
+            color: activeCategory ? '#fff' : '#4B5563',
+            borderColor: activeCategory ? '#E85D3A' : 'rgba(209,213,219,0.6)',
+            backdropFilter: activeCategory ? 'none' : 'blur(8px)',
+            WebkitBackdropFilter: activeCategory ? 'none' : 'blur(8px)',
+          }}
+        >
+          <span>Tipo di locale</span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* Price range chips */}
+        {PRICE_LABELS.slice(1).map((label, idx) => {
+          const priceLevel = idx + 1
+          const active = filters.priceRange === priceLevel
+          return (
+            <button
+              key={priceLevel}
+              type="button"
+              onClick={() => handlePriceClick(priceLevel)}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
+              style={{
+                backgroundColor: active ? '#E85D3A' : 'rgba(255,255,255,0.85)',
+                color: active ? '#fff' : '#4B5563',
+                borderColor: active ? '#E85D3A' : 'rgba(209,213,219,0.6)',
+                backdropFilter: active ? 'none' : 'blur(8px)',
+                WebkitBackdropFilter: active ? 'none' : 'blur(8px)',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Full-screen category modal (same as admin) */}
+      <AnimatePresence>
+        {modalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+            onClick={() => setModalOpen(false)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Tipo di locale</h3>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Grid */}
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+                <div className="grid grid-cols-4 gap-3">
+                  {/* "Tutti" option to clear filter */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onFilterChange?.({ ...filters, category: null })
+                      setModalOpen(false)
+                    }}
+                    className="flex flex-col items-center gap-1.5 py-2"
+                  >
+                    <div
+                      className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
+                        !activeCategory ? 'ring-3 ring-[#E85D3A] shadow-md bg-orange-50' : 'bg-gray-100'
+                      }`}
+                    >
+                      🍽️
+                    </div>
+                    <span className={`text-xs font-medium text-center leading-tight ${
+                      !activeCategory ? 'text-[#E85D3A]' : 'text-gray-900'
+                    }`}>
+                      Tutti
+                    </span>
+                  </button>
+
+                  {CUISINE_CATEGORIES.map((cat) => {
+                    const active = activeCategory === cat.name
+                    return (
+                      <button
+                        key={cat.name}
+                        type="button"
+                        onClick={() => {
+                          handleCuisineClick(cat.name)
+                          setModalOpen(false)
+                        }}
+                        className="flex flex-col items-center gap-1.5 py-2"
+                      >
+                        <div
+                          className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
+                            active ? 'ring-3 shadow-md' : 'bg-gray-100'
+                          }`}
+                          style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                        >
+                          {cat.emoji}
+                        </div>
+                        <span className={`text-xs font-medium text-center leading-tight ${
+                          active ? 'text-[#E85D3A]' : 'text-gray-900'
+                        }`}>
+                          {cat.name}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="w-full py-3 rounded-xl bg-[#E85D3A] text-white font-medium text-sm shadow-md hover:bg-[#d14e2d] transition-colors"
+                >
+                  {activeCategory ? `Filtra: ${activeCategory}` : 'Mostra tutti'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
