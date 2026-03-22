@@ -55,7 +55,7 @@ function PlusIcon({ className }) {
 /*  Color presets                                                      */
 /* ------------------------------------------------------------------ */
 const COLOR_PRESETS = [
-  '#E85D3A', '#EF4444', '#F59E0B', '#10B981', '#6366F1',
+  '#FF5757', '#EF4444', '#F59E0B', '#10B981', '#6366F1',
   '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#3B82F6',
 ]
 
@@ -144,7 +144,7 @@ export default function CategoryManager() {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => { setShowAdd(true); setEditingId(null) }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-medium shadow-sm hover:bg-[#d14e2d] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-medium shadow-sm hover:bg-[#e64545] transition-colors"
           >
             <PlusIcon className="w-4 h-4" />
             Aggiungi
@@ -235,7 +235,7 @@ export default function CategoryManager() {
                       whileTap={{ scale: 0.95 }}
                       onClick={addCategory}
                       disabled={!addForm.name.trim()}
-                      className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#d14e2d] transition-colors disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50"
                     >
                       Aggiungi
                     </motion.button>

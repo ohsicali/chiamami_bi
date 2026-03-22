@@ -36,9 +36,9 @@ function SortChip({ label, active, onClick }) {
       onClick={onClick}
       className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap select-none transition-colors"
       style={{
-        backgroundColor: active ? '#E85D3A' : 'rgba(255,255,255,0.85)',
+        backgroundColor: active ? '#FF5757' : 'rgba(255,255,255,0.85)',
         color: active ? '#fff' : '#4B5563',
-        borderColor: active ? '#E85D3A' : 'rgba(209,213,219,0.6)',
+        borderColor: active ? '#FF5757' : 'rgba(209,213,219,0.6)',
       }}
       type="button"
     >

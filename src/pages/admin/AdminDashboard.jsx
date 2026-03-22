@@ -227,7 +227,7 @@ export default function AdminDashboard() {
   if (!user) return null
 
   const statCards = [
-    { label: 'Ristoranti', value: stats.total, color: '#E85D3A', icon: '🍽️' },
+    { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },
     { label: 'Pubblicati', value: stats.published, color: '#34C759', icon: '✅' },
     { label: 'Bozze', value: stats.drafts, color: '#F59E0B', icon: '📝' },
     { label: 'Citta', value: stats.cities, color: '#6366F1', icon: '🏙️' },
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
 
         <Link
           to="/admin/restaurant/new"
-          className="inline-flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-md hover:bg-[#d14e2d] transition-colors"
+          className="inline-flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-md hover:bg-[#e64545] transition-colors"
         >
           <PlusIcon className="w-4 h-4" />
           Nuovo Ristorante

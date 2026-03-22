@@ -132,7 +132,7 @@ export default function AdminLogin() {
               disabled={submitting}
               whileTap={{ scale: 0.97 }}
               whileHover={{ scale: 1.01 }}
-              className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:shadow-lg hover:bg-[#d14e2d] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:shadow-lg hover:bg-[#e64545] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50 disabled:pointer-events-none"
             >
               {submitting ? (
                 <span className="inline-flex items-center gap-2">

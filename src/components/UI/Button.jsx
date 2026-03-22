@@ -2,10 +2,10 @@ import { motion } from "framer-motion";
 
 const variants = {
   primary:
-    "bg-[#E85D3A] text-white hover:bg-[#d14e2d] shadow-md hover:shadow-lg",
+    "bg-[#FF5757] text-white hover:bg-[#e64545] shadow-md hover:shadow-lg",
   secondary:
-    "border-2 border-[#E85D3A] text-[#E85D3A] hover:bg-[#E85D3A]/10",
-  ghost: "bg-transparent text-[#E85D3A] hover:bg-[#E85D3A]/5",
+    "border-2 border-[#FF5757] text-[#FF5757] hover:bg-[#FF5757]/10",
+  ghost: "bg-transparent text-[#FF5757] hover:bg-[#FF5757]/5",
 };
 
 const sizes = {
@@ -25,7 +25,7 @@ export default function Button({
     <motion.button
       whileTap={{ scale: 0.97 }}
       whileHover={{ scale: 1.02 }}
-      className={`inline-flex items-center justify-center font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#E85D3A]/50 disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF5757]/50 disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${sizes[size]} ${className}`}
       {...rest}
     >
       {children}

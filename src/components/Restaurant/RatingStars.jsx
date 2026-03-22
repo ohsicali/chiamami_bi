@@ -50,7 +50,7 @@ export default function RatingStars({
   className = "",
 }) {
   const starSize = sizeMap[size] || sizeMap.md;
-  const color = "#E85D3A";
+  const color = "#FF5757";
   const fullStars = Math.floor(rating);
   const hasHalf = rating - fullStars >= 0.25 && rating - fullStars < 0.75;
   const adjustedFull = rating - fullStars >= 0.75 ? fullStars + 1 : fullStars;

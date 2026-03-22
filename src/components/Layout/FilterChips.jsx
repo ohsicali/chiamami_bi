@@ -91,9 +91,9 @@ export default function FilterChips({ filters, onFilterChange }) {
           onClick={() => setModalOpen(true)}
           className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
           style={{
-            backgroundColor: selected.length ? '#E85D3A' : 'rgba(255,255,255,0.85)',
+            backgroundColor: selected.length ? '#FF5757' : 'rgba(255,255,255,0.85)',
             color: selected.length ? '#fff' : '#4B5563',
-            borderColor: selected.length ? '#E85D3A' : 'rgba(209,213,219,0.6)',
+            borderColor: selected.length ? '#FF5757' : 'rgba(209,213,219,0.6)',
             backdropFilter: selected.length ? 'none' : 'blur(8px)',
             WebkitBackdropFilter: selected.length ? 'none' : 'blur(8px)',
           }}
@@ -115,9 +115,9 @@ export default function FilterChips({ filters, onFilterChange }) {
               onClick={() => handlePriceClick(priceLevel)}
               className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
               style={{
-                backgroundColor: active ? '#E85D3A' : 'rgba(255,255,255,0.85)',
+                backgroundColor: active ? '#FF5757' : 'rgba(255,255,255,0.85)',
                 color: active ? '#fff' : '#4B5563',
-                borderColor: active ? '#E85D3A' : 'rgba(209,213,219,0.6)',
+                borderColor: active ? '#FF5757' : 'rgba(209,213,219,0.6)',
                 backdropFilter: active ? 'none' : 'blur(8px)',
                 WebkitBackdropFilter: active ? 'none' : 'blur(8px)',
               }}
@@ -174,13 +174,13 @@ export default function FilterChips({ filters, onFilterChange }) {
                   >
                     <div
                       className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                        !selected.length ? 'ring-3 ring-[#E85D3A] shadow-md bg-orange-50' : 'bg-gray-100'
+                        !selected.length ? 'ring-3 ring-[#FF5757] shadow-md bg-orange-50' : 'bg-gray-100'
                       }`}
                     >
                       🍽️
                     </div>
                     <span className={`text-xs font-medium text-center leading-tight ${
-                      !selected.length ? 'text-[#E85D3A]' : 'text-gray-900'
+                      !selected.length ? 'text-[#FF5757]' : 'text-gray-900'
                     }`}>
                       Tutti
                     </span>
@@ -204,7 +204,7 @@ export default function FilterChips({ filters, onFilterChange }) {
                           {cat.emoji}
                         </div>
                         <span className={`text-xs font-medium text-center leading-tight ${
-                          active ? 'text-[#E85D3A]' : 'text-gray-900'
+                          active ? 'text-[#FF5757]' : 'text-gray-900'
                         }`}>
                           {cat.name}
                         </span>
@@ -219,7 +219,7 @@ export default function FilterChips({ filters, onFilterChange }) {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="w-full py-3 rounded-xl bg-[#E85D3A] text-white font-medium text-sm shadow-md hover:bg-[#d14e2d] transition-colors"
+                  className="w-full py-3 rounded-xl bg-[#FF5757] text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
                 >
                   {selected.length > 0 ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})` : 'Mostra tutti'}
                 </button>

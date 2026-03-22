@@ -6,7 +6,7 @@ const ToastContext = createContext(null);
 const typeStyles = {
   success: "bg-green-600 text-white",
   error: "bg-red-600 text-white",
-  info: "bg-[#E85D3A] text-white",
+  info: "bg-[#FF5757] text-white",
 };
 
 const typeIcons = {

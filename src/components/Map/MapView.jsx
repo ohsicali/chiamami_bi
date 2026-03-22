@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
-const ACCENT_COLOR = '#E85D3A'
+const ACCENT_COLOR = '#FF5757'
 
 function getCategoryInfo(cuisineType) {
   const cat = CUISINE_CATEGORIES.find((c) => c.name === cuisineType)

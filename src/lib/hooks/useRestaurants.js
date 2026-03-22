@@ -4,7 +4,7 @@ import { getDistance } from '../utils/distance'
 
 export const CUISINE_CATEGORIES = [
   { name: 'Piemontese', emoji: '🍷', color: '#8B5CF6' },
-  { name: 'Italiana', emoji: '🍝', color: '#E85D3A' },
+  { name: 'Italiana', emoji: '🍝', color: '#FF5757' },
   { name: 'Giapponese', emoji: '🍣', color: '#F59E0B' },
   { name: 'Fine Dining', emoji: '✨', color: '#6366F1' },
   { name: 'Gelateria', emoji: '🍦', color: '#EC4899' },

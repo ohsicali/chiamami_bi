@@ -207,7 +207,7 @@ function CategorySelector({ selected, onChange }) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#d14e2d] transition-colors"
+                  className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
                 >
                   {selected.length > 0
                     ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})`
@@ -334,7 +334,7 @@ function PhotoManager({ photos, onChange }) {
           type="button"
           whileTap={{ scale: 0.95 }}
           onClick={addFromUrl}
-          className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-medium shrink-0 hover:bg-[#d14e2d] transition-colors"
+          className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-medium shrink-0 hover:bg-[#e64545] transition-colors"
         >
           Aggiungi
         </motion.button>
@@ -934,7 +934,7 @@ export default function RestaurantForm() {
               disabled={saving}
               whileTap={{ scale: 0.97 }}
               whileHover={{ scale: 1.01 }}
-              className="px-6 py-2.5 rounded-xl text-sm font-medium bg-accent text-white shadow-md hover:bg-[#d14e2d] transition-colors disabled:opacity-50"
+              className="px-6 py-2.5 rounded-xl text-sm font-medium bg-accent text-white shadow-md hover:bg-[#e64545] transition-colors disabled:opacity-50"
             >
               {saving ? (
                 <span className="inline-flex items-center gap-2">

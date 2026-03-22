@@ -32,7 +32,7 @@ export default function Navbar({ view = "map", onToggleView }) {
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.05 }}
           onClick={onToggleView}
-          className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 backdrop-blur-sm text-gray-700 hover:text-[#E85D3A] transition-colors shadow-sm"
+          className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 backdrop-blur-sm text-gray-700 hover:text-[#FF5757] transition-colors shadow-sm"
           aria-label={view === "map" ? "Switch to list view" : "Switch to map view"}
         >
           {view === "map" ? <ListIcon /> : <MapIcon />}
