@@ -5,13 +5,13 @@ import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 16 },
   visible: (i) => ({
     opacity: 1,
     y: 0,
     transition: {
-      delay: i * 0.05,
-      duration: 0.4,
+      delay: Math.min(i * 0.04, 0.3),
+      duration: 0.3,
       ease: [0.25, 0.46, 0.45, 0.94],
     },
   }),

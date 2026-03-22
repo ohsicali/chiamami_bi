@@ -56,14 +56,13 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
   }
 
   return (
-    <motion.div
-      animate={{
-        scale: focused ? 1.02 : 1,
+    <div
+      className="glass flex items-center gap-2.5 px-4 py-3 border-2 transition-all duration-200 ease-out"
+      style={{
+        borderRadius: 16,
         borderColor: focused ? '#E85D3A' : 'rgba(209, 213, 219, 0.5)',
+        transform: focused ? 'scale(1.02)' : 'scale(1)',
       }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      className="glass flex items-center gap-2.5 px-4 py-3 border-2"
-      style={{ borderRadius: 16 }}
     >
       {/* Search icon */}
       <span className={`transition-colors duration-200 ${focused ? 'text-[#E85D3A]' : 'text-gray-400'}`}>
@@ -103,6 +102,6 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
           </motion.button>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }

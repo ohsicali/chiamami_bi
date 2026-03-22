@@ -127,18 +127,14 @@ export default function PhotoCarousel({ photos = [], height = '300px' }) {
       {normalizedPhotos.length > 1 && (
         <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5">
           {normalizedPhotos.map((_, i) => (
-            <motion.button
+            <button
               key={i}
               onClick={() => goTo(i, i > currentIndex ? 1 : -1)}
-              className="h-2 rounded-full"
-              animate={{
+              className="h-2 rounded-full transition-all duration-300 ease-out"
+              style={{
                 width: i === currentIndex ? 24 : 8,
-                backgroundColor:
-                  i === currentIndex
-                    ? 'rgba(255,255,255,1)'
-                    : 'rgba(255,255,255,0.5)',
+                backgroundColor: i === currentIndex ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.5)',
               }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
               aria-label={`Go to photo ${i + 1}`}
             />
           ))}

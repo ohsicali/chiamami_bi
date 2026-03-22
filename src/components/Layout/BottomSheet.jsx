@@ -44,8 +44,8 @@ export default function BottomSheet({ children, onSnapChange }) {
       // Re-snap to current position
       animate(y, pts[snapIndex], {
         type: 'spring',
-        stiffness: 300,
-        damping: 30,
+        stiffness: 400,
+        damping: 35,
       })
     }
     window.addEventListener('resize', handleResize)
@@ -58,8 +58,8 @@ export default function BottomSheet({ children, onSnapChange }) {
       setSnapIndex(clamped)
       animate(y, snapPoints[clamped], {
         type: 'spring',
-        stiffness: 300,
-        damping: 30,
+        stiffness: 400,
+        damping: 35,
       })
       onSnapChange?.(clamped)
     },

@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
 import MapView from '../../components/Map/MapView'
 import MapControls from '../../components/Map/MapControls'
 import BottomSheet, { SNAP_PEEK, SNAP_HALF, SNAP_FULL } from '../../components/Layout/BottomSheet'
@@ -139,27 +138,18 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <motion.div layout className="flex flex-col gap-3 pb-8">
-            <AnimatePresence mode="popLayout">
-              {restaurants.map((restaurant, index) => (
-                <motion.div
-                  key={restaurant.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
+          <div className="flex flex-col gap-3 pb-8">
+            {restaurants.map((restaurant, index) => (
+                <div key={restaurant.id}>
                   <RestaurantCard
                     restaurant={restaurant}
                     index={index}
                     userPosition={position}
                     onClick={handleCardClick}
                   />
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
-          </motion.div>
+          </div>
         )}
       </BottomSheet>
     </div>

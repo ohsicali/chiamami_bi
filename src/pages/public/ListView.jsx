@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
@@ -286,33 +286,17 @@ export default function ListView() {
             parentRef={scrollContainerRef}
           />
         ) : (
-          <motion.div
-            layout
-            className="grid gap-4 sm:grid-cols-2"
-          >
-            <AnimatePresence mode="popLayout">
+          <div className="grid gap-4 sm:grid-cols-2">
               {restaurants.map((restaurant, index) => (
-                <motion.div
-                  key={restaurant.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    transition: { delay: index * 0.04 },
-                  }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.25 }}
-                >
+                <div key={restaurant.id}>
                   <LargeRestaurantCard
                     restaurant={restaurant}
                     userPosition={position}
                     onClick={handleCardClick}
                   />
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
