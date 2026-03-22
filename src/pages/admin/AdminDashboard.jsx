@@ -58,6 +58,13 @@ function MiniStars({ rating }) {
 /* ------------------------------------------------------------------ */
 function AdminLayout({ children, user, onLogout }) {
   const navigate = useNavigate()
+
+  // Enable scrolling on admin pages (body has overflow:hidden by default for map)
+  useEffect(() => {
+    document.body.classList.add('admin-scroll')
+    return () => document.body.classList.remove('admin-scroll')
+  }, [])
+
   const links = [
     { to: '/admin', label: 'Dashboard', icon: DashboardIcon },
     { to: '/admin/restaurant/new', label: 'Nuovo Ristorante', icon: PlusIcon },
@@ -65,7 +72,7 @@ function AdminLayout({ children, user, onLogout }) {
   ]
 
   return (
-    <div className="min-h-screen bg-bg flex overflow-auto">
+    <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-60 bg-card border-r border-gray-100 p-6 shrink-0">
         <Link to="/admin" className="font-display text-xl text-accent tracking-tight mb-10">
@@ -114,7 +121,7 @@ function AdminLayout({ children, user, onLogout }) {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 md:p-8 p-4 pt-16 md:pt-8 overflow-auto">
+      <main className="flex-1 min-w-0 md:p-8 p-4 pt-16 md:pt-8" style={{ WebkitOverflowScrolling: 'touch' }}>
         {children}
       </main>
     </div>

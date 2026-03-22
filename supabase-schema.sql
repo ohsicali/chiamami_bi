@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
   our_rating float4 DEFAULT 4.0,
   our_review text,
   our_tip text,
+  instagram_reel text,
   is_published boolean DEFAULT false,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()

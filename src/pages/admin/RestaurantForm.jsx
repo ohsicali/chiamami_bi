@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -26,8 +26,9 @@ const EMPTY_FORM = {
   rating: 0,
   our_review: '',
   our_tip: '',
+  instagram_reel: '',
   published: false,
-  photos: [], // { url, caption, sort_order }
+  photos: [], // { url, caption, sort_order, file? }
 }
 
 /* ------------------------------------------------------------------ */
@@ -113,9 +114,11 @@ function PriceSelector({ value, onChange }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Category multi-select chips                                        */
+/*  Category multi-select — Glovo-style dropdown modal                 */
 /* ------------------------------------------------------------------ */
-function CategoryChips({ selected, onChange }) {
+function CategorySelector({ selected, onChange }) {
+  const [open, setOpen] = useState(false)
+
   const toggle = (name) => {
     onChange(
       selected.includes(name)
@@ -125,31 +128,128 @@ function CategoryChips({ selected, onChange }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {CUISINE_CATEGORIES.map((cat) => {
-        const active = selected.includes(cat.name)
-        return (
-          <motion.button
-            key={cat.name}
-            type="button"
-            whileTap={{ scale: 0.95 }}
-            onClick={() => toggle(cat.name)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-              active
-                ? 'text-white shadow-sm'
-                : 'border-gray-200 text-secondary hover:border-gray-300'
-            }`}
-            style={
-              active
-                ? { backgroundColor: cat.color, borderColor: cat.color }
-                : {}
-            }
+    <div>
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm font-medium text-primary hover:border-accent/40 transition-colors"
+      >
+        <span>Tipo di cibo</span>
+        <svg className="w-4 h-4 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Selected chips preview */}
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {selected.map((name) => {
+            const cat = CUISINE_CATEGORIES.find((c) => c.name === name)
+            return (
+              <span
+                key={name}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white"
+                style={{ backgroundColor: cat?.color || '#6B7280' }}
+              >
+                <span>{cat?.emoji}</span>
+                {name}
+                <button
+                  type="button"
+                  onClick={() => toggle(name)}
+                  className="ml-0.5 hover:opacity-70"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Full-screen modal */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
           >
-            <span>{cat.emoji}</span>
-            {cat.name}
-          </motion.button>
-        )
-      })}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-primary">Tipo di cibo</h3>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Grid */}
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+                <div className="grid grid-cols-4 gap-3">
+                  {CUISINE_CATEGORIES.map((cat) => {
+                    const active = selected.includes(cat.name)
+                    return (
+                      <button
+                        key={cat.name}
+                        type="button"
+                        onClick={() => toggle(cat.name)}
+                        className="flex flex-col items-center gap-1.5 py-2"
+                      >
+                        <div
+                          className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
+                            active
+                              ? 'ring-3 ring-accent shadow-md'
+                              : 'bg-gray-100'
+                          }`}
+                          style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                        >
+                          {cat.emoji}
+                        </div>
+                        <span className={`text-xs font-medium text-center leading-tight ${
+                          active ? 'text-accent' : 'text-primary'
+                        }`}>
+                          {cat.name}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Footer button */}
+              <div className="px-5 py-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#d14e2d] transition-colors"
+                >
+                  {selected.length > 0
+                    ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})`
+                    : 'Chiudi'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -181,12 +281,26 @@ function Toggle({ checked, onChange, label }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Photo management                                                   */
+/*  Photo management — file upload from device + URL                   */
 /* ------------------------------------------------------------------ */
 function PhotoManager({ photos, onChange }) {
+  const fileInputRef = useRef(null)
   const [newUrl, setNewUrl] = useState('')
 
-  const addPhoto = () => {
+  const addFromFiles = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    const newPhotos = files.map((file, idx) => ({
+      url: URL.createObjectURL(file),
+      file,
+      caption: '',
+      sort_order: photos.length + idx,
+    }))
+    onChange([...photos, ...newPhotos])
+    e.target.value = ''
+  }
+
+  const addFromUrl = () => {
     if (!newUrl.trim()) return
     onChange([
       ...photos,
@@ -196,6 +310,8 @@ function PhotoManager({ photos, onChange }) {
   }
 
   const removePhoto = (index) => {
+    const removed = photos[index]
+    if (removed.url?.startsWith('blob:')) URL.revokeObjectURL(removed.url)
     const updated = photos.filter((_, i) => i !== index)
       .map((p, i) => ({ ...p, sort_order: i }))
     onChange(updated)
@@ -218,38 +334,46 @@ function PhotoManager({ photos, onChange }) {
 
   return (
     <div className="space-y-4">
-      {/* Add new */}
+      {/* Upload from device */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={addFromFiles}
+        className="hidden"
+      />
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.97 }}
+        onClick={() => fileInputRef.current?.click()}
+        className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-gray-300 text-sm font-medium text-secondary hover:border-accent hover:text-accent transition-colors bg-gray-50/50"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Carica foto dalla libreria
+      </motion.button>
+
+      {/* Or add by URL */}
       <div className="flex gap-2">
         <input
           type="url"
           value={newUrl}
           onChange={(e) => setNewUrl(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPhoto())}
-          placeholder="https://example.com/photo.jpg"
-          className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFromUrl())}
+          placeholder="Oppure incolla un URL immagine..."
+          className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-base text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
         <motion.button
           type="button"
           whileTap={{ scale: 0.95 }}
-          onClick={addPhoto}
+          onClick={addFromUrl}
           className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-medium shrink-0 hover:bg-[#d14e2d] transition-colors"
         >
           Aggiungi
         </motion.button>
       </div>
-
-      {/* Preview of URL being typed */}
-      {newUrl.trim() && (
-        <div className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 p-2">
-          <p className="text-xs text-secondary mb-1">Anteprima:</p>
-          <img
-            src={newUrl}
-            alt="preview"
-            className="w-full max-h-40 object-cover rounded-lg"
-            onError={(e) => { e.target.style.display = 'none' }}
-          />
-        </div>
-      )}
 
       {/* Photo list */}
       <AnimatePresence>
@@ -265,16 +389,18 @@ function PhotoManager({ photos, onChange }) {
               src={photo.url}
               alt=""
               className="w-16 h-16 rounded-lg object-cover shrink-0"
-              onError={(e) => { e.target.src = '' }}
+              onError={(e) => { e.target.style.display = 'none' }}
             />
             <div className="flex-1 min-w-0 space-y-2">
-              <p className="text-xs text-secondary truncate">{photo.url}</p>
+              <p className="text-xs text-secondary truncate">
+                {photo.file ? photo.file.name : photo.url}
+              </p>
               <input
                 type="text"
                 value={photo.caption}
                 onChange={(e) => updateCaption(i, e.target.value)}
                 placeholder="Didascalia (opzionale)"
-                className="w-full px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-1 focus:ring-accent/30"
+                className="w-full px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-base text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-1 focus:ring-accent/30"
               />
             </div>
             <div className="flex flex-col gap-1 shrink-0">
@@ -351,6 +477,12 @@ export default function RestaurantForm() {
     if (!authLoading && !user) navigate('/admin/login', { replace: true })
   }, [user, authLoading, navigate])
 
+  // Enable scrolling on admin pages
+  useEffect(() => {
+    document.body.classList.add('admin-scroll')
+    return () => document.body.classList.remove('admin-scroll')
+  }, [])
+
   // Load restaurant data when editing
   useEffect(() => {
     if (isEditing && restaurants.length > 0) {
@@ -371,6 +503,7 @@ export default function RestaurantForm() {
           rating: r.our_rating || 0,
           our_review: r.our_review || r.description || '',
           our_tip: r.our_tip || (Array.isArray(r.tips) ? r.tips.join('\n') : '') || '',
+          instagram_reel: r.instagram_reel || '',
           published: r.is_published !== false,
           photos: Array.isArray(r.photos)
             ? r.photos.map((p, i) =>
@@ -441,19 +574,74 @@ export default function RestaurantForm() {
       our_rating: form.rating,
       our_review: form.our_review.trim(),
       our_tip: form.our_tip.trim(),
+      instagram_reel: form.instagram_reel.trim() || null,
       is_published: form.published,
-      photos: form.photos,
     }
 
     try {
       if (isSupabaseConfigured()) {
+        let restaurantId = id
+
         if (isEditing) {
           const { error } = await supabase.from('restaurants').update(payload).eq('id', id)
           if (error) throw error
         } else {
-          const { error } = await supabase.from('restaurants').insert(payload)
+          // Generate slug from name
+          payload.slug = form.name.trim().toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            + '-' + Date.now().toString(36)
+          const { data, error } = await supabase.from('restaurants').insert(payload).select('id').single()
           if (error) throw error
+          restaurantId = data.id
         }
+
+        // Handle photos — upload files to storage, then save to restaurant_photos
+        if (form.photos.length > 0) {
+          // Delete old photos if editing
+          if (isEditing) {
+            await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
+          }
+
+          const photoRows = []
+          for (const photo of form.photos) {
+            let photoUrl = photo.url
+            // If it's a file upload, upload to Supabase Storage
+            if (photo.file) {
+              const ext = photo.file.name.split('.').pop()
+              const path = `restaurants/${restaurantId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('photos')
+                .upload(path, photo.file, { cacheControl: '3600', upsert: false })
+              if (uploadError) {
+                console.error('Upload error:', uploadError)
+                addToast(`Errore upload foto: ${uploadError.message}`, 'error')
+                continue
+              }
+              const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
+              photoUrl = urlData.publicUrl
+            }
+            photoRows.push({
+              restaurant_id: restaurantId,
+              photo_url: photoUrl,
+              caption: photo.caption || '',
+              sort_order: photo.sort_order,
+            })
+          }
+
+          if (photoRows.length > 0) {
+            const { error: photoError } = await supabase.from('restaurant_photos').insert(photoRows)
+            if (photoError) {
+              console.error('Photo insert error:', photoError)
+              addToast(`Ristorante salvato ma errore foto: ${photoError.message}`, 'error')
+            }
+          }
+        } else if (isEditing) {
+          // If no photos, clear existing
+          await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
+        }
+
         addToast(isEditing ? 'Ristorante aggiornato!' : 'Ristorante creato!', 'success')
         navigate('/admin')
       } else {
@@ -513,7 +701,7 @@ export default function RestaurantForm() {
     ) : null
 
   return (
-    <div className="min-h-screen bg-bg overflow-auto">
+    <div className="min-h-screen bg-bg" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
       {/* Top bar */}
       <div className="sticky top-0 z-30 glass border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -682,7 +870,7 @@ export default function RestaurantForm() {
           {/* --- Classification --- */}
           <Section title="Classificazione">
             <Field label="Categorie *" error={errors.categories}>
-              <CategoryChips
+              <CategorySelector
                 selected={form.categories}
                 onChange={(v) => update('categories', v)}
               />
@@ -723,6 +911,25 @@ export default function RestaurantForm() {
                 placeholder="Consigli per chi visita il ristorante..."
                 className={inputClass() + ' resize-y'}
               />
+            </Field>
+          </Section>
+
+          {/* --- Instagram Reel --- */}
+          <Section title="Video Instagram">
+            <Field label="Link Reel Instagram (opzionale)">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-pink-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                </svg>
+                <input
+                  type="url"
+                  value={form.instagram_reel}
+                  onChange={(e) => update('instagram_reel', e.target.value)}
+                  placeholder="https://www.instagram.com/reel/..."
+                  className={inputClass()}
+                />
+              </div>
+              <p className="text-xs text-secondary mt-1">Inserisci il link al reel Instagram che parla di questo locale</p>
             </Field>
           </Section>
 
@@ -841,7 +1048,7 @@ function Field({ label, children, error }) {
 }
 
 function inputClass(hasError) {
-  return `w-full px-4 py-2.5 rounded-xl border text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 transition-all duration-200 ${
+  return `w-full px-4 py-2.5 rounded-xl border text-base text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 transition-all duration-200 ${
     hasError
       ? 'border-red-300 focus:ring-red-300/40 focus:border-red-400 bg-red-50/30'
       : 'border-gray-200 focus:ring-accent/30 focus:border-accent bg-bg'
