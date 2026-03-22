@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
+import { LogoFull } from '../../components/UI/Logo'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -56,14 +57,14 @@ export default function AdminLogin() {
         <div className="bg-card rounded-2xl shadow-xl border border-gray-100 p-8 md:p-10">
           {/* Logo / Brand */}
           <div className="text-center mb-8">
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.15, duration: 0.4 }}
-              className="font-display text-3xl md:text-4xl text-accent tracking-tight"
+              className="flex justify-center"
             >
-              ChiamamiBi
-            </motion.h1>
+              <LogoFull height={32} />
+            </motion.div>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

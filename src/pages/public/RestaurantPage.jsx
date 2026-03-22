@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
+import { LogoLoader } from '../../components/UI/Logo'
 
 function slugify(name) {
   return name
@@ -33,7 +34,7 @@ export default function RestaurantPage() {
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 bg-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#E85D3A] border-t-transparent" />
+        <LogoLoader size={48} />
       </div>
     )
   }

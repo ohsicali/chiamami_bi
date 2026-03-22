@@ -1,37 +1,7 @@
-export function LoadingSpinner({ size = 40, className = "" }) {
-  return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 40 40"
-        xmlns="http://www.w3.org/2000/svg"
-        className="animate-spin"
-      >
-        <circle
-          cx="20"
-          cy="20"
-          r="16"
-          fill="none"
-          stroke="#E85D3A"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="80"
-          strokeDashoffset="60"
-          opacity="0.9"
-        />
-        <circle
-          cx="20"
-          cy="20"
-          r="16"
-          fill="none"
-          stroke="#E85D3A"
-          strokeWidth="3"
-          opacity="0.2"
-        />
-      </svg>
-    </div>
-  );
+import { LogoLoader } from './Logo'
+
+export function LoadingSpinner({ size = 48, className = "" }) {
+  return <LogoLoader size={size} className={className} />
 }
 
 export function SkeletonCard({ className = "" }) {

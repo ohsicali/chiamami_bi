@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
+import { LogoFull } from '../../components/UI/Logo'
 
 /* ------------------------------------------------------------------ */
 /*  Animated counter component                                         */
@@ -47,8 +48,8 @@ function AdminLayout({ children, user, onLogout }) {
     <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-60 bg-card border-r border-gray-100 p-6 shrink-0">
-        <Link to="/admin" className="font-display text-xl text-accent tracking-tight mb-10">
-          ChiamamiBi
+        <Link to="/admin" className="mb-10">
+          <LogoFull height={22} />
         </Link>
 
         <nav className="flex-1 space-y-1">
@@ -78,7 +79,7 @@ function AdminLayout({ children, user, onLogout }) {
 
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 inset-x-0 z-40 glass border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-        <Link to="/admin" className="font-display text-lg text-accent">ChiamamiBi</Link>
+        <Link to="/admin"><LogoFull height={20} /></Link>
         <div className="flex items-center gap-3">
           <Link to="/admin/restaurant/new" className="text-accent">
             <PlusIcon className="w-5 h-5" />

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { LogoFull } from "../UI/Logo";
 
 const ListIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,12 +25,7 @@ export default function Navbar({ view = "map", onToggleView }) {
     <nav className="fixed top-0 left-0 right-0 z-40 glass">
       <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
         {/* Logo */}
-        <span
-          className="text-xl font-bold text-[#E85D3A] tracking-tight"
-          style={{ fontFamily: "'Playfair Display', serif" }}
-        >
-          ChiamamiBi
-        </span>
+        <LogoFull height={22} />
 
         {/* View toggle */}
         <motion.button
