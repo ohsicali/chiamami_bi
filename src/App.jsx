@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate, useLocation, matchPath } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 
@@ -33,14 +33,12 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Check if current route is a restaurant detail page
-  const restaurantMatch = matchPath('/restaurant/:slug', location.pathname)
-
   return (
     <Suspense fallback={<PageLoader />}>
-      {/* Base routes — keep HomePage mounted when restaurant overlay is open */}
-      <Routes location={restaurantMatch ? { ...location, pathname: '/' } : location} key={restaurantMatch ? '/' : location.pathname}>
+      <Routes location={location} key={location.pathname}>
+        {/* Public routes */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/restaurant/:slug" element={<RestaurantPage />} />
         <Route path="/list" element={<ListView />} />
         <Route path="/about" element={<AboutPage />} />
 
@@ -54,13 +52,6 @@ export default function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
-      {/* Restaurant detail — rendered directly as AnimatePresence child (not inside Routes) */}
-      <AnimatePresence>
-        {restaurantMatch && (
-          <RestaurantPage key={restaurantMatch.params.slug} slug={restaurantMatch.params.slug} />
-        )}
-      </AnimatePresence>
     </Suspense>
   )
 }

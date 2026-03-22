@@ -17,15 +17,15 @@ const sheetVariants = {
     opacity: 1,
     transition: {
       type: 'spring',
-      damping: 28,
-      stiffness: 300,
+      damping: 35,
+      stiffness: 450,
       mass: 0.8,
     },
   },
   exit: {
     y: '100%',
     opacity: 0,
-    transition: { duration: 0.3, ease: [0.4, 0, 1, 1] },
+    transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
   },
 }
 
