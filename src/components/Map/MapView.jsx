@@ -48,11 +48,15 @@ function ensureStyles() {
   style.id = STYLE_ID
   style.textContent = `
     .chiamami-pin {
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.15s ease;
     }
     .chiamami-pin:hover {
       transform: scale(1.15) !important;
       box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+    }
+    .chiamami-pin:active {
+      transform: scale(0.9) !important;
+      transition: transform 0.08s ease !important;
     }
     .chiamami-pin[data-selected="true"] {
       transform: scale(1.25) !important;
