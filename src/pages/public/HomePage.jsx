@@ -29,6 +29,7 @@ export default function HomePage() {
   const { position, loading: geoLoading, locate } = useGeolocation()
   const {
     restaurants,
+    allRestaurants,
     loading,
     filters,
     setFilters,
@@ -46,13 +47,13 @@ export default function HomePage() {
 
   const handlePinSelect = useCallback((id) => {
     setSelectedId(id)
-    const r = restaurants.find((r) => r.id === id)
+    const r = allRestaurants.find((r) => r.id === id)
     if (r) {
       setTimeout(() => {
         navigate(`/restaurant/${r.slug || slugify(r.name)}`)
       }, 300)
     }
-  }, [restaurants, navigate])
+  }, [allRestaurants, navigate])
 
   const handleCardClick = useCallback(
     (restaurant) => {
@@ -84,7 +85,7 @@ export default function HomePage() {
 
       {/* Map - full screen background */}
       <MapView
-        restaurants={restaurants}
+        restaurants={allRestaurants}
         selectedId={selectedId}
         onSelectRestaurant={handlePinSelect}
         userPosition={position}

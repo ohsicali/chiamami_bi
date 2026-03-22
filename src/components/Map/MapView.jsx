@@ -242,6 +242,8 @@ export default function MapView({
   const markers = useRef([]) // { marker, restaurant, el }
   const userMarker = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
+  const onSelectRef = useRef(onSelectRestaurant)
+  onSelectRef.current = onSelectRestaurant
 
   // Initialize map
   useEffect(() => {
@@ -377,12 +379,11 @@ export default function MapView({
 
       // Create individual markers (visible only when unclustered)
       restaurants.forEach((r) => {
-        const isSelected = r.id === selectedId
-        const el = createPinElement(r, isSelected)
+        const el = createPinElement(r, false)
 
         el.addEventListener('click', (e) => {
           e.stopPropagation()
-          onSelectRestaurant?.(r.id)
+          onSelectRef.current?.(r.id)
         })
 
         const marker = new mapboxgl.Marker({ element: el })
@@ -398,7 +399,7 @@ export default function MapView({
     } else {
       map.current.on('load', onReady)
     }
-  }, [restaurants, selectedId, onSelectRestaurant])
+  }, [restaurants])
 
   // Update selected marker styles when selectedId changes
   useEffect(() => {
