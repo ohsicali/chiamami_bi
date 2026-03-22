@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
@@ -11,7 +11,7 @@ function getCategoryInfo(cuisineType) {
   return cat || { emoji: '🍴', color: '#9CA3AF' }
 }
 
-function createPinElement(restaurant, isSelected) {
+function createPinElement(restaurant) {
   const { emoji, color } = getCategoryInfo(restaurant.cuisine_type)
 
   const el = document.createElement('div')
@@ -28,50 +28,15 @@ function createPinElement(restaurant, isSelected) {
     justify-content: center;
     font-size: 18px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     user-select: none;
-    position: relative;
+    z-index: 1;
+    pointer-events: auto;
   `
 
-  el.innerHTML = `<span style="line-height:1">${emoji}</span>`
-
-  if (isSelected) {
-    applySelectedStyle(el, color)
-  }
-
-  el.addEventListener('mouseenter', () => {
-    if (!el.dataset.selected) {
-      el.style.transform = 'scale(1.1)'
-      el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)'
-    }
-  })
-  el.addEventListener('mouseleave', () => {
-    if (!el.dataset.selected) {
-      el.style.transform = 'scale(1)'
-      el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'
-    }
-  })
+  el.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 
   return el
-}
-
-function applySelectedStyle(el, color) {
-  el.dataset.selected = 'true'
-  el.style.transform = 'scale(1.25)'
-  el.style.boxShadow = `0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3)`
-  el.style.borderColor = ACCENT_COLOR
-  el.style.zIndex = '10'
-  el.style.animation = 'chiamami-pin-pulse 2s infinite'
-}
-
-function removeSelectedStyle(el, color) {
-  delete el.dataset.selected
-  el.style.transform = 'scale(1)'
-  el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'
-  el.style.borderColor = color
-  el.style.zIndex = ''
-  el.style.animation = ''
 }
 
 // Inject keyframes once
@@ -81,6 +46,20 @@ function ensureStyles() {
   const style = document.createElement('style')
   style.id = STYLE_ID
   style.textContent = `
+    .chiamami-pin {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .chiamami-pin:hover {
+      transform: scale(1.15) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+    }
+    .chiamami-pin[data-selected="true"] {
+      transform: scale(1.25) !important;
+      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3) !important;
+      border-color: ${ACCENT_COLOR} !important;
+      z-index: 10 !important;
+      animation: chiamami-pin-pulse 2s infinite;
+    }
     @keyframes chiamami-pin-pulse {
       0%, 100% { box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3); }
       50% { box-shadow: 0 0 0 6px ${ACCENT_COLOR}22, 0 4px 16px rgba(0,0,0,0.3); }
@@ -94,7 +73,6 @@ function ensureStyles() {
 }
 
 function PlaceholderMap({ restaurants, className }) {
-  const categories = CUISINE_CATEGORIES
   return (
     <div
       className={className}
@@ -110,7 +88,6 @@ function PlaceholderMap({ restaurants, className }) {
         height: '100%',
       }}
     >
-      {/* Decorative dots representing restaurants */}
       <div
         style={{
           position: 'absolute',
@@ -146,7 +123,6 @@ function PlaceholderMap({ restaurants, className }) {
         })}
       </div>
 
-      {/* Message overlay */}
       <div
         style={{
           position: 'relative',
@@ -244,6 +220,8 @@ export default function MapView({
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
+  const restaurantsRef = useRef(restaurants)
+  restaurantsRef.current = restaurants
 
   // Initialize map
   useEffect(() => {
@@ -268,78 +246,6 @@ export default function MapView({
           map.current.setLayoutProperty(layer.id, 'visibility', 'none')
         }
       })
-
-      // Add clustered GeoJSON source
-      map.current.addSource('restaurants-cluster', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50,
-      })
-
-      // Cluster circle layer
-      map.current.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'restaurants-cluster',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': ACCENT_COLOR,
-          'circle-radius': [
-            'step',
-            ['get', 'point_count'],
-            18,
-            5, 22,
-            10, 28,
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff',
-        },
-      })
-
-      // Cluster count label layer
-      map.current.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'restaurants-cluster',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 13,
-        },
-        paint: {
-          'text-color': '#ffffff',
-        },
-      })
-
-      // Click clusters to zoom in
-      map.current.on('click', 'clusters', (e) => {
-        const features = map.current.queryRenderedFeatures(e.point, {
-          layers: ['clusters'],
-        })
-        if (!features.length) return
-        const clusterId = features[0].properties.cluster_id
-        map.current
-          .getSource('restaurants-cluster')
-          .getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) return
-            map.current.easeTo({
-              center: features[0].geometry.coordinates,
-              zoom: zoom,
-              duration: 1000,
-            })
-          })
-      })
-
-      // Pointer cursor on clusters
-      map.current.on('mouseenter', 'clusters', () => {
-        map.current.getCanvas().style.cursor = 'pointer'
-      })
-      map.current.on('mouseleave', 'clusters', () => {
-        map.current.getCanvas().style.cursor = ''
-      })
     })
 
     return () => {
@@ -352,41 +258,33 @@ export default function MapView({
     }
   }, [token])
 
-  // Update markers and cluster source when restaurants change
+  // Create/update markers when restaurants change
   useEffect(() => {
     if (!map.current || !restaurants?.length) return
 
-    const onReady = () => {
+    const createMarkers = () => {
       // Remove old markers
       markers.current.forEach(({ marker }) => marker.remove())
       markers.current = []
 
-      // Update cluster source
-      const source = map.current.getSource('restaurants-cluster')
-      if (source) {
-        source.setData({
-          type: 'FeatureCollection',
-          features: restaurants.map((r) => ({
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [r.longitude, r.latitude],
-            },
-            properties: { id: r.id },
-          })),
-        })
-      }
-
-      // Create individual markers (visible only when unclustered)
+      // Create new markers
       restaurants.forEach((r) => {
-        const el = createPinElement(r, false)
+        if (!r.latitude || !r.longitude) return
+
+        const el = createPinElement(r)
 
         el.addEventListener('click', (e) => {
           e.stopPropagation()
           onSelectRef.current?.(r.id)
         })
 
-        const marker = new mapboxgl.Marker({ element: el })
+        // Prevent touch events from being swallowed by the map
+        el.addEventListener('touchend', (e) => {
+          e.stopPropagation()
+          onSelectRef.current?.(r.id)
+        }, { passive: true })
+
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([r.longitude, r.latitude])
           .addTo(map.current)
 
@@ -395,38 +293,37 @@ export default function MapView({
     }
 
     if (map.current.isStyleLoaded()) {
-      onReady()
+      createMarkers()
     } else {
-      map.current.on('load', onReady)
+      map.current.on('load', createMarkers)
     }
   }, [restaurants])
 
   // Update selected marker styles when selectedId changes
   useEffect(() => {
     markers.current.forEach(({ restaurant, el }) => {
-      const { color } = getCategoryInfo(restaurant.cuisine_type)
       if (restaurant.id === selectedId) {
-        applySelectedStyle(el, color)
+        el.dataset.selected = 'true'
       } else {
-        removeSelectedStyle(el, color)
+        delete el.dataset.selected
       }
     })
   }, [selectedId])
 
   // FlyTo selected restaurant
   useEffect(() => {
-    if (!map.current || !selectedId || !restaurants?.length) return
+    if (!map.current || !selectedId) return
 
-    const restaurant = restaurants.find((r) => r.id === selectedId)
-    if (!restaurant) return
+    const r = restaurantsRef.current?.find((r) => r.id === selectedId)
+    if (!r) return
 
     map.current.flyTo({
-      center: [restaurant.longitude, restaurant.latitude],
+      center: [r.longitude, r.latitude],
       zoom: 15,
       duration: 1000,
       essential: true,
     })
-  }, [selectedId, restaurants])
+  }, [selectedId])
 
   // User position blue dot
   useEffect(() => {
