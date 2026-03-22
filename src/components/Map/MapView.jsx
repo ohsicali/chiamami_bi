@@ -252,7 +252,7 @@ export default function MapView({
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/streets-v12',
       center: TORINO_CENTER,
       zoom: 13,
       pitch: 15,
