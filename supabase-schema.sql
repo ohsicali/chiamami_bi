@@ -81,3 +81,32 @@ CREATE POLICY "Public read categories" ON categories
 -- Admin: gestione categorie
 CREATE POLICY "Admin manage categories" ON categories
   FOR ALL USING (auth.role() = 'authenticated');
+
+-- ================================================================
+-- Storage: bucket "photos" — policy per upload e lettura
+-- ================================================================
+
+-- Crea il bucket se non esiste (public per lettura immagini)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('photos', 'photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Chiunque può leggere le foto (bucket pubblico)
+CREATE POLICY "Public read storage photos"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'photos');
+
+-- Utenti autenticati possono caricare foto
+CREATE POLICY "Auth users upload photos"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'photos' AND auth.role() = 'authenticated');
+
+-- Utenti autenticati possono aggiornare le proprie foto
+CREATE POLICY "Auth users update photos"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'photos' AND auth.role() = 'authenticated');
+
+-- Utenti autenticati possono cancellare foto
+CREATE POLICY "Auth users delete photos"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'photos' AND auth.role() = 'authenticated');
