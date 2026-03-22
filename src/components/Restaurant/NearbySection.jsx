@@ -58,7 +58,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
 
       {/* Info */}
       <div className="flex flex-col gap-0.5 p-2.5">
-        <h4 className="truncate text-left font-sans text-sm font-semibold text-primary">
+        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
           {restaurant.name}
         </h4>
         {category && (

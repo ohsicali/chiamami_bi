@@ -141,7 +141,8 @@ export default function RestaurantSheet({
               >
                 {/* Name */}
                 <motion.h1
-                  className="font-display text-2xl font-bold text-primary"
+                  className="text-2xl font-bold text-primary"
+                  style={{ fontFamily: "'TAN Songbird', serif" }}
                   variants={itemVariants}
                 >
                   {restaurant.name}

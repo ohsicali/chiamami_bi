@@ -90,7 +90,7 @@ export default function RestaurantCard({
       {/* Info */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {/* Name */}
-        <h3 className="truncate font-sans text-base font-semibold text-primary">
+        <h3 className="truncate text-base font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
           {restaurant.name}
         </h3>
 
