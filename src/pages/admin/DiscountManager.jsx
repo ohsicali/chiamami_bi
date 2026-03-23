@@ -447,5 +447,6 @@ export default function DiscountManager() {
         )}
       </div>
     </div>
+    </AdminLayout>
   )
 }
