@@ -1,17 +1,19 @@
 import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { motion, useMotionValue, animate } from 'framer-motion'
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 
 export const SNAP_PEEK = 0
 export const SNAP_HALF = 1
 export const SNAP_FULL = 2
 
+const SIDE_MARGIN = 10 // px margin on left/right like Apple Maps
+
 function getSnapPoints() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   return [
-    h - 110,   // PEEK: just drag handle + search bar visible (~110px), like Apple Maps
+    h - 110,   // PEEK: floating search island (~110px visible)
     h * 0.45,  // HALF: ~55% visible
-    h * 0.08,  // FULL: nearly full screen (8% from top, leaves space for navbar)
+    h * 0.08,  // FULL: nearly full screen
   ]
 }
 
@@ -37,6 +39,13 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
   const isDragging = useRef(false)
   const snapIndexRef = useRef(snapIndex)
   snapIndexRef.current = snapIndex
+
+  // Animate border-radius: rounder when peeking (island), less round when expanded
+  const borderRadius = useTransform(
+    y,
+    [snapPoints[SNAP_FULL], snapPoints[SNAP_HALF], snapPoints[SNAP_PEEK]],
+    [20, 24, 28]
+  )
 
   // Recalculate snap points on resize
   useEffect(() => {
@@ -80,11 +89,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         // If sheet is at FULL and content is scrolled, don't drag
         if (snapIndex === SNAP_FULL && contentRef.current) {
           const scrollTop = contentRef.current.scrollTop
-          if (scrollTop > 0 && dy < 0) {
-            cancel()
-            return
-          }
-          if (scrollTop > 0 && dy > 0) {
+          if (scrollTop > 0) {
             cancel()
             return
           }
@@ -139,24 +144,31 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       {...bind()}
       style={{
         y,
+        borderRadius,
         touchAction: 'none',
         position: 'fixed',
         top: 0,
-        left: 0,
-        right: 0,
+        left: SIDE_MARGIN,
+        right: SIDE_MARGIN,
         height: '100dvh',
         zIndex: 30,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.08), 0 -1px 4px rgba(0, 0, 0, 0.04)',
+        background: 'rgba(255, 255, 255, 0.82)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        boxShadow: '0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.08)',
+        overflow: 'hidden',
       }}
-      className="glass"
     >
       {/* Drag handle */}
       <div className="flex items-center justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
         <div
-          className="bg-gray-300 rounded-full"
-          style={{ width: 40, height: 5, borderRadius: 2.5 }}
+          className="rounded-full"
+          style={{
+            width: 36,
+            height: 5,
+            borderRadius: 2.5,
+            background: 'rgba(0, 0, 0, 0.18)',
+          }}
         />
       </div>
 
