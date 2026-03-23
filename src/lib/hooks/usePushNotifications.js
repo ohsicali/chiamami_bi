@@ -53,12 +53,14 @@ export function usePushNotifications(userId) {
 
       // Save subscription to Supabase
       if (isSupabaseConfigured()) {
+        const keys = subscription.toJSON().keys
         await supabase
           .from('push_subscriptions')
           .upsert({
             user_id: userId,
             endpoint: subscription.endpoint,
-            subscription: JSON.stringify(subscription),
+            p256dh: keys.p256dh,
+            auth: keys.auth,
           }, { onConflict: 'endpoint' })
       }
 

@@ -28,7 +28,6 @@ export function useAuth() {
     if (error?.code === 'PGRST116') {
       const newProfile = {
         id: authUser.id,
-        email: authUser.email,
         full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
         avatar_url: authUser.user_metadata?.avatar_url || null,
         is_admin: false,

@@ -52,9 +52,16 @@ export default function ReviewCard({ review }) {
           <p className="text-sm font-semibold text-primary truncate">
             {user?.full_name || 'Utente'}
           </p>
-          <p className="text-[11px] text-secondary">
-            {timeAgo(review.created_at)}
-          </p>
+          <div className="flex items-center gap-1.5">
+            {review.rating && (
+              <span className="text-xs text-yellow-500">
+                {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+              </span>
+            )}
+            <span className="text-[11px] text-secondary">
+              {timeAgo(review.created_at)}
+            </span>
+          </div>
         </div>
       </div>
 
