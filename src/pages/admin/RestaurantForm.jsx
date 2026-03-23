@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -961,7 +961,7 @@ export default function RestaurantForm() {
     )
   }
 
-  if (!user) return null
+  if (!user) return <Navigate to="/admin/login" replace />
 
   const FieldError = ({ field }) =>
     errors[field] ? (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, Navigate } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!user) return null
+  if (!user) return <Navigate to="/admin/login" replace />
 
   const statCards = [
     { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },

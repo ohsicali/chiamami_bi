@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
@@ -119,7 +120,7 @@ export default function CategoryManager() {
     )
   }
 
-  if (!user) return null
+  if (!user) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Categorie">

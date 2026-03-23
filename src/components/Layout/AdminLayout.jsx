@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { LogoFull } from '../UI/Logo'
@@ -185,14 +185,7 @@ function SidebarContent({ user, onLogout, onNavClick }) {
 /* ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title }) {
   const { user, loading: authLoading, signOut } = useAuth()
-  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) navigate('/admin/login', { replace: true })
-  }, [user, authLoading, navigate])
-
 
   // Close mobile menu on route change
   const location = useLocation()
@@ -219,7 +212,7 @@ export default function AdminLayout({ children, title }) {
       </div>
     )
   }
-  if (!user) return null
+  if (!user) return <Navigate to="/admin/login" replace />
 
   return (
     <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
