@@ -20,7 +20,7 @@ export default function ReviewModerator() {
   const [tab, setTab] = useState('pending')
   const [actionLoading, setActionLoading] = useState(null)
 
-  const pending = reviews.filter(r => r.status === 'pending_review')
+  const pending = reviews.filter(r => r.status !== 'published' && r.status !== 'rejected')
   const published = reviews.filter(r => r.status === 'published')
   const rejected = reviews.filter(r => r.status === 'rejected')
 
@@ -129,11 +129,11 @@ export default function ReviewModerator() {
                 {/* Status badge */}
                 <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                   review.status === 'published' ? 'bg-green-100 text-green-700' :
-                  review.status === 'pending_review' ? 'bg-amber-100 text-amber-700' :
-                  'bg-red-100 text-red-600'
+                  review.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                  'bg-amber-100 text-amber-700'
                 }`}>
                   {review.status === 'published' ? 'Pubblicata' :
-                   review.status === 'pending_review' ? 'In attesa' : 'Rifiutata'}
+                   review.status === 'rejected' ? 'Rifiutata' : 'In attesa'}
                 </span>
               </div>
 
@@ -167,7 +167,7 @@ export default function ReviewModerator() {
 
               {/* Actions */}
               <div className="flex gap-2">
-                {review.status === 'pending_review' && (
+                {review.status !== 'published' && review.status !== 'rejected' && (
                   <>
                     <motion.button
                       onClick={() => handleApprove(review.id)}

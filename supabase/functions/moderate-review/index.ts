@@ -73,7 +73,7 @@ Respond ONLY with the JSON object.`,
 
       await supabase
         .from('user_reviews')
-        .update({ status: 'flagged' })
+        .update({ status: 'pending_review', ai_reason: moderation.reason || null })
         .eq('id', review_id)
     }
 
