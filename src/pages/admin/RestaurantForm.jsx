@@ -710,21 +710,21 @@ export default function RestaurantForm() {
     setAiCorrecting(field)
     setAiSuggestion(null)
     try {
-      if (isSupabaseConfigured()) {
-        const { data, error } = await supabase.functions.invoke('correct-text', {
-          body: { text, context: field === 'our_review' ? 'restaurant review' : 'restaurant tip' },
-        })
-        if (error) throw error
-        if (data?.corrected && data.changed) {
-          setAiSuggestion({ field, original: text, corrected: data.corrected })
-        } else {
-          addToast('Il testo sembra gia corretto', 'success')
-        }
+      const resp = await fetch('/api/correct-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, context: field === 'our_review' ? 'restaurant review' : 'restaurant tip' }),
+      })
+      const data = await resp.json()
+      if (data?.error) {
+        addToast(data.error, 'error')
+      } else if (data?.corrected && data.changed) {
+        setAiSuggestion({ field, original: text, corrected: data.corrected })
       } else {
-        addToast('Supabase non configurato per le Edge Functions', 'error')
+        addToast('Il testo sembra già corretto', 'success')
       }
     } catch (err) {
-      addToast('Edge Function non disponibile. Configura correct-text su Supabase.', 'error')
+      addToast('Errore nella correzione del testo.', 'error')
     }
     setAiCorrecting(null)
   }
