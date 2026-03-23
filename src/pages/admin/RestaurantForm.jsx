@@ -647,22 +647,14 @@ export default function RestaurantForm() {
           lng = parseFloat(coordMatch[2])
         }
       } else {
-        // Short URL or unrecognized format — resolve via Edge Function
-        if (!isSupabaseConfigured()) {
-          addToast('Supabase non configurato', 'error')
-          setGoogleFilling(false)
-          return
-        }
-
-        const { data, error } = await supabase.functions.invoke('resolve-maps', {
-          body: { url: mapsUrl },
+        // Short URL — resolve via Vercel serverless function
+        const res = await fetch('/api/resolve-maps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: mapsUrl }),
         })
+        const data = await res.json()
 
-        if (error) {
-          addToast('Errore chiamata Edge Function: ' + (error.message || error), 'error')
-          setGoogleFilling(false)
-          return
-        }
         if (data?.error) {
           addToast(data.error, 'error')
           setGoogleFilling(false)
@@ -675,7 +667,6 @@ export default function RestaurantForm() {
         phone = data.phone || ''
         resolvedUrl = data.resolved_url || mapsUrl
 
-        // Use address from Google Places if available
         if (data.address) update('address', data.address)
         if (data.website) update('website', data.website)
       }
