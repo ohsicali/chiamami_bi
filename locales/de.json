@@ -1,0 +1,163 @@
+{
+  "nav": {
+    "list": "Liste",
+    "map": "Karte",
+    "profile": "Profil",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "deals": "Angebote"
+  },
+  "home": {
+    "nearby": "In der Nähe",
+    "saved": "Gespeichert",
+    "discounted": "Angebote",
+    "localeType": "Küchentyp",
+    "all": "Alle",
+    "restaurants": "Restaurants",
+    "restaurant": "Restaurant",
+    "noResults": "Keine Restaurants gefunden",
+    "changeFilters": "Versuchen Sie, Filter oder Suche zu ändern",
+    "search": "Restaurants suchen..."
+  },
+  "restaurant": {
+    "reviewByBi": "Bi's Bewertung",
+    "tipsByBi": "Bi's Tipps",
+    "info": "Info",
+    "openInMaps": "In Google Maps öffnen",
+    "watchReel": "Reel ansehen",
+    "nearby": "Restaurants in der Nähe",
+    "communityReviews": "Die Community sagt",
+    "reviews": "Bewertungen",
+    "review": "Bewertung",
+    "writeReview": "Waren Sie hier? Erzählen Sie!",
+    "editReview": "Ihre Bewertung bearbeiten",
+    "registerToReview": "Registrieren Sie sich, um eine Bewertung zu hinterlassen",
+    "noReviews": "Noch niemand hat seine Meinung geteilt! Waren Sie hier? Seien Sie der Erste",
+    "showAll": "Alle anzeigen",
+    "tellYourExperience": "Teilen Sie Ihre Erfahrung...",
+    "photo": "Foto",
+    "cancel": "Abbrechen",
+    "publish": "Veröffentlichen",
+    "reviewPublished": "Bewertung veröffentlicht!",
+    "reviewUpdated": "Bewertung aktualisiert!",
+    "submitError": "Fehler beim Senden. Versuchen Sie es erneut.",
+    "originalItalian": "Originalinhalt auf Italienisch"
+  },
+  "discount": {
+    "exclusive": "Exklusives ChiamamiBi-Angebot",
+    "used": "Rabatt verwendet",
+    "validUntil": "Gültig bis",
+    "registerToUnlock": "Registrieren zum Freischalten",
+    "registerFree": "Kostenlos registrieren",
+    "unlock": "Angebot freischalten",
+    "generating": "Wird generiert...",
+    "showQR": "QR dem Restaurant zeigen",
+    "goToProfile": "Zum Profil, um es erneut anzusehen",
+    "alreadyUsed": "Sie haben diesen Rabatt bereits am",
+    "unlockError": "Fehler beim Freischalten. Versuchen Sie es erneut.",
+    "yourDiscount": "Ihr Rabatt",
+    "code": "Code",
+    "showToWaiter": "Zeigen Sie diesen QR dem Kellner. Er wird mit der Handykamera gescannt, um den Rabatt zu validieren.",
+    "close": "Schließen",
+    "badge": "Angebot"
+  },
+  "deals": {
+    "title": "Exklusive Angebote",
+    "subtitle": "Sonderrabatte in Bi's Lieblingsrestaurants, nur für Sie",
+    "registerCTA": "Registrieren Sie sich, um Angebote freizuschalten",
+    "registerDesc": "Erstellen Sie ein kostenloses Konto, um exklusive Rabatte in den besten Restaurants Turins zu erhalten",
+    "noDeals": "Derzeit keine aktiven Angebote",
+    "comeBack": "Kommen Sie bald wieder, Bi bereitet neue Angebote vor!",
+    "explore": "Restaurants erkunden"
+  },
+  "verify": {
+    "title": "Rabattvalidierung",
+    "enterPin": "Geben Sie die Restaurant-PIN ein",
+    "validate": "Validieren",
+    "verifying": "Wird überprüft...",
+    "validated": "Rabatt validiert!",
+    "client": "Kunde",
+    "history": "Rabattverlauf",
+    "toUse": "Zu verwenden",
+    "used": "Verwendet",
+    "noActiveQR": "Kein aktiver QR",
+    "noUsedDiscounts": "Keine Rabatte verwendet",
+    "active": "Aktiv",
+    "backToVerify": "Zurück zur Verifizierung",
+    "viewHistory": "Verlauf anzeigen",
+    "verifyAnother": "Anderen Code verifizieren"
+  },
+  "profile": {
+    "myDiscounts": "Meine Angebote",
+    "noDiscounts": "Keine Angebote freigeschaltet",
+    "discoverDeals": "Entdecken Sie exklusive Angebote im speziellen Bereich",
+    "viewDeals": "Angebote ansehen",
+    "mySaved": "Meine Gespeicherten",
+    "viewOnMap": "Auf der Karte ansehen",
+    "noSaved": "Sie haben noch keine Orte gespeichert!",
+    "exploreSaved": "Erkunden Sie die Karte und speichern Sie Restaurants, die Sie interessieren",
+    "exploreMap": "Karte erkunden",
+    "active": "Aktiv",
+    "redeemed": "Verwendet",
+    "expired": "Abgelaufen"
+  },
+  "auth": {
+    "welcome": "Treten Sie der Community bei",
+    "loginSubtitle": "Melden Sie sich an, um Restaurants zu speichern, Angebote freizuschalten und Bewertungen zu hinterlassen",
+    "continueWithGoogle": "Weiter mit Google",
+    "orEmail": "oder per E-Mail",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "fullName": "Vollständiger Name",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "noAccount": "Noch kein Konto?",
+    "hasAccount": "Bereits ein Konto?",
+    "createAccount": "Konto erstellen"
+  },
+  "share": {
+    "title": "Teilen",
+    "shareRestaurant": "Restaurant teilen",
+    "shareText": "Entdecke {{name}} auf ChiamamiBi!",
+    "copied": "Link kopiert!"
+  },
+  "tiktok": {
+    "watchTiktok": "Auf TikTok ansehen"
+  },
+  "recommended": {
+    "recommendedFor": "Empfohlen für"
+  },
+  "newsletter": {
+    "title": "Bleiben Sie auf dem Laufenden",
+    "subtitle": "Abonnieren Sie unseren Newsletter für neue Restaurants und exklusive Angebote",
+    "placeholder": "Ihre E-Mail",
+    "subscribe": "Abonnieren",
+    "subscribing": "Wird abonniert...",
+    "success": "Abonniert! Überprüfen Sie Ihre E-Mail.",
+    "error": "Fehler. Versuchen Sie es erneut.",
+    "alreadySubscribed": "Diese E-Mail ist bereits abonniert."
+  },
+  "about": {
+    "title": "Wer ist Bi",
+    "story": "Die Geschichte",
+    "philosophy": "Die Philosophie",
+    "numbers": "Die Zahlen",
+    "contact": "Kontakt",
+    "suggest": "Restaurant vorschlagen"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "retry": "Erneut versuchen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "now": "Gerade eben",
+    "minutesAgo": "Min.",
+    "hoursAgo": "Std.",
+    "daysAgo": "Tage",
+    "weeksAgo": "Wochen",
+    "monthsAgo": "Monate"
+  }
+}

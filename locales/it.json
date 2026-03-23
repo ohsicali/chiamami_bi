@@ -1,0 +1,163 @@
+{
+  "nav": {
+    "list": "Lista",
+    "map": "Mappa",
+    "profile": "Profilo",
+    "login": "Accedi",
+    "logout": "Esci",
+    "deals": "Sconti"
+  },
+  "home": {
+    "nearby": "Nelle vicinanze",
+    "saved": "Salvati",
+    "discounted": "Scontati",
+    "localeType": "Tipo di locale",
+    "all": "Tutti",
+    "restaurants": "ristoranti",
+    "restaurant": "ristorante",
+    "noResults": "Nessun ristorante trovato",
+    "changeFilters": "Prova a cambiare i filtri o la ricerca",
+    "search": "Cerca ristoranti..."
+  },
+  "restaurant": {
+    "reviewByBi": "La recensione di Bi",
+    "tipsByBi": "I suggerimenti di Bi",
+    "info": "Info",
+    "openInMaps": "Apri in Google Maps",
+    "watchReel": "Guarda il reel",
+    "nearby": "Ristoranti vicini",
+    "communityReviews": "La community dice",
+    "reviews": "recensioni",
+    "review": "recensione",
+    "writeReview": "Ci sei stato? Racconta!",
+    "editReview": "Modifica la tua recensione",
+    "registerToReview": "Registrati per lasciare una recensione",
+    "noReviews": "Nessuno ha ancora detto la sua! Sei stato qui? Sii il primo a raccontarlo",
+    "showAll": "Mostra tutte",
+    "tellYourExperience": "Racconta la tua esperienza...",
+    "photo": "Foto",
+    "cancel": "Annulla",
+    "publish": "Pubblica",
+    "reviewPublished": "Recensione pubblicata!",
+    "reviewUpdated": "Recensione aggiornata!",
+    "submitError": "Errore nell'invio. Riprova.",
+    "originalItalian": "Contenuto originale in italiano"
+  },
+  "discount": {
+    "exclusive": "Sconto esclusivo ChiamamiBi",
+    "used": "Sconto utilizzato",
+    "validUntil": "Valido fino al",
+    "registerToUnlock": "Registrati per sbloccare",
+    "registerFree": "Registrati gratis",
+    "unlock": "Sblocca sconto",
+    "generating": "Generazione in corso...",
+    "showQR": "Mostra QR al ristorante",
+    "goToProfile": "Vai al profilo per rivederlo",
+    "alreadyUsed": "Hai già utilizzato questo sconto il",
+    "unlockError": "Errore nello sblocco. Riprova.",
+    "yourDiscount": "Il tuo sconto",
+    "code": "Codice",
+    "showToWaiter": "Mostra questo QR al cameriere. Verrà scansionato con la fotocamera del telefono per validare lo sconto.",
+    "close": "Chiudi",
+    "badge": "Sconto"
+  },
+  "deals": {
+    "title": "Sconti esclusivi",
+    "subtitle": "Sconti speciali nei ristoranti preferiti di Bi, solo per te",
+    "registerCTA": "Registrati per sbloccare gli sconti",
+    "registerDesc": "Crea un account gratuito per accedere a sconti esclusivi nei migliori ristoranti di Torino",
+    "noDeals": "Nessuno sconto attivo al momento",
+    "comeBack": "Torna presto, Bi sta preparando nuove offerte!",
+    "explore": "Esplora i ristoranti"
+  },
+  "verify": {
+    "title": "Validazione Sconto",
+    "enterPin": "Inserisci il PIN del ristorante",
+    "validate": "Valida",
+    "verifying": "Verifica in corso...",
+    "validated": "Sconto validato!",
+    "client": "Cliente",
+    "history": "Storico sconti",
+    "toUse": "Da usare",
+    "used": "Utilizzati",
+    "noActiveQR": "Nessun QR attivo",
+    "noUsedDiscounts": "Nessuno sconto utilizzato",
+    "active": "Attivo",
+    "backToVerify": "Torna alla verifica",
+    "viewHistory": "Vedi storico sconti",
+    "verifyAnother": "Verifica un altro codice"
+  },
+  "profile": {
+    "myDiscounts": "I miei sconti",
+    "noDiscounts": "Nessuno sconto sbloccato",
+    "discoverDeals": "Scopri gli sconti esclusivi nella sezione dedicata",
+    "viewDeals": "Vedi sconti",
+    "mySaved": "I miei salvati",
+    "viewOnMap": "Vedi sulla mappa",
+    "noSaved": "Non hai ancora salvato nessun posto!",
+    "exploreSaved": "Esplora la mappa e salva i ristoranti che ti incuriosiscono",
+    "exploreMap": "Esplora la mappa",
+    "active": "Attivo",
+    "redeemed": "Utilizzato",
+    "expired": "Scaduto"
+  },
+  "auth": {
+    "welcome": "Entra nella community",
+    "loginSubtitle": "Accedi per salvare ristoranti, sbloccare sconti e lasciare recensioni",
+    "continueWithGoogle": "Continua con Google",
+    "orEmail": "oppure con email",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Nome completo",
+    "login": "Accedi",
+    "register": "Registrati",
+    "noAccount": "Non hai un account?",
+    "hasAccount": "Hai già un account?",
+    "createAccount": "Crea account"
+  },
+  "share": {
+    "title": "Condividi",
+    "shareRestaurant": "Condividi ristorante",
+    "shareText": "Scopri {{name}} su ChiamamiBi!",
+    "copied": "Link copiato!"
+  },
+  "tiktok": {
+    "watchTiktok": "Guarda su TikTok"
+  },
+  "recommended": {
+    "recommendedFor": "Consigliato per"
+  },
+  "newsletter": {
+    "title": "Resta aggiornato",
+    "subtitle": "Iscriviti alla newsletter per ricevere i nuovi ristoranti e sconti esclusivi",
+    "placeholder": "La tua email",
+    "subscribe": "Iscriviti",
+    "subscribing": "Iscrizione...",
+    "success": "Iscritto! Controlla la tua email.",
+    "error": "Errore. Riprova.",
+    "alreadySubscribed": "Questa email è già iscritta."
+  },
+  "about": {
+    "title": "Chi è Bi",
+    "story": "La storia",
+    "philosophy": "La filosofia",
+    "numbers": "I numeri",
+    "contact": "Contatti",
+    "suggest": "Suggerisci un ristorante"
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "retry": "Riprova",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "back": "Indietro",
+    "now": "Adesso",
+    "minutesAgo": "min fa",
+    "hoursAgo": "ore fa",
+    "daysAgo": "giorni fa",
+    "weeksAgo": "settimane fa",
+    "monthsAgo": "mesi fa"
+  }
+}
