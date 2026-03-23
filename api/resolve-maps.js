@@ -181,6 +181,15 @@ export default async function handler(req, res) {
       address: place?.formatted_address || '',
       phone: place?.formatted_phone_number || '',
       website: place?.website || '',
+      _debug: {
+        originalUrl: url,
+        resolvedUrl,
+        pageTitle,
+        searchQuery,
+        cid,
+        placeId,
+        placeName: place?.name || null,
+      },
     })
   } catch (err) {
     return res.status(200).json({ error: `Errore: ${err.message}` })
