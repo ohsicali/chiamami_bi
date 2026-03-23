@@ -194,6 +194,7 @@ export function compressImage(file, maxWidth = 1200, quality = 0.8) {
 export function useAllReviews() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
 
   const fetchAll = useCallback(async () => {
     if (!isSupabaseConfigured()) {
@@ -201,15 +202,21 @@ export function useAllReviews() {
       return
     }
 
+    setFetchError(null)
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_reviews')
         .select('*, user:profiles(id, full_name, avatar_url), restaurant:restaurants(id, name, slug), photos:user_review_photos(id, photo_url, sort_order)')
         .order('created_at', { ascending: false })
 
+      if (error) {
+        console.error('Supabase reviews query error:', error)
+        setFetchError(error.message || 'Errore caricamento recensioni')
+      }
       setReviews(data || [])
     } catch (err) {
       console.error('Failed to fetch reviews:', err)
+      setFetchError(err.message)
     } finally {
       setLoading(false)
     }
@@ -243,5 +250,5 @@ export function useAllReviews() {
     return !error
   }, [])
 
-  return { reviews, loading, refetch: fetchAll, updateStatus, deleteReview }
+  return { reviews, loading, fetchError, refetch: fetchAll, updateStatus, deleteReview }
 }
