@@ -295,9 +295,11 @@ CREATE TABLE IF NOT EXISTS user_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id uuid NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  rating int2 NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  rating int2 CHECK (rating >= 1 AND rating <= 5),
   comment text,
-  is_published boolean NOT NULL DEFAULT true,
+  status text NOT NULL DEFAULT 'published' CHECK (status IN ('published', 'pending_review', 'rejected')),
+  ai_sentiment text,
+  ai_reason text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(restaurant_id, user_id)
@@ -312,6 +314,7 @@ CREATE TABLE IF NOT EXISTS user_review_photos (
 
 CREATE INDEX IF NOT EXISTS idx_reviews_restaurant ON user_reviews(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user ON user_reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_status ON user_reviews(status);
 CREATE INDEX IF NOT EXISTS idx_review_photos_review ON user_review_photos(review_id);
 
 ALTER TABLE user_reviews ENABLE ROW LEVEL SECURITY;
@@ -320,7 +323,7 @@ ALTER TABLE user_review_photos ENABLE ROW LEVEL SECURITY;
 -- Reviews policies
 DROP POLICY IF EXISTS "Public read published reviews" ON user_reviews;
 CREATE POLICY "Public read published reviews" ON user_reviews
-  FOR SELECT USING (is_published = true);
+  FOR SELECT USING (status = 'published');
 
 DROP POLICY IF EXISTS "Users manage own reviews" ON user_reviews;
 CREATE POLICY "Users manage own reviews" ON user_reviews
@@ -334,7 +337,7 @@ CREATE POLICY "Admin full access reviews" ON user_reviews
 DROP POLICY IF EXISTS "Public read review photos" ON user_review_photos;
 CREATE POLICY "Public read review photos" ON user_review_photos
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM user_reviews WHERE id = review_id AND is_published = true)
+    EXISTS (SELECT 1 FROM user_reviews WHERE id = review_id AND status = 'published')
   );
 
 DROP POLICY IF EXISTS "Users manage own review photos" ON user_review_photos;
@@ -461,7 +464,22 @@ CREATE POLICY "Users manage own push" ON push_subscriptions
   FOR ALL USING (auth.uid() = user_id);
 
 -- ============================================================
--- 9. RENDI IL TUO UTENTE ADMIN
+-- 11. FUNZIONE RPC: incremento sconti riscattati
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.increment_discount_redeemed(discount_uuid uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE discounts
+  SET total_redeemed = total_redeemed + 1
+  WHERE id = discount_uuid;
+END;
+$$;
+
+-- ============================================================
+-- 12. RENDI IL TUO UTENTE ADMIN
 -- Sostituisci con la tua email se diversa
 -- ============================================================
 UPDATE profiles SET is_admin = true
