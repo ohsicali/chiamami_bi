@@ -28,21 +28,21 @@ export default async function handler(req, res) {
       }
     }
 
-    // Step 2: Extract name and coords from the resolved URL
-    let name = ''
+    // Step 2: Extract search query and coords from the resolved URL
+    let searchQuery = ''
     let lat = null
     let lng = null
 
-    // Try /place/Name/@lat,lng pattern
+    // Try /place/Name/@lat,lng pattern (full URLs)
     const placeMatch = resolvedUrl.match(/\/place\/([^/@?]+)/)
-    if (placeMatch) name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+    if (placeMatch) searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
 
     // Try ?q= parameter (common in resolved short URLs)
-    if (!name) {
+    if (!searchQuery) {
       try {
         const urlObj = new URL(resolvedUrl)
         const q = urlObj.searchParams.get('q')
-        if (q) name = q.replace(/\+/g, ' ')
+        if (q) searchQuery = q.replace(/\+/g, ' ')
       } catch (_) {}
     }
 
@@ -53,34 +53,36 @@ export default async function handler(req, res) {
       lng = parseFloat(coordMatch[2])
     }
 
-    if (!name && !lat) {
+    if (!searchQuery && !lat) {
       return res.status(200).json({
         error: `Impossibile estrarre dati dal link. URL risolto: ${resolvedUrl}`,
       })
     }
 
     // Step 3: Find place via Google Places API
+    const input = searchQuery || `${lat},${lng}`
     const locationBias = lat && lng ? `&locationbias=circle:500@${lat},${lng}` : ''
     const findRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name || `${lat},${lng}`)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
+      `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(input)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
     )
     const findData = await findRes.json()
 
     if (findData.status !== 'OK' || !findData.candidates?.[0]?.place_id) {
-      // Fallback: return what we extracted from the URL
+      // Fallback: try to split the q= string into name/address
+      const parts = searchQuery.split(',').map(p => p.trim())
       return res.status(200).json({
         resolved_url: resolvedUrl,
-        name,
+        name: parts[0] || '',
         latitude: lat,
         longitude: lng,
-        address: '',
+        address: parts.length > 1 ? parts.slice(1).join(', ') : '',
         phone: '',
         website: '',
-        warning: findData.status !== 'OK' ? `Places API: ${findData.status}` : '',
+        warning: findData.status !== 'OK' ? `Places API: ${findData.status}` : 'Nessun risultato trovato',
       })
     }
 
-    // Step 4: Get full place details
+    // Step 4: Get full place details — THIS is what properly splits data into fields
     const placeId = findData.candidates[0].place_id
     const detailsRes = await fetch(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
@@ -90,7 +92,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       resolved_url: place?.url || resolvedUrl,
-      name: place?.name || name,
+      name: place?.name || '',
       latitude: place?.geometry?.location?.lat ?? lat,
       longitude: place?.geometry?.location?.lng ?? lng,
       address: place?.formatted_address || '',
