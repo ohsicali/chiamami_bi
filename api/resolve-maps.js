@@ -169,9 +169,13 @@ export default async function handler(req, res) {
     const detailsData = await detailsRes.json()
     const place = detailsData.result
 
+    // Final name: prefer place.name, but reject if it looks like a postal code
+    let finalName = place?.name || searchQuery || ''
+    if (/^\d+$/.test(finalName)) finalName = ''
+
     return res.status(200).json({
       resolved_url: place?.url || resolvedUrl,
-      name: place?.name || searchQuery || '',
+      name: finalName,
       latitude: place?.geometry?.location?.lat ?? lat,
       longitude: place?.geometry?.location?.lng ?? lng,
       address: place?.formatted_address || '',
