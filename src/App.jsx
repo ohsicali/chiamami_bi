@@ -1,8 +1,32 @@
 import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
+
+class ErrorBoundary extends Component {
+  state = { hasError: false, error: null }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
+          <p className="text-lg font-semibold text-primary mb-2">Qualcosa è andato storto</p>
+          <p className="text-sm text-secondary mb-4">{this.state.error?.message}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium"
+          >
+            Ricarica pagina
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // Lazy load pages
 const HomePage = lazy(() => import('./pages/public/HomePage'))
@@ -31,7 +55,7 @@ const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
 
 function PageLoader() {
   return (
-    <div className="h-full flex items-center justify-center bg-bg">
+    <div className="min-h-screen flex items-center justify-center bg-bg">
       <LoadingSpinner />
     </div>
   )
@@ -51,6 +75,7 @@ export default function App() {
 
   return (
     <>
+    <ErrorBoundary>
     <Suspense fallback={<PageLoader />}>
       {/* HomePage stays mounted when viewing restaurant detail */}
       {isHome && <HomePage />}
@@ -84,6 +109,7 @@ export default function App() {
         </Routes>
       )}
     </Suspense>
+    </ErrorBoundary>
 
     {/* Cookie Banner GDPR */}
     <CookieConsent
