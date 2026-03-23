@@ -670,6 +670,7 @@ export default function RestaurantForm() {
         if (data.address) update('address', data.address)
         if (data.website) update('website', data.website)
         if (data.warning) addToast(data.warning, 'error')
+        if (data._debug) console.log('Google Maps API debug:', JSON.stringify(data._debug, null, 2))
       }
 
       // Reject names that are just numbers (postal codes) or common city names
