@@ -6,7 +6,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { useToast } from '../../components/UI/Toast'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
-import { geocodeAddress } from '../../lib/utils/geocoding'
+import { geocodeAddress, reverseGeocode } from '../../lib/utils/geocoding'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
@@ -617,71 +617,95 @@ export default function RestaurantForm() {
     setGeocoding(false)
   }
 
-  // Google Maps autofill — from URL or name search
+  // Google Maps autofill — resolve URL via Edge Function + Mapbox reverse geocode
   const handleGoogleFill = async () => {
-    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_KEY
-    if (!apiKey) {
-      addToast('Chiave Google Places non configurata (VITE_GOOGLE_PLACES_KEY)', 'error')
-      return
-    }
-
     const mapsUrl = form.google_maps_url.trim()
-    let searchQuery = ''
 
-    // Try to extract place name from Google Maps URL
-    if (mapsUrl) {
-      // Extract from /place/Name+Of+Place/ pattern
-      const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
-      if (placeMatch) {
-        searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
-      }
-      // Extract coords from @lat,lng pattern
-      const coordMatch = mapsUrl.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/)
-      if (coordMatch && !searchQuery) {
-        // Use coords to reverse-search
-        searchQuery = `${coordMatch[1]},${coordMatch[2]}`
-      }
-      // For short URLs (goo.gl) or data= URLs, use whatever text we can find
-      if (!searchQuery) {
-        const qMatch = mapsUrl.match(/[?&]q=([^&]+)/)
-        if (qMatch) searchQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' '))
-      }
-    }
-
-    // Fallback to name-based search
-    if (!searchQuery && form.name.trim()) {
-      searchQuery = `${form.name} ${form.city || 'Torino'}`
-    }
-
-    if (!searchQuery) {
-      addToast('Incolla un link Google Maps o inserisci il nome del ristorante', 'error')
+    if (!mapsUrl) {
+      addToast('Incolla un link Google Maps', 'error')
       return
     }
 
     setGoogleFilling(true)
     try {
-      const query = encodeURIComponent(searchQuery)
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${query}&inputtype=textquery&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}`
-      )
-      const data = await res.json()
-      const place = data.candidates?.[0]
-      if (place) {
-        if (place.name && !form.name.trim()) update('name', place.name)
-        if (place.formatted_address) update('address', place.formatted_address)
-        if (place.geometry?.location) {
-          update('latitude', String(place.geometry.location.lat))
-          update('longitude', String(place.geometry.location.lng))
+      // Step 1: Try to parse the URL directly (full URLs like google.com/maps/place/...)
+      let name = ''
+      let lat = null
+      let lng = null
+      let phone = ''
+      let resolvedUrl = mapsUrl
+
+      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(mapsUrl)
+      const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
+      const coordMatch = mapsUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
+
+      if (!isShortUrl && placeMatch) {
+        // Full URL — parse directly
+        name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+        if (coordMatch) {
+          lat = parseFloat(coordMatch[1])
+          lng = parseFloat(coordMatch[2])
         }
-        if (place.formatted_phone_number) update('phone', place.formatted_phone_number)
-        if (place.website) update('website', place.website)
-        if (place.url) update('google_maps_url', place.url)
-        addToast('Dati compilati da Google Maps!', 'success')
       } else {
-        addToast('Nessun risultato trovato su Google Maps', 'error')
+        // Short URL or unrecognized format — resolve via Edge Function
+        if (!isSupabaseConfigured()) {
+          addToast('Supabase non configurato', 'error')
+          setGoogleFilling(false)
+          return
+        }
+
+        const { data, error } = await supabase.functions.invoke('resolve-maps', {
+          body: { url: mapsUrl },
+        })
+
+        if (error || data?.error) {
+          addToast(data?.error || 'Errore nella risoluzione del link', 'error')
+          setGoogleFilling(false)
+          return
+        }
+
+        name = data.name || ''
+        lat = data.latitude
+        lng = data.longitude
+        phone = data.phone || ''
+        resolvedUrl = data.resolved_url || mapsUrl
+
+        // Try to parse the resolved URL for additional data
+        if (!name) {
+          const pm = resolvedUrl.match(/\/place\/([^/@]+)/)
+          if (pm) name = decodeURIComponent(pm[1].replace(/\+/g, ' '))
+        }
+        if (!lat || !lng) {
+          const cm = resolvedUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
+          if (cm) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
+        }
       }
+
+      if (!name && !lat) {
+        addToast('Impossibile estrarre dati dal link. Prova con un link completo di Google Maps.', 'error')
+        setGoogleFilling(false)
+        return
+      }
+
+      // Always fill name
+      if (name) update('name', name)
+      if (resolvedUrl !== mapsUrl) update('google_maps_url', resolvedUrl)
+
+      // Fill coordinates
+      if (lat && lng) {
+        update('latitude', String(lat))
+        update('longitude', String(lng))
+
+        // Step 2: Reverse geocode with Mapbox to get the address
+        const address = await reverseGeocode(lat, lng)
+        if (address) update('address', address)
+      }
+
+      if (phone) update('phone', phone)
+
+      addToast('Dati compilati da Google Maps!', 'success')
     } catch (err) {
-      addToast('Errore nella ricerca Google Maps', 'error')
+      addToast('Errore nella compilazione automatica', 'error')
     }
     setGoogleFilling(false)
   }
@@ -1025,7 +1049,7 @@ export default function RestaurantForm() {
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 onClick={handleGoogleFill}
-                disabled={googleFilling || (!form.google_maps_url.trim() && !form.name.trim())}
+                disabled={googleFilling || !form.google_maps_url.trim()}
                 className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border-2 border-blue-400 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
               >
                 {googleFilling ? (
@@ -1040,7 +1064,7 @@ export default function RestaurantForm() {
                 )}
               </motion.button>
               <p className="text-xs text-secondary self-center">
-                Incolla il link Google Maps e clicca per compilare nome, indirizzo, telefono e coordinate
+                Incolla il link Google Maps (anche link brevi maps.app.goo.gl) e clicca per compilare automaticamente tutti i campi
               </p>
             </div>
           </Section>
