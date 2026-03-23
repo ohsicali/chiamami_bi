@@ -86,11 +86,17 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick }) 
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* "Nelle vicinanze" button */}
+        {/* "Nelle vicinanze" toggle button */}
         {onNearbyClick && (
           <button
             type="button"
-            onClick={onNearbyClick}
+            onClick={() => {
+              if (filters.sortBy === 'distance') {
+                onFilterChange?.({ ...filters, sortBy: null })
+              } else {
+                onNearbyClick()
+              }
+            }}
             className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
             style={{
               backgroundColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(255,255,255,0.85)',
