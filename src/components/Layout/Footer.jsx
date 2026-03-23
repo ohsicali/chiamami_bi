@@ -50,6 +50,9 @@ export default function Footer() {
           <Link to="/partner" className="text-sm text-secondary hover:text-primary transition-colors">
             Per i ristoratori
           </Link>
+          <Link to="/verify" className="text-sm text-secondary hover:text-primary transition-colors">
+            Area ristoratori
+          </Link>
           <Link to="/privacy" className="text-sm text-secondary hover:text-primary transition-colors">
             Privacy Policy
           </Link>
