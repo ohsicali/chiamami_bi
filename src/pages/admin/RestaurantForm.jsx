@@ -670,15 +670,9 @@ export default function RestaurantForm() {
         phone = data.phone || ''
         resolvedUrl = data.resolved_url || mapsUrl
 
-        // Try to parse the resolved URL for additional data
-        if (!name) {
-          const pm = resolvedUrl.match(/\/place\/([^/@]+)/)
-          if (pm) name = decodeURIComponent(pm[1].replace(/\+/g, ' '))
-        }
-        if (!lat || !lng) {
-          const cm = resolvedUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
-          if (cm) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
-        }
+        // Use address from Google Places if available
+        if (data.address) update('address', data.address)
+        if (data.website) update('website', data.website)
       }
 
       if (!name && !lat) {
@@ -687,18 +681,17 @@ export default function RestaurantForm() {
         return
       }
 
-      // Always fill name
       if (name) update('name', name)
       if (resolvedUrl !== mapsUrl) update('google_maps_url', resolvedUrl)
 
-      // Fill coordinates
       if (lat && lng) {
         update('latitude', String(lat))
         update('longitude', String(lng))
-
-        // Step 2: Reverse geocode with Mapbox to get the address
-        const address = await reverseGeocode(lat, lng)
-        if (address) update('address', address)
+        // Fallback to Mapbox reverse geocode if Google didn't return an address
+        if (!form.address) {
+          const address = await reverseGeocode(lat, lng)
+          if (address) update('address', address)
+        }
       }
 
       if (phone) update('phone', phone)
