@@ -251,8 +251,9 @@ CREATE POLICY "Admin full access discounts" ON discounts
 
 -- Redemptions policies
 DROP POLICY IF EXISTS "Users read own redemptions" ON discount_redemptions;
-CREATE POLICY "Users read own redemptions" ON discount_redemptions
-  FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Anyone can read redemptions by qr_code" ON discount_redemptions;
+CREATE POLICY "Anyone can read redemptions by qr_code" ON discount_redemptions
+  FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Users create redemptions" ON discount_redemptions;
 CREATE POLICY "Users create redemptions" ON discount_redemptions
@@ -269,6 +270,14 @@ CREATE POLICY "Admin update redemptions" ON discount_redemptions
 DROP POLICY IF EXISTS "Anyone can update redemption with valid data" ON discount_redemptions;
 CREATE POLICY "Anyone can update redemption with valid data" ON discount_redemptions
   FOR UPDATE USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users delete own redemptions" ON discount_redemptions;
+CREATE POLICY "Users delete own redemptions" ON discount_redemptions
+  FOR DELETE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admin delete redemptions" ON discount_redemptions;
+CREATE POLICY "Admin delete redemptions" ON discount_redemptions
+  FOR DELETE USING (public.is_admin());
 
 -- Partners policies
 DROP POLICY IF EXISTS "Public read active partners" ON restaurant_partners;
