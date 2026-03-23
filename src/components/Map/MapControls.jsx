@@ -67,7 +67,7 @@ export default function MapControls({
       style={{
         position: 'absolute',
         right: 16,
-        bottom: 120,
+        bottom: 260,
         display: 'flex',
         flexDirection: 'column',
         gap: 10,

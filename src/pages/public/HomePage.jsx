@@ -39,6 +39,7 @@ export default function HomePage() {
   const [selectedId, setSelectedId] = useState(null)
   const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
   const mapRef = useRef(null)
+  const sheetRef = useRef(null)
 
   const handleLocateMe = useCallback(() => {
     locate()
@@ -60,21 +61,28 @@ export default function HomePage() {
   )
 
   const handleToggleView = useCallback(() => {
-    navigate('/list')
-  }, [navigate])
+    // Toggle between peek and full via the bottom sheet
+    const current = sheetRef.current?.getSnapIndex() ?? SNAP_PEEK
+    if (current === SNAP_FULL) {
+      sheetRef.current?.snapTo(SNAP_PEEK)
+    } else {
+      sheetRef.current?.snapTo(SNAP_FULL)
+    }
+  }, [])
 
   const handleSnapChange = useCallback((snap) => {
     setSheetSnap(snap)
   }, [])
 
   const handleSearchFocus = useCallback(() => {
-    // When search bar is focused, expand the sheet
+    // When search bar is focused, expand sheet to half
+    sheetRef.current?.snapTo(SNAP_HALF)
   }, [])
 
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       {/* Navbar - fixed top */}
-      <Navbar view="map" onToggleView={handleToggleView} />
+      <Navbar view={sheetSnap === SNAP_FULL ? 'list' : 'map'} onToggleView={handleToggleView} />
 
       {/* Map - full screen background */}
       <MapView
@@ -94,8 +102,8 @@ export default function HomePage() {
         onZoomOut={() => mapRef.current?.zoomOut()}
       />
 
-      {/* Bottom Sheet with restaurant list */}
-      <BottomSheet onSnapChange={handleSnapChange}>
+      {/* Bottom Sheet — Apple Maps style */}
+      <BottomSheet ref={sheetRef} onSnapChange={handleSnapChange}>
         {/* Search Bar */}
         <div className="mb-3">
           <SearchBar
@@ -105,7 +113,7 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Filter Chips */}
+        {/* Filter Chips (categories) */}
         <div className="mb-4">
           <FilterChips filters={filters} onFilterChange={setFilters} />
         </div>
@@ -142,15 +150,15 @@ export default function HomePage() {
         ) : (
           <div className="flex flex-col gap-3 pb-8">
             {restaurants.map((restaurant, index) => (
-                <div key={restaurant.id}>
-                  <RestaurantCard
-                    restaurant={restaurant}
-                    index={index}
-                    userPosition={position}
-                    onClick={handleCardClick}
-                  />
-                </div>
-              ))}
+              <div key={restaurant.id}>
+                <RestaurantCard
+                  restaurant={restaurant}
+                  index={index}
+                  userPosition={position}
+                  onClick={handleCardClick}
+                />
+              </div>
+            ))}
           </div>
         )}
       </BottomSheet>

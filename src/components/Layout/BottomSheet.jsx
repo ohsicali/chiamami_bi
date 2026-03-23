@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { motion, useMotionValue, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 
@@ -9,9 +9,9 @@ export const SNAP_FULL = 2
 function getSnapPoints() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   return [
-    h - 80,    // PEEK: sheet peeks 80px from bottom
-    h * 0.5,   // HALF: 50vh from top
-    h * 0.1,   // FULL: 90vh visible (10% from top)
+    h - 240,   // PEEK: search bar + category circles visible (~240px)
+    h * 0.45,  // HALF: ~55% visible
+    h * 0.08,  // FULL: nearly full screen (8% from top, leaves space for navbar)
   ]
 }
 
@@ -28,7 +28,7 @@ function closestSnap(y, points) {
   return idx
 }
 
-export default function BottomSheet({ children, onSnapChange }) {
+const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, ref) {
   const [snapIndex, setSnapIndex] = useState(SNAP_PEEK)
   const [snapPoints, setSnapPoints] = useState(getSnapPoints)
   const y = useMotionValue(snapPoints[SNAP_PEEK])
@@ -36,12 +36,17 @@ export default function BottomSheet({ children, onSnapChange }) {
   const sheetRef = useRef(null)
   const isDragging = useRef(false)
 
+  // Expose snapTo via ref
+  useImperativeHandle(ref, () => ({
+    snapTo: (index) => snapTo(index),
+    getSnapIndex: () => snapIndex,
+  }))
+
   // Recalculate snap points on resize
   useEffect(() => {
     function handleResize() {
       const pts = getSnapPoints()
       setSnapPoints(pts)
-      // Re-snap to current position
       animate(y, pts[snapIndex], {
         type: 'spring',
         stiffness: 400,
@@ -67,19 +72,17 @@ export default function BottomSheet({ children, onSnapChange }) {
   )
 
   const bind = useDrag(
-    ({ movement: [, my], velocity: [, vy], direction: [, dy], active, cancel, event }) => {
+    ({ movement: [, my], velocity: [, vy], direction: [, dy], active, cancel }) => {
       if (active) {
         isDragging.current = true
         // If sheet is at FULL and content is scrolled, don't drag
         if (snapIndex === SNAP_FULL && contentRef.current) {
           const scrollTop = contentRef.current.scrollTop
           if (scrollTop > 0 && dy < 0) {
-            // User is scrolling up inside content, don't interfere
             cancel()
             return
           }
           if (scrollTop > 0 && dy > 0) {
-            // Let content scroll down first before dragging sheet
             cancel()
             return
           }
@@ -93,22 +96,16 @@ export default function BottomSheet({ children, onSnapChange }) {
         y.set(newY)
       } else {
         isDragging.current = false
-        const currentY = y.get()
         const VELOCITY_THRESHOLD = 0.5
 
-        // Velocity-aware snapping
         if (Math.abs(vy) > VELOCITY_THRESHOLD) {
-          // Fast swipe: go to next snap in swipe direction
           if (dy > 0) {
-            // Swiping down
             snapTo(Math.max(SNAP_PEEK, snapIndex - 1))
           } else {
-            // Swiping up
             snapTo(Math.min(SNAP_FULL, snapIndex + 1))
           }
         } else {
-          // Slow drag: snap to closest point
-          const nearest = closestSnap(currentY, snapPoints)
+          const nearest = closestSnap(y.get(), snapPoints)
           snapTo(nearest)
         }
       }
@@ -171,7 +168,6 @@ export default function BottomSheet({ children, onSnapChange }) {
           height: 'calc(100% - 40px)',
         }}
         onTouchStart={(e) => {
-          // Prevent drag gesture from interfering with scroll at FULL
           if (canScroll && contentRef.current && contentRef.current.scrollTop > 0) {
             e.stopPropagation()
           }
@@ -181,4 +177,6 @@ export default function BottomSheet({ children, onSnapChange }) {
       </div>
     </motion.div>
   )
-}
+})
+
+export default BottomSheet
