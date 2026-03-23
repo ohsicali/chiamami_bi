@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
+import AdminLayout from '../../components/Layout/AdminLayout'
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                              */
@@ -64,7 +64,6 @@ const COLOR_PRESETS = [
 /* ------------------------------------------------------------------ */
 export default function CategoryManager() {
   const { user, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
 
   // Local state mirroring the hardcoded categories
   const [categories, setCategories] = useState(
@@ -75,11 +74,6 @@ export default function CategoryManager() {
   const [showAdd, setShowAdd] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', emoji: '', color: COLOR_PRESETS[0] })
   const [deleteId, setDeleteId] = useState(null)
-
-  // Auth redirect
-  useEffect(() => {
-    if (!authLoading && !user) navigate('/admin/login', { replace: true })
-  }, [user, authLoading, navigate])
 
   const startEdit = (cat) => {
     setEditingId(cat.id)
@@ -128,19 +122,11 @@ export default function CategoryManager() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-bg overflow-auto">
-      {/* Top bar */}
-      <div className="sticky top-0 z-30 glass border-b border-gray-100">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/admin')}
-              className="p-2 rounded-xl text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-primary">Categorie</h1>
-          </div>
+    <AdminLayout title="Categorie">
+      <div className="max-w-2xl mx-auto">
+        {/* Header with Add button */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-lg font-semibold text-primary">Categorie</h1>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => { setShowAdd(true); setEditingId(null) }}
@@ -150,13 +136,11 @@ export default function CategoryManager() {
             Aggiungi
           </motion.button>
         </div>
-      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="max-w-2xl mx-auto px-4 py-8"
       >
         {/* Info note */}
         <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-6">
@@ -407,5 +391,6 @@ export default function CategoryManager() {
         )}
       </AnimatePresence>
     </div>
+    </AdminLayout>
   )
 }

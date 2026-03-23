@@ -1,23 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import AdminLayout from '../../components/Layout/AdminLayout'
 
 export default function NewsletterManager() {
-  const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
   const [subscribers, setSubscribers] = useState([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!authLoading && !user) navigate('/admin/login', { replace: true })
-  }, [user, authLoading, navigate])
-
-  useEffect(() => {
-    document.body.classList.add('admin-scroll')
-    return () => document.body.classList.remove('admin-scroll')
-  }, [])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -65,7 +55,8 @@ export default function NewsletterManager() {
   if (authLoading || loading) return null
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4">
+    <AdminLayout title="Newsletter">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
@@ -112,5 +103,6 @@ export default function NewsletterManager() {
         )}
       </div>
     </div>
+    </AdminLayout>
   )
 }

@@ -8,6 +8,7 @@ import { useToast } from '../../components/UI/Toast'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import { geocodeAddress } from '../../lib/utils/geocoding'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import AdminLayout from '../../components/Layout/AdminLayout'
 
 /* ------------------------------------------------------------------ */
 /*  Convert image file to WebP (smaller, faster loading)               */
@@ -434,16 +435,6 @@ export default function RestaurantForm() {
   const [geocoding, setGeocoding] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-  // Auth redirect
-  useEffect(() => {
-    if (!authLoading && !user) navigate('/admin/login', { replace: true })
-  }, [user, authLoading, navigate])
-
-  // Enable scrolling on admin pages
-  useEffect(() => {
-    document.body.classList.add('admin-scroll')
-    return () => document.body.classList.remove('admin-scroll')
-  }, [])
 
   // Load restaurant data when editing
   useEffect(() => {
@@ -674,21 +665,13 @@ export default function RestaurantForm() {
     ) : null
 
   return (
-    <div className="min-h-screen bg-bg" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
-      {/* Top bar */}
-      <div className="sticky top-0 z-30 glass border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/admin')}
-              className="p-2 rounded-xl text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-primary">
-              {isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}
-            </h1>
-          </div>
+    <AdminLayout title={isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}>
+      <div className="max-w-3xl mx-auto">
+        {/* Action bar */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-lg font-semibold text-primary">
+            {isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}
+          </h1>
           <div className="flex items-center gap-2">
             {isEditing && (
               <button
@@ -708,14 +691,12 @@ export default function RestaurantForm() {
             </button>
           </div>
         </div>
-      </div>
 
       {/* Form */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="max-w-3xl mx-auto px-4 py-8"
       >
         <form onSubmit={handleSave} className="space-y-8">
           {/* --- Basic info --- */}
@@ -997,6 +978,7 @@ export default function RestaurantForm() {
         )}
       </AnimatePresence>
     </div>
+    </AdminLayout>
   )
 }
 
