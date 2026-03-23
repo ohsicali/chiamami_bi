@@ -35,12 +35,8 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
   const contentRef = useRef(null)
   const sheetRef = useRef(null)
   const isDragging = useRef(false)
-
-  // Expose snapTo via ref
-  useImperativeHandle(ref, () => ({
-    snapTo: (index) => snapTo(index),
-    getSnapIndex: () => snapIndex,
-  }))
+  const snapIndexRef = useRef(snapIndex)
+  snapIndexRef.current = snapIndex
 
   // Recalculate snap points on resize
   useEffect(() => {
@@ -70,6 +66,12 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
     },
     [snapPoints, y, onSnapChange]
   )
+
+  // Expose snapTo via ref — must be after snapTo is defined
+  useImperativeHandle(ref, () => ({
+    snapTo: (index) => snapTo(index),
+    getSnapIndex: () => snapIndexRef.current,
+  }), [snapTo])
 
   const bind = useDrag(
     ({ movement: [, my], velocity: [, vy], direction: [, dy], active, cancel }) => {
@@ -139,6 +141,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         y,
         touchAction: 'none',
         position: 'fixed',
+        top: 0,
         left: 0,
         right: 0,
         height: '100dvh',
