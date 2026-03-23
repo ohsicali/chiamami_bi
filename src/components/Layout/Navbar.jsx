@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { LogoFull } from "../UI/Logo";
 import { useAuth } from "../../lib/hooks/useAuth";
-import DarkModeToggle from "./DarkModeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const ListIcon = () => (
@@ -50,20 +49,17 @@ export default function Navbar({ view = "map", onToggleView }) {
           <LogoFull height={28} />
         </Link>
 
-        {/* Right side buttons */}
+        {/* Right side buttons — only 3 icons: language, view toggle, profile */}
         <div className="flex items-center gap-2">
           {/* Language switcher */}
           <LanguageSwitcher />
-
-          {/* Dark mode toggle */}
-          <DarkModeToggle />
 
           {/* View toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             whileHover={{ scale: 1.05 }}
             onClick={onToggleView}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 dark:bg-white/10 backdrop-blur-sm text-gray-700 dark:text-gray-200 hover:text-[#FF5757] transition-colors shadow-sm"
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 backdrop-blur-sm text-gray-700 hover:text-[#FF5757] transition-colors shadow-sm"
             aria-label={view === "map" ? "Switch to list view" : "Switch to map view"}
           >
             {view === "map" ? <ListIcon /> : <MapIcon />}
@@ -92,7 +88,7 @@ export default function Navbar({ view = "map", onToggleView }) {
                   {initials || "?"}
                 </span>
               ) : (
-                <span className="text-gray-700 dark:text-gray-200">
+                <span className="text-gray-700">
                   <UserIcon />
                 </span>
               )}

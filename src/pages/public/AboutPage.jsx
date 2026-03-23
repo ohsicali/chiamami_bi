@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import Footer from '../../components/Layout/Footer'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
@@ -66,7 +67,8 @@ export default function AboutPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="flex flex-col min-h-dvh bg-bg">
+      <div className="flex-1">
       {/* Back button - fixed */}
       <motion.button
         initial={{ opacity: 0, x: -20 }}
@@ -353,6 +355,9 @@ export default function AboutPage() {
           </motion.div>
         </motion.div>
       </section>
+      </div>
+
+      <Footer />
     </div>
   )
 }

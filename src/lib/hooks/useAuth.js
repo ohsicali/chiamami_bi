@@ -39,6 +39,14 @@ export function useAuth() {
         .select()
         .single()
       setProfile(created || newProfile)
+      // Auto-subscribe to newsletter on first registration
+      if (authUser.email) {
+        supabase
+          .from('newsletter_subscribers')
+          .upsert({ email: authUser.email, source: 'registration' }, { onConflict: 'email' })
+          .then(() => {})
+          .catch(() => {})
+      }
       return created || newProfile
     }
 

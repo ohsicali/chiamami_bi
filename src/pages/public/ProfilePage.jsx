@@ -157,6 +157,59 @@ export default function ProfilePage() {
     navigate('/', { replace: true })
   }
 
+  const handleDownloadData = async () => {
+    if (!user) return
+    const [
+      { data: profileData },
+      { data: savedData },
+      { data: redemptionData },
+      { data: reviewData },
+    ] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('saved_restaurants').select('*, restaurant:restaurants(name)').eq('user_id', user.id),
+      supabase.from('discount_redemptions').select('*, discount:discounts(title, discount_value)').eq('user_id', user.id),
+      supabase.from('user_reviews').select('*, restaurant:restaurants(name)').eq('user_id', user.id),
+    ])
+    const exportData = {
+      profile: profileData,
+      email: user.email,
+      saved_restaurants: savedData || [],
+      discount_redemptions: redemptionData || [],
+      reviews: reviewData || [],
+      exported_at: new Date().toISOString(),
+    }
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `chiamamibi-dati-${user.email}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!user) return
+    const confirmed = window.confirm('Sei sicuro di voler cancellare il tuo account? Tutti i tuoi dati verranno eliminati permanentemente.')
+    if (!confirmed) return
+    const doubleConfirm = window.confirm('Questa azione è irreversibile. Confermi la cancellazione?')
+    if (!doubleConfirm) return
+    try {
+      // Delete user data
+      await Promise.all([
+        supabase.from('saved_restaurants').delete().eq('user_id', user.id),
+        supabase.from('discount_redemptions').delete().eq('user_id', user.id),
+        supabase.from('user_reviews').delete().eq('user_id', user.id),
+        supabase.from('newsletter_subscribers').delete().eq('email', user.email),
+        supabase.from('profiles').delete().eq('id', user.id),
+      ])
+      await signOut()
+      navigate('/', { replace: true })
+    } catch (err) {
+      console.error('Account deletion failed:', err)
+      alert('Errore durante la cancellazione. Contatta info@chiamamibi.com')
+    }
+  }
+
   const handleDeleteRedemption = async (redemptionId) => {
     // Optimistic UI update
     setLocalRedemptions(prev => prev.filter(r => r.id !== redemptionId))
@@ -351,8 +404,34 @@ export default function ProfilePage() {
             )}
           </motion.div>
 
+          {/* GDPR / Account management */}
+          <motion.div variants={itemVariants}>
+            <h2
+              className="text-lg font-semibold text-primary mb-4"
+              style={{ fontFamily: "'TAN Songbird', serif" }}
+            >
+              Il tuo account
+            </h2>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleDownloadData}
+                className="w-full rounded-xl bg-card py-3 text-sm font-medium text-primary shadow-sm text-left px-4 flex items-center gap-3"
+              >
+                <span className="text-base">📥</span>
+                Scarica i miei dati
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="w-full rounded-xl bg-card py-3 text-sm font-medium text-red-500 shadow-sm text-left px-4 flex items-center gap-3"
+              >
+                <span className="text-base">🗑️</span>
+                Cancella il mio account
+              </button>
+            </div>
+          </motion.div>
+
           {/* Logout button at bottom */}
-          <motion.div variants={itemVariants} className="pt-4 pb-4">
+          <motion.div variants={itemVariants} className="pt-2 pb-4">
             <button
               onClick={handleLogout}
               className="w-full rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-semibold text-red-500 transition-colors hover:bg-red-100"

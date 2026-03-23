@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import Navbar from '../../components/Layout/Navbar'
+import Footer from '../../components/Layout/Footer'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
@@ -217,13 +218,13 @@ export default function ListView() {
   return (
     <div
       ref={scrollContainerRef}
-      className="min-h-dvh bg-gray-50 overflow-y-auto"
+      className="flex flex-col min-h-dvh bg-gray-50 overflow-y-auto"
     >
       {/* Navbar */}
       <Navbar view="list" onToggleView={handleToggleView} />
 
       {/* Content */}
-      <div className="pt-16 px-4 pb-8 max-w-screen-lg mx-auto">
+      <div className="flex-1 pt-16 px-4 pb-8 max-w-screen-lg mx-auto">
         {/* Search */}
         <div className="mb-3">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -299,6 +300,8 @@ export default function ListView() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   )
 }

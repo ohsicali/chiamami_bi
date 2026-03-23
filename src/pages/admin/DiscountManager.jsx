@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import AdminLayout from '../../components/Layout/AdminLayout'
 
 function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }) {
   const x = useMotionValue(0)
@@ -91,7 +91,6 @@ function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }
 }
 
 export default function DiscountManager() {
-  const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
   const [discounts, setDiscounts] = useState([])
   const [restaurants, setRestaurants] = useState([])
@@ -114,14 +113,6 @@ export default function DiscountManager() {
     is_active: true,
   })
 
-  useEffect(() => {
-    if (!authLoading && !user) navigate('/admin/login', { replace: true })
-  }, [user, authLoading, navigate])
-
-  useEffect(() => {
-    document.body.classList.add('admin-scroll')
-    return () => document.body.classList.remove('admin-scroll')
-  }, [])
 
   // Fetch discounts and restaurants
   useEffect(() => {
@@ -254,7 +245,8 @@ export default function DiscountManager() {
   if (authLoading || loading) return null
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4">
+    <AdminLayout title="Gestione Sconti">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

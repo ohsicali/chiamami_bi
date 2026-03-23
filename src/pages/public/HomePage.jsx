@@ -14,7 +14,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
-import NewsletterForm from '../../components/Newsletter/NewsletterForm'
+import { Link } from 'react-router-dom'
 
 function slugify(name) {
   return name
@@ -156,6 +156,25 @@ export default function HomePage() {
           />
         </div>
 
+        {/* Bi intro — minimal single-line */}
+        <Link
+          to="/about"
+          className="flex items-center gap-2.5 mb-3 px-1 group"
+        >
+          <div className="w-8 h-8 rounded-full bg-accent flex-shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+            Bi
+          </div>
+          <p
+            className="text-sm text-secondary group-hover:text-primary transition-colors italic"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            I posti che amo davvero
+          </p>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </Link>
+
         {/* Results count */}
         <div className="mb-3 px-1">
           {loading ? (
@@ -200,10 +219,6 @@ export default function HomePage() {
                 />
               </div>
             ))}
-            {/* Newsletter form at the bottom of the list */}
-            <div className="mt-4">
-              <NewsletterForm />
-            </div>
           </div>
         )}
       </BottomSheet>

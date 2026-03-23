@@ -1,6 +1,7 @@
-import { Routes, Route, Navigate, matchPath } from 'react-router-dom'
+import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
+import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 
 // Lazy load pages
@@ -22,6 +23,8 @@ const ReviewModerator = lazy(() => import('./pages/admin/ReviewModerator'))
 const PartnerLandingPage = lazy(() => import('./pages/public/PartnerLandingPage'))
 const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
+const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
+const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
@@ -47,6 +50,7 @@ export default function App() {
   const isHome = location.pathname === '/' || isRestaurantDetail
 
   return (
+    <>
     <Suspense fallback={<PageLoader />}>
       {/* HomePage stays mounted when viewing restaurant detail */}
       {isHome && <HomePage />}
@@ -74,9 +78,49 @@ export default function App() {
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )}
     </Suspense>
+
+    {/* Cookie Banner */}
+    <CookieConsent
+      location="bottom"
+      buttonText="Accetta"
+      declineButtonText="Solo necessari"
+      enableDeclineButton
+      style={{
+        background: 'rgba(26, 26, 26, 0.95)',
+        backdropFilter: 'blur(12px)',
+        padding: '16px 20px',
+        fontSize: '13px',
+        alignItems: 'center',
+      }}
+      buttonStyle={{
+        background: '#FF5757',
+        color: '#fff',
+        fontSize: '13px',
+        borderRadius: '10px',
+        padding: '8px 20px',
+        fontWeight: '600',
+      }}
+      declineButtonStyle={{
+        background: 'transparent',
+        border: '1px solid rgba(255,255,255,0.3)',
+        color: '#fff',
+        fontSize: '13px',
+        borderRadius: '10px',
+        padding: '8px 20px',
+        fontWeight: '500',
+      }}
+      cookieName="chiamamibi_cookie_consent"
+      expires={365}
+    >
+      Utilizziamo cookie tecnici per il funzionamento del sito.{' '}
+      <Link to="/privacy" style={{ color: '#FF5757', textDecoration: 'underline' }}>Privacy Policy</Link>
+    </CookieConsent>
+    </>
   )
 }

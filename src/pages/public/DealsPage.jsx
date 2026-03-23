@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
+import Footer from '../../components/Layout/Footer'
 import { LogoFull } from '../../components/UI/Logo'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -32,7 +33,7 @@ export default function DealsPage() {
   const { discounts, loading } = useActiveDiscounts()
 
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="flex flex-col min-h-dvh bg-bg">
       {/* Header */}
       <nav className="sticky top-0 z-40 glass">
         <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
@@ -48,7 +49,7 @@ export default function DealsPage() {
         </div>
       </nav>
 
-      <div className="max-w-screen-lg mx-auto px-5 py-8">
+      <div className="flex-1 max-w-screen-lg mx-auto px-5 py-8">
         <motion.div
           className="flex flex-col gap-6"
           initial="hidden"
@@ -186,6 +187,8 @@ export default function DealsPage() {
           )}
         </motion.div>
       </div>
+
+      <Footer />
     </div>
   )
 }

@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
-import { LogoFull } from '../../components/UI/Logo'
+import AdminLayout from '../../components/Layout/AdminLayout'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 /* ------------------------------------------------------------------ */
@@ -28,166 +28,8 @@ function AnimatedCounter({ value, duration = 1.2 }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Admin sidebar / layout shell                                       */
-/* ------------------------------------------------------------------ */
-function AdminLayout({ children, user, onLogout }) {
-  const navigate = useNavigate()
-
-  // Enable scrolling on admin pages (body has overflow:hidden by default for map)
-  useEffect(() => {
-    document.body.classList.add('admin-scroll')
-    return () => document.body.classList.remove('admin-scroll')
-  }, [])
-
-  const links = [
-    { to: '/admin', label: 'Dashboard', icon: DashboardIcon },
-    { to: '/admin/restaurant/new', label: 'Nuovo Ristorante', icon: PlusIcon },
-    { to: '/admin/categories', label: 'Categorie', icon: TagIcon },
-    { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
-    { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
-    { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
-    { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
-    { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon },
-  ]
-
-  return (
-    <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 bg-card border-r border-gray-100 p-6 shrink-0">
-        <Link to="/admin" className="mb-10">
-          <LogoFull height={22} />
-        </Link>
-
-        <nav className="flex-1 space-y-1">
-          {links.map((l) => {
-            const active = location.pathname === l.to
-            return (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${active ? 'bg-accent/10 text-accent' : 'text-secondary hover:text-primary hover:bg-gray-50'}`}
-              >
-                <l.icon className="w-4 h-4" />
-                {l.label}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="pt-4 border-t border-gray-100 mt-4">
-          <p className="text-xs text-secondary truncate mb-2">{user?.email ?? 'Admin'}</p>
-          <button onClick={onLogout} className="flex items-center gap-2 text-sm text-secondary hover:text-red-500 transition-colors">
-            <LogoutIcon className="w-4 h-4" />
-            Esci
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile header */}
-      <div className="md:hidden fixed top-0 inset-x-0 z-40 glass border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-        <Link to="/admin"><LogoFull height={20} /></Link>
-        <div className="flex items-center gap-3">
-          <Link to="/admin/restaurant/new" className="text-accent">
-            <PlusIcon className="w-5 h-5" />
-          </Link>
-          <Link to="/admin/categories" className="text-secondary hover:text-primary">
-            <TagIcon className="w-5 h-5" />
-          </Link>
-          <Link to="/admin/discounts" className="text-secondary hover:text-primary">
-            <DiscountIcon className="w-5 h-5" />
-          </Link>
-          <Link to="/admin/partners" className="text-secondary hover:text-primary">
-            <PartnerIcon className="w-5 h-5" />
-          </Link>
-          <Link to="/admin/reviews" className="text-secondary hover:text-primary">
-            <ReviewIcon className="w-5 h-5" />
-          </Link>
-          <Link to="/admin/newsletter" className="text-secondary hover:text-primary">
-            <NewsletterIcon className="w-5 h-5" />
-          </Link>
-          <Link to="/admin/applications" className="text-secondary hover:text-primary">
-            <ApplicationIcon className="w-5 h-5" />
-          </Link>
-          <button onClick={onLogout} className="text-secondary hover:text-red-500">
-            <LogoutIcon className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <main className="flex-1 min-w-0 md:p-8 p-4 pt-16 md:pt-8" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {children}
-      </main>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Icons                                                              */
 /* ------------------------------------------------------------------ */
-function DashboardIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-    </svg>
-  )
-}
-function PlusIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
-  )
-}
-function TagIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 10V5a2 2 0 012-2z" />
-    </svg>
-  )
-}
-function LogoutIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
-    </svg>
-  )
-}
-function DiscountIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
-    </svg>
-  )
-}
-function ReviewIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-    </svg>
-  )
-}
-function PartnerIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
-  )
-}
-function NewsletterIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  )
-}
-function ApplicationIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  )
-}
 function SearchIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -208,19 +50,13 @@ function ChevronIcon({ className, direction = 'up' }) {
 /*  Main Dashboard Page                                                */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
-  const { user, loading: authLoading, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
 
   const [search, setSearch] = useState('')
   const [sortCol, setSortCol] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
   const [deleteId, setDeleteId] = useState(null)
-
-  // Redirect if not auth
-  useEffect(() => {
-    if (!authLoading && !user) navigate('/admin/login', { replace: true })
-  }, [user, authLoading, navigate])
 
   // Stats
   const stats = useMemo(() => {
@@ -341,7 +177,7 @@ export default function AdminDashboard() {
   )
 
   return (
-    <AdminLayout user={user} onLogout={signOut}>
+    <AdminLayout title="Dashboard">
       {/* Page header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}

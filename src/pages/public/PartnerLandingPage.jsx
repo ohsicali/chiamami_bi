@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
+import Footer from '../../components/Layout/Footer'
 
 /* ─── animation variants ─── */
 const fadeUp = {
@@ -167,7 +168,7 @@ export default function PartnerLandingPage() {
   ]
 
   return (
-    <div className="min-h-dvh overflow-y-auto" style={{ background: 'linear-gradient(180deg, #FAFAF8 0%, #FFF5F5 50%, #FAFAF8 100%)' }}>
+    <div className="flex flex-col min-h-dvh overflow-y-auto" style={{ background: 'linear-gradient(180deg, #FAFAF8 0%, #FFF5F5 50%, #FAFAF8 100%)' }}>
       {/* ── Header ── */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b border-gray-100">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-5 py-3">
@@ -184,6 +185,7 @@ export default function PartnerLandingPage() {
         </div>
       </header>
 
+      <div className="flex-1">
       {/* ── Hero Section ── */}
       <section className="relative px-5 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center overflow-hidden">
         {/* Decorative dots */}
@@ -466,13 +468,9 @@ export default function PartnerLandingPage() {
           </motion.div>
         </motion.div>
       </section>
+      </div>
 
-      {/* ── Footer ── */}
-      <footer className="px-5 py-10 text-center">
-        <p className="text-xs text-secondary">
-          &copy; {new Date().getFullYear()} ChiamamiBi &mdash; Tutti i diritti riservati
-        </p>
-      </footer>
+      <Footer />
     </div>
   )
 }

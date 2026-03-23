@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -172,6 +173,35 @@ export default function LoginPage() {
             required
             minLength={6}
           />
+
+          {/* Consent checkboxes — only in register mode */}
+          <AnimatePresence mode="wait">
+            {mode === 'register' && (
+              <motion.div
+                key="consent"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-2"
+              >
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="mt-0.5 rounded accent-accent"
+                    required
+                  />
+                  <span className="text-xs text-secondary leading-relaxed">
+                    Ho letto e accetto la{' '}
+                    <Link to="/privacy" className="text-accent underline" target="_blank">Privacy Policy</Link>
+                    {' '}e i{' '}
+                    <Link to="/terms" className="text-accent underline" target="_blank">Termini di Servizio</Link>
+                  </span>
+                </label>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Error / success */}
           <AnimatePresence>
