@@ -138,47 +138,51 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!isSupabaseConfigured()) return
     const fetchActivity = async () => {
-      const items = []
-      // Latest restaurants
-      const { data: recentRestaurants } = await supabase
-        .from('restaurants')
-        .select('id, name, created_at')
-        .order('created_at', { ascending: false })
-        .limit(3)
-      ;(recentRestaurants || []).forEach(r => {
-        items.push({ id: `r-${r.id}`, type: 'restaurant', text: `Ristorante aggiunto: ${r.name}`, time: r.created_at, icon: '🍽️' })
-      })
-      // Latest reviews
-      const { data: recentReviews } = await supabase
-        .from('user_reviews')
-        .select('id, created_at, status, restaurant:restaurants(name), user:profiles(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(3)
-      ;(recentReviews || []).forEach(r => {
-        items.push({ id: `rev-${r.id}`, type: 'review', text: `Recensione su ${r.restaurant?.name || '?'} da ${r.user?.full_name || 'Utente'}`, time: r.created_at, icon: r.status === 'pending_review' ? '⏳' : '⭐' })
-      })
-      // Latest redemptions
-      const { data: recentRedemptions } = await supabase
-        .from('discount_redemptions')
-        .select('id, generated_at, redeemed_at, status, discount:discounts(title, discount_value, restaurant:restaurants(name))')
-        .order('generated_at', { ascending: false })
-        .limit(3)
-      ;(recentRedemptions || []).forEach(r => {
-        const action = r.status === 'redeemed' ? 'Sconto usato' : 'QR generato'
-        items.push({ id: `d-${r.id}`, type: 'discount', text: `${action}: ${r.discount?.discount_value || ''} da ${r.discount?.restaurant?.name || '?'}`, time: r.redeemed_at || r.generated_at, icon: '🎟️' })
-      })
-      // Latest partner applications
-      const { data: recentPartners } = await supabase
-        .from('partner_applications')
-        .select('id, created_at, restaurant_name')
-        .order('created_at', { ascending: false })
-        .limit(2)
-      ;(recentPartners || []).forEach(p => {
-        items.push({ id: `p-${p.id}`, type: 'partner', text: `Candidatura partner: ${p.restaurant_name}`, time: p.created_at, icon: '🤝' })
-      })
-      // Sort by time descending
-      items.sort((a, b) => new Date(b.time) - new Date(a.time))
-      setActivityFeed(items.slice(0, 8))
+      try {
+        const items = []
+        // Latest restaurants
+        const { data: recentRestaurants } = await supabase
+          .from('restaurants')
+          .select('id, name, created_at')
+          .order('created_at', { ascending: false })
+          .limit(3)
+        ;(recentRestaurants || []).forEach(r => {
+          items.push({ id: `r-${r.id}`, type: 'restaurant', text: `Ristorante aggiunto: ${r.name}`, time: r.created_at, icon: '🍽️' })
+        })
+        // Latest reviews
+        const { data: recentReviews } = await supabase
+          .from('user_reviews')
+          .select('id, created_at, status, restaurant:restaurants(name), user:profiles(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(3)
+        ;(recentReviews || []).forEach(r => {
+          items.push({ id: `rev-${r.id}`, type: 'review', text: `Recensione su ${r.restaurant?.name || '?'} da ${r.user?.full_name || 'Utente'}`, time: r.created_at, icon: r.status === 'pending_review' ? '⏳' : '⭐' })
+        })
+        // Latest redemptions
+        const { data: recentRedemptions } = await supabase
+          .from('discount_redemptions')
+          .select('id, generated_at, redeemed_at, status, discount:discounts(title, discount_value, restaurant:restaurants(name))')
+          .order('generated_at', { ascending: false })
+          .limit(3)
+        ;(recentRedemptions || []).forEach(r => {
+          const action = r.status === 'redeemed' ? 'Sconto usato' : 'QR generato'
+          items.push({ id: `d-${r.id}`, type: 'discount', text: `${action}: ${r.discount?.discount_value || ''} da ${r.discount?.restaurant?.name || '?'}`, time: r.redeemed_at || r.generated_at, icon: '🎟️' })
+        })
+        // Latest partner applications
+        const { data: recentPartners } = await supabase
+          .from('partner_applications')
+          .select('id, created_at, restaurant_name')
+          .order('created_at', { ascending: false })
+          .limit(2)
+        ;(recentPartners || []).forEach(p => {
+          items.push({ id: `p-${p.id}`, type: 'partner', text: `Candidatura partner: ${p.restaurant_name}`, time: p.created_at, icon: '🤝' })
+        })
+        // Sort by time descending
+        items.sort((a, b) => new Date(b.time) - new Date(a.time))
+        setActivityFeed(items.slice(0, 8))
+      } catch (err) {
+        console.error('Failed to fetch activity:', err)
+      }
     }
     fetchActivity()
   }, [])

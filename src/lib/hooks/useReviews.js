@@ -201,13 +201,18 @@ export function useAllReviews() {
       return
     }
 
-    const { data } = await supabase
-      .from('user_reviews')
-      .select('*, user:profiles(id, full_name, avatar_url), restaurant:restaurants(id, name, slug), photos:user_review_photos(id, photo_url, sort_order)')
-      .order('created_at', { ascending: false })
+    try {
+      const { data } = await supabase
+        .from('user_reviews')
+        .select('*, user:profiles(id, full_name, avatar_url), restaurant:restaurants(id, name, slug), photos:user_review_photos(id, photo_url, sort_order)')
+        .order('created_at', { ascending: false })
 
-    setReviews(data || [])
-    setLoading(false)
+      setReviews(data || [])
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
