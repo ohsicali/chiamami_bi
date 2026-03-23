@@ -51,12 +51,30 @@ const EMPTY_FORM = {
   website: '',
   categories: [],
   price_range: 0,
+  our_rating: 4.0,
   our_review: '',
   our_tip: '',
+  recommended_for: [],
   instagram_reel: '',
+  tiktok_url: '',
   published: false,
   photos: [], // { url, caption, sort_order, file? }
 }
+
+const RECOMMENDED_FOR_OPTIONS = [
+  'Cena romantica',
+  'Famiglia',
+  'Pranzo di lavoro',
+  'Aperitivo',
+  'Brunch',
+  'Appuntamento',
+  'Tradizione',
+  'Esperienza unica',
+  'Vegetariano',
+  'Gruppo di amici',
+  'Vista panoramica',
+  'Prezzo accessibile',
+]
 
 /* ------------------------------------------------------------------ */
 /*  Price range selector                                               */
@@ -79,6 +97,113 @@ function PriceSelector({ value, onChange }) {
           {PRICE_LABELS[level]}
         </motion.button>
       ))}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Star rating selector (Bi rating 1-5)                               */
+/* ------------------------------------------------------------------ */
+function StarRating({ value, onChange }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onMouseEnter={() => setHover(star)}
+          onMouseLeave={() => setHover(0)}
+          onClick={() => onChange(value === star ? 0 : star)}
+          className="text-2xl transition-transform hover:scale-110"
+        >
+          {star <= (hover || value) ? '⭐' : '☆'}
+        </button>
+      ))}
+      {value > 0 && (
+        <span className="ml-2 text-sm font-medium text-secondary">{value}/5</span>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Recommended-for multi-select chips                                 */
+/* ------------------------------------------------------------------ */
+function RecommendedForSelector({ selected, onChange }) {
+  const [custom, setCustom] = useState('')
+
+  const toggle = (tag) => {
+    onChange(
+      selected.includes(tag)
+        ? selected.filter((s) => s !== tag)
+        : [...selected, tag]
+    )
+  }
+
+  const addCustom = () => {
+    const tag = custom.trim()
+    if (tag && !selected.includes(tag)) {
+      onChange([...selected, tag])
+    }
+    setCustom('')
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {RECOMMENDED_FOR_OPTIONS.map((tag) => {
+          const active = selected.includes(tag)
+          return (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggle(tag)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                active
+                  ? 'bg-accent text-white border-accent'
+                  : 'border-gray-200 text-secondary hover:border-accent/40 hover:text-accent'
+              }`}
+            >
+              {tag}
+            </button>
+          )
+        })}
+      </div>
+      {/* Custom tag input */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustom())}
+          placeholder="Aggiungi tag personalizzato..."
+          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 bg-bg text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
+        />
+        <button
+          type="button"
+          onClick={addCustom}
+          className="px-3 py-2 rounded-xl bg-gray-100 text-xs font-medium text-secondary hover:bg-gray-200 transition-colors"
+        >
+          Aggiungi
+        </button>
+      </div>
+      {/* Show custom tags (not in predefined list) */}
+      {selected.filter((t) => !RECOMMENDED_FOR_OPTIONS.includes(t)).length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected
+            .filter((t) => !RECOMMENDED_FOR_OPTIONS.includes(t))
+            .map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent"
+              >
+                {tag}
+                <button type="button" onClick={() => toggle(tag)} className="hover:opacity-70">✕</button>
+              </span>
+            ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -434,6 +559,20 @@ export default function RestaurantForm() {
   const [saving, setSaving] = useState(false)
   const [geocoding, setGeocoding] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [googleFilling, setGoogleFilling] = useState(false)
+  const [aiCorrecting, setAiCorrecting] = useState(null) // 'review' | 'tip' | null
+  // Inline discount state
+  const [discount, setDiscount] = useState(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountForm, setDiscountForm] = useState({
+    title: '',
+    description: '',
+    discount_type: 'percentage',
+    discount_value: '',
+    conditions: '',
+    valid_until: '',
+    max_redemptions: '',
+  })
 
 
   // Load restaurant data when editing
@@ -453,9 +592,12 @@ export default function RestaurantForm() {
           website: r.website || '',
           categories: r.cuisine_type ? [r.cuisine_type] : (r.categories || []),
           price_range: r.price_range || 0,
+          our_rating: r.our_rating || 4.0,
           our_review: r.our_review || r.description || '',
           our_tip: r.our_tip || (Array.isArray(r.tips) ? r.tips.join('\n') : '') || '',
+          recommended_for: r.recommended_for || [],
           instagram_reel: r.instagram_reel || '',
+          tiktok_url: r.tiktok_url || '',
           published: r.is_published !== false,
           photos: Array.isArray(r.photos)
             ? r.photos.map((p, i) =>
@@ -502,6 +644,156 @@ export default function RestaurantForm() {
     setGeocoding(false)
   }
 
+  // Google Maps autofill
+  const handleGoogleFill = async () => {
+    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_KEY
+    if (!apiKey) {
+      addToast('Chiave Google Places non configurata (VITE_GOOGLE_PLACES_KEY)', 'error')
+      return
+    }
+    if (!form.name.trim()) {
+      addToast('Inserisci il nome del ristorante prima', 'error')
+      return
+    }
+    setGoogleFilling(true)
+    try {
+      const query = encodeURIComponent(`${form.name} ${form.city || 'Torino'}`)
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${query}&inputtype=textquery&fields=formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}`
+      )
+      const data = await res.json()
+      const place = data.candidates?.[0]
+      if (place) {
+        if (place.formatted_address) update('address', place.formatted_address)
+        if (place.geometry?.location) {
+          update('latitude', String(place.geometry.location.lat))
+          update('longitude', String(place.geometry.location.lng))
+        }
+        if (place.formatted_phone_number) update('phone', place.formatted_phone_number)
+        if (place.website) update('website', place.website)
+        if (place.url) update('google_maps_url', place.url)
+        addToast('Dati compilati da Google Maps!', 'success')
+      } else {
+        addToast('Nessun risultato trovato su Google Maps', 'error')
+      }
+    } catch (err) {
+      addToast('Errore nella ricerca Google Maps', 'error')
+    }
+    setGoogleFilling(false)
+  }
+
+  // AI text correction
+  const handleAiCorrect = async (field) => {
+    const text = form[field]?.trim()
+    if (!text) {
+      addToast('Scrivi prima il testo da correggere', 'error')
+      return
+    }
+    setAiCorrecting(field)
+    try {
+      if (isSupabaseConfigured()) {
+        const { data, error } = await supabase.functions.invoke('correct-text', {
+          body: { text, context: field === 'our_review' ? 'restaurant review' : 'restaurant tip' },
+        })
+        if (error) throw error
+        if (data?.corrected) {
+          update(field, data.corrected)
+          addToast('Testo corretto con AI!', 'success')
+        } else {
+          addToast('Il testo sembra gia corretto', 'success')
+        }
+      } else {
+        addToast('Supabase non configurato per le Edge Functions', 'error')
+      }
+    } catch (err) {
+      addToast('Edge Function non disponibile. Configura correct-text su Supabase.', 'error')
+    }
+    setAiCorrecting(null)
+  }
+
+  // Load existing discount when editing
+  useEffect(() => {
+    if (!isEditing || !id || !isSupabaseConfigured()) return
+    setDiscountLoading(true)
+    supabase
+      .from('discounts')
+      .select('*')
+      .eq('restaurant_id', id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setDiscount(data)
+          setDiscountForm({
+            title: data.title || '',
+            description: data.description || '',
+            discount_type: data.discount_type || 'percentage',
+            discount_value: data.discount_value || '',
+            conditions: data.conditions || '',
+            valid_until: data.valid_until ? data.valid_until.slice(0, 10) : '',
+            max_redemptions: data.max_redemptions ? String(data.max_redemptions) : '',
+          })
+        }
+        setDiscountLoading(false)
+      })
+  }, [isEditing, id])
+
+  const handleSaveDiscount = async () => {
+    if (!discountForm.title.trim() || !discountForm.discount_value.trim()) {
+      addToast('Titolo e valore sconto sono obbligatori', 'error')
+      return
+    }
+    if (!isSupabaseConfigured()) return
+
+    const restaurantId = id
+    if (!restaurantId) {
+      addToast('Salva prima il ristorante, poi aggiungi lo sconto', 'error')
+      return
+    }
+
+    const payload = {
+      restaurant_id: restaurantId,
+      title: discountForm.title.trim(),
+      description: discountForm.description.trim(),
+      discount_type: discountForm.discount_type,
+      discount_value: discountForm.discount_value.trim(),
+      conditions: discountForm.conditions.trim(),
+      valid_until: discountForm.valid_until ? new Date(discountForm.valid_until).toISOString() : null,
+      max_redemptions: discountForm.max_redemptions ? parseInt(discountForm.max_redemptions) : null,
+      is_active: true,
+    }
+
+    try {
+      if (discount) {
+        const { error } = await supabase.from('discounts').update(payload).eq('id', discount.id)
+        if (error) throw error
+        addToast('Sconto aggiornato!', 'success')
+      } else {
+        const { data, error } = await supabase.from('discounts').insert(payload).select().single()
+        if (error) throw error
+        setDiscount(data)
+        addToast('Sconto creato!', 'success')
+      }
+    } catch (err) {
+      addToast(`Errore sconto: ${err.message}`, 'error')
+    }
+  }
+
+  const handleDeleteDiscount = async () => {
+    if (!discount) return
+    try {
+      const { error } = await supabase.from('discounts').delete().eq('id', discount.id)
+      if (error) throw error
+      setDiscount(null)
+      setDiscountForm({ title: '', description: '', discount_type: 'percentage', discount_value: '', conditions: '', valid_until: '', max_redemptions: '' })
+      addToast('Sconto eliminato', 'success')
+    } catch (err) {
+      addToast(`Errore: ${err.message}`, 'error')
+    }
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     if (!validate()) {
@@ -523,9 +815,12 @@ export default function RestaurantForm() {
       cuisine_type: form.categories[0] || null,
       category: form.categories,
       price_range: form.price_range,
+      our_rating: form.our_rating || null,
       our_review: form.our_review.trim(),
       our_tip: form.our_tip.trim(),
+      recommended_for: form.recommended_for,
       instagram_reel: form.instagram_reel.trim() || null,
+      tiktok_url: form.tiktok_url.trim() || null,
       is_published: form.published,
     }
 
@@ -699,6 +994,38 @@ export default function RestaurantForm() {
         transition={{ duration: 0.4 }}
       >
         <form onSubmit={handleSave} className="space-y-8">
+          {/* --- Google Maps autofill --- */}
+          <Section title="Compilazione rapida">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={handleGoogleFill}
+                disabled={googleFilling || !form.name.trim()}
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border-2 border-blue-400 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+              >
+                {googleFilling ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
+                    </svg>
+                    Ricerca in corso...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    Compila da Google Maps
+                  </>
+                )}
+              </motion.button>
+              <p className="text-xs text-secondary self-center">
+                Inserisci il nome del ristorante, poi clicca per compilare indirizzo, telefono e coordinate automaticamente
+              </p>
+            </div>
+          </Section>
+
           {/* --- Basic info --- */}
           <Section title="Informazioni base">
             <Field label="Nome *" error={errors.name}>
@@ -845,6 +1172,20 @@ export default function RestaurantForm() {
               />
             </Field>
 
+            <Field label="Rating di Bi">
+              <StarRating
+                value={form.our_rating}
+                onChange={(v) => update('our_rating', v)}
+              />
+            </Field>
+
+            <Field label="Consigliato per...">
+              <RecommendedForSelector
+                selected={form.recommended_for}
+                onChange={(v) => update('recommended_for', v)}
+              />
+            </Field>
+
           </Section>
 
           {/* --- Review & Tip --- */}
@@ -857,6 +1198,26 @@ export default function RestaurantForm() {
                 placeholder="Scrivi la tua recensione del ristorante..."
                 className={inputClass() + ' resize-y'}
               />
+              {form.our_review.trim() && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleAiCorrect('our_review')}
+                  disabled={aiCorrecting === 'our_review'}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-300 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50"
+                >
+                  {aiCorrecting === 'our_review' ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
+                      </svg>
+                      Correzione...
+                    </>
+                  ) : (
+                    'Correggi con AI'
+                  )}
+                </motion.button>
+              )}
             </Field>
             <Field label="I suggerimenti di Bi">
               <textarea
@@ -866,11 +1227,31 @@ export default function RestaurantForm() {
                 placeholder="I suggerimenti di Bi per chi visita il locale..."
                 className={inputClass() + ' resize-y'}
               />
+              {form.our_tip.trim() && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleAiCorrect('our_tip')}
+                  disabled={aiCorrecting === 'our_tip'}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-300 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50"
+                >
+                  {aiCorrecting === 'our_tip' ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
+                      </svg>
+                      Correzione...
+                    </>
+                  ) : (
+                    'Correggi con AI'
+                  )}
+                </motion.button>
+              )}
             </Field>
           </Section>
 
-          {/* --- Instagram Reel --- */}
-          <Section title="Video Instagram">
+          {/* --- Social / Video --- */}
+          <Section title="Social e Video">
             <Field label="Link Reel Instagram (opzionale)">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-pink-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -884,7 +1265,20 @@ export default function RestaurantForm() {
                   className={inputClass()}
                 />
               </div>
-              <p className="text-xs text-secondary mt-1">Inserisci il link al reel Instagram che parla di questo locale</p>
+            </Field>
+            <Field label="Link TikTok (opzionale)">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.87a8.28 8.28 0 004.76 1.5v-3.4a4.85 4.85 0 01-1-.28z"/>
+                </svg>
+                <input
+                  type="url"
+                  value={form.tiktok_url}
+                  onChange={(e) => update('tiktok_url', e.target.value)}
+                  placeholder="https://www.tiktok.com/@..."
+                  className={inputClass()}
+                />
+              </div>
             </Field>
           </Section>
 
@@ -895,6 +1289,126 @@ export default function RestaurantForm() {
               onChange={(photos) => update('photos', photos)}
             />
           </Section>
+
+          {/* --- Discount (inline) --- */}
+          {isEditing && (
+            <Section title="Sconto attivo">
+              {discountLoading ? (
+                <p className="text-sm text-secondary">Caricamento sconto...</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Titolo sconto *">
+                      <input
+                        type="text"
+                        value={discountForm.title}
+                        onChange={(e) => setDiscountForm(p => ({ ...p, title: e.target.value }))}
+                        placeholder="Es. -10% sul conto"
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field label="Valore *">
+                      <input
+                        type="text"
+                        value={discountForm.discount_value}
+                        onChange={(e) => setDiscountForm(p => ({ ...p, discount_value: e.target.value }))}
+                        placeholder="Es. 10%, 5€, Dolce gratis"
+                        className={inputClass()}
+                      />
+                    </Field>
+                  </div>
+
+                  <Field label="Tipo di sconto">
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'percentage', label: 'Percentuale' },
+                        { value: 'fixed', label: 'Importo fisso' },
+                        { value: 'freebie', label: 'Omaggio' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setDiscountForm(p => ({ ...p, discount_type: opt.value }))}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                            discountForm.discount_type === opt.value
+                              ? 'bg-accent text-white border-accent'
+                              : 'border-gray-200 text-secondary hover:border-accent/40'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+
+                  <Field label="Descrizione">
+                    <input
+                      type="text"
+                      value={discountForm.description}
+                      onChange={(e) => setDiscountForm(p => ({ ...p, description: e.target.value }))}
+                      placeholder="Descrizione dello sconto..."
+                      className={inputClass()}
+                    />
+                  </Field>
+
+                  <Field label="Condizioni">
+                    <input
+                      type="text"
+                      value={discountForm.conditions}
+                      onChange={(e) => setDiscountForm(p => ({ ...p, conditions: e.target.value }))}
+                      placeholder="Es. Minimo 2 persone, solo cena"
+                      className={inputClass()}
+                    />
+                  </Field>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Valido fino al">
+                      <input
+                        type="date"
+                        value={discountForm.valid_until}
+                        onChange={(e) => setDiscountForm(p => ({ ...p, valid_until: e.target.value }))}
+                        className={inputClass()}
+                      />
+                    </Field>
+                    <Field label="Max utilizzi">
+                      <input
+                        type="number"
+                        value={discountForm.max_redemptions}
+                        onChange={(e) => setDiscountForm(p => ({ ...p, max_redemptions: e.target.value }))}
+                        placeholder="Illimitati"
+                        className={inputClass()}
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2">
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleSaveDiscount}
+                      className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors"
+                    >
+                      {discount ? 'Aggiorna Sconto' : 'Crea Sconto'}
+                    </motion.button>
+                    {discount && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteDiscount}
+                        className="px-4 py-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        Elimina Sconto
+                      </button>
+                    )}
+                    {discount && (
+                      <span className="text-xs text-green-600 font-medium">
+                        Sconto attivo ({discount.total_redeemed || 0} utilizzi)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Section>
+          )}
 
           {/* --- Publishing --- */}
           <Section title="Pubblicazione">
