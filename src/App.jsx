@@ -85,26 +85,31 @@ export default function App() {
       )}
     </Suspense>
 
-    {/* Cookie Banner */}
+    {/* Cookie Banner GDPR */}
     <CookieConsent
       location="bottom"
-      buttonText="Accetta"
+      buttonText="Accetta tutti"
       declineButtonText="Solo necessari"
       enableDeclineButton
+      overlay={false}
       style={{
-        background: 'rgba(26, 26, 26, 0.95)',
-        backdropFilter: 'blur(12px)',
-        padding: '16px 20px',
+        background: 'rgba(26, 26, 26, 0.96)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        padding: '18px 20px',
         fontSize: '13px',
         alignItems: 'center',
+        zIndex: 9999,
+        borderTop: '1px solid rgba(255,255,255,0.1)',
       }}
       buttonStyle={{
         background: '#FF5757',
         color: '#fff',
         fontSize: '13px',
         borderRadius: '10px',
-        padding: '8px 20px',
+        padding: '10px 24px',
         fontWeight: '600',
+        margin: '4px 8px',
       }}
       declineButtonStyle={{
         background: 'transparent',
@@ -112,13 +117,14 @@ export default function App() {
         color: '#fff',
         fontSize: '13px',
         borderRadius: '10px',
-        padding: '8px 20px',
+        padding: '10px 24px',
         fontWeight: '500',
+        margin: '4px 8px',
       }}
       cookieName="chiamamibi_cookie_consent"
       expires={365}
     >
-      Utilizziamo cookie tecnici per il funzionamento del sito.{' '}
+      Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
       <Link to="/privacy" style={{ color: '#FF5757', textDecoration: 'underline' }}>Privacy Policy</Link>
     </CookieConsent>
     </>

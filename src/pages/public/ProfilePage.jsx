@@ -67,13 +67,13 @@ function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
 
       {/* Swipeable card */}
       <motion.div
-        className="relative rounded-2xl bg-card shadow-sm cursor-pointer"
+        className={`relative rounded-2xl bg-card shadow-sm ${r.status === 'generated' ? 'cursor-pointer' : 'opacity-60'}`}
         style={{ x }}
         drag="x"
         dragConstraints={{ left: -90, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        onClick={() => onShowQR()}
+        onClick={() => r.status === 'generated' && onShowQR()}
       >
         <div className="flex items-center gap-3 p-3">
           {photo ? (
@@ -83,7 +83,7 @@ function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
           )}
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-primary truncate">{restaurant?.name || 'Ristorante'}</h3>
-            <p className="text-accent font-semibold text-sm">{r.discount?.discount_value}</p>
+            <p className={`font-semibold text-sm ${r.status === 'redeemed' ? 'text-secondary line-through' : 'text-accent'}`}>{r.discount?.discount_value}</p>
             <p className="text-xs text-secondary truncate">{r.discount?.title}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
@@ -91,16 +91,17 @@ function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
                 r.status === 'redeemed' ? 'bg-gray-100 text-gray-500' :
                 'bg-red-100 text-red-500'
               }`}>
-                {r.status === 'generated' ? 'Attivo' : r.status === 'redeemed' ? 'Usato' : 'Scaduto'}
-              </span>
-              <span className="text-[10px] text-secondary">
-                {new Date(r.generated_at).toLocaleDateString('it-IT')}
+                {r.status === 'generated' ? 'Attivo' :
+                 r.status === 'redeemed' ? `✓ Utilizzato il ${new Date(r.redeemed_at || r.generated_at).toLocaleDateString('it-IT')}` :
+                 'Scaduto'}
               </span>
             </div>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
+          {r.status === 'generated' && (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          )}
         </div>
       </motion.div>
     </div>

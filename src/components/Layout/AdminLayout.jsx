@@ -104,7 +104,8 @@ function HomeIcon({ className }) {
 /* ------------------------------------------------------------------ */
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, exact: true },
-  { to: '/admin', label: 'Ristoranti', icon: RestaurantIcon, exact: false, hash: '#restaurants' },
+  { to: '/admin?section=restaurants', label: 'Ristoranti', icon: RestaurantIcon },
+  { to: '/admin/categories', label: 'Categorie', icon: ApplicationIcon },
   { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
   { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
   { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
@@ -119,9 +120,9 @@ function SidebarContent({ user, onLogout, onNavClick }) {
   const location = useLocation()
 
   const isActive = (item) => {
-    if (item.hash) return false // "Ristoranti" is a shortcut, never highlight it
-    if (item.exact) return location.pathname === item.to
-    return location.pathname.startsWith(item.to)
+    const itemPath = item.to.split('?')[0]
+    if (item.exact) return location.pathname === itemPath && !location.search
+    return location.pathname === itemPath && (!item.to.includes('?') || location.search === '?' + item.to.split('?')[1])
   }
 
   return (

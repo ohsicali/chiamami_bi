@@ -78,13 +78,20 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
   }), [snapTo])
 
   const bind = useDrag(
-    ({ movement: [, my], velocity: [, vy], direction: [, dy], active, cancel }) => {
+    ({ movement: [, my], velocity: [, vy], direction: [, dy], active, cancel, event }) => {
       if (active) {
         isDragging.current = true
 
-        // If at FULL and content is scrolled, don't drag
+        // If at FULL and content is scrolled, cancel the drag to allow scroll
         if (snapIndex === SNAP_FULL && contentRef.current) {
-          if (contentRef.current.scrollTop > 0) {
+          const scrollTop = contentRef.current.scrollTop
+          // Allow drag-down only when scrolled to top, always cancel if scrolled
+          if (scrollTop > 0) {
+            cancel()
+            return
+          }
+          // If user is dragging up (trying to scroll content), cancel drag
+          if (my < -5) {
             cancel()
             return
           }

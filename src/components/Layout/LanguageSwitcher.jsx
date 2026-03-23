@@ -31,7 +31,9 @@ export default function LanguageSwitcher() {
     }
   }, [open])
 
-  const handleSelect = (code) => {
+  const handleSelect = (e, code) => {
+    e.stopPropagation()
+    e.preventDefault()
     i18n.changeLanguage(code)
     setOpen(false)
   }
@@ -39,7 +41,7 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative" ref={ref}>
       <motion.button
-        onClick={() => setOpen(v => !v)}
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v) }}
         className="flex items-center justify-center w-9 h-9 rounded-xl shadow-sm text-base"
         style={{
           backgroundColor: 'rgba(255,255,255,0.6)',
@@ -65,7 +67,7 @@ export default function LanguageSwitcher() {
             {LANGUAGES.map(lang => (
               <button
                 key={lang.code}
-                onClick={() => handleSelect(lang.code)}
+                onClick={(e) => handleSelect(e, lang.code)}
                 className={`flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left transition-colors ${
                   lang.code === current.code
                     ? 'bg-accent/10 text-accent font-semibold'

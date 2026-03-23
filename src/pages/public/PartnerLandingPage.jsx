@@ -280,12 +280,12 @@ export default function PartnerLandingPage() {
             Come funziona
           </motion.h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 overflow-visible">
             {steps.map((step, i) => (
               <motion.div
                 key={step.title}
                 variants={fadeUp}
-                className="relative flex flex-col items-center text-center rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm p-8"
+                className="relative flex flex-col items-center text-center rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm p-8 mt-4"
               >
                 {/* Step number badge */}
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white text-xs font-bold shadow-md">

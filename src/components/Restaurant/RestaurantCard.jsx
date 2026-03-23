@@ -93,8 +93,8 @@ export default function RestaurantCard({
         )}
         {/* Discount badge */}
         {hasDiscount && (
-          <div className="absolute bottom-1 left-1 z-10 rounded bg-accent px-1.5 py-0.5">
-            <span className="text-[10px] font-bold text-white">🏷️ {t('discount.badge')}</span>
+          <div className="absolute top-1.5 left-1.5 z-10 rounded-lg bg-accent/90 px-2 py-0.5 shadow-sm">
+            <span className="text-[11px] font-bold text-white">{t('discount.badge')}</span>
           </div>
         )}
         {/* Heart save button */}

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -64,6 +64,17 @@ export default function AdminDashboard() {
   const [sortCol, setSortCol] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
   const [deleteId, setDeleteId] = useState(null)
+  const [searchParams] = useSearchParams()
+  const restaurantTableRef = useRef(null)
+
+  // Scroll to restaurants table if ?section=restaurants
+  useEffect(() => {
+    if (searchParams.get('section') === 'restaurants' && restaurantTableRef.current) {
+      setTimeout(() => {
+        restaurantTableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 300)
+    }
+  }, [searchParams, dataLoading])
 
   // Stats
   const stats = useMemo(() => {
@@ -298,10 +309,11 @@ export default function AdminDashboard() {
 
       {/* Search */}
       <motion.div
+        ref={restaurantTableRef}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mb-4"
+        className="mb-4 scroll-mt-20"
       >
         <div className="relative max-w-md">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />

@@ -196,8 +196,11 @@ function DashboardView({ pin }) {
 
 export default function VerifyPage() {
   const [searchParams] = useSearchParams()
-  const code = searchParams.get('code') || ''
+  const codeFromUrl = searchParams.get('code') || ''
   const pinParam = searchParams.get('pin') || ''
+
+  const [manualCode, setManualCode] = useState('')
+  const code = codeFromUrl || manualCode
 
   const [pin, setPin] = useState(() => {
     // Try localStorage first
@@ -206,7 +209,7 @@ export default function VerifyPage() {
   const [preview, setPreview] = useState(null)
   const [result, setResult] = useState(null)
   const [verifying, setVerifying] = useState(false)
-  const [showDashboard, setShowDashboard] = useState(!code && !!pinParam)
+  const [showDashboard, setShowDashboard] = useState(!codeFromUrl && !!pinParam)
 
   // Fetch preview when code is present
   useEffect(() => {
@@ -214,6 +217,12 @@ export default function VerifyPage() {
       fetchQRPreview(code).then(setPreview)
     }
   }, [code])
+
+  const handleManualCodeSubmit = () => {
+    if (manualCode.trim()) {
+      fetchQRPreview(manualCode.trim()).then(setPreview)
+    }
+  }
 
   const handleVerify = async () => {
     if (pin.length !== 6 || !code) return
@@ -286,6 +295,32 @@ export default function VerifyPage() {
                   Validazione Sconto
                 </h2>
 
+                {/* Manual code input when no URL code */}
+                {!codeFromUrl && !preview && !result && (
+                  <div className="mb-5">
+                    <p className="text-sm text-secondary text-center mb-3">
+                      Inserisci il codice sconto
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={manualCode}
+                        onChange={(e) => setManualCode(e.target.value)}
+                        placeholder="Es. BiSc-abc123"
+                        className="flex-1 px-3 py-2.5 rounded-xl border-2 border-gray-200 bg-white text-sm text-primary focus:border-accent focus:outline-none transition-colors"
+                      />
+                      <motion.button
+                        onClick={handleManualCodeSubmit}
+                        disabled={!manualCode.trim()}
+                        className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Cerca
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Preview */}
                 {preview && !result && (
                   <motion.div
@@ -316,8 +351,8 @@ export default function VerifyPage() {
                 {/* Result */}
                 {result && <VerifyResult result={result} />}
 
-                {/* PIN input */}
-                {!result && (
+                {/* PIN input — hidden if QR already redeemed */}
+                {!result && !(preview?.status === 'redeemed') && (
                   <>
                     <div className="mb-4">
                       <p className="text-sm text-secondary text-center mb-3">

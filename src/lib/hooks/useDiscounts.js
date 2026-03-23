@@ -295,7 +295,7 @@ export async function fetchQRPreview(qrCode) {
       .select('full_name')
       .eq('id', data.user_id)
       .single()
-    data.user = profile || { full_name: 'Utente' }
+    data.user = { full_name: profile?.full_name || 'Utente' }
   }
 
   return data || null
