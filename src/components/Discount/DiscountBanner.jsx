@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import QRCodeDisplay from './QRCodeDisplay'
 
 export default function DiscountBanner({ restaurantId }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { discount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
@@ -35,8 +37,12 @@ export default function DiscountBanner({ restaurantId }) {
     setGenerating(true)
     setError(null)
     try {
-      await generateRedemption()
-      setShowQR(true)
+      const result = await generateRedemption()
+      if (result) {
+        setShowQR(true)
+      } else {
+        setError('Errore nello sblocco. Riprova.')
+      }
     } catch (err) {
       setError('Errore nello sblocco. Riprova.')
     } finally {
@@ -77,7 +83,7 @@ export default function DiscountBanner({ restaurantId }) {
             <span className="text-2xl">{isRedeemed ? '✅' : '🎁'}</span>
             <div className="flex-1">
               <h3 className="text-sm font-bold text-primary">
-                {isRedeemed ? 'Sconto utilizzato' : 'Sconto esclusivo ChiamamiBi'}
+                {isRedeemed ? t('discount.used') : t('discount.exclusive')}
               </h3>
               <p
                 className={`text-lg font-bold mt-0.5 ${
@@ -101,7 +107,7 @@ export default function DiscountBanner({ restaurantId }) {
 
           {/* Valid until */}
           <p className="text-xs text-secondary mb-4 pl-9">
-            Valido fino al {validUntil}
+            {t('discount.validUntil')} {validUntil}
           </p>
 
           {/* State: Not logged in - blurred teaser */}
@@ -110,7 +116,7 @@ export default function DiscountBanner({ restaurantId }) {
               {/* Blur overlay */}
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/60 backdrop-blur-sm">
                 <p className="text-sm font-semibold text-primary mb-2">
-                  Registrati per sbloccare
+                  {t('discount.registerToUnlock')}
                 </p>
                 <motion.button
                   onClick={() =>
@@ -121,7 +127,7 @@ export default function DiscountBanner({ restaurantId }) {
                   className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm"
                   whileTap={{ scale: 0.95 }}
                 >
-                  Registrati gratis
+                  {t('discount.registerFree')}
                 </motion.button>
               </div>
               {/* Blurred content behind */}
@@ -142,7 +148,7 @@ export default function DiscountBanner({ restaurantId }) {
               whileTap={{ scale: 0.97 }}
               whileHover={{ scale: 1.01 }}
             >
-              {generating ? 'Generazione in corso...' : '🔓 Sblocca sconto'}
+              {generating ? t('discount.generating') : `🔓 ${t('discount.unlock')}`}
             </motion.button>
           )}
 
@@ -154,10 +160,10 @@ export default function DiscountBanner({ restaurantId }) {
                 className="w-full rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm"
                 whileTap={{ scale: 0.97 }}
               >
-                📱 Mostra QR al ristorante
+                📱 {t('discount.showQR')}
               </motion.button>
               <p className="text-xs text-center text-secondary">
-                Vai al <button onClick={() => navigate('/profile')} className="text-accent underline">profilo</button> per rivederlo
+                {t('discount.goToProfile')}
               </p>
             </div>
           )}
@@ -166,8 +172,8 @@ export default function DiscountBanner({ restaurantId }) {
           {user && isRedeemed && !loading && (
             <div className="rounded-xl bg-gray-100 px-4 py-3 text-center">
               <p className="text-sm text-secondary">
-                Hai già utilizzato questo sconto il{' '}
-                {new Date(redemption.redeemed_at).toLocaleDateString('it-IT')}
+                {t('discount.alreadyUsed')}{' '}
+                {new Date(redemption.redeemed_at).toLocaleDateString()}
               </p>
             </div>
           )}

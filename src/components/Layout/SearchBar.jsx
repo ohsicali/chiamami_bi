@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 const SearchIcon = ({ focused }) => (
   <motion.svg
@@ -37,6 +38,7 @@ const ClearIcon = () => (
 )
 
 export default function SearchBar({ value, onChange, onFocus, onBlur }) {
+  const { t } = useTranslation()
   const [focused, setFocused] = useState(false)
   const inputRef = useRef(null)
 
@@ -77,7 +79,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
         onChange={(e) => onChange?.(e.target.value)}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        placeholder="Cerca ristoranti..."
+        placeholder={t('home.search')}
         className="flex-1 bg-transparent text-[15px] text-primary placeholder:text-secondary outline-none"
         style={{ fontFamily: "var(--font-sans, 'Plus Jakarta Sans', sans-serif)" }}
         autoComplete="off"

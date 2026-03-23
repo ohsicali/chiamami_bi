@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Badge from '../UI/Badge'
 import SaveButton from './SaveButton'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -27,6 +28,7 @@ export default function RestaurantCard({
   onSaveToggle,
   hasDiscount,
 }) {
+  const { t } = useTranslation()
   const [imageLoaded, setImageLoaded] = useState(false)
 
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
@@ -92,7 +94,7 @@ export default function RestaurantCard({
         {/* Discount badge */}
         {hasDiscount && (
           <div className="absolute bottom-1 left-1 z-10 rounded bg-accent px-1.5 py-0.5">
-            <span className="text-[10px] font-bold text-white">🏷️ Sconto</span>
+            <span className="text-[10px] font-bold text-white">🏷️ {t('discount.badge')}</span>
           </div>
         )}
         {/* Heart save button */}

@@ -114,6 +114,28 @@
     "hasAccount": "Déjà un compte ?",
     "createAccount": "Créer un compte"
   },
+  "share": {
+    "title": "Partager",
+    "shareRestaurant": "Partager le restaurant",
+    "shareText": "Découvrez {{name}} sur ChiamamiBi !",
+    "copied": "Lien copié !"
+  },
+  "tiktok": {
+    "watchTiktok": "Voir sur TikTok"
+  },
+  "recommended": {
+    "recommendedFor": "Recommandé pour"
+  },
+  "newsletter": {
+    "title": "Restez informé",
+    "subtitle": "Abonnez-vous à notre newsletter pour les nouveaux restaurants et offres exclusives",
+    "placeholder": "Votre email",
+    "subscribe": "S'abonner",
+    "subscribing": "Inscription...",
+    "success": "Abonné ! Vérifiez votre email.",
+    "error": "Erreur. Réessayez.",
+    "alreadySubscribed": "Cet email est déjà inscrit."
+  },
   "about": {
     "title": "Qui est Bi",
     "story": "L'histoire",

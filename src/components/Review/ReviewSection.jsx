@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useRestaurantReviews, useUserReview } from '../../lib/hooks/useReviews'
 import { useAuth } from '../../lib/hooks/useAuth'
 import ReviewCard from './ReviewCard'
 import ReviewForm from './ReviewForm'
 
 export default function ReviewSection({ restaurantId }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { reviews, loading, refetch } = useRestaurantReviews(restaurantId)
@@ -21,11 +23,11 @@ export default function ReviewSection({ restaurantId }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold text-primary">
-          La community dice
+          {t('restaurant.communityReviews')}
         </h2>
         {reviews.length > 0 && (
           <span className="text-xs text-secondary">
-            {reviews.length} recension{reviews.length === 1 ? 'e' : 'i'}
+            {reviews.length} {reviews.length === 1 ? t('restaurant.review') : t('restaurant.reviews')}
           </span>
         )}
       </div>
@@ -44,7 +46,7 @@ export default function ReviewSection({ restaurantId }) {
           className="rounded-xl bg-accent/10 py-3 text-sm font-semibold text-accent"
           whileTap={{ scale: 0.97 }}
         >
-          Registrati per lasciare una recensione
+          {t('restaurant.registerToReview')}
         </motion.button>
       )}
 
@@ -61,7 +63,7 @@ export default function ReviewSection({ restaurantId }) {
       {!loading && reviews.length === 0 && (
         <div className="rounded-xl bg-card/40 p-6 text-center">
           <p className="text-sm text-secondary">
-            Nessuno ha ancora detto la sua! Sei stato qui? Sii il primo a raccontarlo
+            {t('restaurant.noReviews')}
           </p>
         </div>
       )}
@@ -77,7 +79,7 @@ export default function ReviewSection({ restaurantId }) {
               onClick={() => setShowAll(true)}
               className="text-sm font-medium text-accent text-center py-2"
             >
-              Mostra tutte ({reviews.length})
+              {t('restaurant.showAll')} ({reviews.length})
             </button>
           )}
         </div>

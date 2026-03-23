@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { submitReview, compressImage } from '../../lib/hooks/useReviews'
 
 export default function ReviewForm({ restaurantId, userId, existingReview, onSubmitted }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState(existingReview?.comment || '')
   const [photos, setPhotos] = useState([])
@@ -59,7 +61,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
       setPreviews([])
       onSubmitted?.()
     } catch (err) {
-      setError('Errore nell\'invio. Riprova.')
+      setError(t('restaurant.submitError'))
     } finally {
       setSubmitting(false)
     }
@@ -74,7 +76,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
         animate={{ opacity: 1, scale: 1 }}
       >
         <p className="text-sm font-semibold text-green-700">
-          {existingReview ? 'Recensione aggiornata!' : 'Recensione pubblicata!'}
+          {existingReview ? t('restaurant.reviewUpdated') : t('restaurant.reviewPublished')}
         </p>
       </motion.div>
     )
@@ -89,7 +91,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
           className="w-full rounded-xl bg-accent/10 py-3 text-sm font-semibold text-accent"
           whileTap={{ scale: 0.97 }}
         >
-          {existingReview ? '✏️ Modifica la tua recensione' : '💬 Ci sei stato? Racconta!'}
+          {existingReview ? `✏️ ${t('restaurant.editReview')}` : `💬 ${t('restaurant.writeReview')}`}
         </motion.button>
       )}
 
@@ -107,7 +109,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
               <textarea
                 value={comment}
                 onChange={e => setComment(e.target.value.slice(0, maxChars))}
-                placeholder="Racconta la tua esperienza..."
+                placeholder={t('restaurant.tellYourExperience')}
                 rows={3}
                 className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-primary resize-none focus:border-accent focus:outline-none"
               />
@@ -156,7 +158,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
                     onClick={() => fileInputRef.current?.click()}
                     className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-secondary"
                   >
-                    📷 Foto
+                    📷 {t('restaurant.photo')}
                   </button>
                 </>
               )}
@@ -168,7 +170,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
                 onClick={() => { setOpen(false); setComment(existingReview?.comment || ''); setPhotos([]); setPreviews([]) }}
                 className="rounded-lg px-3 py-2 text-xs font-medium text-secondary"
               >
-                Annulla
+                {t('restaurant.cancel')}
               </button>
 
               {/* Submit */}
@@ -178,7 +180,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
                 className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
                 whileTap={{ scale: 0.95 }}
               >
-                {submitting ? '...' : 'Pubblica'}
+                {submitting ? '...' : t('restaurant.publish')}
               </motion.button>
             </div>
 

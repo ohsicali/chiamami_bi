@@ -55,6 +55,8 @@ const MOCK_RESTAURANTS = [
     our_rating: 4.5,
     our_review: 'Un angolo di tradizione piemontese autentica. Gli agnolotti del plin sono i migliori che abbia provato a Torino — fatti a mano ogni giorno. L\'atmosfera è calda e familiare, il personale ti fa sentire a casa.',
     our_tip: 'Provate gli agnolotti del plin con il sugo d\'arrosto. E non perdetevi il bunet!',
+    recommended_for: ['Cena romantica', 'Famiglia', 'Tradizione'],
+    tiktok_url: null,
     is_published: true,
     created_at: '2025-06-15T10:00:00Z',
     updated_at: '2025-12-01T10:00:00Z',
@@ -82,6 +84,8 @@ const MOCK_RESTAURANTS = [
     our_rating: 4.0,
     our_review: 'Il sushi più fresco di Torino, preparato da veri chef giapponesi. L\'omakase è un\'esperienza: ti affidi allo chef e ogni pezzo è una sorpresa. Il locale è piccolo e intimo, perfetto per una serata speciale.',
     our_tip: 'L\'omakase va prenotato con anticipo. Sedetevi al bancone per vedere lo chef al lavoro!',
+    recommended_for: ['Appuntamento', 'Esperienza unica'],
+    tiktok_url: null,
     is_published: true,
     created_at: '2025-07-01T10:00:00Z',
     updated_at: '2025-11-15T10:00:00Z',
@@ -416,8 +420,9 @@ export function useRestaurants(userPosition = null) {
       const q = searchQuery.toLowerCase().trim()
       result = result.filter(r =>
         r.name.toLowerCase().includes(q) ||
-        r.cuisine_type.toLowerCase().includes(q) ||
-        (r.category || []).some(c => c.toLowerCase().includes(q))
+        r.cuisine_type?.toLowerCase().includes(q) ||
+        (r.category || []).some(c => c.toLowerCase().includes(q)) ||
+        (r.recommended_for || []).some(tag => tag.toLowerCase().includes(q))
       )
     }
 

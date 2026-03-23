@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import MapView from '../../components/Map/MapView'
 import MapControls from '../../components/Map/MapControls'
 import BottomSheet, { SNAP_PEEK, SNAP_HALF, SNAP_FULL } from '../../components/Layout/BottomSheet'
@@ -13,6 +14,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
+import NewsletterForm from '../../components/Newsletter/NewsletterForm'
 
 function slugify(name) {
   return name
@@ -27,6 +29,7 @@ function slugify(name) {
 }
 
 export default function HomePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { position, loading: geoLoading, locate } = useGeolocation()
   const { user } = useAuth()
@@ -114,6 +117,7 @@ export default function HomePage() {
         selectedId={selectedId}
         onSelectRestaurant={handlePinSelect}
         userPosition={position}
+        savedIds={savedIds}
         className="absolute inset-0"
       />
 
@@ -159,7 +163,7 @@ export default function HomePage() {
           ) : (
             <p className="text-sm font-medium text-secondary">
               {displayedRestaurants.length}{' '}
-              {displayedRestaurants.length === 1 ? 'ristorante' : 'ristoranti'}
+              {displayedRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
             </p>
           )}
         </div>
@@ -175,10 +179,10 @@ export default function HomePage() {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-3 text-4xl">🔍</div>
             <p className="text-base font-semibold text-primary">
-              Nessun ristorante trovato
+              {t('home.noResults')}
             </p>
             <p className="mt-1 text-sm text-secondary">
-              Prova a cambiare i filtri o la ricerca
+              {t('home.changeFilters')}
             </p>
           </div>
         ) : (
@@ -196,6 +200,10 @@ export default function HomePage() {
                 />
               </div>
             ))}
+            {/* Newsletter form at the bottom of the list */}
+            <div className="mt-4">
+              <NewsletterForm />
+            </div>
           </div>
         )}
       </BottomSheet>

@@ -1,5 +1,6 @@
 import { motion, useAnimate } from 'framer-motion'
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
 import SaveButton from './SaveButton'
@@ -7,6 +8,50 @@ import DiscountBanner from '../Discount/DiscountBanner'
 import ReviewSection from '../Review/ReviewSection'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+
+function ShareButton({ restaurant, t }) {
+  const [copied, setCopied] = useState(false)
+  const shareUrl = `${window.location.origin}/restaurant/${restaurant.slug || restaurant.id}`
+
+  const handleShare = async () => {
+    const shareData = {
+      title: restaurant.name,
+      text: t('share.shareText', { name: restaurant.name }),
+      url: shareUrl,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch {
+        // User cancelled share
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <motion.button
+      onClick={handleShare}
+      className="flex items-center justify-center gap-2 rounded-2xl bg-card px-5 py-3.5 font-sans text-sm font-semibold text-primary shadow-sm border border-gray-200 dark:border-gray-700"
+      variants={itemVariants}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+      </svg>
+      {copied ? t('share.copied') : t('share.shareRestaurant')}
+    </motion.button>
+  )
+}
 
 const contentVariants = {
   hidden: {},
@@ -35,6 +80,7 @@ export default function RestaurantSheet({
   saved,
   onSaveToggle,
 }) {
+  const { t } = useTranslation()
   const scrollRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
   const [sheetScope, animateSheet] = useAnimate()
@@ -170,6 +216,28 @@ export default function RestaurantSheet({
               )}
             </motion.div>
 
+            {/* Recommended for tags */}
+            {restaurant.recommended_for && restaurant.recommended_for.length > 0 && (
+              <motion.div
+                className="flex flex-col gap-2"
+                variants={itemVariants}
+              >
+                <h2 className="font-display text-sm font-semibold text-secondary">
+                  {t('recommended.recommendedFor')}
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {restaurant.recommended_for.map(tag => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-amber-50 dark:bg-amber-950 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* La recensione di Bi */}
             {reviewText && (
               <motion.div
@@ -177,7 +245,7 @@ export default function RestaurantSheet({
                 variants={itemVariants}
               >
                 <h2 className="font-display text-lg font-semibold text-primary">
-                  La recensione di Bi
+                  {t('restaurant.reviewByBi')}
                 </h2>
                 <div className="rounded-2xl bg-card p-4 shadow-sm">
                   <p className="text-sm leading-relaxed text-secondary">
@@ -194,7 +262,7 @@ export default function RestaurantSheet({
                 variants={itemVariants}
               >
                 <h2 className="font-display text-lg font-semibold text-primary">
-                  I suggerimenti di Bi
+                  {t('restaurant.tipsByBi')}
                 </h2>
                 <div
                   className="rounded-2xl px-4 py-3.5"
@@ -218,7 +286,7 @@ export default function RestaurantSheet({
               variants={itemVariants}
             >
               <h2 className="font-display text-lg font-semibold text-primary">
-                Info
+                {t('restaurant.info')}
               </h2>
 
               <div className="flex flex-col gap-2.5 rounded-2xl bg-card p-4 shadow-sm">
@@ -294,7 +362,26 @@ export default function RestaurantSheet({
                       </svg>
                     </span>
                     <span className="text-sm text-pink-500 underline">
-                      Guarda il reel
+                      {t('restaurant.watchReel')}
+                    </span>
+                  </a>
+                )}
+
+                {/* TikTok */}
+                {restaurant.tiktok_url && (
+                  <a
+                    href={restaurant.tiktok_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3"
+                  >
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-white">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48V13a8.28 8.28 0 005.58 2.17v-3.44a4.85 4.85 0 01-3.77-1.64V6.69h3.77z"/>
+                      </svg>
+                    </span>
+                    <span className="text-sm text-gray-900 dark:text-gray-100 underline">
+                      {t('tiktok.watchTiktok')}
                     </span>
                   </a>
                 )}
@@ -316,9 +403,12 @@ export default function RestaurantSheet({
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                Apri in Google Maps
+                {t('restaurant.openInMaps')}
               </motion.a>
             )}
+
+            {/* Share button */}
+            <ShareButton restaurant={restaurant} t={t} />
 
             {/* Community reviews */}
             <motion.div variants={itemVariants}>

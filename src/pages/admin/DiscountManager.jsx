@@ -13,6 +13,7 @@ export default function DiscountManager() {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
   const [form, setForm] = useState({
     restaurant_id: '',
@@ -93,6 +94,7 @@ export default function DiscountManager() {
     if (!form.restaurant_id || !form.title || !form.discount_value || !form.valid_until) return
 
     setSaving(true)
+    setSaveError(null)
     const payload = {
       restaurant_id: form.restaurant_id,
       title: form.title,
@@ -111,6 +113,12 @@ export default function DiscountManager() {
       result = await supabase.from('discounts').update(payload).eq('id', editing).select('*, restaurant:restaurants(id, name)').single()
     } else {
       result = await supabase.from('discounts').insert(payload).select('*, restaurant:restaurants(id, name)').single()
+    }
+
+    if (result.error) {
+      setSaveError(result.error.message || 'Errore nel salvataggio. Riprova.')
+      setSaving(false)
+      return
     }
 
     if (result.data) {
@@ -296,10 +304,15 @@ export default function DiscountManager() {
                   <span className="text-sm text-primary">Attivo</span>
                 </label>
 
+                {/* Error */}
+                {saveError && (
+                  <p className="text-xs text-red-500">{saveError}</p>
+                )}
+
                 {/* Buttons */}
                 <div className="flex gap-3 pt-2">
                   <button
-                    onClick={() => { setShowForm(false); resetForm() }}
+                    onClick={() => { setShowForm(false); resetForm(); setSaveError(null) }}
                     className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-secondary"
                   >
                     Annulla

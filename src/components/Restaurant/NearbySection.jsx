@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import RatingStars from './RatingStars'
 import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -107,12 +108,14 @@ export default function NearbySection({
       .slice(0, 4)
   }, [currentRestaurant, allRestaurants])
 
+  const { t } = useTranslation()
+
   if (nearby.length === 0) return null
 
   return (
     <div className="flex flex-col gap-3">
       <h3 className="font-display text-lg font-semibold text-primary">
-        Ristoranti vicini
+        {t('restaurant.nearby')}
       </h3>
 
       <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none">

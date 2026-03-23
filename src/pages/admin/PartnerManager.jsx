@@ -45,9 +45,12 @@ export default function PartnerManager() {
     })
   }, [])
 
+  const [addError, setAddError] = useState(null)
+
   const handleAdd = async () => {
     if (!selectedRestaurant) return
     setAdding(true)
+    setAddError(null)
 
     const pin = generatePin()
     const { data, error } = await supabase
@@ -59,6 +62,12 @@ export default function PartnerManager() {
       })
       .select('*, restaurant:restaurants(id, name)')
       .single()
+
+    if (error) {
+      setAddError(error.message || 'Errore durante l\'aggiunta. Riprova.')
+      setAdding(false)
+      return
+    }
 
     if (data) {
       setPartners(prev => [data, ...prev])
@@ -141,6 +150,9 @@ export default function PartnerManager() {
             {adding ? '...' : 'Aggiungi'}
           </motion.button>
         </div>
+        {addError && (
+          <p className="text-xs text-red-500 mt-2">{addError}</p>
+        )}
       </div>
 
       {/* Partners list */}
@@ -149,8 +161,8 @@ export default function PartnerManager() {
           <div key={p.id} className="rounded-2xl bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-primary truncate">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold text-primary">
                     {p.restaurant?.name || 'Ristorante'}
                   </h3>
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${

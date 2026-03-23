@@ -13,7 +13,7 @@ function getCategoryInfo(cuisineType) {
   return cat || { emoji: '🍴', color: '#9CA3AF' }
 }
 
-function createPinElement(restaurant) {
+function createPinElement(restaurant, isSaved) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
   const { emoji, color } = getCategoryInfo(primaryType)
 
@@ -35,9 +35,32 @@ function createPinElement(restaurant) {
     user-select: none;
     z-index: 1;
     pointer-events: auto;
+    position: relative;
   `
 
   el.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
+
+  if (isSaved) {
+    const heart = document.createElement('span')
+    heart.style.cssText = `
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      background: #FF5757;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      line-height: 1;
+      border: 1.5px solid #fff;
+      pointer-events: none;
+    `
+    heart.textContent = '❤️'
+    el.appendChild(heart)
+  }
 
   return el
 }
@@ -218,6 +241,7 @@ const MapView = forwardRef(function MapView({
   selectedId,
   onSelectRestaurant,
   userPosition,
+  savedIds,
   className,
 }, ref) {
   const mapContainer = useRef(null)
@@ -229,6 +253,8 @@ const MapView = forwardRef(function MapView({
   onSelectRef.current = onSelectRestaurant
   const restaurantsRef = useRef(restaurants)
   restaurantsRef.current = restaurants
+  const savedIdsRef = useRef(savedIds)
+  savedIdsRef.current = savedIds
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => map.current?.zoomIn({ duration: 300 }),
@@ -288,9 +314,10 @@ const MapView = forwardRef(function MapView({
         if (rests?.length) {
           markers.current.forEach(({ marker }) => marker.remove())
           markers.current = []
+          const sIds = savedIdsRef.current
           rests.forEach((r) => {
             if (!r.latitude || !r.longitude) return
-            const el = createPinElement(r)
+            const el = createPinElement(r, sIds?.has(r.id))
             el.addEventListener('click', (e) => { e.stopPropagation(); onSelectRef.current?.(r.id) })
             el.addEventListener('touchend', (e) => { e.stopPropagation(); onSelectRef.current?.(r.id) }, { passive: true })
             const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
@@ -314,7 +341,7 @@ const MapView = forwardRef(function MapView({
     }
   }, [token])
 
-  // Create/update markers when restaurants change
+  // Create/update markers when restaurants or savedIds change
   useEffect(() => {
     if (!map.current || !restaurants?.length) return
 
@@ -327,7 +354,7 @@ const MapView = forwardRef(function MapView({
       restaurants.forEach((r) => {
         if (!r.latitude || !r.longitude) return
 
-        const el = createPinElement(r)
+        const el = createPinElement(r, savedIds?.has(r.id))
 
         el.addEventListener('click', (e) => {
           e.stopPropagation()
@@ -353,7 +380,7 @@ const MapView = forwardRef(function MapView({
     } else {
       map.current.on('load', createMarkers)
     }
-  }, [restaurants])
+  }, [restaurants, savedIds])
 
   // Update selected marker styles when selectedId changes
   useEffect(() => {

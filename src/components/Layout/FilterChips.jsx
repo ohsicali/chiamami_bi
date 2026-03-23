@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
 export default function FilterChips({ filters, onFilterChange, onNearbyClick, user, showSavedOnly, onToggleSaved, savedCount = 0, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
+  const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
 
   // Support multi-category as array
@@ -113,7 +115,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
               <line x1="2" y1="12" x2="6" y2="12" />
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
-            <span>Nelle vicinanze</span>
+            <span>{t('home.nearby')}</span>
           </button>
         )}
 
@@ -134,7 +136,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showSavedOnly ? '#fff' : 'none'} stroke="currentColor" strokeWidth={2}>
               <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
             </svg>
-            <span>Salvati{savedCount > 0 ? ` (${savedCount})` : ''}</span>
+            <span>{t('home.saved')}{savedCount > 0 ? ` (${savedCount})` : ''}</span>
           </button>
         )}
 
@@ -152,7 +154,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
               WebkitBackdropFilter: showDealsOnly ? 'none' : 'blur(8px)',
             }}
           >
-            🏷️ Scontati{dealsCount > 0 ? ` (${dealsCount})` : ''}
+            🏷️ {t('home.discounted')}{dealsCount > 0 ? ` (${dealsCount})` : ''}
           </button>
         )}
 
@@ -169,7 +171,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
             WebkitBackdropFilter: selected.length ? 'none' : 'blur(8px)',
           }}
         >
-          <span>{selected.length ? `Tipo di locale (${selected.length})` : 'Tipo di locale'}</span>
+          <span>{selected.length ? `${t('home.localeType')} (${selected.length})` : t('home.localeType')}</span>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
@@ -220,7 +222,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tipo di locale</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('home.localeType')}</h3>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
@@ -254,7 +256,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                       <span className={`text-xs font-medium text-center leading-tight ${
                         !selected.length ? 'text-[#FF5757]' : 'text-gray-900 dark:text-gray-100'
                       }`}>
-                        Tutti
+                        {t('home.all')}
                       </span>
                     </button>
 
@@ -293,7 +295,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                     onClick={() => setModalOpen(false)}
                     className="w-full py-3 rounded-xl bg-[#FF5757] text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
                   >
-                    {selected.length > 0 ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})` : 'Mostra tutti'}
+                    {selected.length > 0 ? `${selected.length} ${t('home.localeType')}` : t('home.all')}
                   </button>
                 </div>
               </motion.div>
