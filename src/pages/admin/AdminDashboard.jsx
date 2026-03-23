@@ -6,6 +6,7 @@ import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hook
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
 import { LogoFull } from '../../components/UI/Logo'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 /* ------------------------------------------------------------------ */
 /*  Animated counter component                                         */
@@ -230,6 +231,45 @@ export default function AdminDashboard() {
     return { total, published, drafts, cities }
   }, [restaurants])
 
+  // Chart data — mock weekly registrations over last 8 weeks
+  const registrationData = useMemo(() => {
+    const weeks = []
+    const now = new Date()
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i * 7)
+      weeks.push({
+        week: d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+        utenti: Math.floor(Math.random() * 40) + 10 + i * 3,
+        ristoranti: Math.floor(Math.random() * 5) + (i < 3 ? 2 : 0),
+      })
+    }
+    return weeks
+  }, [])
+
+  // Top restaurants by category
+  const topCategoriesData = useMemo(() => {
+    const counts = {}
+    restaurants.forEach(r => {
+      const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+      cats.forEach(c => { counts[c] = (counts[c] || 0) + 1 })
+    })
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, count]) => ({ name, count }))
+  }, [restaurants])
+
+  // Recent activity feed — mock data
+  const activityFeed = useMemo(() => [
+    { id: 1, type: 'restaurant', text: 'Nuovo ristorante aggiunto: Trattoria del Borgo', time: '2 ore fa', icon: '🍽️' },
+    { id: 2, type: 'review', text: 'Nuova recensione su Pizzeria Bella Napoli', time: '3 ore fa', icon: '⭐' },
+    { id: 3, type: 'partner', text: 'Nuova candidatura partner: Osteria del Centro', time: '5 ore fa', icon: '🤝' },
+    { id: 4, type: 'discount', text: 'Sconto riscattato: 10% da Sushi Zen', time: '6 ore fa', icon: '🎟️' },
+    { id: 5, type: 'newsletter', text: '3 nuovi iscritti alla newsletter', time: '8 ore fa', icon: '📬' },
+    { id: 6, type: 'restaurant', text: 'Ristorante aggiornato: Café Torino', time: '1 giorno fa', icon: '✏️' },
+  ], [])
+
   // Filtered + sorted
   const rows = useMemo(() => {
     let result = [...restaurants]
@@ -350,11 +390,74 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Registrations line chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+          className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
+        >
+          <h3 className="text-sm font-semibold text-primary mb-4">Registrazioni settimanali</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={registrationData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+              <Line type="monotone" dataKey="utenti" stroke="#FF5757" strokeWidth={2} dot={{ r: 3 }} name="Utenti" />
+              <Line type="monotone" dataKey="ristoranti" stroke="#6366F1" strokeWidth={2} dot={{ r: 3 }} name="Ristoranti" />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Top categories bar chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+          className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
+        >
+          <h3 className="text-sm font-semibold text-primary mb-4">Top categorie</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={topCategoriesData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis type="number" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9ca3af" width={90} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+              <Bar dataKey="count" fill="#FF5757" radius={[0, 6, 6, 0]} name="Ristoranti" />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* Recent activity feed */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
+        className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
+      >
+        <h3 className="text-sm font-semibold text-primary mb-4">Attivita recente</h3>
+        <div className="space-y-3">
+          {activityFeed.map(item => (
+            <div key={item.id} className="flex items-start gap-3">
+              <span className="text-lg flex-shrink-0 mt-0.5">{item.icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-primary">{item.text}</p>
+                <p className="text-xs text-secondary">{item.time}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Search */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.35 }}
+        transition={{ delay: 0.5 }}
         className="mb-4"
       >
         <div className="relative max-w-md">
