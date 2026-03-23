@@ -1,6 +1,18 @@
-import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle, useSyncExternalStore } from 'react'
 import { motion, useMotionValue, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
+
+function subscribeDark(cb) {
+  const mo = new MutationObserver(cb)
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  return () => mo.disconnect()
+}
+function getDark() {
+  return document.documentElement.classList.contains('dark')
+}
+function useIsDark() {
+  return useSyncExternalStore(subscribeDark, getDark)
+}
 
 export const SNAP_PEEK = 0
 export const SNAP_HALF = 1
@@ -34,6 +46,7 @@ function closestSnap(val, points) {
 }
 
 const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, ref) {
+  const isDark = useIsDark()
   const [snapIndex, setSnapIndex] = useState(SNAP_PEEK)
   const [snapHeights, setSnapHeights] = useState(getSnapHeights)
   const sheetHeight = useMotionValue(snapHeights[SNAP_PEEK])
@@ -155,10 +168,12 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         right: SIDE_MARGIN,
         zIndex: 30,
         borderRadius: 22,
-        background: 'rgba(255, 255, 255, 0.88)',
+        background: isDark ? 'rgba(28, 28, 30, 0.92)' : 'rgba(255, 255, 255, 0.88)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
-        boxShadow: '0 2px 28px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)',
+        boxShadow: isDark
+          ? '0 2px 28px rgba(0, 0, 0, 0.4), 0 0 1px rgba(0, 0, 0, 0.2)'
+          : '0 2px 28px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)',
         overflow: 'hidden',
       }}
     >
@@ -170,7 +185,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
             width: 36,
             height: 5,
             borderRadius: 2.5,
-            background: 'rgba(0, 0, 0, 0.18)',
+            background: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.18)',
           }}
         />
       </div>

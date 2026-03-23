@@ -5,6 +5,8 @@ import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
+const MAP_STYLE_LIGHT = 'mapbox://styles/mapbox/streets-v12'
+const MAP_STYLE_DARK = 'mapbox://styles/mapbox/dark-v11'
 
 function getCategoryInfo(cuisineType) {
   const cat = CUISINE_CATEGORIES.find((c) => c.name === cuisineType)
@@ -249,9 +251,10 @@ const MapView = forwardRef(function MapView({
     ensureStyles()
     mapboxgl.accessToken = token
 
+    const isDark = document.documentElement.classList.contains('dark')
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: isDark ? MAP_STYLE_DARK : MAP_STYLE_LIGHT,
       center: TORINO_CENTER,
       zoom: 13,
       pitch: 15,
@@ -267,7 +270,41 @@ const MapView = forwardRef(function MapView({
       })
     })
 
+    // Switch map style when dark mode toggles and re-add markers
+    const observer = new MutationObserver(() => {
+      if (!map.current) return
+      const dark = document.documentElement.classList.contains('dark')
+      const newStyle = dark ? MAP_STYLE_DARK : MAP_STYLE_LIGHT
+      map.current.setStyle(newStyle)
+      map.current.once('style.load', () => {
+        // Hide POI labels
+        map.current.getStyle().layers.forEach((layer) => {
+          if (layer.id.includes('poi')) {
+            map.current.setLayoutProperty(layer.id, 'visibility', 'none')
+          }
+        })
+        // Re-add restaurant markers
+        const rests = restaurantsRef.current
+        if (rests?.length) {
+          markers.current.forEach(({ marker }) => marker.remove())
+          markers.current = []
+          rests.forEach((r) => {
+            if (!r.latitude || !r.longitude) return
+            const el = createPinElement(r)
+            el.addEventListener('click', (e) => { e.stopPropagation(); onSelectRef.current?.(r.id) })
+            el.addEventListener('touchend', (e) => { e.stopPropagation(); onSelectRef.current?.(r.id) }, { passive: true })
+            const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+              .setLngLat([r.longitude, r.latitude])
+              .addTo(map.current)
+            markers.current.push({ marker, restaurant: r, el })
+          })
+        }
+      })
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+
     return () => {
+      observer.disconnect()
       markers.current.forEach(({ marker }) => marker.remove())
       markers.current = []
       userMarker.current?.remove()

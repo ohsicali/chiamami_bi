@@ -4,4 +4,16 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/mapbox-gl')) return 'mapbox'
+          if (id.includes('node_modules/framer-motion')) return 'motion'
+          if (id.includes('node_modules/@supabase')) return 'supabase'
+          if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) return 'i18n'
+        },
+      },
+    },
+  },
 })

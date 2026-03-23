@@ -215,16 +215,16 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
+                className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#1C1C1E] rounded-t-3xl max-h-[85vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-900">Tipo di locale</h3>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tipo di locale</h3>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -246,13 +246,13 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                     >
                       <div
                         className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                          !selected.length ? 'ring-3 ring-[#FF5757] shadow-md bg-orange-50' : 'bg-gray-100'
+                          !selected.length ? 'ring-3 ring-[#FF5757] shadow-md bg-orange-50 dark:bg-orange-950' : 'bg-gray-100 dark:bg-gray-800'
                         }`}
                       >
                         🍽️
                       </div>
                       <span className={`text-xs font-medium text-center leading-tight ${
-                        !selected.length ? 'text-[#FF5757]' : 'text-gray-900'
+                        !selected.length ? 'text-[#FF5757]' : 'text-gray-900 dark:text-gray-100'
                       }`}>
                         Tutti
                       </span>
@@ -269,14 +269,14 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                         >
                           <div
                             className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                              active ? 'ring-3 shadow-md' : 'bg-gray-100'
+                              active ? 'ring-3 shadow-md' : 'bg-gray-100 dark:bg-gray-800'
                             }`}
                             style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
                           >
                             {cat.emoji}
                           </div>
                           <span className={`text-xs font-medium text-center leading-tight ${
-                            active ? 'text-[#FF5757]' : 'text-gray-900'
+                            active ? 'text-[#FF5757]' : 'text-gray-900 dark:text-gray-100'
                           }`}>
                             {cat.name}
                           </span>
@@ -287,7 +287,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                 </div>
 
                 {/* Footer */}
-                <div className="px-5 py-4 border-t border-gray-100">
+                <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700">
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}

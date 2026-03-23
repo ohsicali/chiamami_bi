@@ -1,20 +1,22 @@
 import { motion } from 'framer-motion'
 
-const BUTTON_STYLE = {
-  width: 44,
-  height: 44,
-  borderRadius: '50%',
-  background: '#fff',
-  border: 'none',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  color: '#374151',
-  fontSize: 20,
-  WebkitTapHighlightColor: 'transparent',
-  touchAction: 'manipulation',
+function getButtonStyle(isDark) {
+  return {
+    width: 44,
+    height: 44,
+    borderRadius: '50%',
+    background: isDark ? '#1C1C1E' : '#fff',
+    border: 'none',
+    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.15)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: isDark ? '#D1D5DB' : '#374151',
+    fontSize: 20,
+    WebkitTapHighlightColor: 'transparent',
+    touchAction: 'manipulation',
+  }
 }
 
 function LocateIcon() {
@@ -59,6 +61,8 @@ export default function MapControls({
   onZoomIn,
   onZoomOut,
 }) {
+  const isDark = document.documentElement.classList.contains('dark')
+  const BUTTON_STYLE = getButtonStyle(isDark)
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}

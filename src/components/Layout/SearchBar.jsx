@@ -78,7 +78,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder="Cerca ristoranti..."
-        className="flex-1 bg-transparent text-[15px] text-gray-800 placeholder:text-gray-400 outline-none"
+        className="flex-1 bg-transparent text-[15px] text-primary placeholder:text-secondary outline-none"
         style={{ fontFamily: "var(--font-sans, 'Plus Jakarta Sans', sans-serif)" }}
         autoComplete="off"
         autoCapitalize="off"
@@ -95,7 +95,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
             transition={{ duration: 0.15 }}
             onClick={handleClear}
             type="button"
-            className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200/80 text-gray-500 hover:bg-gray-300 hover:text-gray-700 transition-colors"
+            className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200/80 dark:bg-gray-700/80 text-gray-500 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 hover:text-gray-700 dark:hover:text-white transition-colors"
             aria-label="Cancella ricerca"
           >
             <ClearIcon />
