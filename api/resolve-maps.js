@@ -63,15 +63,39 @@ export default async function handler(req, res) {
     let lat = null
     let lng = null
 
+    // Extract coordinates from URL
+    const coordMatch = resolvedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    if (coordMatch) {
+      lat = parseFloat(coordMatch[1])
+      lng = parseFloat(coordMatch[2])
+    }
+
+    // Check for CID URL — use Google Place Details via CID directly
+    let cid = null
+    try {
+      const urlObj = new URL(resolvedUrl)
+      cid = cid || urlObj.searchParams.get('cid')
+      // Also check original URL for cid
+      const origObj = new URL(url)
+      cid = cid || origObj.searchParams.get('cid')
+    } catch (_) {}
+
     // Best: page title (e.g. "Gastronomia HUI WEI XIANG Crêpes Cinesi")
     if (pageTitle && pageTitle.length > 2 && !/google/i.test(pageTitle)) {
       // Clean up: remove Chinese chars, postal codes, extra metadata
       searchQuery = pageTitle
         .replace(/[\u4e00-\u9fff\u3000-\u303f]+/g, '')  // remove Chinese characters
         .replace(/邮政编码[:\s]*\d+/g, '')                  // remove "邮政编码: 10123"
-        .replace(/\d{5,}/g, '')                            // remove standalone postal codes
-        .replace(/\s{2,}/g, ' ')                           // collapse whitespace
+        .replace(/\b\d{4,6}\b/g, '')                       // remove postal codes (4-6 digits)
+        .replace(/\b(TO|MI|RM|NA|FI|BO|GE|PA|CT|BA|VE|PD)\b/g, '') // remove Italian province codes
+        .replace(/[,\s]{2,}/g, ' ')                        // collapse separators
         .trim()
+    }
+
+    // Reject searchQuery if it's empty, just numbers, or a city name
+    const commonCities = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo', 'turin', 'milan', 'rome']
+    if (searchQuery && (/^\d+$/.test(searchQuery) || commonCities.includes(searchQuery.toLowerCase()))) {
+      searchQuery = ''
     }
 
     // Try /place/Name/ pattern from URL
@@ -80,7 +104,7 @@ export default async function handler(req, res) {
       if (placeMatch) searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
     }
 
-    // Try ?q= parameter — use last comma part (restaurant name, not city)
+    // Try ?q= parameter
     if (!searchQuery) {
       try {
         const urlObj = new URL(resolvedUrl)
@@ -88,52 +112,57 @@ export default async function handler(req, res) {
         if (q) {
           const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
           const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
-          // Restaurant name is usually the last part
           searchQuery = parts.length > 1 ? parts[parts.length - 1] : decoded
         }
       } catch (_) {}
     }
 
-    // Extract coordinates
-    const coordMatch = resolvedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
-    if (coordMatch) {
-      lat = parseFloat(coordMatch[1])
-      lng = parseFloat(coordMatch[2])
-    }
-
-    if (!searchQuery && !lat) {
+    if (!searchQuery && !lat && !cid) {
       return res.status(200).json({
         error: `Impossibile estrarre dati. Prova a copiare l'URL lungo dalla barra del browser dopo aver aperto il link.`,
         debug: { resolvedUrl, pageTitle },
       })
     }
 
-    // Step 4: Search Google Places API
-    // Default location bias to Torino if no coords
+    // Step 4: Find place via Google Places API
     const locationBias = lat && lng
       ? `&locationbias=circle:500@${lat},${lng}`
       : '&locationbias=circle:30000@45.0703,7.6869'
 
-    const findRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
-    )
-    const findData = await findRes.json()
+    let placeId = null
 
-    if (findData.status !== 'OK' || !findData.candidates?.[0]?.place_id) {
+    // If we have a search query, use text search
+    if (searchQuery) {
+      const findRes = await fetch(
+        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
+      )
+      const findData = await findRes.json()
+      placeId = findData.candidates?.[0]?.place_id
+    }
+
+    // If text search failed but we have coordinates, try nearby search
+    if (!placeId && lat && lng) {
+      const nearbyRes = await fetch(
+        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=50&key=${apiKey}&language=it`
+      )
+      const nearbyData = await nearbyRes.json()
+      placeId = nearbyData.results?.[0]?.place_id
+    }
+
+    if (!placeId) {
       return res.status(200).json({
         resolved_url: resolvedUrl,
-        name: searchQuery,
+        name: searchQuery || '',
         latitude: lat,
         longitude: lng,
         address: '',
         phone: '',
         website: '',
-        warning: `Places API findplacefromtext: status=${findData.status}, error=${findData.error_message || 'none'}, query="${searchQuery}"`,
+        warning: `Nessun risultato trovato. Prova con un link Google Maps più completo.`,
       })
     }
 
     // Step 5: Get full place details
-    const placeId = findData.candidates[0].place_id
     const detailsRes = await fetch(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
     )
@@ -142,7 +171,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       resolved_url: place?.url || resolvedUrl,
-      name: place?.name || searchQuery,
+      name: place?.name || searchQuery || '',
       latitude: place?.geometry?.location?.lat ?? lat,
       longitude: place?.geometry?.location?.lng ?? lng,
       address: place?.formatted_address || '',
