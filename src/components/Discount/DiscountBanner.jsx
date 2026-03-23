@@ -41,10 +41,11 @@ export default function DiscountBanner({ restaurantId }) {
       if (result) {
         setShowQR(true)
       } else {
-        setError('Errore nello sblocco. Riprova.')
+        setError(t('discount.unlockError'))
       }
     } catch (err) {
-      setError('Errore nello sblocco. Riprova.')
+      console.error('Discount unlock error:', err)
+      setError(err?.message || t('discount.unlockError'))
     } finally {
       setGenerating(false)
     }
