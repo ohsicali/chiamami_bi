@@ -658,8 +658,13 @@ export default function RestaurantForm() {
           body: { url: mapsUrl },
         })
 
-        if (error || data?.error) {
-          addToast(data?.error || 'Errore nella risoluzione del link', 'error')
+        if (error) {
+          addToast('Errore chiamata Edge Function: ' + (error.message || error), 'error')
+          setGoogleFilling(false)
+          return
+        }
+        if (data?.error) {
+          addToast(data.error, 'error')
           setGoogleFilling(false)
           return
         }

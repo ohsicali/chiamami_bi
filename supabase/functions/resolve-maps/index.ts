@@ -5,6 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const ok = (data: object) =>
+  new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
+
 /** Follow redirects manually to get the final URL */
 async function resolveRedirects(url: string, maxRedirects = 8): Promise<string> {
   let current = url
@@ -26,33 +32,27 @@ async function resolveRedirects(url: string, maxRedirects = 8): Promise<string> 
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
     const { url } = await req.json()
-    if (!url) {
-      return new Response(JSON.stringify({ error: 'url is required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    if (!url) return ok({ error: 'url is required' })
 
     const apiKey = Deno.env.get('GOOGLE_PLACES_KEY')
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GOOGLE_PLACES_KEY secret non configurato' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    if (!apiKey) return ok({ error: 'Secret GOOGLE_PLACES_KEY non configurato su Supabase' })
 
-    // Step 1: Resolve short URL to full URL
+    // Step 1: Resolve short URL
     let resolvedUrl = url
     const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(url)
     if (isShortUrl) {
-      try { resolvedUrl = await resolveRedirects(url) } catch (_) { resolvedUrl = url }
+      try {
+        resolvedUrl = await resolveRedirects(url)
+      } catch (e) {
+        resolvedUrl = url
+      }
     }
 
-    // Step 2: Extract name and coords from the resolved URL
+    // Step 2: Extract name and coords from URL
     let name = ''
     let lat: number | null = null
     let lng: number | null = null
@@ -67,31 +67,46 @@ serve(async (req) => {
       lng = parseFloat(coordMatch[2])
     }
 
-    if (!name) {
-      return new Response(JSON.stringify({
-        error: 'Impossibile estrarre il nome dal link. Prova con un link completo di Google Maps.',
-      }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // If short URL resolution failed and we have no name/coords, return error
+    if (!name && !lat) {
+      return ok({
+        error: `Impossibile estrarre dati dal link. URL risolto: ${resolvedUrl}. Prova con un link completo di Google Maps.`,
+      })
     }
 
     // Step 3: Find place via Google Places API
+    const searchInput = name || `${lat},${lng}`
     const locationBias = lat && lng ? `&locationbias=circle:500@${lat},${lng}` : ''
     const findRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
+      `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchInput)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
     )
     const findData = await findRes.json()
-    const placeId = findData.candidates?.[0]?.place_id
 
-    if (!placeId) {
-      // Fallback: return what we already have from the URL
-      return new Response(JSON.stringify({
+    if (findData.status !== 'OK') {
+      // Places API failed — return what we have from the URL
+      return ok({
         resolved_url: resolvedUrl,
         name,
         latitude: lat,
         longitude: lng,
-        phone: '',
         address: '',
+        phone: '',
         website: '',
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        warning: `Google Places API: ${findData.status} — ${findData.error_message || ''}`,
+      })
+    }
+
+    const placeId = findData.candidates?.[0]?.place_id
+    if (!placeId) {
+      return ok({
+        resolved_url: resolvedUrl,
+        name,
+        latitude: lat,
+        longitude: lng,
+        address: '',
+        phone: '',
+        website: '',
+      })
     }
 
     // Step 4: Get full place details
@@ -101,19 +116,17 @@ serve(async (req) => {
     const detailsData = await detailsRes.json()
     const place = detailsData.result
 
-    return new Response(JSON.stringify({
+    return ok({
       resolved_url: place?.url || resolvedUrl,
       name: place?.name || name,
-      latitude: place?.geometry?.location?.lat || lat,
-      longitude: place?.geometry?.location?.lng || lng,
+      latitude: place?.geometry?.location?.lat ?? lat,
+      longitude: place?.geometry?.location?.lng ?? lng,
       address: place?.formatted_address || '',
       phone: place?.formatted_phone_number || '',
       website: place?.website || '',
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    })
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return ok({ error: `Errore interno: ${err.message}` })
   }
 })
