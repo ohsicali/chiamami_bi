@@ -628,49 +628,25 @@ export default function RestaurantForm() {
 
     setGoogleFilling(true)
     try {
-      // Step 1: Try to parse the URL directly (full URLs like google.com/maps/place/...)
-      let name = ''
-      let lat = null
-      let lng = null
-      let phone = ''
-      let resolvedUrl = mapsUrl
+      // Always call the API to get full place details (address, phone, website)
+      const res = await fetch('/api/resolve-maps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: mapsUrl }),
+      })
+      const data = await res.json()
 
-      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(mapsUrl)
-      const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
-      const coordMatch = mapsUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
-
-      if (!isShortUrl && placeMatch) {
-        // Full URL — parse directly
-        name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
-        if (coordMatch) {
-          lat = parseFloat(coordMatch[1])
-          lng = parseFloat(coordMatch[2])
-        }
-      } else {
-        // Short URL — resolve via Vercel serverless function
-        const res = await fetch('/api/resolve-maps', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: mapsUrl }),
-        })
-        const data = await res.json()
-
-        if (data?.error) {
-          addToast(data.error, 'error')
-          setGoogleFilling(false)
-          return
-        }
-
-        name = data.name || ''
-        lat = data.latitude
-        lng = data.longitude
-        phone = data.phone || ''
-        resolvedUrl = data.resolved_url || mapsUrl
-
-        if (data.address) update('address', data.address)
-        if (data.website) update('website', data.website)
-        if (data.warning) addToast(data.warning, 'error')
+      if (data?.error) {
+        addToast(data.error, 'error')
+        setGoogleFilling(false)
+        return
       }
+
+      const name = data.name || ''
+      const lat = data.latitude
+      const lng = data.longitude
+      const phone = data.phone || ''
+      const resolvedUrl = data.resolved_url || mapsUrl
 
       if (!name && !lat) {
         addToast('Impossibile estrarre dati dal link. Prova con un link completo di Google Maps.', 'error')
@@ -680,18 +656,21 @@ export default function RestaurantForm() {
 
       if (name) update('name', name)
       if (resolvedUrl !== mapsUrl) update('google_maps_url', resolvedUrl)
+      if (data.address) update('address', data.address)
+      if (data.website) update('website', data.website)
 
       if (lat && lng) {
         update('latitude', String(lat))
         update('longitude', String(lng))
         // Fallback to Mapbox reverse geocode if Google didn't return an address
-        if (!form.address) {
+        if (!data.address) {
           const address = await reverseGeocode(lat, lng)
           if (address) update('address', address)
         }
       }
 
       if (phone) update('phone', phone)
+      if (data.warning) addToast(data.warning, 'error')
 
       addToast('Dati compilati da Google Maps!', 'success')
     } catch (err) {
