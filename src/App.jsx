@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, matchPath } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
@@ -33,25 +33,30 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
+  const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
+  const isHome = location.pathname === '/' || isRestaurantDetail
+
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes location={location} key={location.pathname}>
-        {/* Public routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/restaurant/:slug" element={<RestaurantPage />} />
-        <Route path="/list" element={<ListView />} />
-        <Route path="/about" element={<AboutPage />} />
+      {/* HomePage stays mounted when viewing restaurant detail */}
+      {isHome && <HomePage />}
 
-        {/* Admin routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/restaurant/new" element={<RestaurantForm />} />
-        <Route path="/admin/restaurant/:id/edit" element={<RestaurantForm />} />
-        <Route path="/admin/categories" element={<CategoryManager />} />
+      {/* Restaurant detail overlays on top */}
+      {isRestaurantDetail && <RestaurantPage />}
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {/* Other routes replace the page normally */}
+      {!isHome && (
+        <Routes location={location} key={location.pathname}>
+          <Route path="/list" element={<ListView />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/restaurant/new" element={<RestaurantForm />} />
+          <Route path="/admin/restaurant/:id/edit" element={<RestaurantForm />} />
+          <Route path="/admin/categories" element={<CategoryManager />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      )}
     </Suspense>
   )
 }

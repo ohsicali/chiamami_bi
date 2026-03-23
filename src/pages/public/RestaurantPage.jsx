@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, matchPath } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { LogoLoader } from '../../components/UI/Logo'
@@ -16,8 +16,10 @@ function slugify(name) {
 }
 
 export default function RestaurantPage() {
-  const { slug } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
+  const match = matchPath('/restaurant/:slug', location.pathname)
+  const slug = match?.params?.slug
   const { restaurants, loading } = useRestaurants()
 
   const restaurant = restaurants.find((r) => r.slug === slug || slugify(r.name) === slug)

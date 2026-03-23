@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { LogoFull } from "../UI/Logo";
 
 const ListIcon = () => (
@@ -24,8 +25,10 @@ export default function Navbar({ view = "map", onToggleView }) {
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 glass">
       <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
-        {/* Logo */}
-        <LogoFull height={28} />
+        {/* Logo — click to go home */}
+        <Link to="/">
+          <LogoFull height={28} />
+        </Link>
 
         {/* View toggle */}
         <motion.button

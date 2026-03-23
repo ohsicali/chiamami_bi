@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
@@ -211,13 +211,13 @@ function PlaceholderMap({ restaurants, className }) {
   )
 }
 
-export default function MapView({
+const MapView = forwardRef(function MapView({
   restaurants,
   selectedId,
   onSelectRestaurant,
   userPosition,
   className,
-}) {
+}, ref) {
   const mapContainer = useRef(null)
   const map = useRef(null)
   const markers = useRef([]) // { marker, restaurant, el }
@@ -227,6 +227,11 @@ export default function MapView({
   onSelectRef.current = onSelectRestaurant
   const restaurantsRef = useRef(restaurants)
   restaurantsRef.current = restaurants
+
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => map.current?.zoomIn({ duration: 300 }),
+    zoomOut: () => map.current?.zoomOut({ duration: 300 }),
+  }))
 
   // Initialize map
   useEffect(() => {
@@ -368,4 +373,6 @@ export default function MapView({
       style={{ width: '100%', height: '100%' }}
     />
   )
-}
+})
+
+export default MapView

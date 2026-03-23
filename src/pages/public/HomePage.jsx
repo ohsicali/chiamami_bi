@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MapView from '../../components/Map/MapView'
 import MapControls from '../../components/Map/MapControls'
@@ -38,6 +38,7 @@ export default function HomePage() {
 
   const [selectedId, setSelectedId] = useState(null)
   const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
+  const mapRef = useRef(null)
 
   const handleLocateMe = useCallback(() => {
     locate()
@@ -77,6 +78,7 @@ export default function HomePage() {
 
       {/* Map - full screen background */}
       <MapView
+        ref={mapRef}
         restaurants={allRestaurants}
         selectedId={selectedId}
         onSelectRestaurant={handlePinSelect}
@@ -88,8 +90,8 @@ export default function HomePage() {
       <MapControls
         onLocateMe={handleLocateMe}
         isLocating={geoLoading}
-        onZoomIn={() => {}}
-        onZoomOut={() => {}}
+        onZoomIn={() => mapRef.current?.zoomIn()}
+        onZoomOut={() => mapRef.current?.zoomOut()}
       />
 
       {/* Bottom Sheet with restaurant list */}
