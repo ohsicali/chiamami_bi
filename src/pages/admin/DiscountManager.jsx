@@ -1,8 +1,94 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+
+function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }) {
+  const x = useMotionValue(0)
+  const deleteOpacity = useTransform(x, [-120, -60], [1, 0])
+  const deleteScale = useTransform(x, [-120, -60], [1, 0.8])
+  const isExpired = new Date(d.valid_until) < new Date()
+  const isActive = d.is_active && !isExpired
+
+  const handleDragEnd = (_, info) => {
+    if (info.offset.x < -80) {
+      // Snap to reveal delete
+      animate(x, -90, { type: 'spring', stiffness: 400, damping: 30 })
+    } else {
+      // Snap back
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 })
+    }
+  }
+
+  const handleDeleteClick = () => {
+    animate(x, -300, { duration: 0.2 }).then(() => onDelete(d.id))
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Delete button behind */}
+      <motion.div
+        className="absolute right-0 inset-y-0 flex items-center justify-center w-24 bg-red-500 rounded-2xl"
+        style={{ opacity: deleteOpacity, scale: deleteScale }}
+      >
+        <button
+          onClick={handleDeleteClick}
+          className="flex flex-col items-center gap-1 text-white"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+          </svg>
+          <span className="text-xs font-semibold">Elimina</span>
+        </button>
+      </motion.div>
+
+      {/* Swipeable card */}
+      <motion.div
+        className="relative rounded-2xl bg-card p-4 shadow-sm"
+        style={{ x }}
+        drag="x"
+        dragConstraints={{ left: -90, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0" onClick={() => onEdit(d)}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-primary">
+                {d.restaurant?.name || 'Ristorante'}
+              </h3>
+              <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {isActive ? 'Attivo' : isExpired ? 'Scaduto' : 'Disattivato'}
+              </span>
+            </div>
+            <p className="text-accent font-semibold text-sm mt-0.5">{d.discount_value}</p>
+            <p className="text-xs text-secondary mt-0.5">{d.title}</p>
+            {d.conditions && (
+              <p className="text-xs text-secondary mt-0.5">{d.conditions}</p>
+            )}
+            <div className="flex items-center gap-4 mt-2 text-xs text-secondary">
+              <span>Utilizzi: {d.total_redeemed}{d.max_redemptions ? `/${d.max_redemptions}` : ''}</span>
+              <span>Scade: {new Date(d.valid_until).toLocaleDateString('it-IT')}</span>
+            </div>
+          </div>
+
+          {/* Toggle button */}
+          <button
+            onClick={() => onToggleActive(d.id, d.is_active)}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+              d.is_active ? 'bg-gray-100 text-secondary' : 'bg-green-100 text-green-700'
+            }`}
+          >
+            {d.is_active ? 'Disattiva' : 'Attiva'}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
 
 export default function DiscountManager() {
   const navigate = useNavigate()
@@ -95,6 +181,17 @@ export default function DiscountManager() {
 
   const handleSave = async () => {
     if (!form.restaurant_id || !form.title || !form.discount_value || !form.valid_until) return
+
+    // Check: only one active discount per restaurant
+    if (!editing) {
+      const existing = discounts.find(
+        d => d.restaurant_id === form.restaurant_id && d.is_active && new Date(d.valid_until) > new Date()
+      )
+      if (existing) {
+        setSaveError(`${existing.restaurant?.name || 'Questo ristorante'} ha già uno sconto attivo. Disattiva o elimina quello esistente prima.`)
+        return
+      }
+    }
 
     setSaving(true)
     setSaveError(null)
@@ -337,66 +434,15 @@ export default function DiscountManager() {
 
       {/* Discounts list */}
       <div className="flex flex-col gap-3">
-        {discounts.map(d => {
-          const isExpired = new Date(d.valid_until) < new Date()
-          const isActive = d.is_active && !isExpired
-
-          return (
-            <motion.div
-              key={d.id}
-              className="rounded-2xl bg-card p-4 shadow-sm"
-              layout
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-primary truncate">
-                      {d.restaurant?.name || 'Ristorante'}
-                    </h3>
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                      isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {isActive ? 'Attivo' : isExpired ? 'Scaduto' : 'Disattivato'}
-                    </span>
-                  </div>
-                  <p className="text-accent font-semibold text-sm mt-0.5">{d.discount_value}</p>
-                  <p className="text-xs text-secondary mt-0.5">{d.title}</p>
-                  {d.conditions && (
-                    <p className="text-xs text-secondary mt-0.5">{d.conditions}</p>
-                  )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-secondary">
-                    <span>Utilizzi: {d.total_redeemed}{d.max_redemptions ? `/${d.max_redemptions}` : ''}</span>
-                    <span>Scade: {new Date(d.valid_until).toLocaleDateString('it-IT')}</span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    onClick={() => handleToggleActive(d.id, d.is_active)}
-                    className={`rounded-lg px-2.5 py-1.5 text-xs font-medium ${
-                      d.is_active ? 'bg-gray-100 text-secondary' : 'bg-green-100 text-green-700'
-                    }`}
-                  >
-                    {d.is_active ? 'Disattiva' : 'Attiva'}
-                  </button>
-                  <button
-                    onClick={() => handleEdit(d)}
-                    className="rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-secondary"
-                  >
-                    Modifica
-                  </button>
-                  <button
-                    onClick={() => handleDelete(d.id)}
-                    className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-500"
-                  >
-                    Elimina
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )
-        })}
+        {discounts.map(d => (
+          <SwipeableDiscountCard
+            key={d.id}
+            discount={d}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onToggleActive={handleToggleActive}
+          />
+        ))}
 
         {discounts.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-2xl bg-card p-10 text-center shadow-sm">
