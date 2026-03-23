@@ -16,17 +16,21 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(200).json({ error: 'VITE_GOOGLE_PLACES_KEY non configurata' })
 
   try {
-    // Step 1: Resolve URL — try manual redirect following
+    // Step 1: Resolve URL — follow redirects
     let resolvedUrl = url
-    let pageTitle = ''
-
     try {
       resolvedUrl = await followRedirects(url)
     } catch (_) {
       resolvedUrl = url
     }
 
-    // Step 2: Try to fetch the page HTML for the <title> tag
+    // Step 2: Fetch page HTML and extract all useful data
+    let pageTitle = ''
+    let canonicalUrl = ''
+    let html = ''
+    let ogDescription = ''
+    let metaDescription = ''
+
     try {
       const pageUrl = resolvedUrl !== url ? resolvedUrl : url
       const pageRes = await fetch(pageUrl, {
@@ -37,11 +41,12 @@ export default async function handler(req, res) {
           'Accept-Language': 'it-IT,it;q=0.9',
         },
       })
-      // Update resolved URL if fetch followed further redirects
       if (pageRes.url && pageRes.url !== pageUrl) {
         resolvedUrl = pageRes.url
       }
-      const html = await pageRes.text()
+      html = await pageRes.text()
+
+      // Extract <title>
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
       if (titleMatch) {
         pageTitle = titleMatch[1]
@@ -49,13 +54,31 @@ export default async function handler(req, res) {
           .replace(/\s*[-–—|·]\s*Google\s*$/i, '')
           .trim()
       }
+
+      // Extract og:title as fallback for pageTitle
       if (!pageTitle) {
-        const ogMatch = html.match(/property="og:title"[^>]+content="([^"]+)"/i)
+        const ogTitleMatch = html.match(/property="og:title"[^>]+content="([^"]+)"/i)
           || html.match(/content="([^"]+)"[^>]+property="og:title"/i)
-        if (ogMatch) {
-          pageTitle = ogMatch[1].replace(/\s*[-–—|·]\s*Google\s+Maps?\s*$/i, '').trim()
+        if (ogTitleMatch) {
+          pageTitle = ogTitleMatch[1].replace(/\s*[-–—|·]\s*Google\s+Maps?\s*$/i, '').trim()
         }
       }
+
+      // Extract canonical URL (often contains /place/Name/)
+      const canonicalMatch = html.match(/<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i)
+        || html.match(/<link[^>]+href="([^"]+)"[^>]+rel="canonical"/i)
+      if (canonicalMatch) canonicalUrl = canonicalMatch[1]
+
+      // Extract og:description (often contains place name + address)
+      const ogDescMatch = html.match(/property="og:description"[^>]+content="([^"]+)"/i)
+        || html.match(/content="([^"]+)"[^>]+property="og:description"/i)
+      if (ogDescMatch) ogDescription = ogDescMatch[1]
+
+      // Extract meta description
+      const metaDescMatch = html.match(/<meta[^>]+name="description"[^>]+content="([^"]+)"/i)
+        || html.match(/<meta[^>]+content="([^"]+)"[^>]+name="description"/i)
+      if (metaDescMatch) metaDescription = metaDescMatch[1]
+
     } catch (_) {}
 
     // Step 3: Build search query from all available data
@@ -63,52 +86,74 @@ export default async function handler(req, res) {
     let lat = null
     let lng = null
 
-    // Extract coordinates from URL
-    const coordMatch = resolvedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
-    if (coordMatch) {
-      lat = parseFloat(coordMatch[1])
-      lng = parseFloat(coordMatch[2])
+    // Extract coordinates from resolved URL or canonical URL
+    for (const u of [resolvedUrl, canonicalUrl]) {
+      if (!u) continue
+      const m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      if (m) { lat = parseFloat(m[1]); lng = parseFloat(m[2]); break }
     }
 
-    // Check for CID URL — use Google Place Details via CID directly
+    // Check for CID in URL
     let cid = null
-    try {
-      const urlObj = new URL(resolvedUrl)
-      cid = cid || urlObj.searchParams.get('cid')
-      // Also check original URL for cid
-      const origObj = new URL(url)
-      cid = cid || origObj.searchParams.get('cid')
-    } catch (_) {}
+    for (const u of [url, resolvedUrl]) {
+      try {
+        const c = new URL(u).searchParams.get('cid')
+        if (c) { cid = c; break }
+      } catch (_) {}
+    }
 
-    // Best: page title (e.g. "Gastronomia HUI WEI XIANG Crêpes Cinesi")
-    if (pageTitle && pageTitle.length > 2 && !/google/i.test(pageTitle)) {
-      // Clean up: remove Chinese chars, postal codes, extra metadata
+    // Strategy 1: Extract name from /place/Name/ in canonical URL or resolved URL
+    for (const u of [canonicalUrl, resolvedUrl]) {
+      if (searchQuery) break
+      if (!u) continue
+      const placeMatch = u.match(/\/place\/([^/@?]+)/)
+      if (placeMatch) {
+        searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+      }
+    }
+
+    // Strategy 2: Use page title (cleaned up)
+    if (!searchQuery && pageTitle && pageTitle.length > 2 && !/google/i.test(pageTitle)) {
       searchQuery = pageTitle
-        .replace(/[\u4e00-\u9fff\u3000-\u303f]+/g, '')  // remove Chinese characters
-        .replace(/邮政编码[:\s]*\d+/g, '')                  // remove "邮政编码: 10123"
-        .replace(/\b\d{4,6}\b/g, '')                       // remove postal codes (4-6 digits)
-        .replace(/\b(TO|MI|RM|NA|FI|BO|GE|PA|CT|BA|VE|PD)\b/g, '') // remove Italian province codes
-        .replace(/[,\s]{2,}/g, ' ')                        // collapse separators
+        .replace(/[\u4e00-\u9fff\u3000-\u303f]+/g, '')
+        .replace(/邮政编码[:\s]*\d+/g, '')
+        .replace(/\b\d{4,6}\b/g, '')
+        .replace(/\b(TO|MI|RM|NA|FI|BO|GE|PA|CT|BA|VE|PD)\b/g, '')
+        .replace(/[,\s]{2,}/g, ' ')
         .trim()
     }
 
-    // Reject searchQuery if it's empty, just numbers, or a city name
-    const commonCities = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo', 'turin', 'milan', 'rome']
-    if (searchQuery && (/^\d+$/.test(searchQuery) || commonCities.includes(searchQuery.toLowerCase()))) {
-      searchQuery = ''
-    }
-
-    // Try /place/Name/ pattern from URL
+    // Strategy 3: Extract place name from og:description or meta description
+    // These often look like: "★★★★☆ · Ristorante · Via Roma 10" or "Nome Locale, indirizzo..."
     if (!searchQuery) {
-      const placeMatch = resolvedUrl.match(/\/place\/([^/@?]+)/)
-      if (placeMatch) searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+      for (const desc of [ogDescription, metaDescription]) {
+        if (!desc || searchQuery) continue
+        // Try extracting first meaningful segment (before · or ,)
+        const cleaned = desc
+          .replace(/★[★☆]*/g, '')  // remove star ratings
+          .replace(/^\s*·\s*/, '')   // remove leading dot
+          .trim()
+        // First segment before · or , is often the category or name
+        const segments = cleaned.split(/\s*[·,]\s*/).filter(Boolean)
+        if (segments.length >= 2) {
+          // If first segment looks like a category ("Ristorante", "Bar"), use segment[0] + segment[1]
+          const categories = ['ristorante', 'bar', 'pizzeria', 'trattoria', 'osteria', 'caffè', 'café', 'gelateria', 'pasticceria', 'pub', 'birreria', 'enoteca', 'restaurant', 'bakery', 'cafe']
+          if (categories.some(c => segments[0].toLowerCase().includes(c))) {
+            // First segment is a category, skip it — use remaining for location context
+            searchQuery = segments.slice(1).join(' ').trim()
+          } else {
+            searchQuery = segments[0].trim()
+          }
+        } else if (segments.length === 1 && segments[0].length > 3) {
+          searchQuery = segments[0].trim()
+        }
+      }
     }
 
-    // Try ?q= parameter
+    // Strategy 4: Try ?q= parameter
     if (!searchQuery) {
       try {
-        const urlObj = new URL(resolvedUrl)
-        const q = urlObj.searchParams.get('q')
+        const q = new URL(resolvedUrl).searchParams.get('q')
         if (q) {
           const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
           const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
@@ -117,10 +162,38 @@ export default async function handler(req, res) {
       } catch (_) {}
     }
 
+    // Reject if searchQuery is just numbers or a common city name
+    const commonCities = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo', 'turin', 'milan', 'rome']
+    if (searchQuery && (/^\d+$/.test(searchQuery) || commonCities.includes(searchQuery.toLowerCase()))) {
+      searchQuery = ''
+    }
+
+    // Strategy 5: For CID URLs without any data — try fetching via Google Maps search URL
+    if (!searchQuery && !lat && cid) {
+      try {
+        const mapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=cid:${cid}`
+        const cidRes = await fetch(mapsSearchUrl, {
+          redirect: 'follow',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html',
+            'Accept-Language': 'it-IT,it;q=0.9',
+          },
+        })
+        const cidFinalUrl = cidRes.url
+        if (cidFinalUrl) {
+          const pm = cidFinalUrl.match(/\/place\/([^/@?]+)/)
+          if (pm) searchQuery = decodeURIComponent(pm[1].replace(/\+/g, ' '))
+          const cm = cidFinalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+          if (cm) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
+        }
+      } catch (_) {}
+    }
+
     if (!searchQuery && !lat && !cid) {
       return res.status(200).json({
         error: `Impossibile estrarre dati. Prova a copiare l'URL lungo dalla barra del browser dopo aver aperto il link.`,
-        debug: { resolvedUrl, pageTitle },
+        _debug: { resolvedUrl, canonicalUrl, pageTitle, ogDescription, metaDescription },
       })
     }
 
@@ -133,6 +206,8 @@ export default async function handler(req, res) {
 
     // If we have a search query, use text search
     if (searchQuery) {
+      // If we also have coords, append them to improve accuracy
+      const queryWithLocation = lat && lng ? `${searchQuery} @${lat},${lng}` : searchQuery
       const findRes = await fetch(
         `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
       )
@@ -159,6 +234,7 @@ export default async function handler(req, res) {
         phone: '',
         website: '',
         warning: `Nessun risultato trovato. Prova con un link Google Maps più completo.`,
+        _debug: { resolvedUrl, canonicalUrl, pageTitle, ogDescription, metaDescription, searchQuery, cid },
       })
     }
 
@@ -169,7 +245,6 @@ export default async function handler(req, res) {
     const detailsData = await detailsRes.json()
     const place = detailsData.result
 
-    // Final name: prefer place.name, but reject if it looks like a postal code
     let finalName = place?.name || searchQuery || ''
     if (/^\d+$/.test(finalName)) finalName = ''
 
@@ -184,7 +259,10 @@ export default async function handler(req, res) {
       _debug: {
         originalUrl: url,
         resolvedUrl,
+        canonicalUrl,
         pageTitle,
+        ogDescription: ogDescription?.substring(0, 200),
+        metaDescription: metaDescription?.substring(0, 200),
         searchQuery,
         cid,
         placeId,
