@@ -12,6 +12,7 @@ export default defineConfig({
           if (id.includes('node_modules/framer-motion')) return 'motion'
           if (id.includes('node_modules/@supabase')) return 'supabase'
           if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) return 'i18n'
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'recharts'
         },
       },
     },

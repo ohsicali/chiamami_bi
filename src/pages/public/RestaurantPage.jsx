@@ -4,6 +4,8 @@ import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { LogoLoader } from '../../components/UI/Logo'
+import MetaTags from '../../components/SEO/MetaTags'
+import JsonLd from '../../components/SEO/JsonLd'
 
 function slugify(name) {
   return name
@@ -81,14 +83,34 @@ export default function RestaurantPage() {
     )
   }
 
+  const restaurantUrl = `https://chiamamibi.com/restaurant/${restaurant.slug || slugify(restaurant.name)}`
+
   return (
-    <RestaurantSheet
-      restaurant={restaurant}
-      onClose={handleBack}
-      allRestaurants={restaurants}
-      onSelectNearby={handleSelectNearby}
-      saved={isSaved(restaurant.id)}
-      onSaveToggle={handleSaveToggle}
-    />
+    <>
+      <MetaTags
+        title={`${restaurant.name} — ChiamamiBi`}
+        description={restaurant.description || `Scopri ${restaurant.name} su ChiamamiBi`}
+        image={restaurant.image || '/og-image.png'}
+        url={restaurantUrl}
+        type="restaurant"
+      />
+      <JsonLd
+        name={restaurant.name}
+        address={restaurant.address}
+        telephone={restaurant.phone}
+        url={restaurantUrl}
+        priceRange={restaurant.priceRange}
+        servesCuisine={restaurant.cuisine}
+        image={restaurant.image}
+      />
+      <RestaurantSheet
+        restaurant={restaurant}
+        onClose={handleBack}
+        allRestaurants={restaurants}
+        onSelectNearby={handleSelectNearby}
+        saved={isSaved(restaurant.id)}
+        onSaveToggle={handleSaveToggle}
+      />
+    </>
   )
 }
