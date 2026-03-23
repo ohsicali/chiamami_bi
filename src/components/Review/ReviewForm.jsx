@@ -6,8 +6,6 @@ import { submitReview, compressImage } from '../../lib/hooks/useReviews'
 export default function ReviewForm({ restaurantId, userId, existingReview, onSubmitted }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
-  const [rating, setRating] = useState(existingReview?.rating || 0)
-  const [hoverRating, setHoverRating] = useState(0)
   const [comment, setComment] = useState(existingReview?.comment || '')
   const [photos, setPhotos] = useState([])
   const [previews, setPreviews] = useState([])
@@ -44,7 +42,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
   }
 
   const handleSubmit = async () => {
-    if (!comment.trim() || comment.length > maxChars || rating === 0) return
+    if (!comment.trim() || comment.length > maxChars) return
 
     setSubmitting(true)
     setError(null)
@@ -53,7 +51,6 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
       await submitReview({
         restaurantId,
         userId,
-        rating,
         comment: comment.trim(),
         photoFiles: photos,
       })
@@ -107,27 +104,6 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
           >
-            {/* Rating stars */}
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  className="text-2xl transition-transform hover:scale-110"
-                >
-                  <span className={star <= (hoverRating || rating) ? 'text-yellow-400' : 'text-gray-300'}>
-                    ★
-                  </span>
-                </button>
-              ))}
-              {rating > 0 && (
-                <span className="ml-2 text-xs text-secondary">{rating}/5</span>
-              )}
-            </div>
-
             {/* Textarea */}
             <div className="relative">
               <textarea
@@ -200,7 +176,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
               {/* Submit */}
               <motion.button
                 onClick={handleSubmit}
-                disabled={!comment.trim() || rating === 0 || submitting}
+                disabled={!comment.trim() || submitting}
                 className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
                 whileTap={{ scale: 0.95 }}
               >

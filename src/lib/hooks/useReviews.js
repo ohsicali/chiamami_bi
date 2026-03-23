@@ -66,7 +66,7 @@ export function useUserReview(restaurantId, userId) {
 /**
  * Submit or update a review
  */
-export async function submitReview({ restaurantId, userId, rating, comment, photoFiles }) {
+export async function submitReview({ restaurantId, userId, comment, photoFiles }) {
   if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
 
   // Check if user already has a review for this restaurant
@@ -83,7 +83,7 @@ export async function submitReview({ restaurantId, userId, rating, comment, phot
     // Update existing review
     const { data, error } = await supabase
       .from('user_reviews')
-      .update({ rating, comment, status: 'published' })
+      .update({ comment, status: 'published' })
       .eq('id', existing.id)
       .select()
       .single()
@@ -96,7 +96,6 @@ export async function submitReview({ restaurantId, userId, rating, comment, phot
       .insert({
         user_id: userId,
         restaurant_id: restaurantId,
-        rating,
         comment,
         status: 'published',
       })
