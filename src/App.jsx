@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, matchPath } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 
 // Lazy load pages
@@ -41,8 +42,10 @@ export default function App() {
       {/* HomePage stays mounted when viewing restaurant detail */}
       {isHome && <HomePage />}
 
-      {/* Restaurant detail overlays on top */}
-      {isRestaurantDetail && <RestaurantPage />}
+      {/* Restaurant detail overlays on top — AnimatePresence enables exit animation */}
+      <AnimatePresence>
+        {isRestaurantDetail && <RestaurantPage key="restaurant-detail" />}
+      </AnimatePresence>
 
       {/* Other routes replace the page normally */}
       {!isHome && (

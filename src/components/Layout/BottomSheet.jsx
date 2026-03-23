@@ -1,27 +1,30 @@
 import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
+import { motion, useMotionValue, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 
 export const SNAP_PEEK = 0
 export const SNAP_HALF = 1
 export const SNAP_FULL = 2
 
-const SIDE_MARGIN = 10 // px margin on left/right like Apple Maps
+const SIDE_MARGIN = 10
+const BOTTOM_MARGIN = 10
+const TOP_MIN = 70 // leave space for navbar
 
-function getSnapPoints() {
+// Snap points are now HEIGHTS (how tall the visible sheet is)
+function getSnapHeights() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   return [
-    h - 110,   // PEEK: floating search island (~110px visible)
-    h * 0.45,  // HALF: ~55% visible
-    h * 0.08,  // FULL: nearly full screen
+    100,                         // PEEK: just search bar island
+    h * 0.55,                    // HALF: categories + some results
+    h - TOP_MIN - BOTTOM_MARGIN, // FULL: nearly full screen
   ]
 }
 
-function closestSnap(y, points) {
+function closestSnap(val, points) {
   let minDist = Infinity
   let idx = 0
   for (let i = 0; i < points.length; i++) {
-    const d = Math.abs(y - points[i])
+    const d = Math.abs(val - points[i])
     if (d < minDist) {
       minDist = d
       idx = i
@@ -32,27 +35,20 @@ function closestSnap(y, points) {
 
 const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, ref) {
   const [snapIndex, setSnapIndex] = useState(SNAP_PEEK)
-  const [snapPoints, setSnapPoints] = useState(getSnapPoints)
-  const y = useMotionValue(snapPoints[SNAP_PEEK])
+  const [snapHeights, setSnapHeights] = useState(getSnapHeights)
+  const sheetHeight = useMotionValue(snapHeights[SNAP_PEEK])
   const contentRef = useRef(null)
   const sheetRef = useRef(null)
   const isDragging = useRef(false)
   const snapIndexRef = useRef(snapIndex)
   snapIndexRef.current = snapIndex
 
-  // Animate border-radius: rounder when peeking (island), less round when expanded
-  const borderRadius = useTransform(
-    y,
-    [snapPoints[SNAP_FULL], snapPoints[SNAP_HALF], snapPoints[SNAP_PEEK]],
-    [20, 24, 28]
-  )
-
-  // Recalculate snap points on resize
+  // Recalculate on resize
   useEffect(() => {
     function handleResize() {
-      const pts = getSnapPoints()
-      setSnapPoints(pts)
-      animate(y, pts[snapIndex], {
+      const pts = getSnapHeights()
+      setSnapHeights(pts)
+      animate(sheetHeight, pts[snapIndex], {
         type: 'spring',
         stiffness: 400,
         damping: 35,
@@ -60,23 +56,22 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [snapIndex, y])
+  }, [snapIndex, sheetHeight])
 
   const snapTo = useCallback(
     (index) => {
       const clamped = Math.max(SNAP_PEEK, Math.min(SNAP_FULL, index))
       setSnapIndex(clamped)
-      animate(y, snapPoints[clamped], {
+      animate(sheetHeight, snapHeights[clamped], {
         type: 'spring',
         stiffness: 400,
         damping: 35,
       })
       onSnapChange?.(clamped)
     },
-    [snapPoints, y, onSnapChange]
+    [snapHeights, sheetHeight, onSnapChange]
   )
 
-  // Expose snapTo via ref — must be after snapTo is defined
   useImperativeHandle(ref, () => ({
     snapTo: (index) => snapTo(index),
     getSnapIndex: () => snapIndexRef.current,
@@ -86,39 +81,41 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
     ({ movement: [, my], velocity: [, vy], direction: [, dy], active, cancel }) => {
       if (active) {
         isDragging.current = true
-        // If sheet is at FULL and content is scrolled, don't drag
+
+        // If at FULL and content is scrolled, don't drag
         if (snapIndex === SNAP_FULL && contentRef.current) {
-          const scrollTop = contentRef.current.scrollTop
-          if (scrollTop > 0) {
+          if (contentRef.current.scrollTop > 0) {
             cancel()
             return
           }
         }
 
-        const startY = snapPoints[snapIndex]
-        const newY = Math.max(
-          snapPoints[SNAP_FULL],
-          Math.min(snapPoints[SNAP_PEEK] + 40, startY + my)
+        // Dragging up (negative my) = increase height
+        const startH = snapHeights[snapIndex]
+        const newH = Math.max(
+          snapHeights[SNAP_PEEK] - 20,
+          Math.min(snapHeights[SNAP_FULL] + 30, startH - my)
         )
-        y.set(newY)
+        sheetHeight.set(newH)
       } else {
         isDragging.current = false
         const VELOCITY_THRESHOLD = 0.5
 
         if (Math.abs(vy) > VELOCITY_THRESHOLD) {
+          // dy > 0 means dragging down = decrease height = lower snap
           if (dy > 0) {
             snapTo(Math.max(SNAP_PEEK, snapIndex - 1))
           } else {
             snapTo(Math.min(SNAP_FULL, snapIndex + 1))
           }
         } else {
-          const nearest = closestSnap(y.get(), snapPoints)
+          const nearest = closestSnap(sheetHeight.get(), snapHeights)
           snapTo(nearest)
         }
       }
     },
     {
-      from: () => [0, y.get()],
+      from: () => [0, 0],
       filterTaps: true,
       rubberband: 0.15,
       axis: 'y',
@@ -126,7 +123,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
     }
   )
 
-  // Prevent body scroll when sheet is not at full
+  // Prevent body scroll when not at full
   useEffect(() => {
     if (snapIndex !== SNAP_FULL) {
       document.body.style.overflow = 'hidden'
@@ -143,24 +140,23 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       ref={sheetRef}
       {...bind()}
       style={{
-        y,
-        borderRadius,
+        height: sheetHeight,
         touchAction: 'none',
         position: 'fixed',
-        top: 0,
+        bottom: BOTTOM_MARGIN,
         left: SIDE_MARGIN,
         right: SIDE_MARGIN,
-        height: '100dvh',
         zIndex: 30,
-        background: 'rgba(255, 255, 255, 0.82)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        boxShadow: '0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.08)',
+        borderRadius: 22,
+        background: 'rgba(255, 255, 255, 0.88)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        boxShadow: '0 2px 28px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)',
         overflow: 'hidden',
       }}
     >
       {/* Drag handle */}
-      <div className="flex items-center justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
+      <div className="flex items-center justify-center pt-2.5 pb-1.5 cursor-grab active:cursor-grabbing">
         <div
           className="rounded-full"
           style={{
@@ -180,7 +176,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
           overflowY: canScroll ? 'auto' : 'hidden',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
-          height: 'calc(100% - 40px)',
+          height: 'calc(100% - 34px)',
         }}
         onTouchStart={(e) => {
           if (canScroll && contentRef.current && contentRef.current.scrollTop > 0) {

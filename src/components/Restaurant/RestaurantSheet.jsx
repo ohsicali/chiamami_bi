@@ -11,21 +11,23 @@ const overlayVariants = {
 }
 
 const sheetVariants = {
-  hidden: { y: '100%', opacity: 0 },
+  hidden: { y: '100%', opacity: 0, scale: 0.95 },
   visible: {
     y: 0,
     opacity: 1,
+    scale: 1,
     transition: {
       type: 'spring',
-      damping: 35,
-      stiffness: 450,
-      mass: 0.8,
+      damping: 32,
+      stiffness: 380,
+      mass: 0.7,
     },
   },
   exit: {
     y: '100%',
     opacity: 0,
-    transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
+    scale: 0.95,
+    transition: { duration: 0.3, ease: [0.4, 0, 0.7, 0.2] },
   },
 }
 
