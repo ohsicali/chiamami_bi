@@ -33,9 +33,20 @@ export default async function handler(req, res) {
     let lat = null
     let lng = null
 
+    // Try /place/Name/@lat,lng pattern
     const placeMatch = resolvedUrl.match(/\/place\/([^/@?]+)/)
     if (placeMatch) name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
 
+    // Try ?q= parameter (common in resolved short URLs)
+    if (!name) {
+      try {
+        const urlObj = new URL(resolvedUrl)
+        const q = urlObj.searchParams.get('q')
+        if (q) name = q.replace(/\+/g, ' ')
+      } catch (_) {}
+    }
+
+    // Try @lat,lng pattern
     const coordMatch = resolvedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
     if (coordMatch) {
       lat = parseFloat(coordMatch[1])
