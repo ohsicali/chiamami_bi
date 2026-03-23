@@ -190,15 +190,27 @@ export function useUserDiscounts(userId) {
 export async function verifyQRCode(qrCode, pinCode) {
   if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
 
-  // 1. Find the redemption by QR code
+  // 1. Find the redemption by QR code (no profiles join - may be accessed by unauthenticated users)
   const { data: redemption, error: rError } = await supabase
     .from('discount_redemptions')
-    .select('*, discount:discounts(*, restaurant:restaurants(id, name)), user:profiles(full_name, email)')
+    .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug))')
     .eq('qr_code', qrCode)
     .single()
 
   if (rError || !redemption) {
+    console.error('QR lookup failed:', rError, 'code:', qrCode)
     return { valid: false, error: 'not_found', message: 'Codice non riconosciuto' }
+  }
+
+  // Fetch user info separately (may be blocked by RLS for anon users, that's ok)
+  let userName = 'Utente'
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', redemption.user_id)
+    .single()
+  if (userProfile) {
+    userName = userProfile.full_name || userProfile.email || 'Utente'
   }
 
   // 2. Check if already redeemed
@@ -253,7 +265,7 @@ export async function verifyQRCode(qrCode, pinCode) {
     message: 'Sconto validato!',
     discount_title: redemption.discount?.title,
     discount_value: redemption.discount?.discount_value,
-    user_name: redemption.user?.full_name || redemption.user?.email,
+    user_name: userName,
     restaurant_name: redemption.discount?.restaurant?.name,
     redemption,
   }
@@ -265,11 +277,26 @@ export async function verifyQRCode(qrCode, pinCode) {
 export async function fetchQRPreview(qrCode) {
   if (!isSupabaseConfigured()) return null
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('discount_redemptions')
-    .select('status, discount:discounts(title, discount_value, discount_type, restaurant:restaurants(name)), user:profiles(full_name)')
+    .select('status, user_id, discount:discounts(title, discount_value, discount_type, restaurant:restaurants(name))')
     .eq('qr_code', qrCode)
     .single()
+
+  if (error) {
+    console.error('QR preview lookup failed:', error)
+    return null
+  }
+
+  // Try to fetch user name separately
+  if (data?.user_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', data.user_id)
+      .single()
+    data.user = profile || { full_name: 'Utente' }
+  }
 
   return data || null
 }
