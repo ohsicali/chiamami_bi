@@ -31,6 +31,12 @@ function slugify(name) {
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+
+  // Lock body scroll for map page
+  useEffect(() => {
+    document.body.classList.add('map-fixed')
+    return () => document.body.classList.remove('map-fixed')
+  }, [])
   const { position, loading: geoLoading, locate } = useGeolocation()
   const { user } = useAuth()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)

@@ -169,7 +169,7 @@ function DashboardView({ pin }) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-primary">
-                    {r.user?.full_name || r.user?.email || 'Utente'}
+                    {r.user?.full_name || 'Utente'}
                   </p>
                   <p className="text-xs text-secondary">
                     {r.discount?.title} — {r.discount?.discount_value}
@@ -197,19 +197,23 @@ function DashboardView({ pin }) {
 export default function VerifyPage() {
   const [searchParams] = useSearchParams()
   const codeFromUrl = searchParams.get('code') || ''
-  const pinParam = searchParams.get('pin') || ''
-
-  const [manualCode, setManualCode] = useState('')
-  const code = codeFromUrl || manualCode
 
   const [pin, setPin] = useState(() => {
-    // Try localStorage first
-    return pinParam || localStorage.getItem('chiamamibi_pin') || ''
+    return localStorage.getItem('chiamamibi_pin') || ''
   })
+  const [authenticated, setAuthenticated] = useState(() => {
+    // Auto-authenticate if PIN was saved
+    return !!(localStorage.getItem('chiamamibi_pin'))
+  })
+  const [pinError, setPinError] = useState(false)
+
+  // QR validation state
+  const [showVerify, setShowVerify] = useState(!!codeFromUrl)
+  const [manualCode, setManualCode] = useState('')
+  const code = codeFromUrl || manualCode
   const [preview, setPreview] = useState(null)
   const [result, setResult] = useState(null)
   const [verifying, setVerifying] = useState(false)
-  const [showDashboard, setShowDashboard] = useState(!codeFromUrl && !!pinParam)
 
   // Fetch preview when code is present
   useEffect(() => {
@@ -217,6 +221,26 @@ export default function VerifyPage() {
       fetchQRPreview(code).then(setPreview)
     }
   }, [code])
+
+  const handlePinLogin = async () => {
+    if (pin.length !== 6) return
+    setPinError(false)
+    // Validate PIN by trying to fetch redemptions
+    const data = await fetchRestaurantRedemptions(pin)
+    if (data) {
+      localStorage.setItem('chiamamibi_pin', pin)
+      setAuthenticated(true)
+    } else {
+      setPinError(true)
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('chiamamibi_pin')
+    setAuthenticated(false)
+    setPin('')
+    setShowVerify(false)
+  }
 
   const handleManualCodeSubmit = () => {
     if (manualCode.trim()) {
@@ -232,11 +256,6 @@ export default function VerifyPage() {
     try {
       const res = await verifyQRCode(code, pin)
       setResult(res)
-
-      // Save PIN on success
-      if (res.valid || res.error === 'already_redeemed') {
-        localStorage.setItem('chiamamibi_pin', pin)
-      }
     } catch {
       setResult({ valid: false, error: 'not_found', message: 'Errore di connessione' })
     } finally {
@@ -256,29 +275,47 @@ export default function VerifyPage() {
 
       <div className="flex-1 flex flex-col items-center px-5 py-4">
         <AnimatePresence mode="wait">
-          {showDashboard ? (
+          {!authenticated ? (
+            /* ── PIN Login ── */
             <motion.div
-              key="dashboard"
+              key="login"
               className="w-full max-w-sm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <h2
-                className="text-xl font-bold text-primary text-center mb-6"
-                style={{ fontFamily: "'TAN Songbird', serif" }}
-              >
-                Storico sconti
-              </h2>
-              <DashboardView pin={pin} />
-              <button
-                onClick={() => setShowDashboard(false)}
-                className="mt-4 w-full text-sm text-secondary text-center underline"
-              >
-                Torna alla verifica
-              </button>
+              <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-lg border border-white/40">
+                <h2
+                  className="text-xl font-bold text-primary text-center mb-2"
+                  style={{ fontFamily: "'TAN Songbird', serif" }}
+                >
+                  Area Ristoratori
+                </h2>
+                <p className="text-sm text-secondary text-center mb-6">
+                  Inserisci il PIN del tuo ristorante per accedere
+                </p>
+
+                <div className="mb-4">
+                  <PinInput value={pin} onChange={setPin} disabled={false} />
+                </div>
+
+                {pinError && (
+                  <p className="text-xs text-red-500 text-center mb-3">PIN non riconosciuto</p>
+                )}
+
+                <motion.button
+                  onClick={handlePinLogin}
+                  disabled={pin.length !== 6}
+                  className="w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Accedi
+                </motion.button>
+              </div>
             </motion.div>
-          ) : (
+
+          ) : showVerify ? (
+            /* ── QR Validation ── */
             <motion.div
               key="verify"
               className="w-full max-w-sm"
@@ -286,7 +323,6 @@ export default function VerifyPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {/* Card */}
               <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-lg border border-white/40">
                 <h2
                   className="text-xl font-bold text-primary text-center mb-5"
@@ -299,7 +335,7 @@ export default function VerifyPage() {
                 {!codeFromUrl && !preview && !result && (
                   <div className="mb-5">
                     <p className="text-sm text-secondary text-center mb-3">
-                      Inserisci il codice sconto
+                      Inserisci il codice sconto del cliente
                     </p>
                     <div className="flex gap-2">
                       <input
@@ -342,7 +378,7 @@ export default function VerifyPage() {
                     </p>
                     {preview.status === 'redeemed' && (
                       <p className="text-xs text-red-500 font-medium mt-1">
-                        Questo QR è già stato utilizzato
+                        Questo QR e gia stato utilizzato
                       </p>
                     )}
                   </motion.div>
@@ -351,31 +387,22 @@ export default function VerifyPage() {
                 {/* Result */}
                 {result && <VerifyResult result={result} />}
 
-                {/* PIN input — hidden if QR already redeemed */}
-                {!result && !(preview?.status === 'redeemed') && (
-                  <>
-                    <div className="mb-4">
-                      <p className="text-sm text-secondary text-center mb-3">
-                        Inserisci il PIN del ristorante
-                      </p>
-                      <PinInput value={pin} onChange={setPin} disabled={verifying} />
-                    </div>
-
-                    <motion.button
-                      onClick={handleVerify}
-                      disabled={pin.length !== 6 || verifying || !code}
-                      className="w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      {verifying ? 'Verifica in corso...' : '✓ Valida'}
-                    </motion.button>
-                  </>
+                {/* Validate button — hidden if QR already redeemed */}
+                {!result && preview && !(preview?.status === 'redeemed') && (
+                  <motion.button
+                    onClick={handleVerify}
+                    disabled={verifying || !code}
+                    className="w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {verifying ? 'Verifica in corso...' : 'Valida sconto'}
+                  </motion.button>
                 )}
 
                 {/* Reset after result */}
                 {result && (
                   <motion.button
-                    onClick={() => setResult(null)}
+                    onClick={() => { setResult(null); setPreview(null); setManualCode('') }}
                     className="mt-4 w-full text-sm text-secondary underline text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -386,15 +413,48 @@ export default function VerifyPage() {
                 )}
               </div>
 
-              {/* Dashboard link */}
-              {pin.length === 6 && (
-                <button
-                  onClick={() => setShowDashboard(true)}
-                  className="mt-4 w-full text-sm text-secondary text-center underline"
+              <button
+                onClick={() => { setShowVerify(false); setResult(null); setPreview(null); setManualCode('') }}
+                className="mt-4 w-full text-sm text-secondary text-center underline"
+              >
+                Torna alla dashboard
+              </button>
+            </motion.div>
+
+          ) : (
+            /* ── Restaurant Dashboard ── */
+            <motion.div
+              key="dashboard"
+              className="w-full max-w-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <h2
+                className="text-xl font-bold text-primary text-center mb-6"
+                style={{ fontFamily: "'TAN Songbird', serif" }}
+              >
+                La tua area riservata
+              </h2>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 mb-6">
+                <motion.button
+                  onClick={() => setShowVerify(true)}
+                  className="flex-1 rounded-xl bg-accent py-3 text-sm font-semibold text-white shadow-sm"
+                  whileTap={{ scale: 0.97 }}
                 >
-                  Vedi storico sconti
+                  Valida codice
+                </motion.button>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-secondary"
+                >
+                  Esci
                 </button>
-              )}
+              </div>
+
+              <DashboardView pin={pin} />
             </motion.div>
           )}
         </AnimatePresence>

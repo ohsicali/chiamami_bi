@@ -27,12 +27,18 @@ body {
   color: var(--color-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
-  height: 100dvh;
+  min-height: 100dvh;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
-  height: 100%;
+  min-height: 100dvh;
+}
+
+/* Map page needs fixed viewport to prevent scroll behind BottomSheet */
+.map-fixed {
+  overflow: hidden;
+  height: 100dvh;
 }
 
 /* Mapbox overrides */
@@ -72,13 +78,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Admin pages need scroll — override body overflow:hidden */
-.admin-scroll {
-  overflow: auto !important;
-  height: auto !important;
-  min-height: 100dvh;
-  -webkit-overflow-scrolling: touch;
-}
+/* Legacy admin scroll class — no longer needed, body scrolls by default */
 
 /* Prevent iOS Safari zoom on input focus (font-size >= 16px) */
 @supports (-webkit-touch-callout: none) {

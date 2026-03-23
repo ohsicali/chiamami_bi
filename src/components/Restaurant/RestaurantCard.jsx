@@ -103,13 +103,13 @@ export default function RestaurantCard({
       {/* Info */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {/* Name + discount badge inline */}
-        <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-base font-semibold text-primary truncate" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
+        <div className="flex items-start gap-2 min-w-0">
+          <h3 className="text-base font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
             {restaurant.name}
           </h3>
           {hasDiscount && (
-            <span className="shrink-0 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-white leading-none">
-              {discountValue || t('discount.badge')}
+            <span className="shrink-0 mt-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-white leading-none whitespace-nowrap">
+              {discountValue ? `Sconto ${discountValue}` : t('discount.badge')}
             </span>
           )}
         </div>

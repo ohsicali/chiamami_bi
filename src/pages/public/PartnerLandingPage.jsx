@@ -205,8 +205,8 @@ export default function PartnerLandingPage() {
         >
           <motion.h1
             variants={fadeUp}
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary leading-tight mb-6"
-            style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif" }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-bold text-primary mb-6"
+            style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif", lineHeight: 1.3 }}
           >
             Porta il tuo ristorante davanti a migliaia di{' '}
             <span className="text-accent">foodie</span>
