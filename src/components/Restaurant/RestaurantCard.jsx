@@ -25,6 +25,7 @@ export default function RestaurantCard({
   onClick,
   saved,
   onSaveToggle,
+  hasDiscount,
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
 
@@ -86,6 +87,12 @@ export default function RestaurantCard({
         {!photoUrl && (
           <div className="absolute inset-0 flex items-center justify-center text-2xl">
             {category?.emoji || '🍽️'}
+          </div>
+        )}
+        {/* Discount badge */}
+        {hasDiscount && (
+          <div className="absolute bottom-1 left-1 z-10 rounded bg-accent px-1.5 py-0.5">
+            <span className="text-[10px] font-bold text-white">🏷️ Sconto</span>
           </div>
         )}
         {/* Heart save button */}

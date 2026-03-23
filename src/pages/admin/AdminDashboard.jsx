@@ -42,6 +42,8 @@ function AdminLayout({ children, user, onLogout }) {
     { to: '/admin', label: 'Dashboard', icon: DashboardIcon },
     { to: '/admin/restaurant/new', label: 'Nuovo Ristorante', icon: PlusIcon },
     { to: '/admin/categories', label: 'Categorie', icon: TagIcon },
+    { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
+    { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
   ]
 
   return (
@@ -87,6 +89,12 @@ function AdminLayout({ children, user, onLogout }) {
           <Link to="/admin/categories" className="text-secondary hover:text-primary">
             <TagIcon className="w-5 h-5" />
           </Link>
+          <Link to="/admin/discounts" className="text-secondary hover:text-primary">
+            <DiscountIcon className="w-5 h-5" />
+          </Link>
+          <Link to="/admin/partners" className="text-secondary hover:text-primary">
+            <PartnerIcon className="w-5 h-5" />
+          </Link>
           <button onClick={onLogout} className="text-secondary hover:text-red-500">
             <LogoutIcon className="w-5 h-5" />
           </button>
@@ -129,6 +137,20 @@ function LogoutIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+    </svg>
+  )
+}
+function DiscountIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
+    </svg>
+  )
+}
+function PartnerIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   )
 }

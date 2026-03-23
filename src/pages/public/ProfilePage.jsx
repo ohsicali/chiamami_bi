@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import { useUserDiscounts } from '../../lib/hooks/useDiscounts'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
+import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
 
 function slugify(name) {
   return name
@@ -33,8 +35,10 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const { user, profile, loading: authLoading, signOut } = useAuth()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
+  const { redemptions, loading: discountsLoading } = useUserDiscounts(user?.id)
   const [savedRestaurants, setSavedRestaurants] = useState([])
   const [loadingRestaurants, setLoadingRestaurants] = useState(true)
+  const [showQR, setShowQR] = useState(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -133,6 +137,105 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
+          {/* My discounts section */}
+          <motion.div variants={itemVariants}>
+            <h2
+              className="text-lg font-semibold text-primary mb-4"
+              style={{ fontFamily: "'TAN Songbird', serif" }}
+            >
+              I miei sconti
+            </h2>
+
+            {discountsLoading ? (
+              <div className="flex flex-col gap-3">
+                {[1, 2].map(i => (
+                  <div key={i} className="skeleton h-28 rounded-2xl" />
+                ))}
+              </div>
+            ) : redemptions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl bg-card p-8 text-center shadow-sm">
+                <span className="text-3xl mb-2">🏷️</span>
+                <p className="text-sm font-semibold text-primary">Nessuno sconto sbloccato</p>
+                <p className="mt-1 text-xs text-secondary">
+                  Scopri gli sconti esclusivi nella sezione dedicata
+                </p>
+                <Link
+                  to="/deals"
+                  className="mt-4 rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm"
+                >
+                  Vedi sconti
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {redemptions.map(r => {
+                  const discount = r.discount
+                  const restaurant = discount?.restaurant
+                  const photo = restaurant?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
+                  const isRedeemed = r.status === 'redeemed'
+                  const isExpired = r.status === 'expired' || (discount?.valid_until && new Date(discount.valid_until) < new Date())
+
+                  let statusBadge
+                  if (isRedeemed) {
+                    statusBadge = { text: 'Utilizzato', color: 'bg-gray-100 text-gray-600' }
+                  } else if (isExpired) {
+                    statusBadge = { text: 'Scaduto', color: 'bg-gray-100 text-gray-500' }
+                  } else {
+                    statusBadge = { text: 'Attivo', color: 'bg-green-100 text-green-700' }
+                  }
+
+                  return (
+                    <div
+                      key={r.id}
+                      className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm"
+                    >
+                      {/* Photo */}
+                      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl">
+                        {photo ? (
+                          <img
+                            src={photo.photo_url}
+                            alt={restaurant?.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gray-100 flex items-center justify-center text-2xl">
+                            🍽️
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-primary truncate">
+                          {restaurant?.name || 'Ristorante'}
+                        </p>
+                        <p className="text-sm font-semibold text-accent mt-0.5">
+                          {discount?.discount_value}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.color}`}>
+                            {statusBadge.text}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* QR button */}
+                      {!isRedeemed && !isExpired && (
+                        <motion.button
+                          onClick={() => setShowQR(r)}
+                          className="flex-shrink-0 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-white"
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          QR
+                        </motion.button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </motion.div>
+
           {/* Saved restaurants section */}
           <motion.div variants={itemVariants}>
             <div className="flex items-center justify-between mb-4">
@@ -206,6 +309,18 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQR && (
+          <QRCodeDisplay
+            qrCode={showQR.qr_code}
+            discountTitle={showQR.discount?.title}
+            discountValue={showQR.discount?.discount_value}
+            onClose={() => setShowQR(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

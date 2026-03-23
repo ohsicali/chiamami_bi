@@ -11,6 +11,7 @@ import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 
 function slugify(name) {
@@ -30,6 +31,8 @@ export default function HomePage() {
   const { position, loading: geoLoading, locate } = useGeolocation()
   const { user } = useAuth()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { discounts: activeDiscounts } = useActiveDiscounts()
+  const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const {
     restaurants,
     allRestaurants,
@@ -40,10 +43,13 @@ export default function HomePage() {
     setSearchQuery,
   } = useRestaurants(position)
 
-  // Filter for saved if ?filter=saved
+  // Filter for saved / deals
   const [showSavedOnly, setShowSavedOnly] = useState(false)
+  const [showDealsOnly, setShowDealsOnly] = useState(false)
   const displayedRestaurants = showSavedOnly
     ? restaurants.filter((r) => savedIds.has(r.id))
+    : showDealsOnly
+    ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
     : restaurants
 
   const [selectedId, setSelectedId] = useState(null)
@@ -138,8 +144,11 @@ export default function HomePage() {
             onNearbyClick={handleLocateMe}
             user={user}
             showSavedOnly={showSavedOnly}
-            onToggleSaved={() => setShowSavedOnly((v) => !v)}
+            onToggleSaved={() => { setShowSavedOnly((v) => !v); setShowDealsOnly(false) }}
             savedCount={savedIds.size}
+            showDealsOnly={showDealsOnly}
+            onToggleDeals={() => { setShowDealsOnly((v) => !v); setShowSavedOnly(false) }}
+            dealsCount={discountRestaurantIds.size}
           />
         </div>
 
@@ -183,6 +192,7 @@ export default function HomePage() {
                   onClick={handleCardClick}
                   saved={isSaved(restaurant.id)}
                   onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
+                  hasDiscount={discountRestaurantIds.has(restaurant.id)}
                 />
               </div>
             ))}

@@ -3,6 +3,7 @@ import { useRef, useCallback } from 'react'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
 import SaveButton from './SaveButton'
+import DiscountBanner from '../Discount/DiscountBanner'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
@@ -204,6 +205,11 @@ export default function RestaurantSheet({
                 </div>
               </motion.div>
             )}
+
+            {/* Discount banner */}
+            <motion.div variants={itemVariants}>
+              <DiscountBanner restaurantId={restaurant.id} />
+            </motion.div>
 
             {/* Info section */}
             <motion.div
