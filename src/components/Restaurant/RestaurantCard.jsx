@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
-import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { getDistance, formatDistance, formatDrivingTime } from '../../lib/utils/distance'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -108,10 +108,16 @@ export default function RestaurantCard({
           )}
         </div>
 
-        {/* Distance */}
+        {/* Distance + driving time */}
         {distance != null && (
-          <span className="text-xs text-secondary">
-            {formatDistance(distance)}
+          <span className="flex items-center gap-1.5 text-xs text-secondary">
+            <span>{formatDistance(distance)}</span>
+            <span className="flex items-center gap-0.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h.01M16 17h.01M4 11l1.34-4.02A2 2 0 017.24 5h9.52a2 2 0 011.9 1.38L20 11m-16 0h16m-16 0v6a1 1 0 001 1h1a1 1 0 001-1v-1h10v1a1 1 0 001 1h1a1 1 0 001-1v-6" />
+              </svg>
+              {formatDrivingTime(distance)}
+            </span>
           </span>
         )}
 

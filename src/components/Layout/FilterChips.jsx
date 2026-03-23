@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
-export default function FilterChips({ filters, onFilterChange }) {
+export default function FilterChips({ filters, onFilterChange, onNearbyClick }) {
   const [modalOpen, setModalOpen] = useState(false)
 
   // Support multi-category as array
@@ -86,6 +86,31 @@ export default function FilterChips({ filters, onFilterChange }) {
           WebkitOverflowScrolling: 'touch',
         }}
       >
+        {/* "Nelle vicinanze" button */}
+        {onNearbyClick && (
+          <button
+            type="button"
+            onClick={onNearbyClick}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
+            style={{
+              backgroundColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(255,255,255,0.85)',
+              color: filters.sortBy === 'distance' ? '#fff' : '#4B5563',
+              borderColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(209,213,219,0.6)',
+              backdropFilter: filters.sortBy === 'distance' ? 'none' : 'blur(8px)',
+              WebkitBackdropFilter: filters.sortBy === 'distance' ? 'none' : 'blur(8px)',
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <circle cx="12" cy="12" r="4" />
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+            </svg>
+            <span>Nelle vicinanze</span>
+          </button>
+        )}
+
         {/* "Tipo di locale" button — opens full modal */}
         <button
           type="button"
@@ -163,7 +188,7 @@ export default function FilterChips({ filters, onFilterChange }) {
                 </div>
 
                 {/* Grid */}
-                <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
                   <div className="grid grid-cols-4 gap-3">
                     {/* "Tutti" option to clear filter */}
                     <button

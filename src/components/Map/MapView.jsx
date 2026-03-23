@@ -231,6 +231,15 @@ const MapView = forwardRef(function MapView({
   useImperativeHandle(ref, () => ({
     zoomIn: () => map.current?.zoomIn({ duration: 300 }),
     zoomOut: () => map.current?.zoomOut({ duration: 300 }),
+    flyToUser: (pos) => {
+      if (!map.current || !pos) return
+      map.current.flyTo({
+        center: [pos.lng, pos.lat],
+        zoom: 16, // neighborhood level — shows the block
+        duration: 1200,
+        essential: true,
+      })
+    },
   }))
 
   // Initialize map

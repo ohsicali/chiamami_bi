@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MapView from '../../components/Map/MapView'
 import MapControls from '../../components/Map/MapControls'
@@ -45,6 +45,13 @@ export default function HomePage() {
     locate()
     setFilters((prev) => ({ ...prev, sortBy: 'distance' }))
   }, [locate, setFilters])
+
+  // Fly to user position when geolocation completes
+  useEffect(() => {
+    if (position) {
+      mapRef.current?.flyToUser(position)
+    }
+  }, [position])
 
   const handlePinSelect = useCallback((id) => {
     const r = allRestaurants.find((r) => r.id === id)
@@ -115,7 +122,7 @@ export default function HomePage() {
 
         {/* Filter Chips (categories) */}
         <div className="mb-4">
-          <FilterChips filters={filters} onFilterChange={setFilters} />
+          <FilterChips filters={filters} onFilterChange={setFilters} onNearbyClick={handleLocateMe} />
         </div>
 
         {/* Results count */}

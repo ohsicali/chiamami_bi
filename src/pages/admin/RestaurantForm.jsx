@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -137,87 +138,90 @@ function CategorySelector({ selected, onChange }) {
         </div>
       )}
 
-      {/* Full-screen modal */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          >
+      {/* Full-screen modal — rendered via portal to avoid scroll/clipping issues */}
+      {createPortal(
+        <AnimatePresence>
+          {open && (
             <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Grid */}
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4">
-                <div className="grid grid-cols-4 gap-3">
-                  {CUISINE_CATEGORIES.map((cat) => {
-                    const active = selected.includes(cat.name)
-                    return (
-                      <button
-                        key={cat.name}
-                        type="button"
-                        onClick={() => toggle(cat.name)}
-                        className="flex flex-col items-center gap-1.5 py-2"
-                      >
-                        <div
-                          className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                            active
-                              ? 'ring-3 ring-accent shadow-md'
-                              : 'bg-gray-100'
-                          }`}
-                          style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
-                        >
-                          {cat.emoji}
-                        </div>
-                        <span className={`text-xs font-medium text-center leading-tight ${
-                          active ? 'text-accent' : 'text-primary'
-                        }`}>
-                          {cat.name}
-                        </span>
-                      </button>
-                    )
-                  })}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+                  <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-              </div>
 
-              {/* Footer button */}
-              <div className="px-5 py-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
-                >
-                  {selected.length > 0
-                    ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})`
-                    : 'Chiudi'}
-                </button>
-              </div>
+                {/* Grid — min-h-0 prevents flex child from overflowing */}
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <div className="grid grid-cols-4 gap-3">
+                    {CUISINE_CATEGORIES.map((cat) => {
+                      const active = selected.includes(cat.name)
+                      return (
+                        <button
+                          key={cat.name}
+                          type="button"
+                          onClick={() => toggle(cat.name)}
+                          className="flex flex-col items-center gap-1.5 py-2"
+                        >
+                          <div
+                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
+                              active
+                                ? 'ring-3 ring-accent shadow-md'
+                                : 'bg-gray-100'
+                            }`}
+                            style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                          >
+                            {cat.emoji}
+                          </div>
+                          <span className={`text-xs font-medium text-center leading-tight ${
+                            active ? 'text-accent' : 'text-primary'
+                          }`}>
+                            {cat.name}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Footer button */}
+                <div className="px-5 py-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
+                  >
+                    {selected.length > 0
+                      ? `Fatto (${selected.length} selezionat${selected.length === 1 ? 'o' : 'i'})`
+                      : 'Chiudi'}
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   )
 }
