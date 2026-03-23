@@ -9,6 +9,8 @@ import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import Navbar from '../../components/Layout/Navbar'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
+import { useAuth } from '../../lib/hooks/useAuth'
+import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 
 function slugify(name) {
@@ -26,6 +28,8 @@ function slugify(name) {
 export default function HomePage() {
   const navigate = useNavigate()
   const { position, loading: geoLoading, locate } = useGeolocation()
+  const { user } = useAuth()
+  const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const {
     restaurants,
     allRestaurants,
@@ -35,6 +39,12 @@ export default function HomePage() {
     searchQuery,
     setSearchQuery,
   } = useRestaurants(position)
+
+  // Filter for saved if ?filter=saved
+  const [showSavedOnly, setShowSavedOnly] = useState(false)
+  const displayedRestaurants = showSavedOnly
+    ? restaurants.filter((r) => savedIds.has(r.id))
+    : restaurants
 
   const [selectedId, setSelectedId] = useState(null)
   const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
@@ -122,7 +132,15 @@ export default function HomePage() {
 
         {/* Filter Chips (categories) */}
         <div className="mb-4">
-          <FilterChips filters={filters} onFilterChange={setFilters} onNearbyClick={handleLocateMe} />
+          <FilterChips
+            filters={filters}
+            onFilterChange={setFilters}
+            onNearbyClick={handleLocateMe}
+            user={user}
+            showSavedOnly={showSavedOnly}
+            onToggleSaved={() => setShowSavedOnly((v) => !v)}
+            savedCount={savedIds.size}
+          />
         </div>
 
         {/* Results count */}
@@ -131,8 +149,8 @@ export default function HomePage() {
             <div className="skeleton h-4 w-24 rounded-md" />
           ) : (
             <p className="text-sm font-medium text-secondary">
-              {restaurants.length}{' '}
-              {restaurants.length === 1 ? 'ristorante' : 'ristoranti'}
+              {displayedRestaurants.length}{' '}
+              {displayedRestaurants.length === 1 ? 'ristorante' : 'ristoranti'}
             </p>
           )}
         </div>
@@ -144,7 +162,7 @@ export default function HomePage() {
               <SkeletonCard key={i} className="!shadow-sm" />
             ))}
           </div>
-        ) : restaurants.length === 0 ? (
+        ) : displayedRestaurants.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-3 text-4xl">🔍</div>
             <p className="text-base font-semibold text-primary">
@@ -156,13 +174,15 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-8">
-            {restaurants.map((restaurant, index) => (
+            {displayedRestaurants.map((restaurant, index) => (
               <div key={restaurant.id}>
                 <RestaurantCard
                   restaurant={restaurant}
                   index={index}
                   userPosition={position}
                   onClick={handleCardClick}
+                  saved={isSaved(restaurant.id)}
+                  onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
                 />
               </div>
             ))}

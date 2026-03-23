@@ -12,6 +12,8 @@ const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const RestaurantForm = lazy(() => import('./pages/admin/RestaurantForm'))
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
+const LoginPage = lazy(() => import('./pages/public/LoginPage'))
+const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
@@ -49,6 +51,8 @@ export default function App() {
         <Routes location={location} key={location.pathname}>
           <Route path="/list" element={<ListView />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/restaurant/new" element={<RestaurantForm />} />

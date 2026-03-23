@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
-export default function FilterChips({ filters, onFilterChange, onNearbyClick }) {
+export default function FilterChips({ filters, onFilterChange, onNearbyClick, user, showSavedOnly, onToggleSaved, savedCount = 0 }) {
   const [modalOpen, setModalOpen] = useState(false)
 
   // Support multi-category as array
@@ -114,6 +114,27 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick }) 
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
             <span>Nelle vicinanze</span>
+          </button>
+        )}
+
+        {/* "I miei salvati" — visible only when logged in */}
+        {user && onToggleSaved && (
+          <button
+            type="button"
+            onClick={onToggleSaved}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
+            style={{
+              backgroundColor: showSavedOnly ? '#FF5757' : 'rgba(255,255,255,0.85)',
+              color: showSavedOnly ? '#fff' : '#4B5563',
+              borderColor: showSavedOnly ? '#FF5757' : 'rgba(209,213,219,0.6)',
+              backdropFilter: showSavedOnly ? 'none' : 'blur(8px)',
+              WebkitBackdropFilter: showSavedOnly ? 'none' : 'blur(8px)',
+            }}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showSavedOnly ? '#fff' : 'none'} stroke="currentColor" strokeWidth={2}>
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+            <span>Salvati{savedCount > 0 ? ` (${savedCount})` : ''}</span>
           </button>
         )}
 

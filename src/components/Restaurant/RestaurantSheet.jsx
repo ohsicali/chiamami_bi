@@ -2,6 +2,7 @@ import { motion, useAnimate } from 'framer-motion'
 import { useRef, useCallback } from 'react'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
+import SaveButton from './SaveButton'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
@@ -29,6 +30,8 @@ export default function RestaurantSheet({
   onClose,
   allRestaurants = [],
   onSelectNearby,
+  saved,
+  onSaveToggle,
 }) {
   const scrollRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
@@ -114,6 +117,18 @@ export default function RestaurantSheet({
             <path d="M12 19l-7-7 7-7" />
           </svg>
         </motion.button>
+
+        {/* Save button — top right */}
+        {onSaveToggle && (
+          <motion.div
+            className="absolute top-4 right-4 z-10"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
+          >
+            <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
+          </motion.div>
+        )}
 
         {/* Scrollable content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">

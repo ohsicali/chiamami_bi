@@ -1,6 +1,8 @@
 import { useNavigate, useLocation, matchPath } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
+import { useAuth } from '../../lib/hooks/useAuth'
+import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { LogoLoader } from '../../components/UI/Logo'
 
 function slugify(name) {
@@ -21,6 +23,8 @@ export default function RestaurantPage() {
   const match = matchPath('/restaurant/:slug', location.pathname)
   const slug = match?.params?.slug
   const { restaurants, loading } = useRestaurants()
+  const { user } = useAuth()
+  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
   const restaurant = restaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
 
@@ -30,6 +34,16 @@ export default function RestaurantPage() {
 
   const handleSelectNearby = (nearby) => {
     navigate(`/restaurant/${nearby.slug || slugify(nearby.name)}`)
+  }
+
+  const handleSaveToggle = () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    if (restaurant) {
+      toggleSave(restaurant.id)
+    }
   }
 
   // Loading state
@@ -73,6 +87,8 @@ export default function RestaurantPage() {
       onClose={handleBack}
       allRestaurants={restaurants}
       onSelectNearby={handleSelectNearby}
+      saved={isSaved(restaurant.id)}
+      onSaveToggle={handleSaveToggle}
     />
   )
 }

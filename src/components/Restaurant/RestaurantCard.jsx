@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import Badge from '../UI/Badge'
+import SaveButton from './SaveButton'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance, formatDrivingTime } from '../../lib/utils/distance'
 
@@ -22,6 +23,8 @@ export default function RestaurantCard({
   index = 0,
   userPosition,
   onClick,
+  saved,
+  onSaveToggle,
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
 
@@ -83,6 +86,12 @@ export default function RestaurantCard({
         {!photoUrl && (
           <div className="absolute inset-0 flex items-center justify-center text-2xl">
             {category?.emoji || '🍽️'}
+          </div>
+        )}
+        {/* Heart save button */}
+        {onSaveToggle && (
+          <div className="absolute top-1 right-1 z-10">
+            <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
           </div>
         )}
       </div>
