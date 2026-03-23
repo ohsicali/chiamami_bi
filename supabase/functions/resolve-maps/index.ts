@@ -127,6 +127,7 @@ serve(async (req) => {
     })
 
   } catch (err) {
-    return ok({ error: `Errore interno: ${err.message}` })
+    const msg = err instanceof Error ? err.message : String(err)
+    return ok({ error: `Errore interno: ${msg}` })
   }
 })
