@@ -672,6 +672,12 @@ export default function RestaurantForm() {
         if (data.warning) addToast(data.warning, 'error')
       }
 
+      // Reject names that are just numbers (postal codes) or common city names
+      const invalidNames = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo']
+      if (/^\d+$/.test(name) || invalidNames.includes(name.toLowerCase())) {
+        name = ''
+      }
+
       if (!name && !lat) {
         addToast('Impossibile estrarre dati dal link. Prova con un link completo di Google Maps.', 'error')
         setGoogleFilling(false)
