@@ -60,30 +60,43 @@ export default async function handler(req, res) {
     }
 
     // Step 3: Find place via Google Places API
-    const input = searchQuery || `${lat},${lng}`
+    // Try multiple search strategies to find the right place
     const locationBias = lat && lng ? `&locationbias=circle:500@${lat},${lng}` : ''
-    const findRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(input)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
-    )
-    const findData = await findRes.json()
+    const parts = searchQuery.split(',').map(p => p.trim()).filter(Boolean)
 
-    if (findData.status !== 'OK' || !findData.candidates?.[0]?.place_id) {
-      // Fallback: try to split the q= string into name/address
-      const parts = searchQuery.split(',').map(p => p.trim())
-      return res.status(200).json({
-        resolved_url: resolvedUrl,
-        name: parts[0] || '',
-        latitude: lat,
-        longitude: lng,
-        address: parts.length > 1 ? parts.slice(1).join(', ') : '',
-        phone: '',
-        website: '',
-        warning: findData.status !== 'OK' ? `Places API: ${findData.status}` : 'Nessun risultato trovato',
-      })
+    // Strategy: try different parts of the query — last part first (most likely the name),
+    // then last 2 parts, then full string
+    const searchAttempts = []
+    if (parts.length > 1) {
+      searchAttempts.push(parts[parts.length - 1])                    // last part (restaurant name)
+      searchAttempts.push(parts.slice(-2).join(', '))                  // last 2 parts
+    }
+    searchAttempts.push(searchQuery)                                    // full string
+
+    let placeId = null
+    for (const attempt of searchAttempts) {
+      const findRes = await fetch(
+        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(attempt)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
+      )
+      const findData = await findRes.json()
+      if (findData.status === 'OK' && findData.candidates?.[0]?.place_id) {
+        placeId = findData.candidates[0].place_id
+        break
+      }
     }
 
-    // Step 4: Get full place details — THIS is what properly splits data into fields
-    const placeId = findData.candidates[0].place_id
+    if (!placeId) {
+      return res.status(200).json({
+        resolved_url: resolvedUrl,
+        name: parts[parts.length - 1] || searchQuery,
+        latitude: lat,
+        longitude: lng,
+        address: parts.length > 1 ? parts.slice(0, -1).reverse().join(', ') : '',
+        phone: '',
+        website: '',
+        warning: 'Nessun risultato trovato su Google Places',
+      })
+    }
     const detailsRes = await fetch(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
     )
