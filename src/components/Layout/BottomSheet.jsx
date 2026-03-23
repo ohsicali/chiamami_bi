@@ -14,7 +14,7 @@ const TOP_MIN = 70 // leave space for navbar
 function getSnapHeights() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   return [
-    78,                          // PEEK: handle + search bar only
+    86,                          // PEEK: handle + search bar + bottom padding
     h * 0.55,                    // HALF: categories + some results
     h - TOP_MIN - BOTTOM_MARGIN, // FULL: nearly full screen
   ]
@@ -156,7 +156,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       }}
     >
       {/* Drag handle */}
-      <div className="flex items-center justify-center pt-2.5 pb-1.5 cursor-grab active:cursor-grabbing">
+      <div className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing">
         <div
           className="rounded-full"
           style={{
@@ -176,7 +176,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
           overflowY: canScroll ? 'auto' : 'hidden',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
-          height: 'calc(100% - 34px)',
+          height: 'calc(100% - 25px)',
         }}
         onTouchStart={(e) => {
           if (canScroll && contentRef.current && contentRef.current.scrollTop > 0) {
