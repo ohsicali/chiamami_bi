@@ -9,7 +9,7 @@ export const SNAP_FULL = 2
 function getSnapPoints() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   return [
-    h - 240,   // PEEK: search bar + category circles visible (~240px)
+    h - 110,   // PEEK: just drag handle + search bar visible (~110px), like Apple Maps
     h * 0.45,  // HALF: ~55% visible
     h * 0.08,  // FULL: nearly full screen (8% from top, leaves space for navbar)
   ]
