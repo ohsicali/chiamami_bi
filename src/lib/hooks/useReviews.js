@@ -16,14 +16,27 @@ export function useRestaurantReviews(restaurantId) {
     }
 
     setLoading(true)
+    // Fetch reviews without profiles join to avoid RLS recursion
     const { data } = await supabase
       .from('user_reviews')
-      .select('*, user:profiles(id, full_name, avatar_url), photos:user_review_photos(id, photo_url, sort_order)')
+      .select('*, photos:user_review_photos(id, photo_url, sort_order)')
       .eq('restaurant_id', restaurantId)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
 
-    setReviews(data || [])
+    // Fetch profiles separately
+    const userIds = [...new Set((data || []).map(r => r.user_id).filter(Boolean))]
+    let profileMap = {}
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds)
+      if (profiles) {
+        profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
+      }
+    }
+    setReviews((data || []).map(r => ({ ...r, user: profileMap[r.user_id] || null })))
     setLoading(false)
   }, [restaurantId])
 
@@ -204,16 +217,31 @@ export function useAllReviews() {
 
     setFetchError(null)
     try {
+      // Fetch reviews with restaurant and photos (skip profiles join to avoid RLS recursion)
       const { data, error } = await supabase
         .from('user_reviews')
-        .select('*, user:profiles(id, full_name, avatar_url), restaurant:restaurants(id, name, slug), photos:user_review_photos(id, photo_url, sort_order)')
+        .select('*, restaurant:restaurants(id, name, slug), photos:user_review_photos(id, photo_url, sort_order)')
         .order('created_at', { ascending: false })
 
       if (error) {
         console.error('Supabase reviews query error:', error)
         setFetchError(error.message || 'Errore caricamento recensioni')
+        setReviews([])
+      } else {
+        // Fetch profiles separately to avoid RLS recursion on profiles table
+        const userIds = [...new Set((data || []).map(r => r.user_id).filter(Boolean))]
+        let profileMap = {}
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', userIds)
+          if (profiles) {
+            profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
+          }
+        }
+        setReviews((data || []).map(r => ({ ...r, user: profileMap[r.user_id] || null })))
       }
-      setReviews(data || [])
     } catch (err) {
       console.error('Failed to fetch reviews:', err)
       setFetchError(err.message)
