@@ -21,6 +21,18 @@
   --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
+/* Dark mode overrides via .dark class on <html> */
+.dark {
+  --color-primary: #F5F5F5;
+  --color-secondary: #9CA3AF;
+  --color-accent: #FF7A53;
+  --color-accent-light: #2A1A14;
+  --color-bg: #0A0A0A;
+  --color-card: #1C1C1E;
+  --color-success: #30D158;
+  --color-surface-glass: rgba(28, 28, 30, 0.72);
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg);
@@ -70,6 +82,20 @@ body {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+.dark .glass {
+  background: rgba(28, 28, 30, 0.72);
+}
+
+/* Dark mode skeleton */
+.dark .skeleton {
+  background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #444;
 }
 
 /* Admin pages need scroll — override body overflow:hidden */

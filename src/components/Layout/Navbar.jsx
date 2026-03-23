@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { LogoFull } from "../UI/Logo";
 import { useAuth } from "../../lib/hooks/useAuth";
+import DarkModeToggle from "./DarkModeToggle";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const ListIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -50,6 +52,12 @@ export default function Navbar({ view = "map", onToggleView }) {
 
         {/* Right side buttons */}
         <div className="flex items-center gap-2">
+          {/* Language switcher */}
+          <LanguageSwitcher />
+
+          {/* Dark mode toggle */}
+          <DarkModeToggle />
+
           {/* View toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
