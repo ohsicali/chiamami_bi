@@ -16,7 +16,7 @@ function timeAgo(dateStr) {
 
 export default function ReviewModerator() {
   const { user, loading: authLoading } = useAuth()
-  const { reviews, loading, updateStatus, deleteReview } = useAllReviews()
+  const { reviews, loading, fetchError, updateStatus, deleteReview } = useAllReviews()
   const [tab, setTab] = useState('pending')
   const [actionLoading, setActionLoading] = useState(null)
 
@@ -59,6 +59,14 @@ export default function ReviewModerator() {
           {pending.length} da moderare · {published.length} pubblicate · {rejected.length} rifiutate
         </p>
       </div>
+
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3">
+          <p className="text-sm font-semibold text-red-700">Errore caricamento recensioni</p>
+          <p className="text-xs text-red-600 mt-0.5">{fetchError}</p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
