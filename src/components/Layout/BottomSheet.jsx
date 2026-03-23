@@ -135,6 +135,13 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
 
   const canScroll = snapIndex === SNAP_FULL
 
+  // Reset scroll position when leaving FULL to prevent content appearing cut off
+  useEffect(() => {
+    if (!canScroll && contentRef.current) {
+      contentRef.current.scrollTop = 0
+    }
+  }, [canScroll])
+
   return (
     <motion.div
       ref={sheetRef}
