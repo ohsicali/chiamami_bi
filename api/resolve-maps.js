@@ -1,6 +1,5 @@
 /**
  * Vercel Serverless Function — resolve Google Maps URL and fetch place details
- * Runs server-side: no CORS issues, API key is safe
  */
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -17,26 +16,32 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(200).json({ error: 'VITE_GOOGLE_PLACES_KEY non configurata' })
 
   try {
-    // Step 1: Fetch the Google Maps page — follow all redirects and get HTML
+    // Step 1: Resolve URL — try manual redirect following
     let resolvedUrl = url
     let pageTitle = ''
-    let searchQuery = ''
-    let lat = null
-    let lng = null
 
     try {
-      const response = await fetch(url, {
+      resolvedUrl = await followRedirects(url)
+    } catch (_) {
+      resolvedUrl = url
+    }
+
+    // Step 2: Try to fetch the page HTML for the <title> tag
+    try {
+      const pageUrl = resolvedUrl !== url ? resolvedUrl : url
+      const pageRes = await fetch(pageUrl, {
         redirect: 'follow',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
+          'Accept': 'text/html',
+          'Accept-Language': 'it-IT,it;q=0.9',
         },
       })
-      resolvedUrl = response.url || url
-      const html = await response.text()
-
-      // Extract place name from <title> tag (format: "Restaurant Name - Google Maps")
+      // Update resolved URL if fetch followed further redirects
+      if (pageRes.url && pageRes.url !== pageUrl) {
+        resolvedUrl = pageRes.url
+      }
+      const html = await pageRes.text()
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
       if (titleMatch) {
         pageTitle = titleMatch[1]
@@ -44,36 +49,42 @@ export default async function handler(req, res) {
           .replace(/\s*[-–—|·]\s*Google\s*$/i, '')
           .trim()
       }
-
-      // Also try og:title
       if (!pageTitle) {
-        const ogMatch = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i)
-          || html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:title"/i)
+        const ogMatch = html.match(/property="og:title"[^>]+content="([^"]+)"/i)
+          || html.match(/content="([^"]+)"[^>]+property="og:title"/i)
         if (ogMatch) {
-          pageTitle = ogMatch[1]
-            .replace(/\s*[-–—|·]\s*Google\s+Maps?\s*$/i, '')
-            .trim()
+          pageTitle = ogMatch[1].replace(/\s*[-–—|·]\s*Google\s+Maps?\s*$/i, '').trim()
         }
       }
     } catch (_) {}
 
-    // Step 2: Extract data from the resolved URL
-    const placeMatch = resolvedUrl.match(/\/place\/([^/@?]+)/)
-    if (placeMatch) {
-      searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
-    }
+    // Step 3: Build search query from all available data
+    let searchQuery = ''
+    let lat = null
+    let lng = null
 
-    // Use page title as primary search query (most reliable for short URLs)
-    if (pageTitle && pageTitle.length > 2 && !pageTitle.toLowerCase().includes('google maps')) {
+    // Best: page title (e.g. "Gastronomia HUI WEI XIANG Crêpes Cinesi")
+    if (pageTitle && pageTitle.length > 2 && !/google/i.test(pageTitle)) {
       searchQuery = pageTitle
     }
 
-    // Fallback to ?q= parameter
+    // Try /place/Name/ pattern from URL
+    if (!searchQuery) {
+      const placeMatch = resolvedUrl.match(/\/place\/([^/@?]+)/)
+      if (placeMatch) searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+    }
+
+    // Try ?q= parameter — use last comma part (restaurant name, not city)
     if (!searchQuery) {
       try {
         const urlObj = new URL(resolvedUrl)
         const q = urlObj.searchParams.get('q')
-        if (q) searchQuery = q.replace(/\+/g, ' ')
+        if (q) {
+          const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
+          const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
+          // Restaurant name is usually the last part
+          searchQuery = parts.length > 1 ? parts[parts.length - 1] : decoded
+        }
       } catch (_) {}
     }
 
@@ -86,12 +97,17 @@ export default async function handler(req, res) {
 
     if (!searchQuery && !lat) {
       return res.status(200).json({
-        error: `Impossibile estrarre dati dal link. Titolo: "${pageTitle}", URL: ${resolvedUrl}`,
+        error: `Impossibile estrarre dati. Prova a copiare l'URL lungo dalla barra del browser dopo aver aperto il link.`,
+        debug: { resolvedUrl, pageTitle },
       })
     }
 
-    // Step 3: Find place via Google Places API
-    const locationBias = lat && lng ? `&locationbias=circle:500@${lat},${lng}` : '&locationbias=circle:30000@45.0703,7.6869'  // default to Torino area
+    // Step 4: Search Google Places API
+    // Default location bias to Torino if no coords
+    const locationBias = lat && lng
+      ? `&locationbias=circle:500@${lat},${lng}`
+      : '&locationbias=circle:30000@45.0703,7.6869'
+
     const findRes = await fetch(
       `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
     )
@@ -106,11 +122,11 @@ export default async function handler(req, res) {
         address: '',
         phone: '',
         website: '',
-        warning: `Places API: ${findData.status || 'no results'} per "${searchQuery}"`,
+        warning: `Nessun risultato Places API per "${searchQuery}"`,
       })
     }
 
-    // Step 4: Get full place details
+    // Step 5: Get full place details
     const placeId = findData.candidates[0].place_id
     const detailsRes = await fetch(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
@@ -130,4 +146,21 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(200).json({ error: `Errore: ${err.message}` })
   }
+}
+
+/** Follow redirects one by one to get the final URL */
+async function followRedirects(url, maxRedirects = 10) {
+  let current = url
+  for (let i = 0; i < maxRedirects; i++) {
+    const res = await fetch(current, {
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      },
+    })
+    const location = res.headers.get('location')
+    if (!location) return current
+    current = location.startsWith('http') ? location : new URL(location, current).href
+  }
+  return current
 }
