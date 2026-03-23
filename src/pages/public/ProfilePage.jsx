@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useUserDiscounts } from '../../lib/hooks/useDiscounts'
@@ -31,6 +31,82 @@ const itemVariants = {
   },
 }
 
+function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
+  const x = useMotionValue(0)
+  const deleteOpacity = useTransform(x, [-120, -60], [1, 0])
+  const deleteScale = useTransform(x, [-120, -60], [1, 0.8])
+  const restaurant = r.discount?.restaurant
+  const photo = restaurant?.photos?.[0]?.photo_url
+
+  const handleDragEnd = (_, info) => {
+    if (info.offset.x < -80) {
+      animate(x, -90, { type: 'spring', stiffness: 400, damping: 30 })
+    } else {
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 })
+    }
+  }
+
+  const handleDeleteClick = () => {
+    animate(x, -300, { duration: 0.2 }).then(() => onDelete(r.id))
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Delete button behind */}
+      <motion.div
+        className="absolute right-0 inset-y-0 flex items-center justify-center w-24 bg-red-500 rounded-2xl"
+        style={{ opacity: deleteOpacity, scale: deleteScale }}
+      >
+        <button onClick={handleDeleteClick} className="flex flex-col items-center gap-1 text-white">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+          </svg>
+          <span className="text-xs font-semibold">Elimina</span>
+        </button>
+      </motion.div>
+
+      {/* Swipeable card */}
+      <motion.div
+        className="relative rounded-2xl bg-card shadow-sm cursor-pointer"
+        style={{ x }}
+        drag="x"
+        dragConstraints={{ left: -90, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        onClick={() => onShowQR()}
+      >
+        <div className="flex items-center gap-3 p-3">
+          {photo ? (
+            <img src={photo} alt="" className="h-16 w-16 rounded-xl object-cover flex-shrink-0" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-accent/10 text-2xl flex-shrink-0">🏷️</div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-primary truncate">{restaurant?.name || 'Ristorante'}</h3>
+            <p className="text-accent font-semibold text-sm">{r.discount?.discount_value}</p>
+            <p className="text-xs text-secondary truncate">{r.discount?.title}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                r.status === 'generated' ? 'bg-green-100 text-green-700' :
+                r.status === 'redeemed' ? 'bg-gray-100 text-gray-500' :
+                'bg-red-100 text-red-500'
+              }`}>
+                {r.status === 'generated' ? 'Attivo' : r.status === 'redeemed' ? 'Usato' : 'Scaduto'}
+              </span>
+              <span className="text-[10px] text-secondary">
+                {new Date(r.generated_at).toLocaleDateString('it-IT')}
+              </span>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { user, profile, loading: authLoading, signOut } = useAuth()
@@ -39,6 +115,12 @@ export default function ProfilePage() {
   const [savedRestaurants, setSavedRestaurants] = useState([])
   const [loadingRestaurants, setLoadingRestaurants] = useState(true)
   const [showQR, setShowQR] = useState(null)
+  const [localRedemptions, setLocalRedemptions] = useState([])
+
+  // Sync localRedemptions with fetched data
+  useEffect(() => {
+    setLocalRedemptions(redemptions)
+  }, [redemptions])
 
   // Redirect if not logged in
   useEffect(() => {
@@ -73,6 +155,18 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await signOut()
     navigate('/', { replace: true })
+  }
+
+  const handleDeleteRedemption = async (redemptionId) => {
+    // Optimistic UI update
+    setLocalRedemptions(prev => prev.filter(r => r.id !== redemptionId))
+    try {
+      await supabase.from('discount_redemptions').delete().eq('id', redemptionId)
+    } catch (err) {
+      console.error('Failed to delete redemption:', err)
+      // Revert on failure
+      setLocalRedemptions(redemptions)
+    }
   }
 
   if (authLoading) return null
@@ -157,7 +251,7 @@ export default function ProfilePage() {
                   <div key={i} className="skeleton h-28 rounded-2xl" />
                 ))}
               </div>
-            ) : redemptions.length === 0 ? (
+            ) : localRedemptions.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl bg-card p-8 text-center shadow-sm">
                 <span className="text-3xl mb-2">🏷️</span>
                 <p className="text-sm font-semibold text-primary">Nessuno sconto sbloccato</p>
@@ -173,70 +267,14 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {redemptions.map(r => {
-                  const discount = r.discount
-                  const restaurant = discount?.restaurant
-                  const photo = restaurant?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
-                  const isRedeemed = r.status === 'redeemed'
-                  const isExpired = r.status === 'expired' || (discount?.valid_until && new Date(discount.valid_until) < new Date())
-
-                  let statusBadge
-                  if (isRedeemed) {
-                    statusBadge = { text: 'Utilizzato', color: 'bg-gray-100 text-gray-600' }
-                  } else if (isExpired) {
-                    statusBadge = { text: 'Scaduto', color: 'bg-gray-100 text-gray-500' }
-                  } else {
-                    statusBadge = { text: 'Attivo', color: 'bg-green-100 text-green-700' }
-                  }
-
-                  return (
-                    <div
-                      key={r.id}
-                      className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm"
-                    >
-                      {/* Photo */}
-                      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl">
-                        {photo ? (
-                          <img
-                            src={photo.photo_url}
-                            alt={restaurant?.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gray-100 flex items-center justify-center text-2xl">
-                            🍽️
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-primary truncate">
-                          {restaurant?.name || 'Ristorante'}
-                        </p>
-                        <p className="text-sm font-semibold text-accent mt-0.5">
-                          {discount?.discount_value}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.color}`}>
-                            {statusBadge.text}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* QR button */}
-                      {!isRedeemed && !isExpired && (
-                        <motion.button
-                          onClick={() => setShowQR(r)}
-                          className="flex-shrink-0 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-white"
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          QR
-                        </motion.button>
-                      )}
-                    </div>
-                  )
-                })}
+                {localRedemptions.map(r => (
+                  <SwipeableRedemptionCard
+                    key={r.id}
+                    redemption={r}
+                    onShowQR={() => setShowQR(r)}
+                    onDelete={handleDeleteRedemption}
+                  />
+                ))}
               </div>
             )}
           </motion.div>

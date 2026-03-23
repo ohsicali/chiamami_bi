@@ -74,6 +74,20 @@ export function useUserRedemption(discountId, userId) {
   const generateRedemption = useCallback(async () => {
     if (!discountId || !userId || !isSupabaseConfigured()) return null
 
+    // Check if user already has a redemption for this discount
+    const { data: existing } = await supabase
+      .from('discount_redemptions')
+      .select('id, qr_code, status')
+      .eq('discount_id', discountId)
+      .eq('user_id', userId)
+      .limit(1)
+      .single()
+
+    if (existing) {
+      setRedemption(existing)
+      return existing
+    }
+
     const qrCode = generateQRCode()
     const { data, error } = await supabase
       .from('discount_redemptions')
