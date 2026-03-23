@@ -80,29 +80,48 @@ export async function submitReview({ restaurantId, userId, comment, photoFiles }
   let reviewId
 
   if (existing) {
-    // Update existing review
+    // Update existing review — set to pending for moderation
     const { data, error } = await supabase
       .from('user_reviews')
-      .update({ comment, status: 'published' })
+      .update({ comment, status: 'pending_review' })
       .eq('id', existing.id)
       .select()
       .single()
     if (error) throw error
     reviewId = data.id
   } else {
-    // Create new review
+    // Create new review — starts as pending
     const { data, error } = await supabase
       .from('user_reviews')
       .insert({
         user_id: userId,
         restaurant_id: restaurantId,
         comment,
-        status: 'published',
+        status: 'pending_review',
       })
       .select()
       .single()
     if (error) throw error
     reviewId = data.id
+  }
+
+  // Trigger AI moderation via Edge Function (non-blocking)
+  try {
+    const { data: modResult } = await supabase.functions.invoke('moderate-review', {
+      body: { review_id: reviewId, comment },
+    })
+    // If AI approves, auto-publish
+    if (modResult?.approved) {
+      await supabase.from('user_reviews').update({ status: 'published' }).eq('id', reviewId)
+    } else if (modResult) {
+      // Store AI reason for admin review
+      await supabase.from('user_reviews').update({
+        status: 'pending_review',
+        ai_reason: modResult.reason || null,
+      }).eq('id', reviewId)
+    }
+  } catch {
+    // Edge Function unavailable — leave as pending_review for manual moderation
   }
 
   // Upload photos if provided

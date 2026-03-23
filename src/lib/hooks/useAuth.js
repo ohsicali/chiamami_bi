@@ -113,7 +113,11 @@ export function useAuth() {
     setProfile(null)
   }, [])
 
+  const refreshProfile = useCallback(async () => {
+    if (user) await fetchProfile(user)
+  }, [user, fetchProfile])
+
   const isAdmin = profile?.is_admin === true
 
-  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut }
+  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile }
 }

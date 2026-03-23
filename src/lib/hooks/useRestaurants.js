@@ -28,6 +28,8 @@ export const CUISINE_CATEGORIES = [
   { name: 'Insalate', emoji: '🥗', color: '#22C55E' },
   { name: 'Internazionale', emoji: '🌍', color: '#6366F1' },
   { name: 'Cocktail', emoji: '🍸', color: '#A855F7' },
+  { name: 'Bar', emoji: '🍸', color: '#78716C' },
+  { name: 'Tramezzini', emoji: '🥪', color: '#D97706' },
 ]
 
 export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']

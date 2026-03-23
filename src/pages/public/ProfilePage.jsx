@@ -6,6 +6,7 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useUserDiscounts } from '../../lib/hooks/useDiscounts'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
+import Footer from '../../components/Layout/Footer'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
@@ -197,7 +198,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
 }
 
 /* ── Settings Section ── */
-function SettingsSection({ user, profile, onLogout, onBack }) {
+function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) {
   const [fullName, setFullName] = useState(profile?.full_name || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -228,10 +229,13 @@ function SettingsSection({ user, profile, onLogout, onBack }) {
   const handleSaveName = async () => {
     if (!fullName.trim() || !isSupabaseConfigured()) return
     setSaving(true)
-    await supabase.from('profiles').update({ full_name: fullName.trim() }).eq('id', user.id)
+    const { error } = await supabase.from('profiles').update({ full_name: fullName.trim() }).eq('id', user.id)
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    if (!error) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+      onRefreshProfile?.()
+    }
   }
 
   const handleToggleNewsletter = async () => {
@@ -263,36 +267,6 @@ function SettingsSection({ user, profile, onLogout, onBack }) {
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err.message || 'Errore nel cambio password.' })
     }
-  }
-
-  const handleDownloadData = async () => {
-    if (!user) return
-    const [
-      { data: profileData },
-      { data: savedData },
-      { data: redemptionData },
-      { data: reviewData },
-    ] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('saved_restaurants').select('*, restaurant:restaurants(name)').eq('user_id', user.id),
-      supabase.from('discount_redemptions').select('*, discount:discounts(title, discount_value)').eq('user_id', user.id),
-      supabase.from('user_reviews').select('*, restaurant:restaurants(name)').eq('user_id', user.id),
-    ])
-    const exportData = {
-      profile: profileData,
-      email: user.email,
-      saved_restaurants: savedData || [],
-      discount_redemptions: redemptionData || [],
-      reviews: reviewData || [],
-      exported_at: new Date().toISOString(),
-    }
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `chiamamibi-dati-${user.email}.json`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   const handleDeleteAccount = async () => {
@@ -428,15 +402,6 @@ function SettingsSection({ user, profile, onLogout, onBack }) {
         </div>
       </div>
 
-      {/* Download data */}
-      <button
-        onClick={handleDownloadData}
-        className="w-full rounded-2xl bg-card py-4 text-sm font-medium text-primary shadow-sm text-left px-5 flex items-center gap-3"
-      >
-        <span className="text-base">📥</span>
-        Scarica i miei dati
-      </button>
-
       {/* Delete account */}
       <button
         onClick={() => setShowDeleteModal(true)}
@@ -462,7 +427,7 @@ function SettingsSection({ user, profile, onLogout, onBack }) {
 /* ── Main Profile Page ── */
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { user, profile, loading: authLoading, signOut } = useAuth()
+  const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   const { redemptions, loading: discountsLoading } = useUserDiscounts(user?.id)
   const [savedRestaurants, setSavedRestaurants] = useState([])
@@ -566,6 +531,7 @@ export default function ProfilePage() {
               user={user}
               profile={profile}
               onLogout={signOut}
+              onRefreshProfile={refreshProfile}
               onBack={() => setShowSettings(false)}
             />
           ) : (
@@ -799,6 +765,8 @@ export default function ProfilePage() {
           />
         )}
       </AnimatePresence>
+
+      <Footer />
     </div>
   )
 }

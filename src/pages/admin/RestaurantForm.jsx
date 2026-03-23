@@ -51,7 +51,6 @@ const EMPTY_FORM = {
   website: '',
   categories: [],
   price_range: 0,
-  our_rating: 4.0,
   our_review: '',
   our_tip: '',
   recommended_for: [],
@@ -97,32 +96,6 @@ function PriceSelector({ value, onChange }) {
           {PRICE_LABELS[level]}
         </motion.button>
       ))}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Star rating selector (Bi rating 1-5)                               */
-/* ------------------------------------------------------------------ */
-function StarRating({ value, onChange }) {
-  const [hover, setHover] = useState(0)
-  return (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onMouseEnter={() => setHover(star)}
-          onMouseLeave={() => setHover(0)}
-          onClick={() => onChange(value === star ? 0 : star)}
-          className="text-2xl transition-transform hover:scale-110"
-        >
-          {star <= (hover || value) ? '⭐' : '☆'}
-        </button>
-      ))}
-      {value > 0 && (
-        <span className="ml-2 text-sm font-medium text-secondary">{value}/5</span>
-      )}
     </div>
   )
 }
@@ -560,7 +533,8 @@ export default function RestaurantForm() {
   const [geocoding, setGeocoding] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [googleFilling, setGoogleFilling] = useState(false)
-  const [aiCorrecting, setAiCorrecting] = useState(null) // 'review' | 'tip' | null
+  const [aiCorrecting, setAiCorrecting] = useState(null) // 'our_review' | 'our_tip' | null
+  const [aiSuggestion, setAiSuggestion] = useState(null) // { field, original, corrected }
   // Inline discount state
   const [discount, setDiscount] = useState(null)
   const [discountLoading, setDiscountLoading] = useState(false)
@@ -592,7 +566,6 @@ export default function RestaurantForm() {
           website: r.website || '',
           categories: r.cuisine_type ? [r.cuisine_type] : (r.categories || []),
           price_range: r.price_range || 0,
-          our_rating: r.our_rating || 4.0,
           our_review: r.our_review || r.description || '',
           our_tip: r.our_tip || (Array.isArray(r.tips) ? r.tips.join('\n') : '') || '',
           recommended_for: r.recommended_for || [],
@@ -644,26 +617,57 @@ export default function RestaurantForm() {
     setGeocoding(false)
   }
 
-  // Google Maps autofill
+  // Google Maps autofill — from URL or name search
   const handleGoogleFill = async () => {
     const apiKey = import.meta.env.VITE_GOOGLE_PLACES_KEY
     if (!apiKey) {
       addToast('Chiave Google Places non configurata (VITE_GOOGLE_PLACES_KEY)', 'error')
       return
     }
-    if (!form.name.trim()) {
-      addToast('Inserisci il nome del ristorante prima', 'error')
+
+    const mapsUrl = form.google_maps_url.trim()
+    let searchQuery = ''
+
+    // Try to extract place name from Google Maps URL
+    if (mapsUrl) {
+      // Extract from /place/Name+Of+Place/ pattern
+      const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
+      if (placeMatch) {
+        searchQuery = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+      }
+      // Extract coords from @lat,lng pattern
+      const coordMatch = mapsUrl.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+      if (coordMatch && !searchQuery) {
+        // Use coords to reverse-search
+        searchQuery = `${coordMatch[1]},${coordMatch[2]}`
+      }
+      // For short URLs (goo.gl) or data= URLs, use whatever text we can find
+      if (!searchQuery) {
+        const qMatch = mapsUrl.match(/[?&]q=([^&]+)/)
+        if (qMatch) searchQuery = decodeURIComponent(qMatch[1].replace(/\+/g, ' '))
+      }
+    }
+
+    // Fallback to name-based search
+    if (!searchQuery && form.name.trim()) {
+      searchQuery = `${form.name} ${form.city || 'Torino'}`
+    }
+
+    if (!searchQuery) {
+      addToast('Incolla un link Google Maps o inserisci il nome del ristorante', 'error')
       return
     }
+
     setGoogleFilling(true)
     try {
-      const query = encodeURIComponent(`${form.name} ${form.city || 'Torino'}`)
+      const query = encodeURIComponent(searchQuery)
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${query}&inputtype=textquery&fields=formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}`
+        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${query}&inputtype=textquery&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}`
       )
       const data = await res.json()
       const place = data.candidates?.[0]
       if (place) {
+        if (place.name && !form.name.trim()) update('name', place.name)
         if (place.formatted_address) update('address', place.formatted_address)
         if (place.geometry?.location) {
           update('latitude', String(place.geometry.location.lat))
@@ -682,7 +686,7 @@ export default function RestaurantForm() {
     setGoogleFilling(false)
   }
 
-  // AI text correction
+  // AI text correction — shows suggestion for accept/reject
   const handleAiCorrect = async (field) => {
     const text = form[field]?.trim()
     if (!text) {
@@ -690,15 +694,15 @@ export default function RestaurantForm() {
       return
     }
     setAiCorrecting(field)
+    setAiSuggestion(null)
     try {
       if (isSupabaseConfigured()) {
         const { data, error } = await supabase.functions.invoke('correct-text', {
           body: { text, context: field === 'our_review' ? 'restaurant review' : 'restaurant tip' },
         })
         if (error) throw error
-        if (data?.corrected) {
-          update(field, data.corrected)
-          addToast('Testo corretto con AI!', 'success')
+        if (data?.corrected && data.changed) {
+          setAiSuggestion({ field, original: text, corrected: data.corrected })
         } else {
           addToast('Il testo sembra gia corretto', 'success')
         }
@@ -709,6 +713,18 @@ export default function RestaurantForm() {
       addToast('Edge Function non disponibile. Configura correct-text su Supabase.', 'error')
     }
     setAiCorrecting(null)
+  }
+
+  const handleAcceptAi = () => {
+    if (aiSuggestion) {
+      update(aiSuggestion.field, aiSuggestion.corrected)
+      addToast('Correzione applicata!', 'success')
+    }
+    setAiSuggestion(null)
+  }
+
+  const handleRejectAi = () => {
+    setAiSuggestion(null)
   }
 
   // Load existing discount when editing
@@ -815,7 +831,6 @@ export default function RestaurantForm() {
       cuisine_type: form.categories[0] || null,
       category: form.categories,
       price_range: form.price_range,
-      our_rating: form.our_rating || null,
       our_review: form.our_review.trim(),
       our_tip: form.our_tip.trim(),
       recommended_for: form.recommended_for,
@@ -996,12 +1011,21 @@ export default function RestaurantForm() {
         <form onSubmit={handleSave} className="space-y-8">
           {/* --- Google Maps autofill --- */}
           <Section title="Compilazione rapida">
+            <Field label="Link Google Maps">
+              <input
+                type="url"
+                value={form.google_maps_url}
+                onChange={(e) => update('google_maps_url', e.target.value)}
+                placeholder="Incolla link Google Maps (es. https://maps.google.com/...)"
+                className={inputClass()}
+              />
+            </Field>
             <div className="flex flex-col sm:flex-row gap-3">
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 onClick={handleGoogleFill}
-                disabled={googleFilling || !form.name.trim()}
+                disabled={googleFilling || (!form.google_maps_url.trim() && !form.name.trim())}
                 className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border-2 border-blue-400 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
               >
                 {googleFilling ? (
@@ -1012,16 +1036,11 @@ export default function RestaurantForm() {
                     Ricerca in corso...
                   </>
                 ) : (
-                  <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                    </svg>
-                    Compila da Google Maps
-                  </>
+                  'Compila automaticamente'
                 )}
               </motion.button>
               <p className="text-xs text-secondary self-center">
-                Inserisci il nome del ristorante, poi clicca per compilare indirizzo, telefono e coordinate automaticamente
+                Incolla il link Google Maps e clicca per compilare nome, indirizzo, telefono e coordinate
               </p>
             </div>
           </Section>
@@ -1128,15 +1147,6 @@ export default function RestaurantForm() {
                 className={inputClass()}
               />
             </Field>
-            <Field label="Google Maps URL">
-              <input
-                type="url"
-                value={form.google_maps_url}
-                onChange={(e) => update('google_maps_url', e.target.value)}
-                placeholder="https://maps.google.com/..."
-                className={inputClass()}
-              />
-            </Field>
             <Field label="Sito web">
               <input
                 type="text"
@@ -1172,13 +1182,6 @@ export default function RestaurantForm() {
               />
             </Field>
 
-            <Field label="Rating di Bi">
-              <StarRating
-                value={form.our_rating}
-                onChange={(v) => update('our_rating', v)}
-              />
-            </Field>
-
             <Field label="Consigliato per...">
               <RecommendedForSelector
                 selected={form.recommended_for}
@@ -1203,20 +1206,21 @@ export default function RestaurantForm() {
                   type="button"
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleAiCorrect('our_review')}
-                  disabled={aiCorrecting === 'our_review'}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-300 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50"
+                  disabled={!!aiCorrecting}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
                 >
-                  {aiCorrecting === 'our_review' ? (
-                    <>
-                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
-                      </svg>
-                      Correzione...
-                    </>
-                  ) : (
-                    'Correggi con AI'
-                  )}
+                  {aiCorrecting === 'our_review' ? 'Correzione...' : 'Correggi'}
                 </motion.button>
+              )}
+              {aiSuggestion?.field === 'our_review' && (
+                <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
+                  <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
+                  <p className="text-sm text-primary whitespace-pre-wrap">{aiSuggestion.corrected}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
+                    <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-secondary">Rifiuta</button>
+                  </div>
+                </div>
               )}
             </Field>
             <Field label="I suggerimenti di Bi">
@@ -1232,20 +1236,21 @@ export default function RestaurantForm() {
                   type="button"
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleAiCorrect('our_tip')}
-                  disabled={aiCorrecting === 'our_tip'}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-300 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50"
+                  disabled={!!aiCorrecting}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
                 >
-                  {aiCorrecting === 'our_tip' ? (
-                    <>
-                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
-                      </svg>
-                      Correzione...
-                    </>
-                  ) : (
-                    'Correggi con AI'
-                  )}
+                  {aiCorrecting === 'our_tip' ? 'Correzione...' : 'Correggi'}
                 </motion.button>
+              )}
+              {aiSuggestion?.field === 'our_tip' && (
+                <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
+                  <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
+                  <p className="text-sm text-primary whitespace-pre-wrap">{aiSuggestion.corrected}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
+                    <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-secondary">Rifiuta</button>
+                  </div>
+                </div>
               )}
             </Field>
           </Section>

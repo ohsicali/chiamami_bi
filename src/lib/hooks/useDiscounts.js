@@ -206,11 +206,11 @@ export async function verifyQRCode(qrCode, pinCode) {
   let userName = 'Utente'
   const { data: userProfile } = await supabase
     .from('profiles')
-    .select('full_name, email')
+    .select('full_name')
     .eq('id', redemption.user_id)
     .single()
   if (userProfile) {
-    userName = userProfile.full_name || userProfile.email || 'Utente'
+    userName = userProfile.full_name || 'Utente'
   }
 
   // 2. Check if already redeemed
@@ -258,6 +258,26 @@ export async function verifyQRCode(qrCode, pinCode) {
 
   if (uError) {
     return { valid: false, error: 'update_failed', message: 'Errore durante la validazione' }
+  }
+
+  // 6. Increment total_redeemed on the discount
+  const discountId = redemption.discount?.id || redemption.discount_id
+  if (discountId) {
+    await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
+      .catch(async () => {
+        // Fallback: manual increment
+        const { data: d } = await supabase
+          .from('discounts')
+          .select('total_redeemed')
+          .eq('id', discountId)
+          .single()
+        if (d) {
+          await supabase
+            .from('discounts')
+            .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
+            .eq('id', discountId)
+        }
+      })
   }
 
   return {

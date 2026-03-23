@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { submitReview, compressImage } from '../../lib/hooks/useReviews'
@@ -7,6 +7,13 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState(existingReview?.comment || '')
+
+  // Sync comment when existingReview loads/changes
+  useEffect(() => {
+    if (existingReview?.comment && !comment) {
+      setComment(existingReview.comment)
+    }
+  }, [existingReview?.comment])
   const [photos, setPhotos] = useState([])
   const [previews, setPreviews] = useState([])
   const [submitting, setSubmitting] = useState(false)
@@ -76,7 +83,7 @@ export default function ReviewForm({ restaurantId, userId, existingReview, onSub
         animate={{ opacity: 1, scale: 1 }}
       >
         <p className="text-sm font-semibold text-green-700">
-          {existingReview ? t('restaurant.reviewUpdated') : t('restaurant.reviewPublished')}
+          {existingReview ? t('restaurant.reviewUpdated') : 'Recensione inviata! In revisione.'}
         </p>
       </motion.div>
     )

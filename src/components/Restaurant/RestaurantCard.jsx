@@ -27,6 +27,7 @@ export default function RestaurantCard({
   saved,
   onSaveToggle,
   hasDiscount,
+  discountValue,
 }) {
   const { t } = useTranslation()
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -91,15 +92,9 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Discount badge */}
-        {hasDiscount && (
-          <div className="absolute top-1.5 left-1.5 z-10 rounded-lg bg-accent/90 px-2 py-0.5 shadow-sm">
-            <span className="text-[11px] font-bold text-white">{t('discount.badge')}</span>
-          </div>
-        )}
-        {/* Heart save button */}
+        {/* Heart save button — positioned above photo indicators */}
         {onSaveToggle && (
-          <div className="absolute top-1 right-1 z-10">
+          <div className="absolute -top-0.5 -right-0.5 z-20">
             <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
           </div>
         )}
@@ -107,10 +102,17 @@ export default function RestaurantCard({
 
       {/* Info */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        {/* Name */}
-        <h3 className="text-base font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflowX: 'clip', overflowY: 'visible' }}>
-          {restaurant.name}
-        </h3>
+        {/* Name + discount badge inline */}
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="text-base font-semibold text-primary truncate" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
+            {restaurant.name}
+          </h3>
+          {hasDiscount && (
+            <span className="shrink-0 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-white leading-none">
+              {discountValue || t('discount.badge')}
+            </span>
+          )}
+        </div>
 
         {/* Category badges + price */}
         <div className="flex items-center gap-1.5 flex-wrap">

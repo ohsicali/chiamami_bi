@@ -36,6 +36,7 @@ export default function HomePage() {
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
+  const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
   const {
     restaurants,
     allRestaurants,
@@ -216,6 +217,7 @@ export default function HomePage() {
                   saved={isSaved(restaurant.id)}
                   onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
                   hasDiscount={discountRestaurantIds.has(restaurant.id)}
+                  discountValue={discountValueMap[restaurant.id]}
                 />
               </div>
             ))}

@@ -1,12 +1,27 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useAllReviews } from '../../lib/hooks/useReviews'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
 import AdminLayout from '../../components/Layout/AdminLayout'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+
+/* ------------------------------------------------------------------ */
+/*  Relative time helper                                               */
+/* ------------------------------------------------------------------ */
+function timeAgo(date) {
+  const now = new Date()
+  const diff = Math.floor((now - date) / 1000)
+  if (diff < 60) return 'Adesso'
+  if (diff < 3600) return `${Math.floor(diff / 60)} min fa`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} ore fa`
+  if (diff < 604800) return `${Math.floor(diff / 86400)} giorni fa`
+  return date.toLocaleDateString('it-IT')
+}
 
 /* ------------------------------------------------------------------ */
 /*  Animated counter component                                         */
@@ -114,15 +129,59 @@ export default function AdminDashboard() {
       .map(([name, count]) => ({ name, count }))
   }, [restaurants])
 
-  // Recent activity feed — mock data
-  const activityFeed = useMemo(() => [
-    { id: 1, type: 'restaurant', text: 'Nuovo ristorante aggiunto: Trattoria del Borgo', time: '2 ore fa', icon: '🍽️' },
-    { id: 2, type: 'review', text: 'Nuova recensione su Pizzeria Bella Napoli', time: '3 ore fa', icon: '⭐' },
-    { id: 3, type: 'partner', text: 'Nuova candidatura partner: Osteria del Centro', time: '5 ore fa', icon: '🤝' },
-    { id: 4, type: 'discount', text: 'Sconto riscattato: 10% da Sushi Zen', time: '6 ore fa', icon: '🎟️' },
-    { id: 5, type: 'newsletter', text: '3 nuovi iscritti alla newsletter', time: '8 ore fa', icon: '📬' },
-    { id: 6, type: 'restaurant', text: 'Ristorante aggiornato: Café Torino', time: '1 giorno fa', icon: '✏️' },
-  ], [])
+  // Reviews for moderation
+  const { reviews: allReviews, updateStatus: updateReviewStatus } = useAllReviews()
+  const pendingReviews = useMemo(() => allReviews.filter(r => r.status === 'pending_review'), [allReviews])
+
+  // Real recent activity feed
+  const [activityFeed, setActivityFeed] = useState([])
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    const fetchActivity = async () => {
+      const items = []
+      // Latest restaurants
+      const { data: recentRestaurants } = await supabase
+        .from('restaurants')
+        .select('id, name, created_at')
+        .order('created_at', { ascending: false })
+        .limit(3)
+      ;(recentRestaurants || []).forEach(r => {
+        items.push({ id: `r-${r.id}`, type: 'restaurant', text: `Ristorante aggiunto: ${r.name}`, time: r.created_at, icon: '🍽️' })
+      })
+      // Latest reviews
+      const { data: recentReviews } = await supabase
+        .from('user_reviews')
+        .select('id, created_at, status, restaurant:restaurants(name), user:profiles(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(3)
+      ;(recentReviews || []).forEach(r => {
+        items.push({ id: `rev-${r.id}`, type: 'review', text: `Recensione su ${r.restaurant?.name || '?'} da ${r.user?.full_name || 'Utente'}`, time: r.created_at, icon: r.status === 'pending_review' ? '⏳' : '⭐' })
+      })
+      // Latest redemptions
+      const { data: recentRedemptions } = await supabase
+        .from('discount_redemptions')
+        .select('id, generated_at, redeemed_at, status, discount:discounts(title, discount_value, restaurant:restaurants(name))')
+        .order('generated_at', { ascending: false })
+        .limit(3)
+      ;(recentRedemptions || []).forEach(r => {
+        const action = r.status === 'redeemed' ? 'Sconto usato' : 'QR generato'
+        items.push({ id: `d-${r.id}`, type: 'discount', text: `${action}: ${r.discount?.discount_value || ''} da ${r.discount?.restaurant?.name || '?'}`, time: r.redeemed_at || r.generated_at, icon: '🎟️' })
+      })
+      // Latest partner applications
+      const { data: recentPartners } = await supabase
+        .from('partner_applications')
+        .select('id, created_at, restaurant_name')
+        .order('created_at', { ascending: false })
+        .limit(2)
+      ;(recentPartners || []).forEach(p => {
+        items.push({ id: `p-${p.id}`, type: 'partner', text: `Candidatura partner: ${p.restaurant_name}`, time: p.created_at, icon: '🤝' })
+      })
+      // Sort by time descending
+      items.sort((a, b) => new Date(b.time) - new Date(a.time))
+      setActivityFeed(items.slice(0, 8))
+    }
+    fetchActivity()
+  }, [])
 
   // Filtered + sorted
   const rows = useMemo(() => {
@@ -286,6 +345,62 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
+      {/* Reviews moderation section */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.42, duration: 0.4 }}
+        className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-primary">Recensioni</h3>
+            {pendingReviews.length > 0 && (
+              <span className="rounded-full bg-red-500 text-white text-[10px] font-bold px-2 py-0.5">
+                {pendingReviews.length} da moderare
+              </span>
+            )}
+          </div>
+          <Link to="/admin/reviews" className="text-xs text-accent font-medium">
+            Vedi tutte
+          </Link>
+        </div>
+        {pendingReviews.length === 0 ? (
+          <p className="text-sm text-secondary">Nessuna recensione da moderare</p>
+        ) : (
+          <div className="space-y-3">
+            {pendingReviews.slice(0, 5).map(review => (
+              <div key={review.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-primary">{review.user?.full_name || 'Utente'}</span>
+                    <span className="text-xs text-secondary">su {review.restaurant?.name || '?'}</span>
+                  </div>
+                  <p className="text-sm text-secondary line-clamp-2">{review.comment}</p>
+                  {review.ai_reason && (
+                    <p className="text-xs text-amber-600 mt-1">AI: {review.ai_reason}</p>
+                  )}
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => updateReviewStatus(review.id, 'published')}
+                    className="rounded-lg bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 transition-colors"
+                  >
+                    Approva
+                  </button>
+                  <button
+                    onClick={() => updateReviewStatus(review.id, 'rejected')}
+                    className="rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors"
+                  >
+                    Rifiuta
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+
       {/* Recent activity feed */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -294,17 +409,24 @@ export default function AdminDashboard() {
         className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
       >
         <h3 className="text-sm font-semibold text-primary mb-4">Attivita recente</h3>
-        <div className="space-y-3">
-          {activityFeed.map(item => (
-            <div key={item.id} className="flex items-start gap-3">
-              <span className="text-lg flex-shrink-0 mt-0.5">{item.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-primary">{item.text}</p>
-                <p className="text-xs text-secondary">{item.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        {activityFeed.length === 0 ? (
+          <p className="text-sm text-secondary">Nessuna attivita recente</p>
+        ) : (
+          <div className="space-y-3">
+            {activityFeed.map(item => {
+              const ago = item.time ? timeAgo(new Date(item.time)) : ''
+              return (
+                <div key={item.id} className="flex items-start gap-3">
+                  <span className="text-lg flex-shrink-0 mt-0.5">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-primary">{item.text}</p>
+                    <p className="text-xs text-secondary">{ago}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </motion.div>
 
       {/* Search */}

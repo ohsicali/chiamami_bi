@@ -47,7 +47,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: `${contextHint} Please correct any grammar, spelling, and punctuation errors. Improve the writing style to be more engaging and professional while keeping the original meaning and tone. Only return the corrected text, nothing else.\n\nOriginal text:\n${text}`,
+            content: `${contextHint} Correggi SOLO errori grammaticali e ortografici. NON cambiare tono, stile, emoji, espressioni personali. Mantieni tutto il resto identico. Rispondi SOLO con il testo corretto, nient'altro.\n\nTesto originale:\n${text}`,
           },
         ],
       }),
