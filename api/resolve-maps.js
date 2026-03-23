@@ -65,7 +65,13 @@ export default async function handler(req, res) {
 
     // Best: page title (e.g. "Gastronomia HUI WEI XIANG Crêpes Cinesi")
     if (pageTitle && pageTitle.length > 2 && !/google/i.test(pageTitle)) {
+      // Clean up: remove Chinese chars, postal codes, extra metadata
       searchQuery = pageTitle
+        .replace(/[\u4e00-\u9fff\u3000-\u303f]+/g, '')  // remove Chinese characters
+        .replace(/邮政编码[:\s]*\d+/g, '')                  // remove "邮政编码: 10123"
+        .replace(/\d{5,}/g, '')                            // remove standalone postal codes
+        .replace(/\s{2,}/g, ' ')                           // collapse whitespace
+        .trim()
     }
 
     // Try /place/Name/ pattern from URL
@@ -122,7 +128,7 @@ export default async function handler(req, res) {
         address: '',
         phone: '',
         website: '',
-        warning: `Nessun risultato Places API per "${searchQuery}"`,
+        warning: `Places API findplacefromtext: status=${findData.status}, error=${findData.error_message || 'none'}, query="${searchQuery}"`,
       })
     }
 
