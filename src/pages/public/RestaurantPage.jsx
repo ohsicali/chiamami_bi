@@ -1,5 +1,4 @@
 import { useNavigate, useLocation, matchPath } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { LogoLoader } from '../../components/UI/Logo'
@@ -69,16 +68,11 @@ export default function RestaurantPage() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.2 } }}
-    >
-      <RestaurantSheet
-        restaurant={restaurant}
-        onClose={handleBack}
-        allRestaurants={restaurants}
-        onSelectNearby={handleSelectNearby}
-      />
-    </motion.div>
+    <RestaurantSheet
+      restaurant={restaurant}
+      onClose={handleBack}
+      allRestaurants={restaurants}
+      onSelectNearby={handleSelectNearby}
+    />
   )
 }

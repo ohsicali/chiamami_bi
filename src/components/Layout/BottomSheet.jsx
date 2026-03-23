@@ -14,7 +14,7 @@ const TOP_MIN = 70 // leave space for navbar
 function getSnapHeights() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   return [
-    100,                         // PEEK: just search bar island
+    78,                          // PEEK: handle + search bar only
     h * 0.55,                    // HALF: categories + some results
     h - TOP_MIN - BOTTOM_MARGIN, // FULL: nearly full screen
   ]
