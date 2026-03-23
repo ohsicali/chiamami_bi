@@ -80,7 +80,8 @@ export default function RestaurantSheet({
   saved,
   onSaveToggle,
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
   const [sheetScope, animateSheet] = useAnimate()
@@ -251,6 +252,11 @@ export default function RestaurantSheet({
                   <p className="text-sm leading-relaxed text-secondary">
                     {reviewText}
                   </p>
+                  {!isItalian && (
+                    <p className="text-xs text-secondary/60 mt-2 italic">
+                      {t('restaurant.originalItalian')}
+                    </p>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -271,6 +277,11 @@ export default function RestaurantSheet({
                   <p className="text-sm font-medium leading-relaxed text-amber-900">
                     {tipText}
                   </p>
+                  {!isItalian && (
+                    <p className="text-xs text-amber-700/60 mt-2 italic">
+                      {t('restaurant.originalItalian')}
+                    </p>
+                  )}
                 </div>
               </motion.div>
             )}

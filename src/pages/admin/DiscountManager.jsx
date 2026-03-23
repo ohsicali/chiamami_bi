@@ -39,7 +39,10 @@ export default function DiscountManager() {
 
   // Fetch discounts and restaurants
   useEffect(() => {
-    if (!isSupabaseConfigured()) return
+    if (!isSupabaseConfigured()) {
+      setLoading(false)
+      return
+    }
 
     Promise.all([
       supabase
@@ -154,7 +157,7 @@ export default function DiscountManager() {
   if (authLoading || loading) return null
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

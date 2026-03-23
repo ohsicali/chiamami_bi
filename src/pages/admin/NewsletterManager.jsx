@@ -65,7 +65,7 @@ export default function NewsletterManager() {
   if (authLoading || loading) return null
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-4">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>

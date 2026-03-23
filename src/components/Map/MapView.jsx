@@ -48,7 +48,7 @@ function createPinElement(restaurant, isSaved) {
       right: -4px;
       width: 16px;
       height: 16px;
-      background: #FF5757;
+      background: #fff;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -56,6 +56,7 @@ function createPinElement(restaurant, isSaved) {
       font-size: 9px;
       line-height: 1;
       border: 1.5px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
       pointer-events: none;
     `
     heart.textContent = '❤️'

@@ -40,7 +40,8 @@
     "publish": "Publicar",
     "reviewPublished": "¡Reseña publicada!",
     "reviewUpdated": "¡Reseña actualizada!",
-    "submitError": "Error al enviar. Inténtalo de nuevo."
+    "submitError": "Error al enviar. Inténtalo de nuevo.",
+    "originalItalian": "Contenido original en italiano"
   },
   "discount": {
     "exclusive": "Oferta exclusiva ChiamamiBi",

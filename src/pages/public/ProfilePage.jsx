@@ -91,15 +91,20 @@ export default function ProfilePage() {
       {/* Header bar */}
       <nav className="sticky top-0 z-40 glass">
         <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Indietro"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+          </button>
           <Link to="/">
             <LogoFull height={28} />
           </Link>
-          <button
-            onClick={handleLogout}
-            className="text-sm font-medium text-secondary hover:text-accent transition-colors"
-          >
-            Esci
-          </button>
+          <div className="w-10" />
         </div>
       </nav>
 
@@ -306,6 +311,16 @@ export default function ProfilePage() {
                 ))}
               </div>
             )}
+          </motion.div>
+
+          {/* Logout button at bottom */}
+          <motion.div variants={itemVariants} className="pt-4 pb-4">
+            <button
+              onClick={handleLogout}
+              className="w-full rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-semibold text-red-500 transition-colors hover:bg-red-100"
+            >
+              Esci dall'account
+            </button>
           </motion.div>
         </motion.div>
       </div>
