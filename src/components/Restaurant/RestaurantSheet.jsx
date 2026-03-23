@@ -4,6 +4,7 @@ import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
 import SaveButton from './SaveButton'
 import DiscountBanner from '../Discount/DiscountBanner'
+import ReviewSection from '../Review/ReviewSection'
 import Badge from '../UI/Badge'
 import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 
@@ -318,6 +319,11 @@ export default function RestaurantSheet({
                 Apri in Google Maps
               </motion.a>
             )}
+
+            {/* Community reviews */}
+            <motion.div variants={itemVariants}>
+              <ReviewSection restaurantId={restaurant.id} />
+            </motion.div>
 
             {/* Nearby restaurants */}
             <motion.div variants={itemVariants}>

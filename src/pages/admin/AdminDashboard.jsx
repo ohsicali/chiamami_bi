@@ -44,6 +44,7 @@ function AdminLayout({ children, user, onLogout }) {
     { to: '/admin/categories', label: 'Categorie', icon: TagIcon },
     { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
     { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
+    { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
   ]
 
   return (
@@ -95,6 +96,9 @@ function AdminLayout({ children, user, onLogout }) {
           <Link to="/admin/partners" className="text-secondary hover:text-primary">
             <PartnerIcon className="w-5 h-5" />
           </Link>
+          <Link to="/admin/reviews" className="text-secondary hover:text-primary">
+            <ReviewIcon className="w-5 h-5" />
+          </Link>
           <button onClick={onLogout} className="text-secondary hover:text-red-500">
             <LogoutIcon className="w-5 h-5" />
           </button>
@@ -144,6 +148,13 @@ function DiscountIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
+    </svg>
+  )
+}
+function ReviewIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
     </svg>
   )
 }

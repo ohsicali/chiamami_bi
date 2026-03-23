@@ -18,6 +18,7 @@ const DealsPage = lazy(() => import('./pages/public/DealsPage'))
 const VerifyPage = lazy(() => import('./pages/public/VerifyPage'))
 const DiscountManager = lazy(() => import('./pages/admin/DiscountManager'))
 const PartnerManager = lazy(() => import('./pages/admin/PartnerManager'))
+const ReviewModerator = lazy(() => import('./pages/admin/ReviewModerator'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/admin/categories" element={<CategoryManager />} />
           <Route path="/admin/discounts" element={<DiscountManager />} />
           <Route path="/admin/partners" element={<PartnerManager />} />
+          <Route path="/admin/reviews" element={<ReviewModerator />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
