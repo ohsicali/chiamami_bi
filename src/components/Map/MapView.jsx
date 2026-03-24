@@ -334,7 +334,10 @@ const MapView = forwardRef(function MapView({
 
   /* -------------------------------------------------------------- */
   /*  Update the GeoJSON source with current clusters for this zoom  */
+  /*  Uses a wide bbox so features stay visible during panning       */
   /* -------------------------------------------------------------- */
+  const lastZoom = useRef(null)
+
   const updateSource = useCallback(() => {
     const m = map.current
     const sc = cluster.current
@@ -342,12 +345,19 @@ const MapView = forwardRef(function MapView({
 
     const zoom = Math.floor(m.getZoom())
     const bounds = m.getBounds()
-    const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
 
-    // Get clusters + points for current viewport & zoom
+    // Expand bbox by ~50% so pins are ready before they scroll into view
+    const lngPad = (bounds.getEast() - bounds.getWest()) * 0.5
+    const latPad = (bounds.getNorth() - bounds.getSouth()) * 0.5
+    const bbox = [
+      bounds.getWest() - lngPad,
+      bounds.getSouth() - latPad,
+      bounds.getEast() + lngPad,
+      bounds.getNorth() + latPad,
+    ]
+
     const features = sc.getClusters(bbox, zoom)
 
-    // Ensure cluster count images exist and set icon property
     for (const f of features) {
       if (f.properties.cluster) {
         const count = f.properties.point_count
@@ -362,6 +372,8 @@ const MapView = forwardRef(function MapView({
       features,
     })
 
+    lastZoom.current = zoom
+
     // Notify parent about visible restaurants
     if (onVisibleRef.current) {
       const rests = restaurantsRef.current || []
@@ -372,6 +384,16 @@ const MapView = forwardRef(function MapView({
       onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
     }
   }, [])
+
+  // Lightweight check: only update during zoom if zoom level actually changed
+  const onZoom = useCallback(() => {
+    const m = map.current
+    if (!m) return
+    const zoom = Math.floor(m.getZoom())
+    if (zoom !== lastZoom.current) {
+      updateSource()
+    }
+  }, [updateSource])
 
   /* -------------------------------------------------------------- */
   /*  Rebuild supercluster index                                     */
@@ -481,8 +503,10 @@ const MapView = forwardRef(function MapView({
       m.on('mouseenter', PIN_LAYER, () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', PIN_LAYER, () => { m.getCanvas().style.cursor = '' })
 
-      // Update source on every zoom/pan
-      m.on('move', updateSource)
+      // During zoom: update only when integer zoom level changes (clusters change)
+      m.on('zoom', onZoom)
+      // After any movement ends: update for new viewport
+      m.on('moveend', updateSource)
 
       // Build initial index
       rebuildIndex()
@@ -495,7 +519,7 @@ const MapView = forwardRef(function MapView({
       map.current = null
       cluster.current = null
     }
-  }, [token, updateSource, rebuildIndex])
+  }, [token, updateSource, onZoom, rebuildIndex])
 
   /* -------------------------------------------------------------- */
   /*  Rebuild index when restaurants or savedIds change               */
