@@ -635,15 +635,8 @@ export default function RestaurantForm() {
       let phone = ''
       let resolvedUrl = mapsUrl
 
-      // Detect CID URLs (from Google Maps app "Copy link") — these can't be resolved server-side
-      const cidMatch = mapsUrl.match(/[?&]cid=(\d+)/)
-      if (cidMatch) {
-        addToast('I link con "?cid=" dall\'app Google Maps non funzionano. Dall\'app Maps, tocca "Condividi" → "Copia link" per ottenere un link compatibile (inizia con maps.app.goo.gl).', 'error')
-        setGoogleFilling(false)
-        return
-      }
-
-      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|share\.google)\//i.test(mapsUrl)
+      const isCidUrl = /[?&]cid=\d+/.test(mapsUrl)
+      const isShortUrl = isCidUrl || /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|share\.google)\//i.test(mapsUrl)
       const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
       const coordMatch = mapsUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
 
