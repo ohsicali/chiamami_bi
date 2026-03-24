@@ -46,16 +46,22 @@ export default async function handler(req, res) {
     let hasConsent = false
     try {
       const pageUrl = resolvedUrl !== url ? resolvedUrl : url
-      // US-style headers — function runs in iad1 (US) to bypass EU consent page
       const pageRes = await fetch(pageUrl, {
         redirect: 'follow',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html',
-          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
+          'Cookie': 'CONSENT=YES+cb.20231001-00-p0.en+FX+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
         },
       })
       if (pageRes.url && pageRes.url !== pageUrl) resolvedUrl = pageRes.url
+      // Detect Google CAPTCHA/sorry page after HTML fetch
+      if (resolvedUrl.includes('google.com/sorry') || (pageRes.url && pageRes.url.includes('google.com/sorry'))) {
+        return res.status(200).json({
+          error: 'Google ha temporaneamente bloccato le richieste. Riprova tra qualche minuto.',
+        })
+      }
       const html = await pageRes.text()
       htmlLength = html.length
       hasConsent = html.includes('consent.google') || html.includes('CONSENT')
@@ -253,7 +259,8 @@ async function followRedirects(url, maxRedirects = 10) {
       redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
+        'Cookie': 'CONSENT=YES+cb.20231001-00-p0.en+FX+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
       },
     })
     const location = res.headers.get('location')
