@@ -914,10 +914,13 @@ export default function RestaurantForm() {
             await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
           }
 
-          const slug = form.name.trim().toLowerCase()
+          const slugify = (str) => (str || '').trim().toLowerCase()
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+          const nameSlug = slugify(form.name)
+          const citySlug = slugify(form.city || form.address?.split(',').pop())
 
           const photoRows = []
           for (let idx = 0; idx < form.photos.length; idx++) {
@@ -928,9 +931,11 @@ export default function RestaurantForm() {
             if (photo.file) {
               try {
                 const { full, thumb } = await convertToWebP(photo.file)
-                const fileName = `${slug}-${idx + 1}.webp`
-                const thumbName = `${slug}-${idx + 1}-thumb.webp`
-                const basePath = `restaurants/${restaurantId}`
+                // SEO-friendly naming: ristorante-nome-citta-1.webp
+                const seoName = citySlug ? `${nameSlug}-${citySlug}` : nameSlug
+                const fileName = `${seoName}-${idx + 1}.webp`
+                const thumbName = `${seoName}-${idx + 1}-thumb.webp`
+                const basePath = `restaurants/${citySlug || 'other'}/${nameSlug}`
                 const uploadOpts = { contentType: 'image/webp', cacheControl: '31536000', upsert: true }
 
                 // Upload full + thumb in parallel
