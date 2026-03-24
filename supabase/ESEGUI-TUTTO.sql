@@ -133,7 +133,9 @@ CREATE TABLE IF NOT EXISTS categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   icon text,
-  color text
+  color text,
+  sort_order int2 DEFAULT 0,
+  created_at timestamptz DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_restaurants_slug ON restaurants(slug);
