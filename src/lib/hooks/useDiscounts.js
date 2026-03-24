@@ -33,9 +33,8 @@ export function useRestaurantDiscount(restaurantId) {
       .gt('valid_until', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
-      .then(({ data, error }) => {
-        setDiscount(error ? null : data || null)
+      .then(({ data }) => {
+        setDiscount(data?.[0] || null)
         setLoading(false)
       })
       .catch(() => {
