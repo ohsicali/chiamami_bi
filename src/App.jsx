@@ -47,6 +47,7 @@ const ReviewModerator = lazy(() => import('./pages/admin/ReviewModerator'))
 const PartnerLandingPage = lazy(() => import('./pages/public/PartnerLandingPage'))
 const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 
@@ -100,6 +101,7 @@ export default function App() {
           <Route path="/admin/reviews" element={<ReviewModerator />} />
           <Route path="/admin/newsletter" element={<NewsletterManager />} />
           <Route path="/admin/applications" element={<ApplicationManager />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/verify" element={<VerifyPage />} />
