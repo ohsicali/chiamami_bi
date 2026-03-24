@@ -255,14 +255,17 @@ function isGenericQuery(q) {
 async function followRedirects(url, maxRedirects = 10) {
   let current = url
   for (let i = 0; i < maxRedirects; i++) {
-    const res = await fetch(current, {
-      redirect: 'manual',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
-        'Cookie': 'CONSENT=YES+cb.20231001-00-p0.en+FX+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
-      },
-    })
+    // Use mobile UA for goo.gl (needs mobile UA for HTTP redirect)
+    // Send consent cookies only to google.com/maps domains
+    const isGoogleMaps = current.includes('google.com/maps')
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    }
+    if (isGoogleMaps) {
+      headers['Cookie'] = 'CONSENT=YES+cb.20231001-00-p0.en+FX+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg'
+      headers['Accept-Language'] = 'it-IT,it;q=0.9'
+    }
+    const res = await fetch(current, { redirect: 'manual', headers })
     const location = res.headers.get('location')
     if (!location) return current
     current = location.startsWith('http') ? location : new URL(location, current).href
