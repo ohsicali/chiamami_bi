@@ -206,11 +206,16 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   // Email change with OTP verification on current email
-  const [emailStep, setEmailStep] = useState('form') // 'form' | 'otp' | 'done'
+  const [emailStep, setEmailStep] = useState('form') // 'form' | 'otp' | 'recovery_otp' | 'done'
   const [newEmail, setNewEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [emailStatus, setEmailStatus] = useState(null)
   const [emailLoading, setEmailLoading] = useState(false)
+
+  // Recovery email
+  const [recoveryEmail, setRecoveryEmail] = useState(profile?.recovery_email || '')
+  const [savingRecovery, setSavingRecovery] = useState(false)
+  const [recoverySaved, setRecoverySaved] = useState(false)
 
   // Password change with current password verification
   const [pwdUnlocked, setPwdUnlocked] = useState(false)
@@ -302,11 +307,77 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     }
   }
 
+  // "Non ho accesso all'email" — send OTP to recovery email
+  const handleRecoveryOtp = async () => {
+    if (!newEmail.trim()) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    try {
+      const resp = await fetch('/api/recovery-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, action: 'verify_recovery' }),
+      })
+      const data = await resp.json()
+      if (data.no_recovery) {
+        setEmailStatus({ type: 'error', text: 'Nessuna email di recupero configurata. Contatta supporto@chiamamibi.com' })
+      } else if (data.success) {
+        setEmailStep('recovery_otp')
+        setEmailStatus({ type: 'success', text: `Codice inviato a ${data.masked_email}` })
+      } else {
+        setEmailStatus({ type: 'error', text: data.error || 'Errore nell\'invio del codice' })
+      }
+    } catch {
+      setEmailStatus({ type: 'error', text: 'Errore di connessione' })
+    }
+    setEmailLoading(false)
+  }
+
+  // Verify recovery OTP and change email
+  const handleVerifyRecoveryAndChangeEmail = async () => {
+    if (!otpCode.trim() || !newEmail.trim()) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    try {
+      const resp = await fetch('/api/verify-recovery-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, otp: otpCode, new_email: newEmail }),
+      })
+      const data = await resp.json()
+      if (data.success) {
+        setEmailStep('done')
+        setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' })
+      } else {
+        setEmailStatus({ type: 'error', text: data.error || 'Codice non valido' })
+      }
+    } catch {
+      setEmailStatus({ type: 'error', text: 'Errore di connessione' })
+    }
+    setEmailLoading(false)
+  }
+
   const handleEmailReset = () => {
     setEmailStep('form')
     setNewEmail('')
     setOtpCode('')
     setEmailStatus(null)
+  }
+
+  // Save recovery email
+  const handleSaveRecoveryEmail = async () => {
+    if (!isSupabaseConfigured()) return
+    setSavingRecovery(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ recovery_email: recoveryEmail.trim() || null })
+      .eq('id', user.id)
+    setSavingRecovery(false)
+    if (!error) {
+      setRecoverySaved(true)
+      setTimeout(() => setRecoverySaved(false), 2000)
+      onRefreshProfile?.()
+    }
   }
 
   // Password handlers
@@ -444,6 +515,13 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
                 {emailLoading ? '...' : 'Cambia'}
               </motion.button>
             </div>
+            <button
+              onClick={handleRecoveryOtp}
+              disabled={emailLoading || !newEmail.trim()}
+              className="text-xs text-secondary hover:text-accent transition-colors self-start"
+            >
+              Non ho accesso all'email attuale
+            </button>
           </div>
         )}
 
@@ -477,6 +555,36 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
           </div>
         )}
 
+        {emailStep === 'recovery_otp' && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-secondary">
+              Inserisci il codice inviato alla tua <strong>email di recupero</strong>
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Codice di recupero"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={`${inputClasses} text-center tracking-widest font-mono`}
+              />
+              <motion.button
+                onClick={handleVerifyRecoveryAndChangeEmail}
+                disabled={emailLoading || otpCode.length < 6}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Conferma'}
+              </motion.button>
+            </div>
+            <button onClick={handleEmailReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
+              Annulla
+            </button>
+          </div>
+        )}
+
         {emailStep === 'done' && (
           <button onClick={handleEmailReset} className="text-xs text-accent hover:underline">
             Cambia di nuovo
@@ -488,6 +596,31 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
             {emailStatus.text}
           </p>
         )}
+      </div>
+
+      {/* Recovery email */}
+      <div className="rounded-2xl bg-card p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-primary mb-1">Email di recupero</h3>
+        <p className="text-xs text-secondary mb-3">
+          Usata per recuperare l'accesso se perdi l'email principale
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="email"
+            value={recoveryEmail}
+            onChange={e => setRecoveryEmail(e.target.value)}
+            className={inputClasses}
+            placeholder="email-di-recupero@esempio.com"
+          />
+          <motion.button
+            onClick={handleSaveRecoveryEmail}
+            disabled={savingRecovery || recoveryEmail === (profile?.recovery_email || '')}
+            className="rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+            whileTap={{ scale: 0.95 }}
+          >
+            {recoverySaved ? '✓' : savingRecovery ? '...' : 'Salva'}
+          </motion.button>
+        </div>
       </div>
 
       {/* Change password — requires current password */}

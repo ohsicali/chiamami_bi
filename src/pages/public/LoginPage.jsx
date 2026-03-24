@@ -17,7 +17,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { user, signIn, signUp, signInWithGoogle, resetPasswordForEmail } = useAuth()
 
-  const [mode, setMode] = useState('login') // 'login', 'register', or 'forgot'
+  const [mode, setMode] = useState('login') // 'login', 'register', 'forgot', 'recovery_forgot', 'recovery_otp', 'recovery_newpwd'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -25,6 +25,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [recoveryOtp, setRecoveryOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [maskedRecovery, setMaskedRecovery] = useState('')
 
   // Redirect if already logged in
   useEffect(() => {
@@ -41,6 +45,55 @@ export default function LoginPage() {
       if (mode === 'forgot') {
         await resetPasswordForEmail(email)
         setSuccess('Email inviata! Controlla la tua casella di posta per reimpostare la password.')
+      } else if (mode === 'recovery_forgot') {
+        // Send recovery OTP for password reset
+        const resp = await fetch('/api/recovery-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, action: 'reset_password' }),
+        })
+        const data = await resp.json()
+        if (data.no_recovery) {
+          setError('Nessuna email di recupero configurata per questo account. Contatta supporto@chiamamibi.com')
+        } else if (data.success) {
+          setMaskedRecovery(data.masked_email || '')
+          setMode('recovery_otp')
+          setSuccess(`Codice inviato a ${data.masked_email || 'email di recupero'}`)
+        } else {
+          setError(data.error || 'Errore')
+        }
+      } else if (mode === 'recovery_otp') {
+        // Verify recovery OTP
+        if (!recoveryOtp.trim() || recoveryOtp.length < 6) {
+          setError('Inserisci il codice a 6 cifre')
+        } else {
+          setMode('recovery_newpwd')
+          setSuccess('Codice verificato! Inserisci la nuova password.')
+        }
+      } else if (mode === 'recovery_newpwd') {
+        // Set new password via recovery
+        if (newPassword.length < 6) {
+          setError('La password deve avere almeno 6 caratteri')
+        } else if (newPassword !== confirmPassword) {
+          setError('Le password non coincidono')
+        } else {
+          const resp = await fetch('/api/verify-recovery-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp: recoveryOtp, new_password: newPassword }),
+          })
+          const data = await resp.json()
+          if (data.success) {
+            setSuccess('Password reimpostata! Ora puoi accedere.')
+            setMode('login')
+            setPassword('')
+            setRecoveryOtp('')
+            setNewPassword('')
+            setConfirmPassword('')
+          } else {
+            setError(data.error || 'Codice non valido o scaduto')
+          }
+        }
       } else if (mode === 'login') {
         await signIn(email, password)
         navigate('/', { replace: true })
@@ -175,9 +228,9 @@ export default function LoginPage() {
             required
           />
 
-          {/* Password — hidden in forgot mode */}
+          {/* Password — hidden in forgot/recovery modes */}
           <AnimatePresence mode="wait">
-            {mode !== 'forgot' && (
+            {(mode === 'login' || mode === 'register') && (
               <motion.div
                 key="password-field"
                 initial={{ opacity: 0, height: 0 }}
@@ -202,6 +255,81 @@ export default function LoginPage() {
                     Password dimenticata?
                   </button>
                 )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Forgot mode — "Non ho accesso all'email" link */}
+          <AnimatePresence mode="wait">
+            {mode === 'forgot' && (
+              <motion.div
+                key="forgot-recovery"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setMode('recovery_forgot'); setError(''); setSuccess('') }}
+                  className="text-xs text-secondary hover:text-accent transition-colors"
+                >
+                  Non ho accesso all'email
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Recovery OTP input */}
+          <AnimatePresence mode="wait">
+            {mode === 'recovery_otp' && (
+              <motion.div
+                key="recovery-otp-field"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <input
+                  type="text"
+                  placeholder="Codice a 6 cifre"
+                  value={recoveryOtp}
+                  onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary text-center tracking-widest font-mono shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Recovery new password fields */}
+          <AnimatePresence mode="wait">
+            {mode === 'recovery_newpwd' && (
+              <motion.div
+                key="recovery-pwd-fields"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-3"
+              >
+                <input
+                  type="password"
+                  placeholder="Nuova password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                  minLength={6}
+                />
+                <input
+                  type="password"
+                  placeholder="Conferma password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                  minLength={6}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -270,6 +398,12 @@ export default function LoginPage() {
               ? '...'
               : mode === 'forgot'
                 ? 'Invia link di reset'
+                : mode === 'recovery_forgot'
+                ? 'Invia codice di recupero'
+                : mode === 'recovery_otp'
+                ? 'Verifica codice'
+                : mode === 'recovery_newpwd'
+                ? 'Reimposta password'
                 : mode === 'login'
                 ? 'Accedi'
                 : 'Crea account'}
@@ -278,12 +412,12 @@ export default function LoginPage() {
 
         {/* Toggle mode */}
         <motion.p className="text-sm text-secondary" variants={itemVariants}>
-          {mode === 'forgot' ? (
+          {(mode === 'forgot' || mode === 'recovery_forgot' || mode === 'recovery_otp' || mode === 'recovery_newpwd') ? (
             <>
               Ricordi la password?{' '}
               <button
                 type="button"
-                onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+                onClick={() => { setMode('login'); setError(''); setSuccess(''); setRecoveryOtp(''); setNewPassword(''); setConfirmPassword('') }}
                 className="font-semibold text-accent"
               >
                 Torna al login

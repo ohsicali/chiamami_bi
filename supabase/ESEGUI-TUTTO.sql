@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   full_name text,
   email text,
   avatar_url text,
+  recovery_email text,
   is_admin boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
