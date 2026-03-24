@@ -296,14 +296,26 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       setEmailStatus({ type: 'error', text: 'Codice non valido o scaduto' })
       return
     }
-    // OTP verified — update email (with Secure email change OFF, this changes immediately)
+    // OTP verified — update email
     const { error: updateErr } = await supabase.auth.updateUser({ email: newEmail })
     setEmailLoading(false)
     if (updateErr) {
       setEmailStatus({ type: 'error', text: updateErr.message })
     } else {
-      setEmailStep('done')
-      setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' })
+      // Check if Supabase returned a session with updated email (Secure email change OFF)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.email === newEmail) {
+        // Email changed immediately — sync to profiles
+        await supabase.from('profiles').update({ email: newEmail }).eq('id', user.id)
+        await supabase.auth.refreshSession()
+        onRefreshProfile?.()
+        setEmailStep('done')
+        setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' })
+      } else {
+        // Secure email change ON — confirmation email sent to new address
+        setEmailStep('done')
+        setEmailStatus({ type: 'success', text: `Controlla ${newEmail} e clicca il link di conferma per completare il cambio.` })
+      }
     }
   }
 
@@ -346,6 +358,9 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       })
       const data = await resp.json()
       if (data.success) {
+        // Refresh session to get updated email
+        await supabase.auth.refreshSession()
+        onRefreshProfile?.()
         setEmailStep('done')
         setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' })
       } else {

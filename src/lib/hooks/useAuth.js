@@ -92,11 +92,15 @@ export function useAuth() {
     }).catch(() => {
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const authUser = session?.user ?? null
       setUser(authUser)
       if (authUser) {
         fetchProfile(authUser)
+        // Sync email to profiles when it changes (e.g. after email change confirmation)
+        if (event === 'USER_UPDATED' && authUser.email) {
+          supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+        }
       } else {
         setProfile(null)
       }
