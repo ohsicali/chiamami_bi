@@ -65,6 +65,12 @@ supabase/
 - **Colonne mancanti DB**: `recommended_for`, `tiktok_url`, `instagram_reel` aggiunte con ALTER TABLE
 - **Google CAPTCHA/sorry page**: rilevata e gestita con messaggio errore
 
+## Connettori disponibili — USALI
+- **GitHub** — PR, issues, merge (usato via `gh` CLI)
+- **Supabase** — esegui query SQL direttamente, non chiedere all'utente di farlo nel dashboard
+- **Vercel** — controlla deploy, log, config
+- **Web** — ricerche web quando serve
+
 ## Credenziali e config
 - API key Google Places: env var `VITE_GOOGLE_PLACES_KEY`
 - Supabase: env vars `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
