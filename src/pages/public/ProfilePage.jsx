@@ -345,7 +345,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       navigate('/', { replace: true })
     } catch (err) {
       console.error('Account deletion failed:', err)
-      alert('Errore durante la cancellazione. Contatta info@chiamamibi.com')
+      alert(`Errore durante la cancellazione: ${err.message}`)
     }
   }
 
