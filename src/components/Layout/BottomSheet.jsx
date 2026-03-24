@@ -155,7 +155,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       {...bind()}
       style={{
         height: sheetHeight,
-        touchAction: 'none',
+        touchAction: canScroll ? 'pan-y' : 'none',
         position: 'fixed',
         bottom: BOTTOM_MARGIN,
         left: SIDE_MARGIN,
@@ -190,6 +190,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
           overflowY: canScroll ? 'auto' : 'hidden',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
+          touchAction: canScroll ? 'manipulation' : 'none',
           height: 'calc(100% - 25px)',
         }}
         onTouchStart={(e) => {
