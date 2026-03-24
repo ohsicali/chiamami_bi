@@ -422,34 +422,95 @@ function ChangePassword({ userEmail }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Admin list                                                         */
+/*  Admin list — view, add, remove admins                              */
 /* ------------------------------------------------------------------ */
-function AdminList() {
+function AdminList({ currentUserId }) {
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
+  const [email, setEmail] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+  const [status, setStatus] = useState(null)
+  const [removeId, setRemoveId] = useState(null)
 
-  useEffect(() => {
+  const fetchAdmins = useCallback(async () => {
     if (!isSupabaseConfigured()) { setLoading(false); return }
-    supabase
+    const { data } = await supabase
       .from('profiles')
       .select('id, full_name, email, avatar_url, is_admin')
       .eq('is_admin', true)
       .order('full_name')
-      .then(({ data }) => {
-        setAdmins(data || [])
-        setLoading(false)
-      })
+    setAdmins(data || [])
+    setLoading(false)
   }, [])
+
+  useEffect(() => { fetchAdmins() }, [fetchAdmins])
+
+  const handleAdd = async (e) => {
+    e.preventDefault()
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed) return
+    setActionLoading(true)
+    setStatus(null)
+
+    // Find profile by email
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('email', trimmed)
+      .limit(1)
+
+    if (error || !profiles?.length) {
+      setActionLoading(false)
+      setStatus({ type: 'error', msg: 'Nessun utente trovato con questa email. L\'utente deve prima registrarsi.' })
+      return
+    }
+
+    const profile = profiles[0]
+    if (admins.some(a => a.id === profile.id)) {
+      setActionLoading(false)
+      setStatus({ type: 'error', msg: 'Questo utente è già admin.' })
+      return
+    }
+
+    const { error: updateErr } = await supabase
+      .from('profiles')
+      .update({ is_admin: true })
+      .eq('id', profile.id)
+
+    setActionLoading(false)
+    if (updateErr) {
+      setStatus({ type: 'error', msg: updateErr.message })
+    } else {
+      setEmail('')
+      setStatus({ type: 'success', msg: `${profile.full_name || profile.email} è ora admin!` })
+      fetchAdmins()
+    }
+  }
+
+  const handleRemove = async (id) => {
+    if (id === currentUserId) {
+      setStatus({ type: 'error', msg: 'Non puoi rimuovere te stesso come admin.' })
+      setRemoveId(null)
+      return
+    }
+    setActionLoading(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_admin: false })
+      .eq('id', id)
+    setActionLoading(false)
+    setRemoveId(null)
+    if (!error) fetchAdmins()
+  }
 
   return (
     <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
       <h3 className="text-sm font-semibold text-primary mb-3">Amministratori</h3>
+
       {loading ? (
         <div className="animate-pulse h-10 bg-gray-100 rounded-xl" />
-      ) : admins.length === 0 ? (
-        <p className="text-xs text-secondary">Nessun admin trovato</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 mb-4">
           {admins.map((admin) => (
             <div key={admin.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
               {admin.avatar_url ? (
@@ -467,13 +528,71 @@ function AdminList() {
                   <p className="text-xs text-secondary truncate">{admin.email}</p>
                 )}
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
-                Admin
-              </span>
+              {admin.id === currentUserId ? (
+                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
+                  Tu
+                </span>
+              ) : removeId === admin.id ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleRemove(admin.id)}
+                    disabled={actionLoading}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                  >
+                    Conferma
+                  </button>
+                  <button
+                    onClick={() => setRemoveId(null)}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-medium text-secondary hover:bg-gray-200 transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setRemoveId(admin.id)}
+                  className="p-1.5 rounded-lg text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Rimuovi admin"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
             </div>
           ))}
+          {admins.length === 0 && (
+            <p className="text-xs text-secondary">Nessun admin trovato</p>
+          )}
         </div>
       )}
+
+      {/* Add admin form */}
+      <div className="border-t border-gray-100 pt-4">
+        <p className="text-xs font-medium text-secondary mb-2">Aggiungi amministratore</p>
+        <form onSubmit={handleAdd} className="flex gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email dell'utente"
+            required
+            className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+          />
+          <button
+            type="submit"
+            disabled={actionLoading || !email.trim()}
+            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {actionLoading ? '...' : 'Aggiungi'}
+          </button>
+        </form>
+        {status && (
+          <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+            {status.msg}
+          </p>
+        )}
+      </div>
     </div>
   )
 }
@@ -528,7 +647,7 @@ export default function AdminSettings() {
       >
         <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Team</h2>
         <div className="max-w-2xl">
-          <AdminList />
+          <AdminList currentUserId={user.id} />
         </div>
       </motion.div>
 
