@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -214,6 +214,7 @@ function CategorySelector({ selected, onChange }) {
   const [open, setOpen] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', emoji: '', color: ADD_COLOR_PRESETS[0] })
+  const addFormRef = useRef(null)
   const [addSaving, setAddSaving] = useState(false)
 
   const toggle = (name) => {
@@ -386,9 +387,13 @@ function CategorySelector({ selected, onChange }) {
                   <AnimatePresence>
                     {showAddForm && (
                       <motion.div
+                        ref={addFormRef}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
+                        onAnimationComplete={() => {
+                          addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }}
                         className="overflow-hidden mt-4"
                       >
                         <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
@@ -401,6 +406,9 @@ function CategorySelector({ selected, onChange }) {
                               placeholder="Nome"
                               className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
                               autoFocus
+                              onFocus={(e) => {
+                                setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)
+                              }}
                             />
                             <input
                               type="text"
