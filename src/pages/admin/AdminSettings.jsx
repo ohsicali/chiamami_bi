@@ -122,26 +122,62 @@ function ThumbnailTool() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Account: Change email                                              */
+/*  Account: Change email (OTP verification on current email)          */
 /* ------------------------------------------------------------------ */
 function ChangeEmail({ currentEmail }) {
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState(null) // { type: 'success'|'error', msg }
-  const [saving, setSaving] = useState(false)
+  const [step, setStep] = useState('form') // 'form' | 'otp' | 'done'
+  const [newEmail, setNewEmail] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  const [status, setStatus] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault()
-    if (!email.trim() || email === currentEmail) return
-    setSaving(true)
+    if (!newEmail.trim() || newEmail === currentEmail) return
+    setLoading(true)
     setStatus(null)
-    const { error } = await supabase.auth.updateUser({ email })
-    setSaving(false)
+    const { error } = await supabase.auth.signInWithOtp({ email: currentEmail })
+    setLoading(false)
     if (error) {
       setStatus({ type: 'error', msg: error.message })
     } else {
-      setStatus({ type: 'success', msg: 'Email di conferma inviata al nuovo indirizzo. Controlla la casella.' })
-      setEmail('')
+      setStep('otp')
+      setStatus({ type: 'success', msg: `Codice di verifica inviato a ${currentEmail}` })
     }
+  }
+
+  const handleVerifyAndUpdate = async (e) => {
+    e.preventDefault()
+    if (!otpCode.trim()) return
+    setLoading(true)
+    setStatus(null)
+    // Verify OTP
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      email: currentEmail,
+      token: otpCode.trim(),
+      type: 'email',
+    })
+    if (verifyErr) {
+      setLoading(false)
+      setStatus({ type: 'error', msg: 'Codice non valido o scaduto' })
+      return
+    }
+    // OTP verified — update email
+    const { error: updateErr } = await supabase.auth.updateUser({ email: newEmail })
+    setLoading(false)
+    if (updateErr) {
+      setStatus({ type: 'error', msg: updateErr.message })
+    } else {
+      setStep('done')
+      setStatus({ type: 'success', msg: 'Email aggiornata! Controlla la nuova casella per confermare.' })
+    }
+  }
+
+  const handleReset = () => {
+    setStep('form')
+    setNewEmail('')
+    setOtpCode('')
+    setStatus(null)
   }
 
   return (
@@ -150,23 +186,63 @@ function ChangeEmail({ currentEmail }) {
       <p className="text-xs text-secondary mb-3">
         Email attuale: <span className="font-medium text-primary">{currentEmail}</span>
       </p>
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Nuova email"
-          required
-          className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <button
-          type="submit"
-          disabled={saving || !email.trim()}
-          className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {saving ? 'Invio...' : 'Aggiorna email'}
+
+      {step === 'form' && (
+        <form onSubmit={handleSendOtp} className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Nuova email"
+            required
+            className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+          />
+          <button
+            type="submit"
+            disabled={loading || !newEmail.trim()}
+            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {loading ? 'Invio...' : 'Invia codice di verifica'}
+          </button>
+        </form>
+      )}
+
+      {step === 'otp' && (
+        <form onSubmit={handleVerifyAndUpdate} className="space-y-2">
+          <p className="text-xs text-secondary">
+            Inserisci il codice ricevuto su <strong>{currentEmail}</strong>
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="Codice a 6 cifre"
+              required
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            />
+            <button
+              type="submit"
+              disabled={loading || otpCode.length < 6}
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {loading ? 'Verifica...' : 'Conferma'}
+            </button>
+          </div>
+          <button type="button" onClick={handleReset} className="text-xs text-secondary hover:text-primary transition-colors">
+            Annulla
+          </button>
+        </form>
+      )}
+
+      {step === 'done' && (
+        <button onClick={handleReset} className="text-xs text-accent hover:underline">
+          Cambia di nuovo
         </button>
-      </form>
+      )}
+
       {status && (
         <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
           {status.msg}

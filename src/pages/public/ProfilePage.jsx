@@ -205,8 +205,19 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' })
+  // Email change with OTP
+  const [emailStep, setEmailStep] = useState('form') // 'form' | 'otp' | 'done'
+  const [newEmail, setNewEmail] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  const [emailStatus, setEmailStatus] = useState(null)
+  const [emailLoading, setEmailLoading] = useState(false)
+
+  // Password change with current password verification
+  const [pwdUnlocked, setPwdUnlocked] = useState(false)
+  const [currentPwd, setCurrentPwd] = useState('')
+  const [passwordForm, setPasswordForm] = useState({ new: '', confirm: '' })
   const [passwordMsg, setPasswordMsg] = useState(null)
+  const [pwdVerifying, setPwdVerifying] = useState(false)
   const navigate = useNavigate()
 
   // Check newsletter status
@@ -249,6 +260,70 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     }
   }
 
+  // Email OTP handlers
+  const handleSendOtp = async () => {
+    if (!newEmail.trim() || newEmail === user?.email) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    const { error } = await supabase.auth.signInWithOtp({ email: user.email })
+    setEmailLoading(false)
+    if (error) {
+      setEmailStatus({ type: 'error', text: error.message })
+    } else {
+      setEmailStep('otp')
+      setEmailStatus({ type: 'success', text: `Codice inviato a ${user.email}` })
+    }
+  }
+
+  const handleVerifyOtpAndUpdateEmail = async () => {
+    if (!otpCode.trim()) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      email: user.email,
+      token: otpCode.trim(),
+      type: 'email',
+    })
+    if (verifyErr) {
+      setEmailLoading(false)
+      setEmailStatus({ type: 'error', text: 'Codice non valido o scaduto' })
+      return
+    }
+    const { error: updateErr } = await supabase.auth.updateUser({ email: newEmail })
+    setEmailLoading(false)
+    if (updateErr) {
+      setEmailStatus({ type: 'error', text: updateErr.message })
+    } else {
+      setEmailStep('done')
+      setEmailStatus({ type: 'success', text: 'Email aggiornata! Controlla la nuova casella per confermare.' })
+    }
+  }
+
+  const handleEmailReset = () => {
+    setEmailStep('form')
+    setNewEmail('')
+    setOtpCode('')
+    setEmailStatus(null)
+  }
+
+  // Password handlers
+  const handleVerifyCurrentPwd = async () => {
+    if (!currentPwd) return
+    setPwdVerifying(true)
+    setPasswordMsg(null)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPwd,
+    })
+    setPwdVerifying(false)
+    if (error) {
+      setPasswordMsg({ type: 'error', text: 'Password attuale non corretta' })
+    } else {
+      setPwdUnlocked(true)
+      setPasswordMsg(null)
+    }
+  }
+
   const handleChangePassword = async () => {
     setPasswordMsg(null)
     if (passwordForm.new.length < 6) {
@@ -263,7 +338,9 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       const { error } = await supabase.auth.updateUser({ password: passwordForm.new })
       if (error) throw error
       setPasswordMsg({ type: 'success', text: 'Password aggiornata!' })
-      setPasswordForm({ current: '', new: '', confirm: '' })
+      setPasswordForm({ new: '', confirm: '' })
+      setCurrentPwd('')
+      setPwdUnlocked(false)
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err.message || 'Errore nel cambio password.' })
     }
@@ -333,50 +410,142 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         </div>
       </div>
 
-      {/* Email (read-only) */}
+      {/* Email change with OTP */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-primary mb-3">Email</h3>
-        <input
-          type="email"
-          value={user?.email || ''}
-          readOnly
-          className={`${inputClasses} bg-gray-100 cursor-not-allowed`}
-        />
-        <p className="text-xs text-secondary mt-2">L'email non puo' essere modificata.</p>
+        <h3 className="text-sm font-semibold text-primary mb-1">Email</h3>
+        <p className="text-xs text-secondary mb-3">
+          Email attuale: <span className="font-medium text-primary">{user?.email}</span>
+        </p>
+
+        {emailStep === 'form' && (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                className={inputClasses}
+                placeholder="Nuova email"
+              />
+              <motion.button
+                onClick={handleSendOtp}
+                disabled={emailLoading || !newEmail.trim()}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Invia codice'}
+              </motion.button>
+            </div>
+          </div>
+        )}
+
+        {emailStep === 'otp' && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-secondary">
+              Inserisci il codice ricevuto su <strong>{user?.email}</strong>
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Codice a 6 cifre"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={`${inputClasses} text-center tracking-widest font-mono`}
+              />
+              <motion.button
+                onClick={handleVerifyOtpAndUpdateEmail}
+                disabled={emailLoading || otpCode.length < 6}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Conferma'}
+              </motion.button>
+            </div>
+            <button onClick={handleEmailReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
+              Annulla
+            </button>
+          </div>
+        )}
+
+        {emailStep === 'done' && (
+          <button onClick={handleEmailReset} className="text-xs text-accent hover:underline">
+            Cambia di nuovo
+          </button>
+        )}
+
+        {emailStatus && (
+          <p className={`text-xs mt-2 font-medium ${emailStatus.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+            {emailStatus.text}
+          </p>
+        )}
       </div>
 
-      {/* Change password */}
+      {/* Change password — requires current password */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
-        <div className="flex flex-col gap-3">
-          <input
-            type="password"
-            value={passwordForm.new}
-            onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
-            className={inputClasses}
-            placeholder="Nuova password"
-          />
-          <input
-            type="password"
-            value={passwordForm.confirm}
-            onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
-            className={inputClasses}
-            placeholder="Conferma password"
-          />
-          <motion.button
-            onClick={handleChangePassword}
-            disabled={!passwordForm.new || !passwordForm.confirm}
-            className="rounded-xl bg-primary py-3 text-sm font-semibold text-white disabled:opacity-50"
-            whileTap={{ scale: 0.95 }}
-          >
-            Aggiorna password
-          </motion.button>
-          {passwordMsg && (
-            <p className={`text-xs font-medium ${passwordMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
-              {passwordMsg.text}
-            </p>
-          )}
-        </div>
+        {!pwdUnlocked ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-secondary">Inserisci la password attuale per procedere</p>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={currentPwd}
+                onChange={e => setCurrentPwd(e.target.value)}
+                className={inputClasses}
+                placeholder="Password attuale"
+              />
+              <motion.button
+                onClick={handleVerifyCurrentPwd}
+                disabled={pwdVerifying || !currentPwd}
+                className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {pwdVerifying ? '...' : 'Verifica'}
+              </motion.button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <input
+              type="password"
+              value={passwordForm.new}
+              onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
+              className={inputClasses}
+              placeholder="Nuova password (min. 6 caratteri)"
+            />
+            <input
+              type="password"
+              value={passwordForm.confirm}
+              onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+              className={inputClasses}
+              placeholder="Conferma nuova password"
+            />
+            <div className="flex gap-2">
+              <motion.button
+                onClick={handleChangePassword}
+                disabled={!passwordForm.new || !passwordForm.confirm}
+                className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                Aggiorna password
+              </motion.button>
+              <motion.button
+                onClick={() => { setPwdUnlocked(false); setCurrentPwd(''); setPasswordForm({ new: '', confirm: '' }); setPasswordMsg(null) }}
+                className="rounded-xl py-3 px-4 text-sm text-secondary hover:bg-gray-100 transition-colors"
+                whileTap={{ scale: 0.95 }}
+              >
+                Annulla
+              </motion.button>
+            </div>
+          </div>
+        )}
+        {passwordMsg && (
+          <p className={`text-xs font-medium mt-2 ${passwordMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+            {passwordMsg.text}
+          </p>
+        )}
       </div>
 
       {/* Newsletter toggle */}
