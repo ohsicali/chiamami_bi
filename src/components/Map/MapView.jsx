@@ -375,18 +375,18 @@ const MapView = forwardRef(function MapView({
   }, [flushAnimations])
 
   /* -------------------------------------------------------------- */
-  /*  Zoom handler: ANIMATED transition on integer level change      */
-  /*  Flushes previous animations first to prevent overlap           */
+  /*  Zoom handler: just record that zoom level changed.             */
+  /*  Actual sync happens at moveend to avoid mid-animation gaps.    */
   /* -------------------------------------------------------------- */
+  const zoomChanged = useRef(false)
   const onZoom = useCallback(() => {
     const m = map.current
     if (!m) return
     const zoom = Math.floor(m.getZoom())
     if (zoom !== lastZoom.current) {
-      clearTimeout(debounceTimer.current)
-      syncMarkers(true) // always animate cluster ↔ pin transitions
+      zoomChanged.current = true
     }
-  }, [syncMarkers])
+  }, [])
 
   /* -------------------------------------------------------------- */
   /*  Initialize map                                                 */
@@ -413,13 +413,18 @@ const MapView = forwardRef(function MapView({
         if (layer.id.includes('poi')) m.setLayoutProperty(layer.id, 'visibility', 'none')
       })
 
-      // During zoom: animated sync on integer level change
+      // During zoom: record that zoom changed (don't sync mid-animation)
       m.on('zoom', onZoom)
 
-      // After all movement settles: sync for new viewport (panning, etc.)
+      // After all movement settles: sync with animation if zoom changed
       m.on('moveend', () => {
         clearTimeout(debounceTimer.current)
-        debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
+        if (zoomChanged.current) {
+          zoomChanged.current = false
+          syncMarkers(true) // animated crossfade for cluster ↔ pin
+        } else {
+          debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
+        }
       })
 
       // Initial render (instant, no animation needed)
