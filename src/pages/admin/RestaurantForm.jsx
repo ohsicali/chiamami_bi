@@ -204,9 +204,17 @@ function RecommendedForSelector({ selected, onChange }) {
 /* ------------------------------------------------------------------ */
 /*  Category multi-select — Glovo-style dropdown modal                 */
 /* ------------------------------------------------------------------ */
+const ADD_COLOR_PRESETS = [
+  '#FF5757', '#EF4444', '#F59E0B', '#10B981', '#6366F1',
+  '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#3B82F6',
+]
+
 function CategorySelector({ selected, onChange }) {
-  const { categories: CUISINE_CATEGORIES } = useCategories()
+  const { categories: CUISINE_CATEGORIES, addCategory } = useCategories()
   const [open, setOpen] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', emoji: '', color: ADD_COLOR_PRESETS[0] })
+  const [addSaving, setAddSaving] = useState(false)
 
   const toggle = (name) => {
     onChange(
@@ -214,6 +222,28 @@ function CategorySelector({ selected, onChange }) {
         ? selected.filter((s) => s !== name)
         : [...selected, name]
     )
+  }
+
+  // Move a category to first position (changes map icon)
+  const moveToFirst = (name) => {
+    if (selected[0] === name) return
+    onChange([name, ...selected.filter((s) => s !== name)])
+  }
+
+  // Add new category inline and auto-select it
+  const handleAddInline = async () => {
+    if (!addForm.name.trim() || addSaving) return
+    setAddSaving(true)
+    const { data, error } = await addCategory({ name: addForm.name, emoji: addForm.emoji || '🍴', color: addForm.color })
+    setAddSaving(false)
+    if (!error && data) {
+      const newName = addForm.name.trim()
+      if (!selected.includes(newName)) {
+        onChange([...selected, newName])
+      }
+      setAddForm({ name: '', emoji: '', color: ADD_COLOR_PRESETS[0] })
+      setShowAddForm(false)
+    }
   }
 
   return (
@@ -230,32 +260,47 @@ function CategorySelector({ selected, onChange }) {
         </svg>
       </button>
 
-      {/* Selected chips preview */}
+      {/* Selected chips preview — tap to move to first (= map icon) */}
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
-          {selected.map((name) => {
+          {selected.map((name, i) => {
             const cat = CUISINE_CATEGORIES.find((c) => c.name === name)
             return (
-              <span
+              <motion.span
                 key={name}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white"
+                layout
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white cursor-pointer ${
+                  i === 0 ? 'ring-2 ring-offset-1 ring-accent' : ''
+                }`}
                 style={{ backgroundColor: cat?.color || '#6B7280' }}
+                onClick={() => moveToFirst(name)}
+                title={i === 0 ? 'Categoria principale (icona mappa)' : 'Tocca per impostare come principale'}
               >
                 <span>{cat?.emoji}</span>
                 {name}
+                {i === 0 && (
+                  <svg className="w-3 h-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
                 <button
                   type="button"
-                  onClick={() => toggle(name)}
+                  onClick={(e) => { e.stopPropagation(); toggle(name) }}
                   className="ml-0.5 hover:opacity-70"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-              </span>
+              </motion.span>
             )
           })}
         </div>
+      )}
+      {selected.length > 1 && (
+        <p className="text-[10px] text-secondary mt-1">Tocca una categoria per impostarla come principale (icona mappa)</p>
       )}
 
       {/* Full-screen modal — rendered via portal to avoid scroll/clipping issues */}
@@ -267,7 +312,7 @@ function CategorySelector({ selected, onChange }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
-              onClick={() => setOpen(false)}
+              onClick={() => { setOpen(false); setShowAddForm(false) }}
             >
               <motion.div
                 initial={{ y: '100%' }}
@@ -282,7 +327,7 @@ function CategorySelector({ selected, onChange }) {
                   <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); setShowAddForm(false) }}
                     className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                   >
                     <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -321,14 +366,92 @@ function CategorySelector({ selected, onChange }) {
                         </button>
                       )
                     })}
+
+                    {/* Add new category button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAddForm(true)}
+                      className="flex flex-col items-center gap-1.5 py-2"
+                    >
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-accent transition-colors">
+                        <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                      <span className="text-xs font-medium text-secondary text-center leading-tight">Aggiungi</span>
+                    </button>
                   </div>
+
+                  {/* Inline add form */}
+                  <AnimatePresence>
+                    {showAddForm && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden mt-4"
+                      >
+                        <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
+                          <p className="text-sm font-semibold text-primary">Nuova categoria</p>
+                          <div className="grid grid-cols-[1fr_70px] gap-2">
+                            <input
+                              type="text"
+                              value={addForm.name}
+                              onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+                              placeholder="Nome"
+                              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
+                              autoFocus
+                            />
+                            <input
+                              type="text"
+                              value={addForm.emoji}
+                              onChange={(e) => setAddForm((p) => ({ ...p, emoji: e.target.value }))}
+                              placeholder="🍴"
+                              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent/30"
+                              maxLength={4}
+                            />
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {ADD_COLOR_PRESETS.map((c) => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setAddForm((p) => ({ ...p, color: c }))}
+                                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                                  addForm.color === c ? 'border-primary scale-110 shadow-sm' : 'border-transparent'
+                                }`}
+                                style={{ backgroundColor: c }}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setShowAddForm(false)}
+                              className="px-3 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-200 transition-colors"
+                            >
+                              Annulla
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleAddInline}
+                              disabled={!addForm.name.trim() || addSaving}
+                              className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50"
+                            >
+                              {addSaving ? '...' : 'Aggiungi'}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Footer button */}
                 <div className="px-5 py-4 border-t border-gray-100">
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); setShowAddForm(false) }}
                     className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
                   >
                     {selected.length > 0
