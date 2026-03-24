@@ -349,13 +349,18 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const handleDeleteAccount = async () => {
     if (!user) return
     try {
-      await Promise.all([
-        supabase.from('saved_restaurants').delete().eq('user_id', user.id),
-        supabase.from('discount_redemptions').delete().eq('user_id', user.id),
-        supabase.from('user_reviews').delete().eq('user_id', user.id),
-        supabase.from('newsletter_subscribers').delete().eq('email', user.email),
-        supabase.from('profiles').delete().eq('id', user.id),
-      ])
+      const { data: { session } } = await supabase.auth.getSession()
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Errore durante la cancellazione')
+      }
       await onLogout()
       navigate('/', { replace: true })
     } catch (err) {
