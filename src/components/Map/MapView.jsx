@@ -11,10 +11,23 @@ function createPinElement(restaurant, isSaved) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
   const { emoji, color } = getCategoryInfo(primaryType)
 
+  // Outer element — Mapbox controls its transform for positioning.
+  // Must NOT have CSS transitions on transform, or markers drift during zoom.
   const el = document.createElement('div')
   el.className = 'chiamami-pin'
   el.dataset.restaurantId = restaurant.id
   el.style.cssText = `
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    pointer-events: auto;
+  `
+
+  // Inner visual circle — all styling & scale animations go here
+  const inner = document.createElement('div')
+  inner.className = 'chiamami-pin-inner'
+  inner.dataset.color = color
+  inner.style.cssText = `
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -24,15 +37,12 @@ function createPinElement(restaurant, isSaved) {
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     user-select: none;
-    z-index: 1;
-    pointer-events: auto;
     position: relative;
   `
 
-  el.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
+  inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 
   if (isSaved) {
     const heart = document.createElement('span')
@@ -54,9 +64,10 @@ function createPinElement(restaurant, isSaved) {
       pointer-events: none;
     `
     heart.textContent = '❤️'
-    el.appendChild(heart)
+    inner.appendChild(heart)
   }
 
+  el.appendChild(inner)
   return el
 }
 
@@ -67,22 +78,26 @@ function ensureStyles() {
   const style = document.createElement('style')
   style.id = STYLE_ID
   style.textContent = `
-    .chiamami-pin {
+    /* Outer .chiamami-pin: NO transform transitions — Mapbox owns its transform */
+    .chiamami-pin[data-selected="true"] {
+      z-index: 10 !important;
+    }
+    /* Inner element gets all visual transitions & animations */
+    .chiamami-pin-inner {
       transition: transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.15s ease;
     }
-    .chiamami-pin:hover {
-      transform: scale(1.15) !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+    .chiamami-pin:hover .chiamami-pin-inner {
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
-    .chiamami-pin:active {
-      transform: scale(0.9) !important;
-      transition: transform 0.08s ease !important;
+    .chiamami-pin:active .chiamami-pin-inner {
+      transform: scale(0.9);
+      transition: transform 0.08s ease;
     }
-    .chiamami-pin[data-selected="true"] {
-      transform: scale(1.25) !important;
-      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3) !important;
+    .chiamami-pin[data-selected="true"] .chiamami-pin-inner {
+      transform: scale(1.25);
+      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3);
       border-color: ${ACCENT_COLOR} !important;
-      z-index: 10 !important;
       animation: chiamami-pin-pulse 2s infinite;
     }
     @keyframes chiamami-pin-pulse {
