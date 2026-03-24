@@ -1,8 +1,8 @@
 /**
  * Vercel Serverless Function — resolve Google Maps URL and fetch place details
+ * Runs in US region (iad1) to bypass EU consent page for CID URLs.
  *
- * Supports: maps.app.goo.gl, goo.gl, share.google, full google.com/maps/place/ URLs
- * Does NOT support: ?cid= URLs (Google serves consent page, blocked client-side)
+ * Supports: maps.app.goo.gl, goo.gl, share.google, ?cid= URLs, full place URLs
  */
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -19,15 +19,6 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(200).json({ error: 'VITE_GOOGLE_PLACES_KEY non configurata' })
 
   try {
-    // CID URLs can't be resolved server-side (Google serves EU consent page)
-    try {
-      if (new URL(url).searchParams.get('cid')) {
-        return res.status(200).json({
-          error: 'I link con "?cid=" non sono supportati. Dall\'app Google Maps, usa "Condividi" → "Copia link".',
-        })
-      }
-    } catch (_) {}
-
     // Step 1: Follow redirects (for short URLs like maps.app.goo.gl)
     let resolvedUrl = url
     try { resolvedUrl = await followRedirects(url) } catch (_) {}
@@ -37,13 +28,13 @@ export default async function handler(req, res) {
     let canonicalUrl = ''
     try {
       const pageUrl = resolvedUrl !== url ? resolvedUrl : url
+      // Use US-style headers — function runs in iad1 (US) to bypass EU consent page
       const pageRes = await fetch(pageUrl, {
         redirect: 'follow',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html',
-          'Accept-Language': 'it-IT,it;q=0.9',
-          'Cookie': 'CONSENT=PENDING+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
+          'Accept-Language': 'en-US,en;q=0.9',
         },
       })
       if (pageRes.url && pageRes.url !== pageUrl) resolvedUrl = pageRes.url
@@ -241,8 +232,8 @@ async function followRedirects(url, maxRedirects = 10) {
     const res = await fetch(current, {
       redirect: 'manual',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-        'Cookie': 'CONSENT=PENDING+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
       },
     })
     const location = res.headers.get('location')
