@@ -9,126 +9,117 @@ const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const SOURCE_ID = 'restaurants-source'
 const CLUSTER_LAYER = 'clusters'
 const CLUSTER_COUNT_LAYER = 'cluster-count'
-const UNCLUSTERED_LAYER = 'unclustered-point' // invisible, used for hit detection
+const PIN_LAYER = 'restaurant-pins'
+const HEART_LAYER = 'restaurant-hearts'
 
-function createPinElement(restaurant, isSaved) {
-  const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
-  const { emoji, color } = getCategoryInfo(primaryType)
+/* ------------------------------------------------------------------ */
+/*  Generate pin image on canvas and add to map                        */
+/* ------------------------------------------------------------------ */
+function generatePinImage(emoji, borderColor, size = 40) {
+  const scale = 2 // retina
+  const s = size * scale
+  const canvas = document.createElement('canvas')
+  canvas.width = s
+  canvas.height = s
+  const ctx = canvas.getContext('2d')
 
-  // Outer element — Mapbox controls its transform for positioning.
-  const el = document.createElement('div')
-  el.className = 'chiamami-pin'
-  el.dataset.restaurantId = restaurant.id
-  el.style.cssText = `
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    pointer-events: auto;
-  `
+  // White circle with colored border
+  const borderW = 2.5 * scale
+  ctx.beginPath()
+  ctx.arc(s / 2, s / 2, s / 2 - borderW / 2, 0, Math.PI * 2)
+  ctx.fillStyle = '#fff'
+  ctx.fill()
+  ctx.strokeStyle = borderColor
+  ctx.lineWidth = borderW
+  ctx.stroke()
 
-  // Inner visual circle — all styling & scale animations go here
-  const inner = document.createElement('div')
-  inner.className = 'chiamami-pin-inner'
-  inner.dataset.color = color
-  inner.style.cssText = `
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2.5px solid ${color};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    user-select: none;
-    position: relative;
-  `
+  // Drop shadow (simple approximation)
+  ctx.shadowColor = 'rgba(0,0,0,0.15)'
+  ctx.shadowBlur = 4 * scale
+  ctx.shadowOffsetY = 1 * scale
 
-  inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
+  // Emoji centered
+  ctx.shadowColor = 'transparent'
+  ctx.font = `${18 * scale}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(emoji, s / 2, s / 2 + 1 * scale)
 
-  if (isSaved) {
-    const heart = document.createElement('span')
-    heart.style.cssText = `
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 16px;
-      height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      line-height: 1;
-      border: 1.5px solid #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      pointer-events: none;
-    `
-    heart.textContent = '❤️'
-    inner.appendChild(heart)
-  }
-
-  el.appendChild(inner)
-  return el
+  return { canvas, width: s, height: s }
 }
 
-// Inject keyframes once
-const STYLE_ID = 'chiamami-pin-styles'
-function ensureStyles() {
-  if (document.getElementById(STYLE_ID)) return
-  const style = document.createElement('style')
-  style.id = STYLE_ID
-  style.textContent = `
-    /* Outer .chiamami-pin: NO transform transitions — Mapbox owns its transform */
-    .chiamami-pin[data-selected="true"] {
-      z-index: 10 !important;
-    }
-    /* Inner element gets all visual transitions & animations */
-    .chiamami-pin-inner {
-      transition: transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.15s ease;
-    }
-    .chiamami-pin:hover .chiamami-pin-inner {
-      transform: scale(1.15);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-    .chiamami-pin:active .chiamami-pin-inner {
-      transform: scale(0.9);
-      transition: transform 0.08s ease;
-    }
-    .chiamami-pin[data-selected="true"] .chiamami-pin-inner {
-      transform: scale(1.25);
-      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3);
-      border-color: ${ACCENT_COLOR} !important;
-      animation: chiamami-pin-pulse 2s infinite;
-    }
-    @keyframes chiamami-pin-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3); }
-      50% { box-shadow: 0 0 0 6px ${ACCENT_COLOR}22, 0 4px 16px rgba(0,0,0,0.3); }
-    }
-    @keyframes chiamami-user-pulse {
-      0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }
-      50% { box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
-    }
-  `
-  document.head.appendChild(style)
+function generateHeartImage() {
+  const scale = 2
+  const s = 16 * scale
+  const canvas = document.createElement('canvas')
+  canvas.width = s
+  canvas.height = s
+  const ctx = canvas.getContext('2d')
+
+  // White circle
+  ctx.beginPath()
+  ctx.arc(s / 2, s / 2, s / 2 - 1, 0, Math.PI * 2)
+  ctx.fillStyle = '#fff'
+  ctx.fill()
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = 1.5 * scale
+  ctx.stroke()
+
+  // Heart emoji
+  ctx.font = `${9 * scale}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('❤️', s / 2, s / 2 + 1)
+
+  return { canvas, width: s, height: s }
 }
 
 /* ------------------------------------------------------------------ */
 /*  Build GeoJSON FeatureCollection from restaurant array              */
 /* ------------------------------------------------------------------ */
-function buildGeoJSON(restaurants) {
+function buildGeoJSON(restaurants, savedIds) {
   return {
     type: 'FeatureCollection',
     features: (restaurants || [])
       .filter((r) => r.latitude && r.longitude)
-      .map((r) => ({
-        type: 'Feature',
-        id: r.id,
-        geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
-        properties: { id: r.id },
-      })),
+      .map((r) => {
+        const primaryType = (r.category && r.category[0]) || r.cuisine_type
+        const { emoji, color } = getCategoryInfo(primaryType)
+        return {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
+          properties: {
+            id: r.id,
+            icon: `pin-${primaryType || 'default'}`,
+            emoji,
+            color,
+            saved: savedIds?.has(r.id) ? 1 : 0,
+          },
+        }
+      }),
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Ensure all category pin images are loaded into the map             */
+/* ------------------------------------------------------------------ */
+function ensurePinImages(map, restaurants) {
+  const seen = new Set()
+  for (const r of restaurants || []) {
+    const primaryType = (r.category && r.category[0]) || r.cuisine_type
+    const key = `pin-${primaryType || 'default'}`
+    if (seen.has(key) || map.hasImage(key)) continue
+    seen.add(key)
+
+    const { emoji, color } = getCategoryInfo(primaryType)
+    const { canvas, width, height } = generatePinImage(emoji, color)
+    map.addImage(key, { width, height, data: canvas.getContext('2d').getImageData(0, 0, width, height).data }, { pixelRatio: 2 })
+  }
+
+  // Heart badge image
+  if (!map.hasImage('heart-badge')) {
+    const { canvas, width, height } = generateHeartImage()
+    map.addImage('heart-badge', { width, height, data: canvas.getContext('2d').getImageData(0, 0, width, height).data }, { pixelRatio: 2 })
   }
 }
 
@@ -270,7 +261,7 @@ function PlaceholderMap({ restaurants, className }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  MapView component                                                  */
+/*  MapView component — fully native Mapbox layers (no HTML markers)   */
 /* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
   restaurants,
@@ -283,7 +274,6 @@ const MapView = forwardRef(function MapView({
 }, ref) {
   const mapContainer = useRef(null)
   const map = useRef(null)
-  const markers = useRef({}) // id → { marker, el }
   const userMarker = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
@@ -310,86 +300,26 @@ const MapView = forwardRef(function MapView({
   }))
 
   /* -------------------------------------------------------------- */
-  /*  Sync HTML markers for unclustered points + notify visible IDs  */
+  /*  Notify parent about visible restaurants in viewport            */
   /* -------------------------------------------------------------- */
-  const syncMarkers = useCallback(() => {
+  const notifyVisible = useCallback(() => {
     const m = map.current
-    if (!m || !m.getSource(SOURCE_ID)) return
-
+    if (!m || !onVisibleRef.current) return
     const rests = restaurantsRef.current || []
-    const saved = savedIdsRef.current
     const bounds = m.getBounds()
-
-    // Which IDs are NOT clustered? querySourceFeatures returns both cluster
-    // aggregates and individual unclustered points from loaded tiles.
-    const sourceFeatures = m.querySourceFeatures(SOURCE_ID)
-    const unclusteredIds = new Set()
-    sourceFeatures.forEach((f) => {
-      if (!f.properties.cluster && f.properties.id) {
-        unclusteredIds.add(f.properties.id)
-      }
-    })
-
-    // Only show markers for unclustered points that are within the viewport
-    const visibleIds = new Set()
-    for (const id of unclusteredIds) {
-      const r = rests.find((r) => r.id === id)
-      if (r && bounds.contains([r.longitude, r.latitude])) {
-        visibleIds.add(id)
-      }
-    }
-
-    // Remove markers no longer visible
-    for (const id of Object.keys(markers.current)) {
-      if (!visibleIds.has(id)) {
-        markers.current[id].marker.remove()
-        delete markers.current[id]
-      }
-    }
-
-    // Add markers for newly visible unclustered points
-    for (const id of visibleIds) {
-      if (markers.current[id]) continue
-
-      const r = rests.find((r) => r.id === id)
-      if (!r) continue
-
-      const el = createPinElement(r, saved?.has(r.id))
-
-      el.addEventListener('click', (e) => {
-        e.stopPropagation()
-        onSelectRef.current?.(r.id)
-      })
-      el.addEventListener('touchend', (e) => {
-        e.stopPropagation()
-        onSelectRef.current?.(r.id)
-      }, { passive: true })
-
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat([r.longitude, r.latitude])
-        .addTo(m)
-
-      markers.current[id] = { marker, el }
-    }
-
-    // Notify parent about visible restaurants (for list sync)
-    if (onVisibleRef.current) {
-      const allVisibleIds = rests
-        .filter((r) => r.latitude && r.longitude
-          && bounds.contains([r.longitude, r.latitude]))
-        .map((r) => r.id)
-      const center = m.getCenter()
-      onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
-    }
+    const allVisibleIds = rests
+      .filter((r) => r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude]))
+      .map((r) => r.id)
+    const center = m.getCenter()
+    onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Initialize map + cluster source & layers                       */
+  /*  Initialize map + source + all layers                           */
   /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!token || !mapContainer.current) return
 
-    ensureStyles()
     mapboxgl.accessToken = token
 
     map.current = new mapboxgl.Map({
@@ -404,23 +334,26 @@ const MapView = forwardRef(function MapView({
       const m = map.current
       if (!m) return
 
-      // Hide default POI labels to avoid clutter
+      // Hide default POI labels
       m.getStyle().layers.forEach((layer) => {
         if (layer.id.includes('poi')) {
           m.setLayoutProperty(layer.id, 'visibility', 'none')
         }
       })
 
+      // Generate pin images for all restaurant categories
+      ensurePinImages(m, restaurantsRef.current)
+
       // Add GeoJSON source with clustering
       m.addSource(SOURCE_ID, {
         type: 'geojson',
-        data: buildGeoJSON(restaurantsRef.current),
+        data: buildGeoJSON(restaurantsRef.current, savedIdsRef.current),
         cluster: true,
         clusterMaxZoom: 14,
         clusterRadius: 50,
       })
 
-      // Cluster circles
+      // --- Cluster circle ---
       m.addLayer({
         id: CLUSTER_LAYER,
         type: 'circle',
@@ -431,11 +364,10 @@ const MapView = forwardRef(function MapView({
           'circle-radius': ['step', ['get', 'point_count'], 22, 5, 26, 10, 30],
           'circle-stroke-width': 2.5,
           'circle-stroke-color': ACCENT_COLOR,
-          'circle-opacity': 1,
         },
       })
 
-      // Cluster count labels
+      // --- Cluster count label ---
       m.addLayer({
         id: CLUSTER_COUNT_LAYER,
         type: 'symbol',
@@ -452,67 +384,84 @@ const MapView = forwardRef(function MapView({
         },
       })
 
-      // Invisible layer for unclustered points (keeps them in the render pipeline)
+      // --- Individual restaurant pins (symbol layer) ---
       m.addLayer({
-        id: UNCLUSTERED_LAYER,
-        type: 'circle',
+        id: PIN_LAYER,
+        type: 'symbol',
         source: SOURCE_ID,
         filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-radius': 0,
-          'circle-opacity': 0,
+        layout: {
+          'icon-image': ['get', 'icon'],
+          'icon-size': 1,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       })
 
-      // Click on cluster → zoom in to expand
+      // --- Heart badge for saved restaurants ---
+      m.addLayer({
+        id: HEART_LAYER,
+        type: 'symbol',
+        source: SOURCE_ID,
+        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'saved'], 1]],
+        layout: {
+          'icon-image': 'heart-badge',
+          'icon-size': 1,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          'icon-offset': [12, -12], // top-right of the pin
+        },
+      })
+
+      // --- Click on cluster → zoom to expand ---
       m.on('click', CLUSTER_LAYER, (e) => {
         const features = m.queryRenderedFeatures(e.point, { layers: [CLUSTER_LAYER] })
         if (!features.length) return
         const clusterId = features[0].properties.cluster_id
         m.getSource(SOURCE_ID).getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (err) return
-          m.easeTo({
-            center: features[0].geometry.coordinates,
-            zoom: zoom,
-            duration: 500,
-          })
+          m.easeTo({ center: features[0].geometry.coordinates, zoom, duration: 500 })
         })
       })
 
-      // Pointer cursor on clusters
+      // --- Click on restaurant pin ---
+      m.on('click', PIN_LAYER, (e) => {
+        if (!e.features?.length) return
+        const id = e.features[0].properties.id
+        if (id) onSelectRef.current?.(id)
+      })
+
+      // Cursor feedback
       m.on('mouseenter', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = '' })
+      m.on('mouseenter', PIN_LAYER, () => { m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', PIN_LAYER, () => { m.getCanvas().style.cursor = '' })
 
-      // Sync markers when map finishes moving or zooming
-      m.on('moveend', syncMarkers)
-      // Also on idle for initial load and source data changes
-      m.on('idle', syncMarkers)
-
-      // Initial sync
-      syncMarkers()
+      // Notify parent about visible restaurants
+      m.on('moveend', notifyVisible)
+      m.on('idle', notifyVisible)
     })
 
     return () => {
-      Object.values(markers.current).forEach(({ marker }) => marker.remove())
-      markers.current = {}
       userMarker.current?.remove()
       userMarker.current = null
       map.current?.remove()
       map.current = null
     }
-  }, [token, syncMarkers])
+  }, [token, notifyVisible])
 
   /* -------------------------------------------------------------- */
-  /*  Update GeoJSON source when restaurants change                  */
+  /*  Update source data when restaurants or savedIds change          */
   /* -------------------------------------------------------------- */
   useEffect(() => {
-    if (!map.current) return
     const m = map.current
+    if (!m) return
 
     const update = () => {
+      ensurePinImages(m, restaurants)
       const src = m.getSource(SOURCE_ID)
       if (src) {
-        src.setData(buildGeoJSON(restaurants))
+        src.setData(buildGeoJSON(restaurants, savedIds))
       }
     }
 
@@ -521,27 +470,22 @@ const MapView = forwardRef(function MapView({
     } else {
       m.on('load', update)
     }
-  }, [restaurants])
+  }, [restaurants, savedIds])
 
   /* -------------------------------------------------------------- */
-  /*  Rebuild markers when savedIds change (heart badge)             */
+  /*  Highlight selected pin                                         */
   /* -------------------------------------------------------------- */
   useEffect(() => {
-    // Clear all HTML markers so they get recreated with updated saved status
-    Object.values(markers.current).forEach(({ marker }) => marker.remove())
-    markers.current = {}
-    syncMarkers()
-  }, [savedIds, syncMarkers])
+    const m = map.current
+    if (!m || !m.getLayer(PIN_LAYER)) return
 
-  /* -------------------------------------------------------------- */
-  /*  Update selected marker style                                   */
-  /* -------------------------------------------------------------- */
-  useEffect(() => {
-    Object.values(markers.current).forEach(({ el }) => {
-      delete el.dataset.selected
-    })
-    if (selectedId && markers.current[selectedId]) {
-      markers.current[selectedId].el.dataset.selected = 'true'
+    // Use a filter or icon-size expression to highlight selected
+    if (selectedId) {
+      m.setLayoutProperty(PIN_LAYER, 'icon-size', [
+        'case', ['==', ['get', 'id'], selectedId], 1.3, 1
+      ])
+    } else {
+      m.setLayoutProperty(PIN_LAYER, 'icon-size', 1)
     }
   }, [selectedId])
 
@@ -585,6 +529,18 @@ const MapView = forwardRef(function MapView({
       box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
       animation: chiamami-user-pulse 2s infinite;
     `
+    // Inject pulse animation if needed
+    if (!document.getElementById('chiamami-pulse-style')) {
+      const style = document.createElement('style')
+      style.id = 'chiamami-pulse-style'
+      style.textContent = `
+        @keyframes chiamami-user-pulse {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
+        }
+      `
+      document.head.appendChild(style)
+    }
 
     userMarker.current = new mapboxgl.Marker({ element: el })
       .setLngLat([userPosition.lng, userPosition.lat])
