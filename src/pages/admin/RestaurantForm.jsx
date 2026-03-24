@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -214,7 +214,6 @@ function CategorySelector({ selected, onChange }) {
   const [open, setOpen] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', emoji: '', color: ADD_COLOR_PRESETS[0] })
-  const addFormRef = useRef(null)
   const [addSaving, setAddSaving] = useState(false)
 
   const toggle = (name) => {
@@ -325,7 +324,20 @@ function CategorySelector({ selected, onChange }) {
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                  <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
+                  {showAddForm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddForm(false)}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Indietro
+                    </button>
+                  ) : (
+                    <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
+                  )}
                   <button
                     type="button"
                     onClick={() => { setOpen(false); setShowAddForm(false) }}
@@ -337,122 +349,105 @@ function CategorySelector({ selected, onChange }) {
                   </button>
                 </div>
 
-                {/* Grid — min-h-0 prevents flex child from overflowing */}
+                {/* Content area */}
                 <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <div className="grid grid-cols-4 gap-3">
-                    {CUISINE_CATEGORIES.map((cat) => {
-                      const active = selected.includes(cat.name)
-                      return (
-                        <button
-                          key={cat.name}
-                          type="button"
-                          onClick={() => toggle(cat.name)}
-                          className="flex flex-col items-center gap-1.5 py-2"
-                        >
-                          <div
-                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                              active
-                                ? 'ring-3 ring-accent shadow-md'
-                                : 'bg-gray-100'
-                            }`}
-                            style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
-                          >
-                            {cat.emoji}
-                          </div>
-                          <span className={`text-xs font-medium text-center leading-tight ${
-                            active ? 'text-accent' : 'text-primary'
-                          }`}>
-                            {cat.name}
-                          </span>
-                        </button>
-                      )
-                    })}
-
-                    {/* Add new category button */}
-                    <button
-                      type="button"
-                      onClick={() => setShowAddForm(true)}
-                      className="flex flex-col items-center gap-1.5 py-2"
-                    >
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-accent transition-colors">
-                        <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
+                  {showAddForm ? (
+                    /* Add form — replaces grid so it's always visible above keyboard */
+                    <div className="space-y-4">
+                      <p className="text-lg font-semibold text-primary">Nuova categoria</p>
+                      <div>
+                        <label className="text-xs font-medium text-secondary mb-1.5 block">Nome</label>
+                        <input
+                          type="text"
+                          value={addForm.name}
+                          onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+                          placeholder="Es. Pizzeria"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          autoFocus
+                        />
                       </div>
-                      <span className="text-xs font-medium text-secondary text-center leading-tight">Aggiungi</span>
-                    </button>
-                  </div>
-
-                  {/* Inline add form */}
-                  <AnimatePresence>
-                    {showAddForm && (
-                      <motion.div
-                        ref={addFormRef}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        onAnimationComplete={() => {
-                          addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                        }}
-                        className="overflow-hidden mt-4"
-                      >
-                        <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
-                          <p className="text-sm font-semibold text-primary">Nuova categoria</p>
-                          <div className="grid grid-cols-[1fr_70px] gap-2">
-                            <input
-                              type="text"
-                              value={addForm.name}
-                              onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
-                              placeholder="Nome"
-                              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
-                              autoFocus
-                              onFocus={(e) => {
-                                setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)
-                              }}
-                            />
-                            <input
-                              type="text"
-                              value={addForm.emoji}
-                              onChange={(e) => setAddForm((p) => ({ ...p, emoji: e.target.value }))}
-                              placeholder="🍴"
-                              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent/30"
-                              maxLength={4}
-                            />
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {ADD_COLOR_PRESETS.map((c) => (
-                              <button
-                                key={c}
-                                type="button"
-                                onClick={() => setAddForm((p) => ({ ...p, color: c }))}
-                                className={`w-7 h-7 rounded-full border-2 transition-all ${
-                                  addForm.color === c ? 'border-primary scale-110 shadow-sm' : 'border-transparent'
-                                }`}
-                                style={{ backgroundColor: c }}
-                              />
-                            ))}
-                          </div>
-                          <div className="flex gap-2 justify-end">
+                      <div>
+                        <label className="text-xs font-medium text-secondary mb-1.5 block">Emoji</label>
+                        <input
+                          type="text"
+                          value={addForm.emoji}
+                          onChange={(e) => setAddForm((p) => ({ ...p, emoji: e.target.value }))}
+                          placeholder="🍴"
+                          className="w-20 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          maxLength={4}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-secondary mb-1.5 block">Colore</label>
+                        <div className="flex flex-wrap gap-2.5">
+                          {ADD_COLOR_PRESETS.map((c) => (
                             <button
+                              key={c}
                               type="button"
-                              onClick={() => setShowAddForm(false)}
-                              className="px-3 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-200 transition-colors"
-                            >
-                              Annulla
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleAddInline}
-                              disabled={!addForm.name.trim() || addSaving}
-                              className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50"
-                            >
-                              {addSaving ? '...' : 'Aggiungi'}
-                            </button>
-                          </div>
+                              onClick={() => setAddForm((p) => ({ ...p, color: c }))}
+                              className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                addForm.color === c ? 'border-primary scale-110 shadow-sm' : 'border-transparent'
+                              }`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddInline}
+                        disabled={!addForm.name.trim() || addSaving}
+                        className="w-full py-3 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 shadow-md mt-2"
+                      >
+                        {addSaving ? '...' : 'Aggiungi categoria'}
+                      </button>
+                    </div>
+                  ) : (
+                    /* Category grid */
+                    <div className="grid grid-cols-4 gap-3">
+                      {CUISINE_CATEGORIES.map((cat) => {
+                        const active = selected.includes(cat.name)
+                        return (
+                          <button
+                            key={cat.name}
+                            type="button"
+                            onClick={() => toggle(cat.name)}
+                            className="flex flex-col items-center gap-1.5 py-2"
+                          >
+                            <div
+                              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
+                                active
+                                  ? 'ring-3 ring-accent shadow-md'
+                                  : 'bg-gray-100'
+                              }`}
+                              style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                            >
+                              {cat.emoji}
+                            </div>
+                            <span className={`text-xs font-medium text-center leading-tight ${
+                              active ? 'text-accent' : 'text-primary'
+                            }`}>
+                              {cat.name}
+                            </span>
+                          </button>
+                        )
+                      })}
+
+                      {/* Add new category button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm(true)}
+                        className="flex flex-col items-center gap-1.5 py-2"
+                      >
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-accent transition-colors">
+                          <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <span className="text-xs font-medium text-secondary text-center leading-tight">Aggiungi</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer button */}
