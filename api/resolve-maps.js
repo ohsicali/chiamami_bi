@@ -89,21 +89,26 @@ export default async function handler(req, res) {
       if (m) searchQuery = decodeURIComponent(m[1].replace(/\+/g, ' '))
     }
 
-    // Strategy 2: page title
-    if (!searchQuery && pageTitle && pageTitle.length > 2) {
-      searchQuery = pageTitle
+    // Strategy 2: ?q= parameter from URL (more reliable than page title)
+    if (!searchQuery) {
+      for (const u of [resolvedUrl, canonicalUrl]) {
+        if (searchQuery || !u) continue
+        try {
+          const q = new URL(u).searchParams.get('q')
+          if (q) {
+            const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
+            // First comma segment is typically the place name
+            const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
+            const candidate = parts[0]
+            if (candidate && !isGenericQuery(candidate)) searchQuery = candidate
+          }
+        } catch (_) {}
+      }
     }
 
-    // Strategy 3: ?q= parameter
-    if (!searchQuery) {
-      try {
-        const q = new URL(resolvedUrl).searchParams.get('q')
-        if (q) {
-          const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
-          const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
-          searchQuery = parts.length > 1 ? parts[parts.length - 1] : decoded
-        }
-      } catch (_) {}
+    // Strategy 3: page title
+    if (!searchQuery && pageTitle && pageTitle.length > 2) {
+      searchQuery = pageTitle
     }
 
     // Reject generic queries
@@ -247,6 +252,8 @@ function isGenericQuery(q) {
   const generic = ['google maps', 'google', 'find local businesses', 'trova attività', 'view maps', 'indicazioni stradali', 'visualizza mappe']
   if (generic.some(p => lower.includes(p))) return true
   if (/^\d+$/.test(lower)) return true
+  // Postal code + city (e.g. "10124 Torino TO")
+  if (/^\d{4,5}\s/.test(lower)) return true
   const cities = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo', 'turin', 'milan', 'rome']
   return cities.includes(lower)
 }
