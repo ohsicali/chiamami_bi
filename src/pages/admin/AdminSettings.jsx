@@ -122,38 +122,59 @@ function ThumbnailTool() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Account: Change email (Supabase built-in email change flow)        */
+/*  Account: Change email (OTP on current email, then immediate change) */
 /* ------------------------------------------------------------------ */
 function ChangeEmail({ currentEmail }) {
-  const [step, setStep] = useState('form') // 'form' | 'done'
+  const [step, setStep] = useState('form') // 'form' | 'otp' | 'done'
   const [newEmail, setNewEmail] = useState('')
+  const [otpCode, setOtpCode] = useState('')
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const handleChangeEmail = async (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault()
     if (!newEmail.trim() || newEmail === currentEmail) return
     setLoading(true)
     setStatus(null)
-    const { error } = await supabase.auth.updateUser(
-      { email: newEmail },
-      { emailRedirectTo: `${window.location.origin}/auth/callback?type=email_change` }
-    )
+    const { error } = await supabase.auth.signInWithOtp({ email: currentEmail })
     setLoading(false)
     if (error) {
       setStatus({ type: 'error', msg: error.message })
     } else {
+      setStep('otp')
+      setStatus({ type: 'success', msg: `Codice di verifica inviato a ${currentEmail}` })
+    }
+  }
+
+  const handleVerifyAndUpdate = async (e) => {
+    e.preventDefault()
+    if (!otpCode.trim()) return
+    setLoading(true)
+    setStatus(null)
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      email: currentEmail,
+      token: otpCode.trim(),
+      type: 'email',
+    })
+    if (verifyErr) {
+      setLoading(false)
+      setStatus({ type: 'error', msg: 'Codice non valido o scaduto' })
+      return
+    }
+    const { error: updateErr } = await supabase.auth.updateUser({ email: newEmail })
+    setLoading(false)
+    if (updateErr) {
+      setStatus({ type: 'error', msg: updateErr.message })
+    } else {
       setStep('done')
-      setStatus({
-        type: 'success',
-        msg: `Ti abbiamo inviato un'email di conferma a ${newEmail}. Clicca il link nell'email per completare il cambio.`,
-      })
+      setStatus({ type: 'success', msg: 'Email aggiornata con successo!' })
     }
   }
 
   const handleReset = () => {
     setStep('form')
     setNewEmail('')
+    setOtpCode('')
     setStatus(null)
   }
 
@@ -165,7 +186,7 @@ function ChangeEmail({ currentEmail }) {
       </p>
 
       {step === 'form' && (
-        <form onSubmit={handleChangeEmail} className="flex flex-col sm:flex-row gap-2">
+        <form onSubmit={handleSendOtp} className="flex flex-col sm:flex-row gap-2">
           <input
             type="email"
             value={newEmail}
@@ -184,9 +205,39 @@ function ChangeEmail({ currentEmail }) {
         </form>
       )}
 
+      {step === 'otp' && (
+        <form onSubmit={handleVerifyAndUpdate} className="space-y-2">
+          <p className="text-xs text-secondary">
+            Inserisci il codice ricevuto su <strong>{currentEmail}</strong>
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="Codice di verifica"
+              required
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            />
+            <button
+              type="submit"
+              disabled={loading || otpCode.length < 6}
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {loading ? 'Verifica...' : 'Conferma'}
+            </button>
+          </div>
+          <button type="button" onClick={handleReset} className="text-xs text-secondary hover:text-primary transition-colors">
+            Annulla
+          </button>
+        </form>
+      )}
+
       {step === 'done' && (
         <button onClick={handleReset} className="text-xs text-accent hover:underline">
-          Riprova con un'altra email
+          Cambia di nuovo
         </button>
       )}
 
