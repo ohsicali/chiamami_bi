@@ -32,7 +32,14 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture', '')
   )
-  ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(NULLIF(profiles.full_name, ''), EXCLUDED.full_name),
+    avatar_url = COALESCE(profiles.avatar_url, EXCLUDED.avatar_url);
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Non bloccare la registrazione se il profilo fallisce
+  -- Il client creerà il profilo al primo login
   RETURN NEW;
 END;
 $$;

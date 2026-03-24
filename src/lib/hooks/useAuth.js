@@ -37,12 +37,22 @@ export function useAuth() {
         avatar_url: authUser.user_metadata?.avatar_url || null,
         is_admin: false,
       }
-      const { data: created } = await supabase
+      const { data: created, error: insertError } = await supabase
         .from('profiles')
         .insert(newProfile)
         .select()
         .single()
-      setProfile(created || newProfile)
+      if (insertError) {
+        // Insert failed — try upsert (profile might partially exist)
+        const { data: upserted } = await supabase
+          .from('profiles')
+          .upsert(newProfile, { onConflict: 'id' })
+          .select()
+          .single()
+        setProfile(upserted || newProfile)
+      } else {
+        setProfile(created || newProfile)
+      }
       // Auto-subscribe to newsletter on first registration
       if (authUser.email) {
         supabase

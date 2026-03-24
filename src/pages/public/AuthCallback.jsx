@@ -27,6 +27,18 @@ export default function AuthCallback() {
 
       // Handle error from Supabase
       if (errorParam) {
+        // Google OAuth: if trigger failed but user was created, try to recover session
+        if (errorDescription?.includes('Database error saving new user')) {
+          // The user might exist but profile creation failed — check if there's a session
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            // Session exists! Profile will be created by useAuth.fetchProfile
+            setStatus('success')
+            setMessage('Account creato! Benvenuta su ChiamamiBi!')
+            setTimeout(() => navigate('/', { replace: true }), 1500)
+            return
+          }
+        }
         setStatus('error')
         setMessage(errorDescription || 'Si è verificato un errore durante la verifica.')
         return
