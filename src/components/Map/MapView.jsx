@@ -310,14 +310,6 @@ const MapView = forwardRef(function MapView({
   }))
 
   /* -------------------------------------------------------------- */
-  /*  Clear all HTML markers (used during zoom/pan transitions)      */
-  /* -------------------------------------------------------------- */
-  const clearMarkers = useCallback(() => {
-    Object.values(markers.current).forEach(({ marker }) => marker.remove())
-    markers.current = {}
-  }, [])
-
-  /* -------------------------------------------------------------- */
   /*  Sync HTML markers for unclustered points + notify visible IDs  */
   /* -------------------------------------------------------------- */
   const syncMarkers = useCallback(() => {
@@ -326,18 +318,28 @@ const MapView = forwardRef(function MapView({
 
     const rests = restaurantsRef.current || []
     const saved = savedIdsRef.current
+    const bounds = m.getBounds()
 
-    // Which restaurant IDs are visible as unclustered points right now?
-    // Use queryRenderedFeatures (only what's on screen) instead of querySourceFeatures
-    const visibleFeatures = m.queryRenderedFeatures({ layers: [UNCLUSTERED_LAYER] })
-    const visibleIds = new Set()
-    visibleFeatures.forEach((f) => {
-      if (!f.properties.cluster) {
-        visibleIds.add(f.properties.id)
+    // Which IDs are NOT clustered? querySourceFeatures returns both cluster
+    // aggregates and individual unclustered points from loaded tiles.
+    const sourceFeatures = m.querySourceFeatures(SOURCE_ID)
+    const unclusteredIds = new Set()
+    sourceFeatures.forEach((f) => {
+      if (!f.properties.cluster && f.properties.id) {
+        unclusteredIds.add(f.properties.id)
       }
     })
 
-    // Remove markers that are no longer visible (got clustered or panned off screen)
+    // Only show markers for unclustered points that are within the viewport
+    const visibleIds = new Set()
+    for (const id of unclusteredIds) {
+      const r = rests.find((r) => r.id === id)
+      if (r && bounds.contains([r.longitude, r.latitude])) {
+        visibleIds.add(id)
+      }
+    }
+
+    // Remove markers no longer visible
     for (const id of Object.keys(markers.current)) {
       if (!visibleIds.has(id)) {
         markers.current[id].marker.remove()
@@ -372,13 +374,10 @@ const MapView = forwardRef(function MapView({
 
     // Notify parent about visible restaurants (for list sync)
     if (onVisibleRef.current) {
-      // Get ALL visible IDs including those inside clusters
-      const bounds = m.getBounds()
       const allVisibleIds = rests
         .filter((r) => r.latitude && r.longitude
           && bounds.contains([r.longitude, r.latitude]))
         .map((r) => r.id)
-
       const center = m.getCenter()
       onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
     }
@@ -453,14 +452,14 @@ const MapView = forwardRef(function MapView({
         },
       })
 
-      // Invisible layer for unclustered points (for queryRenderedFeatures)
+      // Invisible layer for unclustered points (keeps them in the render pipeline)
       m.addLayer({
         id: UNCLUSTERED_LAYER,
         type: 'circle',
         source: SOURCE_ID,
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-radius': 1,
+          'circle-radius': 0,
           'circle-opacity': 0,
         },
       })
@@ -484,9 +483,9 @@ const MapView = forwardRef(function MapView({
       m.on('mouseenter', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = '' })
 
-      // During movement: hide HTML markers to avoid ghost overlap with clusters
-      m.on('movestart', clearMarkers)
-      // When map settles: show HTML markers in their final positions
+      // Sync markers when map finishes moving or zooming
+      m.on('moveend', syncMarkers)
+      // Also on idle for initial load and source data changes
       m.on('idle', syncMarkers)
 
       // Initial sync
@@ -501,7 +500,7 @@ const MapView = forwardRef(function MapView({
       map.current?.remove()
       map.current = null
     }
-  }, [token, syncMarkers, clearMarkers])
+  }, [token, syncMarkers])
 
   /* -------------------------------------------------------------- */
   /*  Update GeoJSON source when restaurants change                  */
@@ -528,9 +527,11 @@ const MapView = forwardRef(function MapView({
   /*  Rebuild markers when savedIds change (heart badge)             */
   /* -------------------------------------------------------------- */
   useEffect(() => {
-    clearMarkers()
+    // Clear all HTML markers so they get recreated with updated saved status
+    Object.values(markers.current).forEach(({ marker }) => marker.remove())
+    markers.current = {}
     syncMarkers()
-  }, [savedIds, syncMarkers, clearMarkers])
+  }, [savedIds, syncMarkers])
 
   /* -------------------------------------------------------------- */
   /*  Update selected marker style                                   */
