@@ -225,6 +225,12 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const [passwordForm, setPasswordForm] = useState({ new: '', confirm: '' })
   const [passwordMsg, setPasswordMsg] = useState(null)
   const [pwdVerifying, setPwdVerifying] = useState(false)
+  // Google user: add email+password login
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState({ new: '', confirm: '' })
+  const [loginMsg, setLoginMsg] = useState(null)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginAdded, setLoginAdded] = useState(false)
   const navigate = useNavigate()
 
   // Check newsletter status
@@ -451,6 +457,51 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err.message || 'Errore nel cambio password.' })
     }
+  }
+
+  // Google user: add email+password access
+  const handleAddEmailLogin = async () => {
+    setLoginMsg(null)
+    const email = loginEmail.trim()
+    if (!email) {
+      setLoginMsg({ type: 'error', text: 'Inserisci un\'email' })
+      return
+    }
+    if (loginPassword.new.length < 6) {
+      setLoginMsg({ type: 'error', text: 'La password deve avere almeno 6 caratteri' })
+      return
+    }
+    if (loginPassword.new !== loginPassword.confirm) {
+      setLoginMsg({ type: 'error', text: 'Le password non coincidono' })
+      return
+    }
+    setLoginLoading(true)
+    try {
+      // Add password to the account
+      const { error: pwdErr } = await supabase.auth.updateUser({ password: loginPassword.new })
+      if (pwdErr) throw pwdErr
+      // If email is different from current auth email, update it too
+      if (email !== user.email) {
+        const { error: emailErr } = await supabase.auth.updateUser({ email })
+        if (emailErr) throw emailErr
+        // Check if email change was immediate or needs confirmation
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email === email) {
+          await supabase.from('profiles').update({ email }).eq('id', user.id)
+          await supabase.auth.refreshSession()
+          onRefreshProfile?.()
+          setLoginMsg({ type: 'success', text: `Fatto! Ora puoi accedere con ${email} e password.` })
+        } else {
+          setLoginMsg({ type: 'success', text: `Password impostata! Controlla ${email} e clicca il link di conferma per attivare il nuovo accesso.` })
+        }
+      } else {
+        setLoginMsg({ type: 'success', text: 'Password impostata! Ora puoi accedere anche con email e password.' })
+      }
+      setLoginAdded(true)
+    } catch (err) {
+      setLoginMsg({ type: 'error', text: err.message || 'Errore nell\'aggiunta dell\'accesso' })
+    }
+    setLoginLoading(false)
   }
 
   const handleDeleteAccount = async () => {
@@ -689,71 +740,128 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         </div>
       </div>
 
-      {/* Change password — requires current password */}
-      <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
-        {!pwdUnlocked ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-secondary">Inserisci la password attuale per procedere</p>
-            <div className="flex gap-2">
+      {/* Google users: add email+password login */}
+      {isGoogleUser && (
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-primary mb-1">Aggiungi accesso con email e password</h3>
+          <p className="text-xs text-secondary mb-3">
+            Attualmente accedi solo con Google. Aggiungi un accesso con email e password per poter accedere anche se cambi account Google.
+          </p>
+          {!loginAdded ? (
+            <div className="flex flex-col gap-3">
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                className={inputClasses}
+                placeholder="Email per il login"
+              />
               <input
                 type="password"
-                value={currentPwd}
-                onChange={e => setCurrentPwd(e.target.value)}
+                value={loginPassword.new}
+                onChange={e => setLoginPassword(p => ({ ...p, new: e.target.value }))}
                 className={inputClasses}
-                placeholder="Password attuale"
+                placeholder="Password (min. 6 caratteri)"
+              />
+              <input
+                type="password"
+                value={loginPassword.confirm}
+                onChange={e => setLoginPassword(p => ({ ...p, confirm: e.target.value }))}
+                className={inputClasses}
+                placeholder="Conferma password"
               />
               <motion.button
-                onClick={handleVerifyCurrentPwd}
-                disabled={pwdVerifying || !currentPwd}
-                className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                onClick={handleAddEmailLogin}
+                disabled={loginLoading || !loginEmail.trim() || !loginPassword.new}
+                className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50 self-start"
                 whileTap={{ scale: 0.95 }}
               >
-                {pwdVerifying ? '...' : 'Verifica'}
+                {loginLoading ? 'Salvataggio...' : 'Attiva accesso con email'}
               </motion.button>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <input
-              type="password"
-              value={passwordForm.new}
-              onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
-              className={inputClasses}
-              placeholder="Nuova password (min. 6 caratteri)"
-            />
-            <input
-              type="password"
-              value={passwordForm.confirm}
-              onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
-              className={inputClasses}
-              placeholder="Conferma nuova password"
-            />
-            <div className="flex gap-2">
-              <motion.button
-                onClick={handleChangePassword}
-                disabled={!passwordForm.new || !passwordForm.confirm}
-                className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
-                whileTap={{ scale: 0.95 }}
-              >
-                Aggiorna password
-              </motion.button>
-              <motion.button
-                onClick={() => { setPwdUnlocked(false); setCurrentPwd(''); setPasswordForm({ new: '', confirm: '' }); setPasswordMsg(null) }}
-                className="rounded-xl py-3 px-4 text-sm text-secondary hover:bg-gray-100 transition-colors"
-                whileTap={{ scale: 0.95 }}
-              >
-                Annulla
-              </motion.button>
+          ) : (
+            <button
+              onClick={() => { setLoginAdded(false); setLoginEmail(''); setLoginPassword({ new: '', confirm: '' }); setLoginMsg(null) }}
+              className="text-xs text-accent hover:underline"
+            >
+              Modifica di nuovo
+            </button>
+          )}
+          {loginMsg && (
+            <p className={`text-xs font-medium mt-2 ${loginMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+              {loginMsg.text}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Change password — requires current password (non-Google users) */}
+      {!isGoogleUser && (
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
+          {!pwdUnlocked ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-secondary">Inserisci la password attuale per procedere</p>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={currentPwd}
+                  onChange={e => setCurrentPwd(e.target.value)}
+                  className={inputClasses}
+                  placeholder="Password attuale"
+                />
+                <motion.button
+                  onClick={handleVerifyCurrentPwd}
+                  disabled={pwdVerifying || !currentPwd}
+                  className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {pwdVerifying ? '...' : 'Verifica'}
+                </motion.button>
+              </div>
             </div>
-          </div>
-        )}
-        {passwordMsg && (
-          <p className={`text-xs font-medium mt-2 ${passwordMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
-            {passwordMsg.text}
-          </p>
-        )}
-      </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <input
+                type="password"
+                value={passwordForm.new}
+                onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
+                className={inputClasses}
+                placeholder="Nuova password (min. 6 caratteri)"
+              />
+              <input
+                type="password"
+                value={passwordForm.confirm}
+                onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                className={inputClasses}
+                placeholder="Conferma nuova password"
+              />
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleChangePassword}
+                  disabled={!passwordForm.new || !passwordForm.confirm}
+                  className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Aggiorna password
+                </motion.button>
+                <motion.button
+                  onClick={() => { setPwdUnlocked(false); setCurrentPwd(''); setPasswordForm({ new: '', confirm: '' }); setPasswordMsg(null) }}
+                  className="rounded-xl py-3 px-4 text-sm text-secondary hover:bg-gray-100 transition-colors"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Annulla
+                </motion.button>
+              </div>
+            </div>
+          )}
+          {passwordMsg && (
+            <p className={`text-xs font-medium mt-2 ${passwordMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+              {passwordMsg.text}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Newsletter toggle */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
