@@ -8,7 +8,7 @@ const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
-const EXIT_MS = 120
+const CROSSFADE_MS = 200
 
 /* ------------------------------------------------------------------ */
 /*  Inject styles once                                                 */
@@ -20,33 +20,32 @@ function ensureStyles() {
   s.id = STYLE_ID
   s.textContent = `
     .cb-marker {
-      will-change: transform, opacity;
+      will-change: opacity;
     }
-    .cb-marker--enter {
-      transform: scale(0.5);
+    /* New markers: start invisible, full size */
+    .cb-marker--hidden {
       opacity: 0;
+      transform: scale(0.85);
     }
-    .cb-marker--anim {
-      animation: cb-pop-in 220ms cubic-bezier(.175,.885,.32,1.275) forwards;
+    /* Crossfade transition (applied to both old and new) */
+    .cb-marker--fade {
+      transition: opacity ${CROSSFADE_MS}ms ease, transform ${CROSSFADE_MS}ms ease;
     }
-    @keyframes cb-pop-in {
-      0%   { transform: scale(0.5); opacity: 0; }
-      50%  { opacity: 1; }
-      75%  { transform: scale(1.06); }
-      100% { transform: scale(1);   opacity: 1; }
-    }
+    /* Exit: fade to invisible */
     .cb-marker--exit {
-      transition: opacity ${EXIT_MS}ms ease-out;
       opacity: 0;
+      transform: scale(0.85);
       pointer-events: none;
     }
-    .cb-marker--visible {
-      transform: scale(1);
+    /* Enter: fade to visible */
+    .cb-marker--show {
       opacity: 1;
+      transform: scale(1);
     }
-    .cb-marker--instant {
-      transform: scale(1);
+    /* Instant (no animation) */
+    .cb-marker--visible {
       opacity: 1;
+      transform: scale(1);
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
@@ -74,7 +73,7 @@ function createPinEl(restaurant, isSaved) {
   const { emoji, color } = getCategoryInfo(primaryType)
 
   const wrap = document.createElement('div')
-  wrap.className = 'cb-marker cb-marker--enter'
+  wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
   const inner = document.createElement('div')
@@ -106,7 +105,7 @@ function createPinEl(restaurant, isSaved) {
 
 function createClusterEl(count) {
   const wrap = document.createElement('div')
-  wrap.className = 'cb-marker cb-marker--enter'
+  wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
   const size = count >= 10 ? 48 : 44
@@ -123,20 +122,6 @@ function createClusterEl(count) {
 
   wrap.appendChild(inner)
   return wrap
-}
-
-/* ------------------------------------------------------------------ */
-/*  Animate marker in (or show instantly)                              */
-/* ------------------------------------------------------------------ */
-function animateIn(el, animate) {
-  if (!animate) {
-    el.classList.remove('cb-marker--enter')
-    el.classList.add('cb-marker--instant')
-    return
-  }
-  // Start the pop-in keyframe animation
-  el.classList.remove('cb-marker--enter')
-  el.classList.add('cb-marker--anim')
 }
 
 /* ------------------------------------------------------------------ */
@@ -199,10 +184,10 @@ const MapView = forwardRef(function MapView({
   const map = useRef(null)
   const sc = useRef(null)                    // Supercluster
   const markersMap = useRef(new Map())        // key → { marker, el, type, id }
-  const exitingMarkers = useRef(new Map())   // key → { marker, timer }
   const userMarker = useRef(null)
   const lastZoom = useRef(null)
   const debounceTimer = useRef(null)
+  const crossfadeTimer = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
@@ -244,34 +229,15 @@ const MapView = forwardRef(function MapView({
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Flush in-flight animations: finish all instantly                */
-  /* -------------------------------------------------------------- */
-  const flushAnimations = useCallback(() => {
-    // Remove any still-fading-out markers immediately
-    for (const [key, { marker, timer }] of exitingMarkers.current) {
-      clearTimeout(timer)
-      marker.remove()
-    }
-    exitingMarkers.current.clear()
-    // Snap any in-progress pop-in to final state
-    const container = mapContainer.current
-    if (!container) return
-    container.querySelectorAll('.cb-marker--anim, .cb-marker--enter').forEach((el) => {
-      el.classList.remove('cb-marker--enter', 'cb-marker--anim')
-      el.classList.add('cb-marker--instant')
-    })
-  }, [])
-
-  /* -------------------------------------------------------------- */
-  /*  Core sync: diff markers with animated crossfade                */
+  /*  Core sync                                                      */
   /* -------------------------------------------------------------- */
   const syncMarkers = useCallback((animate) => {
     const m = map.current
     const index = sc.current
     if (!m || !index) return
 
-    // If animating, flush any in-progress animations first
-    if (animate) flushAnimations()
+    // Cancel any in-flight crossfade cleanup
+    clearTimeout(crossfadeTimer.current)
 
     const zoom = Math.floor(m.getZoom())
     const bounds = m.getBounds()
@@ -296,27 +262,21 @@ const MapView = forwardRef(function MapView({
       newKeys.set(key, f)
     }
 
-    // ---- Remove stale markers ----
-    for (const [key, entry] of markersMap.current) {
-      if (newKeys.has(key)) continue
-      markersMap.current.delete(key)
+    // Collect markers to exit and markers to enter
+    const toExit = []   // { key, entry } — old markers that should leave
+    const toEnter = []  // { key, el, marker } — new markers to show
 
-      if (animate) {
-        // Fast fade-out (120ms) — overlaps with new markers popping in
-        entry.el.classList.add('cb-marker--exit')
-        const timer = setTimeout(() => {
-          entry.marker.remove()
-          exitingMarkers.current.delete(key)
-        }, EXIT_MS)
-        exitingMarkers.current.set(key, { marker: entry.marker, timer })
-      } else {
-        entry.marker.remove()
+    // ---- Identify stale markers ----
+    for (const [key, entry] of markersMap.current) {
+      if (!newKeys.has(key)) {
+        toExit.push({ key, entry })
       }
     }
 
     // ---- Add new / update existing ----
     for (const [key, f] of newKeys) {
       if (markersMap.current.has(key)) {
+        // Update position of existing marker
         const entry = markersMap.current.get(key)
         const [lng, lat] = f.geometry.coordinates
         entry.marker.setLngLat([lng, lat])
@@ -344,21 +304,71 @@ const MapView = forwardRef(function MapView({
         if (selectedIdRef.current === r.id) el.classList.add('cb-marker--selected')
       }
 
+      if (animate) {
+        // Start hidden — will be revealed in crossfade
+        el.classList.add('cb-marker--hidden')
+      } else {
+        el.classList.add('cb-marker--visible')
+      }
+
       const [lng, lat] = f.geometry.coordinates
       const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
         .setLngLat([lng, lat])
         .addTo(m)
 
-      markersMap.current.set(key, {
+      const entry = {
         marker, el,
         type: f.properties.cluster ? 'cluster' : 'pin',
         id: f.properties.cluster ? null : f.properties.id,
+      }
+      markersMap.current.set(key, entry)
+      toEnter.push({ key, el, marker })
+    }
+
+    // ---- Crossfade or instant swap ----
+    if (animate && (toExit.length > 0 || toEnter.length > 0)) {
+      // Step 1: add transition class to all involved markers
+      for (const { entry } of toExit) {
+        entry.el.classList.add('cb-marker--fade')
+      }
+      for (const { el } of toEnter) {
+        el.classList.add('cb-marker--fade')
+      }
+
+      // Step 2: in next frame, trigger both transitions simultaneously
+      requestAnimationFrame(() => {
+        // Old markers → fade out
+        for (const { entry } of toExit) {
+          entry.el.classList.add('cb-marker--exit')
+        }
+        // New markers → fade in
+        for (const { el } of toEnter) {
+          el.classList.remove('cb-marker--hidden')
+          el.classList.add('cb-marker--show')
+        }
       })
 
-      if (animate) {
-        requestAnimationFrame(() => animateIn(el, true))
-      } else {
-        animateIn(el, false)
+      // Step 3: after transition, clean up old markers from DOM
+      crossfadeTimer.current = setTimeout(() => {
+        for (const { key, entry } of toExit) {
+          entry.marker.remove()
+        }
+        // Clean up transition classes from new markers
+        for (const { el } of toEnter) {
+          el.classList.remove('cb-marker--fade', '  cb-marker--show')
+          el.classList.add('cb-marker--visible')
+        }
+      }, CROSSFADE_MS + 20)
+
+      // Remove exiting keys from map immediately (so they don't interfere with future syncs)
+      for (const { key } of toExit) {
+        markersMap.current.delete(key)
+      }
+    } else {
+      // Instant: just remove old markers
+      for (const { key, entry } of toExit) {
+        markersMap.current.delete(key)
+        entry.marker.remove()
       }
     }
 
@@ -372,7 +382,7 @@ const MapView = forwardRef(function MapView({
       const center = m.getCenter()
       onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
     }
-  }, [flushAnimations])
+  }, [])
 
   /* -------------------------------------------------------------- */
   /*  Zoom handler: just record that zoom level changed.             */
@@ -434,8 +444,7 @@ const MapView = forwardRef(function MapView({
 
     return () => {
       clearTimeout(debounceTimer.current)
-      for (const { marker, timer } of exitingMarkers.current.values()) { clearTimeout(timer); marker.remove() }
-      exitingMarkers.current.clear()
+      clearTimeout(crossfadeTimer.current)
       for (const { marker } of markersMap.current.values()) marker.remove()
       markersMap.current.clear()
       userMarker.current?.remove()
