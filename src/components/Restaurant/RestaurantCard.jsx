@@ -37,12 +37,14 @@ export default function RestaurantCard({
     .filter(Boolean)
   const category = categories[0]
 
-  const photoUrl =
-    Array.isArray(restaurant.photos) && restaurant.photos.length > 0
-      ? typeof restaurant.photos[0] === 'string'
-        ? restaurant.photos[0]
-        : restaurant.photos[0]?.photo_url
-      : null
+  const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
+    ? restaurant.photos[0]
+    : null
+  const photoUrl = firstPhoto
+    ? typeof firstPhoto === 'string'
+      ? firstPhoto
+      : firstPhoto?.thumb_url || firstPhoto?.photo_url
+    : null
 
   const distance =
     userPosition && restaurant.latitude && restaurant.longitude

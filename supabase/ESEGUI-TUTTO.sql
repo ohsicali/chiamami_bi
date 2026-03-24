@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS restaurant_photos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id uuid REFERENCES restaurants(id) ON DELETE CASCADE,
   photo_url text NOT NULL,
+  thumb_url text,
   photo_type text DEFAULT 'external_link',
   caption text,
   sort_order int2 DEFAULT 0,

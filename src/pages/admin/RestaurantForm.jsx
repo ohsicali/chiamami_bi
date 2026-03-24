@@ -12,24 +12,43 @@ import AdminLayout from '../../components/Layout/AdminLayout'
 
 /* ------------------------------------------------------------------ */
 /*  Convert image file to WebP (smaller, faster loading)               */
+/*  Returns { full, thumb } blobs                                      */
 /* ------------------------------------------------------------------ */
-function convertToWebP(file, maxWidth = 1600, quality = 0.82) {
+function convertToWebP(file, maxWidth = 1200, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
-      const scale = Math.min(1, maxWidth / img.width)
-      const w = Math.round(img.width * scale)
-      const h = Math.round(img.height * scale)
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0, w, h)
-      canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error('WebP conversion failed'))),
-        'image/webp',
-        quality
-      )
+      const objectUrl = img.src
+
+      // Helper: resize to given width and return a WebP blob
+      const resize = (targetWidth, q) =>
+        new Promise((res, rej) => {
+          const scale = Math.min(1, targetWidth / img.width)
+          const w = Math.round(img.width * scale)
+          const h = Math.round(img.height * scale)
+          const canvas = document.createElement('canvas')
+          canvas.width = w
+          canvas.height = h
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+          canvas.toBlob(
+            (blob) => (blob ? res(blob) : rej(new Error('WebP conversion failed'))),
+            'image/webp',
+            q
+          )
+        })
+
+      Promise.all([
+        resize(maxWidth, quality),      // full-size for carousel
+        resize(400, 0.70),              // thumbnail for cards/lists
+      ])
+        .then(([full, thumb]) => {
+          URL.revokeObjectURL(objectUrl)
+          resolve({ full, thumb })
+        })
+        .catch((err) => {
+          URL.revokeObjectURL(objectUrl)
+          reject(err)
+        })
     }
     img.onerror = () => reject(new Error('Failed to load image'))
     img.src = URL.createObjectURL(file)
@@ -904,22 +923,35 @@ export default function RestaurantForm() {
           for (let idx = 0; idx < form.photos.length; idx++) {
             const photo = form.photos[idx]
             let photoUrl = photo.url
-            // If it's a file upload, convert to WebP and upload to Supabase Storage
+            // If it's a file upload, convert to WebP and upload full + thumbnail
+            let thumbUrl = null
             if (photo.file) {
               try {
-                const webpBlob = await convertToWebP(photo.file)
+                const { full, thumb } = await convertToWebP(photo.file)
                 const fileName = `${slug}-${idx + 1}.webp`
-                const path = `restaurants/${restaurantId}/${fileName}`
-                const { error: uploadError } = await supabase.storage
-                  .from('photos')
-                  .upload(path, webpBlob, { contentType: 'image/webp', cacheControl: '3600', upsert: true })
-                if (uploadError) {
-                  console.error('Upload error:', uploadError)
-                  addToast(`Errore upload foto: ${uploadError.message}`, 'error')
+                const thumbName = `${slug}-${idx + 1}-thumb.webp`
+                const basePath = `restaurants/${restaurantId}`
+                const uploadOpts = { contentType: 'image/webp', cacheControl: '31536000', upsert: true }
+
+                // Upload full + thumb in parallel
+                const [fullRes, thumbRes] = await Promise.all([
+                  supabase.storage.from('photos').upload(`${basePath}/${fileName}`, full, uploadOpts),
+                  supabase.storage.from('photos').upload(`${basePath}/${thumbName}`, thumb, uploadOpts),
+                ])
+
+                if (fullRes.error) {
+                  console.error('Upload error:', fullRes.error)
+                  addToast(`Errore upload foto: ${fullRes.error.message}`, 'error')
                   continue
                 }
-                const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
+
+                const { data: urlData } = supabase.storage.from('photos').getPublicUrl(`${basePath}/${fileName}`)
                 photoUrl = urlData.publicUrl
+
+                if (!thumbRes.error) {
+                  const { data: thumbData } = supabase.storage.from('photos').getPublicUrl(`${basePath}/${thumbName}`)
+                  thumbUrl = thumbData.publicUrl
+                }
               } catch (convErr) {
                 console.error('Conversion error:', convErr)
                 addToast(`Errore conversione foto ${idx + 1}`, 'error')
@@ -929,6 +961,7 @@ export default function RestaurantForm() {
             photoRows.push({
               restaurant_id: restaurantId,
               photo_url: photoUrl,
+              thumb_url: thumbUrl,
               caption: '',
               sort_order: idx,
             })
