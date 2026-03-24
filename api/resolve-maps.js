@@ -81,19 +81,25 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
       const cm = finalUrl?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
       if (cm) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
 
-      // Deep parse HTML — look for embedded /place/ URLs, coordinates, and place names in JS
+      // Deep parse HTML — look for embedded data, coordinates, and place names in JS
       if (!searchQuery || !lat) {
         const html = await pageRes.text()
 
-        // Look for /place/Name/ URLs anywhere in the HTML (embedded in JS)
+        // Look for /place/ActualName/ URLs in the HTML (not query strings like ?ftid=)
         if (!searchQuery) {
-          const placeUrls = html.match(/\/place\/([^/@?"'\s\\]+)/g)
+          // Match /place/ followed by a URL-encoded name (letters, numbers, +, %, etc.)
+          const placeUrls = html.match(/\/place\/([A-Za-z0-9%+][^/@"'\s\\]{2,})/g)
           if (placeUrls) {
             for (const pu of placeUrls) {
-              const m = pu.match(/\/place\/([^/@?"'\s\\]+)/)
+              const m = pu.match(/\/place\/([A-Za-z0-9%+][^/@"'\s\\]{2,})/)
               if (m) {
                 const candidate = decodeURIComponent(m[1].replace(/\+/g, ' '))
-                if (candidate.length > 2 && !isGenericQuery(candidate) && !/^data/.test(candidate)) {
+                // Filter out technical strings (ftid, hex, data, query params)
+                if (candidate.length > 2
+                    && !isGenericQuery(candidate)
+                    && !/^(data|ftid|0x|cid)/i.test(candidate)
+                    && !/^[0-9a-f:]+$/i.test(candidate)
+                    && /[a-zA-Z]{2,}/.test(candidate)) {
                   searchQuery = candidate
                   debugInfo.strategy = 'html_embedded_place_url'
                   break
@@ -103,20 +109,27 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
           }
         }
 
-        // Look for coordinates in the HTML (patterns like [lat,lng] or @lat,lng)
+        // Look for coordinates in the HTML — broad patterns
         if (!lat) {
-          // Match Italian coordinates (lat 35-47, lng 6-19)
           const coordPatterns = [
-            /\[(-?(?:3[5-9]|4[0-7])\.\d{3,}),\s*(-?(?:[6-9]|1[0-9])\.\d{3,})\]/,
-            /@(-?(?:3[5-9]|4[0-7])\.\d{3,}),(-?(?:[6-9]|1[0-9])\.\d{3,})/,
-            /null,null,(-?(?:3[5-9]|4[0-7])\.\d{4,}),(-?(?:[6-9]|1[0-9])\.\d{4,})/,
+            // Google Maps embeds coords in various JS formats
+            /@(-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})/,
+            /\[(-?\d{1,3}\.\d{4,}),\s*(-?\d{1,3}\.\d{4,})\]/,
+            /null,null,(-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})/,
+            /center=(-?\d{1,3}\.\d{3,})%2C(-?\d{1,3}\.\d{3,})/,
+            /ll=(-?\d{1,3}\.\d{3,}),(-?\d{1,3}\.\d{3,})/,
           ]
           for (const pattern of coordPatterns) {
             const m = html.match(pattern)
             if (m) {
-              lat = parseFloat(m[1])
-              lng = parseFloat(m[2])
-              debugInfo.strategy = (debugInfo.strategy === 'none' ? '' : debugInfo.strategy + '+') + 'html_coords'
+              const candidateLat = parseFloat(m[1])
+              const candidateLng = parseFloat(m[2])
+              // Sanity check: must be valid world coordinates, not some random number
+              if (candidateLat >= -90 && candidateLat <= 90 && candidateLng >= -180 && candidateLng <= 180
+                  && candidateLat !== 0 && candidateLng !== 0) {
+                lat = candidateLat
+                lng = candidateLng
+                debugInfo.strategy = (debugInfo.strategy === 'none' ? '' : debugInfo.strategy + '+') + 'html_coords'
               break
             }
           }
@@ -130,6 +143,25 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
             debugInfo.strategy = 'html_' + extracted.source
           }
           if (!lat && extracted.lat) { lat = extracted.lat; lng = extracted.lng }
+        }
+
+        // Save HTML sample for debugging (first successful fetch only)
+        if (!debugInfo.htmlSample) {
+          // Look for interesting snippets in the HTML
+          const snippets = []
+          // Find any /place/ references
+          const placeRefs = html.match(/\/place\/[^"'\s]{3,50}/g)
+          if (placeRefs) snippets.push('placeRefs: ' + placeRefs.slice(0, 5).join(' | '))
+          // Find any coordinate-like patterns
+          const coordRefs = html.match(/@-?\d+\.\d+,-?\d+\.\d+/g)
+          if (coordRefs) snippets.push('coords: ' + coordRefs.slice(0, 3).join(' | '))
+          // Find APP_INITIALIZATION_STATE
+          if (html.includes('APP_INITIALIZATION_STATE')) snippets.push('HAS_APP_INIT_STATE')
+          // Find any text that looks like a place name near cid
+          const cidContext = html.match(new RegExp('.{0,100}' + cid + '.{0,100}'))
+          if (cidContext) snippets.push('cidContext: ' + cidContext[0].substring(0, 200))
+          debugInfo.htmlSample = snippets.join(' || ') || 'no useful patterns found'
+          debugInfo.htmlLength = html.length
         }
       }
     } catch (_) {}
