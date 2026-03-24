@@ -1,4 +1,4 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
+import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -6,13 +6,16 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
+const SOURCE_ID = 'restaurants-source'
+const CLUSTER_LAYER = 'clusters'
+const CLUSTER_COUNT_LAYER = 'cluster-count'
+const UNCLUSTERED_LAYER = 'unclustered-point' // invisible, used for hit detection
 
 function createPinElement(restaurant, isSaved) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
   const { emoji, color } = getCategoryInfo(primaryType)
 
   // Outer element — Mapbox controls its transform for positioning.
-  // Must NOT have CSS transitions on transform, or markers drift during zoom.
   const el = document.createElement('div')
   el.className = 'chiamami-pin'
   el.dataset.restaurantId = restaurant.id
@@ -112,6 +115,26 @@ function ensureStyles() {
   document.head.appendChild(style)
 }
 
+/* ------------------------------------------------------------------ */
+/*  Build GeoJSON FeatureCollection from restaurant array              */
+/* ------------------------------------------------------------------ */
+function buildGeoJSON(restaurants) {
+  return {
+    type: 'FeatureCollection',
+    features: (restaurants || [])
+      .filter((r) => r.latitude && r.longitude)
+      .map((r) => ({
+        type: 'Feature',
+        id: r.id,
+        geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
+        properties: { id: r.id },
+      })),
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Placeholder when no Mapbox token                                   */
+/* ------------------------------------------------------------------ */
 function PlaceholderMap({ restaurants, className }) {
   return (
     <div
@@ -246,6 +269,9 @@ function PlaceholderMap({ restaurants, className }) {
   )
 }
 
+/* ------------------------------------------------------------------ */
+/*  MapView component                                                  */
+/* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
   restaurants,
   selectedId,
@@ -256,7 +282,7 @@ const MapView = forwardRef(function MapView({
 }, ref) {
   const mapContainer = useRef(null)
   const map = useRef(null)
-  const markers = useRef([]) // { marker, restaurant, el }
+  const markers = useRef({}) // id → { marker, el }
   const userMarker = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
@@ -273,14 +299,70 @@ const MapView = forwardRef(function MapView({
       if (!map.current || !pos) return
       map.current.flyTo({
         center: [pos.lng, pos.lat],
-        zoom: 16, // neighborhood level — shows the block
+        zoom: 16,
         duration: 1200,
         essential: true,
       })
     },
   }))
 
-  // Initialize map
+  /* -------------------------------------------------------------- */
+  /*  Sync HTML markers for unclustered points                       */
+  /* -------------------------------------------------------------- */
+  const syncMarkers = useCallback(() => {
+    const m = map.current
+    if (!m || !m.getSource(SOURCE_ID)) return
+
+    const rests = restaurantsRef.current || []
+    const saved = savedIdsRef.current
+
+    // Which restaurant IDs are visible as unclustered points right now?
+    const visibleFeatures = m.querySourceFeatures(SOURCE_ID, { sourceLayer: '' })
+    const visibleIds = new Set()
+    visibleFeatures.forEach((f) => {
+      // Only unclustered features (not cluster aggregates)
+      if (!f.properties.cluster) {
+        visibleIds.add(f.properties.id)
+      }
+    })
+
+    // Remove markers that are no longer visible (got clustered)
+    for (const id of Object.keys(markers.current)) {
+      if (!visibleIds.has(id)) {
+        markers.current[id].marker.remove()
+        delete markers.current[id]
+      }
+    }
+
+    // Add markers for newly visible unclustered points
+    for (const id of visibleIds) {
+      if (markers.current[id]) continue // already exists
+
+      const r = rests.find((r) => r.id === id)
+      if (!r) continue
+
+      const el = createPinElement(r, saved?.has(r.id))
+
+      el.addEventListener('click', (e) => {
+        e.stopPropagation()
+        onSelectRef.current?.(r.id)
+      })
+      el.addEventListener('touchend', (e) => {
+        e.stopPropagation()
+        onSelectRef.current?.(r.id)
+      }, { passive: true })
+
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([r.longitude, r.latitude])
+        .addTo(m)
+
+      markers.current[id] = { marker, el }
+    }
+  }, [])
+
+  /* -------------------------------------------------------------- */
+  /*  Initialize map + cluster source & layers                       */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!token || !mapContainer.current) return
 
@@ -296,78 +378,153 @@ const MapView = forwardRef(function MapView({
     })
 
     map.current.on('load', () => {
+      const m = map.current
+      if (!m) return
+
       // Hide default POI labels to avoid clutter
-      const layers = map.current.getStyle().layers
-      layers.forEach((layer) => {
+      m.getStyle().layers.forEach((layer) => {
         if (layer.id.includes('poi')) {
-          map.current.setLayoutProperty(layer.id, 'visibility', 'none')
+          m.setLayoutProperty(layer.id, 'visibility', 'none')
         }
       })
+
+      // Add GeoJSON source with clustering
+      m.addSource(SOURCE_ID, {
+        type: 'geojson',
+        data: buildGeoJSON(restaurantsRef.current),
+        cluster: true,
+        clusterMaxZoom: 14,   // stop clustering at this zoom
+        clusterRadius: 50,    // px radius to cluster points
+      })
+
+      // Cluster circles
+      m.addLayer({
+        id: CLUSTER_LAYER,
+        type: 'circle',
+        source: SOURCE_ID,
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#fff',
+          'circle-radius': ['step', ['get', 'point_count'], 22, 5, 26, 10, 30],
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': ACCENT_COLOR,
+          'circle-opacity': 1,
+        },
+      })
+
+      // Cluster count labels
+      m.addLayer({
+        id: CLUSTER_COUNT_LAYER,
+        type: 'symbol',
+        source: SOURCE_ID,
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
+          'text-size': 13,
+          'text-allow-overlap': true,
+        },
+        paint: {
+          'text-color': ACCENT_COLOR,
+        },
+      })
+
+      // Invisible layer for unclustered points (needed for querySourceFeatures)
+      m.addLayer({
+        id: UNCLUSTERED_LAYER,
+        type: 'circle',
+        source: SOURCE_ID,
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-radius': 0,
+          'circle-opacity': 0,
+        },
+      })
+
+      // Click on cluster → zoom in to expand
+      m.on('click', CLUSTER_LAYER, (e) => {
+        const features = m.queryRenderedFeatures(e.point, { layers: [CLUSTER_LAYER] })
+        if (!features.length) return
+        const clusterId = features[0].properties.cluster_id
+        m.getSource(SOURCE_ID).getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return
+          m.easeTo({
+            center: features[0].geometry.coordinates,
+            zoom: zoom,
+            duration: 500,
+          })
+        })
+      })
+
+      // Pointer cursor on clusters
+      m.on('mouseenter', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = '' })
+
+      // Sync HTML markers after every render frame
+      m.on('render', syncMarkers)
+      // Also on moveend/zoomend for safety
+      m.on('moveend', syncMarkers)
+
+      // Initial sync
+      syncMarkers()
     })
 
     return () => {
-      markers.current.forEach(({ marker }) => marker.remove())
-      markers.current = []
+      Object.values(markers.current).forEach(({ marker }) => marker.remove())
+      markers.current = {}
       userMarker.current?.remove()
       userMarker.current = null
       map.current?.remove()
       map.current = null
     }
-  }, [token])
+  }, [token, syncMarkers])
 
-  // Create/update markers when restaurants or savedIds change
+  /* -------------------------------------------------------------- */
+  /*  Update GeoJSON source when restaurants change                  */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
-    if (!map.current || !restaurants?.length) return
+    if (!map.current) return
+    const m = map.current
 
-    const createMarkers = () => {
-      // Remove old markers
-      markers.current.forEach(({ marker }) => marker.remove())
-      markers.current = []
-
-      // Create new markers
-      restaurants.forEach((r) => {
-        if (!r.latitude || !r.longitude) return
-
-        const el = createPinElement(r, savedIds?.has(r.id))
-
-        el.addEventListener('click', (e) => {
-          e.stopPropagation()
-          onSelectRef.current?.(r.id)
-        })
-
-        // Prevent touch events from being swallowed by the map
-        el.addEventListener('touchend', (e) => {
-          e.stopPropagation()
-          onSelectRef.current?.(r.id)
-        }, { passive: true })
-
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([r.longitude, r.latitude])
-          .addTo(map.current)
-
-        markers.current.push({ marker, restaurant: r, el })
-      })
-    }
-
-    if (map.current.isStyleLoaded()) {
-      createMarkers()
-    } else {
-      map.current.on('load', createMarkers)
-    }
-  }, [restaurants, savedIds])
-
-  // Update selected marker styles when selectedId changes
-  useEffect(() => {
-    markers.current.forEach(({ restaurant, el }) => {
-      if (restaurant.id === selectedId) {
-        el.dataset.selected = 'true'
-      } else {
-        delete el.dataset.selected
+    const update = () => {
+      const src = m.getSource(SOURCE_ID)
+      if (src) {
+        src.setData(buildGeoJSON(restaurants))
       }
+    }
+
+    if (m.isStyleLoaded() && m.getSource(SOURCE_ID)) {
+      update()
+    } else {
+      m.on('load', update)
+    }
+  }, [restaurants])
+
+  /* -------------------------------------------------------------- */
+  /*  Rebuild markers when savedIds change (heart badge)             */
+  /* -------------------------------------------------------------- */
+  useEffect(() => {
+    // Clear all HTML markers so they get recreated with updated saved status
+    Object.values(markers.current).forEach(({ marker }) => marker.remove())
+    markers.current = {}
+    syncMarkers()
+  }, [savedIds, syncMarkers])
+
+  /* -------------------------------------------------------------- */
+  /*  Update selected marker style                                   */
+  /* -------------------------------------------------------------- */
+  useEffect(() => {
+    Object.values(markers.current).forEach(({ el }) => {
+      delete el.dataset.selected
     })
+    if (selectedId && markers.current[selectedId]) {
+      markers.current[selectedId].el.dataset.selected = 'true'
+    }
   }, [selectedId])
 
-  // FlyTo selected restaurant
+  /* -------------------------------------------------------------- */
+  /*  FlyTo selected restaurant                                      */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!map.current || !selectedId) return
 
@@ -376,13 +533,15 @@ const MapView = forwardRef(function MapView({
 
     map.current.flyTo({
       center: [r.longitude, r.latitude],
-      zoom: 15,
+      zoom: Math.max(map.current.getZoom(), 15),
       duration: 1000,
       essential: true,
     })
   }, [selectedId])
 
-  // User position blue dot
+  /* -------------------------------------------------------------- */
+  /*  User position blue dot                                         */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!map.current) return
 
