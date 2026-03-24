@@ -46,7 +46,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
         {photoUrl ? (
           <img
             src={photoUrl}
-            alt={restaurant.name}
+            alt={`${restaurant.name}${restaurant.city ? ` - ${restaurant.city}` : ''}`}
             loading="lazy"
             className="h-full w-full object-cover"
           />

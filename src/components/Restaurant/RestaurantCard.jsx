@@ -81,7 +81,7 @@ export default function RestaurantCard({
         {photoUrl && (
           <img
             src={photoUrl}
-            alt={restaurant.name}
+            alt={`${restaurant.name}${restaurant.city ? ` - ${restaurant.city}` : ''}`}
             loading="lazy"
             onLoad={() => setImageLoaded(true)}
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${

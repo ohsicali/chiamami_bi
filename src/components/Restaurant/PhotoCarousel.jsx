@@ -4,7 +4,7 @@ import { useDrag } from '@use-gesture/react'
 
 const swipeThreshold = 50
 
-export default function PhotoCarousel({ photos = [], height = '300px' }) {
+export default function PhotoCarousel({ photos = [], height = '300px', restaurantName = '', city = '' }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
   const [loadedImages, setLoadedImages] = useState({})
@@ -108,7 +108,7 @@ export default function PhotoCarousel({ photos = [], height = '300px' }) {
 
             <img
               src={normalizedPhotos[currentIndex].photo_url}
-              alt={normalizedPhotos[currentIndex].caption || ''}
+              alt={normalizedPhotos[currentIndex].caption || `${restaurantName}${city ? ` - ${city}` : ''}${normalizedPhotos.length > 1 ? ` - Foto ${currentIndex + 1}` : ''}`}
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
               onLoad={() => handleImageLoad(currentIndex)}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
