@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link, useSearchParams, Navigate } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useAllReviews } from '../../lib/hooks/useReviews'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
@@ -477,7 +477,7 @@ export default function AdminDashboard() {
             <tbody className="divide-y divide-gray-50">
               {rows.map((r) => {
                 const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-                  .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+                  .map(name => getCategoryInfo(name))
                   .filter(Boolean)
                 const cat = cats[0]
                 const isPublished = r.is_published !== false

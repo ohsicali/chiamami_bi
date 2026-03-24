@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Badge from '../UI/Badge'
 import SaveButton from './SaveButton'
-import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance, formatDrivingTime } from '../../lib/utils/distance'
 
 const cardVariants = {
@@ -33,8 +33,7 @@ export default function RestaurantCard({
   const [imageLoaded, setImageLoaded] = useState(false)
 
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
-    .filter(Boolean)
+    .map(name => getCategoryInfo(name))
   const category = categories[0]
 
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0

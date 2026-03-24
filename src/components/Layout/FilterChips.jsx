@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useCategories } from '../../lib/hooks/useCategories'
 
 export default function FilterChips({ filters, onFilterChange, onNearbyClick, user, showSavedOnly, onToggleSaved, savedCount = 0, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
+  const { categories: CUISINE_CATEGORIES } = useCategories()
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
 

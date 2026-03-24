@@ -2,20 +2,13 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import { useCategories } from '../../lib/hooks/useCategories'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                              */
 /* ------------------------------------------------------------------ */
-function ArrowLeftIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-    </svg>
-  )
-}
 function PencilIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -65,16 +58,14 @@ const COLOR_PRESETS = [
 /* ------------------------------------------------------------------ */
 export default function CategoryManager() {
   const { user, loading: authLoading } = useAuth()
+  const { categories, loading: catsLoading, addCategory, updateCategory, deleteCategory } = useCategories()
 
-  // Local state mirroring the hardcoded categories
-  const [categories, setCategories] = useState(
-    CUISINE_CATEGORIES.map((c, i) => ({ ...c, id: i }))
-  )
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', emoji: '', color: '' })
   const [showAdd, setShowAdd] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', emoji: '', color: COLOR_PRESETS[0] })
   const [deleteId, setDeleteId] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const startEdit = (cat) => {
     setEditingId(cat.id)
@@ -82,37 +73,35 @@ export default function CategoryManager() {
     setShowAdd(false)
   }
 
-  const saveEdit = () => {
-    if (!editForm.name.trim()) return
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === editingId
-          ? { ...c, name: editForm.name.trim(), emoji: editForm.emoji, color: editForm.color }
-          : c
-      )
-    )
-    setEditingId(null)
+  const saveEdit = async () => {
+    if (!editForm.name.trim() || saving) return
+    setSaving(true)
+    const { error } = await updateCategory(editingId, editForm)
+    setSaving(false)
+    if (!error) setEditingId(null)
   }
 
   const cancelEdit = () => setEditingId(null)
 
-  const addCategory = () => {
-    if (!addForm.name.trim()) return
-    const newId = Math.max(0, ...categories.map((c) => c.id)) + 1
-    setCategories((prev) => [
-      ...prev,
-      { id: newId, name: addForm.name.trim(), emoji: addForm.emoji || '🍴', color: addForm.color },
-    ])
-    setAddForm({ name: '', emoji: '', color: COLOR_PRESETS[0] })
-    setShowAdd(false)
+  const handleAdd = async () => {
+    if (!addForm.name.trim() || saving) return
+    setSaving(true)
+    const { error } = await addCategory({ name: addForm.name, emoji: addForm.emoji || '🍴', color: addForm.color })
+    setSaving(false)
+    if (!error) {
+      setAddForm({ name: '', emoji: '', color: COLOR_PRESETS[0] })
+      setShowAdd(false)
+    }
   }
 
-  const deleteCategory = (id) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id))
+  const handleDelete = async (id) => {
+    setSaving(true)
+    await deleteCategory(id)
+    setSaving(false)
     setDeleteId(null)
   }
 
-  if (authLoading) {
+  if (authLoading || catsLoading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <LoadingSpinner />
@@ -143,16 +132,6 @@ export default function CategoryManager() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Info note */}
-        <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-6">
-          <p className="text-sm text-blue-700">
-            <strong>Nota:</strong> Le categorie sono attualmente gestite nel codice sorgente (
-            <code className="bg-blue-100 px-1 rounded text-xs">CUISINE_CATEGORIES</code> in{' '}
-            <code className="bg-blue-100 px-1 rounded text-xs">useRestaurants.js</code>). Le modifiche
-            qui sono solo locali a questa sessione. Per renderle permanenti, aggiorna il file sorgente.
-          </p>
-        </div>
-
         {/* Add form (inline) */}
         <AnimatePresence>
           {showAdd && (
@@ -218,11 +197,11 @@ export default function CategoryManager() {
                     </button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
-                      onClick={addCategory}
-                      disabled={!addForm.name.trim()}
+                      onClick={handleAdd}
+                      disabled={!addForm.name.trim() || saving}
                       className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50"
                     >
-                      Aggiungi
+                      {saving ? '...' : 'Aggiungi'}
                     </motion.button>
                   </div>
                 </div>
@@ -292,7 +271,8 @@ export default function CategoryManager() {
                         </button>
                         <button
                           onClick={saveEdit}
-                          className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                          disabled={saving}
+                          className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
                           title="Salva"
                         >
                           <CheckIcon className="w-4 h-4" />
@@ -381,10 +361,11 @@ export default function CategoryManager() {
                   Annulla
                 </button>
                 <button
-                  onClick={() => deleteCategory(deleteId)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
+                  onClick={() => handleDelete(deleteId)}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm disabled:opacity-50"
                 >
-                  Elimina
+                  {saving ? '...' : 'Elimina'}
                 </button>
               </div>
             </motion.div>

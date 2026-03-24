@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useCategories } from '../../lib/hooks/useCategories'
 import { useToast } from '../../components/UI/Toast'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import { geocodeAddress, reverseGeocode } from '../../lib/utils/geocoding'
@@ -204,6 +205,7 @@ function RecommendedForSelector({ selected, onChange }) {
 /*  Category multi-select — Glovo-style dropdown modal                 */
 /* ------------------------------------------------------------------ */
 function CategorySelector({ selected, onChange }) {
+  const { categories: CUISINE_CATEGORIES } = useCategories()
   const [open, setOpen] = useState(false)
 
   const toggle = (name) => {

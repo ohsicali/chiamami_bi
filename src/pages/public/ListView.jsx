@@ -9,7 +9,7 @@ import Footer from '../../components/Layout/Footer'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
-import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import Badge from '../../components/UI/Badge'
 
 function slugify(name) {
@@ -51,7 +51,7 @@ function SortChip({ label, active, onClick }) {
 function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+    .map(name => getCategoryInfo(name))
     .filter(Boolean)
   const category = categories[0]
   const photoUrl =

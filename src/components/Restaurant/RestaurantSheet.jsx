@@ -7,7 +7,7 @@ import SaveButton from './SaveButton'
 import DiscountBanner from '../Discount/DiscountBanner'
 import ReviewSection from '../Review/ReviewSection'
 import Badge from '../UI/Badge'
-import { CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 function ShareButton({ restaurant, t }) {
   const [copied, setCopied] = useState(false)
@@ -101,8 +101,7 @@ export default function RestaurantSheet({
   if (!restaurant) return null
 
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
-    .filter(Boolean)
+    .map(name => getCategoryInfo(name))
 
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
 

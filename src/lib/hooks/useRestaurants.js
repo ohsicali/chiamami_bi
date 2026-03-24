@@ -2,41 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { getDistance } from '../utils/distance'
 
-export const CUISINE_CATEGORIES = [
-  { name: 'Piemontese', emoji: '🍷', color: '#8B5CF6' },
-  { name: 'Italiana', emoji: '🍝', color: '#FF5757' },
-  { name: 'Giapponese', emoji: '🍣', color: '#F59E0B' },
-  { name: 'Fine Dining', emoji: '✨', color: '#6366F1' },
-  { name: 'Gelateria', emoji: '🍦', color: '#EC4899' },
-  { name: 'Aperitivo', emoji: '🥂', color: '#F97316' },
-  { name: 'Tapas', emoji: '🫒', color: '#84CC16' },
-  { name: 'Spagnolo', emoji: '🥘', color: '#DC2626' },
-  { name: 'Asiatico', emoji: '🥡', color: '#0EA5E9' },
-  { name: 'Mediterraneo', emoji: '🫓', color: '#14B8A6' },
-  { name: 'Greco', emoji: '🥙', color: '#3B82F6' },
-  { name: 'Indiano', emoji: '🍛', color: '#D97706' },
-  { name: 'Thailandese', emoji: '🍜', color: '#10B981' },
-  { name: 'Poke', emoji: '🥗', color: '#06B6D4' },
-  { name: 'Barbecue', emoji: '🍖', color: '#B91C1C' },
-  { name: 'Pesce', emoji: '🐟', color: '#2563EB' },
-  { name: 'Vegano', emoji: '🥬', color: '#16A34A' },
-  { name: 'Vegetariano', emoji: '🥕', color: '#65A30D' },
-  { name: 'Kebab', emoji: '🌯', color: '#CA8A04' },
-  { name: 'Americano', emoji: '🌭', color: '#EF4444' },
-  { name: 'Sudamericano', emoji: '🫔', color: '#F59E0B' },
-  { name: 'Pasta', emoji: '🍝', color: '#EA580C' },
-  { name: 'Insalate', emoji: '🥗', color: '#22C55E' },
-  { name: 'Internazionale', emoji: '🌍', color: '#6366F1' },
-  { name: 'Cocktail', emoji: '🍸', color: '#A855F7' },
-  { name: 'Bar', emoji: '🍸', color: '#78716C' },
-  { name: 'Tramezzini', emoji: '🥪', color: '#D97706' },
-]
+// Re-export from useCategories for backwards compatibility
+export { getCategoryInfo, DEFAULT_CATEGORIES as CUISINE_CATEGORIES, useCategories } from './useCategories'
 
 export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
-
-export function getCategoryInfo(cuisineType) {
-  return CUISINE_CATEGORIES.find(c => c.name === cuisineType) || { name: cuisineType, emoji: '🍽️', color: '#6B7280' }
-}
 
 const MOCK_RESTAURANTS = [
   {

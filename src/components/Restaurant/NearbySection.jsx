@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import RatingStars from './RatingStars'
-import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
 const cardVariants = {
@@ -19,9 +19,8 @@ const cardVariants = {
 }
 
 function NearbyCard({ restaurant, index, onSelect }) {
-  const category = CUISINE_CATEGORIES.find(
-    (c) => (restaurant.category || []).includes(c.name) || c.name === restaurant.cuisine_type
-  )
+  const primaryType = (restaurant.category || [])[0] || restaurant.cuisine_type
+  const category = primaryType ? getCategoryInfo(primaryType) : null
 
   const photoUrl =
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0

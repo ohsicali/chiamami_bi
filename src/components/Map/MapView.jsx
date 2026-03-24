@@ -1,16 +1,11 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
-
-function getCategoryInfo(cuisineType) {
-  const cat = CUISINE_CATEGORIES.find((c) => c.name === cuisineType)
-  return cat || { emoji: '🍴', color: '#9CA3AF' }
-}
 
 function createPinElement(restaurant, isSaved) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
