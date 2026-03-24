@@ -635,7 +635,15 @@ export default function RestaurantForm() {
       let phone = ''
       let resolvedUrl = mapsUrl
 
-      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(mapsUrl)
+      // Detect CID URLs (from Google Maps app "Copy link") — these can't be resolved server-side
+      const cidMatch = mapsUrl.match(/[?&]cid=(\d+)/)
+      if (cidMatch) {
+        addToast('I link con "?cid=" dall\'app Google Maps non funzionano. Dall\'app Maps, tocca "Condividi" → "Copia link" per ottenere un link compatibile (inizia con maps.app.goo.gl).', 'error')
+        setGoogleFilling(false)
+        return
+      }
+
+      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|share\.google)\//i.test(mapsUrl)
       const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
       const coordMatch = mapsUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
 
@@ -1061,7 +1069,7 @@ export default function RestaurantForm() {
                 )}
               </motion.button>
               <p className="text-xs text-secondary self-center">
-                Incolla il link Google Maps (anche link brevi maps.app.goo.gl) e clicca per compilare automaticamente tutti i campi
+                Dall'app Google Maps tocca "Condividi" → "Copia link". Funzionano anche i link lunghi dal browser.
               </p>
             </div>
           </Section>
