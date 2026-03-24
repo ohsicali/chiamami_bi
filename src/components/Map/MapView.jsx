@@ -7,7 +7,6 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
-const ANIM_MS = 280
 const DEBOUNCE_MS = 120
 
 /* ------------------------------------------------------------------ */
@@ -22,21 +21,21 @@ function ensureStyles() {
     .cb-marker {
       will-change: transform, opacity;
     }
-    .cb-marker--anim {
-      transition: transform ${ANIM_MS}ms cubic-bezier(.2,.8,.3,1), opacity ${ANIM_MS}ms cubic-bezier(.2,.8,.3,1);
-    }
     .cb-marker--enter {
-      transform: scale(0.6);
+      transform: scale(0);
       opacity: 0;
+    }
+    .cb-marker--anim {
+      animation: cb-pop-in 250ms cubic-bezier(.175,.885,.32,1.275) forwards;
+    }
+    @keyframes cb-pop-in {
+      0%   { transform: scale(0);   opacity: 0; }
+      60%  { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1);   opacity: 1; }
     }
     .cb-marker--visible {
       transform: scale(1);
       opacity: 1;
-    }
-    .cb-marker--exit {
-      transform: scale(0.75);
-      opacity: 0;
-      pointer-events: none;
     }
     .cb-marker--instant {
       transform: scale(1);
@@ -128,11 +127,9 @@ function animateIn(el, animate) {
     el.classList.add('cb-marker--instant')
     return
   }
-  // Force reflow so the enter class applies before transition starts
-  el.offsetHeight // eslint-disable-line no-unused-expressions
-  el.classList.add('cb-marker--anim')
+  // Start the pop-in keyframe animation
   el.classList.remove('cb-marker--enter')
-  el.classList.add('cb-marker--visible')
+  el.classList.add('cb-marker--anim')
 }
 
 /* ------------------------------------------------------------------ */
@@ -195,7 +192,6 @@ const MapView = forwardRef(function MapView({
   const map = useRef(null)
   const sc = useRef(null)                    // Supercluster
   const markersMap = useRef(new Map())        // key → { marker, el, type, id }
-  const exitTimers = useRef(new Map())        // key → timeout id (prevent double-remove)
   const userMarker = useRef(null)
   const lastZoom = useRef(null)
   const debounceTimer = useRef(null)
@@ -240,32 +236,15 @@ const MapView = forwardRef(function MapView({
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Flush in-flight animations: finish exits instantly, snap       */
-  /*  enters to visible. Call before starting a new sync cycle.      */
+  /*  Flush in-flight pop-in animations to final state               */
   /* -------------------------------------------------------------- */
   const flushAnimations = useCallback(() => {
-    // Immediately remove any markers still in their exit animation
-    for (const [key, tid] of exitTimers.current) {
-      clearTimeout(tid)
-      // The marker was already deleted from markersMap — find its DOM and remove
-      exitTimers.current.delete(key)
-    }
-    // Remove lingering exit-animated DOM nodes
     const container = mapContainer.current
-    if (container) {
-      container.querySelectorAll('.cb-marker--exit').forEach((el) => {
-        // Walk up to the mapboxgl-marker wrapper and remove it
-        const wrapper = el.closest('.mapboxgl-marker')
-        if (wrapper) wrapper.remove()
-      })
-    }
-    // Snap any in-progress enter animations to final state
-    if (container) {
-      container.querySelectorAll('.cb-marker--enter').forEach((el) => {
-        el.classList.remove('cb-marker--enter', 'cb-marker--anim')
-        el.classList.add('cb-marker--instant')
-      })
-    }
+    if (!container) return
+    container.querySelectorAll('.cb-marker--anim, .cb-marker--enter').forEach((el) => {
+      el.classList.remove('cb-marker--enter', 'cb-marker--anim')
+      el.classList.add('cb-marker--instant')
+    })
   }, [])
 
   /* -------------------------------------------------------------- */
@@ -302,21 +281,11 @@ const MapView = forwardRef(function MapView({
       newKeys.set(key, f)
     }
 
-    // ---- Remove stale markers (animated fade-out) ----
+    // ---- Remove stale markers (always instant — prevents overlap) ----
     for (const [key, entry] of markersMap.current) {
       if (newKeys.has(key)) continue
       markersMap.current.delete(key)
-
-      if (animate) {
-        entry.el.classList.add('cb-marker--anim')
-        entry.el.classList.remove('cb-marker--visible', 'cb-marker--instant')
-        entry.el.classList.add('cb-marker--exit')
-        const markerRef = entry.marker
-        const tid = setTimeout(() => { markerRef.remove(); exitTimers.current.delete(key) }, ANIM_MS)
-        exitTimers.current.set(key, tid)
-      } else {
-        entry.marker.remove()
-      }
+      entry.marker.remove()
     }
 
     // ---- Add new / update existing ----
@@ -434,8 +403,6 @@ const MapView = forwardRef(function MapView({
 
     return () => {
       clearTimeout(debounceTimer.current)
-      for (const tid of exitTimers.current.values()) clearTimeout(tid)
-      exitTimers.current.clear()
       for (const { marker } of markersMap.current.values()) marker.remove()
       markersMap.current.clear()
       userMarker.current?.remove()
