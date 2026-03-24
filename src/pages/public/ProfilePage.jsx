@@ -225,12 +225,13 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const [passwordForm, setPasswordForm] = useState({ new: '', confirm: '' })
   const [passwordMsg, setPasswordMsg] = useState(null)
   const [pwdVerifying, setPwdVerifying] = useState(false)
-  // Google user: add email+password login
+  // Google user: add email+password login (with OTP verification first)
+  const [loginStep, setLoginStep] = useState('form') // 'form' | 'otp' | 'set_password' | 'done'
   const [loginEmail, setLoginEmail] = useState('')
+  const [loginOtp, setLoginOtp] = useState('')
   const [loginPassword, setLoginPassword] = useState({ new: '', confirm: '' })
   const [loginMsg, setLoginMsg] = useState(null)
   const [loginLoading, setLoginLoading] = useState(false)
-  const [loginAdded, setLoginAdded] = useState(false)
   const navigate = useNavigate()
 
   // Check newsletter status
@@ -459,7 +460,40 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     }
   }
 
-  // Google user: add email+password access
+  // Google user: Step 1 — send OTP to current Google email to verify identity
+  const handleLoginSendOtp = async () => {
+    setLoginLoading(true)
+    setLoginMsg(null)
+    const { error } = await supabase.auth.signInWithOtp({ email: user.email })
+    setLoginLoading(false)
+    if (error) {
+      setLoginMsg({ type: 'error', text: error.message })
+    } else {
+      setLoginStep('otp')
+      setLoginMsg({ type: 'success', text: `Codice di verifica inviato a ${user.email}` })
+    }
+  }
+
+  // Google user: Step 2 — verify OTP
+  const handleLoginVerifyOtp = async () => {
+    if (!loginOtp.trim()) return
+    setLoginLoading(true)
+    setLoginMsg(null)
+    const { error } = await supabase.auth.verifyOtp({
+      email: user.email,
+      token: loginOtp.trim(),
+      type: 'email',
+    })
+    setLoginLoading(false)
+    if (error) {
+      setLoginMsg({ type: 'error', text: 'Codice non valido o scaduto' })
+    } else {
+      setLoginStep('set_password')
+      setLoginMsg(null)
+    }
+  }
+
+  // Google user: Step 3 — set new email + password
   const handleAddEmailLogin = async () => {
     setLoginMsg(null)
     const email = loginEmail.trim()
@@ -484,7 +518,6 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       if (email !== user.email) {
         const { error: emailErr } = await supabase.auth.updateUser({ email })
         if (emailErr) throw emailErr
-        // Check if email change was immediate or needs confirmation
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user?.email === email) {
           await supabase.from('profiles').update({ email }).eq('id', user.id)
@@ -497,11 +530,19 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       } else {
         setLoginMsg({ type: 'success', text: 'Password impostata! Ora puoi accedere anche con email e password.' })
       }
-      setLoginAdded(true)
+      setLoginStep('done')
     } catch (err) {
       setLoginMsg({ type: 'error', text: err.message || 'Errore nell\'aggiunta dell\'accesso' })
     }
     setLoginLoading(false)
+  }
+
+  const handleLoginReset = () => {
+    setLoginStep('form')
+    setLoginEmail('')
+    setLoginOtp('')
+    setLoginPassword({ new: '', confirm: '' })
+    setLoginMsg(null)
   }
 
   const handleDeleteAccount = async () => {
@@ -740,15 +781,61 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         </div>
       </div>
 
-      {/* Google users: add email+password login */}
+      {/* Google users: add email+password login (with OTP verification) */}
       {isGoogleUser && (
         <div className="rounded-2xl bg-card p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-primary mb-1">Aggiungi accesso con email e password</h3>
           <p className="text-xs text-secondary mb-3">
             Attualmente accedi solo con Google. Aggiungi un accesso con email e password per poter accedere anche se cambi account Google.
           </p>
-          {!loginAdded ? (
+
+          {/* Step 1: Send OTP to verify identity */}
+          {loginStep === 'form' && (
+            <motion.button
+              onClick={handleLoginSendOtp}
+              disabled={loginLoading}
+              className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+              whileTap={{ scale: 0.95 }}
+            >
+              {loginLoading ? 'Invio...' : 'Verifica la tua identita\''}
+            </motion.button>
+          )}
+
+          {/* Step 2: Enter OTP */}
+          {loginStep === 'otp' && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-secondary">
+                Inserisci il codice ricevuto su <strong>{user?.email}</strong>
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={loginOtp}
+                  onChange={e => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="Codice di verifica"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className={`${inputClasses} text-center tracking-widest font-mono`}
+                />
+                <motion.button
+                  onClick={handleLoginVerifyOtp}
+                  disabled={loginLoading || loginOtp.length < 6}
+                  className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {loginLoading ? '...' : 'Conferma'}
+                </motion.button>
+              </div>
+              <button onClick={handleLoginReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
+                Annulla
+              </button>
+            </div>
+          )}
+
+          {/* Step 3: Set email + password */}
+          {loginStep === 'set_password' && (
             <div className="flex flex-col gap-3">
+              <p className="text-xs text-green-600 font-medium">Identita' verificata! Imposta il tuo nuovo accesso.</p>
               <input
                 type="email"
                 value={loginEmail}
@@ -770,23 +857,33 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
                 className={inputClasses}
                 placeholder="Conferma password"
               />
-              <motion.button
-                onClick={handleAddEmailLogin}
-                disabled={loginLoading || !loginEmail.trim() || !loginPassword.new}
-                className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50 self-start"
-                whileTap={{ scale: 0.95 }}
-              >
-                {loginLoading ? 'Salvataggio...' : 'Attiva accesso con email'}
-              </motion.button>
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleAddEmailLogin}
+                  disabled={loginLoading || !loginEmail.trim() || !loginPassword.new}
+                  className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {loginLoading ? 'Salvataggio...' : 'Attiva accesso con email'}
+                </motion.button>
+                <motion.button
+                  onClick={handleLoginReset}
+                  className="rounded-xl py-3 px-4 text-sm text-secondary hover:bg-gray-100 transition-colors"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Annulla
+                </motion.button>
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={() => { setLoginAdded(false); setLoginEmail(''); setLoginPassword({ new: '', confirm: '' }); setLoginMsg(null) }}
-              className="text-xs text-accent hover:underline"
-            >
+          )}
+
+          {/* Step 4: Done */}
+          {loginStep === 'done' && (
+            <button onClick={handleLoginReset} className="text-xs text-accent hover:underline">
               Modifica di nuovo
             </button>
           )}
+
           {loginMsg && (
             <p className={`text-xs font-medium mt-2 ${loginMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
               {loginMsg.text}
