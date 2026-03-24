@@ -53,13 +53,22 @@ export function useAuth() {
       } else {
         setProfile(created || newProfile)
       }
-      // Auto-subscribe to newsletter on first registration
+      // Auto-subscribe to newsletter + send welcome email on first registration
       if (authUser.email) {
         supabase
           .from('newsletter_subscribers')
           .upsert({ email: authUser.email, source: 'registration' }, { onConflict: 'email' })
           .then(() => {})
           .catch(() => {})
+        // Send welcome email (fire and forget)
+        fetch('/api/welcome-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: authUser.email,
+            name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+          }),
+        }).catch(() => {})
       }
       return created || newProfile
     }
