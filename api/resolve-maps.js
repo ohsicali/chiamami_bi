@@ -85,19 +85,48 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
       if (!searchQuery || !lat) {
         const html = await pageRes.text()
 
+        // Try to extract place name from APP_INITIALIZATION_STATE (Google's JS data blob)
+        if (!searchQuery) {
+          // Google Maps embeds place data in JS — look for patterns like "PlaceName",null,null,lat,lng
+          // or "name":"PlaceName" or similar structured data
+          const namePatterns = [
+            // Pattern: ["PlaceName",null,null,lat,lng] — common in Google Maps JS
+            /\["([^"]{3,60})",null,null,(-?\d{1,3}\.\d{3,}),(-?\d{1,3}\.\d{3,})\]/,
+            // Pattern: "PlaceName","address" — common in place data
+            /\[null,"([^"]{3,60})","[^"]*(?:Via|Piazza|Corso|Strada|Viale|Largo)[^"]*"\]/,
+            // Pattern with escaped quotes in JS
+            /\\x22([^\\]{3,60})\\x22,null,null,(-?\d{1,3}\.\d{3,})/,
+          ]
+          for (const pattern of namePatterns) {
+            const m = html.match(pattern)
+            if (m) {
+              const candidate = m[1].replace(/\\u[\da-f]{4}/gi, c =>
+                String.fromCharCode(parseInt(c.slice(2), 16))
+              )
+              if (candidate.length > 2 && !isGenericQuery(candidate) && /[a-zA-Z]{2,}/.test(candidate)) {
+                searchQuery = candidate
+                if (m[2] && m[3]) { lat = parseFloat(m[2]); lng = parseFloat(m[3]) }
+                debugInfo.strategy = 'app_init_state_name'
+                break
+              }
+            }
+          }
+        }
+
         // Look for /place/ActualName/ URLs in the HTML (not query strings like ?ftid=)
         if (!searchQuery) {
-          // Match /place/ followed by a URL-encoded name (letters, numbers, +, %, etc.)
-          const placeUrls = html.match(/\/place\/([A-Za-z0-9%+][^/@"'\s\\]{2,})/g)
+          const placeUrls = html.match(/\/place\/([A-Za-z][A-Za-z0-9%+_-][^/@"'\s\\]{1,})/g)
           if (placeUrls) {
             for (const pu of placeUrls) {
-              const m = pu.match(/\/place\/([A-Za-z0-9%+][^/@"'\s\\]{2,})/)
+              const m = pu.match(/\/place\/([A-Za-z][A-Za-z0-9%+_-][^/@"'\s\\]{1,})/)
               if (m) {
-                const candidate = decodeURIComponent(m[1].replace(/\+/g, ' '))
-                // Filter out technical strings (ftid, hex, data, query params)
+                let candidate
+                try { candidate = decodeURIComponent(m[1].replace(/\+/g, ' ')) } catch (_) { continue }
+                // Filter out technical strings
                 if (candidate.length > 2
                     && !isGenericQuery(candidate)
-                    && !/^(data|ftid|0x|cid)/i.test(candidate)
+                    && !/^[?&]/.test(candidate)
+                    && !/ftid|0x[0-9a-f]|cid=|data=/i.test(candidate)
                     && !/^[0-9a-f:]+$/i.test(candidate)
                     && /[a-zA-Z]{2,}/.test(candidate)) {
                   searchQuery = candidate
