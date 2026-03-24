@@ -106,7 +106,7 @@ export default function RestaurantPage() {
       <RestaurantSheet
         restaurant={restaurant}
         onClose={handleBack}
-        allRestaurants={restaurants}
+        allRestaurants={allRestaurants}
         onSelectNearby={handleSelectNearby}
         saved={isSaved(restaurant.id)}
         onSaveToggle={handleSaveToggle}
