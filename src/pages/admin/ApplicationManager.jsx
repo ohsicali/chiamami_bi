@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -12,7 +13,7 @@ const STATUS_LABELS = {
 }
 
 export default function ApplicationManager() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -55,6 +56,7 @@ export default function ApplicationManager() {
   }
 
   if (authLoading || loading) return null
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Candidature">

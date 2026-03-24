@@ -72,7 +72,7 @@ function ChevronIcon({ className, direction = 'up' }) {
 /*  Main Dashboard Page                                                */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
 
   const [search, setSearch] = useState('')
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!user) return <Navigate to="/admin/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const statCards = [
     { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },

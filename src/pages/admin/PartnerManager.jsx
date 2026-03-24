@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -9,7 +10,7 @@ function generatePin() {
 }
 
 export default function PartnerManager() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const [partners, setPartners] = useState([])
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -104,6 +105,7 @@ export default function PartnerManager() {
   const availableRestaurants = restaurants.filter(r => !partnerRestaurantIds.has(r.id))
 
   if (authLoading || loading) return null
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Partner">

@@ -482,7 +482,7 @@ function AdminList() {
 /*  Main page                                                          */
 /* ------------------------------------------------------------------ */
 export default function AdminSettings() {
-  const { user, loading } = useAuth()
+  const { user, isAdmin, loading } = useAuth()
 
   if (loading) {
     return (
@@ -491,7 +491,7 @@ export default function AdminSettings() {
       </div>
     )
   }
-  if (!user) return <Navigate to="/admin/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Impostazioni">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useAllReviews } from '../../lib/hooks/useReviews'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -15,7 +16,7 @@ function timeAgo(dateStr) {
 }
 
 export default function ReviewModerator() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const { reviews, loading, fetchError, updateStatus, deleteReview } = useAllReviews()
   const [tab, setTab] = useState('pending')
   const [actionLoading, setActionLoading] = useState(null)
@@ -46,6 +47,7 @@ export default function ReviewModerator() {
   }
 
   if (authLoading || loading) return null
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Recensioni">

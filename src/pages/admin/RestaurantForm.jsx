@@ -670,7 +670,7 @@ export default function RestaurantForm() {
   const { id } = useParams()
   const isEditing = !!id
   const navigate = useNavigate()
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const { restaurants } = useRestaurants()
   const { addToast } = useToast()
 
@@ -1157,7 +1157,7 @@ export default function RestaurantForm() {
     )
   }
 
-  if (!user) return <Navigate to="/admin/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const FieldError = ({ field }) =>
     errors[field] ? (

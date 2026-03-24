@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -91,7 +92,7 @@ function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }
 }
 
 export default function DiscountManager() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const [discounts, setDiscounts] = useState([])
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -243,6 +244,7 @@ export default function DiscountManager() {
   }
 
   if (authLoading || loading) return null
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Gestione Sconti">

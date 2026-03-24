@@ -57,7 +57,7 @@ const COLOR_PRESETS = [
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function CategoryManager() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const { categories, loading: catsLoading, addCategory, updateCategory, deleteCategory } = useCategories()
 
   const [editingId, setEditingId] = useState(null)
@@ -109,7 +109,7 @@ export default function CategoryManager() {
     )
   }
 
-  if (!user) return <Navigate to="/admin/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Categorie">
