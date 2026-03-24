@@ -453,15 +453,15 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
               <input
                 type="text"
                 value={otpCode}
-                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="Codice a 6 cifre"
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="Codice a 8 cifre"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 className={`${inputClasses} text-center tracking-widest font-mono`}
               />
               <motion.button
                 onClick={handleVerifyOtpAndUpdateEmail}
-                disabled={emailLoading || otpCode.length < 6}
+                disabled={emailLoading || otpCode.length < 6 || otpCode.length > 8}
                 className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
                 whileTap={{ scale: 0.95 }}
               >
