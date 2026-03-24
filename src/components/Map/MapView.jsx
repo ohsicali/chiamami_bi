@@ -7,7 +7,8 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
-const ANIM_MS = 200
+const ANIM_MS = 280
+const DEBOUNCE_MS = 120
 
 /* ------------------------------------------------------------------ */
 /*  Inject styles once                                                 */
@@ -19,11 +20,13 @@ function ensureStyles() {
   s.id = STYLE_ID
   s.textContent = `
     .cb-marker {
-      transition: transform ${ANIM_MS}ms cubic-bezier(.4,.15,.3,1), opacity ${ANIM_MS}ms ease;
       will-change: transform, opacity;
     }
+    .cb-marker--anim {
+      transition: transform ${ANIM_MS}ms cubic-bezier(.2,.8,.3,1), opacity ${ANIM_MS}ms cubic-bezier(.2,.8,.3,1);
+    }
     .cb-marker--enter {
-      transform: scale(0);
+      transform: scale(0.6);
       opacity: 0;
     }
     .cb-marker--visible {
@@ -31,9 +34,13 @@ function ensureStyles() {
       opacity: 1;
     }
     .cb-marker--exit {
-      transform: scale(0);
+      transform: scale(0.75);
       opacity: 0;
       pointer-events: none;
+    }
+    .cb-marker--instant {
+      transform: scale(1);
+      opacity: 1;
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
@@ -113,11 +120,17 @@ function createClusterEl(count) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Animate marker in                                                  */
+/*  Animate marker in (or show instantly)                              */
 /* ------------------------------------------------------------------ */
-function animateIn(el) {
-  // Force reflow so the enter class applies before transition
+function animateIn(el, animate) {
+  if (!animate) {
+    el.classList.remove('cb-marker--enter')
+    el.classList.add('cb-marker--instant')
+    return
+  }
+  // Force reflow so the enter class applies before transition starts
   el.offsetHeight // eslint-disable-line no-unused-expressions
+  el.classList.add('cb-marker--anim')
   el.classList.remove('cb-marker--enter')
   el.classList.add('cb-marker--visible')
 }
@@ -181,9 +194,12 @@ const MapView = forwardRef(function MapView({
   const mapContainer = useRef(null)
   const map = useRef(null)
   const sc = useRef(null)                    // Supercluster
-  const markersMap = useRef(new Map())        // key → { marker, el, type }
+  const markersMap = useRef(new Map())        // key → { marker, el, type, id }
+  const exitTimers = useRef(new Map())        // key → timeout id (prevent double-remove)
   const userMarker = useRef(null)
   const lastZoom = useRef(null)
+  const debounceTimer = useRef(null)
+  const isZooming = useRef(false)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
@@ -225,9 +241,9 @@ const MapView = forwardRef(function MapView({
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Sync markers with current viewport — animated transitions      */
+  /*  Core sync: diff markers, animate=true for smooth transitions   */
   /* -------------------------------------------------------------- */
-  const syncMarkers = useCallback(() => {
+  const syncMarkersCore = useCallback((animate) => {
     const m = map.current
     const index = sc.current
     if (!m || !index) return
@@ -246,8 +262,8 @@ const MapView = forwardRef(function MapView({
     const rests = restaurantsRef.current || []
     const saved = savedIdsRef.current
 
-    // Build map of keys for new state
-    const newKeys = new Map() // key → feature
+    // Build target state
+    const newKeys = new Map()
     for (const f of features) {
       const key = f.properties.cluster
         ? `cluster-${f.properties.cluster_id}`
@@ -255,43 +271,49 @@ const MapView = forwardRef(function MapView({
       newKeys.set(key, f)
     }
 
-    // Remove markers that are no longer present (with exit animation)
+    // ---- Remove stale markers ----
     for (const [key, entry] of markersMap.current) {
-      if (!newKeys.has(key)) {
-        entry.el.classList.remove('cb-marker--visible')
+      if (newKeys.has(key)) continue
+
+      // Cancel any pending exit timer for this key (e.g. from a previous remove)
+      if (exitTimers.current.has(key)) {
+        clearTimeout(exitTimers.current.get(key))
+        exitTimers.current.delete(key)
+      }
+
+      markersMap.current.delete(key)
+
+      if (animate) {
+        entry.el.classList.add('cb-marker--anim')
+        entry.el.classList.remove('cb-marker--visible', 'cb-marker--instant')
         entry.el.classList.add('cb-marker--exit')
         const markerRef = entry.marker
-        setTimeout(() => markerRef.remove(), ANIM_MS)
-        markersMap.current.delete(key)
+        const tid = setTimeout(() => { markerRef.remove(); exitTimers.current.delete(key) }, ANIM_MS)
+        exitTimers.current.set(key, tid)
+      } else {
+        entry.marker.remove()
       }
     }
 
-    // Add new markers or update existing
+    // ---- Add new / update existing ----
     for (const [key, f] of newKeys) {
       if (markersMap.current.has(key)) {
-        // Already exists — update position if cluster moved
         const entry = markersMap.current.get(key)
         const [lng, lat] = f.geometry.coordinates
         entry.marker.setLngLat([lng, lat])
         continue
       }
 
-      // Create new marker
       let el
       if (f.properties.cluster) {
         el = createClusterEl(f.properties.point_count)
-        // Click → zoom to expand
         const clusterId = f.properties.cluster_id
+        const coords = f.geometry.coordinates
         el.addEventListener('click', (e) => {
           e.stopPropagation()
           const expZoom = index.getClusterExpansionZoom(clusterId)
-          m.easeTo({ center: f.geometry.coordinates, zoom: expZoom, duration: 500 })
+          m.easeTo({ center: coords, zoom: expZoom, duration: 500 })
         })
-        el.addEventListener('touchend', (e) => {
-          e.stopPropagation()
-          const expZoom = index.getClusterExpansionZoom(clusterId)
-          m.easeTo({ center: f.geometry.coordinates, zoom: expZoom, duration: 500 })
-        }, { passive: true })
       } else {
         const r = rests.find((r) => r.id === f.properties.id)
         if (!r) continue
@@ -300,15 +322,7 @@ const MapView = forwardRef(function MapView({
           e.stopPropagation()
           onSelectRef.current?.(r.id)
         })
-        el.addEventListener('touchend', (e) => {
-          e.stopPropagation()
-          onSelectRef.current?.(r.id)
-        }, { passive: true })
-
-        // Apply selected state if needed
-        if (selectedIdRef.current === r.id) {
-          el.classList.add('cb-marker--selected')
-        }
+        if (selectedIdRef.current === r.id) el.classList.add('cb-marker--selected')
       }
 
       const [lng, lat] = f.geometry.coordinates
@@ -322,8 +336,12 @@ const MapView = forwardRef(function MapView({
         id: f.properties.cluster ? null : f.properties.id,
       })
 
-      // Trigger enter animation on next frame
-      requestAnimationFrame(() => animateIn(el))
+      // Animate or show instantly
+      if (animate) {
+        requestAnimationFrame(() => animateIn(el, true))
+      } else {
+        animateIn(el, false)
+      }
     }
 
     lastZoom.current = zoom
@@ -339,14 +357,26 @@ const MapView = forwardRef(function MapView({
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Zoom handler: sync only when integer zoom changes              */
+  /*  Debounced animated sync — called when movement settles         */
+  /* -------------------------------------------------------------- */
+  const scheduleSyncAnimated = useCallback(() => {
+    clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => syncMarkersCore(true), DEBOUNCE_MS)
+  }, [syncMarkersCore])
+
+  /* -------------------------------------------------------------- */
+  /*  Zoom handler: instant swap mid-zoom (no animation)             */
   /* -------------------------------------------------------------- */
   const onZoom = useCallback(() => {
     const m = map.current
     if (!m) return
     const zoom = Math.floor(m.getZoom())
-    if (zoom !== lastZoom.current) syncMarkers()
-  }, [syncMarkers])
+    if (zoom !== lastZoom.current) {
+      // Cancel any pending animated sync — we'll do instant instead
+      clearTimeout(debounceTimer.current)
+      syncMarkersCore(false)
+    }
+  }, [syncMarkersCore])
 
   /* -------------------------------------------------------------- */
   /*  Initialize map                                                 */
@@ -373,16 +403,28 @@ const MapView = forwardRef(function MapView({
         if (layer.id.includes('poi')) m.setLayoutProperty(layer.id, 'visibility', 'none')
       })
 
-      m.on('zoom', onZoom)
-      m.on('moveend', syncMarkers)
+      // Track zoom state
+      m.on('zoomstart', () => { isZooming.current = true })
+      m.on('zoomend', () => { isZooming.current = false })
 
-      // Initial render
+      // During zoom: instant sync on integer level change
+      m.on('zoom', onZoom)
+
+      // After all movement settles: animated sync (catches panning + final zoom state)
+      m.on('moveend', () => {
+        // If zoom just ended, animate the final state; if just panning, debounce
+        scheduleSyncAnimated()
+      })
+
+      // Initial render (instant, no animation needed)
       buildIndex()
-      syncMarkers()
+      syncMarkersCore(false)
     })
 
     return () => {
-      // Cleanup all markers
+      clearTimeout(debounceTimer.current)
+      for (const tid of exitTimers.current.values()) clearTimeout(tid)
+      exitTimers.current.clear()
       for (const { marker } of markersMap.current.values()) marker.remove()
       markersMap.current.clear()
       userMarker.current?.remove()
@@ -391,7 +433,7 @@ const MapView = forwardRef(function MapView({
       map.current = null
       sc.current = null
     }
-  }, [token, onZoom, syncMarkers, buildIndex])
+  }, [token, onZoom, syncMarkersCore, scheduleSyncAnimated, buildIndex])
 
   /* -------------------------------------------------------------- */
   /*  Rebuild when data changes                                      */
@@ -402,8 +444,8 @@ const MapView = forwardRef(function MapView({
     // Clear existing markers to rebuild with new saved states
     for (const { marker } of markersMap.current.values()) marker.remove()
     markersMap.current.clear()
-    syncMarkers()
-  }, [restaurants, savedIds, buildIndex, syncMarkers])
+    syncMarkersCore(false) // instant — data changed, not a zoom transition
+  }, [restaurants, savedIds, buildIndex, syncMarkersCore])
 
   /* -------------------------------------------------------------- */
   /*  Selected state                                                 */
