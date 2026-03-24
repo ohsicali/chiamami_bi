@@ -149,72 +149,13 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
     }
   }, [canScroll])
 
-  // Native touch drag on content area — doesn't use pointer capture, so clicks work
-  const touchStartY = useRef(null)
-  const touchStartHeight = useRef(null)
-  const contentDragging = useRef(false)
-
-  const handleContentTouchStart = useCallback((e) => {
-    // At FULL with scroll > 0, let content scroll normally
-    if (snapIndexRef.current === SNAP_FULL && contentRef.current && contentRef.current.scrollTop > 0) {
-      return
-    }
-    touchStartY.current = e.touches[0].clientY
-    touchStartHeight.current = sheetHeight.get()
-    contentDragging.current = false
-  }, [sheetHeight])
-
-  const handleContentTouchMove = useCallback((e) => {
-    if (touchStartY.current === null) return
-
-    const dy = touchStartY.current - e.touches[0].clientY // positive = swipe up
-    const absDy = Math.abs(dy)
-
-    // Only start dragging after 10px of vertical movement (avoids blocking taps)
-    if (!contentDragging.current) {
-      if (absDy < 10) return
-      contentDragging.current = true
-    }
-
-    // At FULL, only allow drag down when scrolled to top
-    if (snapIndexRef.current === SNAP_FULL && contentRef.current) {
-      if (contentRef.current.scrollTop > 0) {
-        touchStartY.current = null
-        contentDragging.current = false
-        return
-      }
-      // Swiping up at FULL = trying to scroll content, ignore
-      if (dy > 0) {
-        touchStartY.current = null
-        contentDragging.current = false
-        return
-      }
-    }
-
-    const newH = Math.max(
-      snapHeights[SNAP_PEEK] - 20,
-      Math.min(snapHeights[SNAP_FULL] + 30, touchStartHeight.current + dy)
-    )
-    sheetHeight.set(newH)
-  }, [sheetHeight, snapHeights])
-
-  const handleContentTouchEnd = useCallback(() => {
-    if (!contentDragging.current) {
-      touchStartY.current = null
-      return
-    }
-    contentDragging.current = false
-    touchStartY.current = null
-
-    const nearest = closestSnap(sheetHeight.get(), snapHeights)
-    snapTo(nearest)
-  }, [sheetHeight, snapHeights, snapTo])
-
   return (
     <motion.div
       ref={sheetRef}
+      {...bind()}
       style={{
         height: sheetHeight,
+        touchAction: 'none',
         position: 'fixed',
         bottom: BOTTOM_MARGIN,
         left: SIDE_MARGIN,
@@ -228,12 +169,8 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         overflow: 'hidden',
       }}
     >
-      {/* Drag handle — only this area captures drag gestures */}
-      <div
-        {...bind()}
-        className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing"
-        style={{ touchAction: 'none' }}
-      >
+      {/* Drag handle */}
+      <div className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing">
         <div
           className="rounded-full"
           style={{
@@ -245,7 +182,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         />
       </div>
 
-      {/* Content area — free for normal clicks and interactions */}
+      {/* Content area */}
       <div
         ref={contentRef}
         className="px-4 pb-8"
@@ -253,12 +190,13 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
           overflowY: canScroll ? 'auto' : 'hidden',
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
-          touchAction: 'manipulation',
           height: 'calc(100% - 25px)',
         }}
-        onTouchStart={handleContentTouchStart}
-        onTouchMove={handleContentTouchMove}
-        onTouchEnd={handleContentTouchEnd}
+        onTouchStart={(e) => {
+          if (canScroll && contentRef.current && contentRef.current.scrollTop > 0) {
+            e.stopPropagation()
+          }
+        }}
       >
         {children}
       </div>

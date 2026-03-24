@@ -517,7 +517,7 @@ const MapView = forwardRef(function MapView({
   if (!token) return <PlaceholderMap restaurants={restaurants} className={className} />
 
   return (
-    <div ref={mapContainer} className={className} style={{ width: '100%', height: '100%' }} />
+    <div ref={mapContainer} className={className} style={{ width: '100%', height: '100%', isolation: 'isolate' }} />
   )
 })
 
