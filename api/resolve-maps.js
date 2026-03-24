@@ -19,9 +19,25 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(200).json({ error: 'VITE_GOOGLE_PLACES_KEY non configurata' })
 
   try {
+    // CID URLs can't be resolved server-side (Google blocks with CAPTCHA/consent)
+    try {
+      if (new URL(url).searchParams.get('cid')) {
+        return res.status(200).json({
+          error: 'Link CID non supportato. Dall\'app Google Maps usa "Condividi" → "Copia link".',
+        })
+      }
+    } catch (_) {}
+
     // Step 1: Follow redirects (for short URLs like maps.app.goo.gl)
     let resolvedUrl = url
     try { resolvedUrl = await followRedirects(url) } catch (_) {}
+
+    // Detect Google CAPTCHA/sorry page
+    if (resolvedUrl.includes('google.com/sorry')) {
+      return res.status(200).json({
+        error: 'Google ha bloccato la richiesta. Prova con un link diverso (maps.app.goo.gl).',
+      })
+    }
 
     // Step 2: Fetch page HTML to extract title/metadata
     let pageTitle = ''
