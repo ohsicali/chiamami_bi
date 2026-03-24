@@ -98,6 +98,7 @@ export function useAuth() {
       password,
       options: {
         data: { full_name: fullName },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
     if (error) throw error
@@ -108,8 +109,16 @@ export function useAuth() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
+    })
+    if (error) throw error
+  }, [])
+
+  const resetPasswordForEmail = useCallback(async (email) => {
+    if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     })
     if (error) throw error
   }, [])
@@ -126,5 +135,5 @@ export function useAuth() {
 
   const isAdmin = profile?.is_admin === true
 
-  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile }
+  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
 }
