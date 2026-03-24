@@ -205,6 +205,8 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  // Detect if user logged in via Google OAuth
+  const isGoogleUser = user?.app_metadata?.provider === 'google' || user?.app_metadata?.providers?.includes('google')
   // Email change with OTP verification on current email
   const [emailStep, setEmailStep] = useState('form') // 'form' | 'otp' | 'recovery_otp' | 'done'
   const [newEmail, setNewEmail] = useState('')
@@ -262,6 +264,22 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       await supabase.from('newsletter_subscribers').upsert({ email: user.email, source: 'profile_toggle' }, { onConflict: 'email' })
     } else {
       await supabase.from('newsletter_subscribers').delete().eq('email', user.email)
+    }
+  }
+
+  // Google OAuth users: update only profile email (no Auth change needed)
+  const handleGoogleEmailChange = async () => {
+    if (!newEmail.trim() || newEmail === (profile?.email || user?.email)) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    const { error } = await supabase.from('profiles').update({ email: newEmail.trim() }).eq('id', user.id)
+    setEmailLoading(false)
+    if (error) {
+      setEmailStatus({ type: 'error', text: error.message })
+    } else {
+      setEmailStep('done')
+      setEmailStatus({ type: 'success', text: 'Email di contatto aggiornata!' })
+      onRefreshProfile?.()
     }
   }
 
@@ -504,14 +522,47 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         </div>
       </div>
 
-      {/* Email change with OTP */}
+      {/* Email change with OTP (or direct for Google users) */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-primary mb-1">Email</h3>
-        <p className="text-xs text-secondary mb-3">
-          Email attuale: <span className="font-medium text-primary">{user?.email}</span>
-        </p>
+        <h3 className="text-sm font-semibold text-primary mb-1">
+          {isGoogleUser ? 'Email di contatto' : 'Email'}
+        </h3>
+        {isGoogleUser ? (
+          <p className="text-xs text-secondary mb-3">
+            Accedi con Google ({user?.email}). Qui puoi impostare un'email di contatto diversa.
+            {profile?.email && profile.email !== user?.email && (
+              <><br />Email di contatto: <span className="font-medium text-primary">{profile.email}</span></>
+            )}
+          </p>
+        ) : (
+          <p className="text-xs text-secondary mb-3">
+            Email attuale: <span className="font-medium text-primary">{user?.email}</span>
+          </p>
+        )}
 
-        {emailStep === 'form' && (
+        {emailStep === 'form' && isGoogleUser && (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                className={inputClasses}
+                placeholder="Email di contatto"
+              />
+              <motion.button
+                onClick={handleGoogleEmailChange}
+                disabled={emailLoading || !newEmail.trim() || newEmail === (profile?.email || user?.email)}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Salva'}
+              </motion.button>
+            </div>
+          </div>
+        )}
+
+        {emailStep === 'form' && !isGoogleUser && (
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
               <input
@@ -890,7 +941,7 @@ export default function ProfilePage() {
                   >
                     {displayName}
                   </h1>
-                  <p className="text-sm text-secondary">{user?.email}</p>
+                  <p className="text-sm text-secondary">{profile?.email || user?.email}</p>
                 </div>
                 <button
                   onClick={() => setShowSettings(true)}

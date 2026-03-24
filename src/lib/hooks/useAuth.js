@@ -20,8 +20,13 @@ export function useAuth() {
       .single()
 
     if (data) {
-      // Sync email to profile if missing
-      if (!data.email && authUser.email) {
+      // Sync email to profile if missing (but don't overwrite for Google users who may have a different contact email)
+      const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
+      if (!data.email && authUser.email && !isGoogleUser) {
+        supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+        data.email = authUser.email
+      } else if (!data.email && authUser.email && isGoogleUser) {
+        // For Google users, set initial email but don't overwrite later changes
         supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
         data.email = authUser.email
       }
@@ -98,7 +103,9 @@ export function useAuth() {
       if (authUser) {
         fetchProfile(authUser)
         // Sync email to profiles when it changes (e.g. after email change confirmation)
-        if (event === 'USER_UPDATED' && authUser.email) {
+        // Skip for Google OAuth users — their profile email is managed separately as a contact email
+        const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
+        if (event === 'USER_UPDATED' && authUser.email && !isGoogleUser) {
           supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
         }
       } else {

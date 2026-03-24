@@ -124,12 +124,29 @@ function ThumbnailTool() {
 /* ------------------------------------------------------------------ */
 /*  Account: Change email (OTP on current email, then immediate change) */
 /* ------------------------------------------------------------------ */
-function ChangeEmail({ currentEmail }) {
+function ChangeEmail({ currentEmail, user }) {
+  const isGoogleUser = user?.app_metadata?.provider === 'google' || user?.app_metadata?.providers?.includes('google')
   const [step, setStep] = useState('form') // 'form' | 'otp' | 'done'
   const [newEmail, setNewEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  // Google users: update only profile email (contact email)
+  const handleGoogleEmailChange = async (e) => {
+    e.preventDefault()
+    if (!newEmail.trim()) return
+    setLoading(true)
+    setStatus(null)
+    const { error } = await supabase.from('profiles').update({ email: newEmail.trim() }).eq('id', user.id)
+    setLoading(false)
+    if (error) {
+      setStatus({ type: 'error', msg: error.message })
+    } else {
+      setStep('done')
+      setStatus({ type: 'success', msg: 'Email di contatto aggiornata!' })
+    }
+  }
 
   const handleSendOtp = async (e) => {
     e.preventDefault()
@@ -180,12 +197,40 @@ function ChangeEmail({ currentEmail }) {
 
   return (
     <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
-      <h3 className="text-sm font-semibold text-primary mb-1">Cambia email</h3>
-      <p className="text-xs text-secondary mb-3">
-        Email attuale: <span className="font-medium text-primary">{currentEmail}</span>
-      </p>
+      <h3 className="text-sm font-semibold text-primary mb-1">
+        {isGoogleUser ? 'Email di contatto' : 'Cambia email'}
+      </h3>
+      {isGoogleUser ? (
+        <p className="text-xs text-secondary mb-3">
+          Accesso con Google ({currentEmail}). Puoi impostare un'email di contatto diversa.
+        </p>
+      ) : (
+        <p className="text-xs text-secondary mb-3">
+          Email attuale: <span className="font-medium text-primary">{currentEmail}</span>
+        </p>
+      )}
 
-      {step === 'form' && (
+      {step === 'form' && isGoogleUser && (
+        <form onSubmit={handleGoogleEmailChange} className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Email di contatto"
+            required
+            className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+          />
+          <button
+            type="submit"
+            disabled={loading || !newEmail.trim()}
+            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {loading ? 'Salvataggio...' : 'Salva'}
+          </button>
+        </form>
+      )}
+
+      {step === 'form' && !isGoogleUser && (
         <form onSubmit={handleSendOtp} className="flex flex-col sm:flex-row gap-2">
           <input
             type="email"
@@ -469,7 +514,7 @@ export default function AdminSettings() {
       >
         <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Account</h2>
         <div className="space-y-4 max-w-2xl">
-          <ChangeEmail currentEmail={user.email} />
+          <ChangeEmail currentEmail={user.email} user={user} />
           <ChangePassword userEmail={user.email} />
         </div>
       </motion.div>
