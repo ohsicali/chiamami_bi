@@ -57,17 +57,22 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
     `https://www.google.com/maps/place/?cid=${cid}`,
   ].filter(Boolean)
 
+  // Google consent cookie — required to bypass EU cookie consent page
+  // Without this, Google serves a generic consent page instead of actual place data
+  const googleHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml',
+    'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
+    'Cookie': 'CONSENT=PENDING+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
+  }
+
   for (const tryUrl of urlsToTry) {
     if (searchQuery && lat) break
     debugInfo.triedUrls.push(tryUrl)
     try {
       const pageRes = await fetch(tryUrl, {
         redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html',
-          'Accept-Language': 'it-IT,it;q=0.9',
-        },
+        headers: googleHeaders,
       })
       const finalUrl = pageRes.url
       resolvedUrl = finalUrl || tryUrl
@@ -220,8 +225,9 @@ async function handleStandardUrl(url, apiKey, res) {
       redirect: 'follow',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html',
-        'Accept-Language': 'it-IT,it;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'it-IT,it;q=0.9,en;q=0.8',
+        'Cookie': 'CONSENT=PENDING+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
       },
     })
     if (pageRes.url && pageRes.url !== pageUrl) resolvedUrl = pageRes.url
@@ -455,6 +461,7 @@ async function followRedirects(url, maxRedirects = 10) {
       redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'Cookie': 'CONSENT=PENDING+987; SOCS=CAISHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg',
       },
     })
     const location = res.headers.get('location')
