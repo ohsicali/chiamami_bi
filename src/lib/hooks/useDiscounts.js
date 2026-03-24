@@ -103,23 +103,21 @@ export function useUserRedemption(discountId, userId) {
     if (error) throw error
 
     // Increment total_redeemed counter
-    await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-      .catch(() => {
-        // If RPC doesn't exist, do manual increment
-        supabase
+    const { error: rpcError } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
+    if (rpcError) {
+      // Fallback: manual increment if RPC doesn't exist
+      const { data: d } = await supabase
+        .from('discounts')
+        .select('total_redeemed')
+        .eq('id', discountId)
+        .single()
+      if (d) {
+        await supabase
           .from('discounts')
-          .select('total_redeemed')
+          .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
           .eq('id', discountId)
-          .single()
-          .then(({ data: d }) => {
-            if (d) {
-              supabase
-                .from('discounts')
-                .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
-                .eq('id', discountId)
-            }
-          })
-      })
+      }
+    }
 
     setRedemption(data)
     return data
@@ -263,21 +261,21 @@ export async function verifyQRCode(qrCode, pinCode) {
   // 6. Increment total_redeemed on the discount
   const discountId = redemption.discount?.id || redemption.discount_id
   if (discountId) {
-    await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-      .catch(async () => {
-        // Fallback: manual increment
-        const { data: d } = await supabase
+    const { error: rpcErr } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
+    if (rpcErr) {
+      // Fallback: manual increment
+      const { data: d } = await supabase
+        .from('discounts')
+        .select('total_redeemed')
+        .eq('id', discountId)
+        .single()
+      if (d) {
+        await supabase
           .from('discounts')
-          .select('total_redeemed')
+          .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
           .eq('id', discountId)
-          .single()
-        if (d) {
-          await supabase
-            .from('discounts')
-            .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
-            .eq('id', discountId)
-        }
-      })
+      }
+    }
   }
 
   return {
