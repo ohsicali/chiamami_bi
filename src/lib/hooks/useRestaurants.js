@@ -360,11 +360,13 @@ export function useRestaurants(userPosition = null) {
           .select('*, restaurant_photos(*)')
           .order('name')
         if (dbError) throw dbError
-        const mapped = (data || []).map(r => ({
-          ...r,
-          photos: (r.restaurant_photos || []).sort((a, b) => a.sort_order - b.sort_order),
-        }))
-        delete mapped.restaurant_photos
+        const mapped = (data || []).map(r => {
+          const { restaurant_photos, ...rest } = r
+          return {
+            ...rest,
+            photos: (restaurant_photos || []).sort((a, b) => a.sort_order - b.sort_order),
+          }
+        })
         setAllRestaurants(mapped)
       } else {
         await new Promise(r => setTimeout(r, 300))

@@ -34,8 +34,12 @@ export function useRestaurantDiscount(restaurantId) {
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
-      .then(({ data }) => {
-        setDiscount(data || null)
+      .then(({ data, error }) => {
+        setDiscount(error ? null : data || null)
+        setLoading(false)
+      })
+      .catch(() => {
+        setDiscount(null)
         setLoading(false)
       })
   }, [restaurantId])

@@ -24,11 +24,11 @@ export default function RestaurantPage() {
   const navigate = useNavigate()
   const match = matchPath('/restaurant/:slug', location.pathname)
   const slug = match?.params?.slug
-  const { restaurants, loading } = useRestaurants()
+  const { allRestaurants, loading } = useRestaurants()
   const { user } = useAuth()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
-  const restaurant = restaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
+  const restaurant = allRestaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
 
   const handleBack = () => {
     navigate('/')
