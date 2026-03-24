@@ -276,6 +276,7 @@ const MapView = forwardRef(function MapView({
   restaurants,
   selectedId,
   onSelectRestaurant,
+  onVisibleRestaurantsChange,
   userPosition,
   savedIds,
   className,
@@ -287,6 +288,8 @@ const MapView = forwardRef(function MapView({
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
+  const onVisibleRef = useRef(onVisibleRestaurantsChange)
+  onVisibleRef.current = onVisibleRestaurantsChange
   const restaurantsRef = useRef(restaurants)
   restaurantsRef.current = restaurants
   const savedIdsRef = useRef(savedIds)
@@ -307,7 +310,15 @@ const MapView = forwardRef(function MapView({
   }))
 
   /* -------------------------------------------------------------- */
-  /*  Sync HTML markers for unclustered points                       */
+  /*  Clear all HTML markers (used during zoom/pan transitions)      */
+  /* -------------------------------------------------------------- */
+  const clearMarkers = useCallback(() => {
+    Object.values(markers.current).forEach(({ marker }) => marker.remove())
+    markers.current = {}
+  }, [])
+
+  /* -------------------------------------------------------------- */
+  /*  Sync HTML markers for unclustered points + notify visible IDs  */
   /* -------------------------------------------------------------- */
   const syncMarkers = useCallback(() => {
     const m = map.current
@@ -317,16 +328,16 @@ const MapView = forwardRef(function MapView({
     const saved = savedIdsRef.current
 
     // Which restaurant IDs are visible as unclustered points right now?
-    const visibleFeatures = m.querySourceFeatures(SOURCE_ID, { sourceLayer: '' })
+    // Use queryRenderedFeatures (only what's on screen) instead of querySourceFeatures
+    const visibleFeatures = m.queryRenderedFeatures({ layers: [UNCLUSTERED_LAYER] })
     const visibleIds = new Set()
     visibleFeatures.forEach((f) => {
-      // Only unclustered features (not cluster aggregates)
       if (!f.properties.cluster) {
         visibleIds.add(f.properties.id)
       }
     })
 
-    // Remove markers that are no longer visible (got clustered)
+    // Remove markers that are no longer visible (got clustered or panned off screen)
     for (const id of Object.keys(markers.current)) {
       if (!visibleIds.has(id)) {
         markers.current[id].marker.remove()
@@ -336,7 +347,7 @@ const MapView = forwardRef(function MapView({
 
     // Add markers for newly visible unclustered points
     for (const id of visibleIds) {
-      if (markers.current[id]) continue // already exists
+      if (markers.current[id]) continue
 
       const r = rests.find((r) => r.id === id)
       if (!r) continue
@@ -357,6 +368,19 @@ const MapView = forwardRef(function MapView({
         .addTo(m)
 
       markers.current[id] = { marker, el }
+    }
+
+    // Notify parent about visible restaurants (for list sync)
+    if (onVisibleRef.current) {
+      // Get ALL visible IDs including those inside clusters
+      const bounds = m.getBounds()
+      const allVisibleIds = rests
+        .filter((r) => r.latitude && r.longitude
+          && bounds.contains([r.longitude, r.latitude]))
+        .map((r) => r.id)
+
+      const center = m.getCenter()
+      onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
     }
   }, [])
 
@@ -393,8 +417,8 @@ const MapView = forwardRef(function MapView({
         type: 'geojson',
         data: buildGeoJSON(restaurantsRef.current),
         cluster: true,
-        clusterMaxZoom: 14,   // stop clustering at this zoom
-        clusterRadius: 50,    // px radius to cluster points
+        clusterMaxZoom: 14,
+        clusterRadius: 50,
       })
 
       // Cluster circles
@@ -429,14 +453,14 @@ const MapView = forwardRef(function MapView({
         },
       })
 
-      // Invisible layer for unclustered points (needed for querySourceFeatures)
+      // Invisible layer for unclustered points (for queryRenderedFeatures)
       m.addLayer({
         id: UNCLUSTERED_LAYER,
         type: 'circle',
         source: SOURCE_ID,
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-radius': 0,
+          'circle-radius': 1,
           'circle-opacity': 0,
         },
       })
@@ -460,10 +484,10 @@ const MapView = forwardRef(function MapView({
       m.on('mouseenter', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', CLUSTER_LAYER, () => { m.getCanvas().style.cursor = '' })
 
-      // Sync HTML markers after every render frame
-      m.on('render', syncMarkers)
-      // Also on moveend/zoomend for safety
-      m.on('moveend', syncMarkers)
+      // During movement: hide HTML markers to avoid ghost overlap with clusters
+      m.on('movestart', clearMarkers)
+      // When map settles: show HTML markers in their final positions
+      m.on('idle', syncMarkers)
 
       // Initial sync
       syncMarkers()
@@ -477,7 +501,7 @@ const MapView = forwardRef(function MapView({
       map.current?.remove()
       map.current = null
     }
-  }, [token, syncMarkers])
+  }, [token, syncMarkers, clearMarkers])
 
   /* -------------------------------------------------------------- */
   /*  Update GeoJSON source when restaurants change                  */
@@ -504,11 +528,9 @@ const MapView = forwardRef(function MapView({
   /*  Rebuild markers when savedIds change (heart badge)             */
   /* -------------------------------------------------------------- */
   useEffect(() => {
-    // Clear all HTML markers so they get recreated with updated saved status
-    Object.values(markers.current).forEach(({ marker }) => marker.remove())
-    markers.current = {}
+    clearMarkers()
     syncMarkers()
-  }, [savedIds, syncMarkers])
+  }, [savedIds, syncMarkers, clearMarkers])
 
   /* -------------------------------------------------------------- */
   /*  Update selected marker style                                   */

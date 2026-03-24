@@ -64,8 +64,33 @@ export default function HomePage() {
 
   const [selectedId, setSelectedId] = useState(null)
   const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
+  const [visibleIds, setVisibleIds] = useState(null) // null = show all (initial state)
+  const [mapCenter, setMapCenter] = useState(null)
   const mapRef = useRef(null)
   const sheetRef = useRef(null)
+
+  // Callback from MapView: visible restaurant IDs + map center
+  const handleVisibleRestaurantsChange = useCallback((ids, center) => {
+    setVisibleIds(new Set(ids))
+    setMapCenter(center)
+  }, [])
+
+  // Sort displayed restaurants by distance to map center, filter to viewport
+  const viewportRestaurants = (() => {
+    if (!visibleIds || !mapCenter) return displayedRestaurants
+
+    const inView = displayedRestaurants.filter((r) => visibleIds.has(r.id))
+
+    // Sort by distance to map center
+    const toRad = (d) => (d * Math.PI) / 180
+    const dist = (r) => {
+      const dLat = toRad(r.latitude - mapCenter.lat)
+      const dLng = toRad(r.longitude - mapCenter.lng)
+      return dLat * dLat + dLng * dLng // no need for exact distance, just relative order
+    }
+    inView.sort((a, b) => dist(a) - dist(b))
+    return inView
+  })()
 
   const handleLocateMe = useCallback(() => {
     locate()
@@ -123,6 +148,7 @@ export default function HomePage() {
         restaurants={allRestaurants}
         selectedId={selectedId}
         onSelectRestaurant={handlePinSelect}
+        onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
         userPosition={position}
         savedIds={savedIds}
         className="absolute inset-0"
@@ -188,8 +214,11 @@ export default function HomePage() {
             <div className="skeleton h-4 w-24 rounded-md" />
           ) : (
             <p className="text-sm font-medium text-secondary">
-              {displayedRestaurants.length}{' '}
-              {displayedRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
+              {viewportRestaurants.length}{' '}
+              {viewportRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
+              {visibleIds && viewportRestaurants.length < displayedRestaurants.length && (
+                <span className="text-xs text-secondary/60"> in questa zona</span>
+              )}
             </p>
           )}
         </div>
@@ -201,7 +230,7 @@ export default function HomePage() {
               <SkeletonCard key={i} className="!shadow-sm" />
             ))}
           </div>
-        ) : displayedRestaurants.length === 0 ? (
+        ) : viewportRestaurants.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-3 text-4xl">🔍</div>
             <p className="text-base font-semibold text-primary">
@@ -213,7 +242,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-8">
-            {displayedRestaurants.map((restaurant, index) => (
+            {viewportRestaurants.map((restaurant, index) => (
               <div key={restaurant.id}>
                 <RestaurantCard
                   restaurant={restaurant}
