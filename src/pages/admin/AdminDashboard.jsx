@@ -82,6 +82,9 @@ export default function AdminDashboard() {
   const [searchParams] = useSearchParams()
   const restaurantTableRef = useRef(null)
 
+  // Thumbnail regeneration state
+  const [thumbProgress, setThumbProgress] = useState(null) // { done, total, current } or null
+
   // Scroll to restaurants table if ?section=restaurants
   useEffect(() => {
     if (searchParams.get('section') === 'restaurants' && restaurantTableRef.current) {
@@ -228,6 +231,81 @@ export default function AdminDashboard() {
     setDeleteId(null)
   }
 
+  /* ---------------------------------------------------------------- */
+  /*  Regenerate thumbnails for all photos missing thumb_url           */
+  /* ---------------------------------------------------------------- */
+  const regenerateThumbnails = useCallback(async () => {
+    if (!isSupabaseConfigured()) return
+
+    // 1. Fetch all photos without a thumbnail
+    const { data: photos, error } = await supabase
+      .from('restaurant_photos')
+      .select('id, photo_url, restaurant_id')
+      .is('thumb_url', null)
+      .not('photo_url', 'is', null)
+
+    if (error || !photos?.length) {
+      setThumbProgress({ done: 0, total: 0, current: 'Nessuna foto da convertire' })
+      setTimeout(() => setThumbProgress(null), 3000)
+      return
+    }
+
+    setThumbProgress({ done: 0, total: photos.length, current: 'Avvio...' })
+
+    // Helper: download image, resize to 400px WebP thumbnail
+    const createThumb = (url) =>
+      new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          const scale = Math.min(1, 400 / img.width)
+          const w = Math.round(img.width * scale)
+          const h = Math.round(img.height * scale)
+          const canvas = document.createElement('canvas')
+          canvas.width = w
+          canvas.height = h
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+          canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error('blob failed'))),
+            'image/webp',
+            0.70
+          )
+        }
+        img.onerror = () => reject(new Error('load failed'))
+        img.src = url
+      })
+
+    let done = 0
+    for (const photo of photos) {
+      try {
+        setThumbProgress({ done, total: photos.length, current: `Foto ${done + 1}/${photos.length}` })
+
+        const thumbBlob = await createThumb(photo.photo_url)
+
+        // Upload thumbnail next to original
+        const thumbPath = `restaurants/${photo.restaurant_id}/${photo.id}-thumb.webp`
+        const { error: upErr } = await supabase.storage
+          .from('photos')
+          .upload(thumbPath, thumbBlob, { contentType: 'image/webp', cacheControl: '31536000', upsert: true })
+
+        if (!upErr) {
+          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(thumbPath)
+          // Update DB record
+          await supabase
+            .from('restaurant_photos')
+            .update({ thumb_url: urlData.publicUrl })
+            .eq('id', photo.id)
+        }
+      } catch (err) {
+        console.warn('Thumb generation failed for', photo.id, err)
+      }
+      done++
+    }
+
+    setThumbProgress({ done, total: photos.length, current: 'Completato!' })
+    setTimeout(() => setThumbProgress(null), 4000)
+  }, [])
+
   if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -306,6 +384,28 @@ export default function AdminDashboard() {
           </motion.div>
         ))}
       </div>
+
+      {/* Tools */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.32, duration: 0.4 }}
+        className="flex flex-wrap items-center gap-3 mb-8"
+      >
+        <button
+          onClick={regenerateThumbnails}
+          disabled={thumbProgress !== null}
+          className="inline-flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-xl text-sm font-medium text-primary shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {thumbProgress
+            ? `${thumbProgress.current} (${thumbProgress.done}/${thumbProgress.total})`
+            : 'Rigenera thumbnail foto'
+          }
+        </button>
+      </motion.div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
