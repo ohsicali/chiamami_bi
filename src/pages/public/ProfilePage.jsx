@@ -205,10 +205,9 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  // Email change with OTP
-  const [emailStep, setEmailStep] = useState('form') // 'form' | 'otp' | 'done'
+  // Email change
+  const [emailStep, setEmailStep] = useState('form') // 'form' | 'done'
   const [newEmail, setNewEmail] = useState('')
-  const [otpCode, setOtpCode] = useState('')
   const [emailStatus, setEmailStatus] = useState(null)
   const [emailLoading, setEmailLoading] = useState(false)
 
@@ -260,49 +259,30 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     }
   }
 
-  // Email OTP handlers
-  const handleSendOtp = async () => {
+  // Email change handler — uses Supabase's built-in email change flow
+  const handleChangeEmail = async () => {
     if (!newEmail.trim() || newEmail === user?.email) return
     setEmailLoading(true)
     setEmailStatus(null)
-    const { error } = await supabase.auth.signInWithOtp({ email: user.email })
+    const { error } = await supabase.auth.updateUser(
+      { email: newEmail },
+      { emailRedirectTo: `${window.location.origin}/auth/callback?type=email_change` }
+    )
     setEmailLoading(false)
     if (error) {
       setEmailStatus({ type: 'error', text: error.message })
     } else {
-      setEmailStep('otp')
-      setEmailStatus({ type: 'success', text: `Codice inviato a ${user.email}` })
-    }
-  }
-
-  const handleVerifyOtpAndUpdateEmail = async () => {
-    if (!otpCode.trim()) return
-    setEmailLoading(true)
-    setEmailStatus(null)
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      email: user.email,
-      token: otpCode.trim(),
-      type: 'email',
-    })
-    if (verifyErr) {
-      setEmailLoading(false)
-      setEmailStatus({ type: 'error', text: 'Codice non valido o scaduto' })
-      return
-    }
-    const { error: updateErr } = await supabase.auth.updateUser({ email: newEmail })
-    setEmailLoading(false)
-    if (updateErr) {
-      setEmailStatus({ type: 'error', text: updateErr.message })
-    } else {
       setEmailStep('done')
-      setEmailStatus({ type: 'success', text: 'Email aggiornata! Controlla la nuova casella per confermare.' })
+      setEmailStatus({
+        type: 'success',
+        text: `Ti abbiamo inviato un'email di conferma a ${newEmail}. Clicca il link nell'email per completare il cambio.`,
+      })
     }
   }
 
   const handleEmailReset = () => {
     setEmailStep('form')
     setNewEmail('')
-    setOtpCode('')
     setEmailStatus(null)
   }
 
@@ -433,51 +413,23 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
                 placeholder="Nuova email"
               />
               <motion.button
-                onClick={handleSendOtp}
-                disabled={emailLoading || !newEmail.trim()}
+                onClick={handleChangeEmail}
+                disabled={emailLoading || !newEmail.trim() || newEmail === user?.email}
                 className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
                 whileTap={{ scale: 0.95 }}
               >
-                {emailLoading ? '...' : 'Invia codice'}
+                {emailLoading ? '...' : 'Cambia'}
               </motion.button>
             </div>
-          </div>
-        )}
-
-        {emailStep === 'otp' && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-secondary">
-              Inserisci il codice ricevuto su <strong>{user?.email}</strong>
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={otpCode}
-                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                placeholder="Codice a 8 cifre"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                className={`${inputClasses} text-center tracking-widest font-mono`}
-              />
-              <motion.button
-                onClick={handleVerifyOtpAndUpdateEmail}
-                disabled={emailLoading || otpCode.length < 6 || otpCode.length > 8}
-                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
-                whileTap={{ scale: 0.95 }}
-              >
-                {emailLoading ? '...' : 'Conferma'}
-              </motion.button>
-            </div>
-            <button onClick={handleEmailReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
-              Annulla
-            </button>
           </div>
         )}
 
         {emailStep === 'done' && (
-          <button onClick={handleEmailReset} className="text-xs text-accent hover:underline">
-            Cambia di nuovo
-          </button>
+          <div className="flex flex-col gap-2">
+            <button onClick={handleEmailReset} className="text-xs text-accent hover:underline">
+              Riprova con un'altra email
+            </button>
+          </div>
         )}
 
         {emailStatus && (
