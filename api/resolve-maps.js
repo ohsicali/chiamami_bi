@@ -34,25 +34,34 @@ export default async function handler(req, res) {
 
 /**
  * Handle CID URLs (from Google Maps app sharing)
- * CID pages serve generic HTML server-side, so we need alternative strategies
+ * Google blocks server-side resolution of CID URLs completely.
+ * Solution: convert CID to hex ftid and use Google's internal place lookup,
+ * or scrape the HTML for embedded place data (URLs, coords in JS).
  */
 async function handleCidUrl(cid, originalUrl, apiKey, res) {
   let searchQuery = ''
   let lat = null
   let lng = null
   let resolvedUrl = originalUrl
-  let debugInfo = { strategy: 'none' }
+  let debugInfo = { strategy: 'none', cidHex: null, triedUrls: [] }
 
-  // Strategy A: Try /maps/place/ URL format with CID (sometimes redirects to real place page)
-  const cidUrlFormats = [
-    `https://www.google.com/maps/place/?cid=${cid}`,
+  // Convert CID to hex for ftid lookups
+  let cidHex = null
+  try { cidHex = BigInt(cid).toString(16); debugInfo.cidHex = cidHex } catch (_) {}
+
+  // Strategy A: Fetch CID page and deep-parse the FULL HTML for embedded data
+  // Google Maps pages embed place data in JavaScript even when title is generic
+  const urlsToTry = [
     `https://www.google.com/maps?cid=${cid}&hl=it&gl=it`,
-  ]
+    cidHex ? `https://www.google.com/maps/place/?ftid=0x0:0x${cidHex}` : null,
+    `https://www.google.com/maps/place/?cid=${cid}`,
+  ].filter(Boolean)
 
-  for (const cidUrl of cidUrlFormats) {
-    if (searchQuery) break
+  for (const tryUrl of urlsToTry) {
+    if (searchQuery && lat) break
+    debugInfo.triedUrls.push(tryUrl)
     try {
-      const cidRes = await fetch(cidUrl, {
+      const pageRes = await fetch(tryUrl, {
         redirect: 'follow',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -60,105 +69,76 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
           'Accept-Language': 'it-IT,it;q=0.9',
         },
       })
-      const finalUrl = cidRes.url
-      if (finalUrl) {
-        // Check if we got redirected to a /place/ URL
-        const pm = finalUrl.match(/\/place\/([^/@?]+)/)
-        if (pm) {
-          searchQuery = decodeURIComponent(pm[1].replace(/\+/g, ' '))
-          resolvedUrl = finalUrl
-          debugInfo.strategy = 'cid_redirect_place'
-        }
-        const cm = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
-        if (cm) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
-      }
+      const finalUrl = pageRes.url
+      resolvedUrl = finalUrl || tryUrl
 
-      // Even if no redirect, try to extract data from HTML
-      if (!searchQuery) {
-        const html = await cidRes.text()
-        const extracted = extractFromHtml(html)
-        if (extracted.placeName) {
-          searchQuery = extracted.placeName
-          debugInfo.strategy = 'cid_html_' + extracted.source
-        }
-        if (!lat && extracted.lat) { lat = extracted.lat; lng = extracted.lng }
-        if (extracted.canonicalUrl) {
-          const pm2 = extracted.canonicalUrl.match(/\/place\/([^/@?]+)/)
-          if (pm2) {
-            searchQuery = decodeURIComponent(pm2[1].replace(/\+/g, ' '))
-            debugInfo.strategy = 'cid_canonical'
+      // Check if redirect gave us a /place/ URL
+      const pm = finalUrl?.match(/\/place\/([^/@?]+)/)
+      if (pm) {
+        searchQuery = decodeURIComponent(pm[1].replace(/\+/g, ' '))
+        debugInfo.strategy = 'redirect_place'
+      }
+      const cm = finalUrl?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      if (cm) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
+
+      // Deep parse HTML — look for embedded /place/ URLs, coordinates, and place names in JS
+      if (!searchQuery || !lat) {
+        const html = await pageRes.text()
+
+        // Look for /place/Name/ URLs anywhere in the HTML (embedded in JS)
+        if (!searchQuery) {
+          const placeUrls = html.match(/\/place\/([^/@?"'\s\\]+)/g)
+          if (placeUrls) {
+            for (const pu of placeUrls) {
+              const m = pu.match(/\/place\/([^/@?"'\s\\]+)/)
+              if (m) {
+                const candidate = decodeURIComponent(m[1].replace(/\+/g, ' '))
+                if (candidate.length > 2 && !isGenericQuery(candidate) && !/^data/.test(candidate)) {
+                  searchQuery = candidate
+                  debugInfo.strategy = 'html_embedded_place_url'
+                  break
+                }
+              }
+            }
           }
         }
-      }
-    } catch (_) {}
-  }
 
-  // Strategy B: Convert CID to hex and try ftid-based URL
-  if (!searchQuery) {
-    try {
-      const cidBigInt = BigInt(cid)
-      const cidHex = cidBigInt.toString(16)
-      const ftidUrl = `https://www.google.com/maps/place/?ftid=0x0:0x${cidHex}`
-      const ftidRes = await fetch(ftidUrl, {
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html',
-          'Accept-Language': 'it-IT,it;q=0.9',
-        },
-      })
-      const ftidFinalUrl = ftidRes.url
-      if (ftidFinalUrl) {
-        const pm = ftidFinalUrl.match(/\/place\/([^/@?]+)/)
-        if (pm) {
-          searchQuery = decodeURIComponent(pm[1].replace(/\+/g, ' '))
-          resolvedUrl = ftidFinalUrl
-          debugInfo.strategy = 'ftid_redirect'
+        // Look for coordinates in the HTML (patterns like [lat,lng] or @lat,lng)
+        if (!lat) {
+          // Match Italian coordinates (lat 35-47, lng 6-19)
+          const coordPatterns = [
+            /\[(-?(?:3[5-9]|4[0-7])\.\d{3,}),\s*(-?(?:[6-9]|1[0-9])\.\d{3,})\]/,
+            /@(-?(?:3[5-9]|4[0-7])\.\d{3,}),(-?(?:[6-9]|1[0-9])\.\d{3,})/,
+            /null,null,(-?(?:3[5-9]|4[0-7])\.\d{4,}),(-?(?:[6-9]|1[0-9])\.\d{4,})/,
+          ]
+          for (const pattern of coordPatterns) {
+            const m = html.match(pattern)
+            if (m) {
+              lat = parseFloat(m[1])
+              lng = parseFloat(m[2])
+              debugInfo.strategy = (debugInfo.strategy === 'none' ? '' : debugInfo.strategy + '+') + 'html_coords'
+              break
+            }
+          }
         }
-        const cm = ftidFinalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
-        if (cm && !lat) { lat = parseFloat(cm[1]); lng = parseFloat(cm[2]) }
-      }
 
-      // Try HTML extraction too
-      if (!searchQuery) {
-        const html = await ftidRes.text()
-        const extracted = extractFromHtml(html)
-        if (extracted.placeName) {
-          searchQuery = extracted.placeName
-          debugInfo.strategy = 'ftid_html_' + extracted.source
+        // Standard HTML extraction (title, og tags, canonical)
+        if (!searchQuery) {
+          const extracted = extractFromHtml(html)
+          if (extracted.placeName && !isGenericQuery(extracted.placeName)) {
+            searchQuery = extracted.placeName
+            debugInfo.strategy = 'html_' + extracted.source
+          }
+          if (!lat && extracted.lat) { lat = extracted.lat; lng = extracted.lng }
         }
-        if (!lat && extracted.lat) { lat = extracted.lat; lng = extracted.lng }
       }
     } catch (_) {}
   }
 
-  // Strategy C: Try fetching as Googlebot (Google serves richer HTML to its own crawler)
-  if (!searchQuery) {
-    try {
-      const botRes = await fetch(`https://www.google.com/maps?cid=${cid}`, {
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-          'Accept': 'text/html',
-          'Accept-Language': 'it-IT,it;q=0.9',
-        },
-      })
-      const html = await botRes.text()
-      const extracted = extractFromHtml(html)
-      if (extracted.placeName) {
-        searchQuery = extracted.placeName
-        debugInfo.strategy = 'googlebot_' + extracted.source
-      }
-      if (!lat && extracted.lat) { lat = extracted.lat; lng = extracted.lng }
-    } catch (_) {}
-  }
+  // Reject garbage
+  if (searchQuery && isGenericQuery(searchQuery)) searchQuery = ''
 
-  // Reject garbage search queries
-  if (searchQuery && isGenericQuery(searchQuery)) {
-    searchQuery = ''
-  }
-
-  // Now use Places API to find the place
+  // Use Places API
   return await findAndReturnPlace(searchQuery, lat, lng, cid, resolvedUrl, apiKey, debugInfo, res)
 }
 
