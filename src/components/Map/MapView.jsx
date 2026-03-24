@@ -8,6 +8,7 @@ const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
+const EXIT_MS = 120
 
 /* ------------------------------------------------------------------ */
 /*  Inject styles once                                                 */
@@ -22,16 +23,22 @@ function ensureStyles() {
       will-change: transform, opacity;
     }
     .cb-marker--enter {
-      transform: scale(0);
+      transform: scale(0.5);
       opacity: 0;
     }
     .cb-marker--anim {
-      animation: cb-pop-in 250ms cubic-bezier(.175,.885,.32,1.275) forwards;
+      animation: cb-pop-in 220ms cubic-bezier(.175,.885,.32,1.275) forwards;
     }
     @keyframes cb-pop-in {
-      0%   { transform: scale(0);   opacity: 0; }
-      60%  { transform: scale(1.08); opacity: 1; }
+      0%   { transform: scale(0.5); opacity: 0; }
+      50%  { opacity: 1; }
+      75%  { transform: scale(1.06); }
       100% { transform: scale(1);   opacity: 1; }
+    }
+    .cb-marker--exit {
+      transition: opacity ${EXIT_MS}ms ease-out;
+      opacity: 0;
+      pointer-events: none;
     }
     .cb-marker--visible {
       transform: scale(1);
@@ -192,6 +199,7 @@ const MapView = forwardRef(function MapView({
   const map = useRef(null)
   const sc = useRef(null)                    // Supercluster
   const markersMap = useRef(new Map())        // key → { marker, el, type, id }
+  const exitingMarkers = useRef(new Map())   // key → { marker, timer }
   const userMarker = useRef(null)
   const lastZoom = useRef(null)
   const debounceTimer = useRef(null)
@@ -236,9 +244,16 @@ const MapView = forwardRef(function MapView({
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Flush in-flight pop-in animations to final state               */
+  /*  Flush in-flight animations: finish all instantly                */
   /* -------------------------------------------------------------- */
   const flushAnimations = useCallback(() => {
+    // Remove any still-fading-out markers immediately
+    for (const [key, { marker, timer }] of exitingMarkers.current) {
+      clearTimeout(timer)
+      marker.remove()
+    }
+    exitingMarkers.current.clear()
+    // Snap any in-progress pop-in to final state
     const container = mapContainer.current
     if (!container) return
     container.querySelectorAll('.cb-marker--anim, .cb-marker--enter').forEach((el) => {
@@ -281,11 +296,22 @@ const MapView = forwardRef(function MapView({
       newKeys.set(key, f)
     }
 
-    // ---- Remove stale markers (always instant — prevents overlap) ----
+    // ---- Remove stale markers ----
     for (const [key, entry] of markersMap.current) {
       if (newKeys.has(key)) continue
       markersMap.current.delete(key)
-      entry.marker.remove()
+
+      if (animate) {
+        // Fast fade-out (120ms) — overlaps with new markers popping in
+        entry.el.classList.add('cb-marker--exit')
+        const timer = setTimeout(() => {
+          entry.marker.remove()
+          exitingMarkers.current.delete(key)
+        }, EXIT_MS)
+        exitingMarkers.current.set(key, { marker: entry.marker, timer })
+      } else {
+        entry.marker.remove()
+      }
     }
 
     // ---- Add new / update existing ----
@@ -403,6 +429,8 @@ const MapView = forwardRef(function MapView({
 
     return () => {
       clearTimeout(debounceTimer.current)
+      for (const { marker, timer } of exitingMarkers.current.values()) { clearTimeout(timer); marker.remove() }
+      exitingMarkers.current.clear()
       for (const { marker } of markersMap.current.values()) marker.remove()
       markersMap.current.clear()
       userMarker.current?.remove()
