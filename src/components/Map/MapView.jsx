@@ -199,7 +199,6 @@ const MapView = forwardRef(function MapView({
   const userMarker = useRef(null)
   const lastZoom = useRef(null)
   const debounceTimer = useRef(null)
-  const isZooming = useRef(false)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
@@ -241,12 +240,44 @@ const MapView = forwardRef(function MapView({
   }, [])
 
   /* -------------------------------------------------------------- */
-  /*  Core sync: diff markers, animate=true for smooth transitions   */
+  /*  Flush in-flight animations: finish exits instantly, snap       */
+  /*  enters to visible. Call before starting a new sync cycle.      */
   /* -------------------------------------------------------------- */
-  const syncMarkersCore = useCallback((animate) => {
+  const flushAnimations = useCallback(() => {
+    // Immediately remove any markers still in their exit animation
+    for (const [key, tid] of exitTimers.current) {
+      clearTimeout(tid)
+      // The marker was already deleted from markersMap — find its DOM and remove
+      exitTimers.current.delete(key)
+    }
+    // Remove lingering exit-animated DOM nodes
+    const container = mapContainer.current
+    if (container) {
+      container.querySelectorAll('.cb-marker--exit').forEach((el) => {
+        // Walk up to the mapboxgl-marker wrapper and remove it
+        const wrapper = el.closest('.mapboxgl-marker')
+        if (wrapper) wrapper.remove()
+      })
+    }
+    // Snap any in-progress enter animations to final state
+    if (container) {
+      container.querySelectorAll('.cb-marker--enter').forEach((el) => {
+        el.classList.remove('cb-marker--enter', 'cb-marker--anim')
+        el.classList.add('cb-marker--instant')
+      })
+    }
+  }, [])
+
+  /* -------------------------------------------------------------- */
+  /*  Core sync: diff markers with animated crossfade                */
+  /* -------------------------------------------------------------- */
+  const syncMarkers = useCallback((animate) => {
     const m = map.current
     const index = sc.current
     if (!m || !index) return
+
+    // If animating, flush any in-progress animations first
+    if (animate) flushAnimations()
 
     const zoom = Math.floor(m.getZoom())
     const bounds = m.getBounds()
@@ -271,16 +302,9 @@ const MapView = forwardRef(function MapView({
       newKeys.set(key, f)
     }
 
-    // ---- Remove stale markers ----
+    // ---- Remove stale markers (animated fade-out) ----
     for (const [key, entry] of markersMap.current) {
       if (newKeys.has(key)) continue
-
-      // Cancel any pending exit timer for this key (e.g. from a previous remove)
-      if (exitTimers.current.has(key)) {
-        clearTimeout(exitTimers.current.get(key))
-        exitTimers.current.delete(key)
-      }
-
       markersMap.current.delete(key)
 
       if (animate) {
@@ -336,7 +360,6 @@ const MapView = forwardRef(function MapView({
         id: f.properties.cluster ? null : f.properties.id,
       })
 
-      // Animate or show instantly
       if (animate) {
         requestAnimationFrame(() => animateIn(el, true))
       } else {
@@ -354,29 +377,21 @@ const MapView = forwardRef(function MapView({
       const center = m.getCenter()
       onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
     }
-  }, [])
+  }, [flushAnimations])
 
   /* -------------------------------------------------------------- */
-  /*  Debounced animated sync — called when movement settles         */
-  /* -------------------------------------------------------------- */
-  const scheduleSyncAnimated = useCallback(() => {
-    clearTimeout(debounceTimer.current)
-    debounceTimer.current = setTimeout(() => syncMarkersCore(true), DEBOUNCE_MS)
-  }, [syncMarkersCore])
-
-  /* -------------------------------------------------------------- */
-  /*  Zoom handler: instant swap mid-zoom (no animation)             */
+  /*  Zoom handler: ANIMATED transition on integer level change      */
+  /*  Flushes previous animations first to prevent overlap           */
   /* -------------------------------------------------------------- */
   const onZoom = useCallback(() => {
     const m = map.current
     if (!m) return
     const zoom = Math.floor(m.getZoom())
     if (zoom !== lastZoom.current) {
-      // Cancel any pending animated sync — we'll do instant instead
       clearTimeout(debounceTimer.current)
-      syncMarkersCore(false)
+      syncMarkers(true) // always animate cluster ↔ pin transitions
     }
-  }, [syncMarkersCore])
+  }, [syncMarkers])
 
   /* -------------------------------------------------------------- */
   /*  Initialize map                                                 */
@@ -403,22 +418,18 @@ const MapView = forwardRef(function MapView({
         if (layer.id.includes('poi')) m.setLayoutProperty(layer.id, 'visibility', 'none')
       })
 
-      // Track zoom state
-      m.on('zoomstart', () => { isZooming.current = true })
-      m.on('zoomend', () => { isZooming.current = false })
-
-      // During zoom: instant sync on integer level change
+      // During zoom: animated sync on integer level change
       m.on('zoom', onZoom)
 
-      // After all movement settles: animated sync (catches panning + final zoom state)
+      // After all movement settles: sync for new viewport (panning, etc.)
       m.on('moveend', () => {
-        // If zoom just ended, animate the final state; if just panning, debounce
-        scheduleSyncAnimated()
+        clearTimeout(debounceTimer.current)
+        debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
       })
 
       // Initial render (instant, no animation needed)
       buildIndex()
-      syncMarkersCore(false)
+      syncMarkers(false)
     })
 
     return () => {
@@ -433,7 +444,7 @@ const MapView = forwardRef(function MapView({
       map.current = null
       sc.current = null
     }
-  }, [token, onZoom, syncMarkersCore, scheduleSyncAnimated, buildIndex])
+  }, [token, onZoom, syncMarkers, buildIndex])
 
   /* -------------------------------------------------------------- */
   /*  Rebuild when data changes                                      */
@@ -444,8 +455,8 @@ const MapView = forwardRef(function MapView({
     // Clear existing markers to rebuild with new saved states
     for (const { marker } of markersMap.current.values()) marker.remove()
     markersMap.current.clear()
-    syncMarkersCore(false) // instant — data changed, not a zoom transition
-  }, [restaurants, savedIds, buildIndex, syncMarkersCore])
+    syncMarkers(false) // instant — data changed, not a zoom transition
+  }, [restaurants, savedIds, buildIndex, syncMarkers])
 
   /* -------------------------------------------------------------- */
   /*  Selected state                                                 */
