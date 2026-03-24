@@ -126,7 +126,6 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       filterTaps: true,
       rubberband: 0.15,
       axis: 'y',
-      pointer: { touch: true },
     }
   )
 
