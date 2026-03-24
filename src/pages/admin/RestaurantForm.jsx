@@ -656,6 +656,8 @@ export default function RestaurantForm() {
         })
         const data = await res.json()
 
+        if (data?._debug) console.log('Google Maps API debug:', JSON.stringify(data._debug, null, 2))
+
         if (data?.error) {
           addToast(data.error, 'error')
           setGoogleFilling(false)

@@ -26,9 +26,11 @@ export default async function handler(req, res) {
     // Step 2: Fetch page HTML to extract title/metadata
     let pageTitle = ''
     let canonicalUrl = ''
+    let htmlLength = 0
+    let hasConsent = false
     try {
       const pageUrl = resolvedUrl !== url ? resolvedUrl : url
-      // Use US-style headers — function runs in iad1 (US) to bypass EU consent page
+      // US-style headers — function runs in iad1 (US) to bypass EU consent page
       const pageRes = await fetch(pageUrl, {
         redirect: 'follow',
         headers: {
@@ -39,6 +41,8 @@ export default async function handler(req, res) {
       })
       if (pageRes.url && pageRes.url !== pageUrl) resolvedUrl = pageRes.url
       const html = await pageRes.text()
+      htmlLength = html.length
+      hasConsent = html.includes('consent.google') || html.includes('CONSENT')
       const extracted = extractFromHtml(html)
       pageTitle = extracted.placeName || ''
       canonicalUrl = extracted.canonicalUrl || ''
@@ -86,7 +90,7 @@ export default async function handler(req, res) {
     if (!searchQuery && !lat) {
       return res.status(200).json({
         error: 'Impossibile estrarre dati dal link. Prova con un link Google Maps completo.',
-        _debug: { resolvedUrl, pageTitle, searchQuery },
+        _debug: { originalUrl: url, resolvedUrl, pageTitle, canonicalUrl, searchQuery, htmlLength, hasConsent },
       })
     }
 
