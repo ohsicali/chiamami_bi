@@ -20,6 +20,11 @@ export function useAuth() {
       .single()
 
     if (data) {
+      // Sync email to profile if missing
+      if (!data.email && authUser.email) {
+        supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+        data.email = authUser.email
+      }
       setProfile(data)
       return data
     }

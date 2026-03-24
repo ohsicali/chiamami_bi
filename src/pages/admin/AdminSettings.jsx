@@ -177,13 +177,35 @@ function ChangeEmail({ currentEmail }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Account: Change password                                           */
+/*  Account: Change password (requires current password to unlock)     */
 /* ------------------------------------------------------------------ */
-function ChangePassword() {
+function ChangePassword({ userEmail }) {
+  const [currentPwd, setCurrentPwd] = useState('')
+  const [unlocked, setUnlocked] = useState(false)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [status, setStatus] = useState(null)
+  const [verifying, setVerifying] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const handleVerify = async (e) => {
+    e.preventDefault()
+    if (!currentPwd) return
+    setVerifying(true)
+    setStatus(null)
+    // Verify current password by re-authenticating
+    const { error } = await supabase.auth.signInWithPassword({
+      email: userEmail,
+      password: currentPwd,
+    })
+    setVerifying(false)
+    if (error) {
+      setStatus({ type: 'error', msg: 'Password attuale non corretta' })
+    } else {
+      setUnlocked(true)
+      setStatus(null)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -205,38 +227,72 @@ function ChangePassword() {
       setStatus({ type: 'success', msg: 'Password aggiornata!' })
       setPassword('')
       setConfirm('')
+      setCurrentPwd('')
+      setUnlocked(false)
     }
   }
 
   return (
     <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
       <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Nuova password"
-          required
-          minLength={6}
-          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <input
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Conferma password"
-          required
-          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-        />
-        <button
-          type="submit"
-          disabled={saving || !password || !confirm}
-          className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? 'Salvataggio...' : 'Aggiorna password'}
-        </button>
-      </form>
+      {!unlocked ? (
+        <form onSubmit={handleVerify} className="space-y-2">
+          <p className="text-xs text-secondary mb-1">Inserisci la password attuale per procedere</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="password"
+              value={currentPwd}
+              onChange={(e) => setCurrentPwd(e.target.value)}
+              placeholder="Password attuale"
+              required
+              className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            />
+            <button
+              type="submit"
+              disabled={verifying || !currentPwd}
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-gray-800 text-white hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {verifying ? 'Verifica...' : 'Verifica'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Nuova password (min. 6 caratteri)"
+            required
+            minLength={6}
+            className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+          />
+          <input
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="Conferma nuova password"
+            required
+            className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving || !password || !confirm}
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Salvataggio...' : 'Aggiorna password'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setUnlocked(false); setPassword(''); setConfirm(''); setCurrentPwd(''); setStatus(null) }}
+              className="px-4 py-2 rounded-xl text-xs font-medium text-secondary hover:bg-gray-100 transition-colors"
+            >
+              Annulla
+            </button>
+          </div>
+        </form>
+      )}
       {status && (
         <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
           {status.msg}
@@ -257,7 +313,7 @@ function AdminList() {
     if (!isSupabaseConfigured()) { setLoading(false); return }
     supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, is_admin')
+      .select('id, full_name, email, avatar_url, is_admin')
       .eq('is_admin', true)
       .order('full_name')
       .then(({ data }) => {
@@ -265,20 +321,6 @@ function AdminList() {
         setLoading(false)
       })
   }, [])
-
-  // Fetch emails from auth (via profiles join or separate query)
-  const [emails, setEmails] = useState({})
-  useEffect(() => {
-    if (!admins.length) return
-    // Get emails for admin users from auth metadata stored in profiles
-    // Since we can't query auth.users from client, we show name + id
-    // But we can try to get email from the current session for matching
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) {
-        setEmails((prev) => ({ ...prev, [data.user.id]: data.user.email }))
-      }
-    })
-  }, [admins])
 
   return (
     <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
@@ -295,15 +337,15 @@ function AdminList() {
                 <img src={admin.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent">
-                  {(admin.full_name || '?')[0].toUpperCase()}
+                  {(admin.full_name || admin.email || '?')[0].toUpperCase()}
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-primary truncate">
                   {admin.full_name || 'Admin'}
                 </p>
-                {emails[admin.id] && (
-                  <p className="text-xs text-secondary truncate">{emails[admin.id]}</p>
+                {admin.email && (
+                  <p className="text-xs text-secondary truncate">{admin.email}</p>
                 )}
               </div>
               <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
@@ -354,7 +396,7 @@ export default function AdminSettings() {
         <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Account</h2>
         <div className="space-y-4 max-w-2xl">
           <ChangeEmail currentEmail={user.email} />
-          <ChangePassword />
+          <ChangePassword userEmail={user.email} />
         </div>
       </motion.div>
 
