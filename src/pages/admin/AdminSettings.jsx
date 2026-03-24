@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -122,6 +122,202 @@ function ThumbnailTool() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Account: Change email                                              */
+/* ------------------------------------------------------------------ */
+function ChangeEmail({ currentEmail }) {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState(null) // { type: 'success'|'error', msg }
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!email.trim() || email === currentEmail) return
+    setSaving(true)
+    setStatus(null)
+    const { error } = await supabase.auth.updateUser({ email })
+    setSaving(false)
+    if (error) {
+      setStatus({ type: 'error', msg: error.message })
+    } else {
+      setStatus({ type: 'success', msg: 'Email di conferma inviata al nuovo indirizzo. Controlla la casella.' })
+      setEmail('')
+    }
+  }
+
+  return (
+    <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
+      <h3 className="text-sm font-semibold text-primary mb-1">Cambia email</h3>
+      <p className="text-xs text-secondary mb-3">
+        Email attuale: <span className="font-medium text-primary">{currentEmail}</span>
+      </p>
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Nuova email"
+          required
+          className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+        />
+        <button
+          type="submit"
+          disabled={saving || !email.trim()}
+          className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {saving ? 'Invio...' : 'Aggiorna email'}
+        </button>
+      </form>
+      {status && (
+        <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+          {status.msg}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Account: Change password                                           */
+/* ------------------------------------------------------------------ */
+function ChangePassword() {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [status, setStatus] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (password.length < 6) {
+      setStatus({ type: 'error', msg: 'La password deve avere almeno 6 caratteri' })
+      return
+    }
+    if (password !== confirm) {
+      setStatus({ type: 'error', msg: 'Le password non corrispondono' })
+      return
+    }
+    setSaving(true)
+    setStatus(null)
+    const { error } = await supabase.auth.updateUser({ password })
+    setSaving(false)
+    if (error) {
+      setStatus({ type: 'error', msg: error.message })
+    } else {
+      setStatus({ type: 'success', msg: 'Password aggiornata!' })
+      setPassword('')
+      setConfirm('')
+    }
+  }
+
+  return (
+    <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
+      <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
+      <form onSubmit={handleSubmit} className="space-y-2">
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Nuova password"
+          required
+          minLength={6}
+          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+        />
+        <input
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder="Conferma password"
+          required
+          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+        />
+        <button
+          type="submit"
+          disabled={saving || !password || !confirm}
+          className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {saving ? 'Salvataggio...' : 'Aggiorna password'}
+        </button>
+      </form>
+      {status && (
+        <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+          {status.msg}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Admin list                                                         */
+/* ------------------------------------------------------------------ */
+function AdminList() {
+  const [admins, setAdmins] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) { setLoading(false); return }
+    supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, is_admin')
+      .eq('is_admin', true)
+      .order('full_name')
+      .then(({ data }) => {
+        setAdmins(data || [])
+        setLoading(false)
+      })
+  }, [])
+
+  // Fetch emails from auth (via profiles join or separate query)
+  const [emails, setEmails] = useState({})
+  useEffect(() => {
+    if (!admins.length) return
+    // Get emails for admin users from auth metadata stored in profiles
+    // Since we can't query auth.users from client, we show name + id
+    // But we can try to get email from the current session for matching
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setEmails((prev) => ({ ...prev, [data.user.id]: data.user.email }))
+      }
+    })
+  }, [admins])
+
+  return (
+    <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
+      <h3 className="text-sm font-semibold text-primary mb-3">Amministratori</h3>
+      {loading ? (
+        <div className="animate-pulse h-10 bg-gray-100 rounded-xl" />
+      ) : admins.length === 0 ? (
+        <p className="text-xs text-secondary">Nessun admin trovato</p>
+      ) : (
+        <div className="space-y-2">
+          {admins.map((admin) => (
+            <div key={admin.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+              {admin.avatar_url ? (
+                <img src={admin.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent">
+                  {(admin.full_name || '?')[0].toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-primary truncate">
+                  {admin.full_name || 'Admin'}
+                </p>
+                {emails[admin.id] && (
+                  <p className="text-xs text-secondary truncate">{emails[admin.id]}</p>
+                )}
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
+                Admin
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main page                                                          */
 /* ------------------------------------------------------------------ */
 export default function AdminSettings() {
@@ -148,10 +344,38 @@ export default function AdminSettings() {
         <p className="text-sm text-secondary mt-0.5">Strumenti di manutenzione e configurazione</p>
       </motion.div>
 
+      {/* Account section */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
+        className="mb-8"
+      >
+        <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Account</h2>
+        <div className="space-y-4 max-w-2xl">
+          <ChangeEmail currentEmail={user.email} />
+          <ChangePassword />
+        </div>
+      </motion.div>
+
+      {/* Admin list */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+        className="mb-8"
+      >
+        <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Team</h2>
+        <div className="max-w-2xl">
+          <AdminList />
+        </div>
+      </motion.div>
+
+      {/* Tools section */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
       >
         <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Strumenti</h2>
         <div className="space-y-4 max-w-2xl">
