@@ -130,7 +130,8 @@ async function handleCidUrl(cid, originalUrl, apiKey, res) {
                 lat = candidateLat
                 lng = candidateLng
                 debugInfo.strategy = (debugInfo.strategy === 'none' ? '' : debugInfo.strategy + '+') + 'html_coords'
-              break
+                break
+              }
             }
           }
         }
