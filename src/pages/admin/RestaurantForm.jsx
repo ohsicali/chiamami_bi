@@ -635,8 +635,14 @@ export default function RestaurantForm() {
       let phone = ''
       let resolvedUrl = mapsUrl
 
-      const isCidUrl = /[?&]cid=\d+/.test(mapsUrl)
-      const isShortUrl = isCidUrl || /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|share\.google)\//i.test(mapsUrl)
+      // CID URLs (from Google Maps app) can't be resolved server-side (Google blocks with CAPTCHA)
+      if (/[?&]cid=\d+/.test(mapsUrl)) {
+        addToast('Questo tipo di link non è supportato. Dall\'app Google Maps, apri il locale → tocca "Condividi" (icona freccia) → "Copia link". Il link corretto inizia con maps.app.goo.gl', 'error')
+        setGoogleFilling(false)
+        return
+      }
+
+      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|share\.google)\//i.test(mapsUrl)
       const placeMatch = mapsUrl.match(/\/place\/([^/@]+)/)
       const coordMatch = mapsUrl.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
 
