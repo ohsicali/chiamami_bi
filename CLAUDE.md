@@ -65,11 +65,12 @@ supabase/
 - **Colonne mancanti DB**: `recommended_for`, `tiktok_url`, `instagram_reel` aggiunte con ALTER TABLE
 - **Google CAPTCHA/sorry page**: rilevata e gestita con messaggio errore
 
-## Connettori disponibili — USALI
-- **GitHub** — PR, issues, merge (usato via `gh` CLI)
-- **Supabase** — esegui query SQL direttamente, non chiedere all'utente di farlo nel dashboard
-- **Vercel** — controlla deploy, log, config
+## Connettori disponibili — USALI SE ATTIVI
+- **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
+- **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.
+- **Vercel** — se il connettore è attivo, controlla deploy e log. CLI disponibile (`npx vercel`) ma richiede login. Se non funziona, i deploy avvengono automaticamente al push su GitHub.
 - **Web** — ricerche web quando serve
+- **NOTA**: nella sessione del 24/03/2026 le CLI Supabase e Vercel non erano autenticate. Verificare all'inizio di ogni sessione se i connettori funzionano.
 
 ## Credenziali e config
 - API key Google Places: env var `VITE_GOOGLE_PLACES_KEY`
