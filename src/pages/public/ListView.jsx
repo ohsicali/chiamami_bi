@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
@@ -109,7 +108,7 @@ function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
       <div className="p-4">
         <h3
           className="text-lg font-bold text-gray-900 mb-1"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontFamily: "'TAN Songbird', serif" }}
         >
           {restaurant.name}
         </h3>
@@ -183,7 +182,6 @@ function VirtualizedList({ restaurants, userPosition, onCardClick, parentRef }) 
 }
 
 export default function ListView() {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const { position } = useGeolocation()
   const {
@@ -240,7 +238,7 @@ export default function ListView() {
         {/* Sort options */}
         <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           <span className="text-xs font-medium text-gray-400 mr-1 flex-shrink-0">
-            {t('home.sortBy', 'Ordina:')}
+            Ordina:
           </span>
           {SORT_OPTIONS.map((opt) => (
             <SortChip
@@ -259,7 +257,7 @@ export default function ListView() {
           ) : (
             <p className="text-sm font-medium text-gray-500">
               {restaurants.length}{' '}
-              {restaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
+              {restaurants.length === 1 ? 'ristorante' : 'ristoranti'}
             </p>
           )}
         </div>
@@ -275,10 +273,10 @@ export default function ListView() {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="mb-3 text-4xl">🔍</div>
             <p className="text-base font-semibold text-gray-800">
-              {t('home.noResults')}
+              Nessun ristorante trovato
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              {t('home.changeFilters')}
+              Prova a cambiare i filtri o la ricerca
             </p>
           </div>
         ) : useVirtual ? (

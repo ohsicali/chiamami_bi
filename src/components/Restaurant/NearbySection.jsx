@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import RatingStars from './RatingStars'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
@@ -57,7 +58,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
 
       {/* Info */}
       <div className="flex flex-col gap-0.5 p-2.5">
-        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
           {restaurant.name}
         </h4>
         {category && (
@@ -67,6 +68,11 @@ function NearbyCard({ restaurant, index, onSelect }) {
           >
             {category.emoji} {category.name}
           </span>
+        )}
+        {restaurant.our_rating != null && (
+          <div className="flex items-center gap-1">
+            <RatingStars rating={restaurant.our_rating} size="sm" />
+          </div>
         )}
       </div>
     </motion.button>

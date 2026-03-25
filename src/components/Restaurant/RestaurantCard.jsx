@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Badge from '../UI/Badge'
 import SaveButton from './SaveButton'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { getDistance, formatDistance, formatDrivingTime } from '../../lib/utils/distance'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -56,19 +57,25 @@ export default function RestaurantCard({
 
   return (
     <motion.button
-      className="flex w-full items-start gap-3 rounded-2xl bg-card p-2.5 text-left shadow-sm"
+      className="flex w-full items-center gap-3.5 rounded-2xl bg-card p-3 text-left shadow-sm transition-shadow"
       variants={cardVariants}
       initial="hidden"
       animate="visible"
       custom={index}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{
+        y: -4,
+        boxShadow:
+          '0 8px 30px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+      }}
+      whileTap={{ scale: 0.97 }}
       onClick={() => onClick?.(restaurant)}
     >
       {/* Photo thumbnail */}
-      <div className="relative h-[88px] w-[88px] flex-shrink-0 overflow-hidden rounded-xl">
+      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-accent-light">
+        {/* Placeholder color */}
         <div
           className="absolute inset-0"
-          style={{ backgroundColor: category?.color ? `${category.color}15` : '#f3f4f6' }}
+          style={{ backgroundColor: category?.color ? `${category.color}20` : '#f3f4f6' }}
         />
         {photoUrl && (
           <img
@@ -86,55 +93,60 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Discount badge on photo */}
-        {hasDiscount && (
-          <div className="absolute bottom-1.5 left-1.5 rounded-md bg-accent px-1.5 py-0.5 shadow-sm">
-            <span className="text-[10px] font-bold text-white leading-none">
-              {discountValue || t('discount.badge')}
-            </span>
+        {/* Heart save button — positioned above photo indicators */}
+        {onSaveToggle && (
+          <div className="absolute -top-0.5 -right-0.5 z-20">
+            <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
           </div>
         )}
       </div>
 
       {/* Info */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-0.5">
-        {/* Name */}
-        <div className="flex items-start justify-between gap-2 min-w-0">
-          <h3 className="text-[15px] font-semibold text-primary leading-snug" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {/* Name + discount badge inline */}
+        <div className="flex items-start gap-2 min-w-0">
+          <h3 className="text-base font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
             {restaurant.name}
           </h3>
-          {onSaveToggle && (
-            <div className="flex-shrink-0 -mt-0.5">
-              <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
-            </div>
+          {hasDiscount && (
+            <span className="shrink-0 mt-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-white leading-none whitespace-nowrap">
+              {discountValue ? `Sconto ${discountValue}` : t('discount.badge')}
+            </span>
           )}
         </div>
 
-        {/* Category + price inline */}
-        <div className="flex items-center gap-1 text-xs text-secondary">
-          {category && (
-            <span style={{ color: category.color }}>
-              {category.emoji} {category.name}
+        {/* Category badges + price */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {categories.map(cat => (
+            <Badge key={cat.name} color={cat.color} className="text-[11px]">
+              {cat.emoji} {cat.name}
+            </Badge>
+          ))}
+          {restaurant.price_range != null && (
+            <span className="text-xs font-medium text-secondary">
+              {PRICE_LABELS[restaurant.price_range] || ''}
             </span>
           )}
-          {category && restaurant.price_range != null && <span>·</span>}
-          {restaurant.price_range != null && (
-            <span>{PRICE_LABELS[restaurant.price_range] || ''}</span>
-          )}
         </div>
+
+        {/* Distance + driving time */}
+        {distance != null && (
+          <span className="flex items-center gap-1.5 text-xs text-secondary">
+            <span>{formatDistance(distance)}</span>
+            <span className="flex items-center gap-0.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h.01M16 17h.01M4 11l1.34-4.02A2 2 0 017.24 5h9.52a2 2 0 011.9 1.38L20 11m-16 0h16m-16 0v6a1 1 0 001 1h1a1 1 0 001-1v-1h10v1a1 1 0 001 1h1a1 1 0 001-1v-6" />
+              </svg>
+              {formatDrivingTime(distance)}
+            </span>
+          </span>
+        )}
 
         {/* Address */}
         {restaurant.address && (
-          <p className="truncate text-xs text-secondary/70 mt-0.5">
+          <p className="truncate text-xs text-secondary">
             {restaurant.address}
           </p>
-        )}
-
-        {/* Distance */}
-        {distance != null && (
-          <span className="text-xs text-secondary/70 mt-0.5">
-            {formatDistance(distance)}
-          </span>
         )}
       </div>
     </motion.button>

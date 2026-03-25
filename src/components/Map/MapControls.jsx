@@ -71,7 +71,7 @@ export default function MapControls({
       style={{
         position: 'absolute',
         right: 16,
-        bottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 200 : 125,
+        bottom: 125,
         display: 'flex',
         flexDirection: 'column',
         gap: 10,

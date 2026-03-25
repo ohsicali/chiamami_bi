@@ -7,25 +7,16 @@ export const SNAP_HALF = 1
 export const SNAP_FULL = 2
 
 const SIDE_MARGIN = 10
+const BOTTOM_MARGIN = 10
 const TOP_MIN = 70 // leave space for navbar
-const TAB_BAR_H = 78 // mobile tab bar height
-
-function isMobile() {
-  return typeof window !== 'undefined' && window.innerWidth < 768
-}
-
-function getBottomMargin() {
-  return isMobile() ? TAB_BAR_H + 4 : 10
-}
 
 // Snap points are now HEIGHTS (how tall the visible sheet is)
 function getSnapHeights() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
-  const bottom = getBottomMargin()
   return [
-    130,                      // PEEK: handle + lista button + search bar + bottom padding
-    h * 0.55,                 // HALF: categories + some results
-    h - TOP_MIN - bottom,     // FULL: nearly full screen
+    86,                          // PEEK: handle + search bar + bottom padding
+    h * 0.55,                    // HALF: categories + some results
+    h - TOP_MIN - BOTTOM_MARGIN, // FULL: nearly full screen
   ]
 }
 
@@ -165,7 +156,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         height: sheetHeight,
         touchAction: 'none',
         position: 'fixed',
-        bottom: getBottomMargin(),
+        bottom: BOTTOM_MARGIN,
         left: SIDE_MARGIN,
         right: SIDE_MARGIN,
         zIndex: 30,
@@ -178,10 +169,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       }}
     >
       {/* Drag handle */}
-      <div
-        className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing"
-        onTouchMove={(e) => e.stopPropagation()}
-      >
+      <div className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing">
         <div
           className="rounded-full"
           style={{
@@ -208,7 +196,6 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
             e.stopPropagation()
           }
         }}
-        onTouchMove={(e) => e.stopPropagation()}
       >
         {children}
       </div>

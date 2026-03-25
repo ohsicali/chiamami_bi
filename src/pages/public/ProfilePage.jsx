@@ -135,7 +135,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
           <>
             <div className="text-center mb-5">
               <span className="text-4xl">⚠️</span>
-              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: "'TAN Songbird', serif" }}>
                 Sei sicuro?
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -160,7 +160,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
         ) : (
           <>
             <div className="text-center mb-5">
-              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: "'TAN Songbird', serif" }}>
                 Conferma cancellazione
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -200,10 +200,6 @@ function DeleteAccountModal({ onConfirm, onClose }) {
 /* ── Settings Section ── */
 function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) {
   const [fullName, setFullName] = useState(profile?.full_name || '')
-  // Re-sync fullName when profile is refreshed externally
-  useEffect(() => {
-    if (profile?.full_name) setFullName(profile.full_name)
-  }, [profile?.full_name])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
@@ -260,9 +256,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     setSaving(true)
     const { error } = await supabase.from('profiles').update({ full_name: fullName.trim() }).eq('id', user.id)
     setSaving(false)
-    if (error) {
-      console.error('Profile name update failed:', error)
-    } else {
+    if (!error) {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       onRefreshProfile?.()
@@ -594,7 +588,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         Torna al profilo
       </button>
 
-      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
         Impostazioni
       </h2>
 
@@ -1148,7 +1142,7 @@ export default function ProfilePage() {
                 <div className="flex-1">
                   <h1
                     className="text-xl font-bold text-primary"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: "'TAN Songbird', serif" }}
                   >
                     {displayName}
                   </h1>
@@ -1200,7 +1194,7 @@ export default function ProfilePage() {
                     exit={{ opacity: 0, y: -8 }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
                         I miei salvati
                       </h2>
                       {savedRestaurants.length > 0 && (

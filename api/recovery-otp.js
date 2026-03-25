@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     }
 
     if (!profile.recovery_email) {
-      return res.status(200).json({ success: false, no_recovery: true, message: 'Nessuna email di recupero configurata. Contatta info@chiamamibi.com' })
+      return res.status(200).json({ success: false, no_recovery: true, message: 'Nessuna email di recupero configurata. Contatta supporto@chiamamibi.com' })
     }
 
     // Generate a 6-digit OTP
@@ -76,9 +76,9 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'La Guida di Bi <noreply@chiamamibi.com>',
+        from: process.env.RESEND_FROM || 'ChiamamiBi <noreply@chiamamibi.com>',
         to: [profile.recovery_email],
-        subject: `${otp} — Codice di recupero La Guida di Bi`,
+        subject: `${otp} — Codice di recupero ChiamamiBi`,
         html: buildOtpHtml(firstName, otp, actionText),
       }),
     })
@@ -107,12 +107,12 @@ function buildOtpHtml(name, otp, actionText) {
   return `
 <div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
   <div style="background:#FF5757;padding:32px 24px;text-align:center;">
-    <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:2px;">LA GUIDA DI BI</h1>
+    <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:2px;">CHIAMAMI BI</h1>
   </div>
   <div style="padding:32px 24px;">
     <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">Codice di recupero</h2>
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">
-      Ciao ${name}, hai richiesto di ${actionText} del tuo account La Guida di Bi.
+      Ciao ${name}, hai richiesto di ${actionText} del tuo account ChiamamiBi.
       Usa questo codice per procedere. Il codice scade tra 10 minuti.
     </p>
     <div style="background:#fff5f5;border:2px solid #FF5757;border-radius:12px;padding:16px;text-align:center;margin-bottom:24px;">
@@ -121,7 +121,7 @@ function buildOtpHtml(name, otp, actionText) {
   </div>
   <div style="padding:20px 24px;background:#fafafa;border-top:1px solid #f0f0f0;text-align:center;">
     <p style="margin:0 0 4px;font-size:11px;color:#9ca3af;">Se non hai richiesto questo codice, ignora questa email.</p>
-    <p style="margin:0;font-size:11px;color:#9ca3af;">La Guida di Bi — Torino, Italia</p>
+    <p style="margin:0;font-size:11px;color:#9ca3af;">ChiamamiBi — Torino, Italia</p>
   </div>
 </div>`
 }
