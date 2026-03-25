@@ -174,40 +174,17 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Filter Chips (categories) */}
+        {/* Filter Chips — simplified: categories + 3 chips */}
         <div className="mb-4">
           <FilterChips
             filters={filters}
             onFilterChange={setFilters}
             onNearbyClick={handleLocateMe}
-            user={user}
-            showSavedOnly={showSavedOnly}
-            onToggleSaved={() => { setShowSavedOnly((v) => !v); setShowDealsOnly(false) }}
-            savedCount={savedIds.size}
             showDealsOnly={showDealsOnly}
             onToggleDeals={() => { setShowDealsOnly((v) => !v); setShowSavedOnly(false) }}
             dealsCount={discountRestaurantIds.size}
           />
         </div>
-
-        {/* Bi intro — minimal single-line */}
-        <Link
-          to="/about"
-          className="flex items-center gap-2.5 mb-3 px-1 group"
-        >
-          <div className="w-8 h-8 rounded-full bg-accent flex-shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-            Bi
-          </div>
-          <p
-            className="text-sm text-secondary group-hover:text-primary transition-colors italic"
-            style={{ fontFamily: "'Playfair Display', serif" }}
-          >
-            I posti che amo davvero
-          </p>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </Link>
 
         {/* Results count */}
         <div className="mb-3 px-1">

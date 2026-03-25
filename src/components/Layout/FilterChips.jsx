@@ -5,12 +5,32 @@ import { useTranslation } from 'react-i18next'
 import { PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { useCategories } from '../../lib/hooks/useCategories'
 
-export default function FilterChips({ filters, onFilterChange, onNearbyClick, user, showSavedOnly, onToggleSaved, savedCount = 0, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
+// Pastel backgrounds for the first 6 visible categories in the scroll row
+const PASTEL_BG = {
+  Piemontese: '#FFF5F5',
+  Italiana: '#FFF8EE',
+  Giapponese: '#FFF0F0',
+  Bar: '#F0F5FF',
+  Pizzeria: '#FFFBEE',
+  Tramezzini: '#F5FFF5',
+}
+
+function getPastelBg(catName, catColor) {
+  return PASTEL_BG[catName] || catColor + '18'
+}
+
+const scrollStyle = {
+  scrollbarWidth: 'none',
+  msOverflowStyle: 'none',
+  WebkitOverflowScrolling: 'touch',
+}
+
+export default function FilterChips({ filters, onFilterChange, onNearbyClick, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
   const { categories: CUISINE_CATEGORIES } = useCategories()
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Support multi-category as array
+  // Multi-category support
   const selected = filters.category
     ? (Array.isArray(filters.category) ? filters.category : [filters.category])
     : []
@@ -39,17 +59,13 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
     })
   }
 
+  const hasActiveFilters = selected.length > 0 || filters.priceRange
+  const filterCount = selected.length + (filters.priceRange ? 1 : 0)
+
   return (
-    <div className="flex flex-col gap-3">
-      {/* Scrollable category circles — Glovo style */}
-      <div
-        className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
+    <div className="flex flex-col gap-2.5">
+      {/* ROW 1: Category circles — 44px with pastel backgrounds */}
+      <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4" style={scrollStyle}>
         <style>{`.filter-scroll::-webkit-scrollbar { display: none; }`}</style>
         {CUISINE_CATEGORIES.map((cat) => {
           const active = isActive(cat.name)
@@ -59,20 +75,20 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
               type="button"
               onClick={() => handleCuisineClick(cat.name)}
               className="flex flex-col items-center gap-1 flex-shrink-0"
-              style={{ width: 64 }}
+              style={{ width: 52 }}
             >
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-all duration-200"
+                className="w-11 h-11 rounded-full flex items-center justify-center text-lg transition-all duration-200"
                 style={{
-                  backgroundColor: active ? cat.color + '25' : '#f3f4f6',
-                  boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
+                  backgroundColor: active ? cat.color + '30' : getPastelBg(cat.name, cat.color),
+                  boxShadow: active ? `0 0 0 2px ${cat.color}` : 'none',
                 }}
               >
                 {cat.emoji}
               </div>
               <span
-                className="text-[10px] font-medium text-center leading-tight line-clamp-1 transition-colors"
-                style={{ color: active ? cat.color : '#6B7280' }}
+                className="text-[9px] font-medium text-center leading-tight line-clamp-1 transition-colors"
+                style={{ color: active ? cat.color : '#888' }}
               >
                 {cat.name}
               </span>
@@ -81,19 +97,12 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
         })}
       </div>
 
-      {/* Filter buttons row */}
-      <div
-        className="flex gap-2 overflow-x-auto -mx-4 px-4"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {/* "Nelle vicinanze" toggle button */}
+      {/* ROW 2: 3 chips only — Vicino a me, Scontati, Filtri */}
+      <div className="flex gap-2 overflow-x-auto -mx-4 px-4" style={scrollStyle}>
+        {/* Vicino a me */}
         {onNearbyClick && (
-          <button
-            type="button"
+          <ChipButton
+            active={filters.sortBy === 'distance'}
             onClick={() => {
               if (filters.sortBy === 'distance') {
                 onFilterChange?.({ ...filters, sortBy: null })
@@ -101,109 +110,47 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                 onNearbyClick()
               }
             }}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
-            style={{
-              backgroundColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(255,255,255,0.85)',
-              color: filters.sortBy === 'distance' ? '#fff' : '#4B5563',
-              borderColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(209,213,219,0.6)',
-              backdropFilter: filters.sortBy === 'distance' ? 'none' : 'blur(8px)',
-              WebkitBackdropFilter: filters.sortBy === 'distance' ? 'none' : 'blur(8px)',
-            }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="12" cy="12" r="4" />
               <line x1="12" y1="2" x2="12" y2="6" />
               <line x1="12" y1="18" x2="12" y2="22" />
               <line x1="2" y1="12" x2="6" y2="12" />
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
-            <span>{t('home.nearby')}</span>
-          </button>
+            {t('home.nearby')}
+          </ChipButton>
         )}
 
-        {/* "I miei salvati" — visible only when logged in */}
-        {user && onToggleSaved && (
-          <button
-            type="button"
-            onClick={onToggleSaved}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
-            style={{
-              backgroundColor: showSavedOnly ? '#FF5757' : 'rgba(255,255,255,0.85)',
-              color: showSavedOnly ? '#fff' : '#4B5563',
-              borderColor: showSavedOnly ? '#FF5757' : 'rgba(209,213,219,0.6)',
-              backdropFilter: showSavedOnly ? 'none' : 'blur(8px)',
-              WebkitBackdropFilter: showSavedOnly ? 'none' : 'blur(8px)',
-            }}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showSavedOnly ? '#fff' : 'none'} stroke="currentColor" strokeWidth={2}>
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-            <span>{t('home.saved')}{savedCount > 0 ? ` (${savedCount})` : ''}</span>
-          </button>
-        )}
-
-        {/* "Scontati" — shows restaurants with active discounts */}
+        {/* Scontati — RED when active */}
         {onToggleDeals && (
           <button
             type="button"
             onClick={onToggleDeals}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-medium whitespace-nowrap select-none transition-all"
             style={{
-              backgroundColor: showDealsOnly ? '#FF5757' : 'rgba(255,255,255,0.85)',
-              color: showDealsOnly ? '#fff' : '#4B5563',
-              borderColor: showDealsOnly ? '#FF5757' : 'rgba(209,213,219,0.6)',
-              backdropFilter: showDealsOnly ? 'none' : 'blur(8px)',
-              WebkitBackdropFilter: showDealsOnly ? 'none' : 'blur(8px)',
+              backgroundColor: showDealsOnly ? '#FF5757' : '#fff',
+              color: showDealsOnly ? '#fff' : '#555',
+              border: showDealsOnly ? '1px solid #FF5757' : '1px solid #e0ddd6',
             }}
           >
             🏷️ {t('home.discounted')}{dealsCount > 0 ? ` (${dealsCount})` : ''}
           </button>
         )}
 
-        {/* "Tipo di locale" button — opens full modal */}
-        <button
-          type="button"
+        {/* Filtri — opens modal with prices + categories */}
+        <ChipButton
+          active={hasActiveFilters}
           onClick={() => setModalOpen(true)}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
-          style={{
-            backgroundColor: selected.length ? '#FF5757' : 'rgba(255,255,255,0.85)',
-            color: selected.length ? '#fff' : '#4B5563',
-            borderColor: selected.length ? '#FF5757' : 'rgba(209,213,219,0.6)',
-            backdropFilter: selected.length ? 'none' : 'blur(8px)',
-            WebkitBackdropFilter: selected.length ? 'none' : 'blur(8px)',
-          }}
         >
-          <span>{selected.length ? `${t('home.localeType')} (${selected.length})` : t('home.localeType')}</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M3 12h12M3 20h6" />
           </svg>
-        </button>
-
-        {/* Price range chips */}
-        {PRICE_LABELS.slice(1).map((label, idx) => {
-          const priceLevel = idx + 1
-          const active = filters.priceRange === priceLevel
-          return (
-            <button
-              key={priceLevel}
-              type="button"
-              onClick={() => handlePriceClick(priceLevel)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
-              style={{
-                backgroundColor: active ? '#FF5757' : 'rgba(255,255,255,0.85)',
-                color: active ? '#fff' : '#4B5563',
-                borderColor: active ? '#FF5757' : 'rgba(209,213,219,0.6)',
-                backdropFilter: active ? 'none' : 'blur(8px)',
-                WebkitBackdropFilter: active ? 'none' : 'blur(8px)',
-              }}
-            >
-              {label}
-            </button>
-          )
-        })}
+          Filtri{filterCount > 0 ? ` (${filterCount})` : ''}
+        </ChipButton>
       </div>
 
-      {/* Full-screen category modal — rendered via portal to avoid clipping by BottomSheet's backdrop-filter */}
+      {/* Filter modal — categories grid + price range */}
       {createPortal(
         <AnimatePresence>
           {modalOpen && (
@@ -224,7 +171,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('home.localeType')}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Filtri</h3>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
@@ -236,28 +183,53 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                   </button>
                 </div>
 
-                {/* Grid */}
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {/* Content */}
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  {/* Price range */}
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Fascia di prezzo</p>
+                  <div className="flex gap-2 mb-6">
+                    {PRICE_LABELS.slice(1).map((label, idx) => {
+                      const priceLevel = idx + 1
+                      const active = filters.priceRange === priceLevel
+                      return (
+                        <button
+                          key={priceLevel}
+                          type="button"
+                          onClick={() => handlePriceClick(priceLevel)}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all"
+                          style={{
+                            backgroundColor: active ? '#FF5757' : '#f8f6f1',
+                            color: active ? '#fff' : '#555',
+                            border: active ? '1px solid #FF5757' : '1px solid #eae7e0',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Category grid */}
+                  <p className="text-sm font-semibold text-gray-900 mb-3">Tipo di locale</p>
                   <div className="grid grid-cols-4 gap-3">
-                    {/* "Tutti" option to clear filter */}
+                    {/* "Tutti" option */}
                     <button
                       type="button"
                       onClick={() => {
                         onFilterChange?.({ ...filters, category: null })
-                        setModalOpen(false)
                       }}
                       className="flex flex-col items-center gap-1.5 py-2"
                     >
                       <div
-                        className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                          !selected.length ? 'ring-3 ring-[#FF5757] shadow-md bg-orange-50' : 'bg-gray-100'
-                        }`}
+                        className="w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all"
+                        style={{
+                          backgroundColor: !selected.length ? '#FFF5F5' : '#f3f4f6',
+                          boxShadow: !selected.length ? '0 0 0 2.5px #FF5757' : 'none',
+                        }}
                       >
                         🍽️
                       </div>
-                      <span className={`text-xs font-medium text-center leading-tight ${
-                        !selected.length ? 'text-[#FF5757]' : 'text-gray-900'
-                      }`}>
+                      <span className="text-[10px] font-medium" style={{ color: !selected.length ? '#FF5757' : '#6B7280' }}>
                         {t('home.all')}
                       </span>
                     </button>
@@ -272,16 +244,15 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                           className="flex flex-col items-center gap-1.5 py-2"
                         >
                           <div
-                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                              active ? 'ring-3 shadow-md' : 'bg-gray-100'
-                            }`}
-                            style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                            className="w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all"
+                            style={{
+                              backgroundColor: active ? cat.color + '25' : '#f3f4f6',
+                              boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
+                            }}
                           >
                             {cat.emoji}
                           </div>
-                          <span className={`text-xs font-medium text-center leading-tight ${
-                            active ? 'text-[#FF5757]' : 'text-gray-900'
-                          }`}>
+                          <span className="text-[10px] font-medium" style={{ color: active ? cat.color : '#6B7280' }}>
                             {cat.name}
                           </span>
                         </button>
@@ -295,9 +266,9 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="w-full py-3 rounded-xl bg-[#FF5757] text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
+                    className="w-full py-3 rounded-xl bg-[#FF5757] text-white font-semibold text-sm shadow-md hover:bg-[#e64545] transition-colors"
                   >
-                    {selected.length > 0 ? `${selected.length} ${t('home.localeType')}` : t('home.all')}
+                    {filterCount > 0 ? `Mostra risultati (${filterCount} filtri)` : 'Mostra tutti'}
                   </button>
                 </div>
               </motion.div>
@@ -307,5 +278,22 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
         document.body
       )}
     </div>
+  )
+}
+
+function ChipButton({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-medium whitespace-nowrap select-none transition-all"
+      style={{
+        backgroundColor: active ? '#1a1a1a' : '#fff',
+        color: active ? '#fff' : '#555',
+        border: active ? '1px solid #1a1a1a' : '1px solid #e0ddd6',
+      }}
+    >
+      {children}
+    </button>
   )
 }
