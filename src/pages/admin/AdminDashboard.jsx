@@ -274,7 +274,7 @@ export default function AdminDashboard() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>Dashboard</h1>
           <p className="text-sm text-secondary mt-0.5">
             Ciao, {user?.email?.split('@')[0] ?? 'Admin'}
           </p>
