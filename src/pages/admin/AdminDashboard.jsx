@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link, useSearchParams, Navigate } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -69,28 +69,6 @@ function ChevronIcon({ className, direction = 'up' }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Rating color helper                                                */
-/* ------------------------------------------------------------------ */
-function ratingColor(rating) {
-  if (rating >= 5) return '#22c55e'
-  if (rating >= 4) return '#3b82f6'
-  if (rating >= 3) return '#eab308'
-  if (rating >= 2) return '#f97316'
-  return '#ef4444'
-}
-
-/* ------------------------------------------------------------------ */
-/*  Activity type dot color                                            */
-/* ------------------------------------------------------------------ */
-function activityDotColor(type) {
-  if (type === 'restaurant') return '#6366f1'
-  if (type === 'review') return '#22c55e'
-  if (type === 'discount') return '#f59e0b'
-  if (type === 'partner') return '#3b82f6'
-  return '#9ca3af'
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Dashboard Page                                                */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
@@ -102,17 +80,8 @@ export default function AdminDashboard() {
   const [sortDir, setSortDir] = useState('asc')
   const [deleteId, setDeleteId] = useState(null)
   const [searchParams] = useSearchParams()
-  const [subscriberCount, setSubscriberCount] = useState(0)
   const restaurantTableRef = useRef(null)
 
-
-  // Fetch subscriber count
-  useEffect(() => {
-    if (!isSupabaseConfigured()) return
-    supabase.from('newsletter_subscribers').select('*', { count: 'exact', head: true }).then(({ count }) => {
-      setSubscriberCount(count || 0)
-    })
-  }, [])
 
   // Scroll to restaurants table if ?section=restaurants
   useEffect(() => {
@@ -277,15 +246,15 @@ export default function AdminDashboard() {
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const statCards = [
-    { label: 'ristoranti', value: stats.total, sub: `+${stats.drafts} questo mese`, green: true },
-    { label: 'utenti', value: 847, sub: '+126 settimana' },
-    { label: 'sconti', value: 63, sub: `${subscriberCount || 312} newsletter` },
+    { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },
+    { label: 'Pubblicati', value: stats.published, color: '#34C759', icon: '✅' },
+    { label: 'Bozze', value: stats.drafts, color: '#F59E0B', icon: '📝' },
+    { label: 'Citta', value: stats.cities, color: '#6366F1', icon: '🏙️' },
   ]
 
   const SortHeader = ({ col, children, className = '' }) => (
     <th
-      className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none transition-colors ${className}`}
-      style={{ color: sortCol === col ? '#1a1a1a' : '#9ca3af' }}
+      className={`px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider cursor-pointer select-none hover:text-primary transition-colors ${className}`}
       onClick={() => handleSort(col)}
     >
       <span className="inline-flex items-center gap-1">
@@ -297,434 +266,317 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title="Dashboard">
-
-      {/* Page header — mockup: "Ciao Bi" + "La tua guida" + avatar */}
+      {/* Page header */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="flex items-start justify-between mb-8"
+        transition={{ duration: 0.4 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
       >
         <div>
-          <p className="text-sm mb-1" style={{ color: '#9ca3af' }}>
-            Ciao Bi
+          <h1 className="text-2xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>Dashboard</h1>
+          <p className="text-sm text-secondary mt-0.5">
+            Ciao, {user?.email?.split('@')[0] ?? 'Admin'}
           </p>
-          <h1
-            className="text-2xl font-bold"
-            style={{ fontWeight: 700, color: '#1a1a1a' }}
-          >
-            La tua guida
-          </h1>
         </div>
-        <div
-          className="flex items-center justify-center rounded-full flex-shrink-0"
-          style={{ width: 36, height: 36, background: '#FF5757' }}
+
+        <Link
+          to="/admin/restaurant/new"
+          className="inline-flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-md hover:bg-[#e64545] transition-colors"
         >
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>B</span>
-        </div>
+          <PlusIcon className="w-4 h-4" />
+          Nuovo Ristorante
+        </Link>
       </motion.div>
 
-      {/* Stats cards — horizontal scrollable row */}
-      <div className="flex gap-3 overflow-x-auto pb-2 mb-8" style={{ scrollbarWidth: 'none' }}>
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((s, i) => (
           <motion.div
             key={s.label}
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07, duration: 0.35 }}
-            className="flex-shrink-0 rounded-2xl p-5"
-            style={
-              s.green
-                ? { background: '#22c55e', minWidth: 150 }
-                : { background: '#fff', border: '1px solid #eae7e0', minWidth: 150 }
-            }
+            transition={{ delay: i * 0.08, duration: 0.4 }}
+            className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
           >
-            <p
-              className="text-3xl font-bold leading-none mb-1"
-              style={{ color: s.green ? '#fff' : '#1a1a1a' }}
-            >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xl">{s.icon}</span>
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{ backgroundColor: s.color }}
+              />
+            </div>
+            <p className="text-2xl font-bold text-primary">
               <AnimatedCounter value={s.value} />
             </p>
-            <p
-              className="text-xs font-medium mb-2"
-              style={{ color: s.green ? 'rgba(255,255,255,0.7)' : '#9ca3af' }}
-            >
-              {s.label}
-            </p>
-            {s.sub && (
-              <p
-                className="text-[11px] font-semibold"
-                style={{ color: s.green ? 'rgba(255,255,255,0.8)' : '#22c55e' }}
-              >
-                {s.sub}
-              </p>
-            )}
+            <p className="text-xs text-secondary mt-0.5">{s.label}</p>
           </motion.div>
         ))}
       </div>
 
-      {/* Charts — desktop only */}
-      <div className="hidden lg:grid grid-cols-2 gap-6 mb-10">
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Registrations line chart */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.35 }}
-          className="rounded-2xl p-6"
-          style={{ background: '#fff', border: '1px solid #eae7e0' }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+          className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
         >
-          <h3 className="text-base font-semibold mb-5" style={{ fontWeight: 700, color: '#1a1a1a' }}>
-            Registrazioni settimanali
-          </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <h3 className="text-sm font-semibold text-primary mb-4">Registrazioni settimanali</h3>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={registrationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f4" />
-              <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" />
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #eae7e0', fontSize: 12 }} />
-              <Line type="monotone" dataKey="ristoranti" stroke="#1a1a1a" strokeWidth={2} dot={{ r: 3, fill: '#1a1a1a' }} name="Ristoranti" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+              <Line type="monotone" dataKey="utenti" stroke="#FF5757" strokeWidth={2} dot={{ r: 3 }} name="Utenti" />
+              <Line type="monotone" dataKey="ristoranti" stroke="#6366F1" strokeWidth={2} dot={{ r: 3 }} name="Ristoranti" />
             </LineChart>
           </ResponsiveContainer>
         </motion.div>
 
+        {/* Top categories bar chart */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.36, duration: 0.35 }}
-          className="rounded-2xl p-6"
-          style={{ background: '#fff', border: '1px solid #eae7e0' }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+          className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
         >
-          <h3 className="text-base font-semibold mb-5" style={{ fontWeight: 700, color: '#1a1a1a' }}>
-            Top categorie
-          </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <h3 className="text-sm font-semibold text-primary mb-4">Top categorie</h3>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={topCategoriesData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f4" />
-              <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" width={90} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #eae7e0', fontSize: 12 }} />
-              <Bar dataKey="count" fill="#1a1a1a" radius={[0, 6, 6, 0]} name="Ristoranti" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis type="number" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9ca3af" width={90} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+              <Bar dataKey="count" fill="#FF5757" radius={[0, 6, 6, 0]} name="Ristoranti" />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
 
-      {/* Reviews moderation — mockup style with avatar, Pubblica/Rifiuta buttons */}
+      {/* Reviews moderation section */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.35 }}
-        className="mb-8"
+        transition={{ delay: 0.42, duration: 0.4 }}
+        className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
       >
-        <div className="flex items-center gap-3 mb-4">
-          <h3 className="text-base font-bold" style={{ color: '#1a1a1a' }}>
-            Recensioni
-          </h3>
-          {pendingReviews.length > 0 && (
-            <span
-              className="rounded-full text-[11px] font-semibold px-2.5 py-0.5"
-              style={{ background: '#FF5757', color: '#fff' }}
-            >
-              {pendingReviews.length} nuove
-            </span>
-          )}
-        </div>
-
-        {pendingReviews.length === 0 ? (
-          <p className="text-sm py-4" style={{ color: '#9ca3af' }}>
-            Nessuna recensione da moderare
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {pendingReviews.slice(0, 5).map(review => {
-              const userName = review.user?.full_name || 'Utente'
-              const initial = userName.charAt(0).toUpperCase()
-              const avatarColors = ['#6366f1', '#ec4899', '#f59e0b', '#22c55e', '#3b82f6']
-              const avatarBg = avatarColors[initial.charCodeAt(0) % avatarColors.length]
-              const ago = review.created_at ? timeAgo(new Date(review.created_at)) : ''
-
-              return (
-                <div
-                  key={review.id}
-                  className="rounded-2xl p-4"
-                  style={{ background: '#fff', border: '1px solid #eae7e0' }}
-                >
-                  <div className="flex items-start gap-3 mb-2">
-                    <div
-                      className="flex items-center justify-center rounded-full flex-shrink-0"
-                      style={{ width: 32, height: 32, background: avatarBg }}
-                    >
-                      <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{initial}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>
-                            {userName}
-                          </span>
-                          <span className="text-xs ml-2" style={{ color: '#9ca3af' }}>
-                            {review.restaurant?.name || ''}
-                          </span>
-                        </div>
-                        <span className="text-xs flex-shrink-0" style={{ color: '#9ca3af' }}>{ago}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-sm line-clamp-2 mb-3 ml-11" style={{ color: '#6b7280' }}>
-                    {review.comment}
-                  </p>
-                  <div className="flex gap-2 ml-11">
-                    <button
-                      onClick={() => updateReviewStatus(review.id, 'published')}
-                      className="rounded-xl px-4 py-2 text-xs font-semibold transition-colors hover:opacity-90"
-                      style={{ background: '#1a1a1a', color: '#fff' }}
-                    >
-                      Pubblica
-                    </button>
-                    <button
-                      onClick={() => updateReviewStatus(review.id, 'rejected')}
-                      className="rounded-xl px-4 py-2 text-xs font-semibold transition-colors hover:opacity-90"
-                      style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#6b7280' }}
-                    >
-                      Rifiuta
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </motion.div>
-
-      {/* Ultime attività — simple list */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.35 }}
-        className="mb-8"
-      >
-        <h3 className="text-base font-bold mb-4" style={{ color: '#1a1a1a' }}>
-          Ultime attività
-        </h3>
-
-        {activityFeed.length === 0 ? (
-          <p className="text-sm py-4" style={{ color: '#9ca3af' }}>
-            Nessuna attività recente
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {activityFeed.map((item) => {
-              const ago = item.time ? timeAgo(new Date(item.time)) : ''
-              const dotColor = activityDotColor(item.type)
-              return (
-                <div key={item.id} className="flex items-center gap-3">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: dotColor }}
-                  />
-                  <span className="text-sm flex-1" style={{ color: '#1a1a1a' }}>
-                    {item.text}
-                  </span>
-                  <span className="text-xs flex-shrink-0" style={{ color: '#9ca3af' }}>
-                    {ago}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </motion.div>
-
-      {/* Restaurant table with search */}
-      <motion.div
-        ref={restaurantTableRef}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.48, duration: 0.35 }}
-        className="scroll-mt-20"
-      >
-        {/* Section heading + search bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
-          <h3
-            className="text-base font-semibold"
-            style={{ fontWeight: 700, color: '#1a1a1a' }}
-          >
-            Ristoranti
-            {rows.length > 0 && (
-              <span className="ml-2 text-sm font-normal" style={{ color: '#9ca3af' }}>
-                {rows.length}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-primary">Recensioni</h3>
+            {pendingReviews.length > 0 && (
+              <span className="rounded-full bg-red-500 text-white text-[10px] font-bold px-2 py-0.5">
+                {pendingReviews.length} da moderare
               </span>
             )}
-          </h3>
-
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-              style={{ color: '#9ca3af' }}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-            </svg>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cerca ristoranti..."
-              className="pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none transition-all w-64"
-              style={{
-                background: '#fafafa',
-                border: '1px solid #eae7e0',
-                color: '#1a1a1a',
-              }}
-            />
           </div>
+          <Link to="/admin/reviews" className="text-xs text-accent font-medium">
+            Vedi tutte
+          </Link>
         </div>
+        {pendingReviews.length === 0 ? (
+          <p className="text-sm text-secondary">Nessuna recensione da moderare</p>
+        ) : (
+          <div className="space-y-3">
+            {pendingReviews.slice(0, 5).map(review => (
+              <div key={review.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-primary">{review.user?.full_name || 'Utente'}</span>
+                    <span className="text-xs text-secondary">su {review.restaurant?.name || '?'}</span>
+                  </div>
+                  <p className="text-sm text-secondary line-clamp-2">{review.comment}</p>
+                  {review.ai_reason && (
+                    <p className="text-xs text-amber-600 mt-1">AI: {review.ai_reason}</p>
+                  )}
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => updateReviewStatus(review.id, 'published')}
+                    className="rounded-lg bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 transition-colors"
+                  >
+                    Approva
+                  </button>
+                  <button
+                    onClick={() => updateReviewStatus(review.id, 'rejected')}
+                    className="rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors"
+                  >
+                    Rifiuta
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
 
-        {/* Table */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ border: '1px solid #eae7e0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px]">
-              <thead style={{ background: '#fafafa', borderBottom: '1px solid #eae7e0' }}>
-                <tr>
-                  <th className="px-4 py-3 w-12" />
-                  <SortHeader col="name">Nome</SortHeader>
-                  <SortHeader col="city">Citta</SortHeader>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#9ca3af' }}>Categoria</th>
-                  <SortHeader col="status">Stato</SortHeader>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: '#9ca3af' }}>Azioni</th>
-                </tr>
-              </thead>
-              <tbody style={{ background: '#fff' }}>
-                {rows.map((r, idx) => {
-                  const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-                    .map(name => getCategoryInfo(name))
-                    .filter(Boolean)
-                  const isPublished = r.is_published !== false
-                  const thumb = Array.isArray(r.photos) && r.photos.length > 0
-                    ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.photo_url)
-                    : null
+      {/* Recent activity feed */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
+        className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
+      >
+        <h3 className="text-sm font-semibold text-primary mb-4">Attivita recente</h3>
+        {activityFeed.length === 0 ? (
+          <p className="text-sm text-secondary">Nessuna attivita recente</p>
+        ) : (
+          <div className="space-y-3">
+            {activityFeed.map(item => {
+              const ago = item.time ? timeAgo(new Date(item.time)) : ''
+              return (
+                <div key={item.id} className="flex items-start gap-3">
+                  <span className="text-lg flex-shrink-0 mt-0.5">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-primary">{item.text}</p>
+                    <p className="text-xs text-secondary">{ago}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </motion.div>
 
-                  return (
-                    <tr
-                      key={r.id}
-                      className="transition-colors"
-                      style={{ borderTop: idx > 0 ? '1px solid #f4f4f4' : 'none' }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
-                      onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                    >
-                      {/* Thumbnail */}
-                      <td className="px-4 py-3">
-                        {thumb ? (
-                          <img
-                            src={thumb}
-                            alt=""
-                            className="w-10 h-10 rounded-lg object-cover"
-                            style={{ border: '1px solid #eae7e0' }}
-                          />
-                        ) : (
-                          <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center"
-                            style={{ background: '#f4f4f4', color: '#9ca3af' }}
-                          >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4-4a3 3 0 014.24 0L16 16m-2-2l1.17-1.17a3 3 0 014.24 0L21 14M3 6h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1z" />
-                            </svg>
-                          </div>
+      {/* Search */}
+      <motion.div
+        ref={restaurantTableRef}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="mb-4 scroll-mt-20"
+      >
+        <div className="relative max-w-md">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cerca ristoranti..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+          />
+        </div>
+      </motion.div>
+
+      {/* Table */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+        className="bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead className="border-b border-gray-100 bg-gray-50/50">
+              <tr>
+                <th className="px-4 py-3 w-12" />
+                <SortHeader col="name">Nome</SortHeader>
+                <SortHeader col="city">Citta</SortHeader>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Categoria</th>
+                <SortHeader col="status">Stato</SortHeader>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider">Azioni</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {rows.map((r) => {
+                const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
+                  .map(name => getCategoryInfo(name))
+                  .filter(Boolean)
+                const cat = cats[0]
+                const isPublished = r.is_published !== false
+                const thumb = Array.isArray(r.photos) && r.photos.length > 0
+                  ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.photo_url)
+                  : null
+
+                return (
+                  <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
+                    {/* Thumbnail */}
+                    <td className="px-4 py-3">
+                      {thumb ? (
+                        <img src={thumb} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-secondary text-xs">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4-4a3 3 0 014.24 0L16 16m-2-2l1.17-1.17a3 3 0 014.24 0L21 14M3 6h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1z" />
+                          </svg>
+                        </div>
+                      )}
+                    </td>
+                    {/* Name */}
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-primary">{r.name}</p>
+                      <p className="text-xs text-secondary truncate max-w-[200px]">{r.address}</p>
+                    </td>
+                    {/* City */}
+                    <td className="px-4 py-3 text-sm text-secondary">{r.city || 'Torino'}</td>
+                    {/* Category */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {cats.length > 0 ? cats.map(c => (
+                          <Badge key={c.name} color={c.color}>
+                            {c.emoji} {c.name}
+                          </Badge>
+                        )) : (
+                          <span className="text-xs text-secondary">—</span>
                         )}
-                      </td>
-                      {/* Name */}
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium" style={{ color: '#1a1a1a' }}>{r.name}</p>
-                        <p className="text-xs truncate max-w-[200px]" style={{ color: '#9ca3af' }}>{r.address}</p>
-                      </td>
-                      {/* City */}
-                      <td className="px-4 py-3 text-sm" style={{ color: '#6b7280' }}>{r.city || 'Torino'}</td>
-                      {/* Category */}
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {cats.length > 0 ? cats.map(c => (
-                            <Badge key={c.name} color={c.color}>
-                              {c.emoji} {c.name}
-                            </Badge>
-                          )) : (
-                            <span className="text-xs" style={{ color: '#9ca3af' }}>—</span>
-                          )}
-                        </div>
-                      </td>
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <span
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                          style={
-                            isPublished
-                              ? { background: '#f0fdf4', color: '#16a34a' }
-                              : { background: '#fffbeb', color: '#d97706' }
-                          }
+                      </div>
+                    </td>
+                    {/* Status */}
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPublished ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {isPublished ? 'Pubblicato' : 'Bozza'}
+                      </span>
+                    </td>
+                    {/* Actions */}
+                    <td className="px-4 py-3 text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <Link
+                          to={`/admin/restaurant/${r.id}/edit`}
+                          className="p-2 rounded-lg text-secondary hover:text-accent hover:bg-accent/5 transition-colors"
+                          title="Modifica"
                         >
-                          {isPublished ? 'Pubblicato' : 'Bozza'}
-                        </span>
-                      </td>
-                      {/* Actions */}
-                      <td className="px-4 py-3 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <Link
-                            to={`/admin/restaurant/${r.id}/edit`}
-                            className="p-2 rounded-lg transition-colors"
-                            style={{ color: '#9ca3af' }}
-                            onMouseEnter={e => { e.currentTarget.style.color = '#1a1a1a'; e.currentTarget.style.background = '#f4f4f4' }}
-                            onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent' }}
-                            title="Modifica"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </Link>
-                          <button
-                            onClick={() => handleTogglePublish(r.id)}
-                            className="p-2 rounded-lg transition-colors"
-                            style={{ color: isPublished ? '#16a34a' : '#d97706' }}
-                            title={isPublished ? 'Nascondi' : 'Pubblica'}
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              {isPublished ? (
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
-                              ) : (
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.17-3.592M6.7 6.7A9.965 9.965 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.162 5.175M15 12a3 3 0 01-6 0M3 3l18 18" />
-                              )}
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(r.id)}
-                            className="p-2 rounded-lg transition-colors"
-                            style={{ color: '#9ca3af' }}
-                            onMouseEnter={e => { e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.background = '#fef2f2' }}
-                            onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent' }}
-                            title="Elimina"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-16 text-center text-sm" style={{ color: '#9ca3af' }}>
-                      {search ? 'Nessun ristorante trovato.' : 'Nessun ristorante ancora.'}
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </Link>
+                        <button
+                          onClick={() => handleTogglePublish(r.id)}
+                          className={`p-2 rounded-lg transition-colors ${isPublished ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`}
+                          title={isPublished ? 'Nascondi' : 'Pubblica'}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                            {isPublished ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.17-3.592M6.7 6.7A9.965 9.965 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.162 5.175M15 12a3 3 0 01-6 0M3 3l18 18" />
+                            )}
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setDeleteId(r.id)}
+                          className="p-2 rounded-lg text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Elimina"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                )
+              })}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-secondary text-sm">
+                    {search ? 'Nessun ristorante trovato.' : 'Nessun ristorante ancora.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </motion.div>
 
@@ -735,8 +587,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(4px)' }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4"
             onClick={() => setDeleteId(null)}
           >
             <motion.div
@@ -744,35 +595,23 @@ export default function AdminDashboard() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="rounded-2xl p-7 max-w-sm w-full"
-              style={{
-                background: '#fff',
-                border: '1px solid #eae7e0',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-              }}
+              className="bg-card rounded-2xl shadow-xl p-6 max-w-sm w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3
-                className="text-lg font-semibold mb-2"
-                style={{ fontWeight: 700, color: '#1a1a1a' }}
-              >
-                Conferma eliminazione
-              </h3>
-              <p className="text-sm mb-7" style={{ color: '#6b7280' }}>
+              <h3 className="text-lg font-semibold text-primary mb-2">Conferma eliminazione</h3>
+              <p className="text-sm text-secondary mb-6">
                 Sei sicuro di voler eliminare questo ristorante? Questa azione non puo essere annullata.
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
-                  style={{ color: '#6b7280', background: '#f4f4f4' }}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
                 >
                   Annulla
                 </button>
                 <button
                   onClick={() => handleDelete(deleteId)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:opacity-90"
-                  style={{ background: '#1a1a1a', color: '#fff' }}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
                 >
                   Elimina
                 </button>

@@ -252,7 +252,7 @@ export default function DiscountManager() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-primary" style={{ fontWeight: 700 }}>
+          <h1 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
             Gestione Sconti
           </h1>
           <p className="text-sm text-secondary mt-0.5">{discounts.length} sconti totali</p>

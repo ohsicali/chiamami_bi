@@ -5,35 +5,21 @@
  * - LogoLoader: Animated BI icon for loading states
  */
 
-export function LogoFull({ height = 24, className = '', variant = 'default', showSubtitle = false }) {
+export function LogoFull({ height = 24, className = '', variant = 'default' }) {
   // variant: 'default' (dark text for light bg), 'light' (for dark backgrounds)
   return (
-    <div className={`flex flex-col items-start ${className}`}>
-      <img
-        src="/logo-guida-bi.svg"
-        alt="La Guida di Bi"
-        style={{
-          height,
-          width: 'auto',
-          objectFit: 'contain',
-          filter: variant === 'light' ? 'brightness(0) invert(1)' : 'none',
-        }}
-        draggable={false}
-      />
-      {showSubtitle && (
-        <span
-          style={{
-            fontSize: 8,
-            color: variant === 'light' ? 'rgba(255,255,255,0.5)' : '#bbb',
-            fontFamily: 'system-ui, sans-serif',
-            letterSpacing: '0.03em',
-            marginTop: 1,
-          }}
-        >
-          by ChiamamiBi
-        </span>
-      )}
-    </div>
+    <img
+      src="/logo-guida-bi.svg"
+      alt="La Guida di Bi"
+      className={className}
+      style={{
+        height,
+        width: 'auto',
+        objectFit: 'contain',
+        filter: variant === 'light' ? 'brightness(0) invert(1)' : 'none',
+      }}
+      draggable={false}
+    />
   )
 }
 
@@ -42,7 +28,7 @@ export function LogoSmall({ size = 20, className = '' }) {
     <span
       className={className}
       style={{
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontFamily: 'var(--font-display)',
         fontWeight: 700,
         fontSize: size,
         letterSpacing: '-0.02em',

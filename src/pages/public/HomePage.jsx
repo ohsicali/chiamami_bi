@@ -168,56 +168,27 @@ export default function HomePage() {
         onZoomOut={() => mapRef.current?.zoomOut()}
       />
 
-      {/* Floating Lista/Mappa toggle — ON the map, above BottomSheet */}
-      <div
-        className="fixed left-1/2 -translate-x-1/2 z-40 md:hidden"
-        style={{
-          bottom: sheetSnap === SNAP_FULL
-            ? 'calc(100dvh - 70px - env(safe-area-inset-bottom, 0px))'
-            : sheetSnap === SNAP_HALF
-            ? 'calc(55dvh + 8px)'
-            : 'calc(86px + 78px + 12px)',
-          transition: 'bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      >
-        <button
-          onClick={handleToggleView}
-          style={{
-            background: '#1a1a1a',
-            color: '#fff',
-            borderRadius: 24,
-            padding: '8px 22px',
-            fontSize: 14,
-            fontWeight: 600,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
-            WebkitTapHighlightColor: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          {sheetSnap === SNAP_FULL ? (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                <line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
-              </svg>
-              Mappa
-            </>
-          ) : (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
-              Lista
-            </>
-          )}
-        </button>
-      </div>
-
       {/* Bottom Sheet — Apple Maps style */}
       <BottomSheet ref={sheetRef} onSnapChange={handleSnapChange}>
+        {/* Lista/Mappa toggle — inside sheet, above search */}
+        <div className="flex justify-center mb-3 md:hidden">
+          <button
+            onClick={handleToggleView}
+            style={{
+              background: '#1a1a1a',
+              color: '#fff',
+              borderRadius: 24,
+              padding: '8px 22px',
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {sheetSnap === SNAP_FULL ? 'Mappa' : 'Lista'}
+          </button>
+        </div>
+
         {/* Search Bar */}
         <div className="mb-3">
           <SearchBar

@@ -60,6 +60,7 @@ export default function DealsPage() {
           <motion.div variants={itemVariants}>
             <h1
               className="text-2xl font-bold text-primary"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               Sconti esclusivi
             </h1>
@@ -140,7 +141,7 @@ export default function DealsPage() {
                     className="overflow-hidden rounded-2xl bg-card shadow-sm"
                     whileTap={{ scale: 0.98 }}
                   >
-                    {/* Photo — clean, no badge overlay */}
+                    {/* Photo + discount badge */}
                     <div
                       className="relative h-40 cursor-pointer"
                       onClick={() => navigate(`/restaurant/${slug}`)}
@@ -156,24 +157,18 @@ export default function DealsPage() {
                           🍽️
                         </div>
                       )}
+                      {/* Discount badge */}
+                      <div className="absolute bottom-3 left-3 rounded-lg bg-accent px-3 py-1.5 shadow-md">
+                        <span className="text-sm font-bold text-white">{deal.discount_value}</span>
+                      </div>
                     </div>
 
-                    {/* Info — badge next to name */}
+                    {/* Info */}
                     <div
                       className="p-4 cursor-pointer"
                       onClick={() => navigate(`/restaurant/${slug}`)}
                     >
-                      <div className="flex items-center gap-2">
-                        <h3
-                          className="text-base font-bold text-primary"
-                          style={{ fontFamily: 'var(--font-display)' }}
-                        >
-                          {restaurant?.name}
-                        </h3>
-                        <span className="flex-shrink-0 rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-white">
-                          {deal.discount_value}
-                        </span>
-                      </div>
+                      <h3 className="text-base font-bold text-primary">{restaurant?.name}</h3>
                       <p className="text-sm text-secondary mt-0.5">
                         {restaurant?.city} · {PRICE_LABELS[restaurant?.price_range] || ''}
                       </p>

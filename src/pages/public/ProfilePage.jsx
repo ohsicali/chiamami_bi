@@ -135,7 +135,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
           <>
             <div className="text-center mb-5">
               <span className="text-4xl">⚠️</span>
-              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontWeight: 700 }}>
+              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: 'var(--font-display)' }}>
                 Sei sicuro?
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -160,7 +160,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
         ) : (
           <>
             <div className="text-center mb-5">
-              <h3 className="text-lg font-bold text-red-600" style={{ fontWeight: 700 }}>
+              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: 'var(--font-display)' }}>
                 Conferma cancellazione
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -594,7 +594,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         Torna al profilo
       </button>
 
-      <h2 className="text-xl font-bold text-primary" style={{ fontWeight: 700 }}>
+      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
         Impostazioni
       </h2>
 
@@ -1090,74 +1090,27 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-dvh bg-bg">
-      {/* Gradient header */}
-      <div
-        className="relative"
-        style={{
-          background: 'linear-gradient(135deg, #FF5757 0%, #FF7B7B 100%)',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-        }}
-      >
-        {/* Top bar with back + logo */}
-        <div className="flex items-center justify-between px-4 py-3">
+      {/* Header bar */}
+      <nav className="sticky top-0 z-40 glass">
+        <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
           <button
             onClick={() => showSettings ? setShowSettings(false) : navigate(-1)}
-            className="flex items-center justify-center w-10 h-10 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.2)' }}
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Indietro"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5" />
               <path d="M12 19l-7-7 7-7" />
             </svg>
           </button>
           <Link to="/">
-            <LogoFull height={22} variant="light" />
+            <LogoFull height={28} />
           </Link>
           <div className="w-10" />
         </div>
+      </nav>
 
-        {/* Avatar + name + stats */}
-        <div className="flex flex-col items-center pb-8 pt-2">
-          {avatar ? (
-            <img
-              src={avatar}
-              alt={displayName}
-              className="h-20 w-20 rounded-full object-cover border-3 border-white shadow-lg"
-            />
-          ) : (
-            <div
-              className="flex h-20 w-20 items-center justify-center rounded-full border-3 border-white text-2xl font-bold text-accent shadow-lg"
-              style={{ backgroundColor: '#fff' }}
-            >
-              {initials || '?'}
-            </div>
-          )}
-          <h1
-            className="mt-3 text-xl font-bold text-white"
-            style={{ fontWeight: 700 }}
-          >
-            {displayName}
-          </h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            {profile?.email || user?.email}
-          </p>
-
-          {/* Stats row */}
-          <div className="flex items-center gap-8 mt-4">
-            <div className="flex flex-col items-center">
-              <span className="text-lg font-bold text-white">{savedRestaurants.length}</span>
-              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Salvati</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-lg font-bold text-white">{localRedemptions.length}</span>
-              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Sconti</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-screen-lg mx-auto px-5 py-6">
+      <div className="max-w-screen-lg mx-auto px-5 py-8">
         <AnimatePresence mode="wait">
           {showSettings ? (
             <SettingsSection
@@ -1171,74 +1124,69 @@ export default function ProfilePage() {
           ) : (
             <motion.div
               key="profile"
-              className="flex flex-col gap-5"
+              className="flex flex-col gap-6"
               initial="hidden"
               animate="visible"
               variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
             >
-              {/* iOS-style quick links */}
+              {/* Profile header */}
               <motion.div
+                className="flex items-center gap-4"
                 variants={itemVariants}
-                className="rounded-2xl bg-card shadow-sm overflow-hidden"
-                style={{ border: '1px solid #eae7e0' }}
               >
-                {[
-                  { icon: '⚙️', label: 'Impostazioni', onClick: () => setShowSettings(true) },
-                  { icon: '🏙️', label: 'Chi è Bi', to: '/about' },
-                  { icon: '🤝', label: 'Per i ristoratori', to: '/partner' },
-                  { icon: '📄', label: 'Privacy e Termini', to: '/privacy' },
-                ].map((item, i, arr) => {
-                  const content = (
-                    <div
-                      className="flex items-center gap-3 px-4 py-3.5"
-                      style={i < arr.length - 1 ? { borderBottom: '0.5px solid #eae7e0' } : {}}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span className="flex-1 text-sm font-medium text-primary">{item.label}</span>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
-                    </div>
-                  )
-                  if (item.to) {
-                    return <Link key={item.label} to={item.to}>{content}</Link>
-                  }
-                  return <button key={item.label} onClick={item.onClick} className="w-full text-left">{content}</button>
-                })}
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt={displayName}
+                    className="h-16 w-16 rounded-full object-cover shadow-md"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-xl font-bold text-white shadow-md">
+                    {initials || '?'}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h1
+                    className="text-xl font-bold text-primary"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    {displayName}
+                  </h1>
+                  <p className="text-sm text-secondary">{profile?.email || user?.email}</p>
+                </div>
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  aria-label="Impostazioni"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                  </svg>
+                </button>
               </motion.div>
 
-              {/* Logout — plain red text */}
-              <motion.button
-                variants={itemVariants}
-                onClick={handleLogout}
-                className="py-2 text-sm font-semibold text-accent text-center"
-              >
-                Esci dall'account
-              </motion.button>
-
-              {/* Main tabs: Salvati / Sconti — outlined pills */}
+              {/* Main tabs: Salvati / Sconti */}
               <motion.div variants={itemVariants} className="flex gap-2">
                 <button
                   onClick={() => setActiveTab('saved')}
-                  className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors"
-                  style={{
-                    background: activeTab === 'saved' ? '#fff' : 'transparent',
-                    border: activeTab === 'saved' ? '1.5px solid #1a1a1a' : '1.5px solid #eae7e0',
-                    color: activeTab === 'saved' ? '#1a1a1a' : '#999',
-                  }}
+                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
+                    activeTab === 'saved'
+                      ? 'bg-accent text-white shadow-sm'
+                      : 'bg-card text-secondary shadow-sm'
+                  }`}
                 >
-                  Salvati ({savedRestaurants.length})
+                  ❤️ Salvati ({savedRestaurants.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('discounts')}
-                  className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors"
-                  style={{
-                    background: activeTab === 'discounts' ? '#fff' : 'transparent',
-                    border: activeTab === 'discounts' ? '1.5px solid #1a1a1a' : '1.5px solid #eae7e0',
-                    color: activeTab === 'discounts' ? '#1a1a1a' : '#999',
-                  }}
+                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
+                    activeTab === 'discounts'
+                      ? 'bg-accent text-white shadow-sm'
+                      : 'bg-card text-secondary shadow-sm'
+                  }`}
                 >
-                  Sconti ({localRedemptions.length})
+                  🏷️ Sconti ({localRedemptions.length})
                 </button>
               </motion.div>
 
@@ -1252,7 +1200,7 @@ export default function ProfilePage() {
                     exit={{ opacity: 0, y: -8 }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-primary" style={{ fontWeight: 700 }}>
+                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
                         I miei salvati
                       </h2>
                       {savedRestaurants.length > 0 && (
@@ -1278,53 +1226,19 @@ export default function ProfilePage() {
                         </Link>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2">
-                        {savedRestaurants.map((restaurant) => {
-                          const photo = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
-                            ? (typeof restaurant.photos[0] === 'string' ? restaurant.photos[0] : restaurant.photos[0]?.photo_url)
-                            : null
-                          const cats = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-                          const priceLabel = restaurant.price_range ? '€'.repeat(restaurant.price_range) : ''
-                          const catLabel = cats.length > 0 ? cats[0] : ''
-                          const meta = [catLabel, priceLabel].filter(Boolean).join(' · ')
-
-                          return (
-                            <div
-                              key={restaurant.id}
-                              className="flex items-center gap-3 rounded-2xl p-3 transition-colors active:bg-gray-50 cursor-pointer"
-                              style={{ background: '#fff', border: '1px solid #eae7e0' }}
+                      <div className="flex flex-col gap-3">
+                        {savedRestaurants.map((restaurant, index) => (
+                          <div key={restaurant.id} className="relative">
+                            <RestaurantCard
+                              restaurant={restaurant}
+                              index={index}
                               onClick={() => navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)}
-                            >
-                              {photo ? (
-                                <img
-                                  src={photo}
-                                  alt=""
-                                  className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div
-                                  className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
-                                  style={{ background: '#f4f4f4' }}
-                                >
-                                  <span style={{ fontSize: 20 }}>🍽️</span>
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-primary truncate" style={{ fontFamily: 'var(--font-display)' }}>
-                                  {restaurant.name}
-                                </p>
-                                {meta && (
-                                  <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
-                                    🍽️ {meta}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex-shrink-0" onClick={e => { e.stopPropagation(); toggleSave(restaurant.id) }}>
-                                <SaveButton saved={true} onClick={() => {}} size="sm" />
-                              </div>
+                            />
+                            <div className="absolute top-3 right-3 z-10">
+                              <SaveButton saved={true} onClick={() => toggleSave(restaurant.id)} size="sm" />
                             </div>
-                          )
-                        })}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </motion.div>

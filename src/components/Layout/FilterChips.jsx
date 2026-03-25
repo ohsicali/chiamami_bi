@@ -65,7 +65,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               <div
                 className="w-11 h-11 rounded-full flex items-center justify-center text-lg transition-all duration-200"
                 style={{
-                  backgroundColor: active ? cat.color + '35' : cat.color + '20',
+                  backgroundColor: active ? cat.color + '30' : cat.color + '15',
                   boxShadow: active ? `0 0 0 2px ${cat.color}` : 'none',
                 }}
               >
@@ -107,20 +107,11 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           </ChipButton>
         )}
 
-        {/* Scontati — RED when active */}
+        {/* Scontati */}
         {onToggleDeals && (
-          <button
-            type="button"
-            onClick={onToggleDeals}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-medium whitespace-nowrap select-none transition-all"
-            style={{
-              backgroundColor: showDealsOnly ? '#FF5757' : '#f8f6f1',
-              color: showDealsOnly ? '#fff' : '#555',
-              border: showDealsOnly ? 'none' : '0.5px solid #eae7e0',
-            }}
-          >
+          <ChipButton active={showDealsOnly} onClick={onToggleDeals}>
             🏷️ {t('home.discounted')}{dealsCount > 0 ? ` (${dealsCount})` : ''}
-          </button>
+          </ChipButton>
         )}
 
         {/* Filtri — opens modal with prices + categories */}
@@ -156,7 +147,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b" style={{ borderColor: '#eae7e0' }}>
-                  <h3 className="text-lg font-semibold" style={{ fontWeight: 700 }}>Filtri</h3>
+                  <h3 className="text-lg font-semibold" style={{ fontFamily: "Georgia, serif" }}>Filtri</h3>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}

@@ -110,29 +110,20 @@ function HomeIcon({ className }) {
 /* ------------------------------------------------------------------ */
 /*  Sidebar navigation items                                           */
 /* ------------------------------------------------------------------ */
-function StatsIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  )
-}
-
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, exact: true },
-  { to: '/admin/stats', label: 'Statistiche', icon: StatsIcon },
-  { to: '/admin?section=restaurants', label: 'Ristoranti', icon: RestaurantIcon, count: 24 },
+  { to: '/admin?section=restaurants', label: 'Ristoranti', icon: RestaurantIcon },
   { to: '/admin/categories', label: 'Categorie', icon: ApplicationIcon },
-  { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon, count: 8 },
+  { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
   { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
-  { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon, badge: 3 },
-  { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon, count: 312 },
+  { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
+  { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
   { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon },
   { to: '/admin/settings', label: 'Impostazioni', icon: SettingsIcon },
 ]
 
 /* ------------------------------------------------------------------ */
-/*  Desktop sidebar content (dark theme — unchanged)                   */
+/*  Sidebar content (shared between desktop and mobile)                */
 /* ------------------------------------------------------------------ */
 function SidebarContent({ user, onLogout, onNavClick }) {
   const location = useLocation()
@@ -201,171 +192,6 @@ function SidebarContent({ user, onLogout, onNavClick }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Mobile sidebar content (white theme)                               */
-/* ------------------------------------------------------------------ */
-function MobileSidebarContent({ user, onLogout, onNavClick }) {
-  const location = useLocation()
-
-  const isActive = (item) => {
-    const itemPath = item.to.split('?')[0]
-    const itemQuery = item.to.includes('?') ? '?' + item.to.split('?')[1] : ''
-    if (item.exact) return location.pathname === itemPath && !location.search
-    if (itemQuery) return location.pathname === itemPath && location.search === itemQuery
-    return location.pathname === itemPath
-  }
-
-  // Build user initials from email
-  const userEmail = user?.email ?? 'Admin'
-  const initials = userEmail.includes('@')
-    ? userEmail.split('@')[0].slice(0, 2).replace(/^(.)/, (_, c) => c.toUpperCase())
-    : 'Bi'
-
-  return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Top section: "Menu" title + X close button */}
-      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Menu</h2>
-        <button
-          onClick={onNavClick}
-          className="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-        >
-          <XIcon className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Nav links */}
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item)
-          const Icon = item.icon
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              onClick={onNavClick}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-accent' : 'text-gray-400'}`} />
-              <span className="flex-1">{item.label}</span>
-
-              {/* Red badge (e.g. pending reviews) */}
-              {item.badge != null && (
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-[11px] font-bold leading-none">
-                  {item.badge}
-                </span>
-              )}
-
-              {/* Gray count */}
-              {item.count != null && !item.badge && (
-                <span className="text-xs text-gray-400 font-normal">{item.count}</span>
-              )}
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* User avatar + email + logout */}
-      <div className="px-5 py-4 border-t border-gray-200 mt-2">
-        <div className="flex items-center gap-3 mb-3">
-          {/* Avatar circle */}
-          <div className="w-9 h-9 rounded-full bg-accent/15 text-accent flex items-center justify-center text-sm font-bold flex-shrink-0">
-            {initials}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-gray-900 font-medium truncate">{userEmail}</p>
-          </div>
-        </div>
-        <button
-          onClick={() => { onLogout(); onNavClick?.() }}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-500 transition-colors"
-        >
-          <LogoutIcon className="w-4 h-4" />
-          Esci
-        </button>
-      </div>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Admin Mobile Tab Bar — 5 tabs + floating red "+" button            */
-/* ------------------------------------------------------------------ */
-const ADMIN_TABS = [
-  { path: '/admin', label: 'Home', icon: DashboardIcon, exact: true },
-  { path: '/admin?section=restaurants', label: 'Locali', icon: RestaurantIcon },
-  { path: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
-  { path: '/admin/reviews', label: 'Stelle', icon: ReviewIcon },
-  { path: '/admin/settings', label: 'Altro', icon: SettingsIcon },
-]
-
-function AdminMobileTabBar() {
-  const location = useLocation()
-
-  const isTabActive = (tab) => {
-    const tabPath = tab.path.split('?')[0]
-    const tabQuery = tab.path.includes('?') ? '?' + tab.path.split('?')[1] : ''
-    if (tab.exact) return location.pathname === tabPath && !location.search
-    if (tabQuery) return location.pathname === tabPath && location.search === tabQuery
-    return location.pathname === tabPath
-  }
-
-  return (
-    <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40"
-      style={{
-        background: 'rgba(255,255,255,0.97)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderTop: '0.5px solid #eae7e0',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
-    >
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2 relative">
-        {ADMIN_TABS.map((tab, i) => {
-          const active = isTabActive(tab)
-          const Icon = tab.icon
-          return (
-            <Link
-              key={tab.label}
-              to={tab.path}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 relative"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Icon className={`w-5 h-5 ${active ? 'text-accent' : 'text-gray-400'}`} />
-              <span
-                className="text-[10px] leading-none"
-                style={{
-                  color: active ? '#FF5757' : '#bbb',
-                  fontWeight: active ? 700 : 400,
-                }}
-              >
-                {tab.label}
-              </span>
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Floating red "+" button — centered above tab bar */}
-      <Link
-        to="/admin/restaurant/new"
-        className="absolute left-1/2 -translate-x-1/2 -top-7 flex items-center justify-center w-14 h-14 rounded-full bg-accent shadow-lg shadow-accent/30"
-        style={{ WebkitTapHighlightColor: 'transparent' }}
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </Link>
-    </nav>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main AdminLayout component                                         */
 /* ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title }) {
@@ -399,16 +225,14 @@ export default function AdminLayout({ children, title }) {
   }
   if (!user) return <Navigate to="/admin/login" replace />
 
-  const adminLocation = useLocation()
-
   return (
     <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
-      {/* ── Desktop sidebar (dark) ── */}
+      {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-60 bg-[#1a1a1a] shrink-0 fixed inset-y-0 left-0 z-30">
         <SidebarContent user={user} onLogout={signOut} onNavClick={() => {}} />
       </aside>
 
-      {/* ── Mobile overlay sidebar (white) ── */}
+      {/* ── Mobile overlay sidebar ── */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -427,9 +251,16 @@ export default function AdminLayout({ children, title }) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white z-50 shadow-xl md:hidden"
+              className="fixed inset-y-0 left-0 w-72 bg-[#1a1a1a] z-50 shadow-xl md:hidden"
             >
-              <MobileSidebarContent user={user} onLogout={signOut} onNavClick={closeMobile} />
+              {/* Close button */}
+              <button
+                onClick={closeMobile}
+                className="absolute top-4 right-4 p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+              <SidebarContent user={user} onLogout={signOut} onNavClick={closeMobile} />
             </motion.aside>
           </>
         )}
@@ -437,7 +268,7 @@ export default function AdminLayout({ children, title }) {
 
       {/* ── Main content area ── */}
       <div className="flex-1 md:ml-60 min-w-0 flex flex-col">
-        {/* Mobile top bar — simplified */}
+        {/* Mobile top bar */}
         <div className="md:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(true)}
@@ -464,12 +295,9 @@ export default function AdminLayout({ children, title }) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 min-w-0 md:px-8 md:py-6 px-4 py-4 pb-24 md:pb-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <main className="flex-1 min-w-0 md:px-8 md:py-6 px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
           {children}
         </main>
-
-        {/* ── Mobile Admin Tab Bar — 5 tabs with floating red "+" ── */}
-        <AdminMobileTabBar />
       </div>
     </div>
   )

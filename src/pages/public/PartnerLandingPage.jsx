@@ -1,6 +1,10 @@
 import { useState, useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { LogoFull } from '../../components/UI/Logo'
+import Footer from '../../components/Layout/Footer'
 
 /* ─── animation variants ─── */
 const fadeUp = {
@@ -19,10 +23,47 @@ const stagger = {
   },
 }
 
-const fontFamily = 'system-ui, -apple-system, sans-serif'
+/* ─── icons ─── */
+function ClipboardIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+    </svg>
+  )
+}
+
+function PhoneCallIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94" />
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  )
+}
+
+function RocketIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    </svg>
+  )
+}
+
+function MapPinIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
 
 /* ─── animated counter ─── */
-function AnimatedCounter({ target, duration = 2 }) {
+function AnimatedCounter({ target, suffix = '', duration = 2 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
   const [count, setCount] = useState(0)
@@ -34,6 +75,7 @@ function AnimatedCounter({ target, duration = 2 }) {
     const step = (now) => {
       const elapsed = now - start
       const progress = Math.min(elapsed / (duration * 1000), 1)
+      // ease-out
       const eased = 1 - Math.pow(1 - progress, 3)
       setCount(Math.floor(eased * target))
       if (progress < 1) requestAnimationFrame(step)
@@ -41,11 +83,16 @@ function AnimatedCounter({ target, duration = 2 }) {
     requestAnimationFrame(step)
   }
 
-  return <span ref={ref}>{count.toLocaleString('it-IT')}</span>
+  return (
+    <span ref={ref}>
+      {count.toLocaleString('it-IT')}{suffix}
+    </span>
+  )
 }
 
 /* ─── main component ─── */
 export default function PartnerLandingPage() {
+  const { t } = useTranslation()
   const formRef = useRef(null)
 
   const [form, setForm] = useState({
@@ -74,6 +121,7 @@ export default function PartnerLandingPage() {
     setSubmitting(true)
 
     try {
+      // Validate required fields
       if (!form.restaurant_name || !form.contact_name || !form.email || !form.phone) {
         throw new Error('Compila tutti i campi obbligatori.')
       }
@@ -92,6 +140,7 @@ export default function PartnerLandingPage() {
 
         if (dbError) throw dbError
       } else {
+        // Simulate network delay when Supabase is not configured
         await new Promise((resolve) => setTimeout(resolve, 800))
       }
 
@@ -103,270 +152,212 @@ export default function PartnerLandingPage() {
     }
   }
 
+  const inputClasses =
+    'w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-primary placeholder:text-gray-400 outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 transition-colors'
+
   const stats = [
-    { value: 847, label: 'utenti' },
-    { value: 63, label: 'sconti usati' },
-    { value: 24, label: 'ristoranti' },
+    { value: 10000, suffix: '+', label: 'utenti attivi' },
+    { value: 50, suffix: '+', label: 'ristoranti partner' },
+    { value: 100000, suffix: '+', label: 'piatti scoperti' },
   ]
 
   const steps = [
-    { num: 1, title: 'Bi visita il tuo locale', desc: 'Prova il menu e scrive la recensione' },
-    { num: 2, title: 'Entri nella Guida', desc: 'Foto, recensione e mappa di Torino' },
-    { num: 3, title: 'Ricevi clienti', desc: 'I follower scoprono il tuo locale' },
+    { icon: <ClipboardIcon />, title: 'Candidati', desc: 'Compila il modulo qui sotto con le informazioni del tuo ristorante.' },
+    { icon: <PhoneCallIcon />, title: 'Ti contattiamo', desc: 'Il nostro team valuta la candidatura e ti ricontatta entro 48 ore.' },
+    { icon: <RocketIcon />, title: 'Sei online', desc: 'Il tuo ristorante diventa visibile a migliaia di foodie su La Guida di Bi.' },
   ]
 
-  const inputClasses =
-    'w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors'
-  const inputStyle = {
-    background: '#fff',
-    borderColor: '#eae7e0',
-    color: '#1a1a1a',
-    fontFamily,
-  }
-
   return (
-    <div
-      className="min-h-dvh"
-      style={{ background: '#fff', fontFamily }}
-    >
+    <div className="flex flex-col min-h-dvh overflow-y-auto" style={{ background: 'linear-gradient(180deg, #FAFAF8 0%, #FFF5F5 50%, #FAFAF8 100%)' }}>
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b border-gray-100">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-5 py-3">
+          <Link to="/" aria-label="Home">
+            <LogoFull height={22} />
+          </Link>
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-accent transition-colors"
+          >
+            <MapPinIcon />
+            <span>Torna alla mappa</span>
+          </Link>
+        </div>
+      </header>
+
+      <div className="flex-1">
       {/* ── Hero Section ── */}
-      <section className="px-5 pt-16 pb-12 sm:pt-24 sm:pb-16 text-center">
+      <section className="relative px-5 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center overflow-hidden">
+        {/* Decorative dots */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, #FF5757 1px, transparent 0)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+
         <motion.div
           variants={stagger}
           initial="hidden"
           animate="visible"
-          className="max-w-2xl mx-auto"
+          className="relative z-10 max-w-3xl mx-auto"
         >
-          {/* Bi avatar */}
-          <motion.div
-            variants={fadeUp}
-            className="flex items-center justify-center mx-auto mb-6"
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              background: '#FF5757',
-            }}
-          >
-            <span
-              style={{
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 22,
-                fontFamily,
-                lineHeight: 1,
-              }}
-            >
-              Bi
-            </span>
-          </motion.div>
-
-          {/* Title */}
           <motion.h1
             variants={fadeUp}
-            className="text-2xl sm:text-4xl lg:text-5xl mb-4"
-            style={{
-              fontWeight: 700,
-              lineHeight: 1.3,
-              color: '#1a1a1a',
-              fontFamily,
-            }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-bold text-primary mb-6"
+            style={{ fontFamily: 'var(--font-display)', lineHeight: 1.3 }}
           >
-            Porta il tuo locale nella{' '}
-            <span style={{ color: '#FF5757' }}>Guida di Bi</span>
+            Porta il tuo ristorante davanti a migliaia di{' '}
+            <span className="text-accent">foodie</span>
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
             variants={fadeUp}
-            className="text-sm sm:text-base mb-0"
-            style={{ color: '#888' }}
+            className="text-base sm:text-lg text-secondary max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            40K follower · 1.8M likes su TikTok
+            La Guida di Bi è la guida gastronomica più amata di Torino. Entra nella nostra
+            community e fai scoprire il tuo locale a chi cerca esperienze autentiche.
           </motion.p>
+
+          <motion.button
+            variants={fadeUp}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={scrollToForm}
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-accent text-white font-semibold text-base shadow-lg shadow-accent/20 hover:bg-accent/90 transition-colors"
+          >
+            Candidati ora
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </motion.button>
         </motion.div>
       </section>
 
-      {/* ── Stats Row ── */}
-      <section className="px-5 pb-12 sm:pb-16">
+      {/* ── Social Proof Numbers ── */}
+      <section className="px-5 py-16">
         <motion.div
           variants={stagger}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
-          className="max-w-lg mx-auto grid grid-cols-3 gap-3 sm:gap-4"
+          className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6"
         >
           {stats.map((stat) => (
             <motion.div
               key={stat.label}
               variants={fadeUp}
-              className="flex flex-col items-center gap-1 rounded-2xl py-5 px-3"
-              style={{ background: '#fff', border: '1px solid #eae7e0' }}
+              className="flex flex-col items-center gap-2 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm p-8"
             >
               <span
-                className="text-2xl sm:text-3xl"
-                style={{ fontWeight: 700, color: '#1a1a1a', fontFamily }}
+                className="text-3xl sm:text-4xl font-bold text-accent"
+                style={{ fontFamily: 'var(--font-display)' }}
               >
-                <AnimatedCounter target={stat.value} />
+                <AnimatedCounter target={stat.value} suffix={stat.suffix} />
               </span>
-              <span
-                className="text-xs sm:text-sm"
-                style={{ color: '#888' }}
-              >
-                {stat.label}
-              </span>
+              <span className="text-sm font-medium text-secondary">{stat.label}</span>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
-      {/* ── Come funziona ── */}
-      <section className="px-5 pb-12 sm:pb-16">
+      {/* ── How It Works ── */}
+      <section className="px-5 py-16">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
           variants={stagger}
-          className="max-w-lg mx-auto"
+          className="max-w-4xl mx-auto"
         >
           <motion.h2
             variants={fadeUp}
-            className="text-xl sm:text-2xl mb-8"
-            style={{ fontWeight: 700, color: '#1a1a1a', fontFamily }}
+            className="text-3xl sm:text-4xl font-bold text-primary text-center mb-14"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             Come funziona
           </motion.h2>
 
-          <div className="flex flex-col gap-6">
-            {steps.map((step) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-4">
+            {steps.map((step, i) => (
               <motion.div
-                key={step.num}
+                key={step.title}
                 variants={fadeUp}
-                className="flex items-start gap-4"
+                className="relative flex flex-col items-center text-center rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm p-6 sm:p-8 mt-4"
               >
-                {/* Red numbered circle */}
-                <div
-                  className="flex-shrink-0 flex items-center justify-center"
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    background: '#FF5757',
-                    marginTop: 2,
-                  }}
+                {/* Step number badge */}
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white text-xs font-bold shadow-md">
+                  {i + 1}
+                </div>
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 text-accent mb-5">
+                  {step.icon}
+                </div>
+                <h3
+                  className="text-lg font-bold text-primary mb-2"
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  <span
-                    style={{
-                      color: '#fff',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      fontFamily,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {step.num}
-                  </span>
-                </div>
-
-                <div>
-                  <p
-                    className="text-sm sm:text-base"
-                    style={{ fontWeight: 700, color: '#1a1a1a', fontFamily, marginBottom: 2 }}
-                  >
-                    {step.title}
-                  </p>
-                  <p
-                    className="text-sm"
-                    style={{ color: '#888' }}
-                  >
-                    {step.desc}
-                  </p>
-                </div>
+                  {step.title}
+                </h3>
+                <p className="text-sm text-secondary leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </div>
         </motion.div>
       </section>
 
-      {/* ── CTA Section ── */}
-      <section className="px-5 pb-12 sm:pb-16">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          variants={stagger}
-          className="max-w-lg mx-auto text-center"
-        >
-          <motion.p
-            variants={fadeUp}
-            className="text-lg sm:text-xl mb-5"
-            style={{ fontWeight: 700, color: '#1a1a1a', fontFamily }}
-          >
-            Vuoi entrare nella Guida?
-          </motion.p>
-
-          <motion.button
-            variants={fadeUp}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={scrollToForm}
-            className="w-full py-4 rounded-2xl font-semibold text-base transition-colors cursor-pointer"
-            style={{
-              background: '#FF5757',
-              color: '#fff',
-              fontFamily,
-              border: 'none',
-            }}
-          >
-            Candidati ora
-          </motion.button>
-        </motion.div>
-      </section>
-
       {/* ── Application Form ── */}
-      <section ref={formRef} className="px-5 pb-16 sm:pb-24 scroll-mt-8">
+      <section ref={formRef} className="px-5 py-16 scroll-mt-8">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
           variants={stagger}
-          className="max-w-lg mx-auto"
+          className="max-w-2xl mx-auto"
         >
           <motion.div
             variants={fadeUp}
-            className="rounded-2xl p-6 sm:p-8"
-            style={{ background: '#fafafa', border: '1px solid #eae7e0' }}
+            className="rounded-2xl bg-white shadow-sm border border-gray-100 p-8 sm:p-10"
           >
+            <h2
+              className="text-2xl sm:text-3xl font-bold text-primary mb-2 text-center"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Candidatura partner
+            </h2>
+            <p className="text-sm text-secondary text-center mb-8">
+              Compila il modulo e ti ricontatteremo entro 48 ore.
+            </p>
+
             {submitted ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center gap-4 py-10 text-center"
               >
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-full"
-                  style={{ background: 'rgba(34,197,94,0.1)' }}
-                >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-success">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
                 <h3
-                  className="text-xl"
-                  style={{ fontWeight: 700, color: '#1a1a1a', fontFamily }}
+                  className="text-xl font-bold text-primary"
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   Candidatura inviata!
                 </h3>
-                <p className="text-sm max-w-sm" style={{ color: '#888' }}>
-                  Grazie per il tuo interesse. Ti contatteremo al più presto.
+                <p className="text-sm text-secondary max-w-sm">
+                  Grazie per il tuo interesse. Il nostro team ti contatterà al più presto
+                  per i prossimi passi.
                 </p>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs mb-1.5" style={{ color: '#888', fontFamily }}>
-                      Nome ristorante <span style={{ color: '#FF5757' }}>*</span>
+                    <label className="block text-xs font-semibold text-secondary mb-1.5">
+                      Nome ristorante <span className="text-accent">*</span>
                     </label>
                     <input
                       type="text"
@@ -375,15 +366,12 @@ export default function PartnerLandingPage() {
                       onChange={handleChange}
                       placeholder="Es. Trattoria da Mario"
                       className={inputClasses}
-                      style={inputStyle}
-                      onFocus={e => { e.target.style.borderColor = '#FF5757'; e.target.style.boxShadow = '0 0 0 2px rgba(255,87,87,0.1)' }}
-                      onBlur={e => { e.target.style.borderColor = '#eae7e0'; e.target.style.boxShadow = 'none' }}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1.5" style={{ color: '#888', fontFamily }}>
-                      Nome referente <span style={{ color: '#FF5757' }}>*</span>
+                    <label className="block text-xs font-semibold text-secondary mb-1.5">
+                      Nome referente <span className="text-accent">*</span>
                     </label>
                     <input
                       type="text"
@@ -392,9 +380,6 @@ export default function PartnerLandingPage() {
                       onChange={handleChange}
                       placeholder="Mario Rossi"
                       className={inputClasses}
-                      style={inputStyle}
-                      onFocus={e => { e.target.style.borderColor = '#FF5757'; e.target.style.boxShadow = '0 0 0 2px rgba(255,87,87,0.1)' }}
-                      onBlur={e => { e.target.style.borderColor = '#eae7e0'; e.target.style.boxShadow = 'none' }}
                       required
                     />
                   </div>
@@ -402,8 +387,8 @@ export default function PartnerLandingPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs mb-1.5" style={{ color: '#888', fontFamily }}>
-                      Email <span style={{ color: '#FF5757' }}>*</span>
+                    <label className="block text-xs font-semibold text-secondary mb-1.5">
+                      Email <span className="text-accent">*</span>
                     </label>
                     <input
                       type="email"
@@ -412,15 +397,12 @@ export default function PartnerLandingPage() {
                       onChange={handleChange}
                       placeholder="mario@ristorante.it"
                       className={inputClasses}
-                      style={inputStyle}
-                      onFocus={e => { e.target.style.borderColor = '#FF5757'; e.target.style.boxShadow = '0 0 0 2px rgba(255,87,87,0.1)' }}
-                      onBlur={e => { e.target.style.borderColor = '#eae7e0'; e.target.style.boxShadow = 'none' }}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1.5" style={{ color: '#888', fontFamily }}>
-                      Telefono <span style={{ color: '#FF5757' }}>*</span>
+                    <label className="block text-xs font-semibold text-secondary mb-1.5">
+                      Telefono <span className="text-accent">*</span>
                     </label>
                     <input
                       type="tel"
@@ -429,16 +411,13 @@ export default function PartnerLandingPage() {
                       onChange={handleChange}
                       placeholder="+39 333 1234567"
                       className={inputClasses}
-                      style={inputStyle}
-                      onFocus={e => { e.target.style.borderColor = '#FF5757'; e.target.style.boxShadow = '0 0 0 2px rgba(255,87,87,0.1)' }}
-                      onBlur={e => { e.target.style.borderColor = '#eae7e0'; e.target.style.boxShadow = 'none' }}
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1.5" style={{ color: '#888', fontFamily }}>
+                  <label className="block text-xs font-semibold text-secondary mb-1.5">
                     Città
                   </label>
                   <input
@@ -448,14 +427,11 @@ export default function PartnerLandingPage() {
                     onChange={handleChange}
                     placeholder="Torino"
                     className={inputClasses}
-                    style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = '#FF5757'; e.target.style.boxShadow = '0 0 0 2px rgba(255,87,87,0.1)' }}
-                    onBlur={e => { e.target.style.borderColor = '#eae7e0'; e.target.style.boxShadow = 'none' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1.5" style={{ color: '#888', fontFamily }}>
+                  <label className="block text-xs font-semibold text-secondary mb-1.5">
                     Messaggio
                   </label>
                   <textarea
@@ -465,9 +441,6 @@ export default function PartnerLandingPage() {
                     placeholder="Raccontaci del tuo ristorante..."
                     rows={4}
                     className={`${inputClasses} resize-none`}
-                    style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = '#FF5757'; e.target.style.boxShadow = '0 0 0 2px rgba(255,87,87,0.1)' }}
-                    onBlur={e => { e.target.style.borderColor = '#eae7e0'; e.target.style.boxShadow = 'none' }}
                   />
                 </div>
 
@@ -475,8 +448,7 @@ export default function PartnerLandingPage() {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm font-medium text-center"
-                    style={{ color: '#ef4444' }}
+                    className="text-sm text-red-500 font-medium text-center"
                   >
                     {error}
                   </motion.p>
@@ -487,8 +459,7 @@ export default function PartnerLandingPage() {
                   whileTap={{ scale: 0.97 }}
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2 cursor-pointer"
-                  style={{ background: '#FF5757', color: '#fff', fontFamily, border: 'none' }}
+                  className="w-full py-3.5 rounded-xl bg-accent text-white font-semibold text-sm shadow-sm hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
                 >
                   {submitting ? 'Invio in corso...' : 'Invia candidatura'}
                 </motion.button>
@@ -497,6 +468,9 @@ export default function PartnerLandingPage() {
           </motion.div>
         </motion.div>
       </section>
+      </div>
+
+      <Footer />
     </div>
   )
 }

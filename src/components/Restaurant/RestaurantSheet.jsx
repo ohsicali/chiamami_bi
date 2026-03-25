@@ -1,6 +1,5 @@
 import { motion, useAnimate } from 'framer-motion'
 import { useRef, useCallback, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
@@ -10,8 +9,7 @@ import ReviewSection from '../Review/ReviewSection'
 import Badge from '../UI/Badge'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useRestaurantTranslation } from '../../lib/hooks/useTranslation'
-import { useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
-import { useAuth } from '../../lib/hooks/useAuth'
+import { useRestaurantDiscount } from '../../lib/hooks/useDiscounts'
 
 function ShareButton({ restaurant, t }) {
   const [copied, setCopied] = useState(false)
@@ -84,7 +82,6 @@ export default function RestaurantSheet({
   onSaveToggle,
 }) {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
@@ -119,16 +116,8 @@ export default function RestaurantSheet({
   const reviewText = tr('our_review') || ''
   const tipText = tr('our_tip') || null
 
-  // Auth + discount state for sticky bar
-  const { user } = useAuth()
+  // Check if restaurant has an active discount (for sticky banner)
   const { discount } = useRestaurantDiscount(restaurant.id)
-  const { redemption } = useUserRedemption(discount?.id, user?.id)
-
-  // Get first photo for hero
-  const photos = restaurant.photos || []
-  const heroPhoto = photos.length > 0
-    ? (typeof photos[0] === 'string' ? photos[0] : photos[0]?.photo_url)
-    : null
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
@@ -145,7 +134,7 @@ export default function RestaurantSheet({
       {/* Sheet */}
       <motion.div
         ref={sheetScope}
-        className="relative mt-8 flex flex-1 flex-col overflow-hidden rounded-t-3xl bg-bg"
+        className="relative mt-12 flex flex-1 flex-col overflow-hidden rounded-t-3xl bg-bg"
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{
@@ -155,6 +144,34 @@ export default function RestaurantSheet({
           mass: 0.7,
         }}
       >
+        {/* Back button */}
+        <motion.button
+          className="glass absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-md"
+          onClick={handleClose}
+          whileTap={{ scale: 0.92 }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.25, type: 'spring', stiffness: 400, damping: 20 }}
+          aria-label="Chiudi"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+        </motion.button>
+
+        {/* Save button — top right */}
+        {onSaveToggle && (
+          <motion.div
+            className="absolute top-4 right-4 z-10"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
+          >
+            <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
+          </motion.div>
+        )}
+
         {/* Scrollable content */}
         <div
           ref={scrollRef}
@@ -163,90 +180,8 @@ export default function RestaurantSheet({
           onTouchStart={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
-          {/* ── IMMERSIVE HERO — 380px ── */}
-          <div className="relative w-full" style={{ height: 380 }}>
-            {heroPhoto ? (
-              <img
-                src={heroPhoto}
-                alt={restaurant.name}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <div
-                className="absolute inset-0 flex items-center justify-center text-6xl"
-                style={{ backgroundColor: categories[0]?.color ? `${categories[0].color}20` : '#f3f4f6' }}
-              >
-                {categories[0]?.emoji || '🍽️'}
-              </div>
-            )}
-
-            {/* Gradient overlay — subtle since name is below photo now */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 50%)',
-              }}
-            />
-
-            {/* Back button — glassmorphism */}
-            <motion.button
-              className="absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-md"
-              style={{
-                background: 'rgba(0,0,0,0.25)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-              }}
-              onClick={handleClose}
-              whileTap={{ scale: 0.92 }}
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25, type: 'spring', stiffness: 400, damping: 20 }}
-              aria-label="Chiudi"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5" />
-                <path d="M12 19l-7-7 7-7" />
-              </svg>
-            </motion.button>
-
-            {/* Save + Share buttons — top right */}
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-              {onSaveToggle && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
-                >
-                  <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
-                </motion.div>
-              )}
-              <motion.button
-                className="flex h-10 w-10 items-center justify-center rounded-full shadow-md"
-                style={{
-                  background: 'rgba(0,0,0,0.25)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                }}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.35, type: 'spring', stiffness: 400, damping: 20 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: restaurant.name, url: window.location.href })
-                  }
-                }}
-                aria-label="Condividi"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
-                </svg>
-              </motion.button>
-            </div>
-
-          </div>
+          {/* Photo carousel */}
+          <PhotoCarousel photos={restaurant.photos || []} height="280px" restaurantName={restaurant.name} city={restaurant.city} />
 
           {/* Content */}
           <motion.div
@@ -255,147 +190,105 @@ export default function RestaurantSheet({
             initial="hidden"
             animate="visible"
           >
-            {/* Restaurant name + discount badge */}
+            {/* Name + meta */}
             <motion.div variants={itemVariants}>
-              <div className="flex items-center gap-2.5 mb-2">
-                <h1
-                  className="text-2xl font-bold text-primary"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  {restaurant.name}
-                </h1>
-                {discount && (
-                  <span
-                    className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-                    style={{ background: '#FF5757' }}
-                  >
-                    -{discount.discount_value}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h1
+                className="text-2xl font-bold text-primary"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                {restaurant.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
                 {categories.map(cat => (
-                  <span
-                    key={cat.name}
-                    className="rounded-full px-2.5 py-1 text-xs font-medium"
-                    style={{
-                      background: cat.color ? `${cat.color}15` : '#f4f4f4',
-                      color: cat.color || '#555',
-                    }}
-                  >
+                  <Badge key={cat.name} color={cat.color}>
                     {cat.emoji} {cat.name}
-                  </span>
+                  </Badge>
                 ))}
                 {priceLabel && (
-                  <span
-                    className="rounded-full px-2.5 py-1 text-xs font-medium"
-                    style={{ background: '#f4f4f4', color: '#555' }}
-                  >
+                  <span className="text-sm font-semibold text-secondary">
                     {priceLabel}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1">
-                <p className="text-sm" style={{ color: '#9ca3af' }}>
-                  {restaurant.address}
-                </p>
-              </div>
-              {/* Photo dot indicators */}
-              {photos.length > 1 && (
-                <div className="flex items-center justify-center gap-1.5 mt-3">
-                  {photos.slice(0, 5).map((_, i) => (
-                    <span
-                      key={i}
-                      className="rounded-full"
-                      style={{
-                        width: i === 0 ? 7 : 5,
-                        height: i === 0 ? 7 : 5,
-                        background: i === 0 ? '#1a1a1a' : '#d1d5db',
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
             </motion.div>
-            {/* Quick actions — Indicazioni / Chiama / Sito */}
-            <motion.div className="grid grid-cols-3 gap-2" variants={itemVariants}>
+
+            {/* Recommended for tags */}
+            {restaurant.recommended_for && restaurant.recommended_for.length > 0 && (
+              <motion.div className="flex flex-wrap gap-2" variants={itemVariants}>
+                {restaurant.recommended_for.map(tag => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Quick actions — maps + phone + share */}
+            <motion.div className="flex gap-2" variants={itemVariants}>
               {mapsUrl && (
                 <a
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center rounded-xl bg-accent py-3 text-sm font-semibold text-white"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"
                 >
-                  Indicazioni
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  Mappa
                 </a>
               )}
-              {phoneUrl ? (
+              {phoneUrl && (
                 <a
                   href={phoneUrl}
-                  className="flex items-center justify-center rounded-xl border border-border bg-card py-3 text-sm font-semibold text-primary"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-primary"
                 >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+                  </svg>
                   Chiama
                 </a>
-              ) : (
-                <div />
-              )}
-              {restaurant.website ? (
-                <a
-                  href={restaurant.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center rounded-xl border border-border bg-card py-3 text-sm font-semibold text-primary"
-                >
-                  Sito
-                </a>
-              ) : (
-                <ShareButton restaurant={restaurant} t={t} />
               )}
             </motion.div>
 
-            {/* "Perché mi piace" — with Bi avatar */}
+            {/* La recensione di Bi */}
             {reviewText && (
-              <motion.div className="flex flex-col gap-3" variants={itemVariants}>
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white flex-shrink-0"
-                    style={{ background: '#FF5757' }}
-                  >
-                    Bi
-                  </div>
-                  <h2 className="text-base font-bold text-primary">
-                    Perché mi piace
-                  </h2>
-                </div>
-                <p className="text-sm leading-relaxed text-secondary">
-                  "{reviewText}"
-                </p>
-                {!isItalian && (
-                  <p className="text-xs text-secondary/60 italic">
-                    {t('restaurant.originalItalian')}
-                  </p>
-                )}
-              </motion.div>
-            )}
-
-            {/* Il tip di Bi — red left border accent */}
-            {tipText && (
-              <motion.div variants={itemVariants}>
-                <p className="text-sm font-bold mb-2" style={{ color: '#FF5757' }}>
-                  Il tip di Bi
-                </p>
-                <div
-                  className="rounded-xl px-4 py-3"
-                  style={{
-                    background: '#FFF8F0',
-                    borderLeft: '3px solid #FF5757',
-                  }}
-                >
-                  <p className="text-sm leading-relaxed text-primary">
-                    "{tipText}"
+              <motion.div className="flex flex-col gap-2" variants={itemVariants}>
+                <h2 className="font-display text-lg font-semibold text-primary">
+                  {t('restaurant.reviewByBi')}
+                </h2>
+                <div className="rounded-2xl bg-card p-4 shadow-sm">
+                  <p className="text-sm leading-relaxed text-secondary">
+                    {reviewText}
                   </p>
                   {!isItalian && (
                     <p className="text-xs text-secondary/60 mt-2 italic">
+                      {t('restaurant.originalItalian')}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* I suggerimenti di Bi */}
+            {tipText && (
+              <motion.div className="flex flex-col gap-2" variants={itemVariants}>
+                <h2 className="font-display text-lg font-semibold text-primary">
+                  {t('restaurant.tipsByBi')}
+                </h2>
+                <div
+                  className="rounded-2xl px-4 py-3.5"
+                  style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a, #fcd34d)' }}
+                >
+                  <p className="text-sm font-medium leading-relaxed text-amber-900">
+                    {tipText}
+                  </p>
+                  {!isItalian && (
+                    <p className="text-xs text-amber-700/60 mt-2 italic">
                       {t('restaurant.originalItalian')}
                     </p>
                   )}
@@ -440,44 +333,14 @@ export default function RestaurantSheet({
               </motion.div>
             )}
 
-            {/* Community reviews */}
-            <motion.div variants={itemVariants}>
-              <ReviewSection restaurantId={restaurant.id} />
-            </motion.div>
-
             {/* Discount banner (inline, scrollable) */}
-            <motion.div variants={itemVariants} data-discount-banner>
+            <motion.div variants={itemVariants}>
               <DiscountBanner restaurantId={restaurant.id} />
             </motion.div>
 
-            {/* Recommended for tags */}
-            {restaurant.recommended_for && restaurant.recommended_for.length > 0 && (
-              <motion.div className="flex flex-col gap-2" variants={itemVariants}>
-                <h2
-                  className="text-lg font-semibold text-primary"
-                  style={{ fontWeight: 700 }}
-                >
-                  Consigliato per
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {restaurant.recommended_for.map(tag => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
             {/* Info details */}
             <motion.div className="flex flex-col gap-3" variants={itemVariants}>
-              <h2
-                className="text-lg font-semibold text-primary"
-                style={{ fontWeight: 700 }}
-              >
+              <h2 className="font-display text-lg font-semibold text-primary">
                 {t('restaurant.info')}
               </h2>
 
@@ -520,6 +383,14 @@ export default function RestaurantSheet({
               </div>
             </motion.div>
 
+            {/* Share button */}
+            <ShareButton restaurant={restaurant} t={t} />
+
+            {/* Community reviews */}
+            <motion.div variants={itemVariants}>
+              <ReviewSection restaurantId={restaurant.id} />
+            </motion.div>
+
             {/* Nearby restaurants */}
             <motion.div variants={itemVariants}>
               <NearbySection
@@ -531,95 +402,32 @@ export default function RestaurantSheet({
           </motion.div>
         </div>
 
-        {/* Sticky discount bar — 3 states */}
-        {discount && (() => {
-          const isRedeemed = redemption?.status === 'redeemed'
-          const isGenerated = redemption?.status === 'generated'
-          const redeemedDate = redemption?.redeemed_at
-            ? new Date(redemption.redeemed_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
-            : null
-
-          return (
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 z-20 border-t px-5 py-3"
-              style={{
-                background: isRedeemed ? '#f3f4f6' : 'rgba(255,255,255,0.95)',
-                backdropFilter: isRedeemed ? 'none' : 'blur(16px)',
-                WebkitBackdropFilter: isRedeemed ? 'none' : 'blur(16px)',
-                borderColor: isRedeemed ? '#e5e7eb' : 'rgba(234,231,224,0.5)',
-              }}
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
-            >
-              {isRedeemed ? (
-                /* State 3: Already used */
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-500">
-                      Sconto utilizzato ✓
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Usato il {redeemedDate}
-                    </p>
-                  </div>
-                </div>
-              ) : isGenerated ? (
-                /* State 2: Active QR — show "Mostra QR" */
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-secondary">Il tuo sconto</p>
-                    <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const banner = scrollRef.current?.querySelector('[data-discount-banner]')
-                      if (banner) banner.scrollIntoView({ behavior: 'smooth' })
-                    }}
-                    className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white flex-shrink-0 shadow-sm"
-                  >
-                    Mostra QR
-                  </button>
-                </div>
-              ) : !user ? (
-                /* State 1: Not registered — "Sblocca" outlined */
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-secondary">Sconto esclusivo Bi</p>
-                    <p className="text-sm">
-                      <span className="font-bold text-accent">{discount.discount_value}</span>
-                      {discount.title && <span className="text-secondary"> {discount.title}</span>}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
-                    className="rounded-xl border-2 px-5 py-2 text-xs font-bold flex-shrink-0"
-                    style={{ borderColor: '#1a1a1a', color: '#1a1a1a' }}
-                  >
-                    Sblocca
-                  </button>
-                </div>
-              ) : (
-                /* State 1b: Registered but not yet generated */
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-secondary">Sconto esclusivo Bi</p>
-                    <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const banner = scrollRef.current?.querySelector('[data-discount-banner]')
-                      if (banner) banner.scrollIntoView({ behavior: 'smooth' })
-                    }}
-                    className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white flex-shrink-0 shadow-sm"
-                  >
-                    Scopri
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          )
-        })()}
+        {/* Sticky discount bar at bottom */}
+        {discount && (
+          <motion.div
+            className="absolute bottom-0 left-0 right-0 z-20 border-t border-border/50 bg-bg/95 backdrop-blur-md px-5 py-3"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🎁</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
+                <p className="text-xs text-secondary truncate">{discount.title}</p>
+              </div>
+              <button
+                onClick={() => {
+                  // Scroll to discount banner in the content
+                  scrollRef.current?.querySelector('[class*="DiscountBanner"]')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white flex-shrink-0"
+              >
+                Scopri
+              </button>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
     </div>
   )

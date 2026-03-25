@@ -62,7 +62,7 @@ export default function ApplicationManager() {
     <AdminLayout title="Candidature">
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-primary" style={{ fontWeight: 700 }}>
+        <h1 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
           Candidature Partner
         </h1>
         <p className="text-sm text-secondary mt-0.5">{applications.length} candidature</p>
