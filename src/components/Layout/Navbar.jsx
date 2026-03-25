@@ -49,24 +49,24 @@ export default function Navbar({ view = "map", onToggleView }) {
           <LogoFull height={28} />
         </Link>
 
-        {/* Right side buttons — only 3 icons: language, view toggle, profile */}
+        {/* Right side */}
         <div className="flex items-center gap-2">
-          {/* Language switcher */}
+          {/* Language switcher — always visible */}
           <LanguageSwitcher />
 
-          {/* View toggle */}
+          {/* View toggle — desktop only (mobile uses floating button) */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             whileHover={{ scale: 1.05 }}
             onClick={onToggleView}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 backdrop-blur-sm text-gray-700 hover:text-[#FF5757] transition-colors shadow-sm"
+            className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 backdrop-blur-sm text-gray-700 hover:text-[#FF5757] transition-colors shadow-sm"
             aria-label={view === "map" ? "Switch to list view" : "Switch to map view"}
           >
             {view === "map" ? <ListIcon /> : <MapIcon />}
           </motion.button>
 
-          {/* User avatar / login */}
-          <Link to={user ? "/profile" : "/login"}>
+          {/* User avatar / login — desktop only (mobile uses tab bar) */}
+          <Link to={user ? "/profile" : "/login"} className="hidden md:block">
             <motion.div
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
