@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import RatingStars from './RatingStars'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
@@ -68,11 +67,6 @@ function NearbyCard({ restaurant, index, onSelect }) {
           >
             {category.emoji} {category.name}
           </span>
-        )}
-        {restaurant.our_rating != null && (
-          <div className="flex items-center gap-1">
-            <RatingStars rating={restaurant.our_rating} size="sm" />
-          </div>
         )}
       </div>
     </motion.button>
