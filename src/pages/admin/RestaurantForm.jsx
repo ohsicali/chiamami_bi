@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useCategories } from '../../lib/hooks/useCategories'
 import { useToast } from '../../components/UI/Toast'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import { geocodeAddress, reverseGeocode } from '../../lib/utils/geocoding'
@@ -12,24 +13,43 @@ import AdminLayout from '../../components/Layout/AdminLayout'
 
 /* ------------------------------------------------------------------ */
 /*  Convert image file to WebP (smaller, faster loading)               */
+/*  Returns { full, thumb } blobs                                      */
 /* ------------------------------------------------------------------ */
-function convertToWebP(file, maxWidth = 1600, quality = 0.82) {
+function convertToWebP(file, maxWidth = 1200, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
-      const scale = Math.min(1, maxWidth / img.width)
-      const w = Math.round(img.width * scale)
-      const h = Math.round(img.height * scale)
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0, w, h)
-      canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error('WebP conversion failed'))),
-        'image/webp',
-        quality
-      )
+      const objectUrl = img.src
+
+      // Helper: resize to given width and return a WebP blob
+      const resize = (targetWidth, q) =>
+        new Promise((res, rej) => {
+          const scale = Math.min(1, targetWidth / img.width)
+          const w = Math.round(img.width * scale)
+          const h = Math.round(img.height * scale)
+          const canvas = document.createElement('canvas')
+          canvas.width = w
+          canvas.height = h
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+          canvas.toBlob(
+            (blob) => (blob ? res(blob) : rej(new Error('WebP conversion failed'))),
+            'image/webp',
+            q
+          )
+        })
+
+      Promise.all([
+        resize(maxWidth, quality),      // full-size for carousel
+        resize(400, 0.70),              // thumbnail for cards/lists
+      ])
+        .then(([full, thumb]) => {
+          URL.revokeObjectURL(objectUrl)
+          resolve({ full, thumb })
+        })
+        .catch((err) => {
+          URL.revokeObjectURL(objectUrl)
+          reject(err)
+        })
     }
     img.onerror = () => reject(new Error('Failed to load image'))
     img.src = URL.createObjectURL(file)
@@ -184,8 +204,17 @@ function RecommendedForSelector({ selected, onChange }) {
 /* ------------------------------------------------------------------ */
 /*  Category multi-select — Glovo-style dropdown modal                 */
 /* ------------------------------------------------------------------ */
+const ADD_COLOR_PRESETS = [
+  '#FF5757', '#EF4444', '#F59E0B', '#10B981', '#6366F1',
+  '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#3B82F6',
+]
+
 function CategorySelector({ selected, onChange }) {
+  const { categories: CUISINE_CATEGORIES, addCategory } = useCategories()
   const [open, setOpen] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', emoji: '', color: ADD_COLOR_PRESETS[0] })
+  const [addSaving, setAddSaving] = useState(false)
 
   const toggle = (name) => {
     onChange(
@@ -193,6 +222,28 @@ function CategorySelector({ selected, onChange }) {
         ? selected.filter((s) => s !== name)
         : [...selected, name]
     )
+  }
+
+  // Move a category to first position (changes map icon)
+  const moveToFirst = (name) => {
+    if (selected[0] === name) return
+    onChange([name, ...selected.filter((s) => s !== name)])
+  }
+
+  // Add new category inline and auto-select it
+  const handleAddInline = async () => {
+    if (!addForm.name.trim() || addSaving) return
+    setAddSaving(true)
+    const { data, error } = await addCategory({ name: addForm.name, emoji: addForm.emoji || '🍴', color: addForm.color })
+    setAddSaving(false)
+    if (!error && data) {
+      const newName = addForm.name.trim()
+      if (!selected.includes(newName)) {
+        onChange([...selected, newName])
+      }
+      setAddForm({ name: '', emoji: '', color: ADD_COLOR_PRESETS[0] })
+      setShowAddForm(false)
+    }
   }
 
   return (
@@ -209,32 +260,47 @@ function CategorySelector({ selected, onChange }) {
         </svg>
       </button>
 
-      {/* Selected chips preview */}
+      {/* Selected chips preview — tap to move to first (= map icon) */}
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
-          {selected.map((name) => {
+          {selected.map((name, i) => {
             const cat = CUISINE_CATEGORIES.find((c) => c.name === name)
             return (
-              <span
+              <motion.span
                 key={name}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white"
+                layout
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-white cursor-pointer ${
+                  i === 0 ? 'ring-2 ring-offset-1 ring-accent' : ''
+                }`}
                 style={{ backgroundColor: cat?.color || '#6B7280' }}
+                onClick={() => moveToFirst(name)}
+                title={i === 0 ? 'Categoria principale (icona mappa)' : 'Tocca per impostare come principale'}
               >
                 <span>{cat?.emoji}</span>
                 {name}
+                {i === 0 && (
+                  <svg className="w-3 h-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
                 <button
                   type="button"
-                  onClick={() => toggle(name)}
+                  onClick={(e) => { e.stopPropagation(); toggle(name) }}
                   className="ml-0.5 hover:opacity-70"
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-              </span>
+              </motion.span>
             )
           })}
         </div>
+      )}
+      {selected.length > 1 && (
+        <p className="text-[10px] text-secondary mt-1">Tocca una categoria per impostarla come principale (icona mappa)</p>
       )}
 
       {/* Full-screen modal — rendered via portal to avoid scroll/clipping issues */}
@@ -246,7 +312,7 @@ function CategorySelector({ selected, onChange }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
-              onClick={() => setOpen(false)}
+              onClick={() => { setOpen(false); setShowAddForm(false) }}
             >
               <motion.div
                 initial={{ y: '100%' }}
@@ -258,10 +324,23 @@ function CategorySelector({ selected, onChange }) {
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                  <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
+                  {showAddForm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddForm(false)}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Indietro
+                    </button>
+                  ) : (
+                    <h3 className="text-lg font-semibold text-primary">Tipo di locale</h3>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); setShowAddForm(false) }}
                     className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                   >
                     <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -270,44 +349,112 @@ function CategorySelector({ selected, onChange }) {
                   </button>
                 </div>
 
-                {/* Grid — min-h-0 prevents flex child from overflowing */}
+                {/* Content area */}
                 <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <div className="grid grid-cols-4 gap-3">
-                    {CUISINE_CATEGORIES.map((cat) => {
-                      const active = selected.includes(cat.name)
-                      return (
-                        <button
-                          key={cat.name}
-                          type="button"
-                          onClick={() => toggle(cat.name)}
-                          className="flex flex-col items-center gap-1.5 py-2"
-                        >
-                          <div
-                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                              active
-                                ? 'ring-3 ring-accent shadow-md'
-                                : 'bg-gray-100'
-                            }`}
-                            style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                  {showAddForm ? (
+                    /* Add form — replaces grid so it's always visible above keyboard */
+                    <div className="space-y-4">
+                      <p className="text-lg font-semibold text-primary">Nuova categoria</p>
+                      <div>
+                        <label className="text-xs font-medium text-secondary mb-1.5 block">Nome</label>
+                        <input
+                          type="text"
+                          value={addForm.name}
+                          onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+                          placeholder="Es. Pizzeria"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          autoFocus
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-secondary mb-1.5 block">Emoji</label>
+                        <input
+                          type="text"
+                          value={addForm.emoji}
+                          onChange={(e) => setAddForm((p) => ({ ...p, emoji: e.target.value }))}
+                          placeholder="🍴"
+                          className="w-20 px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          maxLength={4}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-secondary mb-1.5 block">Colore</label>
+                        <div className="flex flex-wrap gap-2.5">
+                          {ADD_COLOR_PRESETS.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setAddForm((p) => ({ ...p, color: c }))}
+                              className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                addForm.color === c ? 'border-primary scale-110 shadow-sm' : 'border-transparent'
+                              }`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddInline}
+                        disabled={!addForm.name.trim() || addSaving}
+                        className="w-full py-3 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 shadow-md mt-2"
+                      >
+                        {addSaving ? '...' : 'Aggiungi categoria'}
+                      </button>
+                    </div>
+                  ) : (
+                    /* Category grid */
+                    <div className="grid grid-cols-4 gap-3">
+                      {CUISINE_CATEGORIES.map((cat) => {
+                        const active = selected.includes(cat.name)
+                        return (
+                          <button
+                            key={cat.name}
+                            type="button"
+                            onClick={() => toggle(cat.name)}
+                            className="flex flex-col items-center gap-1.5 py-2"
                           >
-                            {cat.emoji}
-                          </div>
-                          <span className={`text-xs font-medium text-center leading-tight ${
-                            active ? 'text-accent' : 'text-primary'
-                          }`}>
-                            {cat.name}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
+                            <div
+                              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
+                                active
+                                  ? 'ring-3 ring-accent shadow-md'
+                                  : 'bg-gray-100'
+                              }`}
+                              style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
+                            >
+                              {cat.emoji}
+                            </div>
+                            <span className={`text-xs font-medium text-center leading-tight ${
+                              active ? 'text-accent' : 'text-primary'
+                            }`}>
+                              {cat.name}
+                            </span>
+                          </button>
+                        )
+                      })}
+
+                      {/* Add new category button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm(true)}
+                        className="flex flex-col items-center gap-1.5 py-2"
+                      >
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-accent transition-colors">
+                          <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <span className="text-xs font-medium text-secondary text-center leading-tight">Aggiungi</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer button */}
                 <div className="px-5 py-4 border-t border-gray-100">
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); setShowAddForm(false) }}
                     className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
                   >
                     {selected.length > 0
@@ -523,7 +670,7 @@ export default function RestaurantForm() {
   const { id } = useParams()
   const isEditing = !!id
   const navigate = useNavigate()
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const { restaurants } = useRestaurants()
   const { addToast } = useToast()
 
@@ -533,6 +680,9 @@ export default function RestaurantForm() {
   const [geocoding, setGeocoding] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [googleFilling, setGoogleFilling] = useState(false)
+  const [showNameSearch, setShowNameSearch] = useState(false)
+  const [nameQuery, setNameQuery] = useState('')
+  const [nameSearching, setNameSearching] = useState(false)
   const [aiCorrecting, setAiCorrecting] = useState(null) // 'our_review' | 'our_tip' | null
   const [aiSuggestion, setAiSuggestion] = useState(null) // { field, original, corrected }
   // Inline discount state
@@ -665,7 +815,12 @@ export default function RestaurantForm() {
         if (data?._debug) console.log('Google Maps API debug:', JSON.stringify(data._debug, null, 2))
 
         if (data?.error) {
-          addToast(data.error, 'error')
+          if (data.captcha) {
+            setShowNameSearch(true)
+            addToast('Google ha bloccato il link. Cerca il ristorante per nome qui sotto.', 'error')
+          } else {
+            addToast(data.error, 'error')
+          }
           setGoogleFilling(false)
           return
         }
@@ -714,6 +869,40 @@ export default function RestaurantForm() {
       addToast('Errore nella compilazione automatica', 'error')
     }
     setGoogleFilling(false)
+  }
+
+  // Name search fallback (when Google blocks URL resolution)
+  const handleNameSearch = async () => {
+    const q = nameQuery.trim()
+    if (!q) return
+    setNameSearching(true)
+    try {
+      const res = await fetch('/api/resolve-maps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      })
+      const data = await res.json()
+      if (data?._debug) console.log('Name search debug:', JSON.stringify(data._debug, null, 2))
+      if (data?.error) {
+        addToast(data.error, 'error')
+        setNameSearching(false)
+        return
+      }
+      if (data.name) update('name', data.name)
+      if (data.address) update('address', data.address)
+      if (data.latitude) update('latitude', String(data.latitude))
+      if (data.longitude) update('longitude', String(data.longitude))
+      if (data.phone) update('phone', data.phone)
+      if (data.website) update('website', data.website)
+      if (data.resolved_url) update('google_maps_url', data.resolved_url)
+      setShowNameSearch(false)
+      setNameQuery('')
+      addToast('Dati compilati da Google Places!', 'success')
+    } catch (err) {
+      addToast('Errore nella ricerca', 'error')
+    }
+    setNameSearching(false)
   }
 
   // AI text correction — shows suggestion for accept/reject
@@ -895,31 +1084,49 @@ export default function RestaurantForm() {
             await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
           }
 
-          const slug = form.name.trim().toLowerCase()
+          const slugify = (str) => (str || '').trim().toLowerCase()
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+          const nameSlug = slugify(form.name)
+          const citySlug = slugify(form.city || form.address?.split(',').pop())
 
           const photoRows = []
           for (let idx = 0; idx < form.photos.length; idx++) {
             const photo = form.photos[idx]
             let photoUrl = photo.url
-            // If it's a file upload, convert to WebP and upload to Supabase Storage
+            // If it's a file upload, convert to WebP and upload full + thumbnail
+            let thumbUrl = null
             if (photo.file) {
               try {
-                const webpBlob = await convertToWebP(photo.file)
-                const fileName = `${slug}-${idx + 1}.webp`
-                const path = `restaurants/${restaurantId}/${fileName}`
-                const { error: uploadError } = await supabase.storage
-                  .from('photos')
-                  .upload(path, webpBlob, { contentType: 'image/webp', cacheControl: '3600', upsert: true })
-                if (uploadError) {
-                  console.error('Upload error:', uploadError)
-                  addToast(`Errore upload foto: ${uploadError.message}`, 'error')
+                const { full, thumb } = await convertToWebP(photo.file)
+                // SEO-friendly naming: ristorante-nome-citta-1.webp
+                const seoName = citySlug ? `${nameSlug}-${citySlug}` : nameSlug
+                const fileName = `${seoName}-${idx + 1}.webp`
+                const thumbName = `${seoName}-${idx + 1}-thumb.webp`
+                const basePath = `restaurants/${citySlug || 'other'}/${nameSlug}`
+                const uploadOpts = { contentType: 'image/webp', cacheControl: '31536000', upsert: true }
+
+                // Upload full + thumb in parallel
+                const [fullRes, thumbRes] = await Promise.all([
+                  supabase.storage.from('photos').upload(`${basePath}/${fileName}`, full, uploadOpts),
+                  supabase.storage.from('photos').upload(`${basePath}/${thumbName}`, thumb, uploadOpts),
+                ])
+
+                if (fullRes.error) {
+                  console.error('Upload error:', fullRes.error)
+                  addToast(`Errore upload foto: ${fullRes.error.message}`, 'error')
                   continue
                 }
-                const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
+
+                const { data: urlData } = supabase.storage.from('photos').getPublicUrl(`${basePath}/${fileName}`)
                 photoUrl = urlData.publicUrl
+
+                if (!thumbRes.error) {
+                  const { data: thumbData } = supabase.storage.from('photos').getPublicUrl(`${basePath}/${thumbName}`)
+                  thumbUrl = thumbData.publicUrl
+                }
               } catch (convErr) {
                 console.error('Conversion error:', convErr)
                 addToast(`Errore conversione foto ${idx + 1}`, 'error')
@@ -929,6 +1136,7 @@ export default function RestaurantForm() {
             photoRows.push({
               restaurant_id: restaurantId,
               photo_url: photoUrl,
+              thumb_url: thumbUrl,
               caption: '',
               sort_order: idx,
             })
@@ -991,7 +1199,7 @@ export default function RestaurantForm() {
     )
   }
 
-  if (!user) return <Navigate to="/admin/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const FieldError = ({ field }) =>
     errors[field] ? (
@@ -1073,6 +1281,43 @@ export default function RestaurantForm() {
                 Dall'app Google Maps tocca "Condividi" → "Copia link". Funzionano anche i link lunghi dal browser.
               </p>
             </div>
+
+            {/* Name search fallback — shown when Google blocks URL resolution */}
+            <AnimatePresence>
+              {showNameSearch && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                    <p className="text-sm font-medium text-amber-800 mb-3">
+                      Google ha bloccato il link. Cerca il ristorante per nome:
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={nameQuery}
+                        onChange={(e) => setNameQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleNameSearch())}
+                        placeholder="es. Ristorante Da Mario Torino"
+                        className={inputClass()}
+                      />
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleNameSearch}
+                        disabled={nameSearching || !nameQuery.trim()}
+                        className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                      >
+                        {nameSearching ? 'Cerco...' : 'Cerca'}
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Section>
 
           {/* --- Basic info --- */}

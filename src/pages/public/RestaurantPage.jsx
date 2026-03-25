@@ -24,11 +24,11 @@ export default function RestaurantPage() {
   const navigate = useNavigate()
   const match = matchPath('/restaurant/:slug', location.pathname)
   const slug = match?.params?.slug
-  const { restaurants, loading } = useRestaurants()
+  const { allRestaurants, loading } = useRestaurants()
   const { user } = useAuth()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
-  const restaurant = restaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
+  const restaurant = allRestaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
 
   const handleBack = () => {
     navigate('/')
@@ -65,7 +65,7 @@ export default function RestaurantPage() {
           <div className="mb-4 text-6xl">🍽️</div>
           <h1
             className="mb-2 text-2xl font-bold text-primary"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "Georgia, serif" }}
           >
             Ristorante non trovato
           </h1>
@@ -88,8 +88,8 @@ export default function RestaurantPage() {
   return (
     <>
       <MetaTags
-        title={`${restaurant.name} — ChiamamiBi`}
-        description={restaurant.description || `Scopri ${restaurant.name} su ChiamamiBi`}
+        title={`${restaurant.name} — La Guida di Bi`}
+        description={restaurant.description || `Scopri ${restaurant.name} su La Guida di Bi`}
         image={restaurant.image || '/og-image.png'}
         url={restaurantUrl}
         type="restaurant"
@@ -106,7 +106,7 @@ export default function RestaurantPage() {
       <RestaurantSheet
         restaurant={restaurant}
         onClose={handleBack}
-        allRestaurants={restaurants}
+        allRestaurants={allRestaurants}
         onSelectNearby={handleSelectNearby}
         saved={isSaved(restaurant.id)}
         onSaveToggle={handleSaveToggle}

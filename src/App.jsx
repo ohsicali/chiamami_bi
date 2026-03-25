@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
+import MobileTabBar from './components/Layout/MobileTabBar'
 
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
@@ -47,8 +48,11 @@ const ReviewModerator = lazy(() => import('./pages/admin/ReviewModerator'))
 const PartnerLandingPage = lazy(() => import('./pages/public/PartnerLandingPage'))
 const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
+const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
+const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
@@ -72,6 +76,8 @@ export default function App() {
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isHome = location.pathname === '/' || isRestaurantDetail
+  const isAdmin = location.pathname.startsWith('/admin')
+  const showTabBar = !isAdmin
 
   return (
     <>
@@ -100,9 +106,12 @@ export default function App() {
           <Route path="/admin/reviews" element={<ReviewModerator />} />
           <Route path="/admin/newsletter" element={<NewsletterManager />} />
           <Route path="/admin/applications" element={<ApplicationManager />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -110,6 +119,9 @@ export default function App() {
       )}
     </Suspense>
     </ErrorBoundary>
+
+    {/* Mobile Tab Bar — public pages only */}
+    {showTabBar && <MobileTabBar />}
 
     {/* Cookie Banner GDPR */}
     <CookieConsent

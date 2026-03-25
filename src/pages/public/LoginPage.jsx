@@ -15,9 +15,9 @@ const itemVariants = {
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { user, signIn, signUp, signInWithGoogle } = useAuth()
+  const { user, signIn, signUp, signInWithGoogle, resetPasswordForEmail } = useAuth()
 
-  const [mode, setMode] = useState('login') // 'login' or 'register'
+  const [mode, setMode] = useState('login') // 'login', 'register', 'forgot', 'recovery_forgot', 'recovery_otp', 'recovery_newpwd'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -25,6 +25,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [recoveryOtp, setRecoveryOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [maskedRecovery, setMaskedRecovery] = useState('')
 
   // Redirect if already logged in
   useEffect(() => {
@@ -38,7 +42,59 @@ export default function LoginPage() {
     setSubmitting(true)
 
     try {
-      if (mode === 'login') {
+      if (mode === 'forgot') {
+        await resetPasswordForEmail(email)
+        setSuccess('Email inviata! Controlla la tua casella di posta per reimpostare la password.')
+      } else if (mode === 'recovery_forgot') {
+        // Send recovery OTP for password reset
+        const resp = await fetch('/api/recovery-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, action: 'reset_password' }),
+        })
+        const data = await resp.json()
+        if (data.no_recovery) {
+          setError('Nessuna email di recupero configurata per questo account. Contatta supporto@chiamamibi.com')
+        } else if (data.success) {
+          setMaskedRecovery(data.masked_email || '')
+          setMode('recovery_otp')
+          setSuccess(`Codice inviato a ${data.masked_email || 'email di recupero'}`)
+        } else {
+          setError(data.error || 'Errore')
+        }
+      } else if (mode === 'recovery_otp') {
+        // Verify recovery OTP
+        if (!recoveryOtp.trim() || recoveryOtp.length < 6) {
+          setError('Inserisci il codice a 6 cifre')
+        } else {
+          setMode('recovery_newpwd')
+          setSuccess('Codice verificato! Inserisci la nuova password.')
+        }
+      } else if (mode === 'recovery_newpwd') {
+        // Set new password via recovery
+        if (newPassword.length < 6) {
+          setError('La password deve avere almeno 6 caratteri')
+        } else if (newPassword !== confirmPassword) {
+          setError('Le password non coincidono')
+        } else {
+          const resp = await fetch('/api/verify-recovery-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp: recoveryOtp, new_password: newPassword }),
+          })
+          const data = await resp.json()
+          if (data.success) {
+            setSuccess('Password reimpostata! Ora puoi accedere.')
+            setMode('login')
+            setPassword('')
+            setRecoveryOtp('')
+            setNewPassword('')
+            setConfirmPassword('')
+          } else {
+            setError(data.error || 'Codice non valido o scaduto')
+          }
+        }
+      } else if (mode === 'login') {
         await signIn(email, password)
         navigate('/', { replace: true })
       } else {
@@ -48,7 +104,9 @@ export default function LoginPage() {
     } catch (err) {
       setError(err.message === 'Invalid login credentials'
         ? 'Email o password non corretti'
-        : err.message || 'Si e verificato un errore')
+        : err.message === 'For security purposes, you can only request this once every 60 seconds'
+        ? 'Per sicurezza, puoi richiedere il reset solo ogni 60 secondi'
+        : err.message || 'Si è verificato un errore')
     } finally {
       setSubmitting(false)
     }
@@ -94,43 +152,49 @@ export default function LoginPage() {
         <motion.div className="text-center" variants={itemVariants}>
           <h1
             className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "'TAN Songbird', serif" }}
+            style={{ fontFamily: 'var(--font-display)' }}
           >
-            {mode === 'login' ? 'Bentornata!' : 'Unisciti a noi'}
+            {mode === 'forgot' ? 'Password dimenticata?' : mode === 'login' ? 'Bentornata!' : 'Unisciti a noi'}
           </h1>
           <p className="mt-2 text-sm text-secondary">
-            {mode === 'login'
+            {mode === 'forgot'
+              ? 'Inserisci la tua email e ti invieremo un link per reimpostarla'
+              : mode === 'login'
               ? 'Accedi per salvare i tuoi ristoranti preferiti'
               : 'Crea un account per salvare i tuoi posti del cuore'}
           </p>
         </motion.div>
 
-        {/* Google OAuth */}
-        <motion.button
-          type="button"
-          onClick={handleGoogle}
-          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-card px-5 py-3.5 text-sm font-semibold text-primary shadow-sm transition-shadow hover:shadow-md"
-          variants={itemVariants}
-          whileTap={{ scale: 0.97 }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          Continua con Google
-        </motion.button>
+        {/* Google OAuth — hidden in forgot mode */}
+        {mode !== 'forgot' && (
+          <>
+            <motion.button
+              type="button"
+              onClick={handleGoogle}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-card px-5 py-3.5 text-sm font-semibold text-primary shadow-sm transition-shadow hover:shadow-md"
+              variants={itemVariants}
+              whileTap={{ scale: 0.97 }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              Continua con Google
+            </motion.button>
 
-        {/* Divider */}
-        <motion.div
-          className="flex w-full items-center gap-3"
-          variants={itemVariants}
-        >
-          <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-secondary">oppure</span>
-          <div className="h-px flex-1 bg-gray-200" />
-        </motion.div>
+            {/* Divider */}
+            <motion.div
+              className="flex w-full items-center gap-3"
+              variants={itemVariants}
+            >
+              <div className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs text-secondary">oppure</span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </motion.div>
+          </>
+        )}
 
         {/* Form */}
         <motion.form
@@ -164,15 +228,111 @@ export default function LoginPage() {
             required
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-            required
-            minLength={6}
-          />
+          {/* Password — hidden in forgot/recovery modes */}
+          <AnimatePresence mode="wait">
+            {(mode === 'login' || mode === 'register') && (
+              <motion.div
+                key="password-field"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                  minLength={6}
+                />
+                {mode === 'login' && (
+                  <button
+                    type="button"
+                    onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
+                    className="mt-2 text-xs text-accent hover:underline"
+                  >
+                    Password dimenticata?
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Forgot mode — "Non ho accesso all'email" link */}
+          <AnimatePresence mode="wait">
+            {mode === 'forgot' && (
+              <motion.div
+                key="forgot-recovery"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setMode('recovery_forgot'); setError(''); setSuccess('') }}
+                  className="text-xs text-secondary hover:text-accent transition-colors"
+                >
+                  Non ho accesso all'email
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Recovery OTP input */}
+          <AnimatePresence mode="wait">
+            {mode === 'recovery_otp' && (
+              <motion.div
+                key="recovery-otp-field"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <input
+                  type="text"
+                  placeholder="Codice a 6 cifre"
+                  value={recoveryOtp}
+                  onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary text-center tracking-widest font-mono shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Recovery new password fields */}
+          <AnimatePresence mode="wait">
+            {mode === 'recovery_newpwd' && (
+              <motion.div
+                key="recovery-pwd-fields"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-3"
+              >
+                <input
+                  type="password"
+                  placeholder="Nuova password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                  minLength={6}
+                />
+                <input
+                  type="password"
+                  placeholder="Conferma password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
+                  required
+                  minLength={6}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Consent checkboxes — only in register mode */}
           <AnimatePresence mode="wait">
@@ -236,7 +396,15 @@ export default function LoginPage() {
           >
             {submitting
               ? '...'
-              : mode === 'login'
+              : mode === 'forgot'
+                ? 'Invia link di reset'
+                : mode === 'recovery_forgot'
+                ? 'Invia codice di recupero'
+                : mode === 'recovery_otp'
+                ? 'Verifica codice'
+                : mode === 'recovery_newpwd'
+                ? 'Reimposta password'
+                : mode === 'login'
                 ? 'Accedi'
                 : 'Crea account'}
           </motion.button>
@@ -244,7 +412,18 @@ export default function LoginPage() {
 
         {/* Toggle mode */}
         <motion.p className="text-sm text-secondary" variants={itemVariants}>
-          {mode === 'login' ? (
+          {(mode === 'forgot' || mode === 'recovery_forgot' || mode === 'recovery_otp' || mode === 'recovery_newpwd') ? (
+            <>
+              Ricordi la password?{' '}
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setError(''); setSuccess(''); setRecoveryOtp(''); setNewPassword(''); setConfirmPassword('') }}
+                className="font-semibold text-accent"
+              >
+                Torna al login
+              </button>
+            </>
+          ) : mode === 'login' ? (
             <>
               Non hai un account?{' '}
               <button

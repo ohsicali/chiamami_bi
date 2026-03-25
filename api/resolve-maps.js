@@ -12,11 +12,20 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { url } = req.body || {}
-  if (!url) return res.status(200).json({ error: 'url is required' })
+  const { url, query } = req.body || {}
+  if (!url && !query) return res.status(200).json({ error: 'url or query is required' })
 
   const apiKey = process.env.VITE_GOOGLE_PLACES_KEY
   if (!apiKey) return res.status(200).json({ error: 'VITE_GOOGLE_PLACES_KEY non configurata' })
+
+  // Direct name search — bypasses URL resolution entirely, uses Places API only
+  if (query && !url) {
+    try {
+      return await searchByName(query, apiKey, res)
+    } catch (err) {
+      return res.status(200).json({ error: `Errore ricerca: ${err.message}` })
+    }
+  }
 
   try {
     // CID URLs can't be resolved server-side (Google blocks with CAPTCHA/consent)
@@ -35,7 +44,8 @@ export default async function handler(req, res) {
     // Detect Google CAPTCHA/sorry page
     if (resolvedUrl.includes('google.com/sorry')) {
       return res.status(200).json({
-        error: 'Google ha bloccato la richiesta. Prova con un link diverso (maps.app.goo.gl).',
+        error: 'Google ha bloccato la richiesta dal server. Usa la ricerca per nome qui sotto.',
+        captcha: true,
       })
     }
 
@@ -59,7 +69,8 @@ export default async function handler(req, res) {
       // Detect Google CAPTCHA/sorry page after HTML fetch
       if (resolvedUrl.includes('google.com/sorry') || (pageRes.url && pageRes.url.includes('google.com/sorry'))) {
         return res.status(200).json({
-          error: 'Google ha temporaneamente bloccato le richieste. Riprova tra qualche minuto.',
+          error: 'Google ha bloccato la richiesta dal server. Usa la ricerca per nome qui sotto.',
+          captcha: true,
         })
       }
       const html = await pageRes.text()
@@ -89,21 +100,26 @@ export default async function handler(req, res) {
       if (m) searchQuery = decodeURIComponent(m[1].replace(/\+/g, ' '))
     }
 
-    // Strategy 2: page title
-    if (!searchQuery && pageTitle && pageTitle.length > 2) {
-      searchQuery = pageTitle
+    // Strategy 2: ?q= parameter from URL (more reliable than page title)
+    if (!searchQuery) {
+      for (const u of [resolvedUrl, canonicalUrl]) {
+        if (searchQuery || !u) continue
+        try {
+          const q = new URL(u).searchParams.get('q')
+          if (q) {
+            const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
+            // First comma segment is typically the place name
+            const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
+            const candidate = parts[0]
+            if (candidate && !isGenericQuery(candidate)) searchQuery = candidate
+          }
+        } catch (_) {}
+      }
     }
 
-    // Strategy 3: ?q= parameter
-    if (!searchQuery) {
-      try {
-        const q = new URL(resolvedUrl).searchParams.get('q')
-        if (q) {
-          const decoded = decodeURIComponent(q).replace(/\+/g, ' ')
-          const parts = decoded.split(',').map(p => p.trim()).filter(Boolean)
-          searchQuery = parts.length > 1 ? parts[parts.length - 1] : decoded
-        }
-      } catch (_) {}
+    // Strategy 3: page title
+    if (!searchQuery && pageTitle && pageTitle.length > 2) {
+      searchQuery = pageTitle
     }
 
     // Reject generic queries
@@ -247,8 +263,44 @@ function isGenericQuery(q) {
   const generic = ['google maps', 'google', 'find local businesses', 'trova attività', 'view maps', 'indicazioni stradali', 'visualizza mappe']
   if (generic.some(p => lower.includes(p))) return true
   if (/^\d+$/.test(lower)) return true
+  // Postal code + city (e.g. "10124 Torino TO")
+  if (/^\d{4,5}\s/.test(lower)) return true
   const cities = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo', 'turin', 'milan', 'rome']
   return cities.includes(lower)
+}
+
+/** Search place by name via Google Places API (fallback when URL resolution is blocked) */
+async function searchByName(query, apiKey, res) {
+  const locationBias = '&locationbias=circle:30000@45.0703,7.6869' // Torino default
+
+  const findRes = await fetch(
+    `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id&key=${apiKey}${locationBias}`
+  )
+  const findData = await findRes.json()
+  const placeId = findData.candidates?.[0]?.place_id
+
+  if (!placeId) {
+    return res.status(200).json({
+      error: `Nessun risultato per "${query}". Prova con un nome più specifico.`,
+    })
+  }
+
+  const detailsRes = await fetch(
+    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
+  )
+  const detailsData = await detailsRes.json()
+  const place = detailsData.result
+
+  return res.status(200).json({
+    resolved_url: place?.url || '',
+    name: place?.name || query,
+    latitude: place?.geometry?.location?.lat ?? null,
+    longitude: place?.geometry?.location?.lng ?? null,
+    address: place?.formatted_address || '',
+    phone: place?.formatted_phone_number || '',
+    website: place?.website || '',
+    _debug: { mode: 'name_search', query, placeId, placeName: place?.name || null },
+  })
 }
 
 /** Follow redirects one by one */

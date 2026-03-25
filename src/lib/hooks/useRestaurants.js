@@ -2,41 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { getDistance } from '../utils/distance'
 
-export const CUISINE_CATEGORIES = [
-  { name: 'Piemontese', emoji: '🍷', color: '#8B5CF6' },
-  { name: 'Italiana', emoji: '🍝', color: '#FF5757' },
-  { name: 'Giapponese', emoji: '🍣', color: '#F59E0B' },
-  { name: 'Fine Dining', emoji: '✨', color: '#6366F1' },
-  { name: 'Gelateria', emoji: '🍦', color: '#EC4899' },
-  { name: 'Aperitivo', emoji: '🥂', color: '#F97316' },
-  { name: 'Tapas', emoji: '🫒', color: '#84CC16' },
-  { name: 'Spagnolo', emoji: '🥘', color: '#DC2626' },
-  { name: 'Asiatico', emoji: '🥡', color: '#0EA5E9' },
-  { name: 'Mediterraneo', emoji: '🫓', color: '#14B8A6' },
-  { name: 'Greco', emoji: '🥙', color: '#3B82F6' },
-  { name: 'Indiano', emoji: '🍛', color: '#D97706' },
-  { name: 'Thailandese', emoji: '🍜', color: '#10B981' },
-  { name: 'Poke', emoji: '🥗', color: '#06B6D4' },
-  { name: 'Barbecue', emoji: '🍖', color: '#B91C1C' },
-  { name: 'Pesce', emoji: '🐟', color: '#2563EB' },
-  { name: 'Vegano', emoji: '🥬', color: '#16A34A' },
-  { name: 'Vegetariano', emoji: '🥕', color: '#65A30D' },
-  { name: 'Kebab', emoji: '🌯', color: '#CA8A04' },
-  { name: 'Americano', emoji: '🌭', color: '#EF4444' },
-  { name: 'Sudamericano', emoji: '🫔', color: '#F59E0B' },
-  { name: 'Pasta', emoji: '🍝', color: '#EA580C' },
-  { name: 'Insalate', emoji: '🥗', color: '#22C55E' },
-  { name: 'Internazionale', emoji: '🌍', color: '#6366F1' },
-  { name: 'Cocktail', emoji: '🍸', color: '#A855F7' },
-  { name: 'Bar', emoji: '🍸', color: '#78716C' },
-  { name: 'Tramezzini', emoji: '🥪', color: '#D97706' },
-]
+// Re-export from useCategories for backwards compatibility
+export { getCategoryInfo, DEFAULT_CATEGORIES as CUISINE_CATEGORIES, useCategories } from './useCategories'
 
 export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
-
-export function getCategoryInfo(cuisineType) {
-  return CUISINE_CATEGORIES.find(c => c.name === cuisineType) || { name: cuisineType, emoji: '🍽️', color: '#6B7280' }
-}
 
 const MOCK_RESTAURANTS = [
   {
@@ -54,7 +23,6 @@ const MOCK_RESTAURANTS = [
     category: ['Piemontese', 'Tradizionale'],
     cuisine_type: 'Piemontese',
     price_range: 2,
-    our_rating: 4.5,
     our_review: 'Un angolo di tradizione piemontese autentica. Gli agnolotti del plin sono i migliori che abbia provato a Torino — fatti a mano ogni giorno. L\'atmosfera è calda e familiare, il personale ti fa sentire a casa.',
     our_tip: 'Provate gli agnolotti del plin con il sugo d\'arrosto. E non perdetevi il bunet!',
     recommended_for: ['Cena romantica', 'Famiglia', 'Tradizione'],
@@ -83,7 +51,6 @@ const MOCK_RESTAURANTS = [
     category: ['Giapponese', 'Sushi'],
     cuisine_type: 'Giapponese',
     price_range: 3,
-    our_rating: 4.0,
     our_review: 'Il sushi più fresco di Torino, preparato da veri chef giapponesi. L\'omakase è un\'esperienza: ti affidi allo chef e ogni pezzo è una sorpresa. Il locale è piccolo e intimo, perfetto per una serata speciale.',
     our_tip: 'L\'omakase va prenotato con anticipo. Sedetevi al bancone per vedere lo chef al lavoro!',
     recommended_for: ['Appuntamento', 'Esperienza unica'],
@@ -112,7 +79,6 @@ const MOCK_RESTAURANTS = [
     category: ['Pizza', 'Napoletana'],
     cuisine_type: 'Pizza',
     price_range: 1,
-    our_rating: 5.0,
     our_review: 'LA pizza a Torino, punto. Impasto a lunga lievitazione, forno a legna, ingredienti DOP. La margherita è perfetta nella sua semplicità. C\'è sempre coda, ma ne vale ogni minuto d\'attesa.',
     our_tip: 'Arrivate presto! La margherita è un must assoluto. Il fritto misto di antipasto è pazzesco.',
     is_published: true,
@@ -139,7 +105,6 @@ const MOCK_RESTAURANTS = [
     category: ['Fine Dining', 'Piemontese'],
     cuisine_type: 'Fine Dining',
     price_range: 4,
-    our_rating: 4.5,
     our_review: 'Un pezzo di storia torinese dal 1757. Qui cenava Cavour e l\'atmosfera è rimasta magica: affreschi, lampadari, un\'eleganza senza tempo. La cucina è piemontese raffinata, ogni piatto è un\'opera d\'arte.',
     our_tip: 'Prenotate con almeno una settimana di anticipo e chiedete il tavolo nella sala storica. Il finanziera è imperdibile.',
     is_published: true,
@@ -166,7 +131,6 @@ const MOCK_RESTAURANTS = [
     category: ['Italiana', 'Tradizionale'],
     cuisine_type: 'Italiana',
     price_range: 2,
-    our_rating: 4.0,
     our_review: 'Cucina casalinga vera, come quella della nonna. Nel cuore di Porta Palazzo, questo posto è un rifugio di sapori autentici. Il brasato al Barolo si scioglie in bocca, la pasta è fatta in casa ogni mattina.',
     our_tip: 'Il pranzo del giorno è un affare incredibile. Provate i dolci della casa, li fa la nonna del proprietario!',
     is_published: true,
@@ -193,7 +157,6 @@ const MOCK_RESTAURANTS = [
     category: ['Giapponese', 'Ramen'],
     cuisine_type: 'Giapponese',
     price_range: 2,
-    our_rating: 4.5,
     our_review: 'Ramen artigianale con brodo preparato per 18 ore. Ogni ciotola è un abbraccio caldo. Il tonkotsu è denso, cremoso, pieno di umami. Posto piccolo e un po\' spartano, ma il ramen compensa tutto.',
     our_tip: 'Il tonkotsu è il più richiesto e per buone ragioni. A pranzo c\'è il menu speciale a prezzo ridotto!',
     is_published: true,
@@ -220,7 +183,6 @@ const MOCK_RESTAURANTS = [
     category: ['Piemontese', 'Osteria'],
     cuisine_type: 'Piemontese',
     price_range: 1,
-    our_rating: 4.0,
     our_review: 'La piola come una volta: tovaglie a quadri, vino sfuso e piatti della tradizione. Il vitello tonnato è il migliore che abbia mangiato, cremoso e delicato. Ambiente conviviale, prezzi onestissimi.',
     our_tip: 'Il vitello tonnato è il piatto forte! Chiedete il vino sfuso della casa, è sorprendentemente buono.',
     is_published: true,
@@ -247,7 +209,6 @@ const MOCK_RESTAURANTS = [
     category: ['Gelateria'],
     cuisine_type: 'Gelateria',
     price_range: 1,
-    our_rating: 5.0,
     our_review: 'Il gelato più buono di Torino, punto. Pepino dal 1884 è un\'istituzione. Il Pinguino (il loro gelato ricoperto di cioccolato) è leggendario. I gusti alla nocciola e gianduia sono sublimi.',
     our_tip: 'Il Pinguino è il loro gelato iconico — DOVETE provarlo. La nocciola Piemonte è divina.',
     is_published: true,
@@ -274,7 +235,6 @@ const MOCK_RESTAURANTS = [
     category: ['Food Hall', 'Italiana'],
     cuisine_type: 'Food Hall',
     price_range: 2,
-    our_rating: 3.5,
     our_review: 'Il primo Eataly al mondo, nato qui a Torino nel Lingotto. Più che un ristorante, è un\'esperienza: mercato, botteghe artigianali e diversi ristoranti tematici. Qualità altalenante ma il reparto formaggi e salumi è top.',
     our_tip: 'Visitate il reparto formaggi e salumi, è spettacolare. Il ristorante di pesce al piano superiore è il migliore.',
     is_published: true,
@@ -301,7 +261,6 @@ const MOCK_RESTAURANTS = [
     category: ['Fine Dining', 'Creativa'],
     cuisine_type: 'Fine Dining',
     price_range: 4,
-    our_rating: 5.0,
     our_review: 'Stellato Michelin e lo merita tutto. Lo chef Claudio Vicina crea piatti che raccontano il Piemonte in chiave moderna. Ogni portata è un\'opera d\'arte. Il menu degustazione è un viaggio nei sapori che non dimenticherete.',
     our_tip: 'Il menu degustazione con abbinamento vini è IMPERDIBILE. Prenotate con largo anticipo, i posti sono pochi.',
     is_published: true,
@@ -328,7 +287,6 @@ const MOCK_RESTAURANTS = [
     category: ['Piemontese', 'Contemporanea'],
     cuisine_type: 'Piemontese',
     price_range: 2,
-    our_rating: 4.5,
     our_review: 'Piemontese moderno al suo meglio. Ingredienti a km zero, menu che cambia con le stagioni. Il tajarin al tartufo è da lacrime di gioia. Ottima selezione di vini naturali. Ambiente informale ma curato nei dettagli.',
     our_tip: 'Chiedete i piatti fuori menu, spesso sono le cose migliori. La selezione di vini naturali è eccellente!',
     is_published: true,
@@ -355,7 +313,6 @@ const MOCK_RESTAURANTS = [
     category: ['Gelateria'],
     cuisine_type: 'Gelateria',
     price_range: 1,
-    our_rating: 4.0,
     our_review: 'Nato a Torino nel 2003, Grom è diventato famoso in tutto il mondo. Gelato con ingredienti biologici, senza coloranti né aromi artificiali. Il Crema di Grom è il mio preferito. Una garanzia sempre.',
     our_tip: 'I gusti stagionali cambiano spesso e sono sempre una bella sorpresa. Il Crema di Grom è il must.',
     is_published: true,
@@ -376,7 +333,6 @@ export function useRestaurants(userPosition = null) {
   const [filters, setFilters] = useState({
     category: null,
     priceRange: null,
-    minRating: null,
     sortBy: 'name',
   })
   const [searchQuery, setSearchQuery] = useState('')
@@ -391,11 +347,13 @@ export function useRestaurants(userPosition = null) {
           .select('*, restaurant_photos(*)')
           .order('name')
         if (dbError) throw dbError
-        const mapped = (data || []).map(r => ({
-          ...r,
-          photos: (r.restaurant_photos || []).sort((a, b) => a.sort_order - b.sort_order),
-        }))
-        delete mapped.restaurant_photos
+        const mapped = (data || []).map(r => {
+          const { restaurant_photos, ...rest } = r
+          return {
+            ...rest,
+            photos: (restaurant_photos || []).sort((a, b) => a.sort_order - b.sort_order),
+          }
+        })
         setAllRestaurants(mapped)
       } else {
         await new Promise(r => setTimeout(r, 300))

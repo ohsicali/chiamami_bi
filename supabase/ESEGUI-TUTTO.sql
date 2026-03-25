@@ -9,7 +9,9 @@
 CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name text,
+  email text,
   avatar_url text,
+  recovery_email text,
   is_admin boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -24,13 +26,21 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url)
+  INSERT INTO public.profiles (id, full_name, email, avatar_url)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', ''),
+    NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture', '')
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(NULLIF(profiles.full_name, ''), EXCLUDED.full_name),
+    avatar_url = COALESCE(profiles.avatar_url, EXCLUDED.avatar_url);
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Non bloccare la registrazione se il profilo fallisce
+  -- Il client creerà il profilo al primo login
   RETURN NEW;
 END;
 $$;
@@ -112,6 +122,7 @@ CREATE TABLE IF NOT EXISTS restaurant_photos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id uuid REFERENCES restaurants(id) ON DELETE CASCADE,
   photo_url text NOT NULL,
+  thumb_url text,
   photo_type text DEFAULT 'external_link',
   caption text,
   sort_order int2 DEFAULT 0,
@@ -122,7 +133,9 @@ CREATE TABLE IF NOT EXISTS categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   icon text,
-  color text
+  color text,
+  sort_order int2 DEFAULT 0,
+  created_at timestamptz DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_restaurants_slug ON restaurants(slug);

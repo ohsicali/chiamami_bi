@@ -44,7 +44,7 @@
     "originalItalian": "Contenuto originale in italiano"
   },
   "discount": {
-    "exclusive": "Sconto esclusivo ChiamamiBi",
+    "exclusive": "Sconto esclusivo La Guida di Bi",
     "used": "Sconto utilizzato",
     "validUntil": "Valido fino al",
     "registerToUnlock": "Registrati per sbloccare",
@@ -118,7 +118,7 @@
   "share": {
     "title": "Condividi",
     "shareRestaurant": "Condividi ristorante",
-    "shareText": "Scopri {{name}} su ChiamamiBi!",
+    "shareText": "Scopri {{name}} su La Guida di Bi!",
     "copied": "Link copiato!"
   },
   "tiktok": {

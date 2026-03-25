@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <div className="flex-1 max-w-screen-md mx-auto px-5 py-8">
         <h1
           className="text-2xl font-bold text-primary mb-6"
-          style={{ fontFamily: "'TAN Songbird', serif" }}
+          style={{ fontFamily: 'var(--font-display)' }}
         >
           Privacy Policy
         </h1>
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
 
           <h2 className="text-lg font-semibold text-primary">1. Titolare del trattamento</h2>
           <p>
-            Il titolare del trattamento dei dati è ChiamamiBi, contattabile all'indirizzo email:
+            Il titolare del trattamento dei dati è ChiamamiBi (La Guida di Bi), contattabile all'indirizzo email:
             <a href="mailto:info@chiamamibi.com" className="text-accent"> info@chiamamibi.com</a>
           </p>
 

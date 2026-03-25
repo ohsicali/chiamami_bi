@@ -1,279 +1,412 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
+import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import Supercluster from 'supercluster'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#FF5757'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
+const DEBOUNCE_MS = 120
+const CROSSFADE_MS = 200
 
-function getCategoryInfo(cuisineType) {
-  const cat = CUISINE_CATEGORIES.find((c) => c.name === cuisineType)
-  return cat || { emoji: '🍴', color: '#9CA3AF' }
-}
-
-function createPinElement(restaurant, isSaved) {
-  const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
-  const { emoji, color } = getCategoryInfo(primaryType)
-
-  const el = document.createElement('div')
-  el.className = 'chiamami-pin'
-  el.dataset.restaurantId = restaurant.id
-  el.style.cssText = `
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2.5px solid ${color};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    user-select: none;
-    z-index: 1;
-    pointer-events: auto;
-    position: relative;
-  `
-
-  el.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
-
-  if (isSaved) {
-    const heart = document.createElement('span')
-    heart.style.cssText = `
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 16px;
-      height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      line-height: 1;
-      border: 1.5px solid #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      pointer-events: none;
-    `
-    heart.textContent = '❤️'
-    el.appendChild(heart)
-  }
-
-  return el
-}
-
-// Inject keyframes once
+/* ------------------------------------------------------------------ */
+/*  Inject styles once                                                 */
+/* ------------------------------------------------------------------ */
 const STYLE_ID = 'chiamami-pin-styles'
 function ensureStyles() {
   if (document.getElementById(STYLE_ID)) return
-  const style = document.createElement('style')
-  style.id = STYLE_ID
-  style.textContent = `
-    .chiamami-pin {
-      transition: transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.15s ease;
+  const s = document.createElement('style')
+  s.id = STYLE_ID
+  s.textContent = `
+    .cb-marker {
+      will-change: opacity;
     }
-    .chiamami-pin:hover {
-      transform: scale(1.15) !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+    /* New markers: start invisible, full size */
+    .cb-marker--hidden {
+      opacity: 0;
+      transform: scale(0.85);
     }
-    .chiamami-pin:active {
-      transform: scale(0.9) !important;
-      transition: transform 0.08s ease !important;
+    /* Crossfade transition (applied to both old and new) */
+    .cb-marker--fade {
+      transition: opacity ${CROSSFADE_MS}ms ease, transform ${CROSSFADE_MS}ms ease;
     }
-    .chiamami-pin[data-selected="true"] {
-      transform: scale(1.25) !important;
-      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3) !important;
+    /* Exit: fade to invisible */
+    .cb-marker--exit {
+      opacity: 0;
+      transform: scale(0.85);
+      pointer-events: none;
+    }
+    /* Enter: fade to visible */
+    .cb-marker--show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    /* Instant (no animation) */
+    .cb-marker--visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .cb-marker--selected .cb-inner {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3);
       border-color: ${ACCENT_COLOR} !important;
-      z-index: 10 !important;
-      animation: chiamami-pin-pulse 2s infinite;
     }
-    @keyframes chiamami-pin-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3); }
-      50% { box-shadow: 0 0 0 6px ${ACCENT_COLOR}22, 0 4px 16px rgba(0,0,0,0.3); }
+    .cb-inner {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     }
-    @keyframes chiamami-user-pulse {
+    .cb-marker:hover .cb-inner { transform: scale(1.1); }
+    .cb-marker:active .cb-inner { transform: scale(0.92); }
+    @keyframes cb-pulse {
       0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }
       50% { box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
     }
   `
-  document.head.appendChild(style)
+  document.head.appendChild(s)
 }
 
+/* ------------------------------------------------------------------ */
+/*  Create DOM elements for markers                                    */
+/* ------------------------------------------------------------------ */
+function createPinEl(restaurant, isSaved) {
+  const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
+  const { emoji, color } = getCategoryInfo(primaryType)
+
+  const wrap = document.createElement('div')
+  wrap.className = 'cb-marker'
+  wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
+
+  const inner = document.createElement('div')
+  inner.className = 'cb-inner'
+  inner.style.cssText = `
+    width:40px;height:40px;border-radius:50%;background:#fff;
+    border:2.5px solid ${color};display:flex;align-items:center;
+    justify-content:center;font-size:18px;position:relative;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);user-select:none;
+  `
+  inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
+
+  if (isSaved) {
+    const heart = document.createElement('span')
+    heart.style.cssText = `
+      position:absolute;top:-4px;right:-4px;width:16px;height:16px;
+      background:#fff;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:9px;line-height:1;
+      border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);
+      pointer-events:none;
+    `
+    heart.textContent = '❤️'
+    inner.appendChild(heart)
+  }
+
+  wrap.appendChild(inner)
+  return wrap
+}
+
+function createClusterEl(count) {
+  const wrap = document.createElement('div')
+  wrap.className = 'cb-marker'
+  wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
+
+  const size = count >= 10 ? 48 : 44
+  const inner = document.createElement('div')
+  inner.className = 'cb-inner'
+  inner.style.cssText = `
+    width:${size}px;height:${size}px;border-radius:50%;background:#fff;
+    border:2.5px solid ${ACCENT_COLOR};display:flex;align-items:center;
+    justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    user-select:none;
+  `
+  const label = count > 99 ? '99+' : String(count)
+  inner.innerHTML = `<span style="font-weight:700;font-size:13px;color:${ACCENT_COLOR};line-height:1;pointer-events:none">${label}</span>`
+
+  wrap.appendChild(inner)
+  return wrap
+}
+
+/* ------------------------------------------------------------------ */
+/*  Placeholder                                                        */
+/* ------------------------------------------------------------------ */
 function PlaceholderMap({ restaurants, className }) {
   return (
     <div
       className={className}
       style={{
-        background: '#F5F5F3',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
+        background: '#F5F5F3', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', position: 'relative',
+        overflow: 'hidden', width: '100%', height: '100%',
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '24px',
-          padding: '60px 24px',
-          opacity: 0.3,
-        }}
-      >
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex', flexWrap: 'wrap',
+        alignItems: 'center', justifyContent: 'center', gap: '24px',
+        padding: '60px 24px', opacity: 0.3,
+      }}>
         {(restaurants || []).map((r) => {
           const { emoji, color } = getCategoryInfo(r.cuisine_type)
           return (
-            <div
-              key={r.id}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-              }}
-            >
-              {emoji}
-            </div>
+            <div key={r.id} style={{
+              width: 32, height: 32, borderRadius: '50%', background: color,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+            }}>{emoji}</div>
           )
         })}
       </div>
-
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          textAlign: 'center',
-          padding: '32px',
-          background: 'rgba(255,255,255,0.92)',
-          borderRadius: '16px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-          maxWidth: 360,
-        }}
-      >
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: `${ACCENT_COLOR}15`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 28,
-            margin: '0 auto 16px',
-          }}
-        >
-          🗺️
-        </div>
-        <h3
-          style={{
-            fontSize: 18,
-            fontWeight: 600,
-            color: '#1F2937',
-            margin: '0 0 8px',
-          }}
-        >
+      <div style={{
+        position: 'relative', zIndex: 1, textAlign: 'center', padding: '32px',
+        background: 'rgba(255,255,255,0.92)', borderRadius: '16px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.08)', maxWidth: 360,
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%', background: `${ACCENT_COLOR}15`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 28, margin: '0 auto 16px',
+        }}>🗺️</div>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: '#1F2937', margin: '0 0 8px' }}>
           Configura il token Mapbox
         </h3>
-        <p
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            margin: '0 0 16px',
-            lineHeight: 1.5,
-          }}
-        >
-          Aggiungi la variabile <code
-            style={{
-              background: '#F3F4F6',
-              padding: '2px 6px',
-              borderRadius: 4,
-              fontSize: 13,
-              fontFamily: 'monospace',
-            }}
-          >VITE_MAPBOX_TOKEN</code> al
-          file <code
-            style={{
-              background: '#F3F4F6',
-              padding: '2px 6px',
-              borderRadius: 4,
-              fontSize: 13,
-              fontFamily: 'monospace',
-            }}
-          >.env</code> per visualizzare la mappa.
+        <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Aggiungi <code style={{ background: '#F3F4F6', padding: '2px 6px', borderRadius: 4, fontSize: 13, fontFamily: 'monospace' }}>VITE_MAPBOX_TOKEN</code> al file <code style={{ background: '#F3F4F6', padding: '2px 6px', borderRadius: 4, fontSize: 13, fontFamily: 'monospace' }}>.env</code>
         </p>
-        <div
-          style={{
-            background: '#F9FAFB',
-            border: '1px solid #E5E7EB',
-            borderRadius: 8,
-            padding: '12px',
-            fontSize: 13,
-            fontFamily: 'monospace',
-            color: '#374151',
-            textAlign: 'left',
-          }}
-        >
-          VITE_MAPBOX_TOKEN=pk.eyJ1...
-        </div>
       </div>
     </div>
   )
 }
 
+/* ------------------------------------------------------------------ */
+/*  MapView — supercluster + animated HTML markers                     */
+/* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
-  restaurants,
-  selectedId,
-  onSelectRestaurant,
-  userPosition,
-  savedIds,
-  className,
+  restaurants, selectedId, onSelectRestaurant, onVisibleRestaurantsChange,
+  userPosition, savedIds, className,
 }, ref) {
   const mapContainer = useRef(null)
   const map = useRef(null)
-  const markers = useRef([]) // { marker, restaurant, el }
+  const sc = useRef(null)                    // Supercluster
+  const markersMap = useRef(new Map())        // key → { marker, el, type, id }
   const userMarker = useRef(null)
+  const lastZoom = useRef(null)
+  const debounceTimer = useRef(null)
+  const crossfadeTimer = useRef(null)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
   const onSelectRef = useRef(onSelectRestaurant)
   onSelectRef.current = onSelectRestaurant
+  const onVisibleRef = useRef(onVisibleRestaurantsChange)
+  onVisibleRef.current = onVisibleRestaurantsChange
   const restaurantsRef = useRef(restaurants)
   restaurantsRef.current = restaurants
   const savedIdsRef = useRef(savedIds)
   savedIdsRef.current = savedIds
+  const selectedIdRef = useRef(selectedId)
+  selectedIdRef.current = selectedId
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => map.current?.zoomIn({ duration: 300 }),
     zoomOut: () => map.current?.zoomOut({ duration: 300 }),
     flyToUser: (pos) => {
       if (!map.current || !pos) return
-      map.current.flyTo({
-        center: [pos.lng, pos.lat],
-        zoom: 16, // neighborhood level — shows the block
-        duration: 1200,
-        essential: true,
-      })
+      map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 16, duration: 1200, essential: true })
+    },
+    setPadding: (bottomPx) => {
+      if (!map.current) return
+      map.current.easeTo({ padding: { bottom: bottomPx, top: 70, left: 0, right: 0 }, duration: 300 })
     },
   }))
 
-  // Initialize map
+  /* -------------------------------------------------------------- */
+  /*  Build supercluster index                                       */
+  /* -------------------------------------------------------------- */
+  const buildIndex = useCallback(() => {
+    const rests = restaurantsRef.current || []
+    const saved = savedIdsRef.current
+    const points = rests
+      .filter((r) => r.latitude && r.longitude)
+      .map((r) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
+        properties: { id: r.id, saved: saved?.has(r.id) ? true : false },
+      }))
+
+    const index = new Supercluster({ radius: 60, maxZoom: 16 })
+    index.load(points)
+    sc.current = index
+  }, [])
+
+  /* -------------------------------------------------------------- */
+  /*  Core sync                                                      */
+  /* -------------------------------------------------------------- */
+  const syncMarkers = useCallback((animate) => {
+    const m = map.current
+    const index = sc.current
+    if (!m || !index) return
+
+    // Cancel any in-flight crossfade cleanup
+    clearTimeout(crossfadeTimer.current)
+
+    const zoom = Math.floor(m.getZoom())
+    const bounds = m.getBounds()
+    const pad = 0.5
+    const lngPad = (bounds.getEast() - bounds.getWest()) * pad
+    const latPad = (bounds.getNorth() - bounds.getSouth()) * pad
+    const bbox = [
+      bounds.getWest() - lngPad, bounds.getSouth() - latPad,
+      bounds.getEast() + lngPad, bounds.getNorth() + latPad,
+    ]
+
+    const features = index.getClusters(bbox, zoom)
+    const rests = restaurantsRef.current || []
+    const saved = savedIdsRef.current
+
+    // Build target state
+    const newKeys = new Map()
+    for (const f of features) {
+      const key = f.properties.cluster
+        ? `cluster-${f.properties.cluster_id}`
+        : `pin-${f.properties.id}`
+      newKeys.set(key, f)
+    }
+
+    // Collect markers to exit and markers to enter
+    const toExit = []   // { key, entry } — old markers that should leave
+    const toEnter = []  // { key, el, marker } — new markers to show
+
+    // ---- Identify stale markers ----
+    for (const [key, entry] of markersMap.current) {
+      if (!newKeys.has(key)) {
+        toExit.push({ key, entry })
+      }
+    }
+
+    // ---- Add new / update existing ----
+    for (const [key, f] of newKeys) {
+      if (markersMap.current.has(key)) {
+        // Update position of existing marker
+        const entry = markersMap.current.get(key)
+        const [lng, lat] = f.geometry.coordinates
+        entry.marker.setLngLat([lng, lat])
+        continue
+      }
+
+      let el
+      if (f.properties.cluster) {
+        el = createClusterEl(f.properties.point_count)
+        const clusterId = f.properties.cluster_id
+        const coords = f.geometry.coordinates
+        el.addEventListener('click', (e) => {
+          e.stopPropagation()
+          const expZoom = index.getClusterExpansionZoom(clusterId)
+          m.easeTo({ center: coords, zoom: expZoom, duration: 500 })
+        })
+      } else {
+        const r = rests.find((r) => r.id === f.properties.id)
+        if (!r) continue
+        el = createPinEl(r, saved?.has(r.id))
+        el.addEventListener('click', (e) => {
+          e.stopPropagation()
+          onSelectRef.current?.(r.id)
+        })
+        if (selectedIdRef.current === r.id) el.classList.add('cb-marker--selected')
+      }
+
+      if (animate) {
+        // Start hidden — will be revealed in crossfade
+        el.classList.add('cb-marker--hidden')
+      } else {
+        el.classList.add('cb-marker--visible')
+      }
+
+      const [lng, lat] = f.geometry.coordinates
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([lng, lat])
+        .addTo(m)
+
+      const entry = {
+        marker, el,
+        type: f.properties.cluster ? 'cluster' : 'pin',
+        id: f.properties.cluster ? null : f.properties.id,
+      }
+      markersMap.current.set(key, entry)
+      toEnter.push({ key, el, marker })
+    }
+
+    // ---- Crossfade or instant swap ----
+    if (animate && (toExit.length > 0 || toEnter.length > 0)) {
+      // Step 1: add transition class to all involved markers
+      for (const { entry } of toExit) {
+        entry.el.classList.add('cb-marker--fade')
+      }
+      for (const { el } of toEnter) {
+        el.classList.add('cb-marker--fade')
+      }
+
+      // Step 2: in next frame, trigger both transitions simultaneously
+      requestAnimationFrame(() => {
+        // Old markers → fade out
+        for (const { entry } of toExit) {
+          entry.el.classList.add('cb-marker--exit')
+        }
+        // New markers → fade in
+        for (const { el } of toEnter) {
+          el.classList.remove('cb-marker--hidden')
+          el.classList.add('cb-marker--show')
+        }
+      })
+
+      // Step 3: after transition, clean up old markers from DOM
+      crossfadeTimer.current = setTimeout(() => {
+        for (const { key, entry } of toExit) {
+          entry.marker.remove()
+        }
+        // Clean up transition classes from new markers
+        for (const { el } of toEnter) {
+          el.classList.remove('cb-marker--fade', 'cb-marker--show')
+          el.classList.add('cb-marker--visible')
+        }
+      }, CROSSFADE_MS + 20)
+
+      // Remove exiting keys from map immediately (so they don't interfere with future syncs)
+      for (const { key } of toExit) {
+        markersMap.current.delete(key)
+      }
+    } else {
+      // Instant: just remove old markers
+      for (const { key, entry } of toExit) {
+        markersMap.current.delete(key)
+        entry.marker.remove()
+      }
+    }
+
+    lastZoom.current = zoom
+
+    // Notify parent
+    if (onVisibleRef.current) {
+      const allVisibleIds = rests
+        .filter((r) => r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude]))
+        .map((r) => r.id)
+      const center = m.getCenter()
+      onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
+    }
+  }, [])
+
+  /* -------------------------------------------------------------- */
+  /*  Zoom handler: just record that zoom level changed.             */
+  /*  Actual sync happens at moveend to avoid mid-animation gaps.    */
+  /* -------------------------------------------------------------- */
+  const zoomChanged = useRef(false)
+  const onZoom = useCallback(() => {
+    const m = map.current
+    if (!m) return
+    const zoom = Math.floor(m.getZoom())
+    if (zoom !== lastZoom.current) {
+      zoomChanged.current = true
+    }
+  }, [])
+
+  /* -------------------------------------------------------------- */
+  /*  Initialize map                                                 */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!token || !mapContainer.current) return
-
     ensureStyles()
     mapboxgl.accessToken = token
 
@@ -286,129 +419,109 @@ const MapView = forwardRef(function MapView({
     })
 
     map.current.on('load', () => {
-      // Hide default POI labels to avoid clutter
-      const layers = map.current.getStyle().layers
-      layers.forEach((layer) => {
-        if (layer.id.includes('poi')) {
-          map.current.setLayoutProperty(layer.id, 'visibility', 'none')
+      const m = map.current
+      if (!m) return
+
+      // Hide POI labels
+      m.getStyle().layers.forEach((layer) => {
+        if (layer.id.includes('poi')) m.setLayoutProperty(layer.id, 'visibility', 'none')
+      })
+
+      // During zoom: record that zoom changed (don't sync mid-animation)
+      m.on('zoom', onZoom)
+
+      // After all movement settles: sync with animation if zoom changed
+      m.on('moveend', () => {
+        clearTimeout(debounceTimer.current)
+        if (zoomChanged.current) {
+          zoomChanged.current = false
+          syncMarkers(true) // animated crossfade for cluster ↔ pin
+        } else {
+          debounceTimer.current = setTimeout(() => syncMarkers(false), DEBOUNCE_MS)
         }
       })
+
+      // Initial render (instant, no animation needed)
+      buildIndex()
+      syncMarkers(false)
     })
 
     return () => {
-      markers.current.forEach(({ marker }) => marker.remove())
-      markers.current = []
+      clearTimeout(debounceTimer.current)
+      clearTimeout(crossfadeTimer.current)
+      for (const { marker } of markersMap.current.values()) marker.remove()
+      markersMap.current.clear()
       userMarker.current?.remove()
       userMarker.current = null
       map.current?.remove()
       map.current = null
+      sc.current = null
     }
-  }, [token])
+  }, [token, onZoom, syncMarkers, buildIndex])
 
-  // Create/update markers when restaurants or savedIds change
+  /* -------------------------------------------------------------- */
+  /*  Rebuild when data changes                                      */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
-    if (!map.current || !restaurants?.length) return
+    if (!map.current || !sc.current) return
+    buildIndex()
+    // Clear existing markers to rebuild with new saved states
+    for (const { marker } of markersMap.current.values()) marker.remove()
+    markersMap.current.clear()
+    syncMarkers(false) // instant — data changed, not a zoom transition
+  }, [restaurants, savedIds, buildIndex, syncMarkers])
 
-    const createMarkers = () => {
-      // Remove old markers
-      markers.current.forEach(({ marker }) => marker.remove())
-      markers.current = []
-
-      // Create new markers
-      restaurants.forEach((r) => {
-        if (!r.latitude || !r.longitude) return
-
-        const el = createPinElement(r, savedIds?.has(r.id))
-
-        el.addEventListener('click', (e) => {
-          e.stopPropagation()
-          onSelectRef.current?.(r.id)
-        })
-
-        // Prevent touch events from being swallowed by the map
-        el.addEventListener('touchend', (e) => {
-          e.stopPropagation()
-          onSelectRef.current?.(r.id)
-        }, { passive: true })
-
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([r.longitude, r.latitude])
-          .addTo(map.current)
-
-        markers.current.push({ marker, restaurant: r, el })
-      })
-    }
-
-    if (map.current.isStyleLoaded()) {
-      createMarkers()
-    } else {
-      map.current.on('load', createMarkers)
-    }
-  }, [restaurants, savedIds])
-
-  // Update selected marker styles when selectedId changes
+  /* -------------------------------------------------------------- */
+  /*  Selected state                                                 */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
-    markers.current.forEach(({ restaurant, el }) => {
-      if (restaurant.id === selectedId) {
-        el.dataset.selected = 'true'
+    for (const [, entry] of markersMap.current) {
+      if (entry.type !== 'pin') continue
+      if (entry.id === selectedId) {
+        entry.el.classList.add('cb-marker--selected')
       } else {
-        delete el.dataset.selected
+        entry.el.classList.remove('cb-marker--selected')
       }
-    })
+    }
   }, [selectedId])
 
-  // FlyTo selected restaurant
+  /* -------------------------------------------------------------- */
+  /*  FlyTo selected                                                 */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!map.current || !selectedId) return
-
     const r = restaurantsRef.current?.find((r) => r.id === selectedId)
     if (!r) return
-
     map.current.flyTo({
       center: [r.longitude, r.latitude],
-      zoom: 15,
-      duration: 1000,
-      essential: true,
+      zoom: Math.max(map.current.getZoom(), 15),
+      duration: 1000, essential: true,
     })
   }, [selectedId])
 
-  // User position blue dot
+  /* -------------------------------------------------------------- */
+  /*  User position                                                  */
+  /* -------------------------------------------------------------- */
   useEffect(() => {
     if (!map.current) return
-
-    if (userMarker.current) {
-      userMarker.current.remove()
-      userMarker.current = null
-    }
-
+    if (userMarker.current) { userMarker.current.remove(); userMarker.current = null }
     if (!userPosition) return
 
     const el = document.createElement('div')
     el.style.cssText = `
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #3B82F6;
-      border: 3px solid #fff;
-      box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
-      animation: chiamami-user-pulse 2s infinite;
+      width:16px;height:16px;border-radius:50%;background:#3B82F6;
+      border:3px solid #fff;box-shadow:0 0 0 4px rgba(59,130,246,0.3);
+      animation:cb-pulse 2s infinite;
     `
-
     userMarker.current = new mapboxgl.Marker({ element: el })
       .setLngLat([userPosition.lng, userPosition.lat])
       .addTo(map.current)
   }, [userPosition])
 
-  if (!token) {
-    return <PlaceholderMap restaurants={restaurants} className={className} />
-  }
+  if (!token) return <PlaceholderMap restaurants={restaurants} className={className} />
 
   return (
-    <div
-      ref={mapContainer}
-      className={className}
-      style={{ width: '100%', height: '100%' }}
-    />
+    <div ref={mapContainer} className={className} style={{ width: '100%', height: '100%' }} />
   )
 })
 

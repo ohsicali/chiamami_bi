@@ -26,7 +26,7 @@ export default function Footer() {
             </a>
             {/* Instagram */}
             <a
-              href="https://www.instagram.com/chiamamibi"
+              href="https://www.instagram.com/chiamami_bi"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-pink-500 hover:text-white transition-colors"
@@ -64,7 +64,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="pt-6 border-t border-gray-100">
           <p className="text-xs text-secondary">
-            © {new Date().getFullYear()} ChiamamiBi. Tutti i diritti riservati.
+            © {new Date().getFullYear()} La Guida di Bi by ChiamamiBi. Tutti i diritti riservati.
           </p>
         </div>
       </div>

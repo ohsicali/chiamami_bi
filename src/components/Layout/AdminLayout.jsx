@@ -56,6 +56,14 @@ function ApplicationIcon({ className }) {
     </svg>
   )
 }
+function SettingsIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )
+}
 function LogoutIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -111,6 +119,7 @@ const NAV_ITEMS = [
   { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
   { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
   { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon },
+  { to: '/admin/settings', label: 'Impostazioni', icon: SettingsIcon },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -121,24 +130,29 @@ function SidebarContent({ user, onLogout, onNavClick }) {
 
   const isActive = (item) => {
     const itemPath = item.to.split('?')[0]
+    const itemQuery = item.to.includes('?') ? '?' + item.to.split('?')[1] : ''
     if (item.exact) return location.pathname === itemPath && !location.search
-    return location.pathname === itemPath && (!item.to.includes('?') || location.search === '?' + item.to.split('?')[1])
+    if (itemQuery) return location.pathname === itemPath && location.search === itemQuery
+    return location.pathname === itemPath
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#1a1a1a]">
       {/* Logo + back arrow */}
       <div className="px-5 pt-6 pb-6 flex items-center gap-3">
         <Link
           to="/"
-          className="p-1.5 rounded-lg text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
+          className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors"
           title="Torna al sito"
           onClick={onNavClick}
         >
           <ArrowLeftIcon className="w-4 h-4" />
         </Link>
         <Link to="/admin" className="flex-1" onClick={onNavClick}>
-          <LogoFull height={20} />
+          <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+            <span className="text-accent">La Guida</span>{' '}
+            <span className="text-white">di Bi</span>
+          </span>
         </Link>
       </div>
 
@@ -154,8 +168,8 @@ function SidebarContent({ user, onLogout, onNavClick }) {
               onClick={onNavClick}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-secondary hover:text-primary hover:bg-gray-50'
+                  ? 'bg-accent text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/8'
               }`}
             >
               <Icon className="w-[18px] h-[18px] flex-shrink-0" />
@@ -166,11 +180,11 @@ function SidebarContent({ user, onLogout, onNavClick }) {
       </nav>
 
       {/* User info + logout */}
-      <div className="px-5 py-4 border-t border-gray-100 mt-2">
-        <p className="text-xs text-secondary truncate mb-2">{user?.email ?? 'Admin'}</p>
+      <div className="px-5 py-4 border-t border-white/10 mt-2">
+        <p className="text-xs text-white/40 truncate mb-2">{user?.email ?? 'Admin'}</p>
         <button
           onClick={() => { onLogout(); onNavClick?.() }}
-          className="flex items-center gap-2 text-sm text-secondary hover:text-red-500 transition-colors"
+          className="flex items-center gap-2 text-sm text-white/50 hover:text-red-400 transition-colors"
         >
           <LogoutIcon className="w-4 h-4" />
           Esci
@@ -217,7 +231,7 @@ export default function AdminLayout({ children, title }) {
   return (
     <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex flex-col w-60 bg-white border-r border-gray-100 shrink-0 fixed inset-y-0 left-0 z-30">
+      <aside className="hidden md:flex flex-col w-60 bg-[#1a1a1a] shrink-0 fixed inset-y-0 left-0 z-30">
         <SidebarContent user={user} onLogout={signOut} onNavClick={() => {}} />
       </aside>
 
@@ -240,12 +254,12 @@ export default function AdminLayout({ children, title }) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white z-50 shadow-xl md:hidden"
+              className="fixed inset-y-0 left-0 w-72 bg-[#1a1a1a] z-50 shadow-xl md:hidden"
             >
               {/* Close button */}
               <button
                 onClick={closeMobile}
-                className="absolute top-4 right-4 p-2 rounded-xl text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <XIcon className="w-5 h-5" />
               </button>

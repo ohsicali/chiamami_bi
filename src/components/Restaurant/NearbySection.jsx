@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import RatingStars from './RatingStars'
-import { CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
 const cardVariants = {
@@ -19,9 +18,8 @@ const cardVariants = {
 }
 
 function NearbyCard({ restaurant, index, onSelect }) {
-  const category = CUISINE_CATEGORIES.find(
-    (c) => (restaurant.category || []).includes(c.name) || c.name === restaurant.cuisine_type
-  )
+  const primaryType = (restaurant.category || [])[0] || restaurant.cuisine_type
+  const category = primaryType ? getCategoryInfo(primaryType) : null
 
   const photoUrl =
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
@@ -46,7 +44,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
         {photoUrl ? (
           <img
             src={photoUrl}
-            alt={restaurant.name}
+            alt={`${restaurant.name}${restaurant.city ? ` - ${restaurant.city}` : ''}`}
             loading="lazy"
             className="h-full w-full object-cover"
           />
@@ -59,7 +57,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
 
       {/* Info */}
       <div className="flex flex-col gap-0.5 p-2.5">
-        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
           {restaurant.name}
         </h4>
         {category && (
@@ -69,11 +67,6 @@ function NearbyCard({ restaurant, index, onSelect }) {
           >
             {category.emoji} {category.name}
           </span>
-        )}
-        {restaurant.our_rating != null && (
-          <div className="flex items-center gap-1">
-            <RatingStars rating={restaurant.our_rating} size="sm" />
-          </div>
         )}
       </div>
     </motion.button>

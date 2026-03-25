@@ -60,7 +60,7 @@ export default function DealsPage() {
           <motion.div variants={itemVariants}>
             <h1
               className="text-2xl font-bold text-primary"
-              style={{ fontFamily: "'TAN Songbird', serif" }}
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               Sconti esclusivi
             </h1>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -70,7 +71,7 @@ function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }
               <p className="text-xs text-secondary mt-0.5">{d.conditions}</p>
             )}
             <div className="flex items-center gap-4 mt-2 text-xs text-secondary">
-              <span>Utilizzi: {d.total_redeemed}{d.max_redemptions ? `/${d.max_redemptions}` : ''}</span>
+              <span>Utilizzi: {(d.redemptions || []).filter(r => r.status === 'redeemed').length}{d.max_redemptions ? `/${d.max_redemptions}` : ''}</span>
               <span>Scade: {new Date(d.valid_until).toLocaleDateString('it-IT')}</span>
             </div>
           </div>
@@ -91,7 +92,7 @@ function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }
 }
 
 export default function DiscountManager() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const [discounts, setDiscounts] = useState([])
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
@@ -124,7 +125,7 @@ export default function DiscountManager() {
     Promise.all([
       supabase
         .from('discounts')
-        .select('*, restaurant:restaurants(id, name)')
+        .select('*, restaurant:restaurants(id, name), redemptions:discount_redemptions(id, status)')
         .order('created_at', { ascending: false }),
       supabase
         .from('restaurants')
@@ -243,6 +244,7 @@ export default function DiscountManager() {
   }
 
   if (authLoading || loading) return null
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Gestione Sconti">
@@ -250,7 +252,7 @@ export default function DiscountManager() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+          <h1 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
             Gestione Sconti
           </h1>
           <p className="text-sm text-secondary mt-0.5">{discounts.length} sconti totali</p>

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link, useSearchParams, Navigate } from 'react-router-dom'
 import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, CUISINE_CATEGORIES, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useAllReviews } from '../../lib/hooks/useReviews'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
@@ -72,7 +72,7 @@ function ChevronIcon({ className, direction = 'up' }) {
 /*  Main Dashboard Page                                                */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading } = useAuth()
   const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
 
   const [search, setSearch] = useState('')
@@ -81,6 +81,7 @@ export default function AdminDashboard() {
   const [deleteId, setDeleteId] = useState(null)
   const [searchParams] = useSearchParams()
   const restaurantTableRef = useRef(null)
+
 
   // Scroll to restaurants table if ?section=restaurants
   useEffect(() => {
@@ -100,21 +101,26 @@ export default function AdminDashboard() {
     return { total, published, drafts, cities }
   }, [restaurants])
 
-  // Chart data — mock weekly registrations over last 8 weeks
+  // Chart data — restaurants added per week over last 8 weeks (real data)
   const registrationData = useMemo(() => {
     const weeks = []
     const now = new Date()
     for (let i = 7; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i * 7)
+      const weekStart = new Date(now)
+      weekStart.setDate(weekStart.getDate() - (i + 1) * 7)
+      const weekEnd = new Date(now)
+      weekEnd.setDate(weekEnd.getDate() - i * 7)
+      const count = restaurants.filter(r => {
+        const created = new Date(r.created_at)
+        return created >= weekStart && created < weekEnd
+      }).length
       weeks.push({
-        week: d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
-        utenti: Math.floor(Math.random() * 40) + 10 + i * 3,
-        ristoranti: Math.floor(Math.random() * 5) + (i < 3 ? 2 : 0),
+        week: weekEnd.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+        ristoranti: count,
       })
     }
     return weeks
-  }, [])
+  }, [restaurants])
 
   // Top restaurants by category
   const topCategoriesData = useMemo(() => {
@@ -228,6 +234,7 @@ export default function AdminDashboard() {
     setDeleteId(null)
   }
 
+
   if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -236,7 +243,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!user) return <Navigate to="/admin/login" replace />
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const statCards = [
     { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },
@@ -267,7 +274,7 @@ export default function AdminDashboard() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>Dashboard</h1>
           <p className="text-sm text-secondary mt-0.5">
             Ciao, {user?.email?.split('@')[0] ?? 'Admin'}
           </p>
@@ -475,7 +482,7 @@ export default function AdminDashboard() {
             <tbody className="divide-y divide-gray-50">
               {rows.map((r) => {
                 const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-                  .map(name => CUISINE_CATEGORIES.find(c => c.name === name))
+                  .map(name => getCategoryInfo(name))
                   .filter(Boolean)
                 const cat = cats[0]
                 const isPublished = r.is_published !== false

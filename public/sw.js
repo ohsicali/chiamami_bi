@@ -1,5 +1,5 @@
-// ChiamamiBi Service Worker — Push Notifications
-const CACHE_NAME = 'chiamamibi-v1'
+// La Guida di Bi — Service Worker — Push Notifications
+const CACHE_NAME = 'guida-di-bi-v1'
 
 self.addEventListener('install', () => {
   self.skipWaiting()
@@ -12,7 +12,7 @@ self.addEventListener('activate', (event) => {
 // Handle push notifications
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {}
-  const title = data.title || 'ChiamamiBi'
+  const title = data.title || 'La Guida di Bi'
   const options = {
     body: data.body || '',
     icon: '/logo-bi.svg',

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useAllReviews } from '../../lib/hooks/useReviews'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -15,10 +16,12 @@ function timeAgo(dateStr) {
 }
 
 export default function ReviewModerator() {
-  const { user, loading: authLoading } = useAuth()
-  const { reviews, loading, fetchError, updateStatus, deleteReview } = useAllReviews()
+  const { user, isAdmin, loading: authLoading } = useAuth()
+  const { reviews, loading, fetchError, updateStatus, deleteReview, updateComment } = useAllReviews()
   const [tab, setTab] = useState('pending')
   const [actionLoading, setActionLoading] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [editText, setEditText] = useState('')
 
   const pending = reviews.filter(r => r.status !== 'published' && r.status !== 'rejected')
   const published = reviews.filter(r => r.status === 'published')
@@ -45,14 +48,28 @@ export default function ReviewModerator() {
     setActionLoading(null)
   }
 
+  const handleEdit = (review) => {
+    setEditingId(review.id)
+    setEditText(review.comment)
+  }
+
+  const handleSaveEdit = async (id) => {
+    setActionLoading(id)
+    await updateComment(id, editText)
+    setEditingId(null)
+    setEditText('')
+    setActionLoading(null)
+  }
+
   if (authLoading || loading) return null
+  if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Recensioni">
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+        <h1 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
           Moderazione Recensioni
         </h1>
         <p className="text-sm text-secondary mt-0.5">
@@ -146,9 +163,35 @@ export default function ReviewModerator() {
               </div>
 
               {/* Comment */}
-              <p className="text-sm leading-relaxed text-primary mb-2">
-                {review.comment}
-              </p>
+              {editingId === review.id ? (
+                <div className="mb-2">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none resize-y"
+                  />
+                  <div className="flex gap-2 mt-1.5">
+                    <button
+                      onClick={() => handleSaveEdit(review.id)}
+                      disabled={actionLoading === review.id}
+                      className="rounded-lg bg-accent px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                    >
+                      Salva
+                    </button>
+                    <button
+                      onClick={() => { setEditingId(null); setEditText('') }}
+                      className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-medium text-secondary"
+                    >
+                      Annulla
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed text-primary mb-2">
+                  {review.comment}
+                </p>
+              )}
 
               {/* AI reason if present */}
               {review.ai_reason && (
@@ -174,7 +217,17 @@ export default function ReviewModerator() {
               )}
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                {editingId !== review.id && (
+                  <motion.button
+                    onClick={() => handleEdit(review)}
+                    disabled={actionLoading === review.id}
+                    className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 disabled:opacity-50"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Modifica
+                  </motion.button>
+                )}
                 {review.status !== 'published' && review.status !== 'rejected' && (
                   <>
                     <motion.button
@@ -183,7 +236,7 @@ export default function ReviewModerator() {
                       className="rounded-lg bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 disabled:opacity-50"
                       whileTap={{ scale: 0.95 }}
                     >
-                      ✅ Approva
+                      Approva
                     </motion.button>
                     <motion.button
                       onClick={() => handleReject(review.id)}
@@ -191,7 +244,7 @@ export default function ReviewModerator() {
                       className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-500 disabled:opacity-50"
                       whileTap={{ scale: 0.95 }}
                     >
-                      ❌ Rifiuta
+                      Rifiuta
                     </motion.button>
                   </>
                 )}

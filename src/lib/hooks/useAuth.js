@@ -20,6 +20,16 @@ export function useAuth() {
       .single()
 
     if (data) {
+      // Sync email to profile if missing (but don't overwrite for Google users who may have a different contact email)
+      const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
+      if (!data.email && authUser.email && !isGoogleUser) {
+        supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+        data.email = authUser.email
+      } else if (!data.email && authUser.email && isGoogleUser) {
+        // For Google users, set initial email but don't overwrite later changes
+        supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+        data.email = authUser.email
+      }
       setProfile(data)
       return data
     }
@@ -32,19 +42,38 @@ export function useAuth() {
         avatar_url: authUser.user_metadata?.avatar_url || null,
         is_admin: false,
       }
-      const { data: created } = await supabase
+      const { data: created, error: insertError } = await supabase
         .from('profiles')
         .insert(newProfile)
         .select()
         .single()
-      setProfile(created || newProfile)
-      // Auto-subscribe to newsletter on first registration
+      if (insertError) {
+        // Insert failed — try upsert (profile might partially exist)
+        const { data: upserted } = await supabase
+          .from('profiles')
+          .upsert(newProfile, { onConflict: 'id' })
+          .select()
+          .single()
+        setProfile(upserted || newProfile)
+      } else {
+        setProfile(created || newProfile)
+      }
+      // Auto-subscribe to newsletter + send welcome email on first registration
       if (authUser.email) {
         supabase
           .from('newsletter_subscribers')
           .upsert({ email: authUser.email, source: 'registration' }, { onConflict: 'email' })
           .then(() => {})
           .catch(() => {})
+        // Send welcome email (fire and forget)
+        fetch('/api/welcome-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: authUser.email,
+            name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+          }),
+        }).catch(() => {})
       }
       return created || newProfile
     }
@@ -68,11 +97,17 @@ export function useAuth() {
     }).catch(() => {
       setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const authUser = session?.user ?? null
       setUser(authUser)
       if (authUser) {
         fetchProfile(authUser)
+        // Sync email to profiles when it changes (e.g. after email change confirmation)
+        // Skip for Google OAuth users — their profile email is managed separately as a contact email
+        const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
+        if (event === 'USER_UPDATED' && authUser.email && !isGoogleUser) {
+          supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+        }
       } else {
         setProfile(null)
       }
@@ -93,6 +128,7 @@ export function useAuth() {
       password,
       options: {
         data: { full_name: fullName },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
     if (error) throw error
@@ -103,8 +139,16 @@ export function useAuth() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
+    })
+    if (error) throw error
+  }, [])
+
+  const resetPasswordForEmail = useCallback(async (email) => {
+    if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     })
     if (error) throw error
   }, [])
@@ -121,5 +165,5 @@ export function useAuth() {
 
   const isAdmin = profile?.is_admin === true
 
-  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile }
+  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
 }

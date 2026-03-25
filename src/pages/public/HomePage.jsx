@@ -14,6 +14,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
+import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { Link } from 'react-router-dom'
 
 function slugify(name) {
@@ -64,8 +65,33 @@ export default function HomePage() {
 
   const [selectedId, setSelectedId] = useState(null)
   const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
+  const [visibleIds, setVisibleIds] = useState(null) // null = show all (initial state)
+  const [mapCenter, setMapCenter] = useState(null)
   const mapRef = useRef(null)
   const sheetRef = useRef(null)
+
+  // Callback from MapView: visible restaurant IDs + map center
+  const handleVisibleRestaurantsChange = useCallback((ids, center) => {
+    setVisibleIds(new Set(ids))
+    setMapCenter(center)
+  }, [])
+
+  // Sort displayed restaurants by distance to map center, filter to viewport
+  const viewportRestaurants = (() => {
+    if (!visibleIds || !mapCenter) return displayedRestaurants
+
+    const inView = displayedRestaurants.filter((r) => visibleIds.has(r.id))
+
+    // Sort by distance to map center
+    const toRad = (d) => (d * Math.PI) / 180
+    const dist = (r) => {
+      const dLat = toRad(r.latitude - mapCenter.lat)
+      const dLng = toRad(r.longitude - mapCenter.lng)
+      return dLat * dLat + dLng * dLng // no need for exact distance, just relative order
+    }
+    inView.sort((a, b) => dist(a) - dist(b))
+    return inView
+  })()
 
   const handleLocateMe = useCallback(() => {
     locate()
@@ -105,6 +131,13 @@ export default function HomePage() {
 
   const handleSnapChange = useCallback((snap) => {
     setSheetSnap(snap)
+    // Update map padding so markers/center stay visible above the sheet
+    if (mapRef.current?.setPadding) {
+      const sheetH = snap === SNAP_FULL ? window.innerHeight * 0.8
+        : snap === SNAP_HALF ? window.innerHeight * 0.55
+        : 86
+      mapRef.current.setPadding(sheetH)
+    }
   }, [])
 
   const handleSearchFocus = useCallback(() => {
@@ -123,6 +156,7 @@ export default function HomePage() {
         restaurants={allRestaurants}
         selectedId={selectedId}
         onSelectRestaurant={handlePinSelect}
+        onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
         userPosition={position}
         savedIds={savedIds}
         className="absolute inset-0"
@@ -136,6 +170,25 @@ export default function HomePage() {
         onZoomOut={() => mapRef.current?.zoomOut()}
       />
 
+      {/* Floating Lista/Mappa toggle — mobile only */}
+      <button
+        onClick={handleToggleView}
+        className="md:hidden fixed z-40 left-1/2 -translate-x-1/2"
+        style={{
+          bottom: TAB_BAR_HEIGHT + 16,
+          background: '#1a1a1a',
+          color: '#fff',
+          borderRadius: 24,
+          padding: '10px 22px',
+          fontSize: 14,
+          fontWeight: 600,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        {sheetSnap === SNAP_FULL ? 'Mappa' : 'Lista'}
+      </button>
+
       {/* Bottom Sheet — Apple Maps style */}
       <BottomSheet ref={sheetRef} onSnapChange={handleSnapChange}>
         {/* Search Bar */}
@@ -147,40 +200,17 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Filter Chips (categories) */}
+        {/* Filter Chips — 2 rows: categories + action chips */}
         <div className="mb-4">
           <FilterChips
             filters={filters}
             onFilterChange={setFilters}
             onNearbyClick={handleLocateMe}
-            user={user}
-            showSavedOnly={showSavedOnly}
-            onToggleSaved={() => { setShowSavedOnly((v) => !v); setShowDealsOnly(false) }}
-            savedCount={savedIds.size}
             showDealsOnly={showDealsOnly}
             onToggleDeals={() => { setShowDealsOnly((v) => !v); setShowSavedOnly(false) }}
             dealsCount={discountRestaurantIds.size}
           />
         </div>
-
-        {/* Bi intro — minimal single-line */}
-        <Link
-          to="/about"
-          className="flex items-center gap-2.5 mb-3 px-1 group"
-        >
-          <div className="w-8 h-8 rounded-full bg-accent flex-shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-            Bi
-          </div>
-          <p
-            className="text-sm text-secondary group-hover:text-primary transition-colors italic"
-            style={{ fontFamily: "'Playfair Display', serif" }}
-          >
-            I posti che amo davvero
-          </p>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </Link>
 
         {/* Results count */}
         <div className="mb-3 px-1">
@@ -188,8 +218,11 @@ export default function HomePage() {
             <div className="skeleton h-4 w-24 rounded-md" />
           ) : (
             <p className="text-sm font-medium text-secondary">
-              {displayedRestaurants.length}{' '}
-              {displayedRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
+              {viewportRestaurants.length}{' '}
+              {viewportRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
+              {visibleIds && viewportRestaurants.length < displayedRestaurants.length && (
+                <span className="text-xs text-secondary/60"> in questa zona</span>
+              )}
             </p>
           )}
         </div>
@@ -201,7 +234,7 @@ export default function HomePage() {
               <SkeletonCard key={i} className="!shadow-sm" />
             ))}
           </div>
-        ) : displayedRestaurants.length === 0 ? (
+        ) : viewportRestaurants.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-3 text-4xl">🔍</div>
             <p className="text-base font-semibold text-primary">
@@ -213,7 +246,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-8">
-            {displayedRestaurants.map((restaurant, index) => (
+            {viewportRestaurants.map((restaurant, index) => (
               <div key={restaurant.id}>
                 <RestaurantCard
                   restaurant={restaurant}

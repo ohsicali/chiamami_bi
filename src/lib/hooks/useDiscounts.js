@@ -33,9 +33,12 @@ export function useRestaurantDiscount(restaurantId) {
       .gt('valid_until', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
       .then(({ data }) => {
-        setDiscount(data || null)
+        setDiscount(data?.[0] || null)
+        setLoading(false)
+      })
+      .catch(() => {
+        setDiscount(null)
         setLoading(false)
       })
   }, [restaurantId])
@@ -88,6 +91,15 @@ export function useUserRedemption(discountId, userId) {
       return existing
     }
 
+    // Fetch user name to store with redemption (avoids RLS issues on verify)
+    let userName = null
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single()
+    if (profile) userName = profile.full_name
+
     const qrCode = generateQRCode()
     const { data, error } = await supabase
       .from('discount_redemptions')
@@ -96,6 +108,7 @@ export function useUserRedemption(discountId, userId) {
         user_id: userId,
         qr_code: qrCode,
         status: 'generated',
+        user_name: userName,
       })
       .select()
       .single()
@@ -103,23 +116,21 @@ export function useUserRedemption(discountId, userId) {
     if (error) throw error
 
     // Increment total_redeemed counter
-    await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-      .catch(() => {
-        // If RPC doesn't exist, do manual increment
-        supabase
+    const { error: rpcError } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
+    if (rpcError) {
+      // Fallback: manual increment if RPC doesn't exist
+      const { data: d } = await supabase
+        .from('discounts')
+        .select('total_redeemed')
+        .eq('id', discountId)
+        .single()
+      if (d) {
+        await supabase
           .from('discounts')
-          .select('total_redeemed')
+          .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
           .eq('id', discountId)
-          .single()
-          .then(({ data: d }) => {
-            if (d) {
-              supabase
-                .from('discounts')
-                .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
-                .eq('id', discountId)
-            }
-          })
-      })
+      }
+    }
 
     setRedemption(data)
     return data
@@ -143,7 +154,7 @@ export function useActiveDiscounts() {
 
     supabase
       .from('discounts')
-      .select('*, restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, our_rating, photos:restaurant_photos(id, photo_url, sort_order))')
+      .select('*, restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, photos:restaurant_photos(id, photo_url, sort_order))')
       .eq('is_active', true)
       .gt('valid_until', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -202,16 +213,8 @@ export async function verifyQRCode(qrCode, pinCode) {
     return { valid: false, error: 'not_found', message: 'Codice non riconosciuto' }
   }
 
-  // Fetch user info separately (may be blocked by RLS for anon users, that's ok)
-  let userName = 'Utente'
-  const { data: userProfile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', redemption.user_id)
-    .single()
-  if (userProfile) {
-    userName = userProfile.full_name || 'Utente'
-  }
+  // Use stored user_name from redemption (avoids RLS issues for anon verify)
+  let userName = redemption.user_name || 'Utente'
 
   // 2. Check if already redeemed
   if (redemption.status === 'redeemed') {
@@ -263,21 +266,21 @@ export async function verifyQRCode(qrCode, pinCode) {
   // 6. Increment total_redeemed on the discount
   const discountId = redemption.discount?.id || redemption.discount_id
   if (discountId) {
-    await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-      .catch(async () => {
-        // Fallback: manual increment
-        const { data: d } = await supabase
+    const { error: rpcErr } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
+    if (rpcErr) {
+      // Fallback: manual increment
+      const { data: d } = await supabase
+        .from('discounts')
+        .select('total_redeemed')
+        .eq('id', discountId)
+        .single()
+      if (d) {
+        await supabase
           .from('discounts')
-          .select('total_redeemed')
+          .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
           .eq('id', discountId)
-          .single()
-        if (d) {
-          await supabase
-            .from('discounts')
-            .update({ total_redeemed: (d.total_redeemed || 0) + 1 })
-            .eq('id', discountId)
-        }
-      })
+      }
+    }
   }
 
   return {
@@ -299,7 +302,7 @@ export async function fetchQRPreview(qrCode) {
 
   const { data, error } = await supabase
     .from('discount_redemptions')
-    .select('status, user_id, discount:discounts(title, discount_value, discount_type, restaurant:restaurants(name))')
+    .select('status, user_id, user_name, discount:discounts(title, discount_value, discount_type, restaurant:restaurants(name))')
     .eq('qr_code', qrCode)
     .single()
 
@@ -308,14 +311,9 @@ export async function fetchQRPreview(qrCode) {
     return null
   }
 
-  // Try to fetch user name separately
-  if (data?.user_id) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', data.user_id)
-      .single()
-    data.user = { full_name: profile?.full_name || 'Utente' }
+  // Use stored user_name (avoids RLS issues for anon users)
+  if (data) {
+    data.user = { full_name: data.user_name || 'Utente' }
   }
 
   return data || null

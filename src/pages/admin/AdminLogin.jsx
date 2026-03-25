@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
-import { LogoFull } from '../../components/UI/Logo'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -34,18 +33,18 @@ export default function AdminLogin() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
         <LoadingSpinner />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center px-4">
       {/* Subtle background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-accent/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-accent/10 blur-3xl" />
       </div>
 
       <motion.div
@@ -54,7 +53,7 @@ export default function AdminLogin() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="relative w-full max-w-md"
       >
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100 p-8 md:p-10">
+        <div className="bg-[#242424] rounded-2xl shadow-2xl border border-white/5 p-8 md:p-10">
           {/* Logo / Brand */}
           <div className="text-center mb-8">
             <motion.div
@@ -63,13 +62,13 @@ export default function AdminLogin() {
               transition={{ delay: 0.15, duration: 0.4 }}
               className="flex justify-center"
             >
-              <LogoFull height={32} />
+              <img src="/logo-guida-bi.png" alt="La Guida di Bi" className="h-10 object-contain" />
             </motion.div>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mt-2 text-secondary text-sm"
+              className="mt-3 text-white/40 text-sm"
             >
               Pannello di amministrazione
             </motion.p>
@@ -85,7 +84,7 @@ export default function AdminLogin() {
                 transition={{ duration: 0.25 }}
                 className="overflow-hidden"
               >
-                <div className="flex items-center gap-2 bg-red-50 text-red-600 text-sm rounded-xl px-4 py-3 border border-red-100">
+                <div className="flex items-center gap-2 bg-red-500/10 text-red-400 text-sm rounded-xl px-4 py-3 border border-red-500/20">
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                   </svg>
@@ -98,7 +97,7 @@ export default function AdminLogin() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-primary mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-white/70 mb-1.5">
                 Email
               </label>
               <input
@@ -108,12 +107,12 @@ export default function AdminLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@chiamamibi.it"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-bg text-primary placeholder:text-secondary/50 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all duration-200"
+                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/25 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all duration-200"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-primary mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-white/70 mb-1.5">
                 Password
               </label>
               <input
@@ -123,7 +122,7 @@ export default function AdminLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-bg text-primary placeholder:text-secondary/50 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all duration-200"
+                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/25 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all duration-200"
               />
             </div>
 
@@ -132,7 +131,7 @@ export default function AdminLogin() {
               disabled={submitting}
               whileTap={{ scale: 0.97 }}
               whileHover={{ scale: 1.01 }}
-              className="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm shadow-md hover:shadow-lg hover:bg-[#e64545] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm shadow-lg shadow-accent/20 hover:bg-[#e64545] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50 disabled:pointer-events-none"
             >
               {submitting ? (
                 <span className="inline-flex items-center gap-2">
@@ -148,7 +147,7 @@ export default function AdminLogin() {
           </form>
 
           {/* Footer note */}
-          <p className="mt-6 text-center text-xs text-secondary/60">
+          <p className="mt-6 text-center text-xs text-white/25">
             Accesso riservato agli amministratori
           </p>
         </div>

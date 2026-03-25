@@ -135,7 +135,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
           <>
             <div className="text-center mb-5">
               <span className="text-4xl">⚠️</span>
-              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: "'TAN Songbird', serif" }}>
+              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: 'var(--font-display)' }}>
                 Sei sicuro?
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -160,7 +160,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
         ) : (
           <>
             <div className="text-center mb-5">
-              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: "'TAN Songbird', serif" }}>
+              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: 'var(--font-display)' }}>
                 Conferma cancellazione
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -200,13 +200,42 @@ function DeleteAccountModal({ onConfirm, onClose }) {
 /* ── Settings Section ── */
 function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) {
   const [fullName, setFullName] = useState(profile?.full_name || '')
+  // Re-sync fullName when profile is refreshed externally
+  useEffect(() => {
+    if (profile?.full_name) setFullName(profile.full_name)
+  }, [profile?.full_name])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' })
+  // Detect if user logged in via Google OAuth
+  const isGoogleUser = user?.app_metadata?.provider === 'google' || user?.app_metadata?.providers?.includes('google')
+  // Email change with OTP verification on current email
+  const [emailStep, setEmailStep] = useState('form') // 'form' | 'otp' | 'recovery_otp' | 'done'
+  const [newEmail, setNewEmail] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  const [emailStatus, setEmailStatus] = useState(null)
+  const [emailLoading, setEmailLoading] = useState(false)
+
+  // Recovery email
+  const [recoveryEmail, setRecoveryEmail] = useState(profile?.recovery_email || '')
+  const [savingRecovery, setSavingRecovery] = useState(false)
+  const [recoverySaved, setRecoverySaved] = useState(false)
+
+  // Password change with current password verification
+  const [pwdUnlocked, setPwdUnlocked] = useState(false)
+  const [currentPwd, setCurrentPwd] = useState('')
+  const [passwordForm, setPasswordForm] = useState({ new: '', confirm: '' })
   const [passwordMsg, setPasswordMsg] = useState(null)
+  const [pwdVerifying, setPwdVerifying] = useState(false)
+  // Google user: add email+password login (with OTP verification first)
+  const [loginStep, setLoginStep] = useState('form') // 'form' | 'otp' | 'set_password' | 'done'
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginOtp, setLoginOtp] = useState('')
+  const [loginPassword, setLoginPassword] = useState({ new: '', confirm: '' })
+  const [loginMsg, setLoginMsg] = useState(null)
+  const [loginLoading, setLoginLoading] = useState(false)
   const navigate = useNavigate()
 
   // Check newsletter status
@@ -231,7 +260,9 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     setSaving(true)
     const { error } = await supabase.from('profiles').update({ full_name: fullName.trim() }).eq('id', user.id)
     setSaving(false)
-    if (!error) {
+    if (error) {
+      console.error('Profile name update failed:', error)
+    } else {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       onRefreshProfile?.()
@@ -249,6 +280,170 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     }
   }
 
+  // Google OAuth users: update only profile email (no Auth change needed)
+  const handleGoogleEmailChange = async () => {
+    if (!newEmail.trim() || newEmail === (profile?.email || user?.email)) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    const { error } = await supabase.from('profiles').update({ email: newEmail.trim() }).eq('id', user.id)
+    setEmailLoading(false)
+    if (error) {
+      setEmailStatus({ type: 'error', text: error.message })
+    } else {
+      setEmailStep('done')
+      setEmailStatus({ type: 'success', text: 'Email di contatto aggiornata!' })
+      onRefreshProfile?.()
+    }
+  }
+
+  // Step 1: Send OTP to current email to verify identity
+  const handleSendOtp = async () => {
+    if (!newEmail.trim() || newEmail === user?.email) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    const { error } = await supabase.auth.signInWithOtp({ email: user.email })
+    setEmailLoading(false)
+    if (error) {
+      setEmailStatus({ type: 'error', text: error.message })
+    } else {
+      setEmailStep('otp')
+      setEmailStatus({ type: 'success', text: `Codice di verifica inviato a ${user.email}` })
+    }
+  }
+
+  // Step 2: Verify OTP then change email immediately
+  const handleVerifyAndChangeEmail = async () => {
+    if (!otpCode.trim()) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    // Verify OTP on current email
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      email: user.email,
+      token: otpCode.trim(),
+      type: 'email',
+    })
+    if (verifyErr) {
+      setEmailLoading(false)
+      setEmailStatus({ type: 'error', text: 'Codice non valido o scaduto' })
+      return
+    }
+    // OTP verified — update email
+    const { error: updateErr } = await supabase.auth.updateUser({ email: newEmail })
+    setEmailLoading(false)
+    if (updateErr) {
+      setEmailStatus({ type: 'error', text: updateErr.message })
+    } else {
+      // Check if Supabase returned a session with updated email (Secure email change OFF)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.email === newEmail) {
+        // Email changed immediately — sync to profiles
+        await supabase.from('profiles').update({ email: newEmail }).eq('id', user.id)
+        await supabase.auth.refreshSession()
+        onRefreshProfile?.()
+        setEmailStep('done')
+        setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' })
+      } else {
+        // Secure email change ON — confirmation email sent to new address
+        setEmailStep('done')
+        setEmailStatus({ type: 'success', text: `Controlla ${newEmail} e clicca il link di conferma per completare il cambio.` })
+      }
+    }
+  }
+
+  // "Non ho accesso all'email" — send OTP to recovery email
+  const handleRecoveryOtp = async () => {
+    if (!newEmail.trim()) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    try {
+      const resp = await fetch('/api/recovery-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, action: 'verify_recovery' }),
+      })
+      const data = await resp.json()
+      if (data.no_recovery) {
+        setEmailStatus({ type: 'error', text: 'Nessuna email di recupero configurata. Contatta supporto@chiamamibi.com' })
+      } else if (data.success) {
+        setEmailStep('recovery_otp')
+        setEmailStatus({ type: 'success', text: `Codice inviato a ${data.masked_email}` })
+      } else {
+        setEmailStatus({ type: 'error', text: data.error || 'Errore nell\'invio del codice' })
+      }
+    } catch {
+      setEmailStatus({ type: 'error', text: 'Errore di connessione' })
+    }
+    setEmailLoading(false)
+  }
+
+  // Verify recovery OTP and change email
+  const handleVerifyRecoveryAndChangeEmail = async () => {
+    if (!otpCode.trim() || !newEmail.trim()) return
+    setEmailLoading(true)
+    setEmailStatus(null)
+    try {
+      const resp = await fetch('/api/verify-recovery-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, otp: otpCode, new_email: newEmail }),
+      })
+      const data = await resp.json()
+      if (data.success) {
+        // Refresh session to get updated email
+        await supabase.auth.refreshSession()
+        onRefreshProfile?.()
+        setEmailStep('done')
+        setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' })
+      } else {
+        setEmailStatus({ type: 'error', text: data.error || 'Codice non valido' })
+      }
+    } catch {
+      setEmailStatus({ type: 'error', text: 'Errore di connessione' })
+    }
+    setEmailLoading(false)
+  }
+
+  const handleEmailReset = () => {
+    setEmailStep('form')
+    setNewEmail('')
+    setOtpCode('')
+    setEmailStatus(null)
+  }
+
+  // Save recovery email
+  const handleSaveRecoveryEmail = async () => {
+    if (!isSupabaseConfigured()) return
+    setSavingRecovery(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ recovery_email: recoveryEmail.trim() || null })
+      .eq('id', user.id)
+    setSavingRecovery(false)
+    if (!error) {
+      setRecoverySaved(true)
+      setTimeout(() => setRecoverySaved(false), 2000)
+      onRefreshProfile?.()
+    }
+  }
+
+  // Password handlers
+  const handleVerifyCurrentPwd = async () => {
+    if (!currentPwd) return
+    setPwdVerifying(true)
+    setPasswordMsg(null)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPwd,
+    })
+    setPwdVerifying(false)
+    if (error) {
+      setPasswordMsg({ type: 'error', text: 'Password attuale non corretta' })
+    } else {
+      setPwdUnlocked(true)
+      setPasswordMsg(null)
+    }
+  }
+
   const handleChangePassword = async () => {
     setPasswordMsg(null)
     if (passwordForm.new.length < 6) {
@@ -263,27 +458,119 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
       const { error } = await supabase.auth.updateUser({ password: passwordForm.new })
       if (error) throw error
       setPasswordMsg({ type: 'success', text: 'Password aggiornata!' })
-      setPasswordForm({ current: '', new: '', confirm: '' })
+      setPasswordForm({ new: '', confirm: '' })
+      setCurrentPwd('')
+      setPwdUnlocked(false)
     } catch (err) {
       setPasswordMsg({ type: 'error', text: err.message || 'Errore nel cambio password.' })
     }
   }
 
+  // Google user: Step 1 — send OTP to current Google email to verify identity
+  const handleLoginSendOtp = async () => {
+    setLoginLoading(true)
+    setLoginMsg(null)
+    const { error } = await supabase.auth.signInWithOtp({ email: user.email })
+    setLoginLoading(false)
+    if (error) {
+      setLoginMsg({ type: 'error', text: error.message })
+    } else {
+      setLoginStep('otp')
+      setLoginMsg({ type: 'success', text: `Codice di verifica inviato a ${user.email}` })
+    }
+  }
+
+  // Google user: Step 2 — verify OTP
+  const handleLoginVerifyOtp = async () => {
+    if (!loginOtp.trim()) return
+    setLoginLoading(true)
+    setLoginMsg(null)
+    const { error } = await supabase.auth.verifyOtp({
+      email: user.email,
+      token: loginOtp.trim(),
+      type: 'email',
+    })
+    setLoginLoading(false)
+    if (error) {
+      setLoginMsg({ type: 'error', text: 'Codice non valido o scaduto' })
+    } else {
+      setLoginStep('set_password')
+      setLoginMsg(null)
+    }
+  }
+
+  // Google user: Step 3 — set new email + password
+  const handleAddEmailLogin = async () => {
+    setLoginMsg(null)
+    const email = loginEmail.trim()
+    if (!email) {
+      setLoginMsg({ type: 'error', text: 'Inserisci un\'email' })
+      return
+    }
+    if (loginPassword.new.length < 6) {
+      setLoginMsg({ type: 'error', text: 'La password deve avere almeno 6 caratteri' })
+      return
+    }
+    if (loginPassword.new !== loginPassword.confirm) {
+      setLoginMsg({ type: 'error', text: 'Le password non coincidono' })
+      return
+    }
+    setLoginLoading(true)
+    try {
+      // Add password to the account
+      const { error: pwdErr } = await supabase.auth.updateUser({ password: loginPassword.new })
+      if (pwdErr) throw pwdErr
+      // If email is different from current auth email, update it too
+      if (email !== user.email) {
+        const { error: emailErr } = await supabase.auth.updateUser({ email })
+        if (emailErr) throw emailErr
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email === email) {
+          await supabase.from('profiles').update({ email }).eq('id', user.id)
+          await supabase.auth.refreshSession()
+          onRefreshProfile?.()
+          setLoginMsg({ type: 'success', text: `Fatto! Ora puoi accedere con ${email} e password.` })
+        } else {
+          setLoginMsg({ type: 'success', text: `Password impostata! Controlla ${email} e clicca il link di conferma per attivare il nuovo accesso.` })
+        }
+      } else {
+        setLoginMsg({ type: 'success', text: 'Password impostata! Ora puoi accedere anche con email e password.' })
+      }
+      setLoginStep('done')
+    } catch (err) {
+      setLoginMsg({ type: 'error', text: err.message || 'Errore nell\'aggiunta dell\'accesso' })
+    }
+    setLoginLoading(false)
+  }
+
+  const handleLoginReset = () => {
+    setLoginStep('form')
+    setLoginEmail('')
+    setLoginOtp('')
+    setLoginPassword({ new: '', confirm: '' })
+    setLoginMsg(null)
+  }
+
   const handleDeleteAccount = async () => {
     if (!user) return
     try {
-      await Promise.all([
-        supabase.from('saved_restaurants').delete().eq('user_id', user.id),
-        supabase.from('discount_redemptions').delete().eq('user_id', user.id),
-        supabase.from('user_reviews').delete().eq('user_id', user.id),
-        supabase.from('newsletter_subscribers').delete().eq('email', user.email),
-        supabase.from('profiles').delete().eq('id', user.id),
-      ])
+      const { data: { session } } = await supabase.auth.getSession()
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Errore durante la cancellazione')
+      }
       await onLogout()
       navigate('/', { replace: true })
     } catch (err) {
       console.error('Account deletion failed:', err)
-      alert('Errore durante la cancellazione. Contatta info@chiamamibi.com')
+      alert(`Errore durante la cancellazione: ${err.message}`)
     }
   }
 
@@ -307,7 +594,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         Torna al profilo
       </button>
 
-      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
         Impostazioni
       </h2>
 
@@ -333,51 +620,351 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         </div>
       </div>
 
-      {/* Email (read-only) */}
+      {/* Email change with OTP (or direct for Google users) */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-primary mb-3">Email</h3>
-        <input
-          type="email"
-          value={user?.email || ''}
-          readOnly
-          className={`${inputClasses} bg-gray-100 cursor-not-allowed`}
-        />
-        <p className="text-xs text-secondary mt-2">L'email non puo' essere modificata.</p>
+        <h3 className="text-sm font-semibold text-primary mb-1">
+          {isGoogleUser ? 'Email di contatto' : 'Email'}
+        </h3>
+        {isGoogleUser ? (
+          <p className="text-xs text-secondary mb-3">
+            Accedi con Google ({user?.email}). Qui puoi impostare un'email di contatto diversa.
+            {profile?.email && profile.email !== user?.email && (
+              <><br />Email di contatto: <span className="font-medium text-primary">{profile.email}</span></>
+            )}
+          </p>
+        ) : (
+          <p className="text-xs text-secondary mb-3">
+            Email attuale: <span className="font-medium text-primary">{user?.email}</span>
+          </p>
+        )}
+
+        {emailStep === 'form' && isGoogleUser && (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                className={inputClasses}
+                placeholder="Email di contatto"
+              />
+              <motion.button
+                onClick={handleGoogleEmailChange}
+                disabled={emailLoading || !newEmail.trim() || newEmail === (profile?.email || user?.email)}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Salva'}
+              </motion.button>
+            </div>
+          </div>
+        )}
+
+        {emailStep === 'form' && !isGoogleUser && (
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                className={inputClasses}
+                placeholder="Nuova email"
+              />
+              <motion.button
+                onClick={handleSendOtp}
+                disabled={emailLoading || !newEmail.trim() || newEmail === user?.email}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Cambia'}
+              </motion.button>
+            </div>
+            <button
+              onClick={handleRecoveryOtp}
+              disabled={emailLoading || !newEmail.trim()}
+              className="text-xs text-secondary hover:text-accent transition-colors self-start"
+            >
+              Non ho accesso all'email attuale
+            </button>
+          </div>
+        )}
+
+        {emailStep === 'otp' && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-secondary">
+              Inserisci il codice ricevuto su <strong>{user?.email}</strong>
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="Codice di verifica"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={`${inputClasses} text-center tracking-widest font-mono`}
+              />
+              <motion.button
+                onClick={handleVerifyAndChangeEmail}
+                disabled={emailLoading || otpCode.length < 6}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Conferma'}
+              </motion.button>
+            </div>
+            <button onClick={handleEmailReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
+              Annulla
+            </button>
+          </div>
+        )}
+
+        {emailStep === 'recovery_otp' && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-secondary">
+              Inserisci il codice inviato alla tua <strong>email di recupero</strong>
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Codice di recupero"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className={`${inputClasses} text-center tracking-widest font-mono`}
+              />
+              <motion.button
+                onClick={handleVerifyRecoveryAndChangeEmail}
+                disabled={emailLoading || otpCode.length < 6}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                whileTap={{ scale: 0.95 }}
+              >
+                {emailLoading ? '...' : 'Conferma'}
+              </motion.button>
+            </div>
+            <button onClick={handleEmailReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
+              Annulla
+            </button>
+          </div>
+        )}
+
+        {emailStep === 'done' && (
+          <button onClick={handleEmailReset} className="text-xs text-accent hover:underline">
+            Cambia di nuovo
+          </button>
+        )}
+
+        {emailStatus && (
+          <p className={`text-xs mt-2 font-medium ${emailStatus.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+            {emailStatus.text}
+          </p>
+        )}
       </div>
 
-      {/* Change password */}
+      {/* Recovery email */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
-        <div className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-primary mb-1">Email di recupero</h3>
+        <p className="text-xs text-secondary mb-3">
+          Usata per recuperare l'accesso se perdi l'email principale
+        </p>
+        <div className="flex gap-2">
           <input
-            type="password"
-            value={passwordForm.new}
-            onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
+            type="email"
+            value={recoveryEmail}
+            onChange={e => setRecoveryEmail(e.target.value)}
             className={inputClasses}
-            placeholder="Nuova password"
-          />
-          <input
-            type="password"
-            value={passwordForm.confirm}
-            onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
-            className={inputClasses}
-            placeholder="Conferma password"
+            placeholder="email-di-recupero@esempio.com"
           />
           <motion.button
-            onClick={handleChangePassword}
-            disabled={!passwordForm.new || !passwordForm.confirm}
-            className="rounded-xl bg-primary py-3 text-sm font-semibold text-white disabled:opacity-50"
+            onClick={handleSaveRecoveryEmail}
+            disabled={savingRecovery || recoveryEmail === (profile?.recovery_email || '')}
+            className="rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
             whileTap={{ scale: 0.95 }}
           >
-            Aggiorna password
+            {recoverySaved ? '✓' : savingRecovery ? '...' : 'Salva'}
           </motion.button>
+        </div>
+      </div>
+
+      {/* Google users: add email+password login (with OTP verification) */}
+      {isGoogleUser && (
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-primary mb-1">Aggiungi accesso con email e password</h3>
+          <p className="text-xs text-secondary mb-3">
+            Attualmente accedi solo con Google. Aggiungi un accesso con email e password per poter accedere anche se cambi account Google.
+          </p>
+
+          {/* Step 1: Send OTP to verify identity */}
+          {loginStep === 'form' && (
+            <motion.button
+              onClick={handleLoginSendOtp}
+              disabled={loginLoading}
+              className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+              whileTap={{ scale: 0.95 }}
+            >
+              {loginLoading ? 'Invio...' : 'Verifica la tua identita\''}
+            </motion.button>
+          )}
+
+          {/* Step 2: Enter OTP */}
+          {loginStep === 'otp' && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-secondary">
+                Inserisci il codice ricevuto su <strong>{user?.email}</strong>
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={loginOtp}
+                  onChange={e => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="Codice di verifica"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className={`${inputClasses} text-center tracking-widest font-mono`}
+                />
+                <motion.button
+                  onClick={handleLoginVerifyOtp}
+                  disabled={loginLoading || loginOtp.length < 6}
+                  className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {loginLoading ? '...' : 'Conferma'}
+                </motion.button>
+              </div>
+              <button onClick={handleLoginReset} className="text-xs text-secondary hover:text-primary transition-colors self-start">
+                Annulla
+              </button>
+            </div>
+          )}
+
+          {/* Step 3: Set email + password */}
+          {loginStep === 'set_password' && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-green-600 font-medium">Identita' verificata! Imposta il tuo nuovo accesso.</p>
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                className={inputClasses}
+                placeholder="Email per il login"
+              />
+              <input
+                type="password"
+                value={loginPassword.new}
+                onChange={e => setLoginPassword(p => ({ ...p, new: e.target.value }))}
+                className={inputClasses}
+                placeholder="Password (min. 6 caratteri)"
+              />
+              <input
+                type="password"
+                value={loginPassword.confirm}
+                onChange={e => setLoginPassword(p => ({ ...p, confirm: e.target.value }))}
+                className={inputClasses}
+                placeholder="Conferma password"
+              />
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleAddEmailLogin}
+                  disabled={loginLoading || !loginEmail.trim() || !loginPassword.new}
+                  className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {loginLoading ? 'Salvataggio...' : 'Attiva accesso con email'}
+                </motion.button>
+                <motion.button
+                  onClick={handleLoginReset}
+                  className="rounded-xl py-3 px-4 text-sm text-secondary hover:bg-gray-100 transition-colors"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Annulla
+                </motion.button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Done */}
+          {loginStep === 'done' && (
+            <button onClick={handleLoginReset} className="text-xs text-accent hover:underline">
+              Modifica di nuovo
+            </button>
+          )}
+
+          {loginMsg && (
+            <p className={`text-xs font-medium mt-2 ${loginMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+              {loginMsg.text}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Change password — requires current password (non-Google users) */}
+      {!isGoogleUser && (
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
+          {!pwdUnlocked ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-secondary">Inserisci la password attuale per procedere</p>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={currentPwd}
+                  onChange={e => setCurrentPwd(e.target.value)}
+                  className={inputClasses}
+                  placeholder="Password attuale"
+                />
+                <motion.button
+                  onClick={handleVerifyCurrentPwd}
+                  disabled={pwdVerifying || !currentPwd}
+                  className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {pwdVerifying ? '...' : 'Verifica'}
+                </motion.button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <input
+                type="password"
+                value={passwordForm.new}
+                onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
+                className={inputClasses}
+                placeholder="Nuova password (min. 6 caratteri)"
+              />
+              <input
+                type="password"
+                value={passwordForm.confirm}
+                onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                className={inputClasses}
+                placeholder="Conferma nuova password"
+              />
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleChangePassword}
+                  disabled={!passwordForm.new || !passwordForm.confirm}
+                  className="rounded-xl bg-accent py-3 px-5 text-sm font-semibold text-white disabled:opacity-50"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Aggiorna password
+                </motion.button>
+                <motion.button
+                  onClick={() => { setPwdUnlocked(false); setCurrentPwd(''); setPasswordForm({ new: '', confirm: '' }); setPasswordMsg(null) }}
+                  className="rounded-xl py-3 px-4 text-sm text-secondary hover:bg-gray-100 transition-colors"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Annulla
+                </motion.button>
+              </div>
+            </div>
+          )}
           {passwordMsg && (
-            <p className={`text-xs font-medium ${passwordMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+            <p className={`text-xs font-medium mt-2 ${passwordMsg.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
               {passwordMsg.text}
             </p>
           )}
         </div>
-      </div>
+      )}
 
       {/* Newsletter toggle */}
       <div className="rounded-2xl bg-card p-5 shadow-sm">
@@ -561,11 +1148,11 @@ export default function ProfilePage() {
                 <div className="flex-1">
                   <h1
                     className="text-xl font-bold text-primary"
-                    style={{ fontFamily: "'TAN Songbird', serif" }}
+                    style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {displayName}
                   </h1>
-                  <p className="text-sm text-secondary">{user?.email}</p>
+                  <p className="text-sm text-secondary">{profile?.email || user?.email}</p>
                 </div>
                 <button
                   onClick={() => setShowSettings(true)}
@@ -613,7 +1200,7 @@ export default function ProfilePage() {
                     exit={{ opacity: 0, y: -8 }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
                         I miei salvati
                       </h2>
                       {savedRestaurants.length > 0 && (

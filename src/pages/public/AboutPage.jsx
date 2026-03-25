@@ -124,17 +124,17 @@ export default function AboutPage() {
           <motion.h1
             variants={fadeUp}
             className="text-4xl sm:text-5xl font-bold text-primary mb-4"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "Georgia, serif" }}
           >
-            Chiamami
-            <span className="text-accent">Bi</span>
+            La Guida di
+            <span className="text-accent"> Bi</span>
           </motion.h1>
 
           {/* Tagline */}
           <motion.p
             variants={fadeUp}
             className="text-lg sm:text-xl text-secondary font-medium italic max-w-sm"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "Georgia, serif" }}
           >
             "I posti che amo davvero"
           </motion.p>
@@ -153,7 +153,7 @@ export default function AboutPage() {
           <motion.h2
             variants={fadeUp}
             className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "Georgia, serif" }}
           >
             La mia storia
           </motion.h2>
@@ -183,7 +183,7 @@ export default function AboutPage() {
             className="text-base leading-relaxed text-secondary"
           >
             Gli amici hanno iniziato a chiedermi: "Dove mangiamo stasera?" E così è
-            nata l'idea di ChiamamiBi: una guida personale, sincera, fatta di posti
+            nata l'idea de La Guida di Bi: una guida personale, sincera, fatta di posti
             che ho provato davvero e dove tornerei ad occhi chiusi.
           </motion.p>
         </motion.div>
@@ -206,7 +206,7 @@ export default function AboutPage() {
             <div
               className="absolute top-4 right-6 text-accent/10 select-none pointer-events-none"
               style={{
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: "Georgia, serif",
                 fontSize: '120px',
                 lineHeight: 1,
               }}
@@ -216,20 +216,20 @@ export default function AboutPage() {
 
             <h2
               className="text-2xl font-bold text-primary mb-4 relative z-10"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "Georgia, serif" }}
             >
               La mia filosofia
             </h2>
 
             <p
               className="text-xl sm:text-2xl font-semibold text-accent leading-snug relative z-10"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "Georgia, serif" }}
             >
               Consiglio solo posti dove tornerei
             </p>
 
             <p className="mt-4 text-base text-secondary leading-relaxed relative z-10">
-              Ogni ristorante su ChiamamiBi è un posto dove sono stata almeno due volte.
+              Ogni ristorante su La Guida di Bi è un posto dove sono stata almeno due volte.
               Niente collaborazioni a pagamento, niente recensioni di cortesia. Solo
               consigli genuini, come quelli che daresti alla tua migliore amica.
             </p>
@@ -249,7 +249,7 @@ export default function AboutPage() {
           <motion.h2
             variants={fadeUp}
             className="text-2xl font-bold text-primary mb-2"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "Georgia, serif" }}
           >
             Seguimi
           </motion.h2>
@@ -307,7 +307,7 @@ export default function AboutPage() {
               </span>
               <h2
                 className="text-2xl font-bold text-primary"
-                style={{ fontFamily: "'Playfair Display', serif" }}
+                style={{ fontFamily: "Georgia, serif" }}
               >
                 Suggerisci un posto
               </h2>

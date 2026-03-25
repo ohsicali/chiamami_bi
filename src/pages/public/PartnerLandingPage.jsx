@@ -164,7 +164,7 @@ export default function PartnerLandingPage() {
   const steps = [
     { icon: <ClipboardIcon />, title: 'Candidati', desc: 'Compila il modulo qui sotto con le informazioni del tuo ristorante.' },
     { icon: <PhoneCallIcon />, title: 'Ti contattiamo', desc: 'Il nostro team valuta la candidatura e ti ricontatta entro 48 ore.' },
-    { icon: <RocketIcon />, title: 'Sei online', desc: 'Il tuo ristorante diventa visibile a migliaia di foodie su ChiamamiBi.' },
+    { icon: <RocketIcon />, title: 'Sei online', desc: 'Il tuo ristorante diventa visibile a migliaia di foodie su La Guida di Bi.' },
   ]
 
   return (
@@ -206,7 +206,7 @@ export default function PartnerLandingPage() {
           <motion.h1
             variants={fadeUp}
             className="text-3xl sm:text-5xl lg:text-6xl font-bold text-primary mb-6"
-            style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif", lineHeight: 1.3 }}
+            style={{ fontFamily: 'var(--font-display)', lineHeight: 1.3 }}
           >
             Porta il tuo ristorante davanti a migliaia di{' '}
             <span className="text-accent">foodie</span>
@@ -216,7 +216,7 @@ export default function PartnerLandingPage() {
             variants={fadeUp}
             className="text-base sm:text-lg text-secondary max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            ChiamamiBi è la guida gastronomica più amata di Torino. Entra nella nostra
+            La Guida di Bi è la guida gastronomica più amata di Torino. Entra nella nostra
             community e fai scoprire il tuo locale a chi cerca esperienze autentiche.
           </motion.p>
 
@@ -253,7 +253,7 @@ export default function PartnerLandingPage() {
             >
               <span
                 className="text-3xl sm:text-4xl font-bold text-accent"
-                style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif" }}
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 <AnimatedCounter target={stat.value} suffix={stat.suffix} />
               </span>
@@ -275,17 +275,17 @@ export default function PartnerLandingPage() {
           <motion.h2
             variants={fadeUp}
             className="text-3xl sm:text-4xl font-bold text-primary text-center mb-14"
-            style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif" }}
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             Come funziona
           </motion.h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 overflow-visible">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-4">
             {steps.map((step, i) => (
               <motion.div
                 key={step.title}
                 variants={fadeUp}
-                className="relative flex flex-col items-center text-center rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm p-8 mt-4"
+                className="relative flex flex-col items-center text-center rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm p-6 sm:p-8 mt-4"
               >
                 {/* Step number badge */}
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white text-xs font-bold shadow-md">
@@ -296,7 +296,7 @@ export default function PartnerLandingPage() {
                 </div>
                 <h3
                   className="text-lg font-bold text-primary mb-2"
-                  style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   {step.title}
                 </h3>
@@ -322,7 +322,7 @@ export default function PartnerLandingPage() {
           >
             <h2
               className="text-2xl sm:text-3xl font-bold text-primary mb-2 text-center"
-              style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif" }}
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               Candidatura partner
             </h2>
@@ -343,7 +343,7 @@ export default function PartnerLandingPage() {
                 </div>
                 <h3
                   className="text-xl font-bold text-primary"
-                  style={{ fontFamily: "'TAN Songbird', 'Playfair Display', serif" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   Candidatura inviata!
                 </h3>
