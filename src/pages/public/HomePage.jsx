@@ -14,8 +14,6 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
-import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
-import { Link } from 'react-router-dom'
 
 function slugify(name) {
   return name
@@ -135,7 +133,7 @@ export default function HomePage() {
     if (mapRef.current?.setPadding) {
       const sheetH = snap === SNAP_FULL ? window.innerHeight * 0.8
         : snap === SNAP_HALF ? window.innerHeight * 0.55
-        : 86
+        : 130
       mapRef.current.setPadding(sheetH)
     }
   }, [])
@@ -170,27 +168,27 @@ export default function HomePage() {
         onZoomOut={() => mapRef.current?.zoomOut()}
       />
 
-      {/* Floating Lista/Mappa toggle — mobile only */}
-      <button
-        onClick={handleToggleView}
-        className="md:hidden fixed z-40 left-1/2 -translate-x-1/2"
-        style={{
-          bottom: TAB_BAR_HEIGHT + 16,
-          background: '#1a1a1a',
-          color: '#fff',
-          borderRadius: 24,
-          padding: '10px 22px',
-          fontSize: 14,
-          fontWeight: 600,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-      >
-        {sheetSnap === SNAP_FULL ? 'Mappa' : 'Lista'}
-      </button>
-
       {/* Bottom Sheet — Apple Maps style */}
       <BottomSheet ref={sheetRef} onSnapChange={handleSnapChange}>
+        {/* Lista/Mappa toggle — inside sheet, above search */}
+        <div className="flex justify-center mb-3 md:hidden">
+          <button
+            onClick={handleToggleView}
+            style={{
+              background: '#1a1a1a',
+              color: '#fff',
+              borderRadius: 24,
+              padding: '8px 22px',
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {sheetSnap === SNAP_FULL ? 'Mappa' : 'Lista'}
+          </button>
+        </div>
+
         {/* Search Bar */}
         <div className="mb-3">
           <SearchBar
@@ -221,7 +219,7 @@ export default function HomePage() {
               {viewportRestaurants.length}{' '}
               {viewportRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
               {visibleIds && viewportRestaurants.length < displayedRestaurants.length && (
-                <span className="text-xs text-secondary/60"> in questa zona</span>
+                <span className="text-xs text-secondary/60"> {t('home.inThisArea', 'in questa zona')}</span>
               )}
             </p>
           )}

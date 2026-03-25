@@ -62,7 +62,7 @@ export default function AdminLogin() {
               transition={{ delay: 0.15, duration: 0.4 }}
               className="flex justify-center"
             >
-              <img src="/logo-guida-bi.png" alt="La Guida di Bi" className="h-10 object-contain" />
+              <img src="/logo-guida-bi.svg" alt="La Guida di Bi" className="h-10 object-contain" />
             </motion.div>
             <motion.p
               initial={{ opacity: 0 }}
