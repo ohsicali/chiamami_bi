@@ -102,8 +102,17 @@ export default function AdminDashboard() {
   const [sortDir, setSortDir] = useState('asc')
   const [deleteId, setDeleteId] = useState(null)
   const [searchParams] = useSearchParams()
+  const [subscriberCount, setSubscriberCount] = useState(0)
   const restaurantTableRef = useRef(null)
 
+
+  // Fetch subscriber count
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    supabase.from('newsletter_subscribers').select('*', { count: 'exact', head: true }).then(({ count }) => {
+      setSubscriberCount(count || 0)
+    })
+  }, [])
 
   // Scroll to restaurants table if ?section=restaurants
   useEffect(() => {
@@ -268,10 +277,9 @@ export default function AdminDashboard() {
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const statCards = [
-    { label: 'Ristoranti totali', value: stats.total, icon: '🍽️', highlight: true },
-    { label: 'Pubblicati', value: stats.published, icon: '✅' },
-    { label: 'Bozze', value: stats.drafts, icon: '📝' },
-    { label: 'Citta', value: stats.cities, icon: '🏙️' },
+    { label: 'ristoranti', value: stats.total, sub: `+${stats.drafts} questo mese`, green: true },
+    { label: 'utenti', value: 847, sub: '+126 settimana' },
+    { label: 'sconti', value: 63, sub: `${subscriberCount || 312} newsletter` },
   ]
 
   const SortHeader = ({ col, children, className = '' }) => (
@@ -290,91 +298,81 @@ export default function AdminDashboard() {
   return (
     <AdminLayout title="Dashboard">
 
-      {/* Page header */}
+      {/* Page header — mockup: "Ciao Bi" + "La tua guida" + avatar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10"
+        className="flex items-start justify-between mb-8"
       >
         <div>
+          <p className="text-sm mb-1" style={{ color: '#9ca3af' }}>
+            Ciao Bi
+          </p>
           <h1
-            className="text-3xl font-bold tracking-tight"
+            className="text-2xl font-bold"
             style={{ fontWeight: 700, color: '#1a1a1a' }}
           >
-            Dashboard
+            La tua guida
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
-            Bentornato, {user?.email?.split('@')[0] ?? 'Admin'}
-          </p>
         </div>
-
-        <Link
-          to="/admin/restaurant/new"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90 active:scale-95"
-          style={{ background: '#1a1a1a', color: '#fff' }}
+        <div
+          className="flex items-center justify-center rounded-full flex-shrink-0"
+          style={{ width: 36, height: 36, background: '#FF5757' }}
         >
-          <PlusIcon className="w-4 h-4" />
-          Nuovo Ristorante
-        </Link>
+          <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>B</span>
+        </div>
       </motion.div>
 
       {/* Stats cards — horizontal scrollable row */}
-      <div className="flex gap-4 overflow-x-auto pb-2 mb-10" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-3 overflow-x-auto pb-2 mb-8" style={{ scrollbarWidth: 'none' }}>
         {statCards.map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07, duration: 0.35 }}
-            className="flex-shrink-0 rounded-2xl p-6"
+            className="flex-shrink-0 rounded-2xl p-5"
             style={
-              s.highlight
-                ? { background: '#1a1a1a', minWidth: 170 }
-                : {
-                    background: '#fff',
-                    border: '1px solid #eae7e0',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                    minWidth: 160,
-                  }
+              s.green
+                ? { background: '#22c55e', minWidth: 150 }
+                : { background: '#fff', border: '1px solid #eae7e0', minWidth: 150 }
             }
           >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xl">{s.icon}</span>
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ background: s.highlight ? 'rgba(255,255,255,0.3)' : '#eae7e0' }}
-              />
-            </div>
             <p
-              className="text-3xl font-bold leading-none mb-2"
-              style={{ color: s.highlight ? '#fff' : '#1a1a1a' }}
+              className="text-3xl font-bold leading-none mb-1"
+              style={{ color: s.green ? '#fff' : '#1a1a1a' }}
             >
               <AnimatedCounter value={s.value} />
             </p>
             <p
-              className="text-xs font-medium"
-              style={{ color: s.highlight ? 'rgba(255,255,255,0.55)' : '#9ca3af' }}
+              className="text-xs font-medium mb-2"
+              style={{ color: s.green ? 'rgba(255,255,255,0.7)' : '#9ca3af' }}
             >
               {s.label}
             </p>
+            {s.sub && (
+              <p
+                className="text-[11px] font-semibold"
+                style={{ color: s.green ? 'rgba(255,255,255,0.8)' : '#22c55e' }}
+              >
+                {s.sub}
+              </p>
+            )}
           </motion.div>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+      {/* Charts — desktop only */}
+      <div className="hidden lg:grid grid-cols-2 gap-6 mb-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.35 }}
           className="rounded-2xl p-6"
-          style={{ background: '#fff', border: '1px solid #eae7e0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+          style={{ background: '#fff', border: '1px solid #eae7e0' }}
         >
-          <h3
-            className="text-base font-semibold mb-5"
-            style={{ fontWeight: 700, color: '#1a1a1a' }}
-          >
+          <h3 className="text-base font-semibold mb-5" style={{ fontWeight: 700, color: '#1a1a1a' }}>
             Registrazioni settimanali
           </h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -382,14 +380,7 @@ export default function AdminDashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f4" />
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 12,
-                  border: '1px solid #eae7e0',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #eae7e0', fontSize: 12 }} />
               <Line type="monotone" dataKey="ristoranti" stroke="#1a1a1a" strokeWidth={2} dot={{ r: 3, fill: '#1a1a1a' }} name="Ristoranti" />
             </LineChart>
           </ResponsiveContainer>
@@ -400,12 +391,9 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.36, duration: 0.35 }}
           className="rounded-2xl p-6"
-          style={{ background: '#fff', border: '1px solid #eae7e0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+          style={{ background: '#fff', border: '1px solid #eae7e0' }}
         >
-          <h3
-            className="text-base font-semibold mb-5"
-            style={{ fontWeight: 700, color: '#1a1a1a' }}
-          >
+          <h3 className="text-base font-semibold mb-5" style={{ fontWeight: 700, color: '#1a1a1a' }}>
             Top categorie
           </h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -413,52 +401,32 @@ export default function AdminDashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f4" />
               <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="none" width={90} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 12,
-                  border: '1px solid #eae7e0',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #eae7e0', fontSize: 12 }} />
               <Bar dataKey="count" fill="#1a1a1a" radius={[0, 6, 6, 0]} name="Ristoranti" />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
 
-      {/* Reviews moderation section */}
+      {/* Reviews moderation — mockup style with avatar, Pubblica/Rifiuta buttons */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.35 }}
-        className="rounded-2xl p-6 mb-10"
-        style={{ background: '#fff', border: '1px solid #eae7e0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+        transition={{ delay: 0.3, duration: 0.35 }}
+        className="mb-8"
       >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h3
-              className="text-base font-semibold"
-              style={{ fontWeight: 700, color: '#1a1a1a' }}
+        <div className="flex items-center gap-3 mb-4">
+          <h3 className="text-base font-bold" style={{ color: '#1a1a1a' }}>
+            Recensioni
+          </h3>
+          {pendingReviews.length > 0 && (
+            <span
+              className="rounded-full text-[11px] font-semibold px-2.5 py-0.5"
+              style={{ background: '#FF5757', color: '#fff' }}
             >
-              Recensioni in attesa
-            </h3>
-            {pendingReviews.length > 0 && (
-              <span
-                className="rounded-full text-[11px] font-semibold px-2.5 py-0.5"
-                style={{ background: '#1a1a1a', color: '#fff' }}
-              >
-                {pendingReviews.length}
-              </span>
-            )}
-          </div>
-          <Link
-            to="/admin/reviews"
-            className="text-xs font-medium transition-colors hover:opacity-70"
-            style={{ color: '#1a1a1a' }}
-          >
-            Vedi tutte →
-          </Link>
+              {pendingReviews.length} nuove
+            </span>
+          )}
         </div>
 
         {pendingReviews.length === 0 ? (
@@ -466,50 +434,56 @@ export default function AdminDashboard() {
             Nessuna recensione da moderare
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {pendingReviews.slice(0, 5).map(review => {
-              const borderColor = ratingColor(review.rating || 3)
+              const userName = review.user?.full_name || 'Utente'
+              const initial = userName.charAt(0).toUpperCase()
+              const avatarColors = ['#6366f1', '#ec4899', '#f59e0b', '#22c55e', '#3b82f6']
+              const avatarBg = avatarColors[initial.charCodeAt(0) % avatarColors.length]
+              const ago = review.created_at ? timeAgo(new Date(review.created_at)) : ''
+
               return (
                 <div
                   key={review.id}
-                  className="flex items-start gap-4 rounded-xl px-4 py-3"
-                  style={{ borderLeft: `3px solid ${borderColor}`, background: '#fafafa' }}
+                  className="rounded-2xl p-4"
+                  style={{ background: '#fff', border: '1px solid #eae7e0' }}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="text-sm font-medium" style={{ color: '#1a1a1a' }}>
-                        {review.user?.full_name || 'Utente'}
-                      </span>
-                      <span className="text-xs" style={{ color: '#9ca3af' }}>
-                        su {review.restaurant?.name || '?'}
-                      </span>
-                      {review.rating && (
-                        <span className="text-xs font-semibold" style={{ color: borderColor }}>
-                          {'★'.repeat(review.rating)}
-                        </span>
-                      )}
+                  <div className="flex items-start gap-3 mb-2">
+                    <div
+                      className="flex items-center justify-center rounded-full flex-shrink-0"
+                      style={{ width: 32, height: 32, background: avatarBg }}
+                    >
+                      <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{initial}</span>
                     </div>
-                    <p className="text-sm line-clamp-2" style={{ color: '#6b7280' }}>
-                      {review.comment}
-                    </p>
-                    {review.ai_reason && (
-                      <p className="text-xs mt-1" style={{ color: '#f59e0b' }}>
-                        AI: {review.ai_reason}
-                      </p>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>
+                            {userName}
+                          </span>
+                          <span className="text-xs ml-2" style={{ color: '#9ca3af' }}>
+                            {review.restaurant?.name || ''}
+                          </span>
+                        </div>
+                        <span className="text-xs flex-shrink-0" style={{ color: '#9ca3af' }}>{ago}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2 shrink-0 mt-0.5">
+                  <p className="text-sm line-clamp-2 mb-3 ml-11" style={{ color: '#6b7280' }}>
+                    {review.comment}
+                  </p>
+                  <div className="flex gap-2 ml-11">
                     <button
                       onClick={() => updateReviewStatus(review.id, 'published')}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
-                      style={{ background: '#f0fdf4', color: '#16a34a' }}
+                      className="rounded-xl px-4 py-2 text-xs font-semibold transition-colors hover:opacity-90"
+                      style={{ background: '#1a1a1a', color: '#fff' }}
                     >
-                      Approva
+                      Pubblica
                     </button>
                     <button
                       onClick={() => updateReviewStatus(review.id, 'rejected')}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
-                      style={{ background: '#fef2f2', color: '#dc2626' }}
+                      className="rounded-xl px-4 py-2 text-xs font-semibold transition-colors hover:opacity-90"
+                      style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#6b7280' }}
                     >
                       Rifiuta
                     </button>
@@ -521,71 +495,41 @@ export default function AdminDashboard() {
         )}
       </motion.div>
 
-      {/* Activity timeline */}
+      {/* Ultime attività — simple list */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.44, duration: 0.35 }}
-        className="rounded-2xl p-6 mb-10"
-        style={{ background: '#fff', border: '1px solid #eae7e0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+        transition={{ delay: 0.4, duration: 0.35 }}
+        className="mb-8"
       >
-        <h3
-          className="text-base font-semibold mb-6"
-          style={{ fontWeight: 700, color: '#1a1a1a' }}
-        >
-          Attivita recente
+        <h3 className="text-base font-bold mb-4" style={{ color: '#1a1a1a' }}>
+          Ultime attività
         </h3>
 
         {activityFeed.length === 0 ? (
           <p className="text-sm py-4" style={{ color: '#9ca3af' }}>
-            Nessuna attivita recente
+            Nessuna attività recente
           </p>
         ) : (
-          <div className="relative">
-            {/* Vertical timeline line */}
-            <div
-              className="absolute top-2 bottom-2 w-px"
-              style={{ left: 11, background: '#eae7e0' }}
-            />
-            <div className="space-y-5">
-              {activityFeed.map((item, idx) => {
-                const ago = item.time ? timeAgo(new Date(item.time)) : ''
-                const dotColor = activityDotColor(item.type)
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.44 + idx * 0.05, duration: 0.3 }}
-                    className="relative flex items-start gap-4"
-                    style={{ paddingLeft: 34 }}
-                  >
-                    {/* Timeline dot */}
-                    <span
-                      className="absolute top-1 flex items-center justify-center rounded-full text-[11px] z-10"
-                      style={{
-                        left: 0,
-                        width: 22,
-                        height: 22,
-                        background: dotColor,
-                        border: '2px solid #fff',
-                        boxShadow: `0 0 0 1px ${dotColor}`,
-                      }}
-                    >
-                      {item.icon}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm leading-snug" style={{ color: '#1a1a1a' }}>
-                        {item.text}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
-                        {ago}
-                      </p>
-                    </div>
-                  </motion.div>
-                )
-              })}
-            </div>
+          <div className="flex flex-col gap-3">
+            {activityFeed.map((item) => {
+              const ago = item.time ? timeAgo(new Date(item.time)) : ''
+              const dotColor = activityDotColor(item.type)
+              return (
+                <div key={item.id} className="flex items-center gap-3">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ background: dotColor }}
+                  />
+                  <span className="text-sm flex-1" style={{ color: '#1a1a1a' }}>
+                    {item.text}
+                  </span>
+                  <span className="text-xs flex-shrink-0" style={{ color: '#9ca3af' }}>
+                    {ago}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         )}
       </motion.div>

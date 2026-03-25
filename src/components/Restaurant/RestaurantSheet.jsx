@@ -277,76 +277,85 @@ export default function RestaurantSheet({
             initial="hidden"
             animate="visible"
           >
-            {/* Quick actions — maps + phone + share */}
-            <motion.div className="flex gap-2" variants={itemVariants}>
+            {/* Quick actions — Indicazioni / Chiama / Sito */}
+            <motion.div className="grid grid-cols-3 gap-2" variants={itemVariants}>
               {mapsUrl && (
                 <a
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"
+                  className="flex items-center justify-center rounded-xl bg-accent py-3 text-sm font-semibold text-white"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  Mappa
+                  Indicazioni
                 </a>
               )}
-              {phoneUrl && (
+              {phoneUrl ? (
                 <a
                   href={phoneUrl}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-primary"
+                  className="flex items-center justify-center rounded-xl border border-border bg-card py-3 text-sm font-semibold text-primary"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-                  </svg>
                   Chiama
                 </a>
+              ) : (
+                <div />
               )}
-              <ShareButton restaurant={restaurant} t={t} />
+              {restaurant.website ? (
+                <a
+                  href={restaurant.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center rounded-xl border border-border bg-card py-3 text-sm font-semibold text-primary"
+                >
+                  Sito
+                </a>
+              ) : (
+                <ShareButton restaurant={restaurant} t={t} />
+              )}
             </motion.div>
 
-            {/* "Perché mi piace" — La recensione di Bi */}
+            {/* "Perché mi piace" — with Bi avatar */}
             {reviewText && (
-              <motion.div className="flex flex-col gap-2" variants={itemVariants}>
-                <h2
-                  className="text-lg font-semibold text-primary"
-                  style={{ fontWeight: 700 }}
-                >
-                  {t('restaurant.reviewByBi')}
-                </h2>
-                <div className="rounded-2xl bg-card p-4 shadow-sm">
-                  <p className="text-sm leading-relaxed text-secondary">
-                    {reviewText}
-                  </p>
-                  {!isItalian && (
-                    <p className="text-xs text-secondary/60 mt-2 italic">
-                      {t('restaurant.originalItalian')}
-                    </p>
-                  )}
+              <motion.div className="flex flex-col gap-3" variants={itemVariants}>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white flex-shrink-0"
+                    style={{ background: '#FF5757' }}
+                  >
+                    Bi
+                  </div>
+                  <h2 className="text-base font-bold text-primary">
+                    Perché mi piace
+                  </h2>
                 </div>
+                <p className="text-sm leading-relaxed text-secondary">
+                  "{reviewText}"
+                </p>
+                {!isItalian && (
+                  <p className="text-xs text-secondary/60 italic">
+                    {t('restaurant.originalItalian')}
+                  </p>
+                )}
               </motion.div>
             )}
 
-            {/* I suggerimenti di Bi (tip) */}
+            {/* Il tip di Bi — red left border accent */}
             {tipText && (
-              <motion.div className="flex flex-col gap-2" variants={itemVariants}>
-                <h2
-                  className="text-lg font-semibold text-primary"
-                  style={{ fontWeight: 700 }}
-                >
-                  {t('restaurant.tipsByBi')}
-                </h2>
+              <motion.div variants={itemVariants}>
+                <p className="text-sm font-bold mb-2" style={{ color: '#FF5757' }}>
+                  Il tip di Bi
+                </p>
                 <div
-                  className="rounded-2xl px-4 py-3.5"
-                  style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a, #fcd34d)' }}
+                  className="rounded-xl px-4 py-3"
+                  style={{
+                    background: '#FFF8F0',
+                    borderLeft: '3px solid #FF5757',
+                  }}
                 >
-                  <p className="text-sm font-medium leading-relaxed text-amber-900">
-                    {tipText}
+                  <p className="text-sm leading-relaxed text-primary">
+                    "{tipText}"
                   </p>
                   {!isItalian && (
-                    <p className="text-xs text-amber-700/60 mt-2 italic">
+                    <p className="text-xs text-secondary/60 mt-2 italic">
                       {t('restaurant.originalItalian')}
                     </p>
                   )}

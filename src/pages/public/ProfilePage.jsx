@@ -1183,10 +1183,10 @@ export default function ProfilePage() {
                 style={{ border: '1px solid #eae7e0' }}
               >
                 {[
-                  { icon: '🏷️', label: 'I miei sconti', onClick: () => setActiveTab('discounts') },
                   { icon: '⚙️', label: 'Impostazioni', onClick: () => setShowSettings(true) },
-                  { icon: '📖', label: 'Chi siamo', to: '/about' },
-                  { icon: '🤝', label: 'Diventa partner', to: '/partner' },
+                  { icon: '🏙️', label: 'Chi è Bi', to: '/about' },
+                  { icon: '🤝', label: 'Per i ristoratori', to: '/partner' },
+                  { icon: '📄', label: 'Privacy e Termini', to: '/privacy' },
                 ].map((item, i, arr) => {
                   const content = (
                     <div
@@ -1207,42 +1207,38 @@ export default function ProfilePage() {
                 })}
               </motion.div>
 
-              {/* Logout button */}
+              {/* Logout — plain red text */}
               <motion.button
                 variants={itemVariants}
                 onClick={handleLogout}
-                className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-red-500 shadow-sm"
-                style={{ background: '#fff', border: '1px solid #eae7e0' }}
+                className="py-2 text-sm font-semibold text-accent text-center"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                Esci
+                Esci dall'account
               </motion.button>
 
-              {/* Main tabs: Salvati / Sconti */}
+              {/* Main tabs: Salvati / Sconti — outlined pills */}
               <motion.div variants={itemVariants} className="flex gap-2">
                 <button
                   onClick={() => setActiveTab('saved')}
-                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
-                    activeTab === 'saved'
-                      ? 'bg-accent text-white shadow-sm'
-                      : 'bg-card text-secondary shadow-sm'
-                  }`}
+                  className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors"
+                  style={{
+                    background: activeTab === 'saved' ? '#fff' : 'transparent',
+                    border: activeTab === 'saved' ? '1.5px solid #1a1a1a' : '1.5px solid #eae7e0',
+                    color: activeTab === 'saved' ? '#1a1a1a' : '#999',
+                  }}
                 >
-                  ❤️ Salvati ({savedRestaurants.length})
+                  Salvati ({savedRestaurants.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('discounts')}
-                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
-                    activeTab === 'discounts'
-                      ? 'bg-accent text-white shadow-sm'
-                      : 'bg-card text-secondary shadow-sm'
-                  }`}
+                  className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors"
+                  style={{
+                    background: activeTab === 'discounts' ? '#fff' : 'transparent',
+                    border: activeTab === 'discounts' ? '1.5px solid #1a1a1a' : '1.5px solid #eae7e0',
+                    color: activeTab === 'discounts' ? '#1a1a1a' : '#999',
+                  }}
                 >
-                  🏷️ Sconti ({localRedemptions.length})
+                  Sconti ({localRedemptions.length})
                 </button>
               </motion.div>
 
@@ -1282,19 +1278,53 @@ export default function ProfilePage() {
                         </Link>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-3">
-                        {savedRestaurants.map((restaurant, index) => (
-                          <div key={restaurant.id} className="relative">
-                            <RestaurantCard
-                              restaurant={restaurant}
-                              index={index}
+                      <div className="flex flex-col gap-2">
+                        {savedRestaurants.map((restaurant) => {
+                          const photo = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
+                            ? (typeof restaurant.photos[0] === 'string' ? restaurant.photos[0] : restaurant.photos[0]?.photo_url)
+                            : null
+                          const cats = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+                          const priceLabel = restaurant.price_range ? '€'.repeat(restaurant.price_range) : ''
+                          const catLabel = cats.length > 0 ? cats[0] : ''
+                          const meta = [catLabel, priceLabel].filter(Boolean).join(' · ')
+
+                          return (
+                            <div
+                              key={restaurant.id}
+                              className="flex items-center gap-3 rounded-2xl p-3 transition-colors active:bg-gray-50 cursor-pointer"
+                              style={{ background: '#fff', border: '1px solid #eae7e0' }}
                               onClick={() => navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)}
-                            />
-                            <div className="absolute top-3 right-3 z-10">
-                              <SaveButton saved={true} onClick={() => toggleSave(restaurant.id)} size="sm" />
+                            >
+                              {photo ? (
+                                <img
+                                  src={photo}
+                                  alt=""
+                                  className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div
+                                  className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+                                  style={{ background: '#f4f4f4' }}
+                                >
+                                  <span style={{ fontSize: 20 }}>🍽️</span>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-primary truncate" style={{ fontFamily: 'var(--font-display)' }}>
+                                  {restaurant.name}
+                                </p>
+                                {meta && (
+                                  <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>
+                                    🍽️ {meta}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex-shrink-0" onClick={e => { e.stopPropagation(); toggleSave(restaurant.id) }}>
+                                <SaveButton saved={true} onClick={() => {}} size="sm" />
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </motion.div>
