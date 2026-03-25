@@ -101,21 +101,26 @@ export default function AdminDashboard() {
     return { total, published, drafts, cities }
   }, [restaurants])
 
-  // Chart data — mock weekly registrations over last 8 weeks
+  // Chart data — restaurants added per week over last 8 weeks (real data)
   const registrationData = useMemo(() => {
     const weeks = []
     const now = new Date()
     for (let i = 7; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i * 7)
+      const weekStart = new Date(now)
+      weekStart.setDate(weekStart.getDate() - (i + 1) * 7)
+      const weekEnd = new Date(now)
+      weekEnd.setDate(weekEnd.getDate() - i * 7)
+      const count = restaurants.filter(r => {
+        const created = new Date(r.created_at)
+        return created >= weekStart && created < weekEnd
+      }).length
       weeks.push({
-        week: d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
-        utenti: Math.floor(Math.random() * 40) + 10 + i * 3,
-        ristoranti: Math.floor(Math.random() * 5) + (i < 3 ? 2 : 0),
+        week: weekEnd.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+        ristoranti: count,
       })
     }
     return weeks
-  }, [])
+  }, [restaurants])
 
   // Top restaurants by category
   const topCategoriesData = useMemo(() => {

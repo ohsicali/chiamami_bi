@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 
@@ -55,32 +56,40 @@ export default function LanguageSwitcher() {
         {current.flag}
       </motion.button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="absolute right-0 top-full mt-2 z-50 rounded-xl bg-white shadow-lg border border-gray-100 overflow-hidden min-w-[140px]"
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-          >
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.code}
-                onClick={(e) => handleSelect(e, lang.code)}
-                className={`flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left transition-colors ${
-                  lang.code === current.code
-                    ? 'bg-accent/10 text-accent font-semibold'
-                    : 'text-primary hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-base">{lang.flag}</span>
-                <span>{lang.label}</span>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className="fixed rounded-xl bg-white shadow-lg border border-gray-100 overflow-hidden min-w-[140px]"
+              style={{
+                zIndex: 9999,
+                top: ref.current ? ref.current.getBoundingClientRect().bottom + 8 : 60,
+                right: ref.current ? window.innerWidth - ref.current.getBoundingClientRect().right : 16,
+              }}
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+            >
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={(e) => handleSelect(e, lang.code)}
+                  className={`flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left transition-colors ${
+                    lang.code === current.code
+                      ? 'bg-accent/10 text-accent font-semibold'
+                      : 'text-primary hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="text-base">{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   )
 }

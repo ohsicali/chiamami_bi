@@ -130,8 +130,10 @@ function SidebarContent({ user, onLogout, onNavClick }) {
 
   const isActive = (item) => {
     const itemPath = item.to.split('?')[0]
+    const itemQuery = item.to.includes('?') ? '?' + item.to.split('?')[1] : ''
     if (item.exact) return location.pathname === itemPath && !location.search
-    return location.pathname === itemPath && (!item.to.includes('?') || location.search === '?' + item.to.split('?')[1])
+    if (itemQuery) return location.pathname === itemPath && location.search === itemQuery
+    return location.pathname === itemPath
   }
 
   return (

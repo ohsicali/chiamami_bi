@@ -179,7 +179,12 @@ export default function RestaurantSheet({
         )}
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto scrollbar-none"
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           {/* Photo carousel */}
           <PhotoCarousel photos={restaurant.photos || []} height="300px" restaurantName={restaurant.name} city={restaurant.city} />
 

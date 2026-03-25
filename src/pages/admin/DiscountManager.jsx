@@ -71,7 +71,7 @@ function SwipeableDiscountCard({ discount: d, onEdit, onDelete, onToggleActive }
               <p className="text-xs text-secondary mt-0.5">{d.conditions}</p>
             )}
             <div className="flex items-center gap-4 mt-2 text-xs text-secondary">
-              <span>Utilizzi: {d.total_redeemed}{d.max_redemptions ? `/${d.max_redemptions}` : ''}</span>
+              <span>Utilizzi: {(d.redemptions || []).filter(r => r.status === 'redeemed').length}{d.max_redemptions ? `/${d.max_redemptions}` : ''}</span>
               <span>Scade: {new Date(d.valid_until).toLocaleDateString('it-IT')}</span>
             </div>
           </div>
@@ -125,7 +125,7 @@ export default function DiscountManager() {
     Promise.all([
       supabase
         .from('discounts')
-        .select('*, restaurant:restaurants(id, name)')
+        .select('*, restaurant:restaurants(id, name), redemptions:discount_redemptions(id, status)')
         .order('created_at', { ascending: false }),
       supabase
         .from('restaurants')

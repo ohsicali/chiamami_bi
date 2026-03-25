@@ -200,6 +200,10 @@ function DeleteAccountModal({ onConfirm, onClose }) {
 /* ── Settings Section ── */
 function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) {
   const [fullName, setFullName] = useState(profile?.full_name || '')
+  // Re-sync fullName when profile is refreshed externally
+  useEffect(() => {
+    if (profile?.full_name) setFullName(profile.full_name)
+  }, [profile?.full_name])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
@@ -256,7 +260,9 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
     setSaving(true)
     const { error } = await supabase.from('profiles').update({ full_name: fullName.trim() }).eq('id', user.id)
     setSaving(false)
-    if (!error) {
+    if (error) {
+      console.error('Profile name update failed:', error)
+    } else {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       onRefreshProfile?.()
