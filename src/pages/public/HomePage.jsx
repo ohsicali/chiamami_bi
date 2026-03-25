@@ -131,6 +131,13 @@ export default function HomePage() {
 
   const handleSnapChange = useCallback((snap) => {
     setSheetSnap(snap)
+    // Update map padding so markers/center stay visible above the sheet
+    if (mapRef.current?.setPadding) {
+      const sheetH = snap === SNAP_FULL ? window.innerHeight * 0.8
+        : snap === SNAP_HALF ? window.innerHeight * 0.55
+        : 86
+      mapRef.current.setPadding(sheetH)
+    }
   }, [])
 
   const handleSearchFocus = useCallback(() => {

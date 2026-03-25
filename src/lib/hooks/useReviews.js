@@ -278,5 +278,17 @@ export function useAllReviews() {
     return !error
   }, [])
 
-  return { reviews, loading, fetchError, refetch: fetchAll, updateStatus, deleteReview }
+  const updateComment = useCallback(async (reviewId, newComment) => {
+    const { error } = await supabase
+      .from('user_reviews')
+      .update({ comment: newComment })
+      .eq('id', reviewId)
+
+    if (!error) {
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, comment: newComment } : r))
+    }
+    return !error
+  }, [])
+
+  return { reviews, loading, fetchError, refetch: fetchAll, updateStatus, deleteReview, updateComment }
 }

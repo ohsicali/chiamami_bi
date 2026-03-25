@@ -378,7 +378,7 @@ export default function VerifyPage() {
                     </p>
                     {preview.status === 'redeemed' && (
                       <p className="text-xs text-red-500 font-medium mt-1">
-                        Questo QR e gia stato utilizzato
+                        Questo QR è già stato utilizzato
                       </p>
                     )}
                   </motion.div>

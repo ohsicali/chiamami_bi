@@ -178,7 +178,10 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
       }}
     >
       {/* Drag handle */}
-      <div className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing">
+      <div
+        className="flex items-center justify-center py-2.5 cursor-grab active:cursor-grabbing"
+        onTouchMove={(e) => e.stopPropagation()}
+      >
         <div
           className="rounded-full"
           style={{
@@ -205,6 +208,7 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
             e.stopPropagation()
           }
         }}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         {children}
       </div>

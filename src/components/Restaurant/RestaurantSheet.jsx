@@ -8,6 +8,7 @@ import DiscountBanner from '../Discount/DiscountBanner'
 import ReviewSection from '../Review/ReviewSection'
 import Badge from '../UI/Badge'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { useRestaurantTranslation } from '../../lib/hooks/useTranslation'
 
 function ShareButton({ restaurant, t }) {
   const [copied, setCopied] = useState(false)
@@ -112,8 +113,9 @@ export default function RestaurantSheet({
     ? `tel:${restaurant.phone.replace(/\s/g, '')}`
     : null
 
-  const reviewText = restaurant.our_review || ''
-  const tipText = restaurant.our_tip || null
+  const { t: tr } = useRestaurantTranslation(restaurant)
+  const reviewText = tr('our_review') || ''
+  const tipText = tr('our_tip') || null
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">

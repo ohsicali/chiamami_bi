@@ -207,6 +207,10 @@ const MapView = forwardRef(function MapView({
       if (!map.current || !pos) return
       map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 16, duration: 1200, essential: true })
     },
+    setPadding: (bottomPx) => {
+      if (!map.current) return
+      map.current.easeTo({ padding: { bottom: bottomPx, top: 70, left: 0, right: 0 }, duration: 300 })
+    },
   }))
 
   /* -------------------------------------------------------------- */
@@ -355,7 +359,7 @@ const MapView = forwardRef(function MapView({
         }
         // Clean up transition classes from new markers
         for (const { el } of toEnter) {
-          el.classList.remove('cb-marker--fade', '  cb-marker--show')
+          el.classList.remove('cb-marker--fade', 'cb-marker--show')
           el.classList.add('cb-marker--visible')
         }
       }, CROSSFADE_MS + 20)
