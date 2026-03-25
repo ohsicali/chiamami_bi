@@ -463,7 +463,7 @@ export default function VerifyPage() {
       {/* Footer */}
       <div className="py-4 text-center">
         <Link to="/" className="text-xs text-secondary">
-          Powered by <span className="font-semibold text-accent">ChiamamiBi</span>
+          Powered by <span className="font-semibold text-accent">La Guida di Bi</span>
         </Link>
       </div>
     </div>

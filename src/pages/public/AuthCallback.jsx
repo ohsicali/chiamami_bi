@@ -34,7 +34,7 @@ export default function AuthCallback() {
           if (session) {
             // Session exists! Profile will be created by useAuth.fetchProfile
             setStatus('success')
-            setMessage('Account creato! Benvenuta su ChiamamiBi!')
+            setMessage('Account creato! Benvenuta su La Guida di Bi!')
             setTimeout(() => navigate('/', { replace: true }), 1500)
             return
           }
@@ -68,7 +68,7 @@ export default function AuthCallback() {
           // signup or magiclink — confirmed, redirect to home
           setStatus('success')
           setMessage(type === 'signup'
-            ? 'Email confermata! Benvenuta su ChiamamiBi!'
+            ? 'Email confermata! Benvenuta su La Guida di Bi!'
             : 'Accesso effettuato!')
           setTimeout(() => navigate('/', { replace: true }), 2000)
         } catch (err) {

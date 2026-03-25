@@ -65,7 +65,7 @@ export default function RestaurantPage() {
           <div className="mb-4 text-6xl">🍽️</div>
           <h1
             className="mb-2 text-2xl font-bold text-primary"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "Georgia, serif" }}
           >
             Ristorante non trovato
           </h1>
@@ -88,8 +88,8 @@ export default function RestaurantPage() {
   return (
     <>
       <MetaTags
-        title={`${restaurant.name} — ChiamamiBi`}
-        description={restaurant.description || `Scopri ${restaurant.name} su ChiamamiBi`}
+        title={`${restaurant.name} — La Guida di Bi`}
+        description={restaurant.description || `Scopri ${restaurant.name} su La Guida di Bi`}
         image={restaurant.image || '/og-image.png'}
         url={restaurantUrl}
         type="restaurant"

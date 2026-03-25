@@ -27,7 +27,7 @@ export default function TermsPage() {
 
           <h2 className="text-lg font-semibold text-primary">1. Accettazione dei termini</h2>
           <p>
-            Utilizzando ChiamamiBi accetti i presenti Termini di Servizio. Se non li accetti,
+            Utilizzando La Guida di Bi (di seguito anche "ChiamamiBi") accetti i presenti Termini di Servizio. Se non li accetti,
             ti preghiamo di non utilizzare il servizio.
           </p>
 
