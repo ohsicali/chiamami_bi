@@ -26,9 +26,9 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'ChiamamiBi <noreply@chiamamibi.com>',
+        from: process.env.RESEND_FROM || 'La Guida di Bi <noreply@chiamamibi.com>',
         to: [email],
-        subject: `Benvenuta su ChiamamiBi, ${firstName}! 🍕`,
+        subject: `Benvenuta su La Guida di Bi, ${firstName}! 🍕`,
         html: buildWelcomeHtml(firstName),
       }),
     })
@@ -57,14 +57,14 @@ function buildWelcomeHtml(name) {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
         <!-- Header -->
         <tr><td style="background-color:#E8604C;padding:32px 24px;text-align:center;">
-          <h1 style="margin:0;color:#ffffff;font-family:'Georgia',serif;font-size:28px;font-weight:800;letter-spacing:2px;text-transform:uppercase;">CHIAMAMI BI</h1>
+          <h1 style="margin:0;color:#ffffff;font-family:'Georgia',serif;font-size:28px;font-weight:800;letter-spacing:2px;text-transform:uppercase;">LA GUIDA DI BI</h1>
         </td></tr>
 
         <!-- Body -->
         <tr><td style="padding:32px 24px;">
           <h2 style="margin:0 0 16px;color:#1a1a1a;font-size:22px;">Ciao ${name}! 👋</h2>
           <p style="margin:0 0 16px;color:#4a4a4a;font-size:15px;line-height:1.6;">
-            Benvenuta su <strong>ChiamamiBi</strong> — la tua guida ai migliori ristoranti di Torino!
+            Benvenuta su <strong>La Guida di Bi</strong> — la tua guida ai migliori ristoranti di Torino!
           </p>
           <p style="margin:0 0 24px;color:#4a4a4a;font-size:15px;line-height:1.6;">
             Ecco cosa puoi fare:
@@ -90,7 +90,7 @@ function buildWelcomeHtml(name) {
 
         <!-- Footer -->
         <tr><td style="padding:24px;border-top:1px solid #f0e6e3;text-align:center;">
-          <p style="margin:0 0 8px;color:#999;font-size:12px;">ChiamamiBi — Torino, Italia</p>
+          <p style="margin:0 0 8px;color:#999;font-size:12px;">La Guida di Bi — Torino, Italia</p>
           <p style="margin:0;color:#999;font-size:12px;">
             <a href="https://chiamamibi.com/privacy" style="color:#E8604C;text-decoration:none;">Privacy Policy</a>
             &nbsp;·&nbsp;
