@@ -680,6 +680,9 @@ export default function RestaurantForm() {
   const [geocoding, setGeocoding] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [googleFilling, setGoogleFilling] = useState(false)
+  const [showNameSearch, setShowNameSearch] = useState(false)
+  const [nameQuery, setNameQuery] = useState('')
+  const [nameSearching, setNameSearching] = useState(false)
   const [aiCorrecting, setAiCorrecting] = useState(null) // 'our_review' | 'our_tip' | null
   const [aiSuggestion, setAiSuggestion] = useState(null) // { field, original, corrected }
   // Inline discount state
@@ -812,7 +815,12 @@ export default function RestaurantForm() {
         if (data?._debug) console.log('Google Maps API debug:', JSON.stringify(data._debug, null, 2))
 
         if (data?.error) {
-          addToast(data.error, 'error')
+          if (data.captcha) {
+            setShowNameSearch(true)
+            addToast('Google ha bloccato il link. Cerca il ristorante per nome qui sotto.', 'error')
+          } else {
+            addToast(data.error, 'error')
+          }
           setGoogleFilling(false)
           return
         }
@@ -861,6 +869,40 @@ export default function RestaurantForm() {
       addToast('Errore nella compilazione automatica', 'error')
     }
     setGoogleFilling(false)
+  }
+
+  // Name search fallback (when Google blocks URL resolution)
+  const handleNameSearch = async () => {
+    const q = nameQuery.trim()
+    if (!q) return
+    setNameSearching(true)
+    try {
+      const res = await fetch('/api/resolve-maps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      })
+      const data = await res.json()
+      if (data?._debug) console.log('Name search debug:', JSON.stringify(data._debug, null, 2))
+      if (data?.error) {
+        addToast(data.error, 'error')
+        setNameSearching(false)
+        return
+      }
+      if (data.name) update('name', data.name)
+      if (data.address) update('address', data.address)
+      if (data.latitude) update('latitude', String(data.latitude))
+      if (data.longitude) update('longitude', String(data.longitude))
+      if (data.phone) update('phone', data.phone)
+      if (data.website) update('website', data.website)
+      if (data.resolved_url) update('google_maps_url', data.resolved_url)
+      setShowNameSearch(false)
+      setNameQuery('')
+      addToast('Dati compilati da Google Places!', 'success')
+    } catch (err) {
+      addToast('Errore nella ricerca', 'error')
+    }
+    setNameSearching(false)
   }
 
   // AI text correction — shows suggestion for accept/reject
@@ -1239,6 +1281,43 @@ export default function RestaurantForm() {
                 Dall'app Google Maps tocca "Condividi" → "Copia link". Funzionano anche i link lunghi dal browser.
               </p>
             </div>
+
+            {/* Name search fallback — shown when Google blocks URL resolution */}
+            <AnimatePresence>
+              {showNameSearch && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                    <p className="text-sm font-medium text-amber-800 mb-3">
+                      Google ha bloccato il link. Cerca il ristorante per nome:
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={nameQuery}
+                        onChange={(e) => setNameQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleNameSearch())}
+                        placeholder="es. Ristorante Da Mario Torino"
+                        className={inputClass()}
+                      />
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleNameSearch}
+                        disabled={nameSearching || !nameQuery.trim()}
+                        className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                      >
+                        {nameSearching ? 'Cerco...' : 'Cerca'}
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Section>
 
           {/* --- Basic info --- */}
