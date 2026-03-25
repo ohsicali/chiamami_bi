@@ -1,5 +1,6 @@
 import { motion, useAnimate } from 'framer-motion'
 import { useRef, useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
@@ -9,7 +10,8 @@ import ReviewSection from '../Review/ReviewSection'
 import Badge from '../UI/Badge'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useRestaurantTranslation } from '../../lib/hooks/useTranslation'
-import { useRestaurantDiscount } from '../../lib/hooks/useDiscounts'
+import { useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import { useAuth } from '../../lib/hooks/useAuth'
 
 function ShareButton({ restaurant, t }) {
   const [copied, setCopied] = useState(false)
@@ -82,6 +84,7 @@ export default function RestaurantSheet({
   onSaveToggle,
 }) {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
@@ -116,8 +119,10 @@ export default function RestaurantSheet({
   const reviewText = tr('our_review') || ''
   const tipText = tr('our_tip') || null
 
-  // Check if restaurant has an active discount (for sticky banner)
+  // Auth + discount state for sticky bar
+  const { user } = useAuth()
   const { discount } = useRestaurantDiscount(restaurant.id)
+  const { redemption } = useUserRedemption(discount?.id, user?.id)
 
   // Get first photo for hero
   const photos = restaurant.photos || []
@@ -392,7 +397,7 @@ export default function RestaurantSheet({
             </motion.div>
 
             {/* Discount banner (inline, scrollable) */}
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} data-discount-banner>
               <DiscountBanner restaurantId={restaurant.id} />
             </motion.div>
 
@@ -477,36 +482,91 @@ export default function RestaurantSheet({
           </motion.div>
         </div>
 
-        {/* Sticky discount bar at bottom */}
-        {discount && (
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 z-20 border-t border-border/50 px-5 py-3"
-            style={{
-              background: 'rgba(255,255,255,0.95)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-            }}
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🎁</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
-                <p className="text-xs text-secondary truncate">{discount.title}</p>
-              </div>
-              <button
-                onClick={() => {
-                  scrollRef.current?.querySelector('[class*="DiscountBanner"]')?.scrollIntoView({ behavior: 'smooth' })
-                }}
-                className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white flex-shrink-0"
-              >
-                Scopri
-              </button>
-            </div>
-          </motion.div>
-        )}
+        {/* Sticky discount bar — 3 states */}
+        {discount && (() => {
+          const isRedeemed = redemption?.status === 'redeemed'
+          const isGenerated = redemption?.status === 'generated'
+          const redeemedDate = redemption?.redeemed_at
+            ? new Date(redemption.redeemed_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
+            : null
+
+          return (
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 z-20 border-t px-5 py-3"
+              style={{
+                background: isRedeemed ? '#f3f4f6' : 'rgba(255,255,255,0.95)',
+                backdropFilter: isRedeemed ? 'none' : 'blur(16px)',
+                WebkitBackdropFilter: isRedeemed ? 'none' : 'blur(16px)',
+                borderColor: isRedeemed ? '#e5e7eb' : 'rgba(234,231,224,0.5)',
+              }}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
+            >
+              {isRedeemed ? (
+                /* State 3: Already used */
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-500">
+                      Sconto utilizzato ✓
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Usato il {redeemedDate}
+                    </p>
+                  </div>
+                </div>
+              ) : isGenerated ? (
+                /* State 2: Active QR — show "Mostra QR" */
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-secondary">Il tuo sconto</p>
+                    <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const banner = scrollRef.current?.querySelector('[data-discount-banner]')
+                      if (banner) banner.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white flex-shrink-0 shadow-sm"
+                  >
+                    Mostra QR
+                  </button>
+                </div>
+              ) : !user ? (
+                /* State 1: Not registered — "Sblocca" outlined */
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-secondary">Sconto esclusivo Bi</p>
+                    <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
+                    className="rounded-xl border-2 border-accent px-5 py-2 text-xs font-bold text-accent flex-shrink-0"
+                  >
+                    Sblocca
+                  </button>
+                </div>
+              ) : (
+                /* State 1b: Registered but not yet generated */
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-secondary">Sconto esclusivo Bi</p>
+                    <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const banner = scrollRef.current?.querySelector('[data-discount-banner]')
+                      if (banner) banner.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-white flex-shrink-0 shadow-sm"
+                  >
+                    Scopri
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )
+        })()}
       </motion.div>
     </div>
   )

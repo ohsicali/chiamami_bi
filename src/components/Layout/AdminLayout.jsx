@@ -121,18 +121,18 @@ function StatsIcon({ className }) {
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: DashboardIcon, exact: true },
   { to: '/admin/stats', label: 'Statistiche', icon: StatsIcon },
-  { to: '/admin?section=restaurants', label: 'Ristoranti', icon: RestaurantIcon },
+  { to: '/admin?section=restaurants', label: 'Ristoranti', icon: RestaurantIcon, count: 24 },
   { to: '/admin/categories', label: 'Categorie', icon: ApplicationIcon },
-  { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
+  { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon, count: 8 },
   { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
-  { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
-  { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
+  { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon, badge: 3 },
+  { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon, count: 312 },
   { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon },
   { to: '/admin/settings', label: 'Impostazioni', icon: SettingsIcon },
 ]
 
 /* ------------------------------------------------------------------ */
-/*  Sidebar content (shared between desktop and mobile)                */
+/*  Desktop sidebar content (dark theme — unchanged)                   */
 /* ------------------------------------------------------------------ */
 function SidebarContent({ user, onLogout, onNavClick }) {
   const location = useLocation()
@@ -191,6 +191,97 @@ function SidebarContent({ user, onLogout, onNavClick }) {
         <button
           onClick={() => { onLogout(); onNavClick?.() }}
           className="flex items-center gap-2 text-sm text-white/50 hover:text-red-400 transition-colors"
+        >
+          <LogoutIcon className="w-4 h-4" />
+          Esci
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile sidebar content (white theme)                               */
+/* ------------------------------------------------------------------ */
+function MobileSidebarContent({ user, onLogout, onNavClick }) {
+  const location = useLocation()
+
+  const isActive = (item) => {
+    const itemPath = item.to.split('?')[0]
+    const itemQuery = item.to.includes('?') ? '?' + item.to.split('?')[1] : ''
+    if (item.exact) return location.pathname === itemPath && !location.search
+    if (itemQuery) return location.pathname === itemPath && location.search === itemQuery
+    return location.pathname === itemPath
+  }
+
+  // Build user initials from email
+  const userEmail = user?.email ?? 'Admin'
+  const initials = userEmail.includes('@')
+    ? userEmail.split('@')[0].slice(0, 2).replace(/^(.)/, (_, c) => c.toUpperCase())
+    : 'Bi'
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Top section: "Menu" title + X close button */}
+      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900">Menu</h2>
+        <button
+          onClick={onNavClick}
+          className="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+        >
+          <XIcon className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Nav links */}
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(item)
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.label}
+              to={item.to}
+              onClick={onNavClick}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                active
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-accent' : 'text-gray-400'}`} />
+              <span className="flex-1">{item.label}</span>
+
+              {/* Red badge (e.g. pending reviews) */}
+              {item.badge != null && (
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-accent text-white text-[11px] font-bold leading-none">
+                  {item.badge}
+                </span>
+              )}
+
+              {/* Gray count */}
+              {item.count != null && !item.badge && (
+                <span className="text-xs text-gray-400 font-normal">{item.count}</span>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* User avatar + email + logout */}
+      <div className="px-5 py-4 border-t border-gray-200 mt-2">
+        <div className="flex items-center gap-3 mb-3">
+          {/* Avatar circle */}
+          <div className="w-9 h-9 rounded-full bg-accent/15 text-accent flex items-center justify-center text-sm font-bold flex-shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-gray-900 font-medium truncate">{userEmail}</p>
+          </div>
+        </div>
+        <button
+          onClick={() => { onLogout(); onNavClick?.() }}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-500 transition-colors"
         >
           <LogoutIcon className="w-4 h-4" />
           Esci
@@ -312,12 +403,12 @@ export default function AdminLayout({ children, title }) {
 
   return (
     <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
-      {/* ── Desktop sidebar ── */}
+      {/* ── Desktop sidebar (dark) ── */}
       <aside className="hidden md:flex flex-col w-60 bg-[#1a1a1a] shrink-0 fixed inset-y-0 left-0 z-30">
         <SidebarContent user={user} onLogout={signOut} onNavClick={() => {}} />
       </aside>
 
-      {/* ── Mobile overlay sidebar ── */}
+      {/* ── Mobile overlay sidebar (white) ── */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -336,16 +427,9 @@ export default function AdminLayout({ children, title }) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed inset-y-0 left-0 w-72 bg-[#1a1a1a] z-50 shadow-xl md:hidden"
+              className="fixed inset-y-0 left-0 w-72 bg-white z-50 shadow-xl md:hidden"
             >
-              {/* Close button */}
-              <button
-                onClick={closeMobile}
-                className="absolute top-4 right-4 p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-              <SidebarContent user={user} onLogout={signOut} onNavClick={closeMobile} />
+              <MobileSidebarContent user={user} onLogout={signOut} onNavClick={closeMobile} />
             </motion.aside>
           </>
         )}

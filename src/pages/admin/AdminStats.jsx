@@ -6,12 +6,18 @@ import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useAllReviews } from '../../lib/hooks/useReviews'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
 }
+
+const TIME_FILTERS = [
+  { key: '7d', label: '7 giorni' },
+  { key: '30d', label: '30 giorni' },
+  { key: 'all', label: 'Tutto' },
+]
 
 export default function AdminStats() {
   const { user, isAdmin, loading: authLoading } = useAuth()
@@ -19,11 +25,11 @@ export default function AdminStats() {
   const { reviews } = useAllReviews()
   const [discountStats, setDiscountStats] = useState({ total: 0, redeemed: 0 })
   const [subscriberCount, setSubscriberCount] = useState(0)
+  const [timeFilter, setTimeFilter] = useState('all')
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
 
-    // Fetch discount redemption stats
     supabase.from('discount_redemptions').select('status', { count: 'exact' }).then(({ count }) => {
       setDiscountStats(prev => ({ ...prev, total: count || 0 }))
     })
@@ -35,7 +41,61 @@ export default function AdminStats() {
     })
   }, [])
 
-  // Build monthly data for charts
+  // Filter data by time range
+  const filterByTime = (items, dateField = 'created_at') => {
+    if (!items || timeFilter === 'all') return items || []
+    const now = new Date()
+    const days = timeFilter === '7d' ? 7 : 30
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+    return items.filter(item => {
+      if (!item[dateField]) return false
+      return new Date(item[dateField]) >= cutoff
+    })
+  }
+
+  const filteredRestaurants = useMemo(() => filterByTime(restaurants), [restaurants, timeFilter])
+  const filteredReviews = useMemo(() => filterByTime(reviews), [reviews, timeFilter])
+
+  // Compute previous period stats for % change
+  const periodStats = useMemo(() => {
+    if (timeFilter === 'all') {
+      return {
+        restaurantChange: null,
+        reviewChange: null,
+        ratingChange: null,
+        subscriberChange: null,
+      }
+    }
+    const days = timeFilter === '7d' ? 7 : 30
+    const now = new Date()
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+    const prevCutoff = new Date(cutoff.getTime() - days * 24 * 60 * 60 * 1000)
+
+    const prevRestaurants = (restaurants || []).filter(r => {
+      if (!r.created_at) return false
+      const d = new Date(r.created_at)
+      return d >= prevCutoff && d < cutoff
+    })
+    const prevReviews = (reviews || []).filter(r => {
+      if (!r.created_at) return false
+      const d = new Date(r.created_at)
+      return d >= prevCutoff && d < cutoff
+    })
+
+    const pctChange = (curr, prev) => {
+      if (prev === 0) return curr > 0 ? 100 : 0
+      return ((curr - prev) / prev * 100).toFixed(1)
+    }
+
+    return {
+      restaurantChange: `+${pctChange(filteredRestaurants.length, prevRestaurants.length)}%`,
+      reviewChange: `+${pctChange(filteredReviews.length, prevReviews.length)}%`,
+      ratingChange: null,
+      subscriberChange: null,
+    }
+  }, [restaurants, reviews, filteredRestaurants, filteredReviews, timeFilter])
+
+  // Build monthly data for chart
   const monthlyData = useMemo(() => {
     const months = []
     const now = new Date()
@@ -69,35 +129,23 @@ export default function AdminStats() {
     return months
   }, [restaurants, reviews])
 
-  // Rating distribution
-  const ratingDist = useMemo(() => {
-    const dist = [0, 0, 0, 0, 0]
-    if (reviews) {
-      reviews.forEach(r => {
-        if (r.rating >= 1 && r.rating <= 5) dist[r.rating - 1]++
-      })
-    }
-    return [
-      { label: '1 ⭐', count: dist[0] },
-      { label: '2 ⭐', count: dist[1] },
-      { label: '3 ⭐', count: dist[2] },
-      { label: '4 ⭐', count: dist[3] },
-      { label: '5 ⭐', count: dist[4] },
-    ]
-  }, [reviews])
-
-  // City distribution
-  const cityDist = useMemo(() => {
-    const map = {}
-    restaurants.forEach(r => {
-      const city = r.city || 'Altro'
-      map[city] = (map[city] || 0) + 1
+  // Top restaurants by review count
+  const topRestaurants = useMemo(() => {
+    if (!reviews || !restaurants.length) return []
+    const countMap = {}
+    reviews.forEach(r => {
+      if (r.restaurant_id) {
+        countMap[r.restaurant_id] = (countMap[r.restaurant_id] || 0) + 1
+      }
     })
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, count]) => ({ name, count }))
-  }, [restaurants])
+    return Object.entries(countMap)
+      .map(([id, count]) => {
+        const rest = restaurants.find(r => r.id === id)
+        return { name: rest?.name || 'Sconosciuto', count }
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+  }, [restaurants, reviews])
 
   if (authLoading) {
     return (
@@ -108,9 +156,35 @@ export default function AdminStats() {
   }
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
-  const avgRating = reviews && reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+  const avgRating = filteredReviews && filteredReviews.length > 0
+    ? (filteredReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / filteredReviews.length).toFixed(1)
     : '—'
+
+  const statCards = [
+    {
+      label: 'Ristoranti',
+      value: filteredRestaurants.length,
+      change: timeFilter === 'all' ? `+${filteredRestaurants.length} totali` : periodStats.restaurantChange,
+      highlight: true,
+    },
+    {
+      label: 'Recensioni',
+      value: filteredReviews.length,
+      change: timeFilter === 'all' ? `+${filteredReviews.length} totali` : periodStats.reviewChange,
+    },
+    {
+      label: 'Media voti',
+      value: avgRating,
+      change: avgRating !== '—' ? `su ${filteredReviews.length} voti` : null,
+    },
+    {
+      label: 'Iscritti newsletter',
+      value: subscriberCount,
+      change: `+${subscriberCount} totali`,
+    },
+  ]
+
+  const maxTopCount = topRestaurants.length > 0 ? topRestaurants[0].count : 1
 
   return (
     <AdminLayout title="Statistiche">
@@ -129,28 +203,34 @@ export default function AdminStats() {
           Statistiche
         </motion.h1>
 
-        {/* Summary cards */}
+        {/* Time filter pills */}
+        <motion.div variants={itemVariants} className="flex gap-2">
+          {TIME_FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setTimeFilter(f.key)}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: timeFilter === f.key ? '#FF5757' : '#f3f4f6',
+                color: timeFilter === f.key ? '#fff' : '#6b7280',
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Stat cards */}
         <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="Ristoranti" value={restaurants.length} icon="🏪" highlight />
-          <StatCard label="Recensioni" value={reviews?.length || 0} icon="⭐" />
-          <StatCard label="Media voti" value={avgRating} icon="📊" />
-          <StatCard label="Iscritti newsletter" value={subscriberCount} icon="📧" />
+          {statCards.map((card, i) => (
+            <StatCard key={card.label} {...card} />
+          ))}
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <StatCard label="Sconti generati" value={discountStats.total} icon="🎫" />
-          <StatCard label="Sconti usati" value={discountStats.redeemed} icon="✅" />
-          <StatCard
-            label="Tasso utilizzo"
-            value={discountStats.total > 0 ? `${Math.round((discountStats.redeemed / discountStats.total) * 100)}%` : '—'}
-            icon="📈"
-          />
-        </motion.div>
-
-        {/* Growth chart */}
+        {/* Crescita utenti chart */}
         <motion.div variants={itemVariants} className="rounded-2xl bg-card p-5 shadow-sm border border-border">
           <h2 className="text-base font-semibold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Crescita mensile
+            Crescita utenti
           </h2>
           <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer>
@@ -173,63 +253,88 @@ export default function AdminStats() {
           </div>
         </motion.div>
 
-        {/* Rating distribution */}
+        {/* Top ristoranti */}
         <motion.div variants={itemVariants} className="rounded-2xl bg-card p-5 shadow-sm border border-border">
           <h2 className="text-base font-semibold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Distribuzione voti
+            Top ristoranti
           </h2>
-          <div style={{ width: '100%', height: 200 }}>
-            <ResponsiveContainer>
-              <BarChart data={ratingDist}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eae7e0" />
-                <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#888' }} />
-                <YAxis tick={{ fontSize: 12, fill: '#888' }} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#fff',
-                    border: '1px solid #eae7e0',
-                    borderRadius: 12,
-                    fontSize: 13,
-                  }}
-                />
-                <Bar dataKey="count" fill="#FF5757" radius={[6, 6, 0, 0]} name="Recensioni" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex flex-col gap-3">
+            {topRestaurants.length === 0 && (
+              <p className="text-sm text-secondary">Nessun dato disponibile</p>
+            )}
+            {topRestaurants.map((item, i) => (
+              <div key={item.name} className="flex items-center gap-3">
+                <span
+                  className="w-6 text-sm font-bold text-right shrink-0"
+                  style={{ color: '#888', fontFamily: 'var(--font-display)' }}
+                >
+                  {i + 1}
+                </span>
+                <span className="text-sm font-medium text-primary w-32 sm:w-40 truncate shrink-0">
+                  {item.name}
+                </span>
+                <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: '#FF5757' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(item.count / maxTopCount) * 100}%` }}
+                    transition={{ duration: 0.6, delay: i * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  />
+                </div>
+                <span
+                  className="text-sm font-bold shrink-0 w-8 text-right"
+                  style={{ color: '#1a1a1a', fontFamily: 'var(--font-display)' }}
+                >
+                  {item.count}
+                </span>
+              </div>
+            ))}
           </div>
         </motion.div>
 
-        {/* City distribution */}
-        {cityDist.length > 0 && (
-          <motion.div variants={itemVariants} className="rounded-2xl bg-card p-5 shadow-sm border border-border">
-            <h2 className="text-base font-semibold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Ristoranti per città
-            </h2>
-            <div style={{ width: '100%', height: 200 }}>
-              <ResponsiveContainer>
-                <BarChart data={cityDist} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eae7e0" />
-                  <XAxis type="number" tick={{ fontSize: 12, fill: '#888' }} />
-                  <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12, fill: '#888' }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#fff',
-                      border: '1px solid #eae7e0',
-                      borderRadius: 12,
-                      fontSize: 13,
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#1a1a1a" radius={[0, 6, 6, 0]} name="Ristoranti" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-        )}
+        {/* Social reach */}
+        <motion.div variants={itemVariants}>
+          <h2 className="text-base font-semibold text-primary mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+            Social reach
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            <SocialCard
+              value="40K"
+              label="TikTok follower"
+              icon={
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.71a8.19 8.19 0 004.76 1.52V6.78a4.83 4.83 0 01-1-.09z" />
+                </svg>
+              }
+            />
+            <SocialCard
+              value="1.8M"
+              label="TikTok likes"
+              icon={
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              }
+            />
+            <SocialCard
+              value={subscriberCount}
+              label="Newsletter"
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M22 7l-10 7L2 7" />
+                </svg>
+              }
+            />
+          </div>
+        </motion.div>
       </motion.div>
     </AdminLayout>
   )
 }
 
-function StatCard({ label, value, icon, highlight = false }) {
+function StatCard({ label, value, change, highlight = false }) {
   return (
     <div
       className="rounded-2xl p-4 shadow-sm border"
@@ -238,9 +343,8 @@ function StatCard({ label, value, icon, highlight = false }) {
         borderColor: highlight ? '#1a1a1a' : '#eae7e0',
       }}
     >
-      <div className="text-lg mb-1">{icon}</div>
       <div
-        className="text-xl font-bold"
+        className="text-2xl font-bold"
         style={{
           color: highlight ? '#fff' : '#1a1a1a',
           fontFamily: 'var(--font-display)',
@@ -254,6 +358,29 @@ function StatCard({ label, value, icon, highlight = false }) {
       >
         {label}
       </div>
+      {change && (
+        <div className="text-xs font-semibold mt-1.5" style={{ color: '#1D9E75' }}>
+          {change}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SocialCard({ value, label, icon }) {
+  return (
+    <div
+      className="rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-center gap-1"
+      style={{ backgroundColor: '#1a1a1a' }}
+    >
+      <div className="text-white/60 mb-1">{icon}</div>
+      <div
+        className="text-xl font-bold text-white"
+        style={{ fontFamily: 'var(--font-display)' }}
+      >
+        {value}
+      </div>
+      <div className="text-xs text-white/50 font-medium">{label}</div>
     </div>
   )
 }
