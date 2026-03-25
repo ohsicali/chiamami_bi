@@ -27,3 +27,4 @@ supabase/.temp/
 # Test artifacts
 test-results/
 playwright-report/
+.nano-banana-config.json
