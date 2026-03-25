@@ -180,11 +180,11 @@ export default function RestaurantSheet({
               </div>
             )}
 
-            {/* Gradient overlay — bottom half */}
+            {/* Gradient overlay — subtle since name is below photo now */}
             <div
               className="absolute inset-0"
               style={{
-                background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 50%)',
               }}
             />
 
@@ -209,65 +209,43 @@ export default function RestaurantSheet({
               </svg>
             </motion.button>
 
-            {/* Save button — glassmorphism, top right */}
-            {onSaveToggle && (
-              <motion.div
-                className="absolute top-4 right-4 z-10"
+            {/* Save + Share buttons — top right */}
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              {onSaveToggle && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
+                </motion.div>
+              )}
+              <motion.button
+                className="flex h-10 w-10 items-center justify-center rounded-full shadow-md"
+                style={{
+                  background: 'rgba(0,0,0,0.25)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                }}
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
+                transition={{ delay: 0.35, type: 'spring', stiffness: 400, damping: 20 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: restaurant.name, url: window.location.href })
+                  }
+                }}
+                aria-label="Condividi"
               >
-                <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
-              </motion.div>
-            )}
-
-            {/* Name + category on photo — bottom */}
-            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 z-10">
-              <h1
-                className="text-2xl font-bold text-white mb-1.5"
-                style={{ fontFamily: 'var(--font-display)', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}
-              >
-                {restaurant.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-2">
-                {categories.map(cat => (
-                  <span
-                    key={cat.name}
-                    className="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                    style={{
-                      background: 'rgba(255,255,255,0.2)',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      color: '#fff',
-                    }}
-                  >
-                    {cat.emoji} {cat.name}
-                  </span>
-                ))}
-                {priceLabel && (
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: 'rgba(255,255,255,0.8)' }}
-                  >
-                    {priceLabel}
-                  </span>
-                )}
-              </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+              </motion.button>
             </div>
 
-            {/* Photo count indicator (if multiple photos) */}
-            {photos.length > 1 && (
-              <div
-                className="absolute bottom-5 right-5 z-10 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white"
-                style={{
-                  background: 'rgba(0,0,0,0.4)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                }}
-              >
-                📷 1/{photos.length}
-              </div>
-            )}
           </div>
 
           {/* Content */}
@@ -277,6 +255,68 @@ export default function RestaurantSheet({
             initial="hidden"
             animate="visible"
           >
+            {/* Restaurant name + discount badge */}
+            <motion.div variants={itemVariants}>
+              <div className="flex items-center gap-2.5 mb-2">
+                <h1
+                  className="text-2xl font-bold text-primary"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  {restaurant.name}
+                </h1>
+                {discount && (
+                  <span
+                    className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                    style={{ background: '#FF5757' }}
+                  >
+                    -{discount.discount_value}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {categories.map(cat => (
+                  <span
+                    key={cat.name}
+                    className="rounded-full px-2.5 py-1 text-xs font-medium"
+                    style={{
+                      background: cat.color ? `${cat.color}15` : '#f4f4f4',
+                      color: cat.color || '#555',
+                    }}
+                  >
+                    {cat.emoji} {cat.name}
+                  </span>
+                ))}
+                {priceLabel && (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-xs font-medium"
+                    style={{ background: '#f4f4f4', color: '#555' }}
+                  >
+                    {priceLabel}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <p className="text-sm" style={{ color: '#9ca3af' }}>
+                  {restaurant.address}
+                </p>
+              </div>
+              {/* Photo dot indicators */}
+              {photos.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  {photos.slice(0, 5).map((_, i) => (
+                    <span
+                      key={i}
+                      className="rounded-full"
+                      style={{
+                        width: i === 0 ? 7 : 5,
+                        height: i === 0 ? 7 : 5,
+                        background: i === 0 ? '#1a1a1a' : '#d1d5db',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
             {/* Quick actions — Indicazioni / Chiama / Sito */}
             <motion.div className="grid grid-cols-3 gap-2" variants={itemVariants}>
               {mapsUrl && (
@@ -546,11 +586,15 @@ export default function RestaurantSheet({
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-secondary">Sconto esclusivo Bi</p>
-                    <p className="text-sm font-bold text-accent">{discount.discount_value}</p>
+                    <p className="text-sm">
+                      <span className="font-bold text-accent">{discount.discount_value}</span>
+                      {discount.title && <span className="text-secondary"> {discount.title}</span>}
+                    </p>
                   </div>
                   <button
                     onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
-                    className="rounded-xl border-2 border-accent px-5 py-2 text-xs font-bold text-accent flex-shrink-0"
+                    className="rounded-xl border-2 px-5 py-2 text-xs font-bold flex-shrink-0"
+                    style={{ borderColor: '#1a1a1a', color: '#1a1a1a' }}
                   >
                     Sblocca
                   </button>
