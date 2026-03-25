@@ -215,7 +215,7 @@ export default function PartnerLandingPage() {
             <motion.h1
               variants={fadeUp}
               className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-6"
-              style={{ fontFamily: 'var(--font-display)', lineHeight: 1.3, color: '#fff' }}
+              style={{ fontWeight: 700, lineHeight: 1.3, color: '#fff' }}
             >
               Porta il tuo ristorante davanti a migliaia di{' '}
               <span style={{ color: '#FF5757' }}>foodie</span>
@@ -265,7 +265,7 @@ export default function PartnerLandingPage() {
               >
                 <span
                   className="text-3xl sm:text-4xl font-bold"
-                  style={{ fontFamily: 'var(--font-display)', color: '#FF5757' }}
+                  style={{ fontWeight: 700, color: '#FF5757' }}
                 >
                   <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                 </span>
@@ -287,7 +287,7 @@ export default function PartnerLandingPage() {
             <motion.h2
               variants={fadeUp}
               className="text-3xl sm:text-4xl font-bold text-center mb-14"
-              style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+              style={{ fontWeight: 700, color: '#fff' }}
             >
               Come funziona
             </motion.h2>
@@ -315,7 +315,7 @@ export default function PartnerLandingPage() {
                   </div>
                   <h3
                     className="text-lg font-bold mb-2"
-                    style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+                    style={{ fontWeight: 700, color: '#fff' }}
                   >
                     {step.title}
                   </h3>
@@ -342,7 +342,7 @@ export default function PartnerLandingPage() {
             >
               <h2
                 className="text-2xl sm:text-3xl font-bold mb-2 text-center"
-                style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+                style={{ fontWeight: 700, color: '#fff' }}
               >
                 Candidatura partner
               </h2>
@@ -366,7 +366,7 @@ export default function PartnerLandingPage() {
                   </div>
                   <h3
                     className="text-xl font-bold"
-                    style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+                    style={{ fontWeight: 700, color: '#fff' }}
                   >
                     Candidatura inviata!
                   </h3>

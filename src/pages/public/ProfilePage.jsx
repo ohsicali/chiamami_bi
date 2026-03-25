@@ -135,7 +135,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
           <>
             <div className="text-center mb-5">
               <span className="text-4xl">⚠️</span>
-              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontWeight: 700 }}>
                 Sei sicuro?
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -160,7 +160,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
         ) : (
           <>
             <div className="text-center mb-5">
-              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-lg font-bold text-red-600" style={{ fontWeight: 700 }}>
                 Conferma cancellazione
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -594,7 +594,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         Torna al profilo
       </button>
 
-      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+      <h2 className="text-xl font-bold text-primary" style={{ fontWeight: 700 }}>
         Impostazioni
       </h2>
 
@@ -1135,7 +1135,7 @@ export default function ProfilePage() {
           )}
           <h1
             className="mt-3 text-xl font-bold text-white"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontWeight: 700 }}
           >
             {displayName}
           </h1>
@@ -1256,7 +1256,7 @@ export default function ProfilePage() {
                     exit={{ opacity: 0, y: -8 }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+                      <h2 className="text-lg font-semibold text-primary" style={{ fontWeight: 700 }}>
                         I miei salvati
                       </h2>
                       {savedRestaurants.length > 0 && (

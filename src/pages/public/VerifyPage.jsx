@@ -399,7 +399,7 @@ export default function VerifyPage() {
         <LogoFull height={36} variant="light" />
         <p
           style={{
-            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
             color: '#fff',
             fontSize: 14,
             marginTop: 8,
@@ -483,7 +483,7 @@ export default function VerifyPage() {
               >
                 <h2
                   style={{
-                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
                     fontSize: 20,
                     fontWeight: 700,
                     color: '#fff',

@@ -17,7 +17,7 @@ export default function TermsPage() {
       <div className="flex-1 max-w-screen-md mx-auto px-5 py-8">
         <h1
           className="text-2xl font-bold text-primary mb-6"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontWeight: 700 }}
         >
           Termini di Servizio
         </h1>

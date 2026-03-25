@@ -312,7 +312,7 @@ export default function RestaurantSheet({
               <motion.div className="flex flex-col gap-2" variants={itemVariants}>
                 <h2
                   className="text-lg font-semibold text-primary"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontWeight: 700 }}
                 >
                   {t('restaurant.reviewByBi')}
                 </h2>
@@ -334,7 +334,7 @@ export default function RestaurantSheet({
               <motion.div className="flex flex-col gap-2" variants={itemVariants}>
                 <h2
                   className="text-lg font-semibold text-primary"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontWeight: 700 }}
                 >
                   {t('restaurant.tipsByBi')}
                 </h2>
@@ -406,7 +406,7 @@ export default function RestaurantSheet({
               <motion.div className="flex flex-col gap-2" variants={itemVariants}>
                 <h2
                   className="text-lg font-semibold text-primary"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontWeight: 700 }}
                 >
                   Consigliato per
                 </h2>
@@ -427,7 +427,7 @@ export default function RestaurantSheet({
             <motion.div className="flex flex-col gap-3" variants={itemVariants}>
               <h2
                 className="text-lg font-semibold text-primary"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontWeight: 700 }}
               >
                 {t('restaurant.info')}
               </h2>

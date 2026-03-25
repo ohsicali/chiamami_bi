@@ -198,7 +198,7 @@ export default function AdminStats() {
         <motion.h1
           variants={itemVariants}
           className="text-2xl font-bold text-primary"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontWeight: 700 }}
         >
           Statistiche
         </motion.h1>
@@ -229,7 +229,7 @@ export default function AdminStats() {
 
         {/* Crescita utenti chart */}
         <motion.div variants={itemVariants} className="rounded-2xl bg-card p-5 shadow-sm border border-border">
-          <h2 className="text-base font-semibold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-base font-semibold text-primary mb-4" style={{ fontWeight: 700 }}>
             Crescita utenti
           </h2>
           <div style={{ width: '100%', height: 260 }}>
@@ -255,7 +255,7 @@ export default function AdminStats() {
 
         {/* Top ristoranti */}
         <motion.div variants={itemVariants} className="rounded-2xl bg-card p-5 shadow-sm border border-border">
-          <h2 className="text-base font-semibold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-base font-semibold text-primary mb-4" style={{ fontWeight: 700 }}>
             Top ristoranti
           </h2>
           <div className="flex flex-col gap-3">
@@ -266,7 +266,7 @@ export default function AdminStats() {
               <div key={item.name} className="flex items-center gap-3">
                 <span
                   className="w-6 text-sm font-bold text-right shrink-0"
-                  style={{ color: '#888', fontFamily: 'var(--font-display)' }}
+                  style={{ color: '#888', fontWeight: 700 }}
                 >
                   {i + 1}
                 </span>
@@ -284,7 +284,7 @@ export default function AdminStats() {
                 </div>
                 <span
                   className="text-sm font-bold shrink-0 w-8 text-right"
-                  style={{ color: '#1a1a1a', fontFamily: 'var(--font-display)' }}
+                  style={{ color: '#1a1a1a', fontWeight: 700 }}
                 >
                   {item.count}
                 </span>
@@ -295,7 +295,7 @@ export default function AdminStats() {
 
         {/* Social reach */}
         <motion.div variants={itemVariants}>
-          <h2 className="text-base font-semibold text-primary mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-base font-semibold text-primary mb-3" style={{ fontWeight: 700 }}>
             Social reach
           </h2>
           <div className="grid grid-cols-3 gap-3">
@@ -347,7 +347,7 @@ function StatCard({ label, value, change, highlight = false }) {
         className="text-2xl font-bold"
         style={{
           color: highlight ? '#fff' : '#1a1a1a',
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
         {value}
@@ -376,7 +376,7 @@ function SocialCard({ value, label, icon }) {
       <div className="text-white/60 mb-1">{icon}</div>
       <div
         className="text-xl font-bold text-white"
-        style={{ fontFamily: 'var(--font-display)' }}
+        style={{ fontWeight: 700 }}
       >
         {value}
       </div>

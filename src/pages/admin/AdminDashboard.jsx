@@ -300,7 +300,7 @@ export default function AdminDashboard() {
         <div>
           <h1
             className="text-3xl font-bold tracking-tight"
-            style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+            style={{ fontWeight: 700, color: '#1a1a1a' }}
           >
             Dashboard
           </h1>
@@ -373,7 +373,7 @@ export default function AdminDashboard() {
         >
           <h3
             className="text-base font-semibold mb-5"
-            style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+            style={{ fontWeight: 700, color: '#1a1a1a' }}
           >
             Registrazioni settimanali
           </h3>
@@ -404,7 +404,7 @@ export default function AdminDashboard() {
         >
           <h3
             className="text-base font-semibold mb-5"
-            style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+            style={{ fontWeight: 700, color: '#1a1a1a' }}
           >
             Top categorie
           </h3>
@@ -439,7 +439,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3">
             <h3
               className="text-base font-semibold"
-              style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+              style={{ fontWeight: 700, color: '#1a1a1a' }}
             >
               Recensioni in attesa
             </h3>
@@ -531,7 +531,7 @@ export default function AdminDashboard() {
       >
         <h3
           className="text-base font-semibold mb-6"
-          style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+          style={{ fontWeight: 700, color: '#1a1a1a' }}
         >
           Attivita recente
         </h3>
@@ -602,7 +602,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
           <h3
             className="text-base font-semibold"
-            style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+            style={{ fontWeight: 700, color: '#1a1a1a' }}
           >
             Ristoranti
             {rows.length > 0 && (
@@ -810,7 +810,7 @@ export default function AdminDashboard() {
             >
               <h3
                 className="text-lg font-semibold mb-2"
-                style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+                style={{ fontWeight: 700, color: '#1a1a1a' }}
               >
                 Conferma eliminazione
               </h3>

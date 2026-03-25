@@ -147,7 +147,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b" style={{ borderColor: '#eae7e0' }}>
-                  <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>Filtri</h3>
+                  <h3 className="text-lg font-semibold" style={{ fontWeight: 700 }}>Filtri</h3>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}

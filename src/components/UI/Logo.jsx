@@ -42,7 +42,7 @@ export function LogoSmall({ size = 20, className = '' }) {
     <span
       className={className}
       style={{
-        fontFamily: 'var(--font-display)',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         fontWeight: 700,
         fontSize: size,
         letterSpacing: '-0.02em',
