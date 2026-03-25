@@ -46,7 +46,7 @@ export default function Navbar({ view = "map", onToggleView }) {
       <div className="flex items-center justify-between px-4 py-2.5 max-w-screen-lg mx-auto">
         {/* Logo */}
         <Link to="/">
-          <LogoFull height={22} />
+          <LogoFull height={28} />
         </Link>
 
         {/* Right side */}

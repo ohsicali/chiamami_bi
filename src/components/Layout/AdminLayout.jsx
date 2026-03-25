@@ -149,10 +149,7 @@ function SidebarContent({ user, onLogout, onNavClick }) {
           <ArrowLeftIcon className="w-4 h-4" />
         </Link>
         <Link to="/admin" className="flex-1" onClick={onNavClick}>
-          <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-            <span className="text-accent">La Guida</span>{' '}
-            <span className="text-white">di Bi</span>
-          </span>
+          <LogoFull height={20} variant="light" />
         </Link>
       </div>
 

@@ -1,37 +1,25 @@
 /**
  * La Guida di Bi — logo components
- * - LogoFull: text logo for navbar/headers ("La Guida" in accent, "di Bi" in dark)
- * - LogoSmall: compact version for tight spaces
+ * - LogoFull: image logo for navbar/headers
+ * - LogoSmall: compact text version for tight spaces
  * - LogoLoader: Animated BI icon for loading states
  */
 
-export function LogoFull({ height = 24, className = '' }) {
-  const fontSize = height * 0.85
+export function LogoFull({ height = 24, className = '', variant = 'default' }) {
+  // variant: 'default' (dark text for light bg), 'light' (for dark backgrounds)
   return (
-    <div className={`flex flex-col leading-none ${className}`}>
-      <span
-        style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontWeight: 700,
-          fontSize,
-          letterSpacing: '-0.02em',
-        }}
-      >
-        <span style={{ color: '#FF5757' }}>La Guida</span>
-        <span style={{ color: '#1a1a1a' }}> di Bi</span>
-      </span>
-      <span
-        style={{
-          fontSize: Math.max(8, fontSize * 0.4),
-          color: '#bbb',
-          fontWeight: 400,
-          letterSpacing: '0.02em',
-          marginTop: 1,
-        }}
-      >
-        by ChiamamiBi
-      </span>
-    </div>
+    <img
+      src="/logo-guida-bi.svg"
+      alt="La Guida di Bi"
+      className={className}
+      style={{
+        height,
+        width: 'auto',
+        objectFit: 'contain',
+        filter: variant === 'light' ? 'brightness(0) invert(1)' : 'none',
+      }}
+      draggable={false}
+    />
   )
 }
 
@@ -40,7 +28,7 @@ export function LogoSmall({ size = 20, className = '' }) {
     <span
       className={className}
       style={{
-        fontFamily: "Georgia, 'Times New Roman', serif",
+        fontFamily: 'var(--font-display)',
         fontWeight: 700,
         fontSize: size,
         letterSpacing: '-0.02em',

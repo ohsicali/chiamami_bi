@@ -266,7 +266,7 @@ export default function AboutPage() {
             className="flex items-center justify-center gap-4"
           >
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/chiamami_bi"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white shadow-sm border border-gray-100 text-gray-700 hover:text-accent hover:border-accent/20 transition-colors"
@@ -276,7 +276,7 @@ export default function AboutPage() {
             </a>
 
             <a
-              href="https://tiktok.com"
+              href="https://www.tiktok.com/@chiamamibi"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white shadow-sm border border-gray-100 text-gray-700 hover:text-accent hover:border-accent/20 transition-colors"

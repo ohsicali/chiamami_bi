@@ -436,7 +436,7 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              Hai gia un account?{' '}
+              Hai già un account?{' '}
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(''); setSuccess('') }}

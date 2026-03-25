@@ -23,7 +23,7 @@ function getSnapHeights() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
   const bottom = getBottomMargin()
   return [
-    86,                       // PEEK: handle + search bar + bottom padding
+    130,                      // PEEK: handle + lista button + search bar + bottom padding
     h * 0.55,                 // HALF: categories + some results
     h - TOP_MIN - bottom,     // FULL: nearly full screen
   ]
