@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Guida di Bi — Premium Redesign V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rosso: #E8453C;
+    --crema: #FAF7F2;
+    --nero: #111111;
+    --oro: #C4A265;
+    --grigio: #8A8680;
+    --bordo: rgba(255,255,255,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background: #080808;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* PHONE FRAME */
+  .phone {
+    width: 390px; height: 844px; background: var(--nero);
+    border-radius: 52px; overflow: hidden; position: relative;
+    box-shadow:
+      0 0 0 2px #333,
+      0 0 0 6px #1a1a1a,
+      0 40px 100px rgba(0,0,0,0.8),
+      inset 0 0 40px rgba(0,0,0,0.3);
+  }
+
+  .dynamic-island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 126px; height: 36px; background: #000; border-radius: 20px; z-index: 200;
+  }
+
+  /* GRAIN OVERLAY */
+  .grain {
+    position: absolute; inset: 0; z-index: 150; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 128px;
+  }
+
+  /* MAP AREA — Dark luxe style */
+  .map {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 30% 35%, #2a2520 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 25%, #252018 0%, transparent 50%),
+      linear-gradient(180deg, #1a1814 0%, #1f1d18 40%, #252220 100%);
+  }
+
+  /* Stylized map streets */
+  .map-streets {
+    position: absolute; inset: 0; opacity: 0.06;
+    background-image:
+      linear-gradient(0deg, rgba(255,255,255,0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px),
+      linear-gradient(45deg, rgba(255,255,255,0.15) 1px, transparent 1px),
+      linear-gradient(-30deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 60px 60px, 80px 80px, 100px 100px, 70px 70px;
+  }
+
+  /* River Po — ambient light */
+  .map-river {
+    position: absolute; top: 160px; left: -40px; right: -40px; height: 50px;
+    background: linear-gradient(90deg, transparent, rgba(196,162,101,0.06) 30%, rgba(196,162,101,0.08) 50%, rgba(196,162,101,0.06) 70%, transparent);
+    transform: rotate(-8deg);
+    filter: blur(8px);
+  }
+
+  /* MAP MARKERS */
+  .marker {
+    position: absolute; z-index: 10;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .marker:hover { transform: scale(1.2); }
+
+  .marker-main {
+    background: var(--rosso);
+    box-shadow: 0 4px 20px rgba(232,69,60,0.5), 0 0 0 3px rgba(232,69,60,0.2);
+    animation: marker-breathe 3s ease-in-out infinite;
+  }
+
+  .marker-gold {
+    background: linear-gradient(135deg, var(--oro), #D4B878);
+    box-shadow: 0 4px 20px rgba(196,162,101,0.4), 0 0 0 3px rgba(196,162,101,0.15);
+    animation: marker-breathe 3s ease-in-out infinite 1s;
+  }
+
+  .marker-cluster {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    color: var(--crema); font-size: 14px; font-weight: 700;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  @keyframes marker-breathe {
+    0%, 100% { box-shadow: 0 4px 20px rgba(232,69,60,0.4), 0 0 0 3px rgba(232,69,60,0.15); }
+    50% { box-shadow: 0 4px 28px rgba(232,69,60,0.6), 0 0 0 8px rgba(232,69,60,0.08); }
+  }
+
+  /* Marker tooltip peek */
+  .marker-label {
+    position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+    padding: 3px 10px; border-radius: 8px; white-space: nowrap;
+    font-size: 10px; font-weight: 600; color: var(--crema);
+    letter-spacing: 0.3px; opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .marker:hover .marker-label { opacity: 1; }
+
+  /* NAVBAR — Dark glass */
+  .navbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 60;
+    padding: 58px 24px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(17,17,17,0.95) 0%, rgba(17,17,17,0.7) 70%, transparent 100%);
+  }
+
+  .logo {
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .logo-la {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 400; font-size: 14px;
+    color: var(--grigio); letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .logo-guida {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600; font-size: 22px;
+    color: var(--crema); letter-spacing: -0.3px;
+  }
+  .logo-di {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 400; font-size: 14px;
+    color: var(--grigio);
+  }
+  .logo-bi {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-size: 22px;
+    color: var(--rosso); letter-spacing: -0.5px;
+  }
+
+  .nav-right {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .nav-city {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--grigio); font-weight: 500;
+    padding: 6px 12px; border-radius: 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-city-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4ADE80; box-shadow: 0 0 6px rgba(74,222,128,0.5);
+  }
+
+  /* BOTTOM SHEET — Frosted glass */
+  .sheet {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 30;
+    background: rgba(250,247,242,0.97);
+    backdrop-filter: blur(40px) saturate(1.5);
+    border-radius: 28px 28px 0 0;
+    padding: 0 0 90px;
+    box-shadow:
+      0 -8px 40px rgba(0,0,0,0.3),
+      0 -1px 0 rgba(255,255,255,0.1);
+  }
+
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: rgba(0,0,0,0.12); border-radius: 2px;
+    margin: 10px auto 0;
+  }
+
+  .sheet-content {
+    padding: 16px 22px 0;
+  }
+
+  /* GREETING */
+  .greeting {
+    margin-bottom: 16px;
+  }
+  .greeting-sub {
+    font-size: 12px; color: var(--grigio); font-weight: 500;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .greeting-main {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px; font-weight: 600; color: var(--nero);
+    line-height: 1.1;
+  }
+  .greeting-main em {
+    font-style: italic; color: var(--rosso);
+  }
+
+  /* SEARCH — Elegant */
+  .search {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff;
+    border: 1.5px solid #E8E5DE;
+    border-radius: 16px;
+    padding: 13px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search:hover {
+    border-color: var(--rosso);
+    box-shadow: 0 2px 20px rgba(232,69,60,0.08);
+  }
+  .search-icon { color: var(--grigio); flex-shrink: 0; }
+  .search-text { color: #BFBAB3; font-size: 14px; font-weight: 500; flex: 1; }
+  .search-shortcut {
+    font-size: 10px; color: var(--grigio); font-weight: 600;
+    padding: 4px 8px; border-radius: 6px;
+    background: rgba(0,0,0,0.04);
+    letter-spacing: 0.5px;
+  }
+
+  /* CATEGORIES — Editorial capsules */
+  .categories {
+    display: flex; gap: 8px; overflow-x: auto;
+    margin-bottom: 16px; padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+  }
+  .categories::-webkit-scrollbar { display: none; }
+
+  .cat {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0; padding: 8px 16px 8px 10px;
+    border-radius: 40px; cursor: pointer;
+    background: #fff;
+    border: 1.5px solid #E8E5DE;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .cat:hover {
+    border-color: var(--nero);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .cat-active {
+    background: var(--nero); border-color: var(--nero);
+  }
+  .cat-active .cat-name { color: var(--crema); }
+
+  .cat-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    background: rgba(0,0,0,0.04);
+  }
+  .cat-active .cat-icon { background: rgba(255,255,255,0.12); }
+
+  .cat-name {
+    font-size: 13px; font-weight: 600; color: var(--nero);
+    white-space: nowrap; letter-spacing: -0.2px;
+  }
+
+  /* FILTER CHIPS — Refined */
+  .chips {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .chip {
+    padding: 9px 16px; border-radius: 24px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.2px;
+    white-space: nowrap; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    border: 1.5px solid #E8E5DE;
+    background: #fff; color: #5A564F;
+  }
+  .chip:hover {
+    border-color: #C8C4BC;
+    background: #FDFCFA;
+  }
+  .chip-active {
+    background: var(--rosso) !important;
+    border-color: var(--rosso) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 12px rgba(232,69,60,0.3);
+  }
+  .chip-count {
+    font-size: 10px; font-weight: 700;
+    background: rgba(255,255,255,0.25);
+    padding: 1px 6px; border-radius: 8px;
+  }
+
+  /* FEATURED CARD — The wow element */
+  .featured {
+    background: var(--nero);
+    border-radius: 20px; overflow: hidden;
+    position: relative; height: 100px;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .featured:hover { transform: scale(0.98); }
+
+  .featured-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, rgba(232,69,60,0.15) 0%, transparent 50%),
+      linear-gradient(250deg, rgba(196,162,101,0.1) 0%, transparent 50%),
+      var(--nero);
+  }
+  .featured-grain {
+    position: absolute; inset: 0; opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 128px;
+  }
+
+  .featured-content {
+    position: relative; z-index: 2;
+    padding: 18px 20px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    height: 100%;
+  }
+  .featured-left { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+  .featured-tag {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--oro);
+  }
+  .featured-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--crema);
+    line-height: 1.1;
+  }
+  .featured-meta {
+    font-size: 11px; color: var(--grigio);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .featured-rating {
+    display: flex; align-items: center; gap: 3px;
+    color: var(--oro); font-weight: 600; font-size: 12px;
+  }
+  .featured-arrow {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--crema); align-self: center;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* FLOATING TOGGLE */
+  .floating-btn {
+    position: absolute; bottom: 108px; left: 50%; transform: translateX(-50%);
+    z-index: 40;
+    background: var(--nero);
+    color: var(--crema); border: none;
+    border-radius: 28px;
+    padding: 12px 26px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .floating-btn:hover {
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.12);
+  }
+
+  /* TAB BAR — Ultra refined */
+  .tabbar {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 50;
+    height: 82px;
+    background: rgba(250,247,242,0.95);
+    backdrop-filter: blur(20px) saturate(1.8);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    display: flex; align-items: flex-start;
+    justify-content: space-around;
+    padding: 10px 12px 0;
+  }
+
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    flex: 1; cursor: pointer; position: relative;
+    transition: transform 0.2s;
+  }
+  .tab:hover { transform: translateY(-1px); }
+
+  .tab-icon {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .tab-icon svg { width: 22px; height: 22px; }
+
+  .tab-label {
+    font-size: 10px; font-weight: 500; color: #B5B0A8;
+    letter-spacing: 0.3px;
+  }
+
+  .tab-active .tab-label { color: var(--rosso); font-weight: 700; }
+  .tab-active .tab-icon svg { filter: drop-shadow(0 2px 4px rgba(232,69,60,0.3)); }
+
+  /* Active tab indicator */
+  .tab-active::before {
+    content: '';
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 3px; border-radius: 0 0 3px 3px;
+    background: var(--rosso);
+  }
+
+  /* Badge */
+  .tab-badge {
+    position: absolute; top: -2px; right: -6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--rosso); color: #fff;
+    font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(232,69,60,0.4);
+  }
+
+  /* ENTRANCE ANIMATIONS */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .sheet { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+  .greeting { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+  .search { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
+  .categories { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+  .chips { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
+  .featured { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both; }
+  .marker { animation: fadeIn 0.4s ease 0.8s both; }
+  .floating-btn { animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="dynamic-island"></div>
+  <div class="grain"></div>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="logo">
+      <span class="logo-la">la</span>
+      <span class="logo-guida">Guida</span>
+      <span class="logo-di">di</span>
+      <span class="logo-bi">Bi</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-city">
+        <div class="nav-city-dot"></div>
+        Torino
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map">
+    <div class="map-streets"></div>
+    <div class="map-river"></div>
+
+    <div class="marker marker-main" style="top: 190px; left: 80px;">
+      🍷
+      <span class="marker-label">Barolo & Co</span>
+    </div>
+    <div class="marker marker-main" style="top: 240px; left: 230px;">
+      🍝
+      <span class="marker-label">Trattoria del Centro</span>
+    </div>
+    <div class="marker marker-gold" style="top: 160px; left: 190px;">
+      🍣
+      <span class="marker-label">Sakura Fusion</span>
+    </div>
+    <div class="marker marker-main" style="top: 280px; left: 140px;">
+      🍸
+      <span class="marker-label">Cocktail Bar Torino</span>
+    </div>
+    <div class="marker marker-cluster" style="top: 210px; left: 300px;">
+      5
+    </div>
+  </div>
+
+  <!-- BOTTOM SHEET -->
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-content">
+
+      <!-- GREETING -->
+      <div class="greeting">
+        <div class="greeting-sub">Buonasera</div>
+        <div class="greeting-main">Dove si mangia <em>stasera?</em></div>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="search">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="search-text">Ristorante, cucina, zona...</span>
+        <span class="search-shortcut">Torino</span>
+      </div>
+
+      <!-- CATEGORIES -->
+      <div class="categories">
+        <div class="cat cat-active">
+          <div class="cat-icon">🍷</div>
+          <span class="cat-name">Piemontese</span>
+        </div>
+        <div class="cat">
+          <div class="cat-icon">🍝</div>
+          <span class="cat-name">Italiana</span>
+        </div>
+        <div class="cat">
+          <div class="cat-icon">🍣</div>
+          <span class="cat-name">Giapponese</span>
+        </div>
+        <div class="cat">
+          <div class="cat-icon">🍸</div>
+          <span class="cat-name">Cocktail</span>
+        </div>
+        <div class="cat">
+          <div class="cat-icon">🍕</div>
+          <span class="cat-name">Pizzeria</span>
+        </div>
+        <div class="cat">
+          <div class="cat-icon">🥩</div>
+          <span class="cat-name">Grill</span>
+        </div>
+      </div>
+
+      <!-- CHIPS -->
+      <div class="chips">
+        <div class="chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          Vicino a me
+        </div>
+        <div class="chip chip-active">
+          🏷 Scontati
+          <span class="chip-count">3</span>
+        </div>
+        <div class="chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h4"/></svg>
+          Filtri
+        </div>
+      </div>
+
+      <!-- FEATURED RESTAURANT CARD -->
+      <div class="featured">
+        <div class="featured-bg"></div>
+        <div class="featured-grain"></div>
+        <div class="featured-content">
+          <div class="featured-left">
+            <span class="featured-tag">Consigliato da Bi</span>
+            <div>
+              <div class="featured-name">Ristorante del Cambio</div>
+              <div class="featured-meta">
+                <span class="featured-rating">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                  4.8
+                </span>
+                <span>Piemontese</span>
+                <span>·</span>
+                <span>€€€</span>
+              </div>
+            </div>
+          </div>
+          <div class="featured-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FLOATING BUTTON -->
+  <button class="floating-btn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1.5" fill="currentColor"/><circle cx="3" cy="12" r="1.5" fill="currentColor"/><circle cx="3" cy="18" r="1.5" fill="currentColor"/></svg>
+    Lista
+  </button>
+
+  <!-- TAB BAR -->
+  <div class="tabbar">
+    <div class="tab tab-active">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#E8453C" stroke-width="2" stroke-linecap="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" fill="rgba(232,69,60,0.12)"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <span class="tab-label">Mappa</span>
+    </div>
+    <div class="tab">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8" stroke-linecap="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+          <circle cx="7" cy="7" r="1" fill="#B5B0A8"/>
+        </svg>
+        <div class="tab-badge">2</div>
+      </div>
+      <span class="tab-label">Sconti</span>
+    </div>
+    <div class="tab">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8" stroke-linecap="round">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+        </svg>
+      </div>
+      <span class="tab-label">Salvati</span>
+    </div>
+    <div class="tab">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8" stroke-linecap="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <span class="tab-label">Profilo</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
