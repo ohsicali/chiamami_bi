@@ -14,6 +14,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
+import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { Link } from 'react-router-dom'
 
 function slugify(name) {
@@ -259,6 +260,47 @@ export default function HomePage() {
           </div>
         )}
       </BottomSheet>
+
+      {/* Floating Lista/Mappa toggle — mobile only */}
+      <button
+        onClick={handleToggleView}
+        className="fixed md:hidden flex items-center gap-2 z-40"
+        style={{
+          bottom: `calc(${TAB_BAR_HEIGHT}px + 24px)`,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#1a1a1a',
+          borderRadius: 24,
+          padding: '10px 22px',
+          color: '#fff',
+          fontSize: 13,
+          fontWeight: 600,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+        }}
+      >
+        {sheetSnap === SNAP_FULL ? (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+            Mappa
+          </>
+        ) : (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+            Lista
+          </>
+        )}
+      </button>
     </div>
   )
 }
