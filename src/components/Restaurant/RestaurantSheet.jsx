@@ -119,6 +119,12 @@ export default function RestaurantSheet({
   // Check if restaurant has an active discount (for sticky banner)
   const { discount } = useRestaurantDiscount(restaurant.id)
 
+  // Get first photo for hero
+  const photos = restaurant.photos || []
+  const heroPhoto = photos.length > 0
+    ? (typeof photos[0] === 'string' ? photos[0] : photos[0]?.photo_url)
+    : null
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
       {/* Backdrop */}
@@ -134,7 +140,7 @@ export default function RestaurantSheet({
       {/* Sheet */}
       <motion.div
         ref={sheetScope}
-        className="relative mt-12 flex flex-1 flex-col overflow-hidden rounded-t-3xl bg-bg"
+        className="relative mt-8 flex flex-1 flex-col overflow-hidden rounded-t-3xl bg-bg"
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{
@@ -144,34 +150,6 @@ export default function RestaurantSheet({
           mass: 0.7,
         }}
       >
-        {/* Back button */}
-        <motion.button
-          className="glass absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-md"
-          onClick={handleClose}
-          whileTap={{ scale: 0.92 }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.25, type: 'spring', stiffness: 400, damping: 20 }}
-          aria-label="Chiudi"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5" />
-            <path d="M12 19l-7-7 7-7" />
-          </svg>
-        </motion.button>
-
-        {/* Save button — top right */}
-        {onSaveToggle && (
-          <motion.div
-            className="absolute top-4 right-4 z-10"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
-          >
-            <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
-          </motion.div>
-        )}
-
         {/* Scrollable content */}
         <div
           ref={scrollRef}
@@ -180,8 +158,112 @@ export default function RestaurantSheet({
           onTouchStart={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
-          {/* Photo carousel */}
-          <PhotoCarousel photos={restaurant.photos || []} height="280px" restaurantName={restaurant.name} city={restaurant.city} />
+          {/* ── IMMERSIVE HERO — 380px ── */}
+          <div className="relative w-full" style={{ height: 380 }}>
+            {heroPhoto ? (
+              <img
+                src={heroPhoto}
+                alt={restaurant.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="absolute inset-0 flex items-center justify-center text-6xl"
+                style={{ backgroundColor: categories[0]?.color ? `${categories[0].color}20` : '#f3f4f6' }}
+              >
+                {categories[0]?.emoji || '🍽️'}
+              </div>
+            )}
+
+            {/* Gradient overlay — bottom half */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 40%, transparent 70%)',
+              }}
+            />
+
+            {/* Back button — glassmorphism */}
+            <motion.button
+              className="absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-md"
+              style={{
+                background: 'rgba(0,0,0,0.25)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+              }}
+              onClick={handleClose}
+              whileTap={{ scale: 0.92 }}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25, type: 'spring', stiffness: 400, damping: 20 }}
+              aria-label="Chiudi"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+              </svg>
+            </motion.button>
+
+            {/* Save button — glassmorphism, top right */}
+            {onSaveToggle && (
+              <motion.div
+                className="absolute top-4 right-4 z-10"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
+              >
+                <SaveButton saved={saved} onClick={onSaveToggle} size="md" />
+              </motion.div>
+            )}
+
+            {/* Name + category on photo — bottom */}
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 z-10">
+              <h1
+                className="text-2xl font-bold text-white mb-1.5"
+                style={{ fontFamily: 'var(--font-display)', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}
+              >
+                {restaurant.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2">
+                {categories.map(cat => (
+                  <span
+                    key={cat.name}
+                    className="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    style={{
+                      background: 'rgba(255,255,255,0.2)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      color: '#fff',
+                    }}
+                  >
+                    {cat.emoji} {cat.name}
+                  </span>
+                ))}
+                {priceLabel && (
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: 'rgba(255,255,255,0.8)' }}
+                  >
+                    {priceLabel}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Photo count indicator (if multiple photos) */}
+            {photos.length > 1 && (
+              <div
+                className="absolute bottom-5 right-5 z-10 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white"
+                style={{
+                  background: 'rgba(0,0,0,0.4)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                }}
+              >
+                📷 1/{photos.length}
+              </div>
+            )}
+          </div>
 
           {/* Content */}
           <motion.div
@@ -190,42 +272,6 @@ export default function RestaurantSheet({
             initial="hidden"
             animate="visible"
           >
-            {/* Name + meta */}
-            <motion.div variants={itemVariants}>
-              <h1
-                className="text-2xl font-bold text-primary"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                {restaurant.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                {categories.map(cat => (
-                  <Badge key={cat.name} color={cat.color}>
-                    {cat.emoji} {cat.name}
-                  </Badge>
-                ))}
-                {priceLabel && (
-                  <span className="text-sm font-semibold text-secondary">
-                    {priceLabel}
-                  </span>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Recommended for tags */}
-            {restaurant.recommended_for && restaurant.recommended_for.length > 0 && (
-              <motion.div className="flex flex-wrap gap-2" variants={itemVariants}>
-                {restaurant.recommended_for.map(tag => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </motion.div>
-            )}
-
             {/* Quick actions — maps + phone + share */}
             <motion.div className="flex gap-2" variants={itemVariants}>
               {mapsUrl && (
@@ -253,12 +299,16 @@ export default function RestaurantSheet({
                   Chiama
                 </a>
               )}
+              <ShareButton restaurant={restaurant} t={t} />
             </motion.div>
 
-            {/* La recensione di Bi */}
+            {/* "Perché mi piace" — La recensione di Bi */}
             {reviewText && (
               <motion.div className="flex flex-col gap-2" variants={itemVariants}>
-                <h2 className="font-display text-lg font-semibold text-primary">
+                <h2
+                  className="text-lg font-semibold text-primary"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
                   {t('restaurant.reviewByBi')}
                 </h2>
                 <div className="rounded-2xl bg-card p-4 shadow-sm">
@@ -274,10 +324,13 @@ export default function RestaurantSheet({
               </motion.div>
             )}
 
-            {/* I suggerimenti di Bi */}
+            {/* I suggerimenti di Bi (tip) */}
             {tipText && (
               <motion.div className="flex flex-col gap-2" variants={itemVariants}>
-                <h2 className="font-display text-lg font-semibold text-primary">
+                <h2
+                  className="text-lg font-semibold text-primary"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
                   {t('restaurant.tipsByBi')}
                 </h2>
                 <div
@@ -333,14 +386,44 @@ export default function RestaurantSheet({
               </motion.div>
             )}
 
+            {/* Community reviews */}
+            <motion.div variants={itemVariants}>
+              <ReviewSection restaurantId={restaurant.id} />
+            </motion.div>
+
             {/* Discount banner (inline, scrollable) */}
             <motion.div variants={itemVariants}>
               <DiscountBanner restaurantId={restaurant.id} />
             </motion.div>
 
+            {/* Recommended for tags */}
+            {restaurant.recommended_for && restaurant.recommended_for.length > 0 && (
+              <motion.div className="flex flex-col gap-2" variants={itemVariants}>
+                <h2
+                  className="text-lg font-semibold text-primary"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  Consigliato per
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {restaurant.recommended_for.map(tag => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Info details */}
             <motion.div className="flex flex-col gap-3" variants={itemVariants}>
-              <h2 className="font-display text-lg font-semibold text-primary">
+              <h2
+                className="text-lg font-semibold text-primary"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
                 {t('restaurant.info')}
               </h2>
 
@@ -383,14 +466,6 @@ export default function RestaurantSheet({
               </div>
             </motion.div>
 
-            {/* Share button */}
-            <ShareButton restaurant={restaurant} t={t} />
-
-            {/* Community reviews */}
-            <motion.div variants={itemVariants}>
-              <ReviewSection restaurantId={restaurant.id} />
-            </motion.div>
-
             {/* Nearby restaurants */}
             <motion.div variants={itemVariants}>
               <NearbySection
@@ -405,7 +480,12 @@ export default function RestaurantSheet({
         {/* Sticky discount bar at bottom */}
         {discount && (
           <motion.div
-            className="absolute bottom-0 left-0 right-0 z-20 border-t border-border/50 bg-bg/95 backdrop-blur-md px-5 py-3"
+            className="absolute bottom-0 left-0 right-0 z-20 border-t border-border/50 px-5 py-3"
+            style={{
+              background: 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+            }}
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
@@ -418,7 +498,6 @@ export default function RestaurantSheet({
               </div>
               <button
                 onClick={() => {
-                  // Scroll to discount banner in the content
                   scrollRef.current?.querySelector('[class*="DiscountBanner"]')?.scrollIntoView({ behavior: 'smooth' })
                 }}
                 className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white flex-shrink-0"

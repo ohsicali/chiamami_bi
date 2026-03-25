@@ -56,7 +56,7 @@ export default function RestaurantCard({
 
   return (
     <motion.button
-      className="flex w-full items-start gap-3 rounded-2xl bg-card p-2.5 text-left shadow-sm"
+      className="flex flex-col w-full rounded-2xl bg-card text-left shadow-sm overflow-hidden"
       variants={cardVariants}
       initial="hidden"
       animate="visible"
@@ -64,8 +64,8 @@ export default function RestaurantCard({
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick?.(restaurant)}
     >
-      {/* Photo thumbnail */}
-      <div className="relative h-[88px] w-[88px] flex-shrink-0 overflow-hidden rounded-xl">
+      {/* Full-width photo — 160px height */}
+      <div className="relative w-full" style={{ height: 160 }}>
         <div
           className="absolute inset-0"
           style={{ backgroundColor: category?.color ? `${category.color}15` : '#f3f4f6' }}
@@ -82,31 +82,33 @@ export default function RestaurantCard({
           />
         )}
         {!photoUrl && (
-          <div className="absolute inset-0 flex items-center justify-center text-2xl">
+          <div className="absolute inset-0 flex items-center justify-center text-4xl">
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Discount badge on photo */}
-        {hasDiscount && (
-          <div className="absolute bottom-1.5 left-1.5 rounded-md bg-accent px-1.5 py-0.5 shadow-sm">
-            <span className="text-[10px] font-bold text-white leading-none">
-              {discountValue || t('discount.badge')}
-            </span>
+
+        {/* Heart button — white circle, top right */}
+        {onSaveToggle && (
+          <div className="absolute top-2.5 right-2.5">
+            <SaveButton saved={saved} onClick={onSaveToggle} size="sm" variant="white" />
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-0.5">
-        {/* Name */}
-        <div className="flex items-start justify-between gap-2 min-w-0">
-          <h3 className="text-[15px] font-semibold text-primary leading-snug" style={{ fontFamily: 'var(--font-display)' }}>
+      {/* Info section */}
+      <div className="flex flex-col gap-0.5 px-3 py-2.5">
+        {/* Name + discount badge inline */}
+        <div className="flex items-center gap-2 min-w-0">
+          <h3
+            className="text-[15px] font-semibold text-primary leading-snug truncate"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
             {restaurant.name}
           </h3>
-          {onSaveToggle && (
-            <div className="flex-shrink-0 -mt-0.5">
-              <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
-            </div>
+          {hasDiscount && (
+            <span className="flex-shrink-0 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+              {discountValue || t('discount.badge')}
+            </span>
           )}
         </div>
 
@@ -121,20 +123,19 @@ export default function RestaurantCard({
           {restaurant.price_range != null && (
             <span>{PRICE_LABELS[restaurant.price_range] || ''}</span>
           )}
+          {distance != null && (
+            <>
+              <span>·</span>
+              <span>{formatDistance(distance)}</span>
+            </>
+          )}
         </div>
 
         {/* Address */}
         {restaurant.address && (
-          <p className="truncate text-xs text-secondary/70 mt-0.5">
+          <p className="truncate text-xs text-secondary/70">
             {restaurant.address}
           </p>
-        )}
-
-        {/* Distance */}
-        {distance != null && (
-          <span className="text-xs text-secondary/70 mt-0.5">
-            {formatDistance(distance)}
-          </span>
         )}
       </div>
     </motion.button>

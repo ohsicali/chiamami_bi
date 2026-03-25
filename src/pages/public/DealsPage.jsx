@@ -141,7 +141,7 @@ export default function DealsPage() {
                     className="overflow-hidden rounded-2xl bg-card shadow-sm"
                     whileTap={{ scale: 0.98 }}
                   >
-                    {/* Photo + discount badge */}
+                    {/* Photo — clean, no badge overlay */}
                     <div
                       className="relative h-40 cursor-pointer"
                       onClick={() => navigate(`/restaurant/${slug}`)}
@@ -157,18 +157,24 @@ export default function DealsPage() {
                           🍽️
                         </div>
                       )}
-                      {/* Discount badge */}
-                      <div className="absolute bottom-3 left-3 rounded-lg bg-accent px-3 py-1.5 shadow-md">
-                        <span className="text-sm font-bold text-white">{deal.discount_value}</span>
-                      </div>
                     </div>
 
-                    {/* Info */}
+                    {/* Info — badge next to name */}
                     <div
                       className="p-4 cursor-pointer"
                       onClick={() => navigate(`/restaurant/${slug}`)}
                     >
-                      <h3 className="text-base font-bold text-primary">{restaurant?.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3
+                          className="text-base font-bold text-primary"
+                          style={{ fontFamily: 'var(--font-display)' }}
+                        >
+                          {restaurant?.name}
+                        </h3>
+                        <span className="flex-shrink-0 rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-white">
+                          {deal.discount_value}
+                        </span>
+                      </div>
                       <p className="text-sm text-secondary mt-0.5">
                         {restaurant?.city} · {PRICE_LABELS[restaurant?.price_range] || ''}
                       </p>

@@ -246,7 +246,7 @@ export default function AdminDashboard() {
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   const statCards = [
-    { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },
+    { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️', highlight: true },
     { label: 'Pubblicati', value: stats.published, color: '#34C759', icon: '✅' },
     { label: 'Bozze', value: stats.drafts, color: '#F59E0B', icon: '📝' },
     { label: 'Citta', value: stats.cities, color: '#6366F1', icon: '🏙️' },
@@ -289,15 +289,21 @@ export default function AdminDashboard() {
         </Link>
       </motion.div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats cards — horizontal scrollable, first card black */}
+      <div className="flex gap-4 mb-8 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+        <style>{`.stats-scroll::-webkit-scrollbar { display: none; }`}</style>
         {statCards.map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08, duration: 0.4 }}
-            className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
+            className="rounded-2xl p-5 shadow-sm flex-shrink-0"
+            style={{
+              minWidth: 150,
+              backgroundColor: s.highlight ? '#1a1a1a' : '#fff',
+              border: s.highlight ? 'none' : '1px solid #eae7e0',
+            }}
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-xl">{s.icon}</span>
@@ -306,10 +312,21 @@ export default function AdminDashboard() {
                 style={{ backgroundColor: s.color }}
               />
             </div>
-            <p className="text-2xl font-bold text-primary">
+            <p
+              className="text-2xl font-bold"
+              style={{
+                color: s.highlight ? '#fff' : '#1a1a1a',
+                fontFamily: 'var(--font-display)',
+              }}
+            >
               <AnimatedCounter value={s.value} />
             </p>
-            <p className="text-xs text-secondary mt-0.5">{s.label}</p>
+            <p
+              className="text-xs mt-0.5"
+              style={{ color: s.highlight ? 'rgba(255,255,255,0.6)' : '#888' }}
+            >
+              {s.label}
+            </p>
           </motion.div>
         ))}
       </div>
@@ -380,8 +397,11 @@ export default function AdminDashboard() {
           <p className="text-sm text-secondary">Nessuna recensione da moderare</p>
         ) : (
           <div className="space-y-3">
-            {pendingReviews.slice(0, 5).map(review => (
-              <div key={review.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+            {pendingReviews.slice(0, 5).map(review => {
+              const ratingColors = { 5: '#22c55e', 4: '#3b82f6', 3: '#eab308', 2: '#f97316', 1: '#ef4444' }
+              const borderColor = ratingColors[review.rating] || '#ddd'
+              return (
+              <div key={review.id} className="flex items-start gap-3 rounded-xl p-3" style={{ background: '#fafaf9', borderLeft: `3px solid ${borderColor}` }}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-medium text-primary">{review.user?.full_name || 'Utente'}</span>
@@ -407,7 +427,8 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </motion.div>
@@ -419,23 +440,29 @@ export default function AdminDashboard() {
         transition={{ delay: 0.45, duration: 0.4 }}
         className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
       >
-        <h3 className="text-sm font-semibold text-primary mb-4">Attivita recente</h3>
+        <h3 className="text-sm font-semibold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Attivita recente</h3>
         {activityFeed.length === 0 ? (
           <p className="text-sm text-secondary">Nessuna attivita recente</p>
         ) : (
-          <div className="space-y-3">
-            {activityFeed.map(item => {
-              const ago = item.time ? timeAgo(new Date(item.time)) : ''
-              return (
-                <div key={item.id} className="flex items-start gap-3">
-                  <span className="text-lg flex-shrink-0 mt-0.5">{item.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-primary">{item.text}</p>
-                    <p className="text-xs text-secondary">{ago}</p>
+          <div className="relative pl-6">
+            {/* Timeline vertical line */}
+            <div className="absolute left-2 top-1 bottom-1 w-px bg-gray-200" />
+            <div className="space-y-4">
+              {activityFeed.map(item => {
+                const ago = item.time ? timeAgo(new Date(item.time)) : ''
+                return (
+                  <div key={item.id} className="flex items-start gap-3 relative">
+                    {/* Timeline dot */}
+                    <div className="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-white" style={{ boxShadow: '0 0 0 1px #eae7e0' }} />
+                    <span className="text-base flex-shrink-0">{item.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-primary">{item.text}</p>
+                      <p className="text-xs text-secondary">{ago}</p>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )}
       </motion.div>

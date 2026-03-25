@@ -6,6 +6,7 @@ export default function SaveButton({
   onClick,
   size = 'md',
   className = '',
+  variant = 'default', // 'default' = dark blur bg, 'white' = white bg
 }) {
   const [scope, animate] = useAnimate()
 
@@ -43,7 +44,10 @@ export default function SaveButton({
       onClick={handleClick}
       className={`flex items-center justify-center rounded-full backdrop-blur-sm transition-colors ${btnSize} ${className}`}
       style={{
-        backgroundColor: saved ? 'rgba(255, 87, 87, 0.15)' : 'rgba(0, 0, 0, 0.25)',
+        backgroundColor: variant === 'white'
+          ? 'rgba(255, 255, 255, 0.9)'
+          : saved ? 'rgba(255, 87, 87, 0.15)' : 'rgba(0, 0, 0, 0.25)',
+        ...(variant === 'white' ? { boxShadow: '0 1px 4px rgba(0,0,0,0.1)' } : {}),
       }}
       whileHover={{ scale: 1.1 }}
       aria-label={saved ? 'Rimuovi dai salvati' : 'Salva ristorante'}
@@ -53,7 +57,7 @@ export default function SaveButton({
         height={iconSize}
         viewBox="0 0 24 24"
         fill={saved ? '#FF5757' : 'none'}
-        stroke={saved ? '#FF5757' : '#fff'}
+        stroke={saved ? '#FF5757' : variant === 'white' ? '#999' : '#fff'}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

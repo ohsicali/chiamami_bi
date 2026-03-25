@@ -1090,27 +1090,74 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-dvh bg-bg">
-      {/* Header bar */}
-      <nav className="sticky top-0 z-40 glass">
-        <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
+      {/* Gradient header */}
+      <div
+        className="relative"
+        style={{
+          background: 'linear-gradient(135deg, #FF5757 0%, #FF7B7B 100%)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+        }}
+      >
+        {/* Top bar with back + logo */}
+        <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => showSettings ? setShowSettings(false) : navigate(-1)}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+            className="flex items-center justify-center w-10 h-10 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.2)' }}
             aria-label="Indietro"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5" />
               <path d="M12 19l-7-7 7-7" />
             </svg>
           </button>
           <Link to="/">
-            <LogoFull height={28} />
+            <LogoFull height={22} variant="light" />
           </Link>
           <div className="w-10" />
         </div>
-      </nav>
 
-      <div className="max-w-screen-lg mx-auto px-5 py-8">
+        {/* Avatar + name + stats */}
+        <div className="flex flex-col items-center pb-8 pt-2">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt={displayName}
+              className="h-20 w-20 rounded-full object-cover border-3 border-white shadow-lg"
+            />
+          ) : (
+            <div
+              className="flex h-20 w-20 items-center justify-center rounded-full border-3 border-white text-2xl font-bold text-accent shadow-lg"
+              style={{ backgroundColor: '#fff' }}
+            >
+              {initials || '?'}
+            </div>
+          )}
+          <h1
+            className="mt-3 text-xl font-bold text-white"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            {displayName}
+          </h1>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
+            {profile?.email || user?.email}
+          </p>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-8 mt-4">
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-bold text-white">{savedRestaurants.length}</span>
+              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Salvati</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-bold text-white">{localRedemptions.length}</span>
+              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.7)' }}>Sconti</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-screen-lg mx-auto px-5 py-6">
         <AnimatePresence mode="wait">
           {showSettings ? (
             <SettingsSection
@@ -1124,47 +1171,56 @@ export default function ProfilePage() {
           ) : (
             <motion.div
               key="profile"
-              className="flex flex-col gap-6"
+              className="flex flex-col gap-5"
               initial="hidden"
               animate="visible"
               variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
             >
-              {/* Profile header */}
+              {/* iOS-style quick links */}
               <motion.div
-                className="flex items-center gap-4"
                 variants={itemVariants}
+                className="rounded-2xl bg-card shadow-sm overflow-hidden"
+                style={{ border: '1px solid #eae7e0' }}
               >
-                {avatar ? (
-                  <img
-                    src={avatar}
-                    alt={displayName}
-                    className="h-16 w-16 rounded-full object-cover shadow-md"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-xl font-bold text-white shadow-md">
-                    {initials || '?'}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h1
-                    className="text-xl font-bold text-primary"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    {displayName}
-                  </h1>
-                  <p className="text-sm text-secondary">{profile?.email || user?.email}</p>
-                </div>
-                <button
-                  onClick={() => setShowSettings(true)}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                  aria-label="Impostazioni"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-                  </svg>
-                </button>
+                {[
+                  { icon: '🏷️', label: 'I miei sconti', onClick: () => setActiveTab('discounts') },
+                  { icon: '⚙️', label: 'Impostazioni', onClick: () => setShowSettings(true) },
+                  { icon: '📖', label: 'Chi siamo', to: '/about' },
+                  { icon: '🤝', label: 'Diventa partner', to: '/partner' },
+                ].map((item, i, arr) => {
+                  const content = (
+                    <div
+                      className="flex items-center gap-3 px-4 py-3.5"
+                      style={i < arr.length - 1 ? { borderBottom: '0.5px solid #eae7e0' } : {}}
+                    >
+                      <span className="text-base">{item.icon}</span>
+                      <span className="flex-1 text-sm font-medium text-primary">{item.label}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </div>
+                  )
+                  if (item.to) {
+                    return <Link key={item.label} to={item.to}>{content}</Link>
+                  }
+                  return <button key={item.label} onClick={item.onClick} className="w-full text-left">{content}</button>
+                })}
               </motion.div>
+
+              {/* Logout button */}
+              <motion.button
+                variants={itemVariants}
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-red-500 shadow-sm"
+                style={{ background: '#fff', border: '1px solid #eae7e0' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Esci
+              </motion.button>
 
               {/* Main tabs: Salvati / Sconti */}
               <motion.div variants={itemVariants} className="flex gap-2">
