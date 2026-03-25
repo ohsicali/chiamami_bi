@@ -69,7 +69,7 @@ export default function ReviewModerator() {
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+        <h1 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
           Moderazione Recensioni
         </h1>
         <p className="text-sm text-secondary mt-0.5">

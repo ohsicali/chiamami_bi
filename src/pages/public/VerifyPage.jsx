@@ -287,7 +287,7 @@ export default function VerifyPage() {
               <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-lg border border-white/40">
                 <h2
                   className="text-xl font-bold text-primary text-center mb-2"
-                  style={{ fontFamily: "'TAN Songbird', serif" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   Area Ristoratori
                 </h2>
@@ -326,7 +326,7 @@ export default function VerifyPage() {
               <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-lg border border-white/40">
                 <h2
                   className="text-xl font-bold text-primary text-center mb-5"
-                  style={{ fontFamily: "'TAN Songbird', serif" }}
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   Validazione Sconto
                 </h2>
@@ -432,7 +432,7 @@ export default function VerifyPage() {
             >
               <h2
                 className="text-xl font-bold text-primary text-center mb-6"
-                style={{ fontFamily: "'TAN Songbird', serif" }}
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 La tua area riservata
               </h2>

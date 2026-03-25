@@ -152,7 +152,7 @@ export default function LoginPage() {
         <motion.div className="text-center" variants={itemVariants}>
           <h1
             className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "'TAN Songbird', serif" }}
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             {mode === 'forgot' ? 'Password dimenticata?' : mode === 'login' ? 'Bentornata!' : 'Unisciti a noi'}
           </h1>

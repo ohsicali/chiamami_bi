@@ -108,7 +108,7 @@ function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
       <div className="p-4">
         <h3
           className="text-lg font-bold text-gray-900 mb-1"
-          style={{ fontFamily: "'TAN Songbird', serif" }}
+          style={{ fontFamily: 'var(--font-display)' }}
         >
           {restaurant.name}
         </h3>

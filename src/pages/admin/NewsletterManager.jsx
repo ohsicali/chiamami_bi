@@ -61,7 +61,7 @@ export default function NewsletterManager() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+          <h1 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
             Newsletter
           </h1>
           <p className="text-sm text-secondary mt-0.5">{subscribers.length} iscritti</p>

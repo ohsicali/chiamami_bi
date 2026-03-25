@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <div className="flex-1 max-w-screen-md mx-auto px-5 py-8">
         <h1
           className="text-2xl font-bold text-primary mb-6"
-          style={{ fontFamily: "'TAN Songbird', serif" }}
+          style={{ fontFamily: 'var(--font-display)' }}
         >
           Privacy Policy
         </h1>

@@ -135,7 +135,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
           <>
             <div className="text-center mb-5">
               <span className="text-4xl">⚠️</span>
-              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: "'TAN Songbird', serif" }}>
+              <h3 className="text-lg font-bold text-primary mt-3" style={{ fontFamily: 'var(--font-display)' }}>
                 Sei sicuro?
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -160,7 +160,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
         ) : (
           <>
             <div className="text-center mb-5">
-              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: "'TAN Songbird', serif" }}>
+              <h3 className="text-lg font-bold text-red-600" style={{ fontFamily: 'var(--font-display)' }}>
                 Conferma cancellazione
               </h3>
               <p className="text-sm text-secondary mt-2">
@@ -594,7 +594,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
         Torna al profilo
       </button>
 
-      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+      <h2 className="text-xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
         Impostazioni
       </h2>
 
@@ -1148,7 +1148,7 @@ export default function ProfilePage() {
                 <div className="flex-1">
                   <h1
                     className="text-xl font-bold text-primary"
-                    style={{ fontFamily: "'TAN Songbird', serif" }}
+                    style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {displayName}
                   </h1>
@@ -1200,7 +1200,7 @@ export default function ProfilePage() {
                     exit={{ opacity: 0, y: -8 }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+                      <h2 className="text-lg font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
                         I miei salvati
                       </h2>
                       {savedRestaurants.length > 0 && (
