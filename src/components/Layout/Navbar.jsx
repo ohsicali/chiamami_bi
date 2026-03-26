@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../lib/hooks/useAuth";
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -52,10 +50,12 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   function handleCitySelect(name, lng, lat) {
     inputRef.current?.blur();
     setSelectedCity(name);
+    setQuery("");
+    setSuggestions([]);
     setCityPickerOpen(false);
     setTimeout(() => {
       onCityChange?.({ name, lng, lat });
-    }, 500);
+    }, 300);
   }
 
   const searchCities = useCallback(async (q) => {
@@ -155,185 +155,173 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
         }
       `}</style>
 
-      {createPortal(
-        <AnimatePresence>
-          {cityPickerOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0 } }}
-              style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50,
-                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-              }}
-              onClick={() => setCityPickerOpen(false)}
-            >
-              <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%', transition: { duration: 0.2 } }}
-                transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-                style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  background: '#FAF7F2', borderRadius: '28px 28px 0 0',
-                  paddingBottom: 'env(safe-area-inset-bottom, 20px)',
-                  maxHeight: '60%', display: 'flex', flexDirection: 'column',
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Handle */}
-                <div style={{ width: 40, height: 4, background: 'rgba(0,0,0,0.12)', borderRadius: 2, margin: '10px auto 0', flexShrink: 0 }} />
+      {cityPickerOpen && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50,
+            background: 'rgba(0,0,0,0.5)',
+          }}
+          onClick={() => setCityPickerOpen(false)}
+        >
+          <div
+            style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              background: '#FAF7F2', borderRadius: '28px 28px 0 0',
+              paddingBottom: 'env(safe-area-inset-bottom, 20px)',
+              maxHeight: '60%', display: 'flex', flexDirection: 'column',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, background: 'rgba(0,0,0,0.12)', borderRadius: 2, margin: '10px auto 0', flexShrink: 0 }} />
 
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ flexShrink: 0 }}>
-                  <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>
-                    Dove vuoi esplorare?
-                  </h3>
-                  <button onClick={() => setCityPickerOpen(false)} style={{ padding: 8, borderRadius: '50%', background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="2" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ flexShrink: 0 }}>
+              <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>
+                Dove vuoi esplorare?
+              </h3>
+              <button onClick={() => setCityPickerOpen(false)} style={{ padding: 8, borderRadius: '50%', background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="2" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* Search input */}
+            <div className="px-5 pb-3" style={{ flexShrink: 0 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: '#fff', borderRadius: 14,
+                border: '1.5px solid #E8E5DE', padding: '12px 14px',
+              }}>
+                <SearchIcon />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cerca città, paese o comune..."
+                  style={{
+                    flex: 1, border: 'none', outline: 'none',
+                    background: 'transparent', fontSize: 15, fontWeight: 500,
+                    color: '#111', fontFamily: "'DM Sans', sans-serif",
+                  }}
+                />
+                {query && (
+                  <button onClick={() => { setQuery(""); setSuggestions([]); }} style={{ padding: 2, background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="2" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
-                </div>
+                )}
+              </div>
+            </div>
 
-                {/* Search input */}
-                <div className="px-5 pb-3" style={{ flexShrink: 0 }}>
+            {/* Results — scrollable area */}
+            <div className="px-5 pb-4" style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
+              {/* Currently selected */}
+              {showPopular && (
+                <div style={{ marginBottom: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Selezionata
+                  </span>
                   <div style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    background: '#fff', borderRadius: 14,
-                    border: '1.5px solid #E8E5DE', padding: '12px 14px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 14px', borderRadius: 14, marginTop: 6,
+                    background: '#111', border: '1.5px solid #111',
                   }}>
-                    <SearchIcon />
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Cerca città, paese o comune..."
-                      style={{
-                        flex: 1, border: 'none', outline: 'none',
-                        background: 'transparent', fontSize: 15, fontWeight: 500,
-                        color: '#111', fontFamily: "'DM Sans', sans-serif",
-                      }}
-                    />
-                    {query && (
-                      <button onClick={() => { setQuery(""); setSuggestions([]); }} style={{ padding: 2, background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="2" strokeLinecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                      <span style={{ position: 'relative', width: 8, height: 8 }}>
+                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ADE80' }} />
+                      </span>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {availableCities[selectedCity] > 0 && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#4ADE80' }}>
+                          {availableCities[selectedCity]} locali
+                        </span>
+                      )}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                {/* Results — scrollable area */}
-                <div className="px-5 pb-4" style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
-                  {/* Currently selected */}
-                  {showPopular && (
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
-                        Selezionata
-                      </span>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px 14px', borderRadius: 14, marginTop: 6,
-                        background: '#111', border: '1.5px solid #111',
-                      }}>
-                        <div className="flex items-center gap-3">
-                          <span style={{ position: 'relative', width: 8, height: 8 }}>
-                            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ADE80' }} />
-                          </span>
-                          <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {availableCities[selectedCity] > 0 && (
-                            <span style={{ fontSize: 11, fontWeight: 600, color: '#4ADE80' }}>
-                              {availableCities[selectedCity]} locali
+              {/* Search suggestions */}
+              {showSuggestions && (
+                <div style={{ marginBottom: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Risultati
+                  </span>
+                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {suggestions.map((s, i) => {
+                      const count = countRestaurantsInCity(s.name, restaurants);
+                      return (
+                        <button
+                          key={`${s.name}-${i}`}
+                          onClick={() => handleCitySelect(s.name, s.lng, s.lat)}
+                          className="flex items-center justify-between w-full"
+                          style={{
+                            padding: '12px 14px', borderRadius: 14,
+                            background: '#fff', border: '1.5px solid #E8E5DE',
+                            cursor: 'pointer', textAlign: 'left',
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{s.name}</div>
+                            <div style={{ fontSize: 12, color: '#8A8680', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.fullName}</div>
+                          </div>
+                          {count > 0 && (
+                            <span style={{
+                              fontSize: 11, fontWeight: 600, color: '#4ADE80',
+                              background: 'rgba(74,222,128,0.1)',
+                              padding: '3px 8px', borderRadius: 10, flexShrink: 0, marginLeft: 10,
+                            }}>
+                              {count} locali
                             </span>
                           )}
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Search suggestions */}
-                  {showSuggestions && (
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
-                        Risultati
-                      </span>
-                      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {suggestions.map((s, i) => {
-                          const count = countRestaurantsInCity(s.name, restaurants);
-                          return (
-                            <button
-                              key={`${s.name}-${i}`}
-                              onClick={() => handleCitySelect(s.name, s.lng, s.lat)}
-                              className="flex items-center justify-between w-full"
-                              style={{
-                                padding: '12px 14px', borderRadius: 14,
-                                background: '#fff', border: '1.5px solid #E8E5DE',
-                                cursor: 'pointer', textAlign: 'left',
-                              }}
-                            >
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{s.name}</div>
-                                <div style={{ fontSize: 12, color: '#8A8680', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.fullName}</div>
-                              </div>
-                              {count > 0 && (
-                                <span style={{
-                                  fontSize: 11, fontWeight: 600, color: '#4ADE80',
-                                  background: 'rgba(74,222,128,0.1)',
-                                  padding: '3px 8px', borderRadius: 10, flexShrink: 0, marginLeft: 10,
-                                }}>
-                                  {count} locali
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Loading */}
-                  {query.length >= 2 && searching && (
-                    <div style={{ textAlign: 'center', padding: '16px 0', color: '#8A8680', fontSize: 13 }}>
-                      Cerco...
-                    </div>
-                  )}
-
-                  {/* No results */}
-                  {query.length >= 2 && !searching && suggestions.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '16px 0', color: '#8A8680', fontSize: 13 }}>
-                      Nessun risultato per "{query}"
-                    </div>
-                  )}
-
-                  {/* Other cities with restaurants */}
-                  {showPopular && Object.keys(availableCities).filter(c => c !== selectedCity).length > 0 && (
-                    <div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
-                        Altre città
-                      </span>
-                      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {Object.entries(availableCities)
-                          .filter(([c]) => c !== selectedCity)
-                          .map(([cityName, count]) => (
-                            <CityRow
-                              key={cityName}
-                              name={cityName}
-                              count={count}
-                              onSelect={handleCitySelect}
-                            />
-                          ))
-                        }
-                      </div>
-                    </div>
-                  )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
+              )}
+
+              {/* Loading */}
+              {query.length >= 2 && searching && (
+                <div style={{ textAlign: 'center', padding: '16px 0', color: '#8A8680', fontSize: 13 }}>
+                  Cerco...
+                </div>
+              )}
+
+              {/* No results */}
+              {query.length >= 2 && !searching && suggestions.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '16px 0', color: '#8A8680', fontSize: 13 }}>
+                  Nessun risultato per "{query}"
+                </div>
+              )}
+
+              {/* Other cities with restaurants */}
+              {showPopular && Object.keys(availableCities).filter(c => c !== selectedCity).length > 0 && (
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Altre città
+                  </span>
+                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {Object.entries(availableCities)
+                      .filter(([c]) => c !== selectedCity)
+                      .map(([cityName, count]) => (
+                        <CityRow
+                          key={cityName}
+                          name={cityName}
+                          count={count}
+                          onSelect={handleCitySelect}
+                        />
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
