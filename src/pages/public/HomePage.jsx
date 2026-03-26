@@ -388,26 +388,25 @@ export default function HomePage() {
           {/* Floating cards */}
           {carouselRestaurants.length > 0 && (
             <div
-              className="overflow-x-auto carousel-scroll"
+              className="flex items-end gap-2.5 pb-3 overflow-x-auto carousel-scroll"
               style={{
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none', msOverflowStyle: 'none',
                 pointerEvents: 'auto',
-                padding: '0 16px 3px 16px',
               }}
             >
               <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
-              <div className="flex items-end gap-2.5" style={{ width: 'max-content' }}>
-              {carouselRestaurants.map((r) => (
-                <MiniCard
-                  key={r.id}
-                  restaurant={r}
-                  userPosition={position}
-                  discountValue={discountValueMap[r.id]}
-                  saved={isSaved(r.id)}
-                  onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
-                  onClick={handleCardClick}
-                />
+              {carouselRestaurants.map((r, i) => (
+                <div key={r.id} className="flex-shrink-0" style={i === 0 ? { marginLeft: 16 } : undefined}>
+                  <MiniCard
+                    restaurant={r}
+                    userPosition={position}
+                    discountValue={discountValueMap[r.id]}
+                    saved={isSaved(r.id)}
+                    onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
+                    onClick={handleCardClick}
+                  />
+                </div>
               ))}
               {viewportRestaurants.length > CAROUSEL_MAX && (
                 <div
@@ -427,7 +426,6 @@ export default function HomePage() {
                   <span style={{ fontSize: 10, color: '#B5B0A8', marginTop: 2 }}>{viewportRestaurants.length}</span>
                 </div>
               )}
-              </div>
             </div>
           )}
 
