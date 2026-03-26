@@ -72,9 +72,18 @@ function ensureStyles() {
 /* ------------------------------------------------------------------ */
 /*  Create DOM elements for markers                                    */
 /* ------------------------------------------------------------------ */
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r},${g},${b}`
+}
+
 function createPinEl(restaurant, isSaved) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
-  const { emoji } = getCategoryInfo(primaryType)
+  const { emoji, color } = getCategoryInfo(primaryType)
+  const pinColor = color || ACCENT_COLOR
+  const rgb = hexToRgb(pinColor)
 
   const wrap = document.createElement('div')
   wrap.className = 'cb-marker'
@@ -84,11 +93,10 @@ function createPinEl(restaurant, isSaved) {
   inner.className = 'cb-inner'
   inner.style.cssText = `
     width:44px;height:44px;border-radius:50%;
-    background:${ACCENT_COLOR};
+    background:${pinColor};opacity:0.85;
     display:flex;align-items:center;justify-content:center;
     font-size:18px;position:relative;user-select:none;
-    box-shadow:0 4px 20px rgba(232,69,60,0.5), 0 0 0 3px rgba(232,69,60,0.2);
-    animation: cb-breathe 3s ease-in-out infinite;
+    box-shadow:0 4px 16px rgba(${rgb},0.4), 0 0 0 3px rgba(${rgb},0.15);
   `
   inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 

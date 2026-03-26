@@ -40,19 +40,20 @@ export default function DealsPage() {
         WebkitBackdropFilter: 'blur(20px)',
       }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
-          <Link to="/" className="flex items-baseline gap-1">
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: 13, color: '#8A8680', letterSpacing: 1, textTransform: 'uppercase' }}>la</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, fontSize: 20, color: '#111' }}>Guida</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: 13, color: '#8A8680' }}>di</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: '#E8453C' }}>Bi</span>
+          <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
+            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
+            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>by Chiamami Bi</span>
           </Link>
           <button className="flex items-center gap-1.5" style={{
-            fontSize: 12, color: '#8A8680', fontWeight: 500, padding: '6px 12px', borderRadius: 20,
-            background: 'rgba(0,0,0,0.04)', border: '1px solid #E8E5DE',
+            fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
+            background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)',
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 6px rgba(74,222,128,0.5)', display: 'inline-block' }} />
+            <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
+              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ADE80' }} />
+              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#4ADE80', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
+            </span>
             Torino
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.4 }}><path d="M6 9l6 6 6-6"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5, marginLeft: 2 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
 

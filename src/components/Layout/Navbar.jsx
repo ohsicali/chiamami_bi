@@ -38,7 +38,10 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
           padding: '0 22px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
           paddingBottom: '14px',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.5) 60%, transparent 100%)',
+          background: 'rgba(250,247,242,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(0,0,0,0.04)',
         }}
       >
         <div className="flex items-center justify-between">
