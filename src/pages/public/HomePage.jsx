@@ -353,7 +353,7 @@ export default function HomePage() {
   }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="relative h-dvh w-full overflow-hidden">
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
         onToggleView={() => isSheetActive ? closeSheet() : openSheet()}
@@ -388,7 +388,7 @@ export default function HomePage() {
         ref={bottomPanelRef}
         className="absolute left-0 right-0"
         style={{
-          bottom: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom, 0px))`, zIndex: 20, pointerEvents: 'none',
+          bottom: TAB_BAR_HEIGHT, zIndex: 20, pointerEvents: 'none',
           opacity: hideBottomPanel ? 0 : 1,
           visibility: hideBottomPanel ? 'hidden' : 'visible',
           transition: 'opacity 0.2s, visibility 0.2s',

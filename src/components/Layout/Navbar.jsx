@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,15 +6,6 @@ import { useAuth } from "../../lib/hooks/useAuth";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-
-const POPULAR_CITIES = [
-  { name: "Torino", lng: 7.6869, lat: 45.0703 },
-  { name: "Milano", lng: 9.1900, lat: 45.4642 },
-  { name: "Roma", lng: 12.4964, lat: 41.9028 },
-  { name: "Napoli", lng: 14.2681, lat: 40.8518 },
-  { name: "Firenze", lng: 11.2558, lat: 43.7696 },
-  { name: "Bologna", lng: 11.3426, lat: 44.4949 },
-];
 
 const ChevronDown = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ opacity: 0.5, marginLeft: 2 }}>
@@ -29,20 +20,11 @@ const SearchIcon = () => (
   </svg>
 );
 
-function getDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function countNearbyRestaurants(lat, lng, restaurants, radiusKm = 15) {
-  if (!restaurants?.length) return 0;
-  return restaurants.filter(r => {
-    if (!r.latitude || !r.longitude) return false;
-    return getDistance(lat, lng, r.latitude, r.longitude) <= radiusKm;
-  }).length;
+/* Count restaurants that have this exact city name in their `city` field */
+function countRestaurantsInCity(cityName, restaurants) {
+  if (!restaurants?.length || !cityName) return 0;
+  const lower = cityName.toLowerCase();
+  return restaurants.filter(r => r.city?.toLowerCase() === lower).length;
 }
 
 export default function Navbar({ view = "map", onToggleView, city = "Torino", onCityChange, restaurants = [] }) {
@@ -54,17 +36,33 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   const [searching, setSearching] = useState(false);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
-  const [viewportH, setViewportH] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
+
+  // Get unique cities that actually have restaurants in DB
+  const citiesWithRestaurants = useCallback(() => {
+    const cityMap = {};
+    (restaurants || []).forEach(r => {
+      if (r.city) {
+        const c = r.city;
+        cityMap[c] = (cityMap[c] || 0) + 1;
+      }
+    });
+    return cityMap;
+  }, [restaurants]);
 
   function handleCitySelect(name, lng, lat) {
+    // Blur input first to dismiss keyboard
+    inputRef.current?.blur();
     setSelectedCity(name);
-    setCityPickerOpen(false);
     setQuery("");
     setSuggestions([]);
-    // Delay flyTo until modal exit animation is done
+    // Close after keyboard dismisses
     setTimeout(() => {
-      onCityChange?.({ name, lng, lat });
-    }, 400);
+      setCityPickerOpen(false);
+      // Delay flyTo until modal exit animation is done
+      setTimeout(() => {
+        onCityChange?.({ name, lng, lat });
+      }, 400);
+    }, 100);
   }
 
   const searchCities = useCallback(async (q) => {
@@ -101,27 +99,18 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   useEffect(() => {
     if (cityPickerOpen) {
       document.body.style.overflow = 'hidden';
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setTimeout(() => inputRef.current?.focus(), 200);
     } else {
       document.body.style.overflow = '';
-      setQuery("");
-      setSuggestions([]);
     }
     return () => { document.body.style.overflow = ''; };
   }, [cityPickerOpen]);
 
-  // Track visual viewport height for keyboard avoidance
-  useEffect(() => {
-    if (!cityPickerOpen) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onResize = () => setViewportH(vv.height);
-    vv.addEventListener('resize', onResize);
-    return () => vv.removeEventListener('resize', onResize);
-  }, [cityPickerOpen]);
-
   const showSuggestions = query.length >= 2 && suggestions.length > 0;
   const showPopular = query.length < 2;
+
+  // Only show popular cities that actually have restaurants
+  const availableCities = citiesWithRestaurants();
 
   return (
     <>
@@ -203,7 +192,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                 style={{
                   background: '#FAF7F2', borderRadius: '28px 28px 0 0',
                   paddingBottom: 'env(safe-area-inset-bottom, 20px)',
-                  maxHeight: viewportH * 0.85, display: 'flex', flexDirection: 'column',
+                  maxHeight: '80dvh', display: 'flex', flexDirection: 'column',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -248,27 +237,36 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                   </div>
                 </div>
 
-                {/* Results */}
-                <div className="px-5 pb-4" style={{ overflowY: 'auto', flex: 1 }}>
+                {/* Results — scrollable area */}
+                <div className="px-5 pb-4" style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch' }}>
                   {/* Currently selected */}
-                  <div style={{ marginBottom: 12 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
-                      Selezionata
-                    </span>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '12px 14px', borderRadius: 14, marginTop: 6,
-                      background: '#111', border: '1.5px solid #111',
-                    }}>
-                      <div className="flex items-center gap-3">
-                        <span style={{ position: 'relative', width: 8, height: 8 }}>
-                          <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ADE80' }} />
-                        </span>
-                        <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
+                  {showPopular && (
+                    <div style={{ marginBottom: 12 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Selezionata
+                      </span>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 14px', borderRadius: 14, marginTop: 6,
+                        background: '#111', border: '1.5px solid #111',
+                      }}>
+                        <div className="flex items-center gap-3">
+                          <span style={{ position: 'relative', width: 8, height: 8 }}>
+                            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ADE80' }} />
+                          </span>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {availableCities[selectedCity] > 0 && (
+                            <span style={{ fontSize: 11, fontWeight: 600, color: '#4ADE80' }}>
+                              {availableCities[selectedCity]} locali
+                            </span>
+                          )}
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        </div>
                       </div>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
                     </div>
-                  </div>
+                  )}
 
                   {/* Search suggestions */}
                   {showSuggestions && (
@@ -278,7 +276,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                       </span>
                       <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {suggestions.map((s, i) => {
-                          const count = countNearbyRestaurants(s.lat, s.lng, restaurants);
+                          const count = countRestaurantsInCity(s.name, restaurants);
                           return (
                             <button
                               key={`${s.name}-${i}`}
@@ -324,42 +322,24 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                     </div>
                   )}
 
-                  {/* Popular cities */}
-                  {showPopular && (
+                  {/* Other cities with restaurants */}
+                  {showPopular && Object.keys(availableCities).filter(c => c !== selectedCity).length > 0 && (
                     <div>
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>
-                        Città popolari
+                        Altre città
                       </span>
                       <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {POPULAR_CITIES.filter(c => c.name !== selectedCity).map((c) => {
-                          const count = countNearbyRestaurants(c.lat, c.lng, restaurants);
-                          return (
-                            <button
-                              key={c.name}
-                              onClick={() => handleCitySelect(c.name, c.lng, c.lat)}
-                              className="flex items-center justify-between w-full"
-                              style={{
-                                padding: '12px 14px', borderRadius: 14,
-                                background: '#fff', border: '1.5px solid #E8E5DE',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ddd' }} />
-                                <span style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{c.name}</span>
-                              </div>
-                              {count > 0 && (
-                                <span style={{
-                                  fontSize: 11, fontWeight: 600, color: '#4ADE80',
-                                  background: 'rgba(74,222,128,0.1)',
-                                  padding: '3px 8px', borderRadius: 10,
-                                }}>
-                                  {count} locali
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
+                        {Object.entries(availableCities)
+                          .filter(([c]) => c !== selectedCity)
+                          .map(([cityName, count]) => (
+                            <CityRow
+                              key={cityName}
+                              name={cityName}
+                              count={count}
+                              onSelect={handleCitySelect}
+                            />
+                          ))
+                        }
                       </div>
                     </div>
                   )}
@@ -371,5 +351,53 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
         document.body
       )}
     </>
+  );
+}
+
+/* Geocode a city name to get coordinates, then select it */
+function CityRow({ name, count, onSelect }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    if (!MAPBOX_TOKEN) return;
+    setLoading(true);
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(name)}.json?access_token=${MAPBOX_TOKEN}&country=it&types=place,locality&language=it&limit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.features?.[0]) {
+        const [lng, lat] = data.features[0].center;
+        onSelect(name, lng, lat);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="flex items-center justify-between w-full"
+      style={{
+        padding: '12px 14px', borderRadius: 14,
+        background: '#fff', border: '1.5px solid #E8E5DE',
+        cursor: 'pointer', opacity: loading ? 0.6 : 1,
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ddd' }} />
+        <span style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{name}</span>
+      </div>
+      <span style={{
+        fontSize: 11, fontWeight: 600, color: '#4ADE80',
+        background: 'rgba(74,222,128,0.1)',
+        padding: '3px 8px', borderRadius: 10,
+      }}>
+        {count} locali
+      </span>
+    </button>
   );
 }
