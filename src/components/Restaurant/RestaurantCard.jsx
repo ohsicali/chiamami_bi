@@ -108,7 +108,7 @@ export default function RestaurantCard({
           <div className="flex items-baseline gap-2.5 flex-wrap" style={{ marginBottom: 6 }}>
             <h3 style={{
               fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-              fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.15,
+              fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.35,
             }}>
               {restaurant.name}
             </h3>
@@ -181,7 +181,7 @@ export default function RestaurantCard({
           <h3 style={{
             fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
             fontSize: 15, fontWeight: 600, color: '#111',
-            lineHeight: 1.2,
+            lineHeight: 1.4,
           }}>
             {restaurant.name}
           </h3>
