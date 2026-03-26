@@ -81,7 +81,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       {/* Gold discount strip on top */}
       {discountValue && (
         <div style={{
-          background: '#4ADE80', color: '#fff',
+          background: '#C4A265', color: '#fff',
           fontSize: 10, fontWeight: 700,
           padding: '4px 10px',
           textAlign: 'center',
