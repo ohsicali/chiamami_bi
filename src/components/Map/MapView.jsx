@@ -250,6 +250,10 @@ const MapView = forwardRef(function MapView({
       if (!map.current || !pos) return
       map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 16, duration: 1200, essential: true })
     },
+    flyToCity: (lng, lat, zoom = 13) => {
+      if (!map.current) return
+      map.current.flyTo({ center: [lng, lat], zoom, duration: 1400, essential: true })
+    },
   }))
 
   /* -------------------------------------------------------------- */

@@ -350,7 +350,12 @@ export default function HomePage() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden">
-      <Navbar view={isSheetActive ? 'list' : 'map'} onToggleView={() => isSheetActive ? closeSheet() : openSheet()} />
+      <Navbar
+        view={isSheetActive ? 'list' : 'map'}
+        onToggleView={() => isSheetActive ? closeSheet() : openSheet()}
+        restaurants={allRestaurants}
+        onCityChange={({ lng, lat }) => mapRef.current?.flyToCity(lng, lat)}
+      />
 
       <MapView
         ref={mapRef}
