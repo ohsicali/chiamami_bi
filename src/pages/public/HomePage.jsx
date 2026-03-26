@@ -415,15 +415,31 @@ export default function HomePage() {
                   onClick={openSheet}
                   className="flex-shrink-0 flex flex-col items-center justify-center"
                   style={{
-                    width: 80, scrollSnapAlign: 'start', borderRadius: 14,
-                    background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)',
-                    border: '1.5px dashed #E8E5DE', cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                    width: 64, scrollSnapAlign: 'start', borderRadius: 14,
+                    background: 'rgba(255,255,255,0.35)',
+                    backdropFilter: 'blur(20px) saturate(1.6)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+                    border: '1px solid rgba(255,255,255,0.45)',
+                    cursor: 'pointer',
+                    boxShadow: '0 6px 6px rgba(0,0,0,0.15), 0 0 20px rgba(0,0,0,0.06), inset 2px 2px 1px rgba(255,255,255,0.5), inset -1px -1px 1px rgba(255,255,255,0.4)',
+                    gap: 4,
                   }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680' }}>Vedi</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680' }}>tutti</span>
-                  <span style={{ fontSize: 10, color: '#B5B0A8', marginTop: 2 }}>{viewportRestaurants.length}</span>
+                  <span style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'rgba(232,69,60,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </span>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: '#E8453C', lineHeight: 1 }}>
+                    {viewportRestaurants.length}
+                  </span>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: '#8A8680', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                    tutti
+                  </span>
                 </div>
               )}
             </div>
