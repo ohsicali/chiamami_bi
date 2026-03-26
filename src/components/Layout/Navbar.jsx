@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,6 +54,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   const [searching, setSearching] = useState(false);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
+  const [viewportH, setViewportH] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
 
   function handleCitySelect(name, lng, lat) {
     setSelectedCity(name);
@@ -101,6 +102,16 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
       setQuery("");
       setSuggestions([]);
     }
+  }, [cityPickerOpen]);
+
+  // Track visual viewport height for keyboard avoidance
+  useEffect(() => {
+    if (!cityPickerOpen) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => setViewportH(vv.height);
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
   }, [cityPickerOpen]);
 
   const showSuggestions = query.length >= 2 && suggestions.length > 0;
@@ -186,7 +197,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                 style={{
                   background: '#FAF7F2', borderRadius: '28px 28px 0 0',
                   paddingBottom: 'env(safe-area-inset-bottom, 20px)',
-                  maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+                  maxHeight: viewportH * 0.85, display: 'flex', flexDirection: 'column',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -331,7 +342,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ddd' }} />
                                 <span style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{c.name}</span>
                               </div>
-                              {count > 0 ? (
+                              {count > 0 && (
                                 <span style={{
                                   fontSize: 11, fontWeight: 600, color: '#4ADE80',
                                   background: 'rgba(74,222,128,0.1)',
@@ -339,8 +350,6 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                                 }}>
                                   {count} locali
                                 </span>
-                              ) : (
-                                <span style={{ fontSize: 11, color: '#B5B0A8', fontWeight: 500 }}>Presto disponibile</span>
                               )}
                             </button>
                           );

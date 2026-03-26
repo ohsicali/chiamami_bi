@@ -265,6 +265,10 @@ export default function HomePage() {
     navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)
   }, [navigate])
 
+  const handleCityChange = useCallback(({ lng, lat }) => {
+    mapRef.current?.flyToCity(lng, lat)
+  }, [])
+
   const featuredRestaurant = viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0]
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
   const regularRestaurants = viewportRestaurants.filter(r => r.id !== featuredRestaurant?.id)
@@ -354,7 +358,7 @@ export default function HomePage() {
         view={isSheetActive ? 'list' : 'map'}
         onToggleView={() => isSheetActive ? closeSheet() : openSheet()}
         restaurants={allRestaurants}
-        onCityChange={({ lng, lat }) => mapRef.current?.flyToCity(lng, lat)}
+        onCityChange={handleCityChange}
       />
 
       <MapView
@@ -384,7 +388,7 @@ export default function HomePage() {
         ref={bottomPanelRef}
         className="absolute left-0 right-0"
         style={{
-          bottom: TAB_BAR_HEIGHT, zIndex: 20, pointerEvents: 'none',
+          bottom: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom, 0px))`, zIndex: 20, pointerEvents: 'none',
           opacity: hideBottomPanel ? 0 : 1,
           visibility: hideBottomPanel ? 'hidden' : 'visible',
           transition: 'opacity 0.2s, visibility 0.2s',
