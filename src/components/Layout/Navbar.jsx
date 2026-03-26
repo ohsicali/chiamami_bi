@@ -36,12 +36,12 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
       <nav className="fixed top-0 left-0 right-0 z-40"
         style={{
           padding: '0 22px',
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
-          paddingBottom: '14px',
-          background: 'rgba(250,247,242,0.92)',
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
+          paddingBottom: '10px',
+          background: view === 'map' ? 'rgba(250,247,242,0.75)' : 'rgba(250,247,242,0.92)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(0,0,0,0.04)',
+          borderBottom: view === 'map' ? 'none' : '1px solid rgba(0,0,0,0.04)',
         }}
       >
         <div className="flex items-center justify-between">

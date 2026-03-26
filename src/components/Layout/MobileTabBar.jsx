@@ -3,7 +3,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 
-const TAB_BAR_HEIGHT = 82
+const TAB_BAR_HEIGHT = 60
 
 const ExploreIcon = ({ active }) => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -99,7 +99,7 @@ export default function MobileTabBar() {
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
-      <div className="flex items-start justify-around pt-2.5 px-3 max-w-md mx-auto">
+      <div className="flex items-start justify-around pt-1.5 px-3 max-w-md mx-auto">
         {tabs.map((tab) => (
           <button
             key={tab.key}
