@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion'
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 import MapView from '../../components/Map/MapView'
 import MapControls from '../../components/Map/MapControls'
@@ -40,7 +40,7 @@ function getGreeting() {
 
 const CAROUSEL_MAX = 4
 
-// Compact card floating on map
+// Compact card floating on map — no fixed height, text wraps freely
 function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
@@ -65,7 +65,6 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         borderRadius: 14,
         background: '#fff',
         boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-        overflow: 'hidden',
         border: 'none',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
@@ -73,20 +72,21 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         gap: 10,
       }}
     >
-      <div style={{ width: 72, height: 72, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+      <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
             {category?.emoji || '🍽️'}
           </div>
         )}
       </div>
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 24 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <p style={{
           fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-          fontSize: 13, fontWeight: 600, color: '#111', lineHeight: 1.45, marginBottom: 2,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          fontSize: 12, fontWeight: 600, color: '#111', lineHeight: 1.5, marginBottom: 2,
+          overflow: 'hidden', textOverflow: 'ellipsis',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
         }}>
           {restaurant.name}
         </p>
@@ -113,17 +113,10 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
   )
 }
 
-// Height constants
-const BAR_HEIGHT = 52 // "Mostra elenco" bar
-const CAROUSEL_HEIGHT = 100 // cards area
-const BOTTOM_PANEL_HEIGHT = BAR_HEIGHT + CAROUSEL_HEIGHT
-
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const greeting = getGreeting()
-
-  const [showList, setShowList] = useState(false)
 
   useEffect(() => {
     document.body.classList.add('map-fixed')
@@ -199,43 +192,53 @@ export default function HomePage() {
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
   const regularRestaurants = viewportRestaurants.filter(r => r.id !== featuredRestaurant?.id)
 
-  // --- Draggable sheet overlay ---
-  // sheetY = 0 means fully open (top), positive = how far down from top
+  // --- Sheet system ---
+  // sheetY represents how many px the sheet top is from screen top
+  // sheetY = windowH = fully closed (off screen bottom)
+  // sheetY = 0 = fully open
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
-  const sheetClosedY = windowH // off screen
-  const sheetY = useMotionValue(sheetClosedY)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const sheetY = useMotionValue(windowH)
+  const [isSheetVisible, setIsSheetVisible] = useState(false)
   const sheetContentRef = useRef(null)
 
+  // Derive showList from sheet position for hiding map controls
+  const showList = isSheetVisible
+
+  // Opacity of sheet based on position (fade in as it slides up)
+  const sheetOpacity = useTransform(sheetY, [windowH, windowH * 0.5, 0], [0, 1, 1])
+
   const openSheet = useCallback(() => {
-    setSheetOpen(true)
-    setShowList(true)
+    setIsSheetVisible(true)
     animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
   }, [sheetY])
 
   const closeSheet = useCallback(() => {
-    animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 }).then(() => {
-      setSheetOpen(false)
-      setShowList(false)
-    })
+    animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 })
+    // Delay hiding to let animation finish
+    setTimeout(() => setIsSheetVisible(false), 400)
   }, [sheetY, windowH])
 
-  // Drag on the "Mostra elenco" bar — drags the sheet overlay up
-  const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active }) => {
+  // Drag on "Mostra elenco" bar — makes sheet follow finger
+  const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
+    if (first) {
+      // Make sheet visible as soon as drag starts
+      setIsSheetVisible(true)
+    }
     if (active) {
-      // As user drags up, sheet slides in from bottom
-      const progress = Math.max(0, Math.min(windowH, windowH + my))
-      sheetY.set(progress)
+      // my is negative when dragging up. Sheet starts at windowH.
+      // newY = windowH + my (my is negative so sheet moves up)
+      const newY = Math.max(0, Math.min(windowH, windowH + my))
+      sheetY.set(newY)
     } else {
-      // Released — snap open if dragged more than 30% or fast enough
       const current = sheetY.get()
-      if (current < windowH * 0.7 || (vy > 0.5 && dy < 0)) {
+      // If dragged past 40% of screen OR fast swipe up
+      if (current < windowH * 0.6 || (vy > 0.4 && dy < 0)) {
         openSheet()
       } else {
-        animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 })
+        closeSheet()
       }
     }
-  }, { axis: 'y', from: () => [0, sheetY.get() - windowH], filterTaps: true })
+  }, { axis: 'y', filterTaps: true })
 
   // Drag on sheet handle to close
   const sheetHandleBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active }) => {
@@ -243,7 +246,7 @@ export default function HomePage() {
       const newY = Math.max(0, my)
       sheetY.set(newY)
     } else {
-      if (sheetY.get() > windowH * 0.3 || (vy > 0.5 && dy > 0)) {
+      if (sheetY.get() > windowH * 0.25 || (vy > 0.4 && dy > 0)) {
         closeSheet()
       } else {
         animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
@@ -268,14 +271,14 @@ export default function HomePage() {
         className="absolute inset-0"
       />
 
-      {/* Map Controls */}
+      {/* Map Controls — above carousel + bar. Bar ~50px, carousel ~96px, some padding */}
       {!showList && (
         <MapControls
           onLocateMe={handleLocateMe}
           isLocating={geoLoading}
           onZoomIn={() => mapRef.current?.zoomIn()}
           onZoomOut={() => mapRef.current?.zoomOut()}
-          bottomOffset={TAB_BAR_HEIGHT + BOTTOM_PANEL_HEIGHT + 20}
+          bottomOffset={TAB_BAR_HEIGHT + 50 + 96 + 24}
         />
       )}
 
@@ -285,7 +288,7 @@ export default function HomePage() {
           className="absolute left-0 right-0"
           style={{ bottom: TAB_BAR_HEIGHT, zIndex: 20, pointerEvents: 'none' }}
         >
-          {/* Floating carousel — no background panel, cards float independently */}
+          {/* Floating carousel */}
           {carouselRestaurants.length > 0 && (
             <div
               className="flex gap-2.5 px-4 pb-3 overflow-x-auto carousel-scroll"
@@ -332,7 +335,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* "Mostra elenco" bar — draggable upward */}
+          {/* "Mostra elenco" bar — drags sheet up as you pull */}
           <div
             {...barBind()}
             onClick={openSheet}
@@ -361,30 +364,31 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* === SHEET OVERLAY — slides up from bottom over everything === */}
+      {/* === SHEET OVERLAY — always in DOM, follows sheetY with finger === */}
       <motion.div
         style={{
           y: sheetY,
+          opacity: sheetOpacity,
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          zIndex: sheetOpen ? 35 : -1,
+          zIndex: isSheetVisible ? 35 : -1,
           background: '#FAF7F2',
           borderRadius: '20px 20px 0 0',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          opacity: sheetOpen ? 1 : 0,
-          pointerEvents: sheetOpen ? 'auto' : 'none',
+          pointerEvents: isSheetVisible ? 'auto' : 'none',
         }}
       >
-        {/* Drag handle to close */}
+        {/* Drag handle to close — with safe area padding */}
         <div
           {...sheetHandleBind()}
           style={{
-            padding: '10px 0 6px',
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+            paddingBottom: 8,
             display: 'flex',
             justifyContent: 'center',
             cursor: 'grab',
@@ -402,12 +406,12 @@ export default function HomePage() {
             flex: 1,
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            paddingBottom: TAB_BAR_HEIGHT + 60,
+            paddingBottom: TAB_BAR_HEIGHT + 70,
           }}
         >
           <div className="px-5">
             {/* Greeting */}
-            <div style={{ marginBottom: 16, paddingTop: 8 }}>
+            <div style={{ marginBottom: 16 }}>
               <p style={{
                 fontSize: 11, color: '#8A8680', fontWeight: 600,
                 letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6,
@@ -416,7 +420,7 @@ export default function HomePage() {
               </p>
               <h1 style={{
                 fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-                fontSize: 22, fontWeight: 600, color: '#111', lineHeight: 1.45,
+                fontSize: 22, fontWeight: 600, color: '#111', lineHeight: 1.5,
               }}>
                 {greeting.main}{' '}
                 <em style={{ fontStyle: 'italic', color: '#E8453C' }}>{greeting.em}</em>
