@@ -57,6 +57,16 @@ function ensureStyles() {
     }
     .cb-marker:hover .cb-inner { transform: scale(1.15); }
     .cb-marker:active .cb-inner { transform: scale(0.92); }
+    @keyframes cb-bounce {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.15); }
+      70% { transform: scale(0.9); }
+      85% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .cb-inner--bounce {
+      animation: cb-bounce 0.5s ease-out;
+    }
     @keyframes cb-breathe {
       0%, 100% { box-shadow: 0 4px 20px rgba(232,69,60,0.4), 0 0 0 3px rgba(232,69,60,0.15); }
       50% { box-shadow: 0 4px 28px rgba(232,69,60,0.6), 0 0 0 8px rgba(232,69,60,0.08); }
@@ -90,7 +100,7 @@ function createPinEl(restaurant, isSaved) {
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
   const inner = document.createElement('div')
-  inner.className = 'cb-inner'
+  inner.className = 'cb-inner cb-inner--bounce'
   inner.style.cssText = `
     width:44px;height:44px;border-radius:50%;
     background:${pinColor};opacity:0.85;
