@@ -294,6 +294,31 @@ export default function HomePage() {
     }
   }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
 
+  // Content drag: when scrolled to top and dragging down, dismiss the sheet
+  const scrollRef = useRef(null)
+  const isDismissing = useRef(false)
+  const [dismissing, setDismissing] = useState(false)
+  const contentBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
+    const atTop = !scrollRef.current || scrollRef.current.scrollTop <= 0
+    if (first) {
+      const shouldDismiss = atTop && dy > 0
+      isDismissing.current = shouldDismiss
+      if (shouldDismiss) setDismissing(true)
+    }
+    if (!isDismissing.current) return
+    if (active) {
+      sheetY.set(Math.max(0, my))
+    } else {
+      setDismissing(false)
+      isDismissing.current = false
+      if (sheetY.get() > windowH * 0.15 || (vy > 0.3 && dy > 0)) {
+        closeSheet()
+      } else {
+        animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
+      }
+    }
+  }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
+
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       <Navbar view={isSheetActive ? 'list' : 'map'} onToggleView={() => isSheetActive ? closeSheet() : openSheet()} />
@@ -426,11 +451,16 @@ export default function HomePage() {
         </div>
 
         {/* Scrollable content */}
-        <div style={{
-          flex: 1, overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          paddingBottom: TAB_BAR_HEIGHT + 70,
-        }}>
+        <div
+          ref={scrollRef}
+          {...contentBind()}
+          style={{
+            flex: 1, overflowY: dismissing ? 'hidden' : 'auto',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: TAB_BAR_HEIGHT + 70,
+            touchAction: 'pan-y',
+          }}
+        >
           <div className="px-5">
             {/* Greeting */}
             <div style={{ marginBottom: 16 }}>
