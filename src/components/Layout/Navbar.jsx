@@ -52,16 +52,17 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   }, [restaurants]);
 
   function handleCitySelect(name, lng, lat) {
-    // Blur input to dismiss keyboard, then close immediately
+    // Blur input to dismiss keyboard
     inputRef.current?.blur();
     setSelectedCity(name);
-    // Close modal right away — don't clear query/suggestions yet
-    // to avoid content jump before exit animation
-    setCityPickerOpen(false);
-    // Delay flyTo until modal exit animation is done
+    // Small delay for keyboard to start dismissing, then close
     setTimeout(() => {
-      onCityChange?.({ name, lng, lat });
-    }, 500);
+      setCityPickerOpen(false);
+      // Delay flyTo until modal exit animation is done
+      setTimeout(() => {
+        onCityChange?.({ name, lng, lat });
+      }, 500);
+    }, 150);
   }
 
   const searchCities = useCallback(async (q) => {
@@ -97,12 +98,23 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
 
   useEffect(() => {
     if (cityPickerOpen) {
+      // Lock body scroll — use position:fixed to prevent iOS scroll compensation
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
       document.body.style.overflow = 'hidden';
       setTimeout(() => inputRef.current?.focus(), 200);
-    } else {
-      document.body.style.overflow = '';
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
     }
-    return () => { document.body.style.overflow = ''; };
   }, [cityPickerOpen]);
 
   // Track visual viewport to position modal above keyboard
