@@ -73,25 +73,26 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
-        padding: 10,
-        display: 'flex',
-        gap: 10,
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
         position: 'relative',
       }}
     >
-      {/* Discount sticker — floats above the card */}
+      {/* Gold discount strip on top */}
       {discountValue && (
         <div style={{
-          position: 'absolute', top: -10, left: 12, zIndex: 2,
           background: '#C4A265', color: '#fff',
-          fontSize: 9, fontWeight: 800, letterSpacing: 0.3,
-          padding: '3px 10px', borderRadius: 8,
-          boxShadow: '0 2px 8px rgba(196,162,101,0.4)',
+          fontSize: 10, fontWeight: 700,
+          padding: '4px 10px',
+          textAlign: 'center',
+          letterSpacing: 0.5,
         }}>
-          -{discountValue}%
+          Sconto -{discountValue}%
         </div>
       )}
 
+      {/* Main content row */}
+      <div style={{ display: 'flex', gap: 10, padding: 10 }}>
       <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
@@ -131,6 +132,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         {distance != null && (
           <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
         )}
+      </div>
       </div>
       {onSave && (
         <div style={{ position: 'absolute', bottom: 8, right: 8 }} onClick={(e) => { e.stopPropagation(); onSave() }}>
