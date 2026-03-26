@@ -69,11 +69,11 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         width: 260,
         scrollSnapAlign: 'start',
         borderRadius: 14,
-        background: 'rgba(0,0,0,0.45)',
+        background: 'rgba(255,255,255,0.35)',
         backdropFilter: 'blur(20px) saturate(1.6)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-        boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
-        border: '1px solid rgba(255,255,255,0.15)',
+        boxShadow: '0 6px 6px rgba(0,0,0,0.15), 0 0 20px rgba(0,0,0,0.06), inset 2px 2px 1px rgba(255,255,255,0.5), inset -1px -1px 1px rgba(255,255,255,0.4)',
+        border: '1px solid rgba(255,255,255,0.45)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
@@ -100,7 +100,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
             {category?.emoji || '🍽️'}
           </div>
         )}
@@ -108,7 +108,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <div style={{
           fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-          fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.95)',
+          fontSize: 11, fontWeight: 600, color: '#111',
           lineHeight: 1.6, marginBottom: 2,
           whiteSpace: 'nowrap', textOverflow: 'ellipsis',
           overflow: 'hidden', padding: '2px 0',
@@ -120,21 +120,20 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           {category && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 2,
-              backgroundColor: `${category.color}30`,
+              backgroundColor: `${category.color}20`,
               color: category.color,
               fontSize: 9, fontWeight: 600,
               padding: '1px 6px', borderRadius: 12,
               whiteSpace: 'nowrap',
-              textShadow: '0 0 8px rgba(0,0,0,0.3)',
             }}>
               {category.emoji} {category.name}
             </span>
           )}
-          {priceStr && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{priceStr}</span>}
+          {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
         </div>
         {/* Distance */}
         {distance != null && (
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{formatDistance(distance)}</span>
+          <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
         )}
       </div>
       </div>
