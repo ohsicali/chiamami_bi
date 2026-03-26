@@ -73,71 +73,67 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
+        padding: 10,
+        display: 'flex',
+        gap: 10,
         position: 'relative',
       }}
     >
-      {/* Main content row */}
-      <div style={{ display: 'flex', gap: 10, padding: 10 }}>
-        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
-          {photoUrl ? (
-            <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-              {category?.emoji || '🍽️'}
-            </div>
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
-          <div style={{
-            fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-            fontSize: 11, fontWeight: 600, color: '#111',
-            lineHeight: 1.6, marginBottom: 2,
-            whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-            overflow: 'hidden', padding: '2px 0',
-          }}>
-            {restaurant.name}
-          </div>
-          {/* Category + price */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-            {category && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 2,
-                backgroundColor: `${category.color}20`,
-                color: category.color,
-                fontSize: 9, fontWeight: 600,
-                padding: '1px 6px', borderRadius: 12,
-                whiteSpace: 'nowrap',
-              }}>
-                {category.emoji} {category.name}
-              </span>
-            )}
-            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
-          </div>
-          {/* Distance */}
-          {distance != null && (
-            <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Discount strip */}
+      {/* Discount sticker */}
       {discountValue && (
         <div style={{
-          background: '#E8453C', color: '#fff',
-          fontSize: 10, fontWeight: 700,
-          padding: '4px 10px',
-          textAlign: 'center',
-          letterSpacing: 0.5,
+          position: 'absolute', top: -4, left: -4, zIndex: 2,
+          background: '#C4A265', color: '#fff',
+          fontSize: 9, fontWeight: 800, letterSpacing: 0.3,
+          padding: '3px 8px', borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(196,162,101,0.4)',
         }}>
-          Sconto -{discountValue}%
+          -{discountValue}%
         </div>
       )}
 
-      {/* Save heart */}
+      <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+        {photoUrl ? (
+          <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+            {category?.emoji || '🍽️'}
+          </div>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
+        <div style={{
+          fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+          fontSize: 11, fontWeight: 600, color: '#111',
+          lineHeight: 1.6, marginBottom: 2,
+          whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+          overflow: 'hidden', padding: '2px 0',
+        }}>
+          {restaurant.name}
+        </div>
+        {/* Category + price */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          {category && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 2,
+              backgroundColor: `${category.color}20`,
+              color: category.color,
+              fontSize: 9, fontWeight: 600,
+              padding: '1px 6px', borderRadius: 12,
+              whiteSpace: 'nowrap',
+            }}>
+              {category.emoji} {category.name}
+            </span>
+          )}
+          {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+        </div>
+        {/* Distance */}
+        {distance != null && (
+          <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
+        )}
+      </div>
       {onSave && (
-        <div style={{ position: 'absolute', bottom: discountValue ? 32 : 8, right: 8 }} onClick={(e) => { e.stopPropagation(); onSave() }}>
+        <div style={{ position: 'absolute', bottom: 8, right: 8 }} onClick={(e) => { e.stopPropagation(); onSave() }}>
           <SaveButton saved={saved} size="sm" />
         </div>
       )}
