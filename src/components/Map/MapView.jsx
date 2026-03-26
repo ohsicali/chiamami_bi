@@ -89,7 +89,7 @@ function hexToRgb(hex) {
   return `${r},${g},${b}`
 }
 
-function createPinEl(restaurant, isSaved) {
+function createPinEl(restaurant, isSaved, discountValue) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
   const { emoji, color } = getCategoryInfo(primaryType)
   const pinColor = color || ACCENT_COLOR
@@ -121,6 +121,20 @@ function createPinEl(restaurant, isSaved) {
     `
     heart.textContent = '❤️'
     inner.appendChild(heart)
+  }
+
+  if (discountValue) {
+    const badge = document.createElement('span')
+    badge.style.cssText = `
+      position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+      background:#4ADE80;color:#fff;
+      font-size:8px;font-weight:800;letter-spacing:0.3px;
+      padding:2px 5px;border-radius:6px;white-space:nowrap;
+      box-shadow:0 2px 6px rgba(74,222,128,0.4);
+      pointer-events:none;
+    `
+    badge.textContent = `-${discountValue}%`
+    inner.appendChild(badge)
   }
 
   wrap.appendChild(inner)
@@ -205,7 +219,7 @@ function PlaceholderMap({ restaurants, className }) {
 /* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
   restaurants, selectedId, onSelectRestaurant, onVisibleRestaurantsChange,
-  userPosition, savedIds, className,
+  userPosition, savedIds, discountMap, className,
 }, ref) {
   const mapContainer = useRef(null)
   const map = useRef(null)
@@ -224,6 +238,8 @@ const MapView = forwardRef(function MapView({
   restaurantsRef.current = restaurants
   const savedIdsRef = useRef(savedIds)
   savedIdsRef.current = savedIds
+  const discountMapRef = useRef(discountMap)
+  discountMapRef.current = discountMap
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -323,7 +339,7 @@ const MapView = forwardRef(function MapView({
       } else {
         const r = rests.find((r) => r.id === f.properties.id)
         if (!r) continue
-        el = createPinEl(r, saved?.has(r.id))
+        el = createPinEl(r, saved?.has(r.id), discountMapRef.current?.[r.id])
         el.addEventListener('click', (e) => {
           e.stopPropagation()
           onSelectRef.current?.(r.id)
