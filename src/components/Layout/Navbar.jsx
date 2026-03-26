@@ -50,19 +50,16 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   }, [restaurants]);
 
   function handleCitySelect(name, lng, lat) {
-    // Blur input first to dismiss keyboard
+    // Blur input to dismiss keyboard, then close immediately
     inputRef.current?.blur();
     setSelectedCity(name);
-    setQuery("");
-    setSuggestions([]);
-    // Close after keyboard dismisses
+    // Close modal right away — don't clear query/suggestions yet
+    // to avoid content jump before exit animation
+    setCityPickerOpen(false);
+    // Delay flyTo until modal exit animation is done
     setTimeout(() => {
-      setCityPickerOpen(false);
-      // Delay flyTo until modal exit animation is done
-      setTimeout(() => {
-        onCityChange?.({ name, lng, lat });
-      }, 400);
-    }, 100);
+      onCityChange?.({ name, lng, lat });
+    }, 500);
   }
 
   const searchCities = useCallback(async (q) => {
