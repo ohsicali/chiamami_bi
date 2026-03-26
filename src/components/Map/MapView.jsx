@@ -5,7 +5,8 @@ import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
-const ACCENT_COLOR = '#FF5757'
+const ACCENT_COLOR = '#E8453C'
+const GOLD_COLOR = '#C4A265'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
@@ -49,14 +50,17 @@ function ensureStyles() {
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
-      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3);
-      border-color: ${ACCENT_COLOR} !important;
+      box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(232,69,60,0.5);
     }
     .cb-inner {
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .cb-marker:hover .cb-inner { transform: scale(1.1); }
+    .cb-marker:hover .cb-inner { transform: scale(1.15); }
     .cb-marker:active .cb-inner { transform: scale(0.92); }
+    @keyframes cb-breathe {
+      0%, 100% { box-shadow: 0 4px 20px rgba(232,69,60,0.4), 0 0 0 3px rgba(232,69,60,0.15); }
+      50% { box-shadow: 0 4px 28px rgba(232,69,60,0.6), 0 0 0 8px rgba(232,69,60,0.08); }
+    }
     @keyframes cb-pulse {
       0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }
       50% { box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
@@ -70,7 +74,7 @@ function ensureStyles() {
 /* ------------------------------------------------------------------ */
 function createPinEl(restaurant, isSaved) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
-  const { emoji, color } = getCategoryInfo(primaryType)
+  const { emoji } = getCategoryInfo(primaryType)
 
   const wrap = document.createElement('div')
   wrap.className = 'cb-marker'
@@ -79,20 +83,22 @@ function createPinEl(restaurant, isSaved) {
   const inner = document.createElement('div')
   inner.className = 'cb-inner'
   inner.style.cssText = `
-    width:40px;height:40px;border-radius:50%;background:#fff;
-    border:2.5px solid ${color};display:flex;align-items:center;
-    justify-content:center;font-size:18px;position:relative;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);user-select:none;
+    width:44px;height:44px;border-radius:50%;
+    background:${ACCENT_COLOR};
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;position:relative;user-select:none;
+    box-shadow:0 4px 20px rgba(232,69,60,0.5), 0 0 0 3px rgba(232,69,60,0.2);
+    animation: cb-breathe 3s ease-in-out infinite;
   `
   inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 
   if (isSaved) {
     const heart = document.createElement('span')
     heart.style.cssText = `
-      position:absolute;top:-4px;right:-4px;width:16px;height:16px;
+      position:absolute;top:-4px;right:-4px;width:18px;height:18px;
       background:#fff;border-radius:50%;display:flex;align-items:center;
-      justify-content:center;font-size:9px;line-height:1;
-      border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);
+      justify-content:center;font-size:10px;line-height:1;
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);
       pointer-events:none;
     `
     heart.textContent = '❤️'
@@ -108,17 +114,20 @@ function createClusterEl(count) {
   wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
-  const size = count >= 10 ? 48 : 44
+  const size = count >= 10 ? 52 : 46
   const inner = document.createElement('div')
   inner.className = 'cb-inner'
   inner.style.cssText = `
-    width:${size}px;height:${size}px;border-radius:50%;background:#fff;
-    border:2.5px solid ${ACCENT_COLOR};display:flex;align-items:center;
-    justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    width:${size}px;height:${size}px;border-radius:50%;
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1.5px solid rgba(255,255,255,0.25);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,0.2);
     user-select:none;
   `
   const label = count > 99 ? '99+' : String(count)
-  inner.innerHTML = `<span style="font-weight:700;font-size:13px;color:${ACCENT_COLOR};line-height:1;pointer-events:none">${label}</span>`
+  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#fff;line-height:1;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.3)">${label}</span>`
 
   wrap.appendChild(inner)
   return wrap

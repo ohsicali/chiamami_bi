@@ -6,27 +6,27 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 const TAB_BAR_HEIGHT = 82
 
 const ExploreIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="2" strokeLinecap="round">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} />
-    <path d="M14.31 8l5.74-2.69M14.31 8L8 10.69M14.31 8l-1.62 6.69M8 10.69L2.26 8M8 10.69l4.69 4L8 21.44M12.69 14.69l5.57 2.75M12.69 14.69L8 21.44m4.69-6.75L18.26 8" />
+    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill={active ? '#E8453C' : 'none'} />
   </svg>
 )
 
 const DealsIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
     <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} />
     <circle cx="7" cy="7" r="1" fill={active ? '#E8453C' : '#B5B0A8'} />
   </svg>
 )
 
 const HeartIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
   </svg>
 )
 
 const UserIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
@@ -153,7 +153,7 @@ export default function MobileTabBar() {
             </div>
             <span
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: tab.active ? 700 : 500,
                 color: tab.active ? '#E8453C' : '#B5B0A8',
                 letterSpacing: 0.3,
