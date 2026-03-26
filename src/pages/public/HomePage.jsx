@@ -149,6 +149,19 @@ export default function HomePage() {
         className="absolute inset-0"
       />
 
+      {/* Warm overlay on map edges */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 1,
+          background: `
+            radial-gradient(ellipse at center, transparent 40%, rgba(250,247,242,0.25) 100%),
+            linear-gradient(180deg, rgba(250,247,242,0.4) 0%, transparent 12%),
+            linear-gradient(0deg, rgba(250,247,242,0.3) 0%, transparent 8%)
+          `,
+        }}
+      />
+
       {/* Map Controls */}
       <MapControls
         onLocateMe={handleLocateMe}

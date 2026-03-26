@@ -7,7 +7,7 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
 const GOLD_COLOR = '#C4A265'
-const MAP_STYLE = 'mapbox://styles/mapbox/dark-v11'
+const MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
 
