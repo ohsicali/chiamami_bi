@@ -1,14 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useDragControls } from 'framer-motion'
 import MapView from '../../components/Map/MapView'
 import MapControls from '../../components/Map/MapControls'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import Navbar from '../../components/Layout/Navbar'
-import { useRestaurants } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -36,6 +36,79 @@ function getGreeting() {
 }
 
 const CAROUSEL_MAX = 4
+
+// TheFork-style mini card for the map carousel
+function CarouselCard({ restaurant, discountValue, onClick }) {
+  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+    .map(name => getCategoryInfo(name))
+  const category = categories[0]
+
+  const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
+    ? restaurant.photos[0] : null
+  const photoUrl = firstPhoto
+    ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
+    : null
+
+  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range + 1) : null
+
+  return (
+    <button
+      onClick={() => onClick?.(restaurant)}
+      className="flex-shrink-0 flex text-left"
+      style={{
+        width: 280,
+        scrollSnapAlign: 'start',
+        borderRadius: 16,
+        background: '#fff',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        overflow: 'hidden',
+        border: 'none',
+        cursor: 'pointer',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      {/* Photo left */}
+      <div style={{ width: 110, minHeight: 100, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt={restaurant.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            loading="lazy"
+          />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+            {category?.emoji || '🍽️'}
+          </div>
+        )}
+        {discountValue && (
+          <span style={{
+            position: 'absolute', top: 6, left: 6,
+            background: '#E8453C', color: '#fff', fontSize: 9, fontWeight: 700,
+            padding: '2px 6px', borderRadius: 6,
+          }}>
+            -{discountValue}%
+          </span>
+        )}
+      </div>
+      {/* Info right */}
+      <div style={{ padding: '10px 12px', flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <p style={{
+          fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+          fontSize: 13, fontWeight: 600, color: '#111',
+          lineHeight: 1.2, marginBottom: 3,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
+          {restaurant.name}
+        </p>
+        <p style={{ fontSize: 11, color: '#8A8680', lineHeight: 1.3 }}>
+          {category?.name || ''}
+          {priceStr && ` · ${priceStr}`}
+        </p>
+      </div>
+    </button>
+  )
+}
 
 export default function HomePage() {
   const { t } = useTranslation()
@@ -119,6 +192,16 @@ export default function HomePage() {
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
   const regularRestaurants = viewportRestaurants.filter(r => r.id !== featuredRestaurant?.id)
 
+  // Swipe up handler for "Mostra elenco" bar
+  const handleBarDragEnd = useCallback((_, info) => {
+    if (info.offset.y < -50) {
+      setShowList(true)
+    }
+  }, [])
+
+  // Height of carousel area + elenco bar
+  const bottomAreaHeight = carouselRestaurants.length > 0 ? 160 : 50
+
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       {/* Navbar */}
@@ -136,13 +219,14 @@ export default function HomePage() {
         className="absolute inset-0"
       />
 
-      {/* Map Controls — hide when list is open */}
+      {/* Map Controls — positioned above the carousel area */}
       {!showList && (
         <MapControls
           onLocateMe={handleLocateMe}
           isLocating={geoLoading}
           onZoomIn={() => mapRef.current?.zoomIn()}
           onZoomOut={() => mapRef.current?.zoomOut()}
+          bottomOffset={TAB_BAR_HEIGHT + bottomAreaHeight + 16}
         />
       )}
 
@@ -155,7 +239,7 @@ export default function HomePage() {
           {/* Horizontal carousel of cards */}
           {carouselRestaurants.length > 0 && (
             <div
-              className="flex gap-3 px-4 pb-3 overflow-x-auto"
+              className="flex gap-3 px-4 pb-3 overflow-x-auto carousel-scroll"
               style={{
                 scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
@@ -165,106 +249,67 @@ export default function HomePage() {
             >
               <style>{`.carousel-scroll::-webkit-scrollbar { display: none; }`}</style>
               {carouselRestaurants.map((restaurant) => (
-                <div
+                <CarouselCard
                   key={restaurant.id}
-                  onClick={() => handleCardClick(restaurant)}
-                  className="flex-shrink-0 cursor-pointer"
-                  style={{
-                    width: 260,
-                    scrollSnapAlign: 'start',
-                    borderRadius: 16,
-                    background: '#fff',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {/* Photo */}
-                  <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
-                    {restaurant.photo_url ? (
-                      <img
-                        src={restaurant.photo_url}
-                        alt={restaurant.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-                        🍽️
-                      </div>
-                    )}
-                    {discountRestaurantIds.has(restaurant.id) && (
-                      <span style={{
-                        position: 'absolute', top: 8, right: 8,
-                        background: '#E8453C', color: '#fff', fontSize: 10, fontWeight: 700,
-                        padding: '3px 8px', borderRadius: 8,
-                      }}>
-                        -{discountValueMap[restaurant.id]}%
-                      </span>
-                    )}
-                  </div>
-                  {/* Info */}
-                  <div style={{ padding: '10px 14px' }}>
-                    <p style={{
-                      fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-                      fontSize: 14, fontWeight: 600, color: '#111',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
-                      {restaurant.name}
-                    </p>
-                    <p style={{ fontSize: 11, color: '#8A8680', marginTop: 2 }}>
-                      {(restaurant.category && restaurant.category[0]) || restaurant.cuisine_type}
-                      {restaurant.price_range && ` · ${'€'.repeat(restaurant.price_range)}`}
-                    </p>
-                  </div>
-                </div>
+                  restaurant={restaurant}
+                  discountValue={discountValueMap[restaurant.id]}
+                  onClick={handleCardClick}
+                />
               ))}
               {/* "Vedi tutti" card */}
               {viewportRestaurants.length > CAROUSEL_MAX && (
-                <div
+                <button
                   onClick={() => setShowList(true)}
-                  className="flex-shrink-0 cursor-pointer flex flex-col items-center justify-center"
+                  className="flex-shrink-0 flex flex-col items-center justify-center"
                   style={{
-                    width: 120,
+                    width: 100,
                     scrollSnapAlign: 'start',
                     borderRadius: 16,
-                    background: 'rgba(255,255,255,0.9)',
+                    background: 'rgba(255,255,255,0.92)',
                     backdropFilter: 'blur(12px)',
                     border: '1.5px solid #E8E5DE',
+                    cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontSize: 20, marginBottom: 4 }}>📋</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#111' }}>Vedi tutti</span>
-                  <span style={{ fontSize: 10, color: '#8A8680' }}>{viewportRestaurants.length} locali</span>
-                </div>
+                  <span style={{ fontSize: 18, marginBottom: 4 }}>📋</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#111' }}>Vedi tutti</span>
+                  <span style={{ fontSize: 10, color: '#8A8680' }}>{viewportRestaurants.length}</span>
+                </button>
               )}
             </div>
           )}
 
-          {/* "Mostra elenco" bar */}
-          <button
+          {/* "Mostra elenco" bar — swipeable + tappable, rounded pill */}
+          <motion.div
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleBarDragEnd}
             onClick={() => setShowList(true)}
             style={{
-              width: '100%',
+              margin: '0 16px',
               padding: '14px 0',
-              background: 'rgba(250,247,242,0.95)',
+              background: 'rgba(250,247,242,0.96)',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
-              borderTop: '1px solid rgba(0,0,0,0.06)',
-              border: 'none',
+              borderRadius: 20,
+              boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
               cursor: 'pointer',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
               gap: 6,
+              touchAction: 'none',
               WebkitTapHighlightColor: 'transparent',
+              marginBottom: 8,
             }}
           >
             {/* Drag handle */}
-            <div style={{ position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: '#E8453C' }}>
               Mostra elenco di {viewportRestaurants.length} ristoranti
             </span>
-          </button>
+          </motion.div>
         </div>
       )}
 
@@ -282,40 +327,35 @@ export default function HomePage() {
               background: '#FAF7F2',
               overflowY: 'auto',
               WebkitOverflowScrolling: 'touch',
+              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 60px)',
               paddingBottom: TAB_BAR_HEIGHT + 60,
             }}
           >
-            {/* List header */}
-            <div style={{
-              position: 'sticky', top: 0, zIndex: 10,
-              padding: 'calc(env(safe-area-inset-top, 0px) + 60px) 20px 0',
-              background: 'rgba(250,247,242,0.95)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-            }}>
+            {/* List content — all scrolls together, nothing sticky */}
+            <div className="px-5">
               {/* Greeting */}
               <div style={{ marginBottom: 16 }}>
                 <p style={{
-                  fontSize: 12, color: '#8A8680', fontWeight: 500,
+                  fontSize: 11, color: '#8A8680', fontWeight: 600,
                   letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2,
                 }}>
                   {greeting.sub}
                 </p>
                 <h1 style={{
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: 26, fontWeight: 600, color: '#111', lineHeight: 1.1,
+                  fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+                  fontSize: 22, fontWeight: 600, color: '#111', lineHeight: 1.15,
                 }}>
                   {greeting.main} <em style={{ fontStyle: 'italic', color: '#E8453C' }}>{greeting.em}</em>
                 </h1>
               </div>
 
               {/* Search */}
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 14 }}>
                 <SearchBar value={searchQuery} onChange={setSearchQuery} />
               </div>
 
               {/* Filters */}
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 14 }}>
                 <FilterChips
                   filters={filters}
                   onFilterChange={setFilters}
@@ -327,7 +367,7 @@ export default function HomePage() {
               </div>
 
               {/* Results count */}
-              <div style={{ marginBottom: 12, paddingLeft: 2 }}>
+              <div style={{ marginBottom: 12 }}>
                 {loading ? (
                   <div className="skeleton h-4 w-24 rounded-md" />
                 ) : (
@@ -340,10 +380,8 @@ export default function HomePage() {
                   </p>
                 )}
               </div>
-            </div>
 
-            {/* Restaurant list */}
-            <div className="px-4">
+              {/* Restaurant list */}
               {loading ? (
                 <div className="flex flex-col gap-3">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -391,7 +429,7 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Floating "Vedi la mappa" button */}
+            {/* Floating "Vedi la mappa" button — gold/accent style */}
             <button
               onClick={() => setShowList(false)}
               style={{
@@ -400,14 +438,14 @@ export default function HomePage() {
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 40,
-                background: '#111',
-                color: '#FAF7F2',
+                background: '#C4A265',
+                color: '#fff',
                 fontSize: 14,
                 fontWeight: 600,
                 padding: '12px 28px',
                 borderRadius: 28,
                 border: 'none',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                boxShadow: '0 4px 24px rgba(196,162,101,0.4)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',

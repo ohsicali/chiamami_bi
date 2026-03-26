@@ -63,6 +63,7 @@ export default function MapControls({
   isLocating,
   onZoomIn,
   onZoomOut,
+  bottomOffset,
 }) {
   const BUTTON_STYLE = getButtonStyle()
 
@@ -74,7 +75,7 @@ export default function MapControls({
       style={{
         position: 'absolute',
         right: 16,
-        bottom: TAB_BAR_HEIGHT + 180,
+        bottom: bottomOffset || (TAB_BAR_HEIGHT + 180),
         display: 'flex',
         flexDirection: 'column',
         gap: 10,

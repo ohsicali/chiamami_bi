@@ -102,13 +102,13 @@ export default function RestaurantCard({
             marginBottom: 10,
           }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-            Consigliato da Bi
+            In evidenza
           </div>
 
           <div className="flex items-baseline gap-2.5 flex-wrap" style={{ marginBottom: 6 }}>
             <h3 style={{
               fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-              fontSize: 26, fontWeight: 600, color: '#fff', lineHeight: 1.1,
+              fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.15,
             }}>
               {restaurant.name}
             </h3>
@@ -180,9 +180,8 @@ export default function RestaurantCard({
         <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
           <h3 style={{
             fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-            fontSize: 18, fontWeight: 600, color: '#111',
+            fontSize: 15, fontWeight: 600, color: '#111',
             lineHeight: 1.2,
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {restaurant.name}
           </h3>
