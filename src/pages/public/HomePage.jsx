@@ -137,17 +137,19 @@ export default function HomePage() {
       {/* Navbar — dark gradient over map */}
       <Navbar view={sheetSnap === SNAP_FULL ? 'list' : 'map'} onToggleView={handleToggleView} />
 
-      {/* Map */}
-      <MapView
-        ref={mapRef}
-        restaurants={allRestaurants}
-        selectedId={selectedId}
-        onSelectRestaurant={handlePinSelect}
-        onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
-        userPosition={position}
-        savedIds={savedIds}
-        className="absolute inset-0"
-      />
+      {/* Map — darkened with CSS filter for premium dark look */}
+      <div className="absolute inset-0" style={{ filter: 'brightness(0.55) saturate(0.7) contrast(1.1)' }}>
+        <MapView
+          ref={mapRef}
+          restaurants={allRestaurants}
+          selectedId={selectedId}
+          onSelectRestaurant={handlePinSelect}
+          onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
+          userPosition={position}
+          savedIds={savedIds}
+          className="absolute inset-0"
+        />
+      </div>
 
       {/* Map Controls */}
       <MapControls
