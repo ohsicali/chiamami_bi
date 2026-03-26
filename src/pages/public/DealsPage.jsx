@@ -42,7 +42,7 @@ export default function DealsPage() {
         <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>by Chiamami Bi</span>
+            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>by Chiamami Bi</span>
           </Link>
           <button className="flex items-center gap-1.5" style={{
             fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
@@ -183,7 +183,7 @@ export default function DealsPage() {
 
                         <div>
                           <h3 style={{
-                            fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+                            fontFamily: "'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                             fontSize: 24, fontWeight: 600, color: '#fff', lineHeight: 1.1, marginBottom: 4,
                           }}>
                             {featuredDeal.restaurant?.name}
@@ -247,7 +247,7 @@ export default function DealsPage() {
                               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
                                   <h3 style={{
-                                    fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+                                    fontFamily: "'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                                     fontSize: 17, fontWeight: 600, color: '#111', lineHeight: 1.2,
                                   }}>
                                     {r?.name}

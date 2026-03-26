@@ -56,7 +56,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
           flex: 1, background: 'transparent',
           fontSize: 14, fontWeight: 500, color: '#111',
           outline: 'none', border: 'none',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
         }}
         autoComplete="off"
         autoCapitalize="off"

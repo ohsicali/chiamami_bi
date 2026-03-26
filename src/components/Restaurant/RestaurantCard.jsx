@@ -107,7 +107,7 @@ export default function RestaurantCard({
 
           <div className="flex items-baseline gap-2.5 flex-wrap" style={{ marginBottom: 6 }}>
             <h3 style={{
-              fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+              fontFamily: "'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.5,
             }}>
               {restaurant.name}
@@ -192,7 +192,7 @@ export default function RestaurantCard({
         {/* Name + discount */}
         <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
           <h3 style={{
-            fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+            fontFamily: "'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             fontSize: 15, fontWeight: 600, color: '#111',
             lineHeight: 1.5,
           }}>

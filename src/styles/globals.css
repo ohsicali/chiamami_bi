@@ -19,9 +19,9 @@
   --color-oro: #C4A265;
   --color-bordo: #E8E5DE;
   --color-surface-glass: rgba(250, 247, 242, 0.92);
-  --font-display: 'Playfair Display', serif;
-  --font-editorial: 'Cormorant Garamond', serif;
-  --font-sans: 'DM Sans', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-editorial: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
 }
 
 body {
@@ -90,12 +90,12 @@ body {
 
 /* Editorial font utility */
 .font-editorial {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
 }
 
 /* TAN Songbird for restaurant names */
 .font-restaurant {
-  font-family: 'TAN Songbird', 'Cormorant Garamond', serif;
+  font-family: 'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 /* Legacy admin scroll class — no longer needed, body scrolls by default */

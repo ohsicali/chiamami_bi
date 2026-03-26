@@ -124,7 +124,7 @@ export default function AboutPage() {
           <motion.h1
             variants={fadeUp}
             className="text-4xl sm:text-5xl font-bold text-primary mb-4"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
           >
             Chiamami
             <span className="text-accent">Bi</span>
@@ -134,7 +134,7 @@ export default function AboutPage() {
           <motion.p
             variants={fadeUp}
             className="text-lg sm:text-xl text-secondary font-medium italic max-w-sm"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
           >
             "I posti che amo davvero"
           </motion.p>
@@ -153,7 +153,7 @@ export default function AboutPage() {
           <motion.h2
             variants={fadeUp}
             className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
           >
             La mia storia
           </motion.h2>
@@ -206,7 +206,7 @@ export default function AboutPage() {
             <div
               className="absolute top-4 right-6 text-accent/10 select-none pointer-events-none"
               style={{
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
                 fontSize: '120px',
                 lineHeight: 1,
               }}
@@ -216,14 +216,14 @@ export default function AboutPage() {
 
             <h2
               className="text-2xl font-bold text-primary mb-4 relative z-10"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
             >
               La mia filosofia
             </h2>
 
             <p
               className="text-xl sm:text-2xl font-semibold text-accent leading-snug relative z-10"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
             >
               Consiglio solo posti dove tornerei
             </p>
@@ -249,7 +249,7 @@ export default function AboutPage() {
           <motion.h2
             variants={fadeUp}
             className="text-2xl font-bold text-primary mb-2"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
           >
             Seguimi
           </motion.h2>
@@ -307,7 +307,7 @@ export default function AboutPage() {
               </span>
               <h2
                 className="text-2xl font-bold text-primary"
-                style={{ fontFamily: "'Playfair Display', serif" }}
+                style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
               >
                 Suggerisci un posto
               </h2>
