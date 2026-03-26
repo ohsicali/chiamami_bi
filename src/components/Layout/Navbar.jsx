@@ -65,7 +65,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
     }
     setSearching(true);
     try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${MAPBOX_TOKEN}&country=it&types=place,locality&language=it&limit=6`;
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${MAPBOX_TOKEN}&country=it&types=place,locality&language=it&limit=4`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.features) {
@@ -162,8 +162,11 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50"
-              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', touchAction: 'none' }}
+              style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50,
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                touchAction: 'none', overscrollBehavior: 'none',
+              }}
               onClick={() => setCityPickerOpen(false)}
             >
               <motion.div
@@ -171,11 +174,11 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-                className="absolute bottom-0 left-0 right-0"
                 style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
                   background: '#FAF7F2', borderRadius: '28px 28px 0 0',
                   paddingBottom: 'env(safe-area-inset-bottom, 20px)',
-                  maxHeight: '70vh', display: 'flex', flexDirection: 'column',
+                  maxHeight: '60%', display: 'flex', flexDirection: 'column',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
