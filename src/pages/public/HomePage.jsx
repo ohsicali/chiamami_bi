@@ -14,7 +14,6 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
-import { Link } from 'react-router-dom'
 
 function slugify(name) {
   return name
@@ -28,21 +27,30 @@ function slugify(name) {
     .replace(/(^-|-$)/g, '')
 }
 
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return { sub: 'Buongiorno', main: 'Dove si mangia', em: 'oggi?' }
+  if (h < 18) return { sub: 'Buon pomeriggio', main: 'Dove si mangia', em: 'oggi?' }
+  return { sub: 'Buonasera', main: 'Dove si mangia', em: 'stasera?' }
+}
+
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const greeting = getGreeting()
 
-  // Lock body scroll for map page
   useEffect(() => {
     document.body.classList.add('map-fixed')
     return () => document.body.classList.remove('map-fixed')
   }, [])
+
   const { position, loading: geoLoading, locate } = useGeolocation()
   const { user } = useAuth()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
+
   const {
     restaurants,
     allRestaurants,
@@ -53,40 +61,31 @@ export default function HomePage() {
     setSearchQuery,
   } = useRestaurants(position)
 
-  // Filter for saved / deals
-  const [showSavedOnly, setShowSavedOnly] = useState(false)
   const [showDealsOnly, setShowDealsOnly] = useState(false)
-  const displayedRestaurants = showSavedOnly
-    ? restaurants.filter((r) => savedIds.has(r.id))
-    : showDealsOnly
+  const displayedRestaurants = showDealsOnly
     ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
     : restaurants
 
   const [selectedId, setSelectedId] = useState(null)
   const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
-  const [visibleIds, setVisibleIds] = useState(null) // null = show all (initial state)
+  const [visibleIds, setVisibleIds] = useState(null)
   const [mapCenter, setMapCenter] = useState(null)
   const mapRef = useRef(null)
   const sheetRef = useRef(null)
 
-  // Callback from MapView: visible restaurant IDs + map center
   const handleVisibleRestaurantsChange = useCallback((ids, center) => {
     setVisibleIds(new Set(ids))
     setMapCenter(center)
   }, [])
 
-  // Sort displayed restaurants by distance to map center, filter to viewport
   const viewportRestaurants = (() => {
     if (!visibleIds || !mapCenter) return displayedRestaurants
-
     const inView = displayedRestaurants.filter((r) => visibleIds.has(r.id))
-
-    // Sort by distance to map center
     const toRad = (d) => (d * Math.PI) / 180
     const dist = (r) => {
       const dLat = toRad(r.latitude - mapCenter.lat)
       const dLng = toRad(r.longitude - mapCenter.lng)
-      return dLat * dLat + dLng * dLng // no need for exact distance, just relative order
+      return dLat * dLat + dLng * dLng
     }
     inView.sort((a, b) => dist(a) - dist(b))
     return inView
@@ -97,7 +96,6 @@ export default function HomePage() {
     setFilters((prev) => ({ ...prev, sortBy: 'distance' }))
   }, [locate, setFilters])
 
-  // Fly to user position when geolocation completes
   useEffect(() => {
     if (position) {
       mapRef.current?.flyToUser(position)
@@ -106,20 +104,14 @@ export default function HomePage() {
 
   const handlePinSelect = useCallback((id) => {
     const r = allRestaurants.find((r) => r.id === id)
-    if (r) {
-      navigate(`/restaurant/${r.slug || slugify(r.name)}`)
-    }
+    if (r) navigate(`/restaurant/${r.slug || slugify(r.name)}`)
   }, [allRestaurants, navigate])
 
-  const handleCardClick = useCallback(
-    (restaurant) => {
-      navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)
-    },
-    [navigate]
-  )
+  const handleCardClick = useCallback((restaurant) => {
+    navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name)}`)
+  }, [navigate])
 
   const handleToggleView = useCallback(() => {
-    // Toggle between peek and full via the bottom sheet
     const current = sheetRef.current?.getSnapIndex() ?? SNAP_PEEK
     if (current === SNAP_FULL) {
       sheetRef.current?.snapTo(SNAP_PEEK)
@@ -133,16 +125,19 @@ export default function HomePage() {
   }, [])
 
   const handleSearchFocus = useCallback(() => {
-    // When search bar is focused, expand sheet to half
     sheetRef.current?.snapTo(SNAP_HALF)
   }, [])
 
+  // Find a featured restaurant (first one with a discount, or just first)
+  const featuredRestaurant = viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0]
+  const regularRestaurants = viewportRestaurants.filter(r => r.id !== featuredRestaurant?.id)
+
   return (
     <div className="relative h-dvh w-full overflow-hidden">
-      {/* Navbar - fixed top */}
+      {/* Navbar — dark gradient over map */}
       <Navbar view={sheetSnap === SNAP_FULL ? 'list' : 'map'} onToggleView={handleToggleView} />
 
-      {/* Map - full screen background */}
+      {/* Map */}
       <MapView
         ref={mapRef}
         restaurants={allRestaurants}
@@ -154,7 +149,7 @@ export default function HomePage() {
         className="absolute inset-0"
       />
 
-      {/* Map Controls - bottom right, above the bottom sheet */}
+      {/* Map Controls */}
       <MapControls
         onLocateMe={handleLocateMe}
         isLocating={geoLoading}
@@ -162,10 +157,26 @@ export default function HomePage() {
         onZoomOut={() => mapRef.current?.zoomOut()}
       />
 
-      {/* Bottom Sheet — Apple Maps style */}
+      {/* Bottom Sheet */}
       <BottomSheet ref={sheetRef} onSnapChange={handleSnapChange}>
-        {/* Search Bar */}
-        <div className="mb-3">
+        {/* Greeting */}
+        <div style={{ marginBottom: 16 }}>
+          <p style={{
+            fontSize: 12, color: '#8A8680', fontWeight: 500,
+            letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2,
+          }}>
+            {greeting.sub}
+          </p>
+          <h1 style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 26, fontWeight: 600, color: '#111', lineHeight: 1.1,
+          }}>
+            {greeting.main} <em style={{ fontStyle: 'italic', color: '#E8453C' }}>{greeting.em}</em>
+          </h1>
+        </div>
+
+        {/* Search */}
+        <div style={{ marginBottom: 16 }}>
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
@@ -173,51 +184,28 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Filter Chips (categories) */}
-        <div className="mb-4">
+        {/* Filters */}
+        <div style={{ marginBottom: 16 }}>
           <FilterChips
             filters={filters}
             onFilterChange={setFilters}
             onNearbyClick={handleLocateMe}
-            user={user}
-            showSavedOnly={showSavedOnly}
-            onToggleSaved={() => { setShowSavedOnly((v) => !v); setShowDealsOnly(false) }}
-            savedCount={savedIds.size}
             showDealsOnly={showDealsOnly}
-            onToggleDeals={() => { setShowDealsOnly((v) => !v); setShowSavedOnly(false) }}
+            onToggleDeals={() => setShowDealsOnly((v) => !v)}
             dealsCount={discountRestaurantIds.size}
           />
         </div>
 
-        {/* Bi intro — minimal single-line */}
-        <Link
-          to="/about"
-          className="flex items-center gap-2.5 mb-3 px-1 group"
-        >
-          <div className="w-8 h-8 rounded-full bg-accent flex-shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-            Bi
-          </div>
-          <p
-            className="text-sm text-secondary group-hover:text-primary transition-colors italic"
-            style={{ fontFamily: "'Playfair Display', serif" }}
-          >
-            I posti che amo davvero
-          </p>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </Link>
-
         {/* Results count */}
-        <div className="mb-3 px-1">
+        <div style={{ marginBottom: 12, paddingLeft: 6 }}>
           {loading ? (
             <div className="skeleton h-4 w-24 rounded-md" />
           ) : (
-            <p className="text-sm font-medium text-secondary">
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680' }}>
               {viewportRestaurants.length}{' '}
               {viewportRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
               {visibleIds && viewportRestaurants.length < displayedRestaurants.length && (
-                <span className="text-xs text-secondary/60"> in questa zona</span>
+                <span style={{ fontWeight: 500, letterSpacing: 0 }}> in questa zona</span>
               )}
             </p>
           )}
@@ -227,34 +215,45 @@ export default function HomePage() {
         {loading ? (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <SkeletonCard key={i} className="!shadow-sm" />
+              <SkeletonCard key={i} />
             ))}
           </div>
         ) : viewportRestaurants.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-3 text-4xl">🔍</div>
-            <p className="text-base font-semibold text-primary">
-              {t('home.noResults')}
-            </p>
-            <p className="mt-1 text-sm text-secondary">
-              {t('home.changeFilters')}
-            </p>
+            <div style={{ marginBottom: 12, fontSize: 40 }}>🔍</div>
+            <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{t('home.noResults')}</p>
+            <p style={{ marginTop: 4, fontSize: 14, color: '#8A8680' }}>{t('home.changeFilters')}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-8">
-            {viewportRestaurants.map((restaurant, index) => (
-              <div key={restaurant.id}>
-                <RestaurantCard
-                  restaurant={restaurant}
-                  index={index}
-                  userPosition={position}
-                  onClick={handleCardClick}
-                  saved={isSaved(restaurant.id)}
-                  onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
-                  hasDiscount={discountRestaurantIds.has(restaurant.id)}
-                  discountValue={discountValueMap[restaurant.id]}
-                />
-              </div>
+            {/* Hero card — first featured restaurant */}
+            {featuredRestaurant && (
+              <RestaurantCard
+                restaurant={featuredRestaurant}
+                index={0}
+                userPosition={position}
+                onClick={handleCardClick}
+                saved={isSaved(featuredRestaurant.id)}
+                onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
+                hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
+                discountValue={discountValueMap[featuredRestaurant.id]}
+                variant="hero"
+              />
+            )}
+
+            {/* Regular cards */}
+            {regularRestaurants.map((restaurant, index) => (
+              <RestaurantCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                index={index + 1}
+                userPosition={position}
+                onClick={handleCardClick}
+                saved={isSaved(restaurant.id)}
+                onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
+                hasDiscount={discountRestaurantIds.has(restaurant.id)}
+                discountValue={discountValueMap[restaurant.id]}
+              />
             ))}
           </div>
         )}

@@ -5,12 +5,11 @@ import { useTranslation } from 'react-i18next'
 import { PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { useCategories } from '../../lib/hooks/useCategories'
 
-export default function FilterChips({ filters, onFilterChange, onNearbyClick, user, showSavedOnly, onToggleSaved, savedCount = 0, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
+export default function FilterChips({ filters, onFilterChange, onNearbyClick, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
   const { categories: CUISINE_CATEGORIES } = useCategories()
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Support multi-category as array
   const selected = filters.category
     ? (Array.isArray(filters.category) ? filters.category : [filters.category])
     : []
@@ -26,71 +25,97 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
     } else {
       next = [...selected, categoryName]
     }
-    onFilterChange?.({
-      ...filters,
-      category: next.length > 0 ? next : null,
-    })
+    onFilterChange?.({ ...filters, category: next.length > 0 ? next : null })
   }
 
   function handlePriceClick(priceLevel) {
-    onFilterChange?.({
-      ...filters,
-      priceRange: filters.priceRange === priceLevel ? null : priceLevel,
-    })
+    onFilterChange?.({ ...filters, priceRange: filters.priceRange === priceLevel ? null : priceLevel })
   }
+
+  // Show first 6 categories as capsule pills
+  const visibleCats = CUISINE_CATEGORIES.slice(0, 6)
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Scrollable category circles — Glovo style */}
+      {/* Category capsules — editorial pill style */}
       <div
-        className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4"
+        className="flex gap-2 overflow-x-auto -mx-1 px-1"
         style={{
           scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
+          maskImage: 'linear-gradient(90deg, #000 85%, transparent)',
+          WebkitMaskImage: 'linear-gradient(90deg, #000 85%, transparent)',
         }}
       >
-        <style>{`.filter-scroll::-webkit-scrollbar { display: none; }`}</style>
-        {CUISINE_CATEGORIES.map((cat) => {
+        {visibleCats.map((cat) => {
           const active = isActive(cat.name)
           return (
             <button
               key={cat.name}
               type="button"
               onClick={() => handleCuisineClick(cat.name)}
-              className="flex flex-col items-center gap-1 flex-shrink-0"
-              style={{ width: 64 }}
+              className="flex items-center gap-2 flex-shrink-0"
+              style={{
+                padding: '8px 16px 8px 10px',
+                borderRadius: 40,
+                background: active ? '#111' : '#fff',
+                border: `1.5px solid ${active ? '#111' : '#E8E5DE'}`,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
             >
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-all duration-200"
-                style={{
-                  backgroundColor: active ? cat.color + '25' : '#f3f4f6',
-                  boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
-                }}
-              >
+              <span style={{
+                width: 32, height: 32, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 15,
+                background: active ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)',
+              }}>
                 {cat.emoji}
-              </div>
-              <span
-                className="text-[10px] font-medium text-center leading-tight line-clamp-1 transition-colors"
-                style={{ color: active ? cat.color : '#6B7280' }}
-              >
+              </span>
+              <span style={{
+                fontSize: 13, fontWeight: 600,
+                color: active ? '#FAF7F2' : '#111',
+                whiteSpace: 'nowrap',
+              }}>
                 {cat.name}
               </span>
             </button>
           )
         })}
+
+        {/* "Altro +" to open modal */}
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center gap-2 flex-shrink-0"
+          style={{
+            padding: '8px 16px 8px 10px',
+            borderRadius: 40,
+            background: selected.length > 0 ? '#111' : '#fff',
+            border: `1.5px solid ${selected.length > 0 ? '#111' : '#E8E5DE'}`,
+          }}
+        >
+          <span style={{
+            width: 32, height: 32, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 15,
+            background: selected.length > 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)',
+          }}>
+            ＋
+          </span>
+          <span style={{
+            fontSize: 13, fontWeight: 600,
+            color: selected.length > 0 ? '#FAF7F2' : '#111',
+            whiteSpace: 'nowrap',
+          }}>
+            Altro
+          </span>
+        </button>
       </div>
 
-      {/* Filter buttons row */}
-      <div
-        className="flex gap-2 overflow-x-auto -mx-4 px-4"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {/* "Nelle vicinanze" toggle button */}
+      {/* Filter chips row */}
+      <div className="flex gap-2">
+        {/* Vicino a me */}
         {onNearbyClick && (
           <button
             type="button"
@@ -101,109 +126,86 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                 onNearbyClick()
               }
             }}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
             style={{
-              backgroundColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(255,255,255,0.85)',
-              color: filters.sortBy === 'distance' ? '#fff' : '#4B5563',
-              borderColor: filters.sortBy === 'distance' ? '#3B82F6' : 'rgba(209,213,219,0.6)',
-              backdropFilter: filters.sortBy === 'distance' ? 'none' : 'blur(8px)',
-              WebkitBackdropFilter: filters.sortBy === 'distance' ? 'none' : 'blur(8px)',
+              padding: '9px 16px',
+              borderRadius: 24,
+              fontSize: 12, fontWeight: 600, letterSpacing: 0.2,
+              whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: `1.5px solid ${filters.sortBy === 'distance' ? '#111' : '#E8E5DE'}`,
+              background: filters.sortBy === 'distance' ? '#111' : '#fff',
+              color: filters.sortBy === 'distance' ? '#FAF7F2' : '#5A564F',
+              cursor: 'pointer',
             }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="4" />
-              <line x1="12" y1="2" x2="12" y2="6" />
-              <line x1="12" y1="18" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="6" y2="12" />
-              <line x1="18" y1="12" x2="22" y2="12" />
-            </svg>
-            <span>{t('home.nearby')}</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            Vicino a me
           </button>
         )}
 
-        {/* "I miei salvati" — visible only when logged in */}
-        {user && onToggleSaved && (
-          <button
-            type="button"
-            onClick={onToggleSaved}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
-            style={{
-              backgroundColor: showSavedOnly ? '#FF5757' : 'rgba(255,255,255,0.85)',
-              color: showSavedOnly ? '#fff' : '#4B5563',
-              borderColor: showSavedOnly ? '#FF5757' : 'rgba(209,213,219,0.6)',
-              backdropFilter: showSavedOnly ? 'none' : 'blur(8px)',
-              WebkitBackdropFilter: showSavedOnly ? 'none' : 'blur(8px)',
-            }}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showSavedOnly ? '#fff' : 'none'} stroke="currentColor" strokeWidth={2}>
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-            <span>{t('home.saved')}{savedCount > 0 ? ` (${savedCount})` : ''}</span>
-          </button>
-        )}
-
-        {/* "Scontati" — shows restaurants with active discounts */}
+        {/* Scontati */}
         {onToggleDeals && (
           <button
             type="button"
             onClick={onToggleDeals}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
             style={{
-              backgroundColor: showDealsOnly ? '#FF5757' : 'rgba(255,255,255,0.85)',
-              color: showDealsOnly ? '#fff' : '#4B5563',
-              borderColor: showDealsOnly ? '#FF5757' : 'rgba(209,213,219,0.6)',
-              backdropFilter: showDealsOnly ? 'none' : 'blur(8px)',
-              WebkitBackdropFilter: showDealsOnly ? 'none' : 'blur(8px)',
+              padding: '9px 16px',
+              borderRadius: 24,
+              fontSize: 12, fontWeight: 600,
+              whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: `1.5px solid ${showDealsOnly ? '#E8453C' : '#E8E5DE'}`,
+              background: showDealsOnly ? '#E8453C' : '#fff',
+              color: showDealsOnly ? '#fff' : '#5A564F',
+              boxShadow: showDealsOnly ? '0 2px 12px rgba(232,69,60,0.3)' : 'none',
+              cursor: 'pointer',
             }}
           >
-            🏷️ {t('home.discounted')}{dealsCount > 0 ? ` (${dealsCount})` : ''}
+            🏷 Scontati
+            {dealsCount > 0 && (
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: showDealsOnly ? 'rgba(255,255,255,0.25)' : 'rgba(232,69,60,0.1)',
+                color: showDealsOnly ? '#fff' : '#E8453C',
+                padding: '1px 6px', borderRadius: 8,
+              }}>
+                {dealsCount}
+              </span>
+            )}
           </button>
         )}
 
-        {/* "Tipo di locale" button — opens full modal */}
+        {/* Filtri — opens full modal with categories + price */}
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
           style={{
-            backgroundColor: selected.length ? '#FF5757' : 'rgba(255,255,255,0.85)',
-            color: selected.length ? '#fff' : '#4B5563',
-            borderColor: selected.length ? '#FF5757' : 'rgba(209,213,219,0.6)',
-            backdropFilter: selected.length ? 'none' : 'blur(8px)',
-            WebkitBackdropFilter: selected.length ? 'none' : 'blur(8px)',
+            padding: '9px 16px',
+            borderRadius: 24,
+            fontSize: 12, fontWeight: 600,
+            whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: 6,
+            border: `1.5px solid ${(selected.length || filters.priceRange) ? '#111' : '#E8E5DE'}`,
+            background: (selected.length || filters.priceRange) ? '#111' : '#fff',
+            color: (selected.length || filters.priceRange) ? '#FAF7F2' : '#5A564F',
+            cursor: 'pointer',
           }}
         >
-          <span>{selected.length ? `${t('home.localeType')} (${selected.length})` : t('home.localeType')}</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M4 6h16M4 12h10M4 18h4"/></svg>
+          Filtri
+          {(selected.length > 0 || filters.priceRange) && (
+            <span style={{
+              fontSize: 10, fontWeight: 700,
+              background: 'rgba(255,255,255,0.2)',
+              padding: '1px 6px', borderRadius: 8,
+            }}>
+              {(selected.length || 0) + (filters.priceRange ? 1 : 0)}
+            </span>
+          )}
         </button>
-
-        {/* Price range chips */}
-        {PRICE_LABELS.slice(1).map((label, idx) => {
-          const priceLevel = idx + 1
-          const active = filters.priceRange === priceLevel
-          return (
-            <button
-              key={priceLevel}
-              type="button"
-              onClick={() => handlePriceClick(priceLevel)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border whitespace-nowrap select-none transition-colors"
-              style={{
-                backgroundColor: active ? '#FF5757' : 'rgba(255,255,255,0.85)',
-                color: active ? '#fff' : '#4B5563',
-                borderColor: active ? '#FF5757' : 'rgba(209,213,219,0.6)',
-                backdropFilter: active ? 'none' : 'blur(8px)',
-                WebkitBackdropFilter: active ? 'none' : 'blur(8px)',
-              }}
-            >
-              {label}
-            </button>
-          )
-        })}
       </div>
 
-      {/* Full-screen category modal — rendered via portal to avoid clipping by BottomSheet's backdrop-filter */}
+      {/* Full filter modal */}
       {createPortal(
         <AnimatePresence>
           {modalOpen && (
@@ -211,7 +213,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+              className="fixed inset-0 z-50"
+              style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
               onClick={() => setModalOpen(false)}
             >
               <motion.div
@@ -219,71 +222,77 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
+                className="absolute bottom-0 left-0 right-0 max-h-[85vh] flex flex-col"
+                style={{ background: '#FAF7F2', borderRadius: '28px 28px 0 0' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('home.localeType')}</h3>
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  >
-                    <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ borderBottom: '1px solid #E8E5DE' }}>
+                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600, color: '#111' }}>
+                    Filtri
+                  </h3>
+                  <button type="button" onClick={() => setModalOpen(false)} className="p-2 rounded-full" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
 
-                {/* Grid */}
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <div className="grid grid-cols-4 gap-3">
-                    {/* "Tutti" option to clear filter */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onFilterChange?.({ ...filters, category: null })
-                        setModalOpen(false)
-                      }}
-                      className="flex flex-col items-center gap-1.5 py-2"
-                    >
-                      <div
-                        className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                          !selected.length ? 'ring-3 ring-[#FF5757] shadow-md bg-orange-50' : 'bg-gray-100'
-                        }`}
-                      >
-                        🍽️
-                      </div>
-                      <span className={`text-xs font-medium text-center leading-tight ${
-                        !selected.length ? 'text-[#FF5757]' : 'text-gray-900'
-                      }`}>
-                        {t('home.all')}
-                      </span>
+                {/* Content */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-5" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  {/* Categories grid */}
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 12 }}>Tipo di cucina</p>
+                  <div className="grid grid-cols-4 gap-3 mb-6">
+                    {/* All option */}
+                    <button type="button" onClick={() => { onFilterChange?.({ ...filters, category: null }) }} className="flex flex-col items-center gap-1.5 py-2">
+                      <div style={{
+                        width: 56, height: 56, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 22,
+                        background: !selected.length ? 'rgba(232,69,60,0.1)' : 'rgba(0,0,0,0.04)',
+                        boxShadow: !selected.length ? '0 0 0 2.5px #E8453C' : 'none',
+                      }}>🍽️</div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: !selected.length ? '#E8453C' : '#111' }}>Tutti</span>
                     </button>
 
                     {CUISINE_CATEGORIES.map((cat) => {
                       const active = isActive(cat.name)
                       return (
+                        <button key={cat.name} type="button" onClick={() => handleCuisineClick(cat.name)} className="flex flex-col items-center gap-1.5 py-2">
+                          <div style={{
+                            width: 56, height: 56, borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 22,
+                            background: active ? `${cat.color}20` : 'rgba(0,0,0,0.04)',
+                            boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
+                            transition: 'all 0.2s',
+                          }}>{cat.emoji}</div>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: active ? cat.color : '#111', textAlign: 'center', lineHeight: 1.2 }}>{cat.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Price range */}
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 12 }}>Fascia di prezzo</p>
+                  <div className="flex gap-2 mb-4">
+                    {PRICE_LABELS.slice(1).map((label, idx) => {
+                      const priceLevel = idx + 1
+                      const active = filters.priceRange === priceLevel
+                      return (
                         <button
-                          key={cat.name}
+                          key={priceLevel}
                           type="button"
-                          onClick={() => handleCuisineClick(cat.name)}
-                          className="flex flex-col items-center gap-1.5 py-2"
+                          onClick={() => handlePriceClick(priceLevel)}
+                          style={{
+                            flex: 1, padding: '12px 8px', borderRadius: 14,
+                            fontSize: 13, fontWeight: 600,
+                            background: active ? '#111' : '#fff',
+                            color: active ? '#FAF7F2' : '#5A564F',
+                            border: `1.5px solid ${active ? '#111' : '#E8E5DE'}`,
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            textAlign: 'center',
+                          }}
                         >
-                          <div
-                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-all ${
-                              active ? 'ring-3 shadow-md' : 'bg-gray-100'
-                            }`}
-                            style={active ? { backgroundColor: cat.color + '20', ringColor: cat.color } : {}}
-                          >
-                            {cat.emoji}
-                          </div>
-                          <span className={`text-xs font-medium text-center leading-tight ${
-                            active ? 'text-[#FF5757]' : 'text-gray-900'
-                          }`}>
-                            {cat.name}
-                          </span>
+                          {label}
                         </button>
                       )
                     })}
@@ -291,13 +300,22 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, us
                 </div>
 
                 {/* Footer */}
-                <div className="px-5 py-4 border-t border-gray-100">
+                <div className="px-5 py-4" style={{ borderTop: '1px solid #E8E5DE' }}>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="w-full py-3 rounded-xl bg-[#FF5757] text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: 14,
+                      background: '#E8453C', color: '#fff',
+                      fontSize: 14, fontWeight: 700,
+                      border: 'none', cursor: 'pointer',
+                      boxShadow: '0 4px 16px rgba(232,69,60,0.3)',
+                    }}
                   >
-                    {selected.length > 0 ? `${selected.length} ${t('home.localeType')}` : t('home.all')}
+                    {selected.length > 0 || filters.priceRange
+                      ? `Mostra risultati`
+                      : 'Tutti i ristoranti'
+                    }
                   </button>
                 </div>
               </motion.div>

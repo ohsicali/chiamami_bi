@@ -9,16 +9,19 @@
 }
 
 @theme {
-  --color-primary: #1A1A1A;
-  --color-secondary: #6B7280;
-  --color-accent: #FF5757;
-  --color-accent-light: #FFF0F0;
-  --color-bg: #FAFAF8;
+  --color-primary: #111111;
+  --color-secondary: #8A8680;
+  --color-accent: #E8453C;
+  --color-accent-light: rgba(232, 69, 60, 0.1);
+  --color-bg: #FAF7F2;
   --color-card: #FFFFFF;
-  --color-success: #34C759;
-  --color-surface-glass: rgba(255, 255, 255, 0.72);
+  --color-success: #4ADE80;
+  --color-oro: #C4A265;
+  --color-bordo: #E8E5DE;
+  --color-surface-glass: rgba(250, 247, 242, 0.92);
   --font-display: 'Playfair Display', serif;
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-editorial: 'Cormorant Garamond', serif;
+  --font-sans: 'DM Sans', sans-serif;
 }
 
 body {
@@ -73,9 +76,26 @@ body {
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(250, 247, 242, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+/* Dark glass utility */
+.glass-dark {
+  background: rgba(17, 17, 17, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Editorial font utility */
+.font-editorial {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* TAN Songbird for restaurant names */
+.font-restaurant {
+  font-family: 'TAN Songbird', 'Cormorant Garamond', serif;
 }
 
 /* Legacy admin scroll class — no longer needed, body scrolls by default */

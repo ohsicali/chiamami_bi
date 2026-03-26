@@ -2,41 +2,6 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 
-const SearchIcon = ({ focused }) => (
-  <motion.svg
-    animate={{ rotate: focused ? -15 : 0 }}
-    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="flex-shrink-0"
-  >
-    <circle cx="11" cy="11" r="8" />
-    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </motion.svg>
-)
-
-const ClearIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-)
-
 export default function SearchBar({ value, onChange, onFocus, onBlur }) {
   const { t } = useTranslation()
   const [focused, setFocused] = useState(false)
@@ -59,19 +24,26 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
 
   return (
     <div
-      className="glass flex items-center gap-2.5 px-4 py-3 border-2 transition-all duration-200 ease-out"
+      className="flex items-center gap-3"
       style={{
+        background: '#fff',
+        border: `1.5px solid ${focused ? '#E8453C' : '#E8E5DE'}`,
         borderRadius: 16,
-        borderColor: focused ? '#FF5757' : 'rgba(209, 213, 219, 0.5)',
-        transform: focused ? 'scale(1.02)' : 'scale(1)',
+        padding: '13px 18px',
+        boxShadow: focused ? '0 2px 20px rgba(232,69,60,0.08)' : '0 2px 12px rgba(0,0,0,0.04)',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
       }}
     >
-      {/* Search icon */}
-      <span className={`transition-colors duration-200 ${focused ? 'text-[#FF5757]' : 'text-gray-400'}`}>
-        <SearchIcon focused={focused} />
-      </span>
+      <svg
+        width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke={focused ? '#E8453C' : '#C0BBB3'}
+        strokeWidth="2.2" strokeLinecap="round"
+        style={{ flexShrink: 0, transition: 'stroke 0.2s' }}
+      >
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
 
-      {/* Input */}
       <input
         ref={inputRef}
         type="text"
@@ -79,15 +51,29 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
         onChange={(e) => onChange?.(e.target.value)}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        placeholder={t('home.search')}
-        className="flex-1 bg-transparent text-[15px] text-primary placeholder:text-secondary outline-none"
-        style={{ fontFamily: "var(--font-sans, 'Plus Jakarta Sans', sans-serif)" }}
+        placeholder={t('home.search') || 'Ristorante, cucina, zona...'}
+        style={{
+          flex: 1, background: 'transparent',
+          fontSize: 14, fontWeight: 500, color: '#111',
+          outline: 'none', border: 'none',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
       />
 
-      {/* Clear button */}
+      {/* Tag */}
+      {!value && !focused && (
+        <span style={{
+          fontSize: 10, color: '#8A8680', fontWeight: 600,
+          padding: '4px 8px', borderRadius: 6,
+          background: 'rgba(0,0,0,0.04)',
+        }}>
+          Torino
+        </span>
+      )}
+
       <AnimatePresence>
         {value && value.length > 0 && (
           <motion.button
@@ -97,10 +83,17 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
             transition={{ duration: 0.15 }}
             onClick={handleClear}
             type="button"
-            className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200/80 text-gray-500 hover:bg-gray-300 hover:text-gray-700 transition-colors"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 24, height: 24, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.06)', color: '#8A8680',
+              border: 'none', cursor: 'pointer',
+            }}
             aria-label="Cancella ricerca"
           >
-            <ClearIcon />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </motion.button>
         )}
       </AnimatePresence>

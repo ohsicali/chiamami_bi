@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
+import MobileTabBar from './components/Layout/MobileTabBar'
 
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
@@ -75,6 +76,8 @@ export default function App() {
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isHome = location.pathname === '/' || isRestaurantDetail
+  const isAdmin = location.pathname.startsWith('/admin')
+  const showTabBar = !isAdmin && !isRestaurantDetail
 
   return (
     <>
@@ -117,6 +120,9 @@ export default function App() {
     </Suspense>
     </ErrorBoundary>
 
+    {/* Mobile Tab Bar */}
+    {showTabBar && <MobileTabBar />}
+
     {/* Cookie Banner GDPR */}
     <CookieConsent
       location="bottom"
@@ -135,7 +141,7 @@ export default function App() {
         borderTop: '1px solid rgba(255,255,255,0.1)',
       }}
       buttonStyle={{
-        background: '#FF5757',
+        background: '#E8453C',
         color: '#fff',
         fontSize: '13px',
         borderRadius: '10px',
@@ -157,7 +163,7 @@ export default function App() {
       expires={365}
     >
       Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
-      <Link to="/privacy" style={{ color: '#FF5757', textDecoration: 'underline' }}>Privacy Policy</Link>
+      <Link to="/privacy" style={{ color: '#E8453C', textDecoration: 'underline' }}>Privacy Policy</Link>
     </CookieConsent>
     </>
   )
