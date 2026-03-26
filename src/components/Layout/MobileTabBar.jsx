@@ -113,12 +113,12 @@ export default function MobileTabBar() {
               <span
                 style={{
                   position: 'absolute',
-                  top: -10,
+                  top: 0,
                   left: '50%',
                   transform: 'translateX(-50%)',
                   width: 20,
                   height: 3,
-                  borderRadius: '0 0 3px 3px',
+                  borderRadius: '3px',
                   background: '#E8453C',
                 }}
               />
