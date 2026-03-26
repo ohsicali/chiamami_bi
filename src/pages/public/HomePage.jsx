@@ -66,30 +66,29 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       onClick={() => onClick?.(restaurant)}
       className="flex-shrink-0"
       style={{
-        width: 260, height: 88,
+        width: 260,
         scrollSnapAlign: 'start',
         borderRadius: 14,
         background: '#fff',
         boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
+        padding: 10,
         display: 'flex',
-        overflow: 'hidden',
+        gap: 10,
         position: 'relative',
       }}
     >
-      {/* Photo — flush left, full height */}
-      <div style={{ width: 88, flexShrink: 0 }}>
+      <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
         {photoUrl ? (
-          <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
+          <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
             {category?.emoji || '🍽️'}
           </div>
         )}
       </div>
-      {/* Text content */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '10px 10px 10px 12px' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <div style={{
           fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
           fontSize: 11, fontWeight: 600, color: '#111',
