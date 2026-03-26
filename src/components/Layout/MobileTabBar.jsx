@@ -108,7 +108,21 @@ export default function MobileTabBar() {
               touchAction: 'manipulation',
             }}
           >
-            {/* Active indicator bar */}
+            {tab.active && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -6,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 20,
+                  height: 3,
+                  borderRadius: '0 0 3px 3px',
+                  background: '#E8453C',
+                }}
+              />
+            )}
+
             <div className="relative">
               <tab.icon active={tab.active} />
               {tab.badge > 0 && (
@@ -144,12 +158,6 @@ export default function MobileTabBar() {
             >
               {tab.label}
             </span>
-            {tab.active && (
-              <span style={{
-                width: 5, height: 5, borderRadius: '50%',
-                background: '#E8453C',
-              }} />
-            )}
           </button>
         ))}
       </div>
