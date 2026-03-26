@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
-import MobileTabBar from './components/Layout/MobileTabBar'
 
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
@@ -76,8 +75,6 @@ export default function App() {
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isHome = location.pathname === '/' || isRestaurantDetail
-  const isAdmin = location.pathname.startsWith('/admin')
-  const showTabBar = !isAdmin && !isRestaurantDetail
 
   return (
     <>
@@ -119,9 +116,6 @@ export default function App() {
       )}
     </Suspense>
     </ErrorBoundary>
-
-    {/* Mobile Tab Bar — public pages only */}
-    {showTabBar && <MobileTabBar />}
 
     {/* Cookie Banner GDPR */}
     <CookieConsent
