@@ -98,9 +98,18 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         }}>
           {restaurant.name}
         </div>
-        <div style={{ fontSize: 10, color: '#8A8680', lineHeight: 1.3, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {category?.name || ''}
-        </div>
+        {category && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 2,
+            backgroundColor: `${category.color}20`,
+            color: category.color,
+            fontSize: 9, fontWeight: 600,
+            padding: '1px 6px', borderRadius: 12,
+            whiteSpace: 'nowrap',
+          }}>
+            {category.emoji} {category.name}
+          </span>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
           {priceStr && <span style={{ color: '#555', fontWeight: 600 }}>{priceStr}</span>}
           {distance != null && <span style={{ color: '#8A8680' }}>{formatDistance(distance)}</span>}
