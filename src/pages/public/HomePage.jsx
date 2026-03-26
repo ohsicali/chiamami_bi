@@ -98,9 +98,8 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         }}>
           {restaurant.name}
         </div>
-        <div style={{ fontSize: 10, color: '#8A8680', lineHeight: 1.3, marginBottom: 2 }}>
+        <div style={{ fontSize: 10, color: '#8A8680', lineHeight: 1.3, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {category?.name || ''}
-          {restaurant.recommended_for && ` · ${restaurant.recommended_for}`}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
           {priceStr && <span style={{ color: '#555', fontWeight: 600 }}>{priceStr}</span>}
@@ -192,13 +191,17 @@ export default function HomePage() {
   const bottomPanelRef = useRef(null)
   const [bottomPanelH, setBottomPanelH] = useState(160)
 
-  // Measure actual bottom panel height
+  // Measure actual bottom panel height with ResizeObserver (no render loops)
   useEffect(() => {
-    if (bottomPanelRef.current) {
-      const h = bottomPanelRef.current.getBoundingClientRect().height
+    const el = bottomPanelRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      const h = entry.contentRect.height
       if (h > 0) setBottomPanelH(h)
-    }
-  })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const handleVisibleRestaurantsChange = useCallback((ids, center) => {
     setVisibleIds(new Set(ids))

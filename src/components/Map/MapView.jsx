@@ -443,6 +443,23 @@ const MapView = forwardRef(function MapView({
       // During zoom: record that zoom changed (don't sync mid-animation)
       m.on('zoom', onZoom)
 
+      // During movement: update visible restaurant count in real-time
+      let moveRaf = null
+      m.on('move', () => {
+        if (moveRaf) return
+        moveRaf = requestAnimationFrame(() => {
+          moveRaf = null
+          if (!onVisibleRef.current) return
+          const rests = restaurantsRef.current || []
+          const bounds = m.getBounds()
+          const ids = rests
+            .filter((r) => r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude]))
+            .map((r) => r.id)
+          const center = m.getCenter()
+          onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
+        })
+      })
+
       // After all movement settles: sync with animation if zoom changed
       m.on('moveend', () => {
         clearTimeout(debounceTimer.current)
