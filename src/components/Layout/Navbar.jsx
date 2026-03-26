@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -155,7 +156,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
         }
       `}</style>
 
-      {cityPickerOpen && (
+      {cityPickerOpen && createPortal(
         <div
           style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
@@ -321,7 +322,8 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
