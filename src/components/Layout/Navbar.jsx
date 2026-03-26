@@ -161,18 +161,17 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0 } }}
               style={{
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50,
                 background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-                touchAction: 'none', overscrollBehavior: 'none',
               }}
               onClick={() => setCityPickerOpen(false)}
             >
               <motion.div
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
-                exit={{ y: '100%' }}
+                exit={{ y: '100%', transition: { duration: 0.2 } }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
                 style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
