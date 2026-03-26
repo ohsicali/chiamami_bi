@@ -384,7 +384,7 @@ export default function HomePage() {
           {/* Floating cards */}
           {carouselRestaurants.length > 0 && (
             <div
-              className="flex gap-2.5 px-4 pb-3 overflow-x-auto carousel-scroll"
+              className="flex items-end gap-2.5 px-4 pb-3 overflow-x-auto carousel-scroll"
               style={{
                 scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
