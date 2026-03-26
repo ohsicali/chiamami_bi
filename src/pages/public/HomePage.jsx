@@ -353,7 +353,7 @@ export default function HomePage() {
   }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden">
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
         onToggleView={() => isSheetActive ? closeSheet() : openSheet()}

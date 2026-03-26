@@ -58,10 +58,13 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
 
   function handleCitySelect(name, lng, lat) {
     setSelectedCity(name);
-    onCityChange?.({ name, lng, lat });
     setCityPickerOpen(false);
     setQuery("");
     setSuggestions([]);
+    // Delay flyTo until modal exit animation is done
+    setTimeout(() => {
+      onCityChange?.({ name, lng, lat });
+    }, 400);
   }
 
   const searchCities = useCallback(async (q) => {
@@ -97,11 +100,14 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
 
   useEffect(() => {
     if (cityPickerOpen) {
+      document.body.style.overflow = 'hidden';
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
+      document.body.style.overflow = '';
       setQuery("");
       setSuggestions([]);
     }
+    return () => { document.body.style.overflow = ''; };
   }, [cityPickerOpen]);
 
   // Track visual viewport height for keyboard avoidance
