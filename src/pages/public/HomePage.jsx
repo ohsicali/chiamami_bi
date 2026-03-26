@@ -415,15 +415,30 @@ export default function HomePage() {
                   onClick={openSheet}
                   className="flex-shrink-0 flex flex-col items-center justify-center"
                   style={{
-                    width: 80, height: 88, scrollSnapAlign: 'start', borderRadius: 14,
-                    background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)',
-                    border: '1.5px dashed #E8E5DE', cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                    width: 72, height: 88, scrollSnapAlign: 'start', borderRadius: 14,
+                    marginRight: 16,
+                    background: 'rgba(0,0,0,0.45)',
+                    backdropFilter: 'blur(20px) saturate(1.6)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    cursor: 'pointer',
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
+                    gap: 6,
                   }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680' }}>Vedi</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680' }}>tutti</span>
-                  <span style={{ fontSize: 10, color: '#B5B0A8', marginTop: 2 }}>{viewportRestaurants.length}</span>
+                  <span style={{
+                    width: 30, height: 30, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.15)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>
+                    {viewportRestaurants.length} locali
+                  </span>
                 </div>
               )}
             </div>
