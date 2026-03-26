@@ -66,7 +66,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       onClick={() => onClick?.(restaurant)}
       className="flex-shrink-0"
       style={{
-        width: 260,
+        width: 260, height: 88,
         scrollSnapAlign: 'start',
         borderRadius: 14,
         background: '#fff',
@@ -78,12 +78,12 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         position: 'relative',
       }}
     >
-      {/* Photo — tall, flush left, no gaps */}
-      <div style={{ width: 110, flexShrink: 0, position: 'relative' }}>
+      {/* Photo — flush left, full height */}
+      <div style={{ width: 88, flexShrink: 0 }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
         ) : (
-          <div style={{ width: '100%', height: '100%', minHeight: 100, background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
             {category?.emoji || '🍽️'}
           </div>
         )}
