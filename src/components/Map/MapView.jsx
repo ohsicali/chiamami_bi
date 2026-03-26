@@ -7,7 +7,7 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
 const GOLD_COLOR = '#C4A265'
-const MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
+const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
 
@@ -119,15 +119,15 @@ function createClusterEl(count) {
   inner.className = 'cb-inner'
   inner.style.cssText = `
     width:${size}px;height:${size}px;border-radius:50%;
-    background:rgba(255,255,255,0.15);
-    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-    border:1.5px solid rgba(255,255,255,0.25);
+    background:rgba(255,255,255,0.88);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1.5px solid rgba(0,0,0,0.08);
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 4px 16px rgba(0,0,0,0.2);
+    box-shadow:0 2px 12px rgba(0,0,0,0.1);
     user-select:none;
   `
   const label = count > 99 ? '99+' : String(count)
-  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#fff;line-height:1;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.3)">${label}</span>`
+  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#111;line-height:1;pointer-events:none">${label}</span>`
 
   wrap.appendChild(inner)
   return wrap
