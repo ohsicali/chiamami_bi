@@ -124,9 +124,22 @@ export default function RestaurantCard({
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-            {category && <span>{category.name}</span>}
-            {priceStr && <><span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} /><span>{priceStr}</span></>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap' }}>
+            {categories.map(cat => (
+              <span
+                key={cat.name}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 3,
+                  backgroundColor: `${cat.color}30`,
+                  color: '#fff',
+                  fontSize: 11, fontWeight: 600,
+                  padding: '2px 8px', borderRadius: 20,
+                }}
+              >
+                {cat.emoji} {cat.name}
+              </span>
+            ))}
+            {priceStr && <span>{priceStr}</span>}
             {distance != null && <><span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} /><span>{formatDistance(distance)}</span></>}
           </div>
         </div>
@@ -197,15 +210,22 @@ export default function RestaurantCard({
           )}
         </div>
 
-        {/* Cuisine */}
-        <div style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {category && <span>{category.name}</span>}
-          {restaurant.recommended_for && (
-            <>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />
-              <span>{restaurant.recommended_for}</span>
-            </>
-          )}
+        {/* Category badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+          {categories.map(cat => (
+            <span
+              key={cat.name}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                backgroundColor: `${cat.color}20`,
+                color: cat.color,
+                fontSize: 11, fontWeight: 600,
+                padding: '2px 8px', borderRadius: 20,
+              }}
+            >
+              {cat.emoji} {cat.name}
+            </span>
+          ))}
         </div>
 
         {/* Bottom row */}

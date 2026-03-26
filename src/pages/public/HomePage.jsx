@@ -91,10 +91,10 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <div style={{
           fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
-          fontSize: 13, fontWeight: 600, color: '#111',
+          fontSize: 11, fontWeight: 600, color: '#111',
           lineHeight: 1.6, marginBottom: 2,
           whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-          overflow: 'hidden', padding: '3px 0',
+          overflow: 'hidden', padding: '2px 0',
         }}>
           {restaurant.name}
         </div>
