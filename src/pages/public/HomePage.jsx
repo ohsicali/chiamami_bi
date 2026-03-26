@@ -93,7 +93,8 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
           fontSize: 13, fontWeight: 600, color: '#111',
           lineHeight: 1.6, marginBottom: 2,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+          overflow: 'hidden', padding: '3px 0',
         }}>
           {restaurant.name}
         </div>
@@ -404,20 +405,21 @@ export default function HomePage() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           zIndex: isSheetActive ? 35 : -1,
           background: '#FAF7F2',
-          borderRadius: '20px 20px 0 0',
           display: 'flex', flexDirection: 'column',
           pointerEvents: isSheetActive ? 'auto' : 'none',
           willChange: 'transform',
+          overflow: 'hidden',
         }}
       >
         {/* Handle */}
         <div
           {...handleBind()}
           style={{
-            paddingTop: 48,
-            paddingBottom: 8,
+            paddingTop: 'max(env(safe-area-inset-top, 16px), 56px)',
+            paddingBottom: 10,
             display: 'flex', justifyContent: 'center',
             cursor: 'grab', touchAction: 'none', flexShrink: 0,
+            background: '#FAF7F2',
           }}
         >
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
