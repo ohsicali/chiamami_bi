@@ -79,13 +79,13 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         position: 'relative',
       }}
     >
-      {/* Discount sticker */}
+      {/* Discount sticker — floats above the card */}
       {discountValue && (
         <div style={{
-          position: 'absolute', top: -4, left: -4, zIndex: 2,
+          position: 'absolute', top: -10, left: 12, zIndex: 2,
           background: '#C4A265', color: '#fff',
           fontSize: 9, fontWeight: 800, letterSpacing: 0.3,
-          padding: '3px 8px', borderRadius: 8,
+          padding: '3px 10px', borderRadius: 8,
           boxShadow: '0 2px 8px rgba(196,162,101,0.4)',
         }}>
           -{discountValue}%
