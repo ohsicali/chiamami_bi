@@ -398,6 +398,7 @@ export default function HomePage() {
               }}
             >
               <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
+              <div style={{ minWidth: 12, flexShrink: 0 }} />
               {carouselRestaurants.map((r) => (
                 <MiniCard
                   key={r.id}
