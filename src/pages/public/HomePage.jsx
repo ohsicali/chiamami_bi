@@ -394,11 +394,11 @@ export default function HomePage() {
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none', msOverflowStyle: 'none',
                 pointerEvents: 'auto',
-                paddingLeft: 20, paddingRight: 16,
+                paddingRight: 16,
               }}
             >
               <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
-              <div style={{ minWidth: 12, flexShrink: 0 }} />
+              <div aria-hidden style={{ minWidth: 20, width: 20, flexShrink: 0 }} />
               {carouselRestaurants.map((r) => (
                 <MiniCard
                   key={r.id}
