@@ -98,27 +98,30 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         }}>
           {restaurant.name}
         </div>
-        {category && (
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 2,
-            alignSelf: 'flex-start',
-            backgroundColor: `${category.color}20`,
-            color: category.color,
-            fontSize: 9, fontWeight: 600,
-            padding: '1px 6px', borderRadius: 12,
-            whiteSpace: 'nowrap',
-          }}>
-            {category.emoji} {category.name}
-          </span>
-        )}
+        {/* Category + price */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          {category && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 2,
+              backgroundColor: `${category.color}20`,
+              color: category.color,
+              fontSize: 9, fontWeight: 600,
+              padding: '1px 6px', borderRadius: 12,
+              whiteSpace: 'nowrap',
+            }}>
+              {category.emoji} {category.name}
+            </span>
+          )}
+          {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+        </div>
+        {/* Discount + distance */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
-          {priceStr && <span style={{ color: '#555', fontWeight: 600 }}>{priceStr}</span>}
-          {distance != null && <span style={{ color: '#8A8680' }}>{formatDistance(distance)}</span>}
           {discountValue && (
             <span style={{ background: 'rgba(232,69,60,0.1)', color: '#E8453C', fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>
               -{discountValue}%
             </span>
           )}
+          {distance != null && <span style={{ color: '#8A8680' }}>{formatDistance(distance)}</span>}
         </div>
       </div>
       {onSave && (
