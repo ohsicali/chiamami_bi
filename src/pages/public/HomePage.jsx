@@ -101,6 +101,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         {category && (
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 2,
+            alignSelf: 'flex-start',
             backgroundColor: `${category.color}20`,
             color: category.color,
             fontSize: 9, fontWeight: 600,
