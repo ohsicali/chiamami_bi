@@ -390,15 +390,13 @@ export default function HomePage() {
             <div
               className="flex items-end gap-2.5 pb-3 overflow-x-auto carousel-scroll"
               style={{
-                scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none', msOverflowStyle: 'none',
                 pointerEvents: 'auto',
-                paddingRight: 16,
+                marginLeft: 16, marginRight: 16,
               }}
             >
               <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
-              <div aria-hidden style={{ minWidth: 20, width: 20, flexShrink: 0 }} />
               {carouselRestaurants.map((r) => (
                 <MiniCard
                   key={r.id}
