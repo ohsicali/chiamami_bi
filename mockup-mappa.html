@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esplora — Mappa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#080808;font-family:'DM Sans',sans-serif}
+.ph{width:390px;height:844px;background:#111;border-radius:52px;overflow:hidden;position:relative;box-shadow:0 0 0 2px #333,0 40px 100px rgba(0,0,0,.8)}
+.island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:126px;height:36px;background:#000;border-radius:20px;z-index:200}
+
+/* NAV */
+.nav{position:absolute;top:0;left:0;right:0;z-index:60;padding:58px 22px 14px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(17,17,17,.95),rgba(17,17,17,.7) 70%,transparent)}
+.logo{display:flex;align-items:baseline;gap:4px}
+.l1{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:#8A8680;letter-spacing:1px;text-transform:uppercase}
+.l2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;color:#FAF7F2}
+.l3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:#E8453C}
+.city{display:flex;align-items:center;gap:5px;font-size:12px;color:#8A8680;font-weight:500;padding:6px 12px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);cursor:pointer}
+.city-dot{width:6px;height:6px;border-radius:50%;background:#4ADE80;box-shadow:0 0 6px rgba(74,222,128,.5)}
+.city svg{width:12px;height:12px;opacity:.5;margin-left:2px}
+
+/* MAP */
+.map{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 35%,#2a2520,transparent 60%),radial-gradient(ellipse at 70% 25%,#252018,transparent 50%),linear-gradient(180deg,#1a1814,#1f1d18 40%,#252220)}
+.streets{position:absolute;inset:0;opacity:.06;background-image:linear-gradient(0deg,rgba(255,255,255,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.3) 1px,transparent 1px),linear-gradient(45deg,rgba(255,255,255,.15) 1px,transparent 1px);background-size:60px 60px,80px 80px,100px 100px}
+.river{position:absolute;top:160px;left:-40px;right:-40px;height:50px;background:linear-gradient(90deg,transparent,rgba(196,162,101,.06) 30%,rgba(196,162,101,.08) 50%,rgba(196,162,101,.06) 70%,transparent);transform:rotate(-8deg);filter:blur(8px)}
+
+/* MARKERS */
+.mk{position:absolute;z-index:10;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;animation:pulse 3s ease-in-out infinite}
+.mk-r{background:#E8453C;box-shadow:0 4px 20px rgba(232,69,60,.5),0 0 0 3px rgba(232,69,60,.2)}
+.mk-g{background:linear-gradient(135deg,#C4A265,#D4B878);box-shadow:0 4px 20px rgba(196,162,101,.4)}
+.mk-c{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.2);color:#FAF7F2;font-size:14px;font-weight:700;animation:none}
+@keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(232,69,60,.4),0 0 0 3px rgba(232,69,60,.15)}50%{box-shadow:0 4px 28px rgba(232,69,60,.6),0 0 0 8px rgba(232,69,60,.08)}}
+
+/* BOTTOM SHEET */
+.sheet{position:absolute;bottom:0;left:0;right:0;z-index:30;background:rgba(250,247,242,.97);backdrop-filter:blur(40px);border-radius:28px 28px 0 0;padding:0 0 90px;box-shadow:0 -8px 40px rgba(0,0,0,.3)}
+.handle{width:40px;height:4px;background:rgba(0,0,0,.12);border-radius:2px;margin:10px auto 0}
+.sc{padding:16px 22px 0}
+
+/* GREETING */
+.gr-s{font-size:12px;color:#8A8680;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}
+.gr-m{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:#111;line-height:1.1;margin-bottom:16px}
+.gr-m em{font-style:italic;color:#E8453C}
+
+/* SEARCH */
+.src{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #E8E5DE;border-radius:16px;padding:13px 18px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.src svg{color:#C0BBB3;flex-shrink:0}
+.src span{color:#C0BBB3;font-size:14px;font-weight:500;flex:1}
+.src-tag{font-size:10px;color:#8A8680;font-weight:600;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.04)}
+
+/* CATS */
+.cats{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}
+.cats::-webkit-scrollbar{display:none}
+.cat{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:8px 16px 8px 10px;border-radius:40px;cursor:pointer;background:#fff;border:1.5px solid #E8E5DE;transition:all .2s}
+.cat-a{background:#111;border-color:#111}
+.cat-a .cn{color:#FAF7F2}
+.ci{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(0,0,0,.04)}
+.cat-a .ci{background:rgba(255,255,255,.12)}
+.cn{font-size:13px;font-weight:600;color:#111;white-space:nowrap}
+
+/* CHIPS */
+.chips{display:flex;gap:8px}
+.chip{padding:9px 16px;border-radius:24px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:6px;border:1.5px solid #E8E5DE;background:#fff;color:#5A564F}
+.chip-a{background:#E8453C;border-color:#E8453C;color:#fff;box-shadow:0 2px 12px rgba(232,69,60,.3)}
+.chip-cnt{font-size:10px;font-weight:700;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px}
+
+/* TAB BAR */
+.tb{position:absolute;bottom:0;left:0;right:0;z-index:50;height:82px;background:rgba(250,247,242,.95);backdrop-filter:blur(20px);border-top:1px solid rgba(0,0,0,.06);display:flex;align-items:flex-start;justify-content:space-around;padding:10px 12px 0}
+.t{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;cursor:pointer;position:relative}
+.t svg{width:22px;height:22px}
+.tl{font-size:10px;font-weight:500;color:#B5B0A8}
+.ta .tl{color:#E8453C;font-weight:700}
+.ta::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:0 0 3px 3px;background:#E8453C}
+.badge{position:absolute;top:-2px;right:calc(50% - 20px);width:16px;height:16px;border-radius:50%;background:#E8453C;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="ph">
+<div class="island"></div>
+
+<div class="nav">
+  <div class="logo"><span class="l1">la </span><span class="l2">Guida </span><span class="l1">di </span><span class="l3">Bi</span></div>
+  <div class="city">
+    <div class="city-dot"></div>Torino
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+</div>
+
+<div class="map">
+  <div class="streets"></div>
+  <div class="river"></div>
+  <div class="mk mk-r" style="top:190px;left:80px">🍷</div>
+  <div class="mk mk-r" style="top:240px;left:230px">🍝</div>
+  <div class="mk mk-g" style="top:160px;left:190px">🍣</div>
+  <div class="mk mk-r" style="top:280px;left:140px">🍸</div>
+  <div class="mk mk-c" style="top:210px;left:300px">5</div>
+</div>
+
+<div class="sheet">
+  <div class="handle"></div>
+  <div class="sc">
+    <div class="gr-s">Buongiorno</div>
+    <div class="gr-m">Dove si mangia <em>oggi?</em></div>
+    <div class="src">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Ristorante, cucina, zona...</span>
+      <span class="src-tag">Torino</span>
+    </div>
+    <div class="cats">
+      <div class="cat cat-a"><div class="ci">🍷</div><span class="cn">Piemontese</span></div>
+      <div class="cat"><div class="ci">🍝</div><span class="cn">Italiana</span></div>
+      <div class="cat"><div class="ci">🍣</div><span class="cn">Giapponese</span></div>
+      <div class="cat"><div class="ci">🍸</div><span class="cn">Cocktail</span></div>
+      <div class="cat"><div class="ci">🍕</div><span class="cn">Pizza</span></div>
+    </div>
+    <div class="chips">
+      <div class="chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>Vicino a me</div>
+      <div class="chip chip-a">🏷 Scontati<span class="chip-cnt">3</span></div>
+      <div class="chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h4"/></svg>Filtri</div>
+    </div>
+  </div>
+</div>
+
+<div class="tb">
+  <div class="t ta"><svg viewBox="0 0 24 24" fill="none" stroke="#E8453C" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" fill="rgba(232,69,60,.12)"/><path d="M14.31 8l5.74-2.69M14.31 8L8 10.69M14.31 8l-1.62 6.69M8 10.69L2.26 8M8 10.69l4.69 4L8 21.44M12.69 14.69l5.57 2.75M12.69 14.69L8 21.44m4.69-6.75L18.26 8"/></svg><span class="tl">Esplora</span></div>
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1" fill="#B5B0A8"/></svg><div class="badge">3</div><span class="tl">Sconti</span></div>
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="tl">Salvati</span></div>
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tl">Profilo</span></div>
+</div>
+</div>
+</body>
+</html>
