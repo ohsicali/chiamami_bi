@@ -52,17 +52,12 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   }, [restaurants]);
 
   function handleCitySelect(name, lng, lat) {
-    // Blur input to dismiss keyboard
     inputRef.current?.blur();
     setSelectedCity(name);
-    // Small delay for keyboard to start dismissing, then close
+    setCityPickerOpen(false);
     setTimeout(() => {
-      setCityPickerOpen(false);
-      // Delay flyTo until modal exit animation is done
-      setTimeout(() => {
-        onCityChange?.({ name, lng, lat });
-      }, 500);
-    }, 150);
+      onCityChange?.({ name, lng, lat });
+    }, 500);
   }
 
   const searchCities = useCallback(async (q) => {
@@ -96,26 +91,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
     return () => clearTimeout(debounceRef.current);
   }, [query, searchCities]);
 
-  useEffect(() => {
-    if (cityPickerOpen) {
-      // Lock body scroll — use position:fixed to prevent iOS scroll compensation
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => inputRef.current?.focus(), 200);
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [cityPickerOpen]);
+  // No body style manipulation — it causes iOS Safari layout reflow bugs
 
   // Track visual viewport to position modal above keyboard
   useEffect(() => {
@@ -214,7 +190,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50"
-              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', touchAction: 'none' }}
               onClick={() => setCityPickerOpen(false)}
             >
               <motion.div
@@ -274,7 +250,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                 </div>
 
                 {/* Results — scrollable area */}
-                <div className="px-5 pb-4" style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch' }}>
+                <div className="px-5 pb-4" style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                   {/* Currently selected */}
                   {showPopular && (
                     <div style={{ marginBottom: 12 }}>
