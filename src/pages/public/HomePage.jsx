@@ -90,8 +90,10 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       </div>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <div style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: 14, fontWeight: 700, color: '#111', lineHeight: 1.3, marginBottom: 3,
+          fontFamily: "'TAN Songbird', 'Cormorant Garamond', serif",
+          fontSize: 13, fontWeight: 600, color: '#111',
+          lineHeight: 1.6, marginBottom: 2,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
           {restaurant.name}
         </div>
@@ -122,7 +124,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
  * Inline map controls — rendered here directly instead of a separate component
  * so we have full control over positioning without prop-passing issues.
  */
-function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom }) {
+function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom, hidden }) {
   const btnStyle = {
     width: 44, height: 44, borderRadius: '50%',
     background: 'rgba(255,255,255,0.92)',
@@ -134,7 +136,7 @@ function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom
     WebkitTapHighlightColor: 'transparent',
   }
   return (
-    <div style={{ position: 'absolute', right: 16, bottom, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 15 }}>
+    <div style={{ position: 'absolute', right: 16, bottom, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 15, opacity: hidden ? 0 : 1, visibility: hidden ? 'hidden' : 'visible', transition: 'opacity 0.2s, visibility 0.2s' }}>
       <button onClick={onLocateMe} style={{ ...btnStyle, color: isLocating ? '#3B82F6' : '#374151' }} aria-label="Posizione">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" /><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
@@ -241,25 +243,35 @@ export default function HomePage() {
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
   const sheetY = useMotionValue(windowH)
   const [isSheetActive, setIsSheetActive] = useState(false)
+  const [isDraggingBar, setIsDraggingBar] = useState(false)
   const sheetOpacity = useTransform(sheetY, [windowH, windowH * 0.4, 0], [0, 1, 1])
 
+  // Show sheet = fully open; hide bottom panel only when sheet is open AND not mid-drag
+  const hideBottomPanel = isSheetActive && !isDraggingBar
+
   const openSheet = useCallback(() => {
+    setIsDraggingBar(false)
     setIsSheetActive(true)
     animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
   }, [sheetY])
 
   const closeSheet = useCallback(() => {
+    setIsDraggingBar(false)
     animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 })
     setTimeout(() => setIsSheetActive(false), 500)
   }, [sheetY, windowH])
 
   // Bar drag: pull up to reveal sheet
   const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
-    if (first) setIsSheetActive(true)
+    if (first) {
+      setIsDraggingBar(true)
+      setIsSheetActive(true) // make sheet z-index visible
+    }
     if (active) {
       // my < 0 when dragging up. Map windowH+my so sheet slides in.
       sheetY.set(Math.max(0, Math.min(windowH, windowH + my)))
     } else {
+      setIsDraggingBar(false)
       if (sheetY.get() < windowH * 0.6 || (vy > 0.3 && dy < 0)) {
         openSheet()
       } else {
@@ -297,23 +309,26 @@ export default function HomePage() {
       />
 
       {/* Map controls — use measured bottom panel height */}
-      {!isSheetActive && (
-        <InlineMapControls
-          onLocateMe={handleLocateMe}
-          isLocating={geoLoading}
-          onZoomIn={() => mapRef.current?.zoomIn()}
-          onZoomOut={() => mapRef.current?.zoomOut()}
-          bottom={TAB_BAR_HEIGHT + bottomPanelH + 16}
-        />
-      )}
+      <InlineMapControls
+        onLocateMe={handleLocateMe}
+        isLocating={geoLoading}
+        onZoomIn={() => mapRef.current?.zoomIn()}
+        onZoomOut={() => mapRef.current?.zoomOut()}
+        bottom={TAB_BAR_HEIGHT + bottomPanelH + 16}
+        hidden={hideBottomPanel}
+      />
 
-      {/* === Bottom panel on map === */}
-      {!isSheetActive && (
-        <div
-          ref={bottomPanelRef}
-          className="absolute left-0 right-0"
-          style={{ bottom: TAB_BAR_HEIGHT, zIndex: 20, pointerEvents: 'none' }}
-        >
+      {/* === Bottom panel on map — never unmount, hide with CSS so drag stays alive === */}
+      <div
+        ref={bottomPanelRef}
+        className="absolute left-0 right-0"
+        style={{
+          bottom: TAB_BAR_HEIGHT, zIndex: 20, pointerEvents: 'none',
+          opacity: hideBottomPanel ? 0 : 1,
+          visibility: hideBottomPanel ? 'hidden' : 'visible',
+          transition: 'opacity 0.2s, visibility 0.2s',
+        }}
+      >
           {/* Floating cards */}
           {carouselRestaurants.length > 0 && (
             <div
@@ -380,7 +395,6 @@ export default function HomePage() {
             </span>
           </div>
         </div>
-      )}
 
       {/* === SHEET — always in DOM, translated off-screen when closed === */}
       <motion.div
