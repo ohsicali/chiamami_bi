@@ -248,7 +248,7 @@ const MapView = forwardRef(function MapView({
     zoomOut: () => map.current?.zoomOut({ duration: 300 }),
     flyToUser: (pos) => {
       if (!map.current || !pos) return
-      map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 16, duration: 1200, essential: true })
+      map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 14, duration: 1200, essential: true })
     },
     flyToCity: (lng, lat, zoom = 13) => {
       if (!map.current) return
