@@ -43,11 +43,11 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
       >
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-baseline gap-1">
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: 13, color: '#8A8680', letterSpacing: 1, textTransform: 'uppercase' }}>la</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, fontSize: 20, color: '#FAF7F2' }}>Guida</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: 13, color: '#8A8680' }}>di</span>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: '#E8453C' }}>Bi</span>
+          <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
+            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
+            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>
+              by Chiamami Bi
+            </span>
           </Link>
 
           <div className="flex items-center gap-3">

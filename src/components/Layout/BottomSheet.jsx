@@ -34,14 +34,19 @@ function closestSnap(val, points) {
 }
 
 const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, ref) {
-  const [snapIndex, setSnapIndex] = useState(SNAP_PEEK)
+  const [snapIndex, setSnapIndex] = useState(SNAP_HALF)
   const [snapHeights, setSnapHeights] = useState(getSnapHeights)
-  const sheetHeight = useMotionValue(snapHeights[SNAP_PEEK])
+  const sheetHeight = useMotionValue(snapHeights[SNAP_HALF])
   const contentRef = useRef(null)
   const sheetRef = useRef(null)
   const isDragging = useRef(false)
   const snapIndexRef = useRef(snapIndex)
   snapIndexRef.current = snapIndex
+
+  // Notify parent of initial snap state
+  useEffect(() => {
+    onSnapChange?.(SNAP_HALF)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recalculate on resize
   useEffect(() => {

@@ -1,18 +1,19 @@
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { SNAP_PEEK, SNAP_HALF, SNAP_FULL } from '../Layout/BottomSheet'
 
-function getButtonStyle(isDark) {
+function getButtonStyle() {
   return {
     width: 44,
     height: 44,
     borderRadius: '50%',
-    background: isDark ? '#1C1C1E' : '#fff',
-    border: 'none',
-    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.15)',
+    background: 'rgba(17,17,17,0.85)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    color: isDark ? '#D1D5DB' : '#374151',
+    color: '#D1D5DB',
     fontSize: 20,
     WebkitTapHighlightColor: 'transparent',
     touchAction: 'manipulation',
@@ -55,93 +56,111 @@ const buttonVariants = {
   hover: { scale: 1.05 },
 }
 
+// Bottom offset based on sheet snap state
+function getBottomOffset(sheetSnap) {
+  if (sheetSnap === SNAP_PEEK) return 110
+  if (sheetSnap === SNAP_HALF) {
+    const h = typeof window !== 'undefined' ? window.innerHeight : 800
+    return h * 0.55 + 24
+  }
+  return 0 // SNAP_FULL — hidden
+}
+
 export default function MapControls({
   onLocateMe,
   isLocating,
   onZoomIn,
   onZoomOut,
+  sheetSnap = SNAP_PEEK,
 }) {
-  const isDark = document.documentElement.classList.contains('dark')
-  const BUTTON_STYLE = getButtonStyle(isDark)
+  const BUTTON_STYLE = getButtonStyle()
+  const isHidden = sheetSnap === SNAP_FULL
+  const bottomOffset = getBottomOffset(sheetSnap)
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
-      style={{
-        position: 'absolute',
-        right: 16,
-        bottom: 125,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        zIndex: 10,
-      }}
-    >
-      {/* Locate me button */}
-      <motion.button
-        variants={buttonVariants}
-        initial="initial"
-        animate="animate"
-        whileTap="tap"
-        whileHover="hover"
-        transition={{ duration: 0.2 }}
-        onClick={onLocateMe}
-        aria-label="Vicino a me"
-        title="Vicino a me"
-        style={{
-          ...BUTTON_STYLE,
-          color: isLocating ? '#3B82F6' : '#374151',
-          position: 'relative',
-          overflow: 'visible',
-        }}
-      >
-        {isLocating && (
-          <motion.div
-            animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+    <AnimatePresence>
+      {!isHidden && (
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0, bottom: bottomOffset }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={{
+            position: 'absolute',
+            right: 16,
+            bottom: bottomOffset,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            zIndex: 10,
+          }}
+        >
+          {/* Locate me button */}
+          <motion.button
+            variants={buttonVariants}
+            initial="initial"
+            animate="animate"
+            whileTap="tap"
+            whileHover="hover"
+            transition={{ duration: 0.2 }}
+            onClick={onLocateMe}
+            aria-label="Vicino a me"
+            title="Vicino a me"
             style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '50%',
-              background: 'rgba(59,130,246,0.2)',
+              ...BUTTON_STYLE,
+              color: isLocating ? '#3B82F6' : '#D1D5DB',
+              position: 'relative',
+              overflow: 'visible',
             }}
-          />
-        )}
-        <LocateIcon />
-      </motion.button>
+          >
+            {isLocating && (
+              <motion.div
+                animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  background: 'rgba(59,130,246,0.2)',
+                }}
+              />
+            )}
+            <LocateIcon />
+          </motion.button>
 
-      {/* Zoom in */}
-      <motion.button
-        variants={buttonVariants}
-        initial="initial"
-        animate="animate"
-        whileTap="tap"
-        whileHover="hover"
-        transition={{ duration: 0.2, delay: 0.05 }}
-        onClick={onZoomIn}
-        aria-label="Zoom avanti"
-        title="Zoom avanti"
-        style={BUTTON_STYLE}
-      >
-        <PlusIcon />
-      </motion.button>
+          {/* Zoom in */}
+          <motion.button
+            variants={buttonVariants}
+            initial="initial"
+            animate="animate"
+            whileTap="tap"
+            whileHover="hover"
+            transition={{ duration: 0.2, delay: 0.05 }}
+            onClick={onZoomIn}
+            aria-label="Zoom avanti"
+            title="Zoom avanti"
+            style={BUTTON_STYLE}
+          >
+            <PlusIcon />
+          </motion.button>
 
-      {/* Zoom out */}
-      <motion.button
-        variants={buttonVariants}
-        initial="initial"
-        animate="animate"
-        whileTap="tap"
-        whileHover="hover"
-        transition={{ duration: 0.2, delay: 0.1 }}
-        onClick={onZoomOut}
-        aria-label="Zoom indietro"
-        title="Zoom indietro"
-        style={BUTTON_STYLE}
-      >
-        <MinusIcon />
-      </motion.button>
-    </motion.div>
+          {/* Zoom out */}
+          <motion.button
+            variants={buttonVariants}
+            initial="initial"
+            animate="animate"
+            whileTap="tap"
+            whileHover="hover"
+            transition={{ duration: 0.2, delay: 0.1 }}
+            onClick={onZoomOut}
+            aria-label="Zoom indietro"
+            title="Zoom indietro"
+            style={BUTTON_STYLE}
+          >
+            <MinusIcon />
+          </motion.button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

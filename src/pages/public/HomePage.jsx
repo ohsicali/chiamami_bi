@@ -67,7 +67,7 @@ export default function HomePage() {
     : restaurants
 
   const [selectedId, setSelectedId] = useState(null)
-  const [sheetSnap, setSheetSnap] = useState(SNAP_PEEK)
+  const [sheetSnap, setSheetSnap] = useState(SNAP_HALF)
   const [visibleIds, setVisibleIds] = useState(null)
   const [mapCenter, setMapCenter] = useState(null)
   const mapRef = useRef(null)
@@ -155,7 +155,43 @@ export default function HomePage() {
         isLocating={geoLoading}
         onZoomIn={() => mapRef.current?.zoomIn()}
         onZoomOut={() => mapRef.current?.zoomOut()}
+        sheetSnap={sheetSnap}
       />
+
+      {/* Floating "Elenco" button when sheet is collapsed */}
+      {sheetSnap === SNAP_PEEK && (
+        <button
+          onClick={() => sheetRef.current?.snapTo(SNAP_HALF)}
+          style={{
+            position: 'absolute',
+            bottom: 110,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 20,
+            background: '#111',
+            color: '#FAF7F2',
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '10px 24px',
+            borderRadius: 24,
+            border: 'none',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            letterSpacing: 0.5,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+          Elenco
+        </button>
+      )}
 
       {/* Bottom Sheet */}
       <BottomSheet ref={sheetRef} onSnapChange={handleSnapChange}>
