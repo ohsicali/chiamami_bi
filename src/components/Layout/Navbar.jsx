@@ -36,8 +36,6 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   const [searching, setSearching] = useState(false);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
-  const [modalBottom, setModalBottom] = useState(0);
-  const [modalMaxH, setModalMaxH] = useState('80dvh');
 
   // Get unique cities that actually have restaurants in DB
   const citiesWithRestaurants = useCallback(() => {
@@ -90,31 +88,6 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
     debounceRef.current = setTimeout(() => searchCities(query), 300);
     return () => clearTimeout(debounceRef.current);
   }, [query, searchCities]);
-
-  // No body style manipulation — it causes iOS Safari layout reflow bugs
-
-  // Track visual viewport to position modal above keyboard
-  useEffect(() => {
-    if (!cityPickerOpen) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      // offsetTop = how far the visual viewport is from the layout viewport top
-      // When keyboard opens, the visual viewport shrinks and may shift
-      const keyboardH = window.innerHeight - vv.height;
-      setModalBottom(keyboardH);
-      setModalMaxH(vv.height * 0.85);
-    };
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    update();
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-      setModalBottom(0);
-      setModalMaxH('80dvh');
-    };
-  }, [cityPickerOpen]);
 
   const showSuggestions = query.length >= 2 && suggestions.length > 0;
   const showPopular = query.length < 2;
@@ -198,13 +171,11 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-                className="absolute left-0 right-0"
+                className="absolute bottom-0 left-0 right-0"
                 style={{
-                  bottom: modalBottom,
                   background: '#FAF7F2', borderRadius: '28px 28px 0 0',
-                  paddingBottom: modalBottom > 0 ? 10 : 'env(safe-area-inset-bottom, 20px)',
-                  maxHeight: modalMaxH, display: 'flex', flexDirection: 'column',
-                  transition: 'bottom 0.15s ease-out, max-height 0.15s ease-out',
+                  paddingBottom: 'env(safe-area-inset-bottom, 20px)',
+                  maxHeight: '70vh', display: 'flex', flexDirection: 'column',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
