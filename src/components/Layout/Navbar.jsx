@@ -38,7 +38,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
           padding: '0 22px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
           paddingBottom: '14px',
-          background: 'linear-gradient(180deg, rgba(250,247,242,0.95) 0%, rgba(250,247,242,0.6) 70%, transparent 100%)',
+          background: 'linear-gradient(180deg, rgba(17,17,17,0.85) 0%, rgba(17,17,17,0.4) 60%, transparent 100%)',
         }}
       >
         <div className="flex items-center justify-between">
@@ -60,10 +60,10 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               onClick={() => setCityPickerOpen(true)}
               className="flex items-center gap-1.5"
               style={{
-                fontSize: 12, color: '#555', fontWeight: 600,
+                fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500,
                 padding: '6px 12px', borderRadius: 20,
-                background: 'rgba(0,0,0,0.04)',
-                border: '1px solid rgba(0,0,0,0.08)',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
               }}
             >
               {/* Pulsing green dot */}
