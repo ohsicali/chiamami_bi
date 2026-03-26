@@ -228,7 +228,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ borderBottom: '1px solid #E8E5DE' }}>
-                  <h3 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif", fontSize: 20, fontWeight: 600, color: '#111' }}>
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 600, color: '#111' }}>
                     Filtri
                   </h3>
                   <button type="button" onClick={() => setModalOpen(false)} className="p-2 rounded-full" style={{ background: 'rgba(0,0,0,0.04)' }}>

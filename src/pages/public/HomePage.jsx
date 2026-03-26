@@ -107,7 +107,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       </div>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <div style={{
-          fontFamily: "'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
           fontSize: 11, fontWeight: 600, color: '#111',
           lineHeight: 1.6, marginBottom: 2,
           whiteSpace: 'nowrap', textOverflow: 'ellipsis',
@@ -516,7 +516,7 @@ export default function HomePage() {
                 {greeting.sub}
               </p>
               <h1 style={{
-                fontFamily: "'TAN Songbird', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+                fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
                 fontSize: 22, fontWeight: 600, color: '#111', lineHeight: 1.5,
               }}>
                 {greeting.main}{' '}

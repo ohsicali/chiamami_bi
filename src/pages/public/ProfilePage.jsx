@@ -1099,7 +1099,7 @@ export default function ProfilePage() {
           </button>
           <Link to="/" className="flex flex-col items-center" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>by Chiamami Bi</span>
+            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>by Chiamami Bi</span>
           </Link>
           <div className="w-10" />
         </div>
