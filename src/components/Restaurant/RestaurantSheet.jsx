@@ -155,6 +155,7 @@ export default function RestaurantSheet({
   const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
   const gradientRef = useRef(null)
+  const photoRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
   const [sheetScope, animateSheet] = useAnimate()
   const { handleShare } = useShare(restaurant, t)
@@ -170,17 +171,22 @@ export default function RestaurantSheet({
     return () => { if (meta && original) meta.setAttribute('content', original) }
   }, [])
 
-  // Smooth scroll-driven gradient — direct DOM manipulation, no re-renders
+  // Smooth scroll-driven parallax + gradient — direct DOM, 60fps
   useEffect(() => {
     const el = scrollRef.current
     const grad = gradientRef.current
+    const photo = photoRef.current
     if (!el || !grad) return
     let ticking = false
     const onScroll = () => {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        grad.style.opacity = String(Math.min(el.scrollTop / 200, 1))
+        const s = el.scrollTop
+        // White gradient fades in
+        grad.style.opacity = String(Math.min(s / 200, 1))
+        // Photo parallax — moves up at 0.4x scroll speed
+        if (photo) photo.style.transform = `translateY(${s * 0.4}px)`
         ticking = false
       })
     }
@@ -236,7 +242,7 @@ export default function RestaurantSheet({
         <div
           ref={gradientRef}
           style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: '42vh', zIndex: 3,
+            position: 'absolute', top: 0, left: 0, right: 0, height: '50vh', zIndex: 3,
             background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 40%, transparent 100%)',
             opacity: 0,
             pointerEvents: 'none',
@@ -248,15 +254,29 @@ export default function RestaurantSheet({
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
 
           {/* Photo area — sticky so white card scrolls over it */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 0 }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" onIndexChange={setPhotoIndex} />
+          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden' }}>
+            <div ref={photoRef} style={{ willChange: 'transform' }}>
+              <PhotoCarousel photos={restaurant.photos || []} height="50vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+            </div>
 
             {/* Bottom shadow on photo to separate from white card */}
             <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 100,
               background: 'linear-gradient(0deg, rgba(0,0,0,0.2) 0%, transparent 100%)',
               pointerEvents: 'none', zIndex: 1,
             }} />
+
+            {/* Photo counter — on photo, bottom right */}
+            {photoCount > 1 && (
+              <div style={{
+                position: 'absolute', bottom: 40, right: 16, zIndex: 2,
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                borderRadius: 14, padding: '4px 10px',
+                fontSize: 12, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+              }}>
+                {photoIndex + 1} / {photoCount}
+              </div>
+            )}
 
             {/* Back button — white circle */}
             <button
@@ -294,13 +314,13 @@ export default function RestaurantSheet({
           </div>
 
           {/* Spacer so white card starts below the sticky photo */}
-          <div style={{ height: '42vh', pointerEvents: 'none' }} />
+          <div style={{ height: '50vh', pointerEvents: 'none' }} />
 
           {/* White content card — rounded top, scrolls up over photo */}
           <div style={{
             background: '#fff',
             borderRadius: '20px 20px 0 0',
-            marginTop: '-42vh',
+            marginTop: '-50vh',
             position: 'relative', zIndex: 2,
           }}>
             {/* Green discount strip following the card's rounded corners */}
@@ -314,18 +334,6 @@ export default function RestaurantSheet({
                 borderRadius: '20px 20px 0 0',
               }}>
                 {discountTitle}
-              </div>
-            )}
-
-            {/* Photo counter — anchored to white card, top right */}
-            {photoCount > 1 && (
-              <div style={{
-                position: 'absolute', top: discountTitle ? 38 : 14, right: 18, zIndex: 5,
-                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-                borderRadius: 12, padding: '3px 10px',
-                fontSize: 11, fontWeight: 600, color: '#fff',
-              }}>
-                {photoIndex + 1} / {photoCount}
               </div>
             )}
 
