@@ -1,13 +1,15 @@
-import { motion, useAnimate } from 'framer-motion'
+import { motion, useAnimate, AnimatePresence } from 'framer-motion'
 import { useRef, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
 import SaveButton from './SaveButton'
-import DiscountBanner from '../Discount/DiscountBanner'
 import ReviewSection from '../Review/ReviewSection'
+import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 
@@ -19,28 +21,6 @@ const contentVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
-}
-
-/* ── Action pill button ── */
-function ActionPill({ label, href, onClick, filled }) {
-  const Tag = href ? 'a' : 'button'
-  const props = href ? { href, target: '_blank', rel: 'noopener noreferrer' } : { onClick }
-  return (
-    <Tag
-      {...props}
-      style={{
-        flex: 1, padding: '12px 0', borderRadius: 24, textAlign: 'center',
-        fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'none',
-        WebkitTapHighlightColor: 'transparent',
-        ...(filled
-          ? { background: '#111', color: '#fff', border: '1px solid #111' }
-          : { background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.12)' }
-        ),
-      }}
-    >
-      {label}
-    </Tag>
-  )
 }
 
 /* ── Share logic ── */
@@ -60,6 +40,113 @@ function useShare(restaurant, t) {
   return { handleShare, copied }
 }
 
+/* ── Sticky Discount Bar ── */
+function StickyDiscountBar({ restaurantId }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { discount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
+  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
+  const [generating, setGenerating] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+
+  if (discountLoading || !discount) return null
+  const isExpired = new Date(discount.valid_until) < new Date()
+  const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
+  if (isExpired || isMaxed) return null
+
+  const isRedeemed = redemption?.status === 'redeemed'
+  const isGenerated = redemption?.status === 'generated'
+
+  const handleUnlock = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: window.location.pathname, discount: true } })
+      return
+    }
+    setGenerating(true)
+    try {
+      const result = await generateRedemption()
+      if (result) setShowQR(true)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // Format discount value
+  const val = String(discount.discount_value)
+  const displayVal = val.includes('%') && !val.startsWith('-') ? `-${val}` : val
+
+  return (
+    <>
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
+        style={{
+          position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 30,
+          background: '#111', color: '#fff',
+          padding: '14px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayVal}</span>
+            {discount.title && discount.title !== discount.discount_value && (
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.title}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Action button */}
+        {isRedeemed ? (
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+            {t('discount.alreadyUsed')}
+          </span>
+        ) : isGenerated ? (
+          <button
+            onClick={() => setShowQR(true)}
+            style={{
+              background: '#E8453C', color: '#fff', border: 'none',
+              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Mostra QR
+          </button>
+        ) : (
+          <button
+            onClick={handleUnlock}
+            disabled={generating || redemptionLoading}
+            style={{
+              background: '#fff', color: '#111', border: 'none',
+              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', opacity: generating ? 0.5 : 1,
+            }}
+          >
+            {generating ? '...' : 'Sblocca'}
+          </button>
+        )}
+      </motion.div>
+
+      <AnimatePresence>
+        {showQR && redemption && (
+          <QRCodeDisplay
+            qrCode={redemption.qr_code}
+            discountTitle={discount.title}
+            discountValue={discount.discount_value}
+            onClose={() => setShowQR(false)}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
 /* ══════════════════════════════════════════ */
 export default function RestaurantSheet({
   restaurant,
@@ -74,14 +161,14 @@ export default function RestaurantSheet({
   const scrollRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
   const [sheetScope, animateSheet] = useAnimate()
-  const { handleShare, copied } = useShare(restaurant, t)
+  const { handleShare } = useShare(restaurant, t)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
   const handleClose = useCallback(async () => {
     await Promise.all([
-      animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.25, ease: 'easeOut' }),
-      animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, { duration: 0.32, ease: [0.4, 0, 0.7, 0.2] }),
+      animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' }),
+      animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, { duration: 0.28, ease: [0.4, 0, 0.7, 0.2] }),
     ])
     onClose()
   }, [onClose, animateBackdrop, animateSheet, backdropScope, sheetScope])
@@ -89,113 +176,99 @@ export default function RestaurantSheet({
   if (!restaurant) return null
 
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => getCategoryInfo(name))
-    .filter(Boolean)
+    .map(name => getCategoryInfo(name)).filter(Boolean)
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
   const mapsUrl = restaurant.google_maps_url || (restaurant.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}` : null)
   const phoneUrl = restaurant.phone ? `tel:${restaurant.phone.replace(/\s/g, '')}` : null
   const reviewText = restaurant.our_review || ''
   const tipText = restaurant.our_tip || null
-
-  // Discount for this restaurant
   const discount = activeDiscounts.find(d => d.restaurant_id === restaurant.id)
   const discountValue = discount?.discount_value
-
-  // Distance
   const distance = position && restaurant.latitude && restaurant.longitude
-    ? getDistance(position.lat, position.lng, restaurant.latitude, restaurant.longitude)
-    : null
+    ? getDistance(position.lat, position.lng, restaurant.latitude, restaurant.longitude) : null
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
       {/* Backdrop */}
       <motion.div
         ref={backdropScope}
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.2 }}
         onClick={handleClose}
       />
 
-      {/* Sheet */}
+      {/* Full page sheet — no mt, no rounded top */}
       <motion.div
         ref={sheetScope}
-        className="relative mt-12 flex flex-1 flex-col overflow-hidden rounded-t-3xl bg-bg"
+        className="relative flex flex-1 flex-col overflow-hidden bg-bg"
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', damping: 30, stiffness: 350, mass: 0.7 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
-        {/* Back button */}
-        <motion.button
-          className="absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-md"
-          style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', color: '#fff' }}
-          onClick={handleClose}
-          whileTap={{ scale: 0.92 }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.25, type: 'spring', stiffness: 400, damping: 20 }}
-          aria-label="Chiudi"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
-          </svg>
-        </motion.button>
-
-        {/* Save + Share buttons — top right */}
-        <motion.div
-          className="absolute top-4 right-4 z-10 flex items-center gap-2"
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 20 }}
-        >
-          {onSaveToggle && <SaveButton saved={saved} onClick={onSaveToggle} size="md" />}
-          <button
-            onClick={handleShare}
-            style={{
-              width: 40, height: 40, borderRadius: '50%',
-              background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: 'none', cursor: 'pointer', color: '#fff',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-          </button>
-        </motion.div>
-
         {/* Scrollable content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
-          {/* Photo area with overlay info */}
-          <div style={{ position: 'relative' }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="320px" restaurantName={restaurant.name} city={restaurant.city} />
 
-            {/* Gradient overlay at bottom of photo */}
+          {/* Photo area with overlay */}
+          <div style={{ position: 'relative' }}>
+            <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" />
+
+            {/* Gradient overlay */}
             <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0, height: 140,
-              background: 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%)',
-              pointerEvents: 'none', borderRadius: '0 0 0 0',
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
+              pointerEvents: 'none',
             }} />
 
+            {/* Back button */}
+            <button
+              onClick={handleClose}
+              style={{
+                position: 'absolute', top: 16, left: 16, zIndex: 10,
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer', color: '#fff',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+
+            {/* Save + Share — top right */}
+            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 10 }}>
+              {onSaveToggle && <SaveButton saved={saved} onClick={onSaveToggle} size="md" />}
+              <button
+                onClick={handleShare}
+                style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: 'none', cursor: 'pointer', color: '#fff',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+              </button>
+            </div>
+
             {/* Info overlaid on photo bottom */}
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
-              padding: '0 20px 16px', zIndex: 5,
-            }}>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 16px', zIndex: 5 }}>
               {/* Name + discount badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <h1 style={{
                   fontFamily: "'TAN Songbird', serif",
-                  fontSize: 24, fontWeight: 700, color: '#fff',
-                  lineHeight: 1.2,
+                  fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.2,
                 }}>
                   {restaurant.name}
                 </h1>
                 {discountValue && (
                   <span style={{
                     background: '#E8453C', color: '#fff',
-                    fontSize: 12, fontWeight: 700,
+                    fontSize: 13, fontWeight: 700,
                     padding: '4px 10px', borderRadius: 8,
                     whiteSpace: 'nowrap', flexShrink: 0,
                   }}>
@@ -205,21 +278,18 @@ export default function RestaurantSheet({
               </div>
 
               {/* Category badges + price */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
                 {categories.map(cat => (
-                  <span
-                    key={cat.name}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 3,
-                      backgroundColor: `${cat.color}30`, color: '#fff',
-                      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
-                    }}
-                  >
+                  <span key={cat.name} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                    backgroundColor: `${cat.color}30`, color: '#fff',
+                    fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
+                  }}>
                     {cat.emoji} {cat.name}
                   </span>
                 ))}
                 {priceLabel && (
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{priceLabel}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{priceLabel}</span>
                 )}
               </div>
 
@@ -244,14 +314,32 @@ export default function RestaurantSheet({
             initial="hidden"
             animate="visible"
           >
-            {/* Action buttons row */}
+            {/* Action buttons — squared pills */}
             <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8 }}>
-              {mapsUrl && <ActionPill label="Indicazioni" href={mapsUrl} filled />}
-              {phoneUrl && <ActionPill label="Chiama" href={phoneUrl} />}
-              {restaurant.website && <ActionPill label="Sito" href={restaurant.website} />}
+              {mapsUrl && (
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                  flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
+                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  background: '#111', color: '#fff', border: '1px solid #111',
+                }}>Indicazioni</a>
+              )}
+              {phoneUrl && (
+                <a href={phoneUrl} style={{
+                  flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
+                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                }}>Chiama</a>
+              )}
+              {restaurant.website && (
+                <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
+                  flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
+                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                }}>Sito</a>
+              )}
             </motion.div>
 
-            {/* Perché mi piace — Bi's review */}
+            {/* Recensione di Bi */}
             {reviewText && (
               <motion.div variants={itemVariants}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -259,16 +347,11 @@ export default function RestaurantSheet({
                     width: 28, height: 28, borderRadius: '50%',
                     background: '#E8453C', color: '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, fontWeight: 800,
-                  }}>
-                    Bi
-                  </span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Perché mi piace</span>
+                    fontSize: 11, fontWeight: 800,
+                  }}>Bi</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Recensione di Bi</span>
                 </div>
-                <p style={{
-                  fontSize: 14, lineHeight: 1.7, color: '#444',
-                  paddingLeft: 36,
-                }}>
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', paddingLeft: 36 }}>
                   "{reviewText}"
                 </p>
                 {!isItalian && (
@@ -279,15 +362,18 @@ export default function RestaurantSheet({
               </motion.div>
             )}
 
-            {/* Il tip di Bi — blockquote style with red left border */}
+            {/* Il tip di Bi — yellow background with red left border */}
             {tipText && (
               <motion.div variants={itemVariants}>
                 <div style={{
+                  background: '#FEF3C7',
                   borderLeft: '3px solid #E8453C',
-                  paddingLeft: 16, marginLeft: 36,
+                  borderRadius: '0 12px 12px 0',
+                  padding: '14px 16px',
+                  marginLeft: 36,
                 }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: '#E8453C', marginBottom: 4 }}>Il tip di Bi</p>
-                  <p style={{ fontSize: 14, lineHeight: 1.6, color: '#444', fontWeight: 500 }}>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, color: '#78350F', fontWeight: 500 }}>
                     "{tipText}"
                   </p>
                 </div>
@@ -306,9 +392,7 @@ export default function RestaurantSheet({
                   <span key={tag} style={{
                     fontSize: 12, fontWeight: 600, color: '#92700C',
                     background: '#FEF3C7', padding: '5px 12px', borderRadius: 20,
-                  }}>
-                    {tag}
-                  </span>
+                  }}>{tag}</span>
                 ))}
               </motion.div>
             )}
@@ -318,11 +402,10 @@ export default function RestaurantSheet({
               <motion.div variants={itemVariants}>
                 <a
                   href={restaurant.tiktok_url || restaurant.instagram_reel}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target="_blank" rel="noopener noreferrer"
                   style={{
                     display: 'flex', alignItems: 'center', gap: 14,
-                    background: '#111', borderRadius: 16, padding: 14,
+                    background: '#111', borderRadius: 12, padding: 14,
                     textDecoration: 'none', color: '#fff',
                   }}
                 >
@@ -338,22 +421,13 @@ export default function RestaurantSheet({
                     )}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600 }}>
-                      {restaurant.tiktok_url ? 'Guarda su TikTok' : 'Guarda su Instagram'}
-                    </p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>
-                      Il video di Bi su {restaurant.name}
-                    </p>
+                    <p style={{ fontSize: 13, fontWeight: 600 }}>{restaurant.tiktok_url ? 'Guarda su TikTok' : 'Guarda su Instagram'}</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Il video di Bi su {restaurant.name}</p>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0, opacity: 0.6 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 </a>
               </motion.div>
             )}
-
-            {/* Discount banner */}
-            <motion.div variants={itemVariants}>
-              <DiscountBanner restaurantId={restaurant.id} />
-            </motion.div>
 
             {/* Community reviews */}
             <motion.div variants={itemVariants}>
@@ -370,6 +444,9 @@ export default function RestaurantSheet({
             </motion.div>
           </motion.div>
         </div>
+
+        {/* Sticky discount bar at bottom */}
+        <StickyDiscountBar restaurantId={restaurant.id} />
       </motion.div>
     </div>
   )
