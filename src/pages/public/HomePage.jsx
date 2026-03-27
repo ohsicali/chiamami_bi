@@ -48,7 +48,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
   const photoUrl = firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
     : null
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range + 1) : null
+  const priceLevel = restaurant.price_range != null ? restaurant.price_range : null
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
     : null
@@ -84,7 +84,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           textAlign: 'center',
           letterSpacing: 0.5,
         }}>
-          Sconto -{discountValue}%
+          {(() => { const n = String(discountValue).replace(/[-% ]/g, ''); return n ? `-${n}%` : discountValue })()}
         </div>
       )}
 
@@ -123,7 +123,13 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
               {category.emoji} {category.name}
             </span>
           )}
-          {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+          {priceLevel != null && (
+            <span style={{ fontSize: 10, fontWeight: 600 }}>
+              {[1, 2, 3].map(i => (
+                <span key={i} style={{ color: i <= priceLevel ? '#111' : '#D1CDC6' }}>€</span>
+              ))}
+            </span>
+          )}
         </div>
         {/* Distance */}
         {distance != null && (

@@ -17,6 +17,25 @@ const cardVariants = {
   }),
 }
 
+/* Clean discount: strip -, %, spaces — always show as "-N%" */
+function formatDiscount(val) {
+  if (!val) return null
+  const num = String(val).replace(/[-% ]/g, '')
+  return num ? `-${num}%` : null
+}
+
+/* Price: always 3 €, colored by level */
+function PriceDisplay({ level, light }) {
+  if (level == null) return null
+  return (
+    <span style={{ fontWeight: 600 }}>
+      {[1, 2, 3].map(i => (
+        <span key={i} style={{ color: i <= level ? (light ? '#fff' : '#111') : (light ? 'rgba(255,255,255,0.3)' : '#D1CDC6') }}>€</span>
+      ))}
+    </span>
+  )
+}
+
 export default function RestaurantCard({
   restaurant,
   index = 0,
@@ -49,9 +68,8 @@ export default function RestaurantCard({
       ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
       : null
 
-  const priceStr = restaurant.price_range != null
-    ? '€'.repeat(restaurant.price_range + 1)
-    : null
+  const priceLevel = restaurant.price_range != null ? restaurant.price_range : null
+  const discountStr = formatDiscount(discountValue)
 
   // HERO VARIANT — dark featured card
   if (variant === 'hero') {
@@ -97,14 +115,14 @@ export default function RestaurantCard({
             <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
             In evidenza
           </div>
-          {hasDiscount && discountValue && (
+          {hasDiscount && discountStr && (
             <div style={{
               background: '#E8453C', color: '#fff',
               fontSize: 11, fontWeight: 700,
               padding: '5px 12px', borderRadius: 10,
               boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
             }}>
-              -{discountValue}%
+              {discountStr}
             </div>
           )}
         </div>
@@ -170,10 +188,10 @@ export default function RestaurantCard({
                 <span>{restaurant.recommended_for[0]}</span>
               </>
             )}
-            {priceStr && (
+            {priceLevel != null && (
               <>
                 <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
-                <span>{priceStr}</span>
+                <PriceDisplay level={priceLevel} light />
               </>
             )}
             {distance != null && (
@@ -227,7 +245,7 @@ export default function RestaurantCard({
           </div>
         )}
         {/* Discount banner at bottom of photo */}
-        {hasDiscount && discountValue && (
+        {hasDiscount && discountStr && (
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
             background: '#4ADE80', color: '#fff',
@@ -235,7 +253,7 @@ export default function RestaurantCard({
             padding: '3px 0', textAlign: 'center',
             borderRadius: '0 0 14px 14px',
           }}>
-            -{discountValue}%
+            {discountStr}
           </div>
         )}
       </div>
@@ -291,19 +309,13 @@ export default function RestaurantCard({
           {restaurant.recommended_for?.length > 0 && (
             <>
               <span>{restaurant.recommended_for[0]}</span>
-              {(priceStr || distance != null) && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
+              {(priceLevel != null || distance != null) && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
             </>
           )}
-          {priceStr && (
-            <span style={{ fontWeight: 600 }}>
-              {priceStr.split('').map((c, i) => (
-                <span key={i} style={{ color: i < (restaurant.price_range + 1) ? '#111' : '#ccc' }}>€</span>
-              ))}
-            </span>
-          )}
+          {priceLevel != null && <PriceDisplay level={priceLevel} />}
           {distance != null && (
             <>
-              {priceStr && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
+              {priceLevel != null && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
                 {formatDistance(distance)}
