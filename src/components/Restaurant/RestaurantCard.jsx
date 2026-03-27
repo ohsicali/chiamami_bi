@@ -50,7 +50,7 @@ export default function RestaurantCard({
       ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
       : null
 
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range + 1) : null
+  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
 
   // HERO VARIANT — dark featured card
   if (variant === 'hero') {

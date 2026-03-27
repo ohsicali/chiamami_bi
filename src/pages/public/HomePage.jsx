@@ -48,7 +48,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
   const photoUrl = firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
     : null
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range + 1) : null
+  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
     : null
