@@ -89,9 +89,9 @@ export default function RestaurantCard({
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             background: '#C4A265', color: '#fff',
-            fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+            fontSize: 11, fontWeight: 700, letterSpacing: 1,
             textTransform: 'uppercase',
-            padding: '5px 10px', borderRadius: 8,
+            padding: '5px 12px', borderRadius: 10,
           }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
             In evidenza
@@ -100,7 +100,7 @@ export default function RestaurantCard({
             <div style={{
               background: '#E8453C', color: '#fff',
               fontSize: 11, fontWeight: 700,
-              padding: '5px 12px', borderRadius: 8,
+              padding: '5px 12px', borderRadius: 10,
               boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
             }}>
               -{discountValue}%
