@@ -47,6 +47,37 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           WebkitMaskImage: 'linear-gradient(90deg, #000 85%, transparent)',
         }}
       >
+        {/* "Tutti" pill */}
+        <button
+          type="button"
+          onClick={() => onFilterChange?.({ ...filters, category: null })}
+          className="flex items-center gap-2 flex-shrink-0"
+          style={{
+            padding: '8px 16px 8px 10px',
+            borderRadius: 40,
+            background: selected.length === 0 ? '#111' : '#fff',
+            border: `1.5px solid ${selected.length === 0 ? '#111' : '#E8E5DE'}`,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          <span style={{
+            width: 32, height: 32, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 15,
+            background: selected.length === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)',
+          }}>
+            🍽
+          </span>
+          <span style={{
+            fontSize: 13, fontWeight: 600,
+            color: selected.length === 0 ? '#FAF7F2' : '#111',
+            whiteSpace: 'nowrap',
+          }}>
+            Tutti
+          </span>
+        </button>
+
         {visibleCats.map((cat) => {
           const active = isActive(cat.name)
           return (
