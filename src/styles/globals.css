@@ -62,6 +62,12 @@ body {
   border-radius: 2px;
 }
 
+/* Hero card shimmer — single light sweep */
+@keyframes hero-shimmer {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }

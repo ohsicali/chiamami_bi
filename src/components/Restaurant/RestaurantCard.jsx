@@ -82,6 +82,18 @@ export default function RestaurantCard({
           <div className="absolute inset-0" style={{
             background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)',
           }} />
+          {/* Shimmer — single light sweep */}
+          {imageLoaded && (
+            <div className="absolute inset-0 overflow-hidden" style={{ borderRadius: 22 }}>
+              <div style={{
+                position: 'absolute', inset: 0,
+                width: '40%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)',
+                animation: 'hero-shimmer 1.2s ease-out 0.3s forwards',
+                transform: 'translateX(-100%) skewX(-15deg)',
+              }} />
+            </div>
+          )}
         </div>
 
         {/* Top left badges: In evidenza + Discount */}
