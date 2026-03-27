@@ -1,5 +1,5 @@
 import { motion, useAnimate, AnimatePresence } from 'framer-motion'
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import PhotoCarousel from './PhotoCarousel'
@@ -85,7 +85,7 @@ function StickyDiscountBar({ restaurantId }) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
         style={{
-          position: 'sticky', bottom: 16, left: 0, right: 0, zIndex: 30,
+          position: 'sticky', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 0, right: 0, zIndex: 30,
           margin: '0 16px',
           background: '#111', color: '#fff',
           padding: '14px 18px',
@@ -167,6 +167,14 @@ export default function RestaurantSheet({
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
+  // Dark theme-color while sheet is open (blends status bar with photo)
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    const original = meta?.getAttribute('content')
+    if (meta) meta.setAttribute('content', '#000000')
+    return () => { if (meta && original) meta.setAttribute('content', original) }
+  }, [])
+
   const handleClose = useCallback(async () => {
     await Promise.all([
       animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' }),
@@ -227,7 +235,7 @@ export default function RestaurantSheet({
             <button
               onClick={handleClose}
               style={{
-                position: 'absolute', top: 16, left: 16, zIndex: 10,
+                position: 'absolute', top: 'calc(16px + env(safe-area-inset-top, 0px))', left: 16, zIndex: 10,
                 width: 40, height: 40, borderRadius: '50%',
                 background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -240,7 +248,7 @@ export default function RestaurantSheet({
             </button>
 
             {/* Save + Share — top right */}
-            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', gap: 10 }}>
+            <div style={{ position: 'absolute', top: 'calc(16px + env(safe-area-inset-top, 0px))', right: 16, zIndex: 10, display: 'flex', gap: 10 }}>
               {onSaveToggle && <SaveButton saved={saved} onClick={onSaveToggle} size="md" />}
               <button
                 onClick={handleShare}
