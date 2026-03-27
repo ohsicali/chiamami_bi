@@ -190,7 +190,7 @@ export default function RestaurantCard({
   // DEFAULT VARIANT — horizontal compact card
   return (
     <motion.button
-      className="flex w-full items-center gap-3.5 text-left relative"
+      className="flex w-full items-start gap-3.5 text-left relative"
       style={{
         padding: 14,
         background: '#fff',
@@ -207,7 +207,7 @@ export default function RestaurantCard({
       onClick={() => onClick?.(restaurant)}
     >
       {/* Photo */}
-      <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 88, height: 88, borderRadius: 14 }}>
+      <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 100, height: 100, borderRadius: 14 }}>
         <div
           className="absolute inset-0"
           style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }}
@@ -228,7 +228,7 @@ export default function RestaurantCard({
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
+      <div className="flex-1 min-w-0 flex flex-col" style={{ paddingTop: 2 }}>
         {/* Name + discount */}
         <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
           <h3 style={{
@@ -258,7 +258,7 @@ export default function RestaurantCard({
         )}
 
         {/* Category badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
           {categories.map(cat => (
             <span
               key={cat.name}
@@ -275,22 +275,30 @@ export default function RestaurantCard({
           ))}
         </div>
 
-        {/* Bottom row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {distance != null && (
-            <span style={{ fontSize: 11, color: '#8A8680', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-              {formatDistance(distance)}
-            </span>
+        {/* Recommended + Price row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8A8680', fontWeight: 500 }}>
+          {restaurant.recommended_for?.length > 0 && (
+            <>
+              <span>{restaurant.recommended_for[0]}</span>
+              {priceStr && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
+            </>
           )}
           {priceStr && (
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>
+            <span style={{ fontWeight: 600 }}>
               {priceStr.split('').map((c, i) => (
                 <span key={i} style={{ color: i < (restaurant.price_range + 1) ? '#111' : '#ccc' }}>€</span>
               ))}
             </span>
           )}
         </div>
+
+        {/* Distance row */}
+        {distance != null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8A8680', fontWeight: 500, marginTop: 4 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            {formatDistance(distance)}
+          </div>
+        )}
       </div>
 
       {/* Save heart */}
