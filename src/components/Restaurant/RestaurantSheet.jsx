@@ -183,10 +183,10 @@ export default function RestaurantSheet({
       ticking = true
       requestAnimationFrame(() => {
         const s = el.scrollTop
-        // White gradient fades in
-        grad.style.opacity = String(Math.min(s / 200, 1))
-        // Photo parallax — moves up at 0.4x scroll speed
-        if (photo) photo.style.transform = `translateY(${s * 0.4}px)`
+        // White gradient fades in — fully opaque by 250px
+        grad.style.opacity = String(Math.min(s / 250, 1))
+        // Photo parallax — subtle scale + slow upward drift (no translateY gaps)
+        if (photo) photo.style.transform = `scale(${1 + s * 0.0004}) translateY(${-s * 0.12}px)`
         ticking = false
       })
     }
@@ -238,12 +238,12 @@ export default function RestaurantSheet({
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
-        {/* White gradient overlay from top — fades in smoothly as you scroll */}
+        {/* White gradient overlay — fades in as you scroll, becomes solid white merging with card */}
         <div
           ref={gradientRef}
           style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: '50vh', zIndex: 3,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 40%, transparent 100%)',
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 3,
+            background: 'linear-gradient(180deg, #fff 0%, #fff 30%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0) 80%)',
             opacity: 0,
             pointerEvents: 'none',
             willChange: 'opacity',
@@ -254,9 +254,9 @@ export default function RestaurantSheet({
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
 
           {/* Photo area — sticky so white card scrolls over it */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden' }}>
-            <div ref={photoRef} style={{ willChange: 'transform' }}>
-              <PhotoCarousel photos={restaurant.photos || []} height="50vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '50vh' }}>
+            <div ref={photoRef} style={{ willChange: 'transform', transformOrigin: 'center center' }}>
+              <PhotoCarousel photos={restaurant.photos || []} height="55vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
             </div>
 
             {/* Bottom shadow on photo to separate from white card */}
