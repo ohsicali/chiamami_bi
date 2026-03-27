@@ -226,30 +226,29 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
+        {/* Discount badge inside photo */}
+        {hasDiscount && discountValue && (
+          <div style={{
+            position: 'absolute', top: 6, left: 6,
+            background: '#4ADE80', color: '#fff',
+            fontSize: 10, fontWeight: 700,
+            padding: '2px 7px', borderRadius: 6,
+          }}>
+            -{discountValue}%
+          </div>
+        )}
       </div>
 
       {/* Body */}
       <div className="flex-1 min-w-0 flex flex-col" style={{ paddingTop: 2 }}>
-        {/* Name + discount */}
-        <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
-          <h3 style={{
-            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 14, fontWeight: 600, color: '#111',
-            lineHeight: 1.5,
-          }}>
-            {restaurant.name}
-          </h3>
-          {hasDiscount && discountValue && (
-            <span style={{
-              background: 'rgba(232,69,60,0.1)', color: '#E8453C',
-              fontSize: 11, fontWeight: 700,
-              padding: '2px 8px', borderRadius: 6,
-              whiteSpace: 'nowrap', flexShrink: 0,
-            }}>
-              {discountValue}
-            </span>
-          )}
-        </div>
+        {/* Name */}
+        <h3 style={{
+          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontSize: 14, fontWeight: 600, color: '#111',
+          lineHeight: 1.5, marginBottom: 3,
+        }}>
+          {restaurant.name}
+        </h3>
 
         {/* Tagline */}
         {restaurant.tagline && (
