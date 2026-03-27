@@ -133,7 +133,8 @@ function createPinEl(restaurant, isSaved, discountValue) {
       box-shadow:0 2px 6px rgba(74,222,128,0.4);
       pointer-events:none;
     `
-    badge.textContent = `-${discountValue}%`
+    const num = String(discountValue).replace(/[-% ]/g, '')
+    badge.textContent = num ? `-${num}%` : discountValue
     inner.appendChild(badge)
   }
 
