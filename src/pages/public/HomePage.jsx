@@ -30,12 +30,6 @@ function slugify(name) {
     .replace(/(^-|-$)/g, '')
 }
 
-function getGreeting() {
-  const h = new Date().getHours()
-  if (h < 12) return { sub: 'Buongiorno', main: 'Dove si mangia', em: 'oggi?' }
-  if (h < 18) return { sub: 'Buon pomeriggio', main: 'Dove si mangia', em: 'oggi?' }
-  return { sub: 'Buonasera', main: 'Dove si mangia', em: 'stasera?' }
-}
 
 const CAROUSEL_MAX = 4
 
@@ -181,7 +175,6 @@ function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const greeting = getGreeting()
 
   useEffect(() => {
     document.body.classList.add('map-fixed')
@@ -516,23 +509,6 @@ export default function HomePage() {
           }}
         >
           <div className="px-5">
-            {/* Greeting */}
-            <div style={{ marginBottom: 16 }}>
-              <p style={{
-                fontSize: 11, color: '#8A8680', fontWeight: 600,
-                letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6,
-              }}>
-                {greeting.sub}
-              </p>
-              <h1 style={{
-                fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                fontSize: 22, fontWeight: 600, color: '#111', lineHeight: 1.5,
-              }}>
-                {greeting.main}{' '}
-                <em style={{ fontStyle: 'italic', color: '#E8453C' }}>{greeting.em}</em>
-              </h1>
-            </div>
-
             <div style={{ marginBottom: 14 }}>
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
             </div>
