@@ -88,14 +88,11 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         style={{
           position: 'relative', zIndex: 30,
           margin: '0 16px 16px',
-          background: 'rgba(30,30,30,0.55)',
-          backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
-          color: '#fff',
+          background: '#111', color: '#fff',
           padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderRadius: 22,
-          boxShadow: '0 2px 16px rgba(0,0,0,0.12)',
-          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 20,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
