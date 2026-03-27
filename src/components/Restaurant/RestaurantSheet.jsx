@@ -85,26 +85,29 @@ function StickyDiscountBar({ restaurantId }) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
         style={{
-          position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 30,
-          background: '#111', color: '#fff',
-          padding: '14px 20px',
+          position: 'sticky', bottom: 16, left: 0, right: 0, zIndex: 30,
+          margin: '0 16px',
+          background: '#fff', color: '#111',
+          padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 20,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+          border: '1px solid rgba(0,0,0,0.06)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>Sconto esclusivo Bi</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
             <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayVal}</span>
             {discount.title && discount.title !== discount.discount_value && (
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.title}</span>
+              <span style={{ fontSize: 13, color: '#555' }}>{discount.title}</span>
             )}
           </div>
         </div>
 
         {/* Action button */}
         {isRedeemed ? (
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: '#8A8680', fontWeight: 600 }}>
             {t('discount.alreadyUsed')}
           </span>
         ) : isGenerated ? (
@@ -112,8 +115,8 @@ function StickyDiscountBar({ restaurantId }) {
             onClick={() => setShowQR(true)}
             style={{
               background: '#E8453C', color: '#fff', border: 'none',
-              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer',
+              padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', flexShrink: 0,
             }}
           >
             Mostra QR
@@ -123,9 +126,9 @@ function StickyDiscountBar({ restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: '#fff', color: '#111', border: 'none',
-              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', opacity: generating ? 0.5 : 1,
+              background: '#111', color: '#fff', border: 'none',
+              padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
           >
             {generating ? '...' : 'Sblocca'}
