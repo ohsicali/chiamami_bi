@@ -86,8 +86,8 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
         style={{
-          position: 'sticky', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 0, right: 0, zIndex: 30,
-          margin: '0 16px',
+          position: 'relative', zIndex: 30,
+          margin: '0 16px 16px',
           background: '#111', color: '#fff',
           padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -463,8 +463,10 @@ export default function RestaurantSheet({
           </motion.div>
         </div>
 
-        {/* Sticky discount bar at bottom */}
-        <StickyDiscountBar discount={discount} restaurantId={restaurant.id} />
+        {/* Sticky discount bar at bottom — wrapped in cream bg so Safari toolbar stays light */}
+        <div style={{ background: '#FAF7F2', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <StickyDiscountBar discount={discount} restaurantId={restaurant.id} />
+        </div>
       </motion.div>
     </div>
   )
