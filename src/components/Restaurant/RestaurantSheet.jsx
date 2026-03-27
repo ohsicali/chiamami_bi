@@ -86,8 +86,7 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
         style={{
-          position: 'relative', zIndex: 30,
-          margin: '0 16px 16px',
+          position: 'absolute', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, zIndex: 30,
           background: '#111', color: '#fff',
           padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -96,7 +95,7 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600 }}>Sconto esclusivo Bi</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
             <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayTitle}</span>
             {discount.title && discount.title !== discount.discount_value && (
@@ -272,7 +271,7 @@ export default function RestaurantSheet({
               {discountTitle && (
                 <div style={{ marginBottom: 12 }}>
                   <span style={{
-                    background: '#E8453C', color: '#fff',
+                    background: '#4ADE80', color: '#fff',
                     fontSize: 11, fontWeight: 700,
                     padding: '4px 10px', borderRadius: 8,
                     display: 'inline-block',
@@ -322,7 +321,7 @@ export default function RestaurantSheet({
           {/* Content below photo */}
           <motion.div
             className="flex flex-col gap-5"
-            style={{ padding: '20px 20px 40px' }}
+            style={{ padding: '20px 20px 100px' }}
             variants={contentVariants}
             initial="hidden"
             animate="visible"
@@ -458,10 +457,8 @@ export default function RestaurantSheet({
           </motion.div>
         </div>
 
-        {/* Sticky discount bar at bottom — wrapped in cream bg so Safari toolbar stays light */}
-        <div style={{ background: '#FAF7F2', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          <StickyDiscountBar discount={discount} restaurantId={restaurant.id} />
-        </div>
+        {/* Floating discount bar */}
+        <StickyDiscountBar discount={discount} restaurantId={restaurant.id} />
       </motion.div>
     </div>
   )
