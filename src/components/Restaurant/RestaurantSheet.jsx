@@ -88,11 +88,14 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         style={{
           position: 'relative', zIndex: 30,
           margin: '0 16px 16px',
-          background: '#111', color: '#fff',
+          background: 'rgba(17,17,17,0.75)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          color: '#fff',
           padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           borderRadius: 20,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+          border: '1px solid rgba(255,255,255,0.08)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -268,32 +271,27 @@ export default function RestaurantSheet({
 
             {/* Info overlaid on photo bottom */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 16px', zIndex: 5 }}>
-              {/* Name + discount badge inline */}
-              <div style={{ marginBottom: 8, lineHeight: 1.6 }}>
-                <h1 style={{
-                  fontFamily: "'TAN Songbird', serif",
-                  fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.6,
-                  display: 'inline',
-                }}>
-                  {restaurant.name}
-                </h1>
-                {discountTitle && (
-                  <>
-                    {' '}
-                    <span style={{
-                      background: '#E8453C', color: '#fff',
-                      fontSize: 12, fontWeight: 700,
-                      padding: '4px 10px', borderRadius: 8,
-                      whiteSpace: 'nowrap',
-                      display: 'inline-block',
-                      verticalAlign: 'middle',
-                      position: 'relative', top: -2,
-                    }}>
-                      {discountTitle}
-                    </span>
-                  </>
-                )}
-              </div>
+              {/* Discount badge above name */}
+              {discountTitle && (
+                <div style={{ marginBottom: 6 }}>
+                  <span style={{
+                    background: '#E8453C', color: '#fff',
+                    fontSize: 11, fontWeight: 700,
+                    padding: '4px 10px', borderRadius: 8,
+                    display: 'inline-block',
+                  }}>
+                    {discountTitle}
+                  </span>
+                </div>
+              )}
+              {/* Name */}
+              <h1 style={{
+                fontFamily: "'TAN Songbird', serif",
+                fontSize: 22, fontWeight: 700, color: '#fff', lineHeight: 1.5,
+                marginBottom: 8,
+              }}>
+                {restaurant.name}
+              </h1>
 
               {/* Category badges + price */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
