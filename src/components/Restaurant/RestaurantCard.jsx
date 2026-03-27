@@ -124,17 +124,17 @@ export default function RestaurantCard({
 
         {/* Content — bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-2">
-          {/* "Consigliato da Bi" badge */}
+          {/* "In evidenza" badge — spaced above the name */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             background: '#C4A265', color: '#fff',
             fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
             textTransform: 'uppercase',
             padding: '4px 10px', borderRadius: 6,
-            marginBottom: 10,
+            marginBottom: 14,
           }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-            Consigliato da Bi
+            In evidenza
           </div>
 
           {/* Name */}
@@ -146,30 +146,36 @@ export default function RestaurantCard({
             {restaurant.name}
           </h3>
 
-          {/* Info row: category · rating · price · distance */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+          {/* Info row: category colored · recommended_for · price · distance */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap' }}>
             {category && (
-              <>
-                <span>{category.name}</span>
-                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
-              </>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                backgroundColor: `${category.color}30`,
+                color: '#fff', fontSize: 11, fontWeight: 600,
+                padding: '2px 8px', borderRadius: 20,
+              }}>
+                {category.emoji} {category.name}
+              </span>
             )}
-            {restaurant.our_rating && (
+            {restaurant.recommended_for?.length > 0 && (
               <>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#C4A265', fontWeight: 700 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                  {restaurant.our_rating}
-                </span>
                 <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                <span>{restaurant.recommended_for[0]}</span>
               </>
             )}
             {priceStr && (
               <>
+                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
                 <span>{priceStr}</span>
-                {distance != null && <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />}
               </>
             )}
-            {distance != null && <span>{formatDistance(distance)}</span>}
+            {distance != null && (
+              <>
+                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                <span>{formatDistance(distance)}</span>
+              </>
+            )}
           </div>
         </div>
       </motion.button>
