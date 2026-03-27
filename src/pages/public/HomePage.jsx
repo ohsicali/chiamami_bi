@@ -79,8 +79,8 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       {discountTitle && (
         <div style={{
           background: '#4ADE80', color: '#fff',
-          fontSize: 10, fontWeight: 700,
-          padding: '4px 10px',
+          fontSize: 12, fontWeight: 700,
+          padding: '5px 10px',
           textAlign: 'center',
           letterSpacing: 0.5,
         }}>
