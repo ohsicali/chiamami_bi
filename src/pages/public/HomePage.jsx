@@ -544,17 +544,19 @@ export default function HomePage() {
                     <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4 }}>
                       In evidenza
                     </p>
-                    <RestaurantCard
-                      restaurant={featuredRestaurant}
-                      index={0}
-                      userPosition={position}
-                      onClick={handleCardClick}
-                      saved={isSaved(featuredRestaurant.id)}
-                      onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
-                      hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
-                      discountTitle={discountTitleMap[featuredRestaurant.id]}
-                      variant="hero"
-                    />
+                    <div className="hero-glow-wrap">
+                      <RestaurantCard
+                        restaurant={featuredRestaurant}
+                        index={0}
+                        userPosition={position}
+                        onClick={handleCardClick}
+                        saved={isSaved(featuredRestaurant.id)}
+                        onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
+                        hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
+                        discountTitle={discountTitleMap[featuredRestaurant.id]}
+                        variant="hero"
+                      />
+                    </div>
                   </>
                 )}
 
