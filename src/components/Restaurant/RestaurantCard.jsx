@@ -32,6 +32,7 @@ export default function RestaurantCard({
 
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
+    .filter(Boolean)
   const category = categories[0]
 
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
