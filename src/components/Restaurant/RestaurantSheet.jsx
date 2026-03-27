@@ -97,7 +97,7 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: '#4ADE80' }}>{displayTitle}</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayTitle}</span>
             {discount.title && discount.title !== discount.discount_value && (
               <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.discount_value}</span>
             )}
@@ -271,7 +271,7 @@ export default function RestaurantSheet({
               {discountTitle && (
                 <div style={{ marginBottom: 12 }}>
                   <span style={{
-                    background: '#4ADE80', color: '#fff',
+                    background: '#E8453C', color: '#fff',
                     fontSize: 11, fontWeight: 700,
                     padding: '4px 10px', borderRadius: 8,
                     display: 'inline-block',
