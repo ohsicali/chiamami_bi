@@ -242,7 +242,7 @@ export default function RestaurantCard({
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-w-0 flex flex-col" style={{ paddingTop: 2 }}>
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
         {/* Name */}
         <h3 style={{
           fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
