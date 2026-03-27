@@ -63,17 +63,6 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
         spellCheck={false}
       />
 
-      {/* Tag */}
-      {!value && !focused && (
-        <span style={{
-          fontSize: 10, color: '#8A8680', fontWeight: 600,
-          padding: '4px 8px', borderRadius: 6,
-          background: 'rgba(0,0,0,0.04)',
-        }}>
-          Torino
-        </span>
-      )}
-
       <AnimatePresence>
         {value && value.length > 0 && (
           <motion.button
