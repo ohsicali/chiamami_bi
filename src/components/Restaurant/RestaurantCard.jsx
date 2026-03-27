@@ -138,7 +138,7 @@ export default function RestaurantCard({
           {/* Name */}
           <h3 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.3,
+            fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.5,
             marginBottom: 8,
           }}>
             {restaurant.name}
@@ -227,7 +227,7 @@ export default function RestaurantCard({
           <h3 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
             fontSize: 14, fontWeight: 600, color: '#111',
-            lineHeight: 1.35,
+            lineHeight: 1.5,
           }}>
             {restaurant.name}
           </h3>
