@@ -138,7 +138,7 @@ export default function RestaurantCard({
           {/* Name */}
           <h3 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.1,
+            fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.3,
             marginBottom: 8,
           }}>
             {restaurant.name}
@@ -226,8 +226,8 @@ export default function RestaurantCard({
         <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
           <h3 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 15, fontWeight: 600, color: '#111',
-            lineHeight: 1.5,
+            fontSize: 14, fontWeight: 600, color: '#111',
+            lineHeight: 1.35,
           }}>
             {restaurant.name}
           </h3>
