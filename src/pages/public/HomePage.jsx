@@ -109,6 +109,12 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         }}>
           {restaurant.name}
         </div>
+        {/* Tagline */}
+        {restaurant.tagline && (
+          <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+            {restaurant.tagline}
+          </div>
+        )}
         {/* Category + price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
           {category && (
