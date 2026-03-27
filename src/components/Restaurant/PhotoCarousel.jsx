@@ -4,7 +4,7 @@ import { useDrag } from '@use-gesture/react'
 
 const swipeThreshold = 50
 
-export default function PhotoCarousel({ photos = [], height = '300px', restaurantName = '', city = '', dotsPosition = 'center' }) {
+export default function PhotoCarousel({ photos = [], height = '300px', restaurantName = '', city = '', dotsPosition = 'center', showCounter = false }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
   const [loadedImages, setLoadedImages] = useState({})
@@ -141,10 +141,10 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
         </div>
       )}
 
-      {/* Photo counter — only when dots are centered */}
-      {normalizedPhotos.length > 1 && dotsPosition !== 'right' && (
-        <div className="absolute top-3 right-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
-          {currentIndex + 1}/{normalizedPhotos.length}
+      {/* Photo counter — hidden when dots are right, unless showCounter is forced */}
+      {normalizedPhotos.length > 1 && (dotsPosition !== 'right' || showCounter) && (
+        <div className={`absolute ${showCounter && dotsPosition === 'right' ? 'bottom-3 right-4' : 'top-3 right-3'} rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm`}>
+          {currentIndex + 1} / {normalizedPhotos.length}
         </div>
       )}
     </div>

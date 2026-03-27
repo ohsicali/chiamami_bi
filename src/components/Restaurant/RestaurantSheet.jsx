@@ -159,6 +159,7 @@ export default function RestaurantSheet({
   const { handleShare } = useShare(restaurant, t)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
+  const [scrollY, setScrollY] = useState(0)
 
   // Match Safari toolbar to white bottom bar
   useEffect(() => {
@@ -166,6 +167,11 @@ export default function RestaurantSheet({
     const original = meta?.getAttribute('content')
     if (meta) meta.setAttribute('content', '#ffffff')
     return () => { if (meta && original) meta.setAttribute('content', original) }
+  }, [])
+
+  // Track scroll for parallax white gradient
+  const handleScroll = useCallback((e) => {
+    setScrollY(e.target.scrollTop)
   }, [])
 
   const handleClose = useCallback(async () => {
@@ -190,6 +196,9 @@ export default function RestaurantSheet({
   const distance = position && restaurant.latitude && restaurant.longitude
     ? getDistance(position.lat, position.lng, restaurant.latitude, restaurant.longitude) : null
 
+  // White gradient opacity based on scroll (0 at top, 1 after 200px scroll)
+  const gradientOpacity = Math.min(scrollY / 200, 1)
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
       {/* Backdrop */}
@@ -210,12 +219,30 @@ export default function RestaurantSheet({
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
+        {/* White gradient overlay from top — fades in as you scroll */}
+        <div
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: '42vh', zIndex: 3,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 40%, transparent 100%)',
+            opacity: gradientOpacity,
+            pointerEvents: 'none',
+            transition: 'opacity 0.05s linear',
+          }}
+        />
+
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none" onScroll={handleScroll}>
 
           {/* Photo area — clean, no text overlay */}
           <div style={{ position: 'relative' }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" />
+            <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" showCounter />
+
+            {/* Bottom shadow on photo to separate from white card */}
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.25) 0%, transparent 100%)',
+              pointerEvents: 'none', zIndex: 1,
+            }} />
 
             {/* Back button — white circle */}
             <button
@@ -259,6 +286,20 @@ export default function RestaurantSheet({
             marginTop: -24,
             position: 'relative', zIndex: 2,
           }}>
+            {/* Green discount strip following the card's rounded corners */}
+            {discountTitle && (
+              <div style={{
+                background: '#4ADE80', color: '#fff',
+                fontSize: 11, fontWeight: 700,
+                padding: '6px 14px',
+                textAlign: 'center',
+                letterSpacing: 0.5,
+                borderRadius: '20px 20px 0 0',
+              }}>
+                {discountTitle}
+              </div>
+            )}
+
             <motion.div
               className="flex flex-col"
               variants={contentVariants}
@@ -266,20 +307,6 @@ export default function RestaurantSheet({
               animate="visible"
               style={{ padding: '28px 24px 100px' }}
             >
-              {/* Discount badge */}
-              {discountTitle && (
-                <motion.div variants={itemVariants} style={{ textAlign: 'center', marginBottom: 12 }}>
-                  <span style={{
-                    background: '#E8453C', color: '#fff',
-                    fontSize: 11, fontWeight: 700,
-                    padding: '5px 14px', borderRadius: 20,
-                    display: 'inline-block',
-                  }}>
-                    {discountTitle}
-                  </span>
-                </motion.div>
-              )}
-
               {/* Restaurant name — centered */}
               <motion.h1 variants={itemVariants} style={{
                 fontFamily: "'TAN Songbird', serif",
@@ -300,7 +327,7 @@ export default function RestaurantSheet({
               </motion.p>
               <motion.div variants={itemVariants} style={{
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                gap: 6, flexWrap: 'wrap', marginBottom: 20,
+                gap: 4, flexWrap: 'wrap', marginBottom: 24,
               }}>
                 {categories.map((cat, i) => (
                   <span key={cat.name} style={{ fontSize: 13, color: '#666' }}>
@@ -313,45 +340,6 @@ export default function RestaurantSheet({
                   </span>
                 )}
               </motion.div>
-
-              {/* Stats row — Airbnb style with dividers */}
-              {(restaurant.our_rating || reviewText) && (
-                <motion.div variants={itemVariants} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
-                  padding: '14px 0', marginBottom: 24,
-                }}>
-                  {restaurant.our_rating && (
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: '#111' }}>{restaurant.our_rating}</p>
-                      <p style={{ fontSize: 10, color: '#888', fontWeight: 500, marginTop: 2 }}>Voto di Bi</p>
-                    </div>
-                  )}
-                  {restaurant.our_rating && reviewText && (
-                    <div style={{ width: 1, height: 36, background: 'rgba(0,0,0,0.08)' }} />
-                  )}
-                  {reviewText && (
-                    <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <span style={{
-                        width: 28, height: 28, borderRadius: '50%',
-                        background: '#E8453C', color: '#fff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800,
-                      }}>Bi</span>
-                      <p style={{ fontSize: 10, color: '#888', fontWeight: 500, marginTop: 4 }}>Recensito</p>
-                    </div>
-                  )}
-                  {categories.length > 0 && (
-                    <>
-                      <div style={{ width: 1, height: 36, background: 'rgba(0,0,0,0.08)' }} />
-                      <div style={{ flex: 1, textAlign: 'center' }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{categories[0].emoji}</p>
-                        <p style={{ fontSize: 10, color: '#888', fontWeight: 500, marginTop: 2 }}>{categories[0].name}</p>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              )}
 
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 24 }} />
