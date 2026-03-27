@@ -84,18 +84,29 @@ export default function RestaurantCard({
           }} />
         </div>
 
-        {/* Discount badge — top left */}
-        {hasDiscount && discountValue && (
+        {/* Top left badges: In evidenza + Discount */}
+        <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
-            position: 'absolute', top: 16, left: 16, zIndex: 10,
-            background: '#E8453C', color: '#fff',
-            fontSize: 11, fontWeight: 700,
-            padding: '5px 12px', borderRadius: 10,
-            boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: '#C4A265', color: '#fff',
+            fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+            textTransform: 'uppercase',
+            padding: '5px 10px', borderRadius: 8,
           }}>
-            -{discountValue}%
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            In evidenza
           </div>
-        )}
+          {hasDiscount && discountValue && (
+            <div style={{
+              background: '#E8453C', color: '#fff',
+              fontSize: 11, fontWeight: 700,
+              padding: '5px 12px', borderRadius: 8,
+              boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
+            }}>
+              -{discountValue}%
+            </div>
+          )}
+        </div>
 
         {/* Heart — top right, glassmorphic with white border */}
         {onSaveToggle && (
@@ -124,19 +135,6 @@ export default function RestaurantCard({
 
         {/* Content — bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-2">
-          {/* "In evidenza" badge — spaced above the name */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#C4A265', color: '#fff',
-            fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
-            textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 6,
-            marginBottom: 14,
-          }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-            In evidenza
-          </div>
-
           {/* Name */}
           <h3 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
