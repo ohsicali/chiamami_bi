@@ -10,6 +10,7 @@ export default function SaveButton({
   const [scope, animate] = useAnimate()
 
   const sizes = {
+    xs: { button: 'w-6 h-6', icon: 14 },
     sm: { button: 'w-8 h-8', icon: 20 },
     md: { button: 'w-10 h-10', icon: 22 },
     lg: { button: 'w-12 h-12', icon: 26 },
