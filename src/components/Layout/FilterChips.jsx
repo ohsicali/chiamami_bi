@@ -43,8 +43,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
         style={{
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
-          maskImage: 'linear-gradient(90deg, #000 85%, transparent)',
-          WebkitMaskImage: 'linear-gradient(90deg, #000 85%, transparent)',
+          maskImage: 'linear-gradient(90deg, transparent, #000 5%, #000 85%, transparent)',
+          WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 5%, #000 85%, transparent)',
         }}
       >
         {/* "Tutti" pill */}
