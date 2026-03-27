@@ -226,13 +226,14 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Discount badge inside photo */}
+        {/* Discount banner at bottom of photo */}
         {hasDiscount && discountValue && (
           <div style={{
-            position: 'absolute', top: 6, left: 6,
+            position: 'absolute', bottom: 0, left: 0, right: 0,
             background: '#4ADE80', color: '#fff',
             fontSize: 10, fontWeight: 700,
-            padding: '2px 7px', borderRadius: 6,
+            padding: '3px 0', textAlign: 'center',
+            borderRadius: '0 0 14px 14px',
           }}>
             -{discountValue}%
           </div>
