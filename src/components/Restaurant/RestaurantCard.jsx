@@ -315,7 +315,7 @@ export default function RestaurantCard({
 
       {/* Save heart */}
       {onSaveToggle && (
-        <div className="absolute top-3.5 right-3.5">
+        <div className="absolute bottom-3.5 right-3.5">
           <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
         </div>
       )}
