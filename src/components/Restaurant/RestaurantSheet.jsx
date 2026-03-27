@@ -87,27 +87,26 @@ function StickyDiscountBar({ restaurantId }) {
         style={{
           position: 'sticky', bottom: 16, left: 0, right: 0, zIndex: 30,
           margin: '0 16px',
-          background: '#fff', color: '#111',
+          background: '#111', color: '#fff',
           padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           borderRadius: 20,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
             <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayVal}</span>
             {discount.title && discount.title !== discount.discount_value && (
-              <span style={{ fontSize: 13, color: '#555' }}>{discount.title}</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.title}</span>
             )}
           </div>
         </div>
 
         {/* Action button */}
         {isRedeemed ? (
-          <span style={{ fontSize: 12, color: '#8A8680', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
             {t('discount.alreadyUsed')}
           </span>
         ) : isGenerated ? (
@@ -126,7 +125,7 @@ function StickyDiscountBar({ restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: '#fff', color: '#111', border: '1.5px solid #111',
+              background: '#fff', color: '#111', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
