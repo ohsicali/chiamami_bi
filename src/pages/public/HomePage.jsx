@@ -39,7 +39,7 @@ const CAROUSEL_MAX = 4
  * Title uses Cormorant Garamond (not TAN Songbird) at small size
  * to avoid ascender/descender clipping.
  */
-function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
+function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
   const category = categories[0]
@@ -75,8 +75,8 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         position: 'relative',
       }}
     >
-      {/* Gold discount strip on top */}
-      {discountValue && (
+      {/* Green discount strip on top */}
+      {discountTitle && (
         <div style={{
           background: '#4ADE80', color: '#fff',
           fontSize: 10, fontWeight: 700,
@@ -84,7 +84,7 @@ function MiniCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           textAlign: 'center',
           letterSpacing: 0.5,
         }}>
-          {discountValue}
+          {discountTitle}
         </div>
       )}
 
@@ -187,6 +187,7 @@ export default function HomePage() {
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
+  const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
 
   const {
     restaurants,
@@ -404,7 +405,7 @@ export default function HomePage() {
                   <MiniCard
                     restaurant={r}
                     userPosition={position}
-                    discountValue={discountValueMap[r.id]}
+                    discountTitle={discountTitleMap[r.id]}
                     saved={isSaved(r.id)}
                     onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                     onClick={handleCardClick}
@@ -551,7 +552,7 @@ export default function HomePage() {
                       saved={isSaved(featuredRestaurant.id)}
                       onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
                       hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
-                      discountValue={discountValueMap[featuredRestaurant.id]}
+                      discountTitle={discountTitleMap[featuredRestaurant.id]}
                       variant="hero"
                     />
                   </>
@@ -576,7 +577,7 @@ export default function HomePage() {
                     saved={isSaved(restaurant.id)}
                     onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
                     hasDiscount={discountRestaurantIds.has(restaurant.id)}
-                    discountValue={discountValueMap[restaurant.id]}
+                    discountTitle={discountTitleMap[restaurant.id]}
                   />
                 ))}
               </div>

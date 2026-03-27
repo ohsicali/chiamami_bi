@@ -26,7 +26,7 @@ export default function RestaurantCard({
   saved,
   onSaveToggle,
   hasDiscount,
-  discountValue,
+  discountTitle,
   variant = 'default', // 'default' | 'hero'
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -96,14 +96,14 @@ export default function RestaurantCard({
             <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
             In evidenza
           </div>
-          {hasDiscount && discountValue && (
+          {hasDiscount && discountTitle && (
             <div style={{
               background: '#E8453C', color: '#fff',
               fontSize: 11, fontWeight: 700,
               padding: '5px 12px', borderRadius: 10,
               boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
             }}>
-              {discountValue}
+              {discountTitle}
             </div>
           )}
         </div>
@@ -190,13 +190,13 @@ export default function RestaurantCard({
   // DEFAULT VARIANT — horizontal compact card
   return (
     <motion.button
-      className="flex w-full items-start gap-3.5 text-left relative"
+      className="w-full text-left relative"
       style={{
-        padding: 14,
         background: '#fff',
         borderRadius: 18,
         border: '1px solid rgba(0,0,0,0.04)',
         boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
       }}
       variants={cardVariants}
       initial="hidden"
@@ -206,6 +206,20 @@ export default function RestaurantCard({
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick?.(restaurant)}
     >
+      {/* Green discount strip on top */}
+      {hasDiscount && discountTitle && (
+        <div style={{
+          background: '#4ADE80', color: '#fff',
+          fontSize: 10, fontWeight: 700,
+          padding: '4px 10px',
+          textAlign: 'center',
+          letterSpacing: 0.5,
+        }}>
+          {discountTitle}
+        </div>
+      )}
+
+      <div className="flex w-full items-start gap-3.5" style={{ padding: 14 }}>
       {/* Photo */}
       <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 100, height: 100, borderRadius: 14 }}>
         <div
@@ -223,18 +237,6 @@ export default function RestaurantCard({
         ) : (
           <div className="absolute inset-0 flex items-center justify-center" style={{ fontSize: 32, opacity: 0.6 }}>
             {category?.emoji || '🍽️'}
-          </div>
-        )}
-        {/* Discount banner at bottom of photo */}
-        {hasDiscount && discountValue && (
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            background: '#4ADE80', color: '#fff',
-            fontSize: 10, fontWeight: 700,
-            padding: '3px 0', textAlign: 'center',
-            borderRadius: '0 0 14px 14px',
-          }}>
-            {discountValue}
           </div>
         )}
       </div>
@@ -312,6 +314,7 @@ export default function RestaurantCard({
           <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
         </div>
       )}
+      </div>
     </motion.button>
   )
 }
