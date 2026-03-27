@@ -219,7 +219,7 @@ export default function RestaurantCard({
         </div>
       )}
 
-      <div className="flex w-full items-start gap-3.5" style={{ padding: 14 }}>
+      <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
       {/* Photo */}
       <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 100, height: 100, borderRadius: 14 }}>
         <div
