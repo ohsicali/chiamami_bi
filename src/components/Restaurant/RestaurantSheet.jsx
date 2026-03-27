@@ -270,7 +270,7 @@ export default function RestaurantSheet({
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 16px', zIndex: 5 }}>
               {/* Discount badge above name */}
               {discountTitle && (
-                <div style={{ marginBottom: 6 }}>
+                <div style={{ marginBottom: 12 }}>
                   <span style={{
                     background: '#E8453C', color: '#fff',
                     fontSize: 11, fontWeight: 700,
