@@ -275,12 +275,12 @@ export default function RestaurantCard({
           ))}
         </div>
 
-        {/* Recommended + Price row */}
+        {/* Recommended + Price + Distance row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8A8680', fontWeight: 500 }}>
           {restaurant.recommended_for?.length > 0 && (
             <>
               <span>{restaurant.recommended_for[0]}</span>
-              {priceStr && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
+              {(priceStr || distance != null) && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
             </>
           )}
           {priceStr && (
@@ -290,15 +290,16 @@ export default function RestaurantCard({
               ))}
             </span>
           )}
+          {distance != null && (
+            <>
+              {priceStr && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+                {formatDistance(distance)}
+              </span>
+            </>
+          )}
         </div>
-
-        {/* Distance row */}
-        {distance != null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8A8680', fontWeight: 500, marginTop: 4 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-            {formatDistance(distance)}
-          </div>
-        )}
       </div>
 
       {/* Save heart */}
