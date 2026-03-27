@@ -589,10 +589,12 @@ export default function HomePage() {
           style={{
             position: 'absolute', bottom: TAB_BAR_HEIGHT + 16,
             left: '50%', transform: 'translateX(-50%)', zIndex: 40,
-            background: '#C4A265', color: '#fff',
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(20px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+            color: '#fff',
             fontSize: 14, fontWeight: 600, padding: '12px 28px',
-            borderRadius: 28, border: 'none',
-            boxShadow: '0 4px 24px rgba(196,162,101,0.4)',
+            borderRadius: 28, border: '1px solid rgba(255,255,255,0.15)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
             WebkitTapHighlightColor: 'transparent',
           }}
