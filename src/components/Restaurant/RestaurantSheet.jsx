@@ -126,7 +126,7 @@ function StickyDiscountBar({ restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: '#111', color: '#fff', border: 'none',
+              background: '#fff', color: '#111', border: '1.5px solid #111',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
