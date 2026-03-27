@@ -154,12 +154,13 @@ export default function RestaurantSheet({
   const { t, i18n } = useTranslation()
   const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
+  const gradientRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
   const [sheetScope, animateSheet] = useAnimate()
   const { handleShare } = useShare(restaurant, t)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
-  const [scrollY, setScrollY] = useState(0)
+  const [photoIndex, setPhotoIndex] = useState(0)
 
   // Match Safari toolbar to white bottom bar
   useEffect(() => {
@@ -169,9 +170,22 @@ export default function RestaurantSheet({
     return () => { if (meta && original) meta.setAttribute('content', original) }
   }, [])
 
-  // Track scroll for parallax white gradient
-  const handleScroll = useCallback((e) => {
-    setScrollY(e.target.scrollTop)
+  // Smooth scroll-driven gradient — direct DOM manipulation, no re-renders
+  useEffect(() => {
+    const el = scrollRef.current
+    const grad = gradientRef.current
+    if (!el || !grad) return
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        grad.style.opacity = String(Math.min(el.scrollTop / 200, 1))
+        ticking = false
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
   const handleClose = useCallback(async () => {
@@ -196,8 +210,7 @@ export default function RestaurantSheet({
   const distance = position && restaurant.latitude && restaurant.longitude
     ? getDistance(position.lat, position.lng, restaurant.latitude, restaurant.longitude) : null
 
-  // White gradient opacity based on scroll (0 at top, 1 after 200px scroll)
-  const gradientOpacity = Math.min(scrollY / 200, 1)
+  const photoCount = (restaurant.photos || []).length
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
@@ -219,28 +232,29 @@ export default function RestaurantSheet({
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
-        {/* White gradient overlay from top — fades in as you scroll */}
+        {/* White gradient overlay from top — fades in smoothly as you scroll */}
         <div
+          ref={gradientRef}
           style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: '42vh', zIndex: 3,
             background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 40%, transparent 100%)',
-            opacity: gradientOpacity,
+            opacity: 0,
             pointerEvents: 'none',
-            transition: 'opacity 0.05s linear',
+            willChange: 'opacity',
           }}
         />
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none" onScroll={handleScroll}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
 
-          {/* Photo area — clean, no text overlay */}
-          <div style={{ position: 'relative' }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" showCounter />
+          {/* Photo area — sticky so white card scrolls over it */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 0 }}>
+            <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" onIndexChange={setPhotoIndex} />
 
             {/* Bottom shadow on photo to separate from white card */}
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
-              background: 'linear-gradient(0deg, rgba(0,0,0,0.25) 0%, transparent 100%)',
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.2) 0%, transparent 100%)',
               pointerEvents: 'none', zIndex: 1,
             }} />
 
@@ -279,11 +293,14 @@ export default function RestaurantSheet({
             </div>
           </div>
 
-          {/* White content card — rounded top overlapping photo */}
+          {/* Spacer so white card starts below the sticky photo */}
+          <div style={{ height: '42vh', pointerEvents: 'none' }} />
+
+          {/* White content card — rounded top, scrolls up over photo */}
           <div style={{
             background: '#fff',
             borderRadius: '20px 20px 0 0',
-            marginTop: -24,
+            marginTop: '-42vh',
             position: 'relative', zIndex: 2,
           }}>
             {/* Green discount strip following the card's rounded corners */}
@@ -297,6 +314,18 @@ export default function RestaurantSheet({
                 borderRadius: '20px 20px 0 0',
               }}>
                 {discountTitle}
+              </div>
+            )}
+
+            {/* Photo counter — anchored to white card, top right */}
+            {photoCount > 1 && (
+              <div style={{
+                position: 'absolute', top: discountTitle ? 38 : 14, right: 18, zIndex: 5,
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                borderRadius: 12, padding: '3px 10px',
+                fontSize: 11, fontWeight: 600, color: '#fff',
+              }}>
+                {photoIndex + 1} / {photoCount}
               </div>
             )}
 
