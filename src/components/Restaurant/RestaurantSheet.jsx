@@ -40,12 +40,11 @@ function useShare(restaurant, t) {
   return { handleShare, copied }
 }
 
-/* ── Sticky Discount Bar ── */
-function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
+/* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
+function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  // Use parent discount if available, otherwise fetch independently
   const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
   const discount = discountFromParent || fetchedDiscount
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
@@ -82,31 +81,25 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
   return (
     <>
       <motion.div
-        initial={{ y: 80, opacity: 0, scale: 0.95 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1, type: 'spring', stiffness: 300, damping: 26 }}
         style={{
-          position: 'absolute', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, zIndex: 30,
-          background: '#111', color: '#fff',
-          padding: '14px 18px',
+          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 30,
+          background: '#fff',
+          padding: '14px 20px',
+          paddingBottom: 'calc(14px + env(safe-area-inset-bottom, 0px))',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderRadius: 20,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
+          borderTop: '1px solid rgba(0,0,0,0.08)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayTitle}</span>
-            {discount.title && discount.title !== discount.discount_value && (
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.discount_value}</span>
-            )}
-          </div>
+          <p style={{ fontSize: 11, color: '#888', fontWeight: 500 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#111', marginTop: 1 }}>{displayTitle}</p>
         </div>
 
-        {/* Action button */}
         {isRedeemed ? (
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>
             {t('discount.alreadyUsed')}
           </span>
         ) : isGenerated ? (
@@ -114,7 +107,7 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={() => setShowQR(true)}
             style={{
               background: '#E8453C', color: '#fff', border: 'none',
-              padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+              padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700,
               cursor: 'pointer', flexShrink: 0,
             }}
           >
@@ -125,8 +118,8 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: '#fff', color: '#111', border: 'none',
-              padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+              background: '#E8453C', color: '#fff', border: 'none',
+              padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
           >
@@ -167,11 +160,11 @@ export default function RestaurantSheet({
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
-  // White theme-color while sheet is open (match Safari toolbar)
+  // Match Safari toolbar to white bottom bar
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
     const original = meta?.getAttribute('content')
-    if (meta) meta.setAttribute('content', '#FAF7F2')
+    if (meta) meta.setAttribute('content', '#ffffff')
     return () => { if (meta && original) meta.setAttribute('content', original) }
   }, [])
 
@@ -209,10 +202,10 @@ export default function RestaurantSheet({
         onClick={handleClose}
       />
 
-      {/* Full page sheet — no mt, no rounded top */}
+      {/* Full page sheet */}
       <motion.div
         ref={sheetScope}
-        className="relative flex flex-1 flex-col overflow-hidden bg-bg"
+        className="relative flex flex-1 flex-col overflow-hidden bg-white"
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
@@ -220,245 +213,288 @@ export default function RestaurantSheet({
         {/* Scrollable content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
 
-          {/* Photo area with overlay */}
+          {/* Photo area — clean, no text overlay */}
           <div style={{ position: 'relative' }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" />
+            <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" />
 
-            {/* Gradient overlay */}
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0, height: 200,
-              background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
-              pointerEvents: 'none',
-            }} />
-
-            {/* Back button */}
+            {/* Back button — white circle */}
             <button
               onClick={handleClose}
               style={{
-                position: 'absolute', top: 'calc(16px + env(safe-area-inset-top, 0px))', left: 16, zIndex: 10,
-                width: 40, height: 40, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)',
+                position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 14, zIndex: 10,
+                width: 36, height: 36, borderRadius: '50%',
+                background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer', color: '#fff',
+                border: 'none', cursor: 'pointer', color: '#111',
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
               </svg>
             </button>
 
-            {/* Save + Share — top right */}
-            <div style={{ position: 'absolute', top: 'calc(16px + env(safe-area-inset-top, 0px))', right: 16, zIndex: 10, display: 'flex', gap: 10 }}>
-              {onSaveToggle && <SaveButton saved={saved} onClick={onSaveToggle} size="md" />}
+            {/* Share + Save — white circles, top right */}
+            <div style={{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', right: 14, zIndex: 10, display: 'flex', gap: 10 }}>
               <button
                 onClick={handleShare}
                 style={{
-                  width: 40, height: 40, borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)',
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: 'none', cursor: 'pointer', color: '#fff',
+                  border: 'none', cursor: 'pointer', color: '#111',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
                 </svg>
               </button>
+              {onSaveToggle && <SaveButton saved={saved} onClick={onSaveToggle} size="md" />}
             </div>
+          </div>
 
-            {/* Info overlaid on photo bottom */}
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 16px', zIndex: 5 }}>
-              {/* Discount badge above name */}
+          {/* White content card — rounded top overlapping photo */}
+          <div style={{
+            background: '#fff',
+            borderRadius: '20px 20px 0 0',
+            marginTop: -24,
+            position: 'relative', zIndex: 2,
+          }}>
+            <motion.div
+              className="flex flex-col"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              style={{ padding: '28px 24px 100px' }}
+            >
+              {/* Discount badge */}
               {discountTitle && (
-                <div style={{ marginBottom: 12 }}>
+                <motion.div variants={itemVariants} style={{ textAlign: 'center', marginBottom: 12 }}>
                   <span style={{
                     background: '#E8453C', color: '#fff',
                     fontSize: 11, fontWeight: 700,
-                    padding: '4px 10px', borderRadius: 8,
+                    padding: '5px 14px', borderRadius: 20,
                     display: 'inline-block',
                   }}>
                     {discountTitle}
                   </span>
-                </div>
+                </motion.div>
               )}
-              {/* Name */}
-              <h1 style={{
+
+              {/* Restaurant name — centered */}
+              <motion.h1 variants={itemVariants} style={{
                 fontFamily: "'TAN Songbird', serif",
-                fontSize: 22, fontWeight: 700, color: '#fff', lineHeight: 1.5,
+                fontSize: 24, fontWeight: 700, color: '#111',
+                lineHeight: 1.35, textAlign: 'center',
                 marginBottom: 8,
               }}>
                 {restaurant.name}
-              </h1>
+              </motion.h1>
 
-              {/* Category badges + price */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-                {categories.map(cat => (
-                  <span key={cat.name} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 3,
-                    backgroundColor: `${cat.color}30`, color: '#fff',
-                    fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
-                  }}>
-                    {cat.emoji} {cat.name}
+              {/* Subtitle — address, categories, price */}
+              <motion.p variants={itemVariants} style={{
+                fontSize: 13, color: '#666', textAlign: 'center', lineHeight: 1.5,
+                marginBottom: 4,
+              }}>
+                {restaurant.address}
+                {distance != null && ` · ${formatDistance(distance)}`}
+              </motion.p>
+              <motion.div variants={itemVariants} style={{
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                gap: 6, flexWrap: 'wrap', marginBottom: 20,
+              }}>
+                {categories.map((cat, i) => (
+                  <span key={cat.name} style={{ fontSize: 13, color: '#666' }}>
+                    {cat.emoji} {cat.name}{i < categories.length - 1 ? ' · ' : ''}
                   </span>
                 ))}
                 {priceLabel && (
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{priceLabel}</span>
-                )}
-              </div>
-
-              {/* Address + distance */}
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {restaurant.address && <span>{restaurant.address}</span>}
-                {distance != null && (
-                  <>
-                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.4)', display: 'inline-block' }} />
-                    <span>{formatDistance(distance)}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Content below photo */}
-          <motion.div
-            className="flex flex-col gap-5"
-            style={{ padding: '20px 20px 100px' }}
-            variants={contentVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Action buttons — squared pills */}
-            <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8 }}>
-              {mapsUrl && (
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-                  flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#111', color: '#fff', border: '1px solid #111',
-                }}>Indicazioni</a>
-              )}
-              {phoneUrl && (
-                <a href={phoneUrl} style={{
-                  flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
-                }}>Chiama</a>
-              )}
-              {restaurant.website && (
-                <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
-                  flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
-                }}>Sito</a>
-              )}
-            </motion.div>
-
-            {/* Recensione di Bi */}
-            {reviewText && (
-              <motion.div variants={itemVariants}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{
-                    width: 28, height: 28, borderRadius: '50%',
-                    background: '#E8453C', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 800,
-                  }}>Bi</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Recensione di Bi</span>
-                </div>
-                <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', paddingLeft: 36 }}>
-                  "{reviewText}"
-                </p>
-                {!isItalian && (
-                  <p style={{ fontSize: 11, color: '#aaa', marginTop: 6, paddingLeft: 36, fontStyle: 'italic' }}>
-                    {t('restaurant.originalItalian')}
-                  </p>
-                )}
-              </motion.div>
-            )}
-
-            {/* Il tip di Bi — yellow background with red left border */}
-            {tipText && (
-              <motion.div variants={itemVariants}>
-                <div style={{
-                  background: '#FEF3C7',
-                  borderLeft: '3px solid #E8453C',
-                  borderRadius: '0 12px 12px 0',
-                  padding: '14px 16px',
-                  marginLeft: 36,
-                }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#E8453C', marginBottom: 4 }}>Il tip di Bi</p>
-                  <p style={{ fontSize: 14, lineHeight: 1.6, color: '#78350F', fontWeight: 500 }}>
-                    "{tipText}"
-                  </p>
-                </div>
-                {!isItalian && (
-                  <p style={{ fontSize: 11, color: '#aaa', marginTop: 6, paddingLeft: 36, fontStyle: 'italic' }}>
-                    {t('restaurant.originalItalian')}
-                  </p>
-                )}
-              </motion.div>
-            )}
-
-            {/* Recommended for */}
-            {restaurant.recommended_for?.length > 0 && (
-              <motion.div variants={itemVariants} style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {restaurant.recommended_for.map(tag => (
-                  <span key={tag} style={{
-                    fontSize: 12, fontWeight: 600, color: '#92700C',
-                    background: '#FEF3C7', padding: '5px 12px', borderRadius: 20,
-                  }}>{tag}</span>
-                ))}
-              </motion.div>
-            )}
-
-            {/* TikTok / Instagram video */}
-            {(restaurant.instagram_reel || restaurant.tiktok_url) && (
-              <motion.div variants={itemVariants}>
-                <a
-                  href={restaurant.tiktok_url || restaurant.instagram_reel}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    background: '#111', borderRadius: 12, padding: 14,
-                    textDecoration: 'none', color: '#fff',
-                  }}
-                >
-                  <span style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    background: 'rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    {restaurant.tiktok_url ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48V13a8.28 8.28 0 005.58 2.17v-3.44a4.85 4.85 0 01-3.77-1.64V6.69h3.77z"/></svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                    )}
+                  <span style={{ fontSize: 13, color: '#666' }}>
+                    {categories.length > 0 ? ' · ' : ''}{priceLabel}
                   </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600 }}>{restaurant.tiktok_url ? 'Guarda su TikTok' : 'Guarda su Instagram'}</p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Il video di Bi su {restaurant.name}</p>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0, opacity: 0.6 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                </a>
+                )}
               </motion.div>
-            )}
 
-            {/* Community reviews */}
-            <motion.div variants={itemVariants}>
-              <ReviewSection restaurantId={restaurant.id} />
-            </motion.div>
+              {/* Stats row — Airbnb style with dividers */}
+              {(restaurant.our_rating || reviewText) && (
+                <motion.div variants={itemVariants} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
+                  padding: '14px 0', marginBottom: 24,
+                }}>
+                  {restaurant.our_rating && (
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                      <p style={{ fontSize: 18, fontWeight: 800, color: '#111' }}>{restaurant.our_rating}</p>
+                      <p style={{ fontSize: 10, color: '#888', fontWeight: 500, marginTop: 2 }}>Voto di Bi</p>
+                    </div>
+                  )}
+                  {restaurant.our_rating && reviewText && (
+                    <div style={{ width: 1, height: 36, background: 'rgba(0,0,0,0.08)' }} />
+                  )}
+                  {reviewText && (
+                    <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: '#E8453C', color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, fontWeight: 800,
+                      }}>Bi</span>
+                      <p style={{ fontSize: 10, color: '#888', fontWeight: 500, marginTop: 4 }}>Recensito</p>
+                    </div>
+                  )}
+                  {categories.length > 0 && (
+                    <>
+                      <div style={{ width: 1, height: 36, background: 'rgba(0,0,0,0.08)' }} />
+                      <div style={{ flex: 1, textAlign: 'center' }}>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{categories[0].emoji}</p>
+                        <p style={{ fontSize: 10, color: '#888', fontWeight: 500, marginTop: 2 }}>{categories[0].name}</p>
+                      </div>
+                    </>
+                  )}
+                </motion.div>
+              )}
 
-            {/* Nearby restaurants */}
-            <motion.div variants={itemVariants}>
-              <NearbySection
-                currentRestaurant={restaurant}
-                allRestaurants={allRestaurants}
-                onSelect={onSelectNearby}
-              />
+              {/* Divider */}
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 24 }} />
+
+              {/* Action buttons row */}
+              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                {mapsUrl && (
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                    flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#111', color: '#fff',
+                  }}>Indicazioni</a>
+                )}
+                {phoneUrl && (
+                  <a href={phoneUrl} style={{
+                    flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                  }}>Chiama</a>
+                )}
+                {restaurant.website && (
+                  <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
+                    flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                  }}>Sito</a>
+                )}
+              </motion.div>
+
+              {/* Recensione di Bi */}
+              {reviewText && (
+                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <span style={{
+                      width: 40, height: 40, borderRadius: '50%',
+                      background: '#E8453C', color: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 800,
+                    }}>Bi</span>
+                    <div>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Recensione di Bi</p>
+                      <p style={{ fontSize: 12, color: '#888' }}>La guida di Bi</p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 15, lineHeight: 1.7, color: '#333' }}>
+                    "{reviewText}"
+                  </p>
+                  {!isItalian && (
+                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 6, fontStyle: 'italic' }}>
+                      {t('restaurant.originalItalian')}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Il tip di Bi */}
+              {tipText && (
+                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                  <div style={{
+                    background: '#FEF3C7',
+                    borderLeft: '3px solid #E8453C',
+                    borderRadius: '0 12px 12px 0',
+                    padding: '14px 16px',
+                  }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#E8453C', marginBottom: 4 }}>Il tip di Bi</p>
+                    <p style={{ fontSize: 14, lineHeight: 1.6, color: '#78350F', fontWeight: 500 }}>
+                      "{tipText}"
+                    </p>
+                  </div>
+                  {!isItalian && (
+                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 6, fontStyle: 'italic' }}>
+                      {t('restaurant.originalItalian')}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Divider */}
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
+
+              {/* Recommended for */}
+              {restaurant.recommended_for?.length > 0 && (
+                <motion.div variants={itemVariants} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+                  {restaurant.recommended_for.map(tag => (
+                    <span key={tag} style={{
+                      fontSize: 12, fontWeight: 600, color: '#92700C',
+                      background: '#FEF3C7', padding: '5px 12px', borderRadius: 20,
+                    }}>{tag}</span>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* TikTok / Instagram video */}
+              {(restaurant.instagram_reel || restaurant.tiktok_url) && (
+                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                  <a
+                    href={restaurant.tiktok_url || restaurant.instagram_reel}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      background: '#111', borderRadius: 12, padding: 14,
+                      textDecoration: 'none', color: '#fff',
+                    }}
+                  >
+                    <span style={{
+                      width: 40, height: 40, borderRadius: 10,
+                      background: 'rgba(255,255,255,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      {restaurant.tiktok_url ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48V13a8.28 8.28 0 005.58 2.17v-3.44a4.85 4.85 0 01-3.77-1.64V6.69h3.77z"/></svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                      )}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600 }}>{restaurant.tiktok_url ? 'Guarda su TikTok' : 'Guarda su Instagram'}</p>
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Il video di Bi su {restaurant.name}</p>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0, opacity: 0.6 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  </a>
+                </motion.div>
+              )}
+
+              {/* Community reviews */}
+              <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <ReviewSection restaurantId={restaurant.id} />
+              </motion.div>
+
+              {/* Nearby restaurants */}
+              <motion.div variants={itemVariants}>
+                <NearbySection
+                  currentRestaurant={restaurant}
+                  allRestaurants={allRestaurants}
+                  onSelect={onSelectNearby}
+                />
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Floating discount bar */}
-        <StickyDiscountBar discount={discount} restaurantId={restaurant.id} />
+        {/* Floating discount bar — Airbnb style white bottom bar */}
+        <FloatingDiscountBar discount={discount} restaurantId={restaurant.id} />
       </motion.div>
     </div>
   )
