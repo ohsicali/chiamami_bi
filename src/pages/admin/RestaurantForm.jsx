@@ -61,6 +61,7 @@ function convertToWebP(file, maxWidth = 1200, quality = 0.78) {
 /* ------------------------------------------------------------------ */
 const EMPTY_FORM = {
   name: '',
+  tagline: '',
   address: '',
   city: 'Torino',
   country: 'Italia',
@@ -706,6 +707,7 @@ export default function RestaurantForm() {
       if (r) {
         setForm({
           name: r.name || '',
+          tagline: r.tagline || '',
           address: r.address || '',
           city: r.city || 'Torino',
           country: r.country || 'Italia',
@@ -1039,6 +1041,7 @@ export default function RestaurantForm() {
 
     const payload = {
       name: form.name.trim(),
+      tagline: form.tagline.trim() || null,
       address: form.address.trim(),
       city: form.city.trim(),
       country: form.country.trim(),
@@ -1331,6 +1334,20 @@ export default function RestaurantForm() {
                 className={inputClass(errors.name)}
               />
               <FieldError field="name" />
+            </Field>
+
+            <Field label="Breve descrizione">
+              <input
+                type="text"
+                value={form.tagline}
+                onChange={(e) => update('tagline', e.target.value)}
+                placeholder="Es: Panini calabresi, Tapas e paella spagnola..."
+                maxLength={60}
+                className={inputClass()}
+              />
+              <span style={{ fontSize: 11, color: '#8A8680', marginTop: 2 }}>
+                {form.tagline.length}/60 — Apparirà sotto il nome nelle card
+              </span>
             </Field>
 
             <Field label="Indirizzo *" error={errors.address}>

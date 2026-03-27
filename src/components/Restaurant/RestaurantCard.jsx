@@ -139,10 +139,17 @@ export default function RestaurantCard({
           <h3 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
             fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.5,
-            marginBottom: 8,
+            marginBottom: restaurant.tagline ? 4 : 8,
           }}>
             {restaurant.name}
           </h3>
+
+          {/* Tagline */}
+          {restaurant.tagline && (
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 500, marginBottom: 8 }}>
+              {restaurant.tagline}
+            </p>
+          )}
 
           {/* Info row: category colored · recommended_for · price · distance */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap' }}>
@@ -242,6 +249,13 @@ export default function RestaurantCard({
             </span>
           )}
         </div>
+
+        {/* Tagline */}
+        {restaurant.tagline && (
+          <p style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 4 }}>
+            {restaurant.tagline}
+          </p>
+        )}
 
         {/* Category badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
