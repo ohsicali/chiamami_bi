@@ -258,9 +258,9 @@ export default function RestaurantCard({
           </p>
         )}
 
-        {/* Category badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
-          {categories.map(cat => (
+        {/* Category badges — max 2 visible */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+          {categories.slice(0, 2).map(cat => (
             <span
               key={cat.name}
               style={{
@@ -274,6 +274,16 @@ export default function RestaurantCard({
               {cat.emoji} {cat.name}
             </span>
           ))}
+          {categories.length > 2 && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 22, height: 22, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.06)',
+              fontSize: 10, fontWeight: 700, color: '#8A8680',
+            }}>
+              +{categories.length - 2}
+            </span>
+          )}
         </div>
 
         {/* Recommended + Price + Distance row */}
