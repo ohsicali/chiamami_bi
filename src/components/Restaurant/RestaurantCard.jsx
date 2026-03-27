@@ -194,7 +194,7 @@ export default function RestaurantCard({
       style={{
         background: '#fff',
         borderRadius: 18,
-        border: '1px solid rgba(0,0,0,0.08)',
+        border: '1px solid rgba(0,0,0,0.12)',
         boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
         overflow: 'hidden',
       }}
