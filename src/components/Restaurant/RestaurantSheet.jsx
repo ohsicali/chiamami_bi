@@ -82,9 +82,9 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
   return (
     <>
       <motion.div
-        initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
+        initial={{ y: 80, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
         style={{
           position: 'absolute', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, zIndex: 30,
           background: '#111', color: '#fff',
@@ -95,9 +95,9 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayTitle}</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#4ADE80' }}>{displayTitle}</span>
             {discount.title && discount.title !== discount.discount_value && (
               <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.discount_value}</span>
             )}
