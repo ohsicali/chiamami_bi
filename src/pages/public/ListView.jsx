@@ -1,16 +1,17 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import Navbar from '../../components/Layout/Navbar'
-import Footer from '../../components/Layout/Footer'
+import MobileTabBar from '../../components/Layout/MobileTabBar'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
+import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import { useAuth } from '../../lib/hooks/useAuth'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import Badge from '../../components/UI/Badge'
+import { getDistance, formatDistance } from '../../lib/utils/distance'
 
 function slugify(name) {
   return name
@@ -24,165 +25,325 @@ function slugify(name) {
     .replace(/(^-|-$)/g, '')
 }
 
-const SORT_OPTIONS = [
-  { value: 'distance', label: 'Vicinanza' },
-  { value: 'name', label: 'Nome A-Z' },
-  { value: 'newest', label: 'Più recenti' },
-]
+/* ── Star SVG ── */
+const StarIcon = ({ size = 11 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#C4A265" stroke="none">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+  </svg>
+)
 
-function SortChip({ label, active, onClick }) {
+/* ── Heart SVG ── */
+const HeartIcon = ({ filled, size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24"
+    fill={filled ? '#E8453C' : 'none'}
+    stroke={filled ? '#E8453C' : 'currentColor'}
+    strokeWidth="2"
+  >
+    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+  </svg>
+)
+
+/* ── Distance icon ── */
+const DistanceIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <circle cx="12" cy="12" r="4" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+  </svg>
+)
+
+/* ── Price display (€€€ style) ── */
+function PriceDisplay({ level }) {
+  if (!level) return null
   return (
-    <motion.button
-      whileTap={{ scale: 0.93 }}
-      onClick={onClick}
-      className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap select-none transition-colors"
-      style={{
-        backgroundColor: active ? '#FF5757' : 'rgba(255,255,255,0.85)',
-        color: active ? '#fff' : '#4B5563',
-        borderColor: active ? '#FF5757' : 'rgba(209,213,219,0.6)',
-      }}
-      type="button"
-    >
-      {label}
-    </motion.button>
+    <span style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>
+      {[1, 2, 3].map(i => (
+        <span key={i} style={{ color: i <= level ? '#111' : '#D1CDC6' }}>€</span>
+      ))}
+    </span>
   )
 }
 
-function LargeRestaurantCard({ restaurant, userPosition, onClick }) {
-  const [imageLoaded, setImageLoaded] = useState(false)
+/* ── Photo helper ── */
+function getPhotoUrl(restaurant) {
+  if (Array.isArray(restaurant.photos) && restaurant.photos.length > 0) {
+    const p = restaurant.photos[0]
+    return typeof p === 'string' ? p : p?.photo_url
+  }
+  return null
+}
+
+/* ============================================
+   HERO CARD — Featured restaurant (first one)
+   ============================================ */
+function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const photoUrl = getPhotoUrl(restaurant)
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => getCategoryInfo(name))
-    .filter(Boolean)
+    .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
-  const photoUrl =
-    Array.isArray(restaurant.photos) && restaurant.photos.length > 0
-      ? typeof restaurant.photos[0] === 'string'
-        ? restaurant.photos[0]
-        : restaurant.photos[0]?.photo_url
-      : null
+
+  const dist = userPosition && restaurant.latitude
+    ? formatDistance(getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude))
+    : null
 
   return (
-    <motion.button
-      className="w-full rounded-2xl bg-white shadow-md overflow-hidden text-left"
-      whileHover={{
-        y: -4,
-        boxShadow: '0 8px 30px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.05)',
-      }}
-      whileTap={{ scale: 0.98 }}
+    <button
       onClick={() => onClick?.(restaurant)}
+      style={{
+        width: '100%', borderRadius: 22, overflow: 'hidden',
+        position: 'relative', height: 200, marginBottom: 16,
+        cursor: 'pointer', border: 'none', padding: 0,
+        display: 'block', textAlign: 'left',
+      }}
     >
-      {/* Large photo */}
-      <div className="relative h-44 w-full bg-gray-100">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundColor: category?.color
-              ? `${category.color}15`
-              : '#f3f4f6',
-          }}
-        />
-        {photoUrl ? (
+      {/* Background image or fallback */}
+      <div style={{ position: 'absolute', inset: 0, background: '#2a1f18' }}>
+        {photoUrl && (
           <img
-            src={photoUrl}
-            alt={restaurant.name}
-            loading="lazy"
-            onLoad={() => setImageLoaded(true)}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            src={photoUrl} alt={restaurant.name} loading="lazy"
+            onLoad={() => setImgLoaded(true)}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              objectFit: 'cover', opacity: imgLoaded ? 1 : 0,
+              transition: 'opacity 0.4s',
+            }}
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-5xl">
+        )}
+        {!photoUrl && (
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 56, opacity: 0.4, background: `linear-gradient(135deg, ${category?.color || '#8A8680'}33, ${category?.color || '#8A8680'}11)`,
+          }}>
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Price badge */}
-        {restaurant.price_range != null && (
-          <div className="absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm">
-            {PRICE_LABELS[restaurant.price_range] || ''}
+        {/* Gradient overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)',
+        }} />
+      </div>
+
+      {/* Discount badge */}
+      {discountValue && (
+        <div style={{
+          position: 'absolute', top: 16, left: 16, zIndex: 3,
+          background: '#E8453C', color: '#fff',
+          fontSize: 11, fontWeight: 700,
+          padding: '5px 12px', borderRadius: 10,
+          boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
+        }}>
+          -{discountValue}%
+        </div>
+      )}
+
+      {/* Heart button */}
+      <div
+        onClick={(e) => { e.stopPropagation(); onSave?.() }}
+        style={{
+          position: 'absolute', top: 16, right: 16, zIndex: 3,
+          width: 36, height: 36, borderRadius: '50%',
+          background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer',
+        }}
+      >
+        <HeartIcon filled={saved} size={18} />
+      </div>
+
+      {/* Content */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
+        {restaurant.our_rating >= 4.5 && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: '#C4A265', color: '#fff',
+            fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+            textTransform: 'uppercase',
+            padding: '4px 10px', borderRadius: 6, marginBottom: 10,
+          }}>
+            <StarIcon size={10} />
+            Consigliato da Bi
           </div>
         )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4">
-        <h3
-          className="text-lg font-bold text-gray-900 mb-1"
-          style={{ fontFamily: "'TAN Songbird', serif" }}
-        >
+        <div style={{
+          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontSize: 26, fontWeight: 600, color: '#fff',
+          lineHeight: 1.1, marginBottom: 6,
+        }}>
           {restaurant.name}
-        </h3>
-
-        <div className="flex items-center gap-1.5 flex-wrap mb-2">
-          {categories.map(cat => (
-            <Badge key={cat.name} color={cat.color} className="text-[11px]">
-              {cat.emoji} {cat.name}
-            </Badge>
-          ))}
         </div>
-
-        {restaurant.description && (
-          <p className="text-sm text-gray-500 line-clamp-2 mb-2">
-            {restaurant.description}
-          </p>
-        )}
-
-        {restaurant.address && (
-          <p className="text-xs text-gray-400 truncate">{restaurant.address}</p>
-        )}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          fontSize: 12, color: 'rgba(255,255,255,0.7)',
+        }}>
+          {restaurant.our_rating && (
+            <>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#C4A265', fontWeight: 700 }}>
+                <StarIcon size={12} />
+                {restaurant.our_rating}
+              </span>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+            </>
+          )}
+          {category && (
+            <>
+              <span>{category.name}</span>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+            </>
+          )}
+          {restaurant.price_range && <span>{PRICE_LABELS[restaurant.price_range]}</span>}
+          {dist && (
+            <>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
+              <span>{dist}</span>
+            </>
+          )}
+        </div>
       </div>
-    </motion.button>
+    </button>
   )
 }
 
-// Threshold above which virtual scrolling kicks in
-const VIRTUAL_THRESHOLD = 20
+/* ============================================
+   HORIZONTAL CARD — Compact restaurant row
+   ============================================ */
+function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const photoUrl = getPhotoUrl(restaurant)
+  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+    .map(n => getCategoryInfo(n)).filter(Boolean)
+  const category = categories[0]
 
-function VirtualizedList({ restaurants, userPosition, onCardClick, parentRef }) {
-  const virtualizer = useVirtualizer({
-    count: restaurants.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 340,
-    overscan: 3,
-    gap: 16,
-  })
+  const dist = userPosition && restaurant.latitude
+    ? formatDistance(getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude))
+    : null
 
   return (
-    <div
+    <button
+      onClick={() => onClick?.(restaurant)}
       style={{
-        height: `${virtualizer.getTotalSize()}px`,
-        width: '100%',
+        display: 'flex', gap: 14, padding: 14, marginBottom: 12,
+        background: '#fff', borderRadius: 18,
+        border: '1px solid rgba(0,0,0,0.04)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        cursor: 'pointer', width: '100%', textAlign: 'left',
         position: 'relative',
       }}
     >
-      {virtualizer.getVirtualItems().map((virtualItem) => {
-        const restaurant = restaurants[virtualItem.index]
-        return (
-          <div
-            key={restaurant.id}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${virtualItem.size}px`,
-              transform: `translateY(${virtualItem.start}px)`,
-            }}
-          >
-            <LargeRestaurantCard
-              restaurant={restaurant}
-              userPosition={userPosition}
-              onClick={onCardClick}
+      {/* Image */}
+      <div style={{
+        width: 88, height: 88, borderRadius: 14,
+        flexShrink: 0, position: 'relative', overflow: 'hidden',
+      }}>
+        {photoUrl ? (
+          <>
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
+            }} />
+            <img
+              src={photoUrl} alt={restaurant.name} loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', opacity: imgLoaded ? 1 : 0,
+                transition: 'opacity 0.4s',
+              }}
             />
+          </>
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 32, opacity: 0.6,
+            background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
+          }}>
+            {category?.emoji || '🍽️'}
           </div>
-        )
-      })}
-    </div>
+        )}
+        {/* Discount badge on image */}
+        {discountValue && (
+          <div style={{
+            position: 'absolute', top: 6, left: 6,
+            background: '#E8453C', color: '#fff',
+            fontSize: 9, fontWeight: 700,
+            padding: '2px 7px', borderRadius: 6,
+            boxShadow: '0 2px 6px rgba(232,69,60,0.3)',
+          }}>
+            -{discountValue}%
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+        <div style={{
+          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontSize: 18, fontWeight: 600, color: '#111',
+          lineHeight: 1.2, marginBottom: 3,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          paddingRight: 28,
+        }}>
+          {restaurant.name}
+        </div>
+        <div style={{
+          fontSize: 12, color: '#8A8680', fontWeight: 500,
+          marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          {category?.name || restaurant.cuisine_type || 'Ristorante'}
+          {restaurant.description && (
+            <>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', flexShrink: 0 }} />
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {restaurant.description.slice(0, 30)}
+              </span>
+            </>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {restaurant.our_rating && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 3,
+              background: '#FBF9F4', padding: '3px 8px', borderRadius: 8,
+              fontSize: 12, fontWeight: 700, color: '#111',
+            }}>
+              <StarIcon />
+              {restaurant.our_rating}
+            </div>
+          )}
+          {dist && (
+            <div style={{
+              fontSize: 11, color: '#8A8680', fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              <DistanceIcon />
+              {dist}
+            </div>
+          )}
+          <PriceDisplay level={restaurant.price_range} />
+        </div>
+      </div>
+
+      {/* Heart */}
+      <div
+        onClick={(e) => { e.stopPropagation(); onSave?.() }}
+        style={{
+          position: 'absolute', right: 14, top: 14,
+          color: saved ? '#E8453C' : '#D1CDC6',
+          cursor: 'pointer', padding: 4,
+        }}
+      >
+        <HeartIcon filled={saved} />
+      </div>
+    </button>
   )
 }
 
+/* ============================================
+   MAIN LIST VIEW
+   ============================================ */
 export default function ListView() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { position } = useGeolocation()
   const {
     restaurants,
@@ -192,6 +353,14 @@ export default function ListView() {
     searchQuery,
     setSearchQuery,
   } = useRestaurants(position)
+
+  const { discounts: activeDiscounts } = useActiveDiscounts()
+  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+
+  const discountValueMap = useMemo(() =>
+    Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value])),
+    [activeDiscounts]
+  )
 
   const scrollContainerRef = useRef(null)
 
@@ -206,102 +375,137 @@ export default function ListView() {
     [navigate]
   )
 
-  const handleSortChange = useCallback(
-    (sortBy) => {
-      setFilters((prev) => ({ ...prev, sortBy }))
-    },
-    [setFilters]
-  )
+  const handleSave = useCallback((id) => {
+    if (!user) { navigate('/login'); return }
+    toggleSave(id)
+  }, [user, navigate, toggleSave])
 
-  const useVirtual = restaurants.length >= VIRTUAL_THRESHOLD
+  // First restaurant with discount as featured, or just the first one
+  const featuredRestaurant = restaurants.find(r => discountValueMap[r.id]) || restaurants[0]
+  const otherRestaurants = restaurants.filter(r => r.id !== featuredRestaurant?.id)
 
   return (
     <div
       ref={scrollContainerRef}
-      className="flex flex-col min-h-dvh bg-gray-50 overflow-y-auto"
+      style={{
+        minHeight: '100dvh', background: '#FAF7F2',
+        display: 'flex', flexDirection: 'column',
+        paddingBottom: 80,
+      }}
     >
       {/* Navbar */}
-      <Navbar view="list" onToggleView={handleToggleView} />
+      <Navbar view="list" onToggleView={handleToggleView} restaurants={restaurants} />
 
       {/* Content */}
-      <div className="flex-1 pt-16 px-4 pb-8 max-w-screen-lg mx-auto">
+      <div style={{ flex: 1, paddingTop: 100, paddingLeft: 16, paddingRight: 16, maxWidth: 600, margin: '0 auto', width: '100%' }}>
         {/* Search */}
-        <div className="mb-3">
+        <div style={{ marginBottom: 12 }}>
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
         {/* Filters */}
-        <div className="mb-3">
+        <div style={{ marginBottom: 12 }}>
           <FilterChips filters={filters} onFilterChange={setFilters} />
         </div>
 
-        {/* Sort options */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          <span className="text-xs font-medium text-gray-400 mr-1 flex-shrink-0">
-            Ordina:
-          </span>
-          {SORT_OPTIONS.map((opt) => (
-            <SortChip
-              key={opt.value}
-              label={opt.label}
-              active={filters.sortBy === opt.value}
-              onClick={() => handleSortChange(opt.value)}
-            />
-          ))}
-        </div>
-
         {/* Results count */}
-        <div className="mb-4">
+        <div style={{ marginBottom: 14, paddingLeft: 6 }}>
           {loading ? (
-            <div className="skeleton h-4 w-24 rounded-md" />
+            <div style={{ width: 100, height: 14, borderRadius: 6, background: '#E8E5DE' }} />
           ) : (
-            <p className="text-sm font-medium text-gray-500">
-              {restaurants.length}{' '}
-              {restaurants.length === 1 ? 'ristorante' : 'ristoranti'}
-            </p>
+            <span style={{ fontSize: 12, color: '#8A8680', fontWeight: 500 }}>
+              <b style={{ color: '#111', fontWeight: 700 }}>{restaurants.length}</b> ristoranti
+            </span>
           )}
         </div>
 
         {/* Restaurant list */}
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : restaurants.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-3 text-4xl">🔍</div>
-            <p className="text-base font-semibold text-gray-800">
-              Nessun ristorante trovato
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
-              Prova a cambiare i filtri o la ricerca
-            </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>Nessun ristorante trovato</p>
+            <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Prova a cambiare i filtri o la ricerca</p>
           </div>
-        ) : useVirtual ? (
-          <VirtualizedList
-            restaurants={restaurants}
-            userPosition={position}
-            onCardClick={handleCardClick}
-            parentRef={scrollContainerRef}
-          />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-              {restaurants.map((restaurant, index) => (
-                <div key={restaurant.id}>
-                  <LargeRestaurantCard
+          <>
+            {/* Featured / Hero card */}
+            {featuredRestaurant && (
+              <>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: 2,
+                  textTransform: 'uppercase', color: '#8A8680',
+                  marginBottom: 14, paddingLeft: 6,
+                }}>
+                  In evidenza
+                </div>
+                <HeroCard
+                  restaurant={featuredRestaurant}
+                  userPosition={position}
+                  discountValue={discountValueMap[featuredRestaurant.id]}
+                  saved={isSaved(featuredRestaurant.id)}
+                  onSave={() => handleSave(featuredRestaurant.id)}
+                  onClick={handleCardClick}
+                />
+              </>
+            )}
+
+            {/* All restaurants */}
+            {otherRestaurants.length > 0 && (
+              <>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: 2,
+                  textTransform: 'uppercase', color: '#8A8680',
+                  marginBottom: 14, paddingLeft: 6,
+                }}>
+                  Tutti i ristoranti
+                </div>
+                {otherRestaurants.map((restaurant) => (
+                  <HorizontalCard
+                    key={restaurant.id}
                     restaurant={restaurant}
                     userPosition={position}
+                    discountValue={discountValueMap[restaurant.id]}
+                    saved={isSaved(restaurant.id)}
+                    onSave={() => handleSave(restaurant.id)}
                     onClick={handleCardClick}
                   />
-                </div>
-              ))}
-          </div>
+                ))}
+              </>
+            )}
+          </>
         )}
       </div>
 
-      <Footer />
+      {/* Floating "Mappa" button */}
+      <button
+        onClick={handleToggleView}
+        style={{
+          position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 60, background: '#111', color: '#FAF7F2',
+          border: 'none', borderRadius: 28,
+          padding: '12px 26px',
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 13, fontWeight: 700, letterSpacing: 0.5,
+          display: 'flex', alignItems: 'center', gap: 10,
+          cursor: 'pointer',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        Mappa
+      </button>
+
+      {/* Tab bar */}
+      <MobileTabBar />
     </div>
   )
 }
