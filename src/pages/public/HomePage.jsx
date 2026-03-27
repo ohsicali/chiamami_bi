@@ -132,8 +132,8 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       </div>
       </div>
       {onSave && (
-        <div style={{ position: 'absolute', bottom: 8, right: 8 }} onClick={(e) => { e.stopPropagation(); onSave() }}>
-          <SaveButton saved={saved} size="sm" />
+        <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
+          <SaveButton saved={saved} onClick={onSave} size="sm" />
         </div>
       )}
     </div>
