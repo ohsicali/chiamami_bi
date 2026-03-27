@@ -524,20 +524,6 @@ export default function HomePage() {
               />
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              {loading ? (
-                <div className="skeleton h-4 w-24 rounded-md" />
-              ) : (
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680' }}>
-                  {viewportRestaurants.length}{' '}
-                  {viewportRestaurants.length === 1 ? t('home.restaurant') : t('home.restaurants')}
-                  {visibleIds && viewportRestaurants.length < displayedRestaurants.length && (
-                    <span style={{ fontWeight: 500, letterSpacing: 0 }}> in questa zona</span>
-                  )}
-                </p>
-              )}
-            </div>
-
             {loading ? (
               <div className="flex flex-col gap-3">
                 {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -550,18 +536,34 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="flex flex-col gap-3 pb-8">
+                {/* IN EVIDENZA section */}
                 {featuredRestaurant && (
-                  <RestaurantCard
-                    restaurant={featuredRestaurant}
-                    index={0}
-                    userPosition={position}
-                    onClick={handleCardClick}
-                    saved={isSaved(featuredRestaurant.id)}
-                    onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
-                    hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
-                    discountValue={discountValueMap[featuredRestaurant.id]}
-                    variant="hero"
-                  />
+                  <>
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4 }}>
+                      In evidenza
+                    </p>
+                    <RestaurantCard
+                      restaurant={featuredRestaurant}
+                      index={0}
+                      userPosition={position}
+                      onClick={handleCardClick}
+                      saved={isSaved(featuredRestaurant.id)}
+                      onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
+                      hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
+                      discountValue={discountValueMap[featuredRestaurant.id]}
+                      variant="hero"
+                    />
+                  </>
+                )}
+
+                {/* TUTTI I RISTORANTI section */}
+                {regularRestaurants.length > 0 && (
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4, marginTop: 4 }}>
+                    Tutti i ristoranti
+                    <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', marginLeft: 6 }}>
+                      · {viewportRestaurants.length} {viewportRestaurants.length === 1 ? 'ristorante' : 'ristoranti'} in questa zona
+                    </span>
+                  </p>
                 )}
                 {regularRestaurants.map((restaurant, index) => (
                   <RestaurantCard
