@@ -22,16 +22,12 @@ export default function SaveButton({
       e.stopPropagation()
       e.preventDefault()
 
-      // Bounce animation
-      await animate(scope.current, { scale: 0.7 }, { duration: 0.1 })
-      await animate(
-        scope.current,
-        { scale: 1.25 },
-        { type: 'spring', stiffness: 600, damping: 12 }
-      )
-      await animate(scope.current, { scale: 1 }, { duration: 0.15 })
-
       onClick?.()
+
+      // Bounce animation (fire-and-forget, doesn't block save)
+      animate(scope.current, { scale: 0.7 }, { duration: 0.08 })
+        .then(() => animate(scope.current, { scale: 1.2 }, { type: 'spring', stiffness: 700, damping: 14 }))
+        .then(() => animate(scope.current, { scale: 1 }, { duration: 0.1 }))
     },
     [onClick, animate, scope]
   )
