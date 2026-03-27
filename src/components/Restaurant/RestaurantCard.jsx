@@ -57,7 +57,7 @@ export default function RestaurantCard({
     return (
       <motion.button
         className="w-full text-left relative overflow-hidden"
-        style={{ borderRadius: 22, height: 200 }}
+        style={{ borderRadius: 22, height: 200, animation: 'hero-pulse 3s ease-in-out infinite' }}
         variants={cardVariants}
         initial="hidden"
         animate="visible"

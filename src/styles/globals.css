@@ -68,6 +68,12 @@ body {
   100% { transform: translateX(250%) skewX(-15deg); }
 }
 
+/* Hero card soft pulse — breathing shadow */
+@keyframes hero-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(196,162,101,0.15); }
+  50% { box-shadow: 0 8px 32px rgba(196,162,101,0.3); }
+}
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
