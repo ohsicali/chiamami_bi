@@ -41,16 +41,19 @@ function useShare(restaurant, t) {
 }
 
 /* ── Sticky Discount Bar ── */
-function StickyDiscountBar({ restaurantId }) {
+function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { discount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
+  // Use parent discount if available, otherwise fetch independently
+  const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
+  const discount = discountFromParent || fetchedDiscount
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
   const [generating, setGenerating] = useState(false)
   const [showQR, setShowQR] = useState(false)
 
-  if (discountLoading || !discount) return null
+  if (!discount && discountLoading) return null
+  if (!discount) return null
   const isExpired = new Date(discount.valid_until) < new Date()
   const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
   if (isExpired || isMaxed) return null
@@ -74,9 +77,7 @@ function StickyDiscountBar({ restaurantId }) {
     }
   }
 
-  // Format discount value
-  const val = String(discount.discount_value)
-  const displayVal = val.includes('%') && !val.startsWith('-') ? `-${val}` : val
+  const displayTitle = discount.title || discount.discount_value
 
   return (
     <>
@@ -96,12 +97,7 @@ function StickyDiscountBar({ restaurantId }) {
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayVal}</span>
-            {discount.title && discount.title !== discount.discount_value && (
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.title}</span>
-            )}
-          </div>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
         </div>
 
         {/* Action button */}
@@ -167,11 +163,11 @@ export default function RestaurantSheet({
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
-  // Dark theme-color while sheet is open (blends status bar with photo)
+  // White theme-color while sheet is open (match Safari toolbar)
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
     const original = meta?.getAttribute('content')
-    if (meta) meta.setAttribute('content', '#000000')
+    if (meta) meta.setAttribute('content', '#FAF7F2')
     return () => { if (meta && original) meta.setAttribute('content', original) }
   }, [])
 
@@ -193,7 +189,7 @@ export default function RestaurantSheet({
   const reviewText = restaurant.our_review || ''
   const tipText = restaurant.our_tip || null
   const discount = activeDiscounts.find(d => d.restaurant_id === restaurant.id)
-  const discountValue = discount?.discount_value
+  const discountTitle = discount?.title || discount?.discount_value
   const distance = position && restaurant.latitude && restaurant.longitude
     ? getDistance(position.lat, position.lng, restaurant.latitude, restaurant.longitude) : null
 
@@ -268,21 +264,22 @@ export default function RestaurantSheet({
             {/* Info overlaid on photo bottom */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 16px', zIndex: 5 }}>
               {/* Name + discount badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
                 <h1 style={{
                   fontFamily: "'TAN Songbird', serif",
-                  fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.2,
+                  fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.4,
                 }}>
                   {restaurant.name}
                 </h1>
-                {discountValue && (
+                {discountTitle && (
                   <span style={{
                     background: '#E8453C', color: '#fff',
-                    fontSize: 13, fontWeight: 700,
+                    fontSize: 12, fontWeight: 700,
                     padding: '4px 10px', borderRadius: 8,
                     whiteSpace: 'nowrap', flexShrink: 0,
+                    marginTop: 6,
                   }}>
-                    {String(discountValue).includes('%') && !String(discountValue).startsWith('-') ? `-${discountValue}` : discountValue}
+                    {discountTitle}
                   </span>
                 )}
               </div>
@@ -456,7 +453,7 @@ export default function RestaurantSheet({
         </div>
 
         {/* Sticky discount bar at bottom */}
-        <StickyDiscountBar restaurantId={restaurant.id} />
+        <StickyDiscountBar discount={discount} restaurantId={restaurant.id} />
       </motion.div>
     </div>
   )
