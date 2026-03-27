@@ -289,7 +289,8 @@ export default function HomePage() {
   }, [sheetY, windowH])
 
   // Bar drag: pull up to reveal sheet
-  const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
+  const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first, tap }) => {
+    if (tap) return // let onClick handle taps
     if (first) {
       setIsDraggingBar(true)
       setIsSheetActive(true) // make sheet z-index visible
