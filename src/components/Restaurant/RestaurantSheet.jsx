@@ -97,7 +97,12 @@ function StickyDiscountBar({ discount: discountFromParent, restaurantId }) {
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#E8453C' }}>{displayTitle}</span>
+            {discount.title && discount.title !== discount.discount_value && (
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{discount.discount_value}</span>
+            )}
+          </div>
         </div>
 
         {/* Action button */}
@@ -263,24 +268,30 @@ export default function RestaurantSheet({
 
             {/* Info overlaid on photo bottom */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 16px', zIndex: 5 }}>
-              {/* Name + discount badge */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+              {/* Name + discount badge inline */}
+              <div style={{ marginBottom: 8, lineHeight: 1.6 }}>
                 <h1 style={{
                   fontFamily: "'TAN Songbird', serif",
-                  fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.4,
+                  fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1.6,
+                  display: 'inline',
                 }}>
                   {restaurant.name}
                 </h1>
                 {discountTitle && (
-                  <span style={{
-                    background: '#E8453C', color: '#fff',
-                    fontSize: 12, fontWeight: 700,
-                    padding: '4px 10px', borderRadius: 8,
-                    whiteSpace: 'nowrap', flexShrink: 0,
-                    marginTop: 6,
-                  }}>
-                    {discountTitle}
-                  </span>
+                  <>
+                    {' '}
+                    <span style={{
+                      background: '#E8453C', color: '#fff',
+                      fontSize: 12, fontWeight: 700,
+                      padding: '4px 10px', borderRadius: 8,
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      verticalAlign: 'middle',
+                      position: 'relative', top: -2,
+                    }}>
+                      {discountTitle}
+                    </span>
+                  </>
                 )}
               </div>
 
