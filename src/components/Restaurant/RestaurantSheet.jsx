@@ -227,7 +227,7 @@ export default function RestaurantSheet({
 
             {/* Gradient overlay */}
             <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 200,
               background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
               pointerEvents: 'none',
             }} />
