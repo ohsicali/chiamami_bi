@@ -643,29 +643,67 @@ export default function RestaurantSheet({
 
               {/* Chi è Bi */}
               <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                <div
-                  onClick={() => navigate('/about')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    background: '#F5EDE3', borderRadius: 14, padding: '16px 18px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{
-                    width: 44, height: 44, borderRadius: '50%',
-                    background: '#E8453C', color: '#fff',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 800, flexShrink: 0,
-                  }}>Bi</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: '#2A2219' }}>Chi è Bi?</p>
-                    <p style={{ fontSize: 13, color: '#8C7A62', lineHeight: 1.4, marginTop: 2 }}>
-                      Scopri chi sceglie i posti e perché fidarti
-                    </p>
+                <div style={{
+                  background: '#F5EDE3', borderRadius: 16, padding: '24px 20px',
+                }}>
+                  {/* Header row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                    <span style={{
+                      width: 52, height: 52, borderRadius: '50%',
+                      background: '#E8453C', color: '#fff',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, fontWeight: 800, flexShrink: 0,
+                    }}>Bi</span>
+                    <div>
+                      <p style={{ fontSize: 18, fontWeight: 800, color: '#2A2219' }}>Ciao, sono Bi</p>
+                      <p style={{ fontSize: 13, color: '#8C7A62', marginTop: 1 }}>La tua guida a Torino</p>
+                    </div>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8C7A62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
+
+                  {/* Bio */}
+                  <p style={{ fontSize: 15, lineHeight: 1.7, color: '#3D3428', marginBottom: 16 }}>
+                    Consiglio solo posti dove tornerei. Niente sponsorizzazioni, niente fuffa — solo i locali che amo davvero, provati e riprovati.
+                  </p>
+
+                  {/* Social links + About */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
+                      textDecoration: 'none', color: '#2A2219', fontSize: 13, fontWeight: 600,
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A2219" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                      </svg>
+                      Instagram
+                    </a>
+                    <a href="https://tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
+                      textDecoration: 'none', color: '#2A2219', fontSize: 13, fontWeight: 600,
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#2A2219">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.8a8.25 8.25 0 004.76 1.5V6.86a4.84 4.84 0 01-1-.17z"/>
+                      </svg>
+                      TikTok
+                    </a>
+                    <div style={{ flex: 1 }} />
+                    <button
+                      onClick={() => navigate('/about')}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: '#E8453C', fontSize: 13, fontWeight: 700, padding: '8px 0',
+                      }}
+                    >
+                      Scopri di più
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
 
