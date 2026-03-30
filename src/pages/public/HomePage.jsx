@@ -89,7 +89,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       )}
 
       {/* Main content row */}
-      <div style={{ display: 'flex', gap: 10, padding: 10 }}>
+      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
       <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
@@ -136,12 +136,12 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
           <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
         )}
       </div>
-      </div>
       {onSave && (
-        <div style={{ position: 'absolute', top: 8, right: 8 }}>
+        <div style={{ position: 'absolute', top: 6, right: 6 }}>
           <SaveButton saved={saved} onClick={onSave} size="xs" />
         </div>
       )}
+      </div>
     </div>
   )
 }
