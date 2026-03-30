@@ -48,19 +48,36 @@ export default function AboutPage() {
   const navigate = useNavigate()
   const config = useSiteConfig()
   const [formSent, setFormSent] = useState(false)
+  const [formStep, setFormStep] = useState(1)
+  const [formExpanded, setFormExpanded] = useState(true)
   const [formData, setFormData] = useState({ name: '', restaurant: '', reason: '' })
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.restaurant.trim()) return
-    if (isSupabaseConfigured()) {
-      await supabase.from('restaurant_suggestions').insert({
-        name: formData.name || null,
-        restaurant_name: formData.restaurant,
-        reason: formData.reason || null,
-      }).then(() => {})
+  const formSteps = [
+    { key: 'name', label: 'Come ti chiami?', placeholder: 'Il tuo nome', field: 'name' },
+    { key: 'restaurant', label: 'Che posto mi consigli?', placeholder: 'Nome del ristorante', field: 'restaurant' },
+    { key: 'reason', label: 'Perché ci devo andare?', placeholder: 'Raccontami...', field: 'reason', multiline: true },
+  ]
+
+  const handleFormContinue = async () => {
+    if (formStep < 3) {
+      setFormStep(formStep + 1)
+      setFormExpanded(false)
+    } else {
+      // Submit
+      if (isSupabaseConfigured() && formData.restaurant.trim()) {
+        await supabase.from('restaurant_suggestions').insert({
+          name: formData.name || null,
+          restaurant_name: formData.restaurant,
+          reason: formData.reason || null,
+        })
+      }
+      setFormSent(true)
     }
-    setFormSent(true)
+  }
+
+  const handleFormBack = () => {
+    if (formStep === 2) setFormExpanded(true)
+    if (formStep > 1) setFormStep(formStep - 1)
   }
 
   return (
@@ -436,64 +453,134 @@ export default function AboutPage() {
                   ) : (
                     <motion.div key="form" exit={{ opacity: 0 }}>
                       <div style={{ position: 'relative', zIndex: 1 }}>
-                        <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>
-                          Hai un posto da consigliarmi?
-                        </p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 22, lineHeight: 1.5 }}>
-                          Dimmi il nome e perché ci devo andare
-                        </p>
+                        {/* Progress dots */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 24, position: 'relative', marginBottom: 28 }}>
+                          {[1, 2, 3].map((dot) => (
+                            <div
+                              key={dot}
+                              style={{
+                                width: 8, height: 8, borderRadius: '50%',
+                                background: dot <= formStep ? '#fff' : 'rgba(255,255,255,0.3)',
+                                position: 'relative', zIndex: 2,
+                                transition: 'background 0.3s',
+                              }}
+                            />
+                          ))}
+                          {/* Red progress bar */}
+                          <motion.div
+                            initial={{ width: 24 }}
+                            animate={{
+                              width: formStep === 1 ? 24 : formStep === 2 ? 56 : 88,
+                            }}
+                            transition={{
+                              type: 'spring', stiffness: 300, damping: 20, mass: 0.8,
+                            }}
+                            style={{
+                              position: 'absolute', left: -8, top: -8,
+                              height: 24, borderRadius: 12,
+                              background: '#E8453C',
+                              zIndex: 1,
+                            }}
+                          />
+                        </div>
 
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          <input
-                            type="text"
-                            placeholder="Il tuo nome"
-                            value={formData.name}
-                            onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                            style={{
-                              width: '100%', padding: '13px 16px', borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              background: 'rgba(255,255,255,0.12)',
-                              fontSize: 14, color: '#fff', outline: 'none',
-                            }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Nome del ristorante *"
-                            required
-                            value={formData.restaurant}
-                            onChange={e => setFormData(p => ({ ...p, restaurant: e.target.value }))}
-                            style={{
-                              width: '100%', padding: '13px 16px', borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              background: 'rgba(255,255,255,0.12)',
-                              fontSize: 14, color: '#fff', outline: 'none',
-                            }}
-                          />
-                          <textarea
-                            placeholder="Perché ci devo andare?"
-                            rows={3}
-                            value={formData.reason}
-                            onChange={e => setFormData(p => ({ ...p, reason: e.target.value }))}
-                            style={{
-                              width: '100%', padding: '13px 16px', borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              background: 'rgba(255,255,255,0.12)',
-                              fontSize: 14, color: '#fff', outline: 'none', resize: 'none',
-                            }}
-                          />
+                        {/* Step question + input */}
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={formStep}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.25 }}
+                          >
+                            <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 14 }}>
+                              {formSteps[formStep - 1].label}
+                            </p>
+                            {formSteps[formStep - 1].multiline ? (
+                              <textarea
+                                autoFocus
+                                placeholder={formSteps[formStep - 1].placeholder}
+                                rows={3}
+                                value={formData[formSteps[formStep - 1].field]}
+                                onChange={e => setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value }))}
+                                style={{
+                                  width: '100%', padding: '14px 16px', borderRadius: 14,
+                                  border: '1px solid rgba(255,255,255,0.2)',
+                                  background: 'rgba(255,255,255,0.12)',
+                                  fontSize: 15, color: '#fff', outline: 'none', resize: 'none',
+                                }}
+                              />
+                            ) : (
+                              <input
+                                autoFocus
+                                type="text"
+                                placeholder={formSteps[formStep - 1].placeholder}
+                                value={formData[formSteps[formStep - 1].field]}
+                                onChange={e => setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value }))}
+                                style={{
+                                  width: '100%', padding: '14px 16px', borderRadius: 14,
+                                  border: '1px solid rgba(255,255,255,0.2)',
+                                  background: 'rgba(255,255,255,0.12)',
+                                  fontSize: 15, color: '#fff', outline: 'none',
+                                }}
+                              />
+                            )}
+                          </motion.div>
+                        </AnimatePresence>
+
+                        {/* Buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
+                          {!formExpanded && (
+                            <motion.button
+                              initial={{ opacity: 0, width: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, width: 64, scale: 1 }}
+                              transition={{
+                                type: 'spring', stiffness: 400, damping: 15, mass: 0.8,
+                                opacity: { duration: 0.2 },
+                              }}
+                              onClick={handleFormBack}
+                              style={{
+                                padding: '13px 16px', borderRadius: 50,
+                                background: 'rgba(255,255,255,0.15)', color: '#fff',
+                                border: 'none', fontSize: 14, fontWeight: 600,
+                                cursor: 'pointer', flexShrink: 0,
+                                backdropFilter: 'blur(4px)',
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                              </svg>
+                            </motion.button>
+                          )}
                           <motion.button
+                            onClick={handleFormContinue}
                             whileTap={{ scale: 0.97 }}
-                            type="submit"
+                            animate={{ flex: formExpanded ? 1 : 'inherit' }}
                             style={{
-                              width: '100%', padding: '14px 20px', borderRadius: 12,
-                              background: '#22181C', color: '#fff', border: 'none',
+                              padding: '13px 20px', borderRadius: 50,
+                              background: '#E8453C', color: '#fff', border: 'none',
                               fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                              marginTop: 4,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                              flex: formExpanded ? 1 : undefined,
+                              width: formExpanded ? undefined : 200,
                             }}
                           >
-                            Invia suggerimento
+                            {formStep === 3 && (
+                              <motion.div
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 15, mass: 0.5 }}
+                                style={{ display: 'flex' }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                  <path d="M22 4L12 14.01l-3-3"/>
+                                </svg>
+                              </motion.div>
+                            )}
+                            {formStep === 3 ? 'Invia' : 'Continua'}
                           </motion.button>
-                        </form>
+                        </div>
                       </div>
                     </motion.div>
                   )}
