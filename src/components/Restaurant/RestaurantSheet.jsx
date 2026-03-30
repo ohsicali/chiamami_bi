@@ -319,8 +319,8 @@ export default function RestaurantSheet({
                 {/* Content */}
                 <div style={{
                   position: 'relative', zIndex: 1,
-                  padding: '12px 18px 16px',
-                  borderRadius: '20px 20px 16px 16px',
+                  padding: '12px 18px',
+                  borderRadius: '20px 20px 0 0',
                   background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
@@ -334,6 +334,13 @@ export default function RestaurantSheet({
                     {discountTitle}
                   </span>
                 </div>
+                {/* Downward curve */}
+                <div style={{
+                  position: 'relative', zIndex: 1,
+                  height: 14,
+                  background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
+                  borderRadius: '0 0 50% 50%',
+                }} />
               </div>
             )}
 
