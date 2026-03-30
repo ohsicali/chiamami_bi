@@ -301,18 +301,18 @@ export default function RestaurantSheet({
               </div>
             )}
 
-            {/* Discount strip — lime glow bar with curved bottom */}
+            {/* Discount strip — lime glow bar */}
             {discountTitle && (
               <div style={{
                 position: 'relative',
                 borderRadius: '20px 20px 0 0',
+                overflow: 'hidden',
               }}>
-                {/* Glow layer behind the bar */}
+                {/* Glow — only upward, clipped at bottom by overflow:hidden */}
                 <div style={{
-                  position: 'absolute', inset: 0,
-                  borderRadius: '20px 20px 0 0',
-                  background: 'rgba(163,230,53,0.9)',
-                  boxShadow: '0 40px 80px -16px rgba(163,230,53,0.8), 0 0 40px rgba(163,230,53,0.3)',
+                  position: 'absolute', top: -60, left: -20, right: -20, bottom: '50%',
+                  background: 'rgba(163,230,53,0.6)',
+                  filter: 'blur(30px)',
                   pointerEvents: 'none',
                 }} />
 
