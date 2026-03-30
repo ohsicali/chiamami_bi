@@ -648,12 +648,15 @@ export default function RestaurantSheet({
                 }}>
                   {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                    <span style={{
-                      width: 52, height: 52, borderRadius: '50%',
-                      background: '#E8453C', color: '#fff',
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 16, fontWeight: 800, flexShrink: 0,
-                    }}>Bi</span>
+                    <img
+                      src="/bi-photo.jpg"
+                      alt="Bi"
+                      style={{
+                        width: 52, height: 52, borderRadius: '50%',
+                        objectFit: 'cover', flexShrink: 0,
+                        border: '2px solid rgba(232,69,60,0.2)',
+                      }}
+                    />
                     <div>
                       <p style={{ fontSize: 18, fontWeight: 800, color: '#2A2219' }}>Ciao, sono Bi</p>
                       <p style={{ fontSize: 13, color: '#8C7A62', marginTop: 1 }}>La tua guida a Torino</p>
