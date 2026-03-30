@@ -649,7 +649,7 @@ export default function RestaurantSheet({
                   {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
                     <img
-                      src="/bi-photo.jpg"
+                      src="/bi-photo.JPG"
                       alt="Bi"
                       style={{
                         width: 52, height: 52, borderRadius: '50%',
