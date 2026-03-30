@@ -284,8 +284,8 @@ export default function RestaurantSheet({
           {/* White content card — scrolls up over sticky photo */}
           <div style={{
             background: '#fff',
-            borderRadius: '28px 28px 0 0',
-            marginTop: -32,
+            borderRadius: '20px 20px 0 0',
+            marginTop: -24,
             position: 'relative', zIndex: 2,
             minHeight: '100vh',
           }}>
@@ -305,7 +305,7 @@ export default function RestaurantSheet({
             {discountTitle && (
               <div style={{
                 position: 'relative',
-                borderRadius: '28px 28px 0 0',
+                borderRadius: '20px 20px 0 0',
               }}>
                 {/* Glow — subtle, close to strip */}
                 <div style={{
@@ -319,7 +319,7 @@ export default function RestaurantSheet({
                 <div style={{
                   position: 'relative', zIndex: 1,
                   padding: '12px 18px',
-                  borderRadius: '28px 28px 0 0',
+                  borderRadius: '20px 20px 0 0',
                   background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
