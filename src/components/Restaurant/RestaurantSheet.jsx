@@ -97,7 +97,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo da Bi</p>
           <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
         </div>
 
@@ -472,22 +472,26 @@ export default function RestaurantSheet({
 
                     {/* Badge */}
                     <div style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(74,222,128,0.12)', padding: '5px 12px', borderRadius: 20,
-                      marginBottom: 14, position: 'relative', zIndex: 2,
+                      display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2,
+                      marginBottom: 14,
                     }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#4ADE80"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                        Esclusiva Bi
-                      </span>
+                      <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        background: 'rgba(74,222,128,0.12)', padding: '5px 12px', borderRadius: 20,
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#4ADE80"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                          Sconto esclusivo da Bi
+                        </span>
+                      </div>
                     </div>
 
                     {/* Discount title */}
-                    <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, position: 'relative', zIndex: 2 }}>
+                    <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, position: 'relative', zIndex: 2, textAlign: 'center' }}>
                       {discount.title || discount.discount_value}
                     </h3>
                     {discount.description && (
-                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 4, position: 'relative', zIndex: 2 }}>
+                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 4, position: 'relative', zIndex: 2, textAlign: 'center' }}>
                         {discount.description}
                       </p>
                     )}
@@ -525,25 +529,29 @@ export default function RestaurantSheet({
                         </svg>
                       </div>
 
-                      {/* Lock icon overlay */}
-                      <motion.div
-                        animate={{ scale: [1, 1.08, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                        style={{
-                          position: 'absolute', top: '50%', left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: 52, height: 52, borderRadius: '50%',
-                          background: 'rgba(74,222,128,0.15)',
-                          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          border: '1px solid rgba(74,222,128,0.25)',
-                        }}
-                      >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0110 0v4" />
-                        </svg>
-                      </motion.div>
+                      {/* Lock icon overlay — wrapper handles centering, inner div animates */}
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        pointerEvents: 'none',
+                      }}>
+                        <motion.div
+                          animate={{ scale: [1, 1.08, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                          style={{
+                            width: 52, height: 52, borderRadius: '50%',
+                            background: 'rgba(74,222,128,0.15)',
+                            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: '1px solid rgba(74,222,128,0.25)',
+                          }}
+                        >
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0110 0v4" />
+                          </svg>
+                        </motion.div>
+                      </div>
                     </div>
 
                     {/* CTA text */}
