@@ -447,8 +447,8 @@ export default function RestaurantSheet({
 
               {/* ── Secondo Bi — plain text ── */}
               {reviewText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 15, lineHeight: 1.75, color: '#22181C' }}>
+                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#22181C' }}>
                     {reviewText}
                   </p>
                   {!isItalian && (
@@ -470,9 +470,9 @@ export default function RestaurantSheet({
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
                       </svg>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Cosa prendere</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Cosa prendere</span>
                     </div>
-                    <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(255,255,255,0.95)' }}>
+                    <p style={{ fontSize: 16, lineHeight: 1.8, color: 'rgba(255,255,255,0.95)' }}>
                       {tipText}
                     </p>
                   </div>
