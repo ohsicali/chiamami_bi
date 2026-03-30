@@ -103,14 +103,14 @@ export default function AboutPage() {
             variants={fadeUp}
             className="mb-8 relative"
           >
-            <div
-              className="w-36 h-36 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center shadow-lg"
+            <img
+              src="/bi-photo.JPG"
+              alt="Bi"
+              className="w-36 h-36 rounded-full object-cover shadow-lg"
               style={{
                 border: '3px solid rgba(232, 93, 58, 0.2)',
               }}
-            >
-              <span className="text-5xl select-none">Bi</span>
-            </div>
+            />
             {/* Decorative ring */}
             <div
               className="absolute -inset-3 rounded-full"
