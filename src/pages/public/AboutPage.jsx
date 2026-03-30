@@ -415,15 +415,11 @@ export default function AboutPage() {
               variants={fadeUp}
             >
               <div style={{
-                background: '#C4A265', borderRadius: 16, padding: '28px 22px',
+                background: '#fff', borderRadius: 16, padding: '28px 22px',
                 position: 'relative', overflow: 'hidden',
+                border: '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
               }}>
-                {/* Accent glow */}
-                <div style={{
-                  position: 'absolute', bottom: -30, right: -30, width: 120, height: 120,
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%)',
-                  pointerEvents: 'none',
-                }} />
 
                 <AnimatePresence mode="wait">
                   {formSent ? (
@@ -438,29 +434,37 @@ export default function AboutPage() {
                     >
                       <div style={{
                         width: 52, height: 52, borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.2)',
+                        background: 'rgba(232,69,60,0.1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5"/>
                         </svg>
                       </div>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Grazie!</p>
-                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
+                      <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C' }}>Grazie!</p>
+                      <p style={{ fontSize: 14, color: '#8A8680', textAlign: 'center' }}>
                         Il tuo suggerimento è stato inviato.<br />Lo proverò presto!
                       </p>
                     </motion.div>
                   ) : (
                     <motion.div key="form" exit={{ opacity: 0 }}>
                       <div style={{ position: 'relative', zIndex: 1 }}>
+                        {/* Title */}
+                        <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C', marginBottom: 6 }}>
+                          Hai un posto da consigliarmi?
+                        </p>
+                        <p style={{ fontSize: 13, color: '#8A8680', marginBottom: 22 }}>
+                          Rispondi a 3 domande veloci
+                        </p>
+
                         {/* Progress dots */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 24, position: 'relative', marginBottom: 28 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 24, position: 'relative', marginBottom: 24 }}>
                           {[1, 2, 3].map((dot) => (
                             <div
                               key={dot}
                               style={{
                                 width: 8, height: 8, borderRadius: '50%',
-                                background: dot <= formStep ? '#fff' : 'rgba(255,255,255,0.3)',
+                                background: dot <= formStep ? '#fff' : 'rgba(0,0,0,0.1)',
                                 position: 'relative', zIndex: 2,
                                 transition: 'background 0.3s',
                               }}
@@ -493,7 +497,7 @@ export default function AboutPage() {
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.25 }}
                           >
-                            <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 14 }}>
+                            <p style={{ fontSize: 16, fontWeight: 700, color: '#22181C', marginBottom: 14 }}>
                               {formSteps[formStep - 1].label}
                             </p>
                             {formSteps[formStep - 1].multiline ? (
@@ -505,9 +509,9 @@ export default function AboutPage() {
                                 onChange={e => setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value }))}
                                 style={{
                                   width: '100%', padding: '14px 16px', borderRadius: 14,
-                                  border: '1px solid rgba(255,255,255,0.2)',
-                                  background: 'rgba(255,255,255,0.12)',
-                                  fontSize: 15, color: '#fff', outline: 'none', resize: 'none',
+                                  border: '1px solid rgba(0,0,0,0.08)',
+                                  background: '#FAF7F2',
+                                  fontSize: 15, color: '#22181C', outline: 'none', resize: 'none',
                                 }}
                               />
                             ) : (
@@ -519,9 +523,9 @@ export default function AboutPage() {
                                 onChange={e => setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value }))}
                                 style={{
                                   width: '100%', padding: '14px 16px', borderRadius: 14,
-                                  border: '1px solid rgba(255,255,255,0.2)',
-                                  background: 'rgba(255,255,255,0.12)',
-                                  fontSize: 15, color: '#fff', outline: 'none',
+                                  border: '1px solid rgba(0,0,0,0.08)',
+                                  background: '#FAF7F2',
+                                  fontSize: 15, color: '#22181C', outline: 'none',
                                 }}
                               />
                             )}
@@ -541,13 +545,12 @@ export default function AboutPage() {
                               onClick={handleFormBack}
                               style={{
                                 padding: '13px 16px', borderRadius: 50,
-                                background: 'rgba(255,255,255,0.15)', color: '#fff',
+                                background: '#F0EBE3', color: '#22181C',
                                 border: 'none', fontSize: 14, fontWeight: 600,
                                 cursor: 'pointer', flexShrink: 0,
-                                backdropFilter: 'blur(4px)',
                               }}
                             >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M19 12H5M12 19l-7-7 7-7"/>
                               </svg>
                             </motion.button>
@@ -572,7 +575,7 @@ export default function AboutPage() {
                                 transition={{ type: 'spring', stiffness: 500, damping: 15, mass: 0.5 }}
                                 style={{ display: 'flex' }}
                               >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
                                   <path d="M22 4L12 14.01l-3-3"/>
                                 </svg>
