@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
@@ -122,8 +123,11 @@ export default function NearbySection({
   }, [currentRestaurant, allRestaurants])
 
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   if (nearby.length === 0) return null
+
+  const totalCount = allRestaurants.length
 
   return (
     <div className="flex flex-col gap-3">
@@ -140,6 +144,39 @@ export default function NearbySection({
             onSelect={onSelect}
           />
         ))}
+        {/* "More" card */}
+        <motion.button
+          className="flex w-20 flex-shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl"
+          variants={cardVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-20px' }}
+          custom={nearby.length}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate('/list')}
+          style={{
+            background: 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(20px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
+            gap: 6, marginRight: 4,
+          }}
+        >
+          <span style={{
+            width: 30, height: 30, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>
+            {totalCount} locali
+          </span>
+        </motion.button>
       </div>
     </div>
   )
