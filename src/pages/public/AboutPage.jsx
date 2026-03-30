@@ -59,16 +59,18 @@ export default function AboutPage() {
   ]
 
   const handleFormContinue = async () => {
+    const currentField = formSteps[formStep - 1].field
+    if (!formData[currentField]?.trim()) return
     if (formStep < 3) {
       setFormStep(formStep + 1)
       setFormExpanded(false)
     } else {
       // Submit
-      if (isSupabaseConfigured() && formData.restaurant.trim()) {
+      if (isSupabaseConfigured()) {
         await supabase.from('restaurant_suggestions').insert({
-          name: formData.name || null,
+          name: formData.name,
           restaurant_name: formData.restaurant,
-          reason: formData.reason || null,
+          reason: formData.reason,
         })
       }
       setFormSent(true)
@@ -143,14 +145,15 @@ export default function AboutPage() {
               />
             </motion.div>
 
-            {/* Title */}
-            <motion.h1 variants={fadeUp} style={{
-              fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-              fontSize: 36, fontWeight: 700, color: '#fff',
-              marginBottom: 12, textAlign: 'center', letterSpacing: -0.5,
-            }}>
-              Chiamami<span style={{ color: '#E8453C' }}>Bi</span>
-            </motion.h1>
+            {/* Logo */}
+            <motion.div variants={fadeUp} style={{ marginBottom: 12 }}>
+              <img
+                src="/logo-guida-bi.png"
+                alt="La Guida di Bi"
+                style={{ height: 32, width: 'auto', filter: 'brightness(0) invert(1)' }}
+                draggable={false}
+              />
+            </motion.div>
 
             {/* Tagline */}
             <motion.p variants={fadeUp} style={{
@@ -224,7 +227,7 @@ export default function AboutPage() {
               <p style={{
                 fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
                 fontSize: 26, fontWeight: 700, color: '#22181C',
-                lineHeight: 1.7, textAlign: 'center',
+                lineHeight: 1.9, textAlign: 'center',
               }}>
                 "Dove mangiamo<br />stasera?"
               </p>
@@ -434,10 +437,10 @@ export default function AboutPage() {
                     >
                       <div style={{
                         width: 52, height: 52, borderRadius: '50%',
-                        background: 'rgba(232,69,60,0.1)',
+                        background: 'rgba(74,222,128,0.12)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5"/>
                         </svg>
                       </div>
