@@ -64,16 +64,24 @@ function NearbyCard({ restaurant, index, onSelect }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-0.5 p-2.5">
-        <h4 className="text-left text-xs font-semibold text-primary leading-snug" style={{ fontFamily: "'TAN Songbird', serif", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+      <div className="flex flex-col gap-1 p-2.5">
+        <h4 className="text-left text-xs font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
           {restaurant.name}
         </h4>
         {(category || priceLabel) && (
-          <span className="text-left text-[11px] font-medium text-secondary">
-            {category && <>{category.emoji} {category.name}</>}
-            {category && priceLabel && ' · '}
-            {priceLabel}
-          </span>
+          <div className="flex items-center gap-1 flex-wrap">
+            {category && (
+              <span
+                className="text-[10px] font-semibold rounded-full px-2 py-0.5"
+                style={{ color: category.color, border: `1px solid ${category.color}` }}
+              >
+                {category.emoji} {category.name}
+              </span>
+            )}
+            {priceLabel && (
+              <span className="text-[10px] font-medium text-secondary">{priceLabel}</span>
+            )}
+          </div>
         )}
         {shortDesc && (
           <p className="text-left text-[11px] text-secondary leading-tight mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
