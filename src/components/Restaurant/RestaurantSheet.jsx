@@ -447,7 +447,7 @@ export default function RestaurantSheet({
 
               {/* ── Secondo Bi — plain text ── */}
               {reviewText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div variants={itemVariants} style={{ marginBottom: 20, padding: '0 18px' }}>
                   <p style={{ fontSize: 16, lineHeight: 1.8, color: '#22181C' }}>
                     {reviewText}
                   </p>
