@@ -306,14 +306,13 @@ export default function RestaurantSheet({
               <div style={{
                 position: 'relative',
                 borderRadius: '20px 20px 0 0',
-                overflow: 'hidden',
               }}>
-                {/* Glow — only upward, clipped at bottom by overflow:hidden */}
+                {/* Glow — upward onto photo only */}
                 <div style={{
-                  position: 'absolute', top: -60, left: -20, right: -20, bottom: '50%',
-                  background: 'rgba(163,230,53,0.6)',
-                  filter: 'blur(30px)',
-                  pointerEvents: 'none',
+                  position: 'absolute', top: -80, left: -20, right: -20, height: 80,
+                  background: 'rgba(163,230,53,0.5)',
+                  filter: 'blur(40px)',
+                  pointerEvents: 'none', zIndex: 0,
                 }} />
 
                 {/* Content */}
