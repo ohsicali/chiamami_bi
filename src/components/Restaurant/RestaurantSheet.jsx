@@ -427,55 +427,48 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* Recensione di Bi — warm cream card */}
+              {/* Secondo Bi — the place described */}
               {reviewText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
                   <div style={{
-                    background: '#F5EDE3', borderRadius: 16, padding: '22px 20px',
+                    borderRadius: 16, padding: '22px 20px',
+                    borderLeft: '3px solid #E8453C',
+                    background: 'linear-gradient(135deg, rgba(232,69,60,0.04) 0%, rgba(245,237,227,0.5) 100%)',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <span style={{
-                        width: 32, height: 32, borderRadius: '50%',
-                        background: '#E8453C', color: '#fff',
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 11, fontWeight: 800, flexShrink: 0,
-                      }}>Bi</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#2A2219' }}>Recensione di Bi</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                      </svg>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#E8453C', letterSpacing: 0.8, textTransform: 'uppercase' }}>Secondo Bi</span>
                     </div>
-                    <p style={{ fontSize: 16, lineHeight: 1.7, color: '#3D3428' }}>
-                      "{reviewText}"
+                    <p style={{ fontSize: 16, lineHeight: 1.75, color: '#2A2219' }}>
+                      {reviewText}
                     </p>
                     {!isItalian && (
-                      <p style={{ fontSize: 13, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
+                      <p style={{ fontSize: 12, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
                         {t('restaurant.originalItalian')}
                       </p>
-                    )}
-
-                    {/* Tip di Bi — inside the card */}
-                    {tipText && (
-                      <div style={{
-                        marginTop: 16, paddingTop: 16,
-                        borderTop: '1px solid rgba(0,0,0,0.06)',
-                      }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: '#E8453C', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
-                        <p style={{ fontSize: 15, lineHeight: 1.6, color: '#3D3428', fontWeight: 500 }}>
-                          "{tipText}"
-                        </p>
-                      </div>
                     )}
                   </div>
                 </motion.div>
               )}
 
-              {/* Tip di Bi standalone — only if there's a tip but no review */}
-              {tipText && !reviewText && (
+              {/* Cosa prendere — Bi's food tips */}
+              {tipText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
-                    background: '#F5EDE3', borderRadius: 16, padding: '22px 20px',
+                    borderRadius: 16, padding: '22px 20px',
+                    borderLeft: '3px solid #C4A265',
+                    background: 'linear-gradient(135deg, rgba(196,162,101,0.06) 0%, rgba(245,237,227,0.5) 100%)',
                   }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#E8453C', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
-                    <p style={{ fontSize: 14, lineHeight: 1.6, color: '#3D3428', fontWeight: 500 }}>
-                      "{tipText}"
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+                      </svg>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#C4A265', letterSpacing: 0.8, textTransform: 'uppercase' }}>Cosa prendere</span>
+                    </div>
+                    <p style={{ fontSize: 16, lineHeight: 1.75, color: '#2A2219' }}>
+                      {tipText}
                     </p>
                   </div>
                 </motion.div>
