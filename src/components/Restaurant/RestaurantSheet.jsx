@@ -399,6 +399,22 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
+              {/* Recommended for */}
+              {restaurant.recommended_for?.length > 0 && (
+                <motion.div variants={itemVariants} style={{
+                  display: 'flex', justifyContent: 'center', alignItems: 'center',
+                  gap: 6, flexWrap: 'wrap', marginBottom: 20,
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#888' }}>Consigliato per:</span>
+                  {restaurant.recommended_for.map(tag => (
+                    <span key={tag} style={{
+                      fontSize: 13, fontWeight: 600, color: '#92700C',
+                      background: '#FEF3C7', padding: '4px 12px', borderRadius: 20,
+                    }}>{tag}</span>
+                  ))}
+                </motion.div>
+              )}
+
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 16 }} />
 
@@ -750,18 +766,6 @@ export default function RestaurantSheet({
                   </div>
                 </div>
               </motion.div>
-
-              {/* Recommended for */}
-              {restaurant.recommended_for?.length > 0 && (
-                <motion.div variants={itemVariants} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-                  {restaurant.recommended_for.map(tag => (
-                    <span key={tag} style={{
-                      fontSize: 14, fontWeight: 600, color: '#92700C',
-                      background: '#FEF3C7', padding: '5px 12px', borderRadius: 20,
-                    }}>{tag}</span>
-                  ))}
-                </motion.div>
-              )}
 
               {/* TikTok / Instagram video */}
               {(restaurant.instagram_reel || restaurant.tiktok_url) && (
