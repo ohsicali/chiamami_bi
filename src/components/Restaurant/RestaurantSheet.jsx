@@ -351,6 +351,7 @@ export default function RestaurantSheet({
               style={{
                 padding: '28px 24px 100px',
                 background: '#fff',
+                ...(!discountTitle && { borderRadius: '20px 20px 0 0' }),
               }}
             >
               {/* Restaurant name — centered */}
