@@ -399,6 +399,20 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
+              {/* Recommended for */}
+              {restaurant.recommended_for?.length > 0 && (
+                <motion.div variants={itemVariants} style={{
+                  display: 'flex', justifyContent: 'center', alignItems: 'center',
+                  gap: 6, flexWrap: 'wrap', marginBottom: 10, marginTop: -10,
+                }}>
+                  {restaurant.recommended_for.map(tag => (
+                    <span key={tag} style={{
+                      fontSize: 12, color: '#999',
+                    }}>{tag}</span>
+                  ))}
+                </motion.div>
+              )}
+
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
