@@ -405,11 +405,11 @@ export default function RestaurantSheet({
                   display: 'flex', justifyContent: 'center', alignItems: 'center',
                   gap: 6, flexWrap: 'wrap', marginBottom: 20,
                 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#888' }}>Consigliato per:</span>
                   {restaurant.recommended_for.map(tag => (
                     <span key={tag} style={{
-                      fontSize: 13, fontWeight: 600, color: '#92700C',
-                      background: '#FEF3C7', padding: '4px 12px', borderRadius: 20,
+                      fontSize: 12, fontWeight: 500, color: '#999',
+                      padding: '3px 10px', borderRadius: 16,
+                      border: '1px solid rgba(0,0,0,0.08)',
                     }}>{tag}</span>
                   ))}
                 </motion.div>
