@@ -179,6 +179,11 @@ export default function RestaurantSheet({
     return () => { if (meta && original) meta.setAttribute('content', original) }
   }, [])
 
+  // Scroll to top when restaurant changes (e.g. nearby click)
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+  }, [restaurant?.id])
+
   // Parallax — photo drifts up at 0.3x scroll speed
   useEffect(() => {
     const el = scrollRef.current

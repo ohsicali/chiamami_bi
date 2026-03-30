@@ -80,7 +80,7 @@ export default function RestaurantCard({
             background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)',
           }} />
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(206,129,71,0.1), transparent 50%)',
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)',
           }} />
           {/* Shimmer — single light sweep */}
           {imageLoaded && (
@@ -100,7 +100,7 @@ export default function RestaurantCard({
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#CE8147', color: '#fff',
+            background: '#C4A265', color: '#fff',
             fontSize: 11, fontWeight: 700, letterSpacing: 1,
             textTransform: 'uppercase',
             padding: '5px 12px', borderRadius: 10,
@@ -110,10 +110,9 @@ export default function RestaurantCard({
           </div>
           {hasDiscount && discountTitle && (
             <div style={{
-              background: '#E8453C', color: '#fff',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
               fontSize: 11, fontWeight: 700,
               padding: '5px 12px', borderRadius: 10,
-              boxShadow: '0 2px 10px rgba(232,69,60,0.4)',
             }}>
               {discountTitle}
             </div>

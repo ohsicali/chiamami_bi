@@ -95,7 +95,7 @@ export default function DealsPage() {
               {!user && (
                 <motion.div variants={fadeUp} style={{
                   borderRadius: 18, padding: 20, marginBottom: 16, marginTop: 16,
-                  background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(206,129,71,0.06))',
+                  background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(196,162,101,0.06))',
                   border: '1.5px solid #E8E5DE',
                 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 6 }}>Registrati per sbloccare gli sconti</p>
@@ -157,14 +157,14 @@ export default function DealsPage() {
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }}
                           />
                         )}
-                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(206,129,71,0.1), transparent 50%)' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
                       </div>
 
                       <div style={{ position: 'relative', zIndex: 2, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
                         <div className="flex justify-between items-start">
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: 4,
-                            background: '#CE8147', color: '#fff',
+                            background: '#C4A265', color: '#fff',
                             fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
                             padding: '4px 10px', borderRadius: 6,
                           }}>
@@ -172,10 +172,9 @@ export default function DealsPage() {
                             Top sconto
                           </span>
                           <span style={{
-                            background: '#E8453C', color: '#fff',
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
                             fontSize: 16, fontWeight: 800,
                             padding: '6px 14px', borderRadius: 12,
-                            boxShadow: '0 4px 16px rgba(232,69,60,0.4)',
                           }}>
                             {featuredDeal.discount_value}
                           </span>
@@ -199,7 +198,7 @@ export default function DealsPage() {
                               <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 2, overflow: 'hidden' }}>
                                 <div style={{
                                   width: `${Math.max(5, ((featuredDeal.max_redemptions - (featuredDeal.current_redemptions || 0)) / featuredDeal.max_redemptions) * 100)}%`,
-                                  height: '100%', background: '#CE8147', borderRadius: 2,
+                                  height: '100%', background: '#C4A265', borderRadius: 2,
                                 }} />
                               </div>
                               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -253,7 +252,7 @@ export default function DealsPage() {
                                     {r?.name}
                                   </h3>
                                   <span style={{
-                                    background: 'rgba(232,69,60,0.1)', color: '#E8453C',
+                                    background: 'rgba(163,230,53,0.15)', color: '#22181C',
                                     fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
                                     whiteSpace: 'nowrap', flexShrink: 0,
                                   }}>
@@ -268,7 +267,7 @@ export default function DealsPage() {
                                     <div style={{ flex: 1, height: 4, background: '#eee', borderRadius: 2, overflow: 'hidden' }}>
                                       <div style={{
                                         width: `${Math.max(5, ((deal.max_redemptions - (deal.current_redemptions || 0)) / deal.max_redemptions) * 100)}%`,
-                                        height: '100%', background: '#E8453C', borderRadius: 2,
+                                        height: '100%', background: 'linear-gradient(135deg, #a3e635, #4ade80)', borderRadius: 2,
                                       }} />
                                     </div>
                                     <span style={{ fontSize: 10, color: '#8A8680', fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -291,7 +290,7 @@ export default function DealsPage() {
                   <div style={{ background: '#fff', borderRadius: 16, padding: 18, border: '1.5px solid #E8E5DE' }}>
                     {[
                       { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-                      { icon: '✅', bg: 'rgba(206,129,71,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
                       { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
                     ].map((step, i) => (
                       <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>

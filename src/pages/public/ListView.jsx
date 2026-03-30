@@ -27,7 +27,7 @@ function slugify(name) {
 
 /* ── Star SVG ── */
 const StarIcon = ({ size = 11 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#CE8147" stroke="none">
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#C4A265" stroke="none">
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
   </svg>
 )
@@ -155,7 +155,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         {restaurant.our_rating >= 4.5 && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#CE8147', color: '#fff',
+            background: '#C4A265', color: '#fff',
             fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
             textTransform: 'uppercase',
             padding: '4px 10px', borderRadius: 6, marginBottom: 10,
@@ -177,7 +177,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         }}>
           {restaurant.our_rating && (
             <>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#CE8147', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#C4A265', fontWeight: 700 }}>
                 <StarIcon size={12} />
                 {restaurant.our_rating}
               </span>
