@@ -301,41 +301,34 @@ export default function RestaurantSheet({
               </div>
             )}
 
-            {/* Discount strip — dark card with green glow */}
+            {/* Discount strip — lime glow bar */}
             {discountTitle && (
               <div style={{
                 position: 'relative',
                 borderRadius: '20px 20px 0 0',
-                overflow: 'hidden',
               }}>
-                {/* Green glow behind */}
+                {/* Glow layer behind the bar */}
                 <div style={{
-                  position: 'absolute', bottom: -8, left: '10%', right: '10%', height: 24,
-                  background: 'rgba(74,222,128,0.5)',
-                  filter: 'blur(16px)',
-                  borderRadius: '50%',
+                  position: 'absolute', inset: 0,
+                  borderRadius: '20px 20px 0 0',
+                  background: 'rgba(163,230,53,0.9)',
+                  boxShadow: '0 40px 80px -16px rgba(163,230,53,0.8), 0 0 40px rgba(163,230,53,0.3)',
                   pointerEvents: 'none',
                 }} />
 
+                {/* Content */}
                 <div style={{
-                  background: 'radial-gradient(120% 120% at 30% 10%, #1a1a1a 0%, #0f0f10 60%, #0b0b0c 100%)',
-                  padding: '14px 18px',
-                  borderRadius: '20px 20px 0 0',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   position: 'relative', zIndex: 1,
+                  padding: '12px 18px',
+                  borderRadius: '20px 20px 0 0',
+                  background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
-                  <motion.span
-                    animate={{ opacity: [1, 0.4, 1], scale: [1, 0.85, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: '#4ADE80',
-                      boxShadow: '0 0 8px rgba(74,222,128,0.6)',
-                      flexShrink: 0, display: 'inline-block',
-                    }}
-                  />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
                   <span style={{
-                    fontSize: 13, fontWeight: 700, color: '#fff',
+                    fontSize: 13, fontWeight: 700, color: '#000',
                     letterSpacing: 0.3,
                   }}>
                     {discountTitle}
