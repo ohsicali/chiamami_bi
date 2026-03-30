@@ -307,11 +307,11 @@ export default function RestaurantSheet({
                 position: 'relative',
                 borderRadius: '20px 20px 0 0',
               }}>
-                {/* Glow — upward onto photo only */}
+                {/* Glow — subtle, close to strip */}
                 <div style={{
-                  position: 'absolute', top: -80, left: -20, right: -20, height: 80,
-                  background: 'rgba(163,230,53,0.5)',
-                  filter: 'blur(40px)',
+                  position: 'absolute', top: -30, left: 0, right: 0, height: 30,
+                  background: 'rgba(163,230,53,0.25)',
+                  filter: 'blur(16px)',
                   pointerEvents: 'none', zIndex: 0,
                 }} />
 
