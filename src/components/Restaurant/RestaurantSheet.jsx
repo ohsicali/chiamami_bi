@@ -154,6 +154,7 @@ export default function RestaurantSheet({
   const { t, i18n } = useTranslation()
   const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
+  const photoRef = useRef(null)
   const [backdropScope, animateBackdrop] = useAnimate()
   const [sheetScope, animateSheet] = useAnimate()
   const { handleShare } = useShare(restaurant, t)
@@ -167,6 +168,24 @@ export default function RestaurantSheet({
     const original = meta?.getAttribute('content')
     if (meta) meta.setAttribute('content', '#ffffff')
     return () => { if (meta && original) meta.setAttribute('content', original) }
+  }, [])
+
+  // Parallax — photo drifts up at 0.3x scroll speed
+  useEffect(() => {
+    const el = scrollRef.current
+    const photo = photoRef.current
+    if (!el || !photo) return
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        photo.style.transform = `translateY(${-el.scrollTop * 0.3}px)`
+        ticking = false
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
   const handleClose = useCallback(async () => {
@@ -217,8 +236,10 @@ export default function RestaurantSheet({
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
 
           {/* Photo — sticky, stays in place while content scrolls over it */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 0 }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="50vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '50vh' }}>
+            <div ref={photoRef} style={{ willChange: 'transform' }}>
+              <PhotoCarousel photos={restaurant.photos || []} height="65vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+            </div>
 
             {/* Back button — white circle */}
             <button
