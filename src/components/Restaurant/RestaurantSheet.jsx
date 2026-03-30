@@ -349,7 +349,7 @@ export default function RestaurantSheet({
               initial="hidden"
               animate="visible"
               style={{
-                padding: '28px 24px 100px',
+                padding: `${discountTitle ? 12 : 28}px 24px 100px`,
                 background: '#fff',
                 ...(!discountTitle && { borderRadius: '20px 20px 0 0' }),
               }}
