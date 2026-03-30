@@ -166,6 +166,10 @@ export default function RestaurantSheet({
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
   const [photoIndex, setPhotoIndex] = useState(0)
+  const [inlineShowQR, setInlineShowQR] = useState(false)
+  const [inlineGenerating, setInlineGenerating] = useState(false)
+  const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
+  const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
 
   // Match Safari toolbar to white bottom bar
   useEffect(() => {
@@ -495,170 +499,262 @@ export default function RestaurantSheet({
                 </motion.div>
               )}
 
-              {/* ── Discount FOMO Section ── */}
+              {/* ── Discount Section ── */}
               {discount && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                  <motion.div
-                    animate={{ boxShadow: ['0 0 0 0 rgba(163,230,53,0)', '0 0 24px 4px rgba(163,230,53,0.12)', '0 0 0 0 rgba(163,230,53,0)'] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{
+                  {user ? (
+                    /* ── Logged-in user: unlock / show QR ── */
+                    <div style={{
                       background: 'linear-gradient(145deg, #22181C 0%, #2a2025 100%)',
                       borderRadius: 16, padding: '24px 20px',
                       position: 'relative', overflow: 'hidden',
-                    }}
-                  >
-                    {/* Animated shimmer */}
-                    <motion.div
-                      animate={{ x: ['-100%', '200%'] }}
-                      transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
-                      style={{
-                        position: 'absolute', top: 0, left: 0,
-                        width: '50%', height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
-                        pointerEvents: 'none', zIndex: 1,
-                      }}
-                    />
-
-                    {/* Decorative glow */}
-                    <div style={{
-                      position: 'absolute', top: -40, right: -40,
-                      width: 140, height: 140,
-                      background: 'radial-gradient(circle, rgba(163,230,53,0.12) 0%, transparent 70%)',
-                      borderRadius: '50%', pointerEvents: 'none',
-                    }} />
-
-                    {/* Badge */}
-                    <div style={{
-                      display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2,
-                      marginBottom: 14,
                     }}>
+                      {/* Badge */}
                       <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
+                        display: 'flex', justifyContent: 'center', marginBottom: 14,
                       }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                          Sconto esclusivo da Bi
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Discount title */}
-                    <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                      {discount.title || discount.discount_value}
-                    </h3>
-                    {discount.description && (
-                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 4, position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                        {discount.description}
-                      </p>
-                    )}
-
-                    {/* Blurred QR + Lock */}
-                    <div
-                      onClick={!user ? () => navigate('/login', { state: { from: window.location.pathname, discount: true } }) : undefined}
-                      style={{
-                        position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
-                        margin: '20px 0 8px', cursor: !user ? 'pointer' : 'default', zIndex: 2,
-                      }}
-                    >
-                      {/* Fake QR grid — blurred */}
-                      <div style={{
-                        width: 140, height: 140, position: 'relative',
-                        filter: 'blur(8px)', opacity: 0.35,
-                      }}>
-                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
-                          {[0,1,2,3,4,5,6].map(row =>
-                            [0,1,2,3,4,5,6].map(col => {
-                              const on = (row + col) % 3 !== 0 || (row < 3 && col < 3) || (row < 3 && col > 3) || (row > 3 && col < 3)
-                              return on ? (
-                                <rect key={`${row}-${col}`} x={col * 20} y={row * 20} width="16" height="16" rx="2" fill="#fff" />
-                              ) : null
-                            })
-                          )}
-                          <rect x="0" y="0" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
-                          <rect x="88" y="0" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
-                          <rect x="0" y="88" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
-                          <rect x="12" y="12" width="28" height="28" rx="2" fill="#fff" />
-                          <rect x="100" y="12" width="28" height="28" rx="2" fill="#fff" />
-                          <rect x="12" y="100" width="28" height="28" rx="2" fill="#fff" />
-                        </svg>
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
+                        }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                            Sconto esclusivo da Bi
+                          </span>
+                        </div>
                       </div>
 
-                      {/* Lock icon overlay */}
-                      <div style={{
-                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        pointerEvents: 'none',
-                      }}>
-                        <motion.div
-                          animate={{ scale: [1, 1.08, 1] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                          style={{
-                            width: 52, height: 52, borderRadius: '50%',
-                            background: 'rgba(163,230,53,0.15)',
-                            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                      {/* Discount title */}
+                      <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, textAlign: 'center' }}>
+                        {discount.title || discount.discount_value}
+                      </h3>
+                      {discount.description && (
+                        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 16, textAlign: 'center' }}>
+                          {discount.description}
+                        </p>
+                      )}
+
+                      {inlineRedemption?.status === 'redeemed' ? (
+                        /* Already used */
+                        <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                          <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            background: 'rgba(255,255,255,0.08)', padding: '10px 20px', borderRadius: 12,
+                          }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Sconto già utilizzato</span>
+                          </div>
+                        </div>
+                      ) : inlineRedemption?.status === 'generated' ? (
+                        /* QR ready — show it */
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                          <div style={{
+                            background: '#fff', borderRadius: 12, padding: 16,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: '1px solid rgba(163,230,53,0.25)',
+                          }}>
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(inlineRedemption.qr_code)}`}
+                              alt="QR Code"
+                              style={{ width: 160, height: 160 }}
+                            />
+                          </div>
+                          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+                            Mostra questo QR in cassa per ottenere lo sconto
+                          </p>
+                        </div>
+                      ) : (
+                        /* Not yet unlocked — unlock button */
+                        <button
+                          onClick={async () => {
+                            setInlineGenerating(true)
+                            try { await inlineGenerateRedemption() } catch (e) { console.error(e) }
+                            finally { setInlineGenerating(false) }
+                          }}
+                          disabled={inlineGenerating || inlineRedemptionLoading}
+                          style={{
+                            width: '100%', padding: '14px 20px', borderRadius: 12,
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
+                            fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                            opacity: inlineGenerating ? 0.5 : 1,
                           }}
                         >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0110 0v4" />
-                          </svg>
-                        </motion.div>
+                          {inlineGenerating ? 'Sblocco in corso...' : 'Sblocca il tuo sconto'}
+                        </button>
+                      )}
+
+                      {/* Social proof */}
+                      {discount.total_redeemed > 0 && (
+                        <p style={{
+                          fontSize: 12, color: 'rgba(255,255,255,0.25)',
+                          textAlign: 'center', marginTop: 14,
+                        }}>
+                          {discount.total_redeemed} {discount.total_redeemed === 1 ? 'persona ha' : 'persone hanno'} già sbloccato
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    /* ── Not logged in: FOMO design ── */
+                    <motion.div
+                      animate={{ boxShadow: ['0 0 0 0 rgba(163,230,53,0)', '0 0 24px 4px rgba(163,230,53,0.12)', '0 0 0 0 rgba(163,230,53,0)'] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      style={{
+                        background: 'linear-gradient(145deg, #22181C 0%, #2a2025 100%)',
+                        borderRadius: 16, padding: '24px 20px',
+                        position: 'relative', overflow: 'hidden',
+                      }}
+                    >
+                      {/* Animated shimmer */}
+                      <motion.div
+                        animate={{ x: ['-100%', '200%'] }}
+                        transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                        style={{
+                          position: 'absolute', top: 0, left: 0,
+                          width: '50%', height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
+                          pointerEvents: 'none', zIndex: 1,
+                        }}
+                      />
+
+                      {/* Decorative glow */}
+                      <div style={{
+                        position: 'absolute', top: -40, right: -40,
+                        width: 140, height: 140,
+                        background: 'radial-gradient(circle, rgba(163,230,53,0.12) 0%, transparent 70%)',
+                        borderRadius: '50%', pointerEvents: 'none',
+                      }} />
+
+                      {/* Badge */}
+                      <div style={{
+                        display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2,
+                        marginBottom: 14,
+                      }}>
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
+                        }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                            Sconto esclusivo da Bi
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* How it works — 3 steps */}
-                    <div style={{
-                      display: 'flex', gap: 12, margin: '16px 0 20px',
-                      position: 'relative', zIndex: 2,
-                    }}>
-                      {[
-                        { icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                      {/* Discount title */}
+                      <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, position: 'relative', zIndex: 2, textAlign: 'center' }}>
+                        {discount.title || discount.discount_value}
+                      </h3>
+                      {discount.description && (
+                        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 4, position: 'relative', zIndex: 2, textAlign: 'center' }}>
+                          {discount.description}
+                        </p>
+                      )}
+
+                      {/* Blurred QR + Lock */}
+                      <div
+                        onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
+                        style={{
+                          position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                          margin: '20px 0 8px', cursor: 'pointer', zIndex: 2,
+                        }}
+                      >
+                        <div style={{
+                          width: 140, height: 140, position: 'relative',
+                          filter: 'blur(8px)', opacity: 0.35,
+                        }}>
+                          <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+                            {[0,1,2,3,4,5,6].map(row =>
+                              [0,1,2,3,4,5,6].map(col => {
+                                const on = (row + col) % 3 !== 0 || (row < 3 && col < 3) || (row < 3 && col > 3) || (row > 3 && col < 3)
+                                return on ? (
+                                  <rect key={`${row}-${col}`} x={col * 20} y={row * 20} width="16" height="16" rx="2" fill="#fff" />
+                                ) : null
+                              })
+                            )}
+                            <rect x="0" y="0" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
+                            <rect x="88" y="0" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
+                            <rect x="0" y="88" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
+                            <rect x="12" y="12" width="28" height="28" rx="2" fill="#fff" />
+                            <rect x="100" y="12" width="28" height="28" rx="2" fill="#fff" />
+                            <rect x="12" y="100" width="28" height="28" rx="2" fill="#fff" />
                           </svg>
-                        ), text: 'Iscriviti gratis' },
-                        { icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-                          </svg>
-                        ), text: 'Sblocca il QR' },
-                        { icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                          </svg>
-                        ), text: 'Mostralo in cassa' },
-                      ].map((step, i, arr) => (
-                        <Fragment key={i}>
-                          <div style={{
-                            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                          }}>
-                            <div style={{
-                              width: 40, height: 40, borderRadius: '50%',
-                              background: 'rgba(163,230,53,0.1)',
+                        </div>
+
+                        {/* Lock icon overlay */}
+                        <div style={{
+                          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          pointerEvents: 'none',
+                        }}>
+                          <motion.div
+                            animate={{ scale: [1, 1.08, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            style={{
+                              width: 52, height: 52, borderRadius: '50%',
+                              background: 'rgba(163,230,53,0.15)',
+                              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              {step.icon}
-                            </div>
-                            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textAlign: 'center' }}>
-                              {step.text}
-                            </span>
-                          </div>
-                          {i < arr.length - 1 && (
-                            <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 20 }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M9 18l6-6-6-6"/>
-                              </svg>
-                            </div>
-                          )}
-                        </Fragment>
-                      ))}
-                    </div>
+                              border: '1px solid rgba(163,230,53,0.25)',
+                            }}
+                          >
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0110 0v4" />
+                            </svg>
+                          </motion.div>
+                        </div>
+                      </div>
 
-                    {/* CTA */}
-                    {!user ? (
+                      {/* How it works — 3 steps */}
+                      <div style={{
+                        display: 'flex', gap: 12, margin: '16px 0 20px',
+                        position: 'relative', zIndex: 2,
+                      }}>
+                        {[
+                          { icon: (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                          ), text: 'Iscriviti gratis' },
+                          { icon: (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                            </svg>
+                          ), text: 'Sblocca il QR' },
+                          { icon: (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                            </svg>
+                          ), text: 'Mostralo in cassa' },
+                        ].map((step, i, arr) => (
+                          <Fragment key={i}>
+                            <div style={{
+                              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                            }}>
+                              <div style={{
+                                width: 40, height: 40, borderRadius: '50%',
+                                background: 'rgba(163,230,53,0.1)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                {step.icon}
+                              </div>
+                              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textAlign: 'center' }}>
+                                {step.text}
+                              </span>
+                            </div>
+                            {i < arr.length - 1 && (
+                              <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 20 }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                              </div>
+                            )}
+                          </Fragment>
+                        ))}
+                      </div>
+
+                      {/* CTA */}
                       <button
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
@@ -670,26 +766,19 @@ export default function RestaurantSheet({
                       >
                         Iscriviti gratis per sbloccare
                       </button>
-                    ) : (
-                      <p style={{
-                        fontSize: 13, color: 'rgba(255,255,255,0.35)',
-                        textAlign: 'center', position: 'relative', zIndex: 2,
-                      }}>
-                        Usa il bottone in basso per sbloccare il tuo sconto
-                      </p>
-                    )}
 
-                    {/* Social proof */}
-                    {discount.total_redeemed > 0 && (
-                      <p style={{
-                        fontSize: 12, color: 'rgba(255,255,255,0.25)',
-                        textAlign: 'center', marginTop: 10,
-                        position: 'relative', zIndex: 2,
-                      }}>
-                        {discount.total_redeemed} {discount.total_redeemed === 1 ? 'persona ha' : 'persone hanno'} già sbloccato
-                      </p>
-                    )}
-                  </motion.div>
+                      {/* Social proof */}
+                      {discount.total_redeemed > 0 && (
+                        <p style={{
+                          fontSize: 12, color: 'rgba(255,255,255,0.25)',
+                          textAlign: 'center', marginTop: 10,
+                          position: 'relative', zIndex: 2,
+                        }}>
+                          {discount.total_redeemed} {discount.total_redeemed === 1 ? 'persona ha' : 'persone hanno'} già sbloccato
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
                 </motion.div>
               )}
 
