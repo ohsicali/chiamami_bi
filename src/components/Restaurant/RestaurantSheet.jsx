@@ -301,7 +301,7 @@ export default function RestaurantSheet({
               </div>
             )}
 
-            {/* Discount strip — lime glow bar */}
+            {/* Discount strip — lime glow bar with curved bottom */}
             {discountTitle && (
               <div style={{
                 position: 'relative',
@@ -319,8 +319,8 @@ export default function RestaurantSheet({
                 {/* Content */}
                 <div style={{
                   position: 'relative', zIndex: 1,
-                  padding: '12px 18px',
-                  borderRadius: '20px 20px 0 0',
+                  padding: '12px 18px 16px',
+                  borderRadius: '20px 20px 16px 16px',
                   background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
