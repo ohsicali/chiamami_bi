@@ -180,7 +180,7 @@ export default function RestaurantSheet({
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        photo.style.transform = `translateY(${-el.scrollTop * 0.3}px)`
+        photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
         ticking = false
       })
     }
@@ -238,7 +238,7 @@ export default function RestaurantSheet({
           {/* Photo — sticky, stays in place while content scrolls over it */}
           <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '38vh' }}>
             <div ref={photoRef} style={{ willChange: 'transform' }}>
-              <PhotoCarousel photos={restaurant.photos || []} height="50vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+              <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
             </div>
 
             {/* Back button — white circle */}
