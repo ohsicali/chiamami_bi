@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import RatingStars from './RatingStars'
-import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
 const cardVariants = {
@@ -21,6 +20,7 @@ const cardVariants = {
 function NearbyCard({ restaurant, index, onSelect }) {
   const primaryType = (restaurant.category || [])[0] || restaurant.cuisine_type
   const category = primaryType ? getCategoryInfo(primaryType) : null
+  const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
 
   const photoUrl =
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
@@ -28,6 +28,13 @@ function NearbyCard({ restaurant, index, onSelect }) {
         ? restaurant.photos[0]
         : restaurant.photos[0]?.photo_url
       : null
+
+  // Short description: first ~60 chars of our_review
+  const shortDesc = restaurant.our_review
+    ? restaurant.our_review.length > 60
+      ? restaurant.our_review.slice(0, 60).trimEnd() + '…'
+      : restaurant.our_review
+    : null
 
   return (
     <motion.button
@@ -58,21 +65,20 @@ function NearbyCard({ restaurant, index, onSelect }) {
 
       {/* Info */}
       <div className="flex flex-col gap-0.5 p-2.5">
-        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
+        <h4 className="text-left text-xs font-semibold text-primary leading-snug" style={{ fontFamily: "'TAN Songbird', serif", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {restaurant.name}
         </h4>
-        {category && (
-          <span
-            className="text-left text-[11px] font-medium"
-            style={{ color: category.color }}
-          >
-            {category.emoji} {category.name}
+        {(category || priceLabel) && (
+          <span className="text-left text-[11px] font-medium text-secondary">
+            {category && <>{category.emoji} {category.name}</>}
+            {category && priceLabel && ' · '}
+            {priceLabel}
           </span>
         )}
-        {restaurant.our_rating != null && (
-          <div className="flex items-center gap-1">
-            <RatingStars rating={restaurant.our_rating} size="sm" />
-          </div>
+        {shortDesc && (
+          <p className="text-left text-[11px] text-secondary leading-tight mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {shortDesc}
+          </p>
         )}
       </div>
     </motion.button>
