@@ -86,16 +86,19 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
         style={{
           position: 'absolute', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, zIndex: 30,
-          background: '#111', color: '#fff',
+          background: 'rgba(20,20,20,0.55)',
+          backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
+          color: '#fff',
           padding: '14px 18px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           borderRadius: 20,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#E8453C', marginTop: 2 }}>{displayTitle}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
         </div>
 
         {isRedeemed ? (
@@ -118,7 +121,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: '#fff', color: '#111', border: 'none',
+              background: '#4ADE80', color: '#fff', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
