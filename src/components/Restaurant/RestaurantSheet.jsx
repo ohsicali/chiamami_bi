@@ -408,7 +408,7 @@ export default function RestaurantSheet({
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#22181C', border: '1px solid rgba(0,0,0,0.15)',
+                    background: '#F0EBE3', color: '#22181C', border: 'none',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -421,7 +421,7 @@ export default function RestaurantSheet({
                   <a href={phoneUrl} style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#22181C', border: '1px solid rgba(0,0,0,0.15)',
+                    background: '#F0EBE3', color: '#22181C', border: 'none',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -434,7 +434,7 @@ export default function RestaurantSheet({
                   <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#22181C', border: '1px solid rgba(0,0,0,0.15)',
+                    background: '#F0EBE3', color: '#22181C', border: 'none',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -445,33 +445,17 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* ── Secondo Bi — clean review card ── */}
+              {/* ── Secondo Bi — plain text ── */}
               {reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
-                  <div style={{
-                    borderRadius: 16, padding: '20px 18px',
-                    background: '#F0EBE3',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: '50%',
-                        background: '#E8453C',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                      }}>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Bi</span>
-                      </div>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#22181C' }}>Recensione di Bi</span>
-                    </div>
-                    <p style={{ fontSize: 15, lineHeight: 1.75, color: '#22181C' }}>
-                      {reviewText}
+                  <p style={{ fontSize: 15, lineHeight: 1.75, color: '#22181C' }}>
+                    {reviewText}
+                  </p>
+                  {!isItalian && (
+                    <p style={{ fontSize: 12, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
+                      {t('restaurant.originalItalian')}
                     </p>
-                    {!isItalian && (
-                      <p style={{ fontSize: 12, color: '#A89A86', marginTop: 10, fontStyle: 'italic' }}>
-                        {t('restaurant.originalItalian')}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </motion.div>
               )}
 
@@ -701,7 +685,7 @@ export default function RestaurantSheet({
               {/* Chi è Bi */}
               <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                 <div style={{
-                  background: '#FAF3DD', borderRadius: 16, padding: '24px 20px',
+                  background: '#F0EBE3', borderRadius: 16, padding: '24px 20px',
                 }}>
                   {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
