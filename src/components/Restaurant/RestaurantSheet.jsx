@@ -399,29 +399,11 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* Recommended for */}
-              {restaurant.recommended_for?.length > 0 && (
-                <motion.div variants={itemVariants} style={{
-                  display: 'flex', justifyContent: 'center', alignItems: 'center',
-                  gap: 6, flexWrap: 'wrap', marginBottom: 20,
-                }}>
-                  {restaurant.recommended_for.map((tag, i) => (
-                    <Fragment key={tag}>
-                      {i > 0 && <span style={{ fontSize: 10, color: '#ccc', userSelect: 'none' }}>·</span>}
-                      <span style={{
-                        fontSize: 12, fontWeight: 500, color: '#A09080',
-                        letterSpacing: 0.3, textTransform: 'lowercase',
-                      }}>{tag}</span>
-                    </Fragment>
-                  ))}
-                </motion.div>
-              )}
-
               {/* Divider */}
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 16 }} />
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
               {/* Action buttons — with icons */}
-              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 {mapsUrl && (
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
