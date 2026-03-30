@@ -293,7 +293,7 @@ export default function RestaurantSheet({
                 position: 'absolute', top: -36, right: 16, zIndex: 3,
                 background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
                 borderRadius: 14, padding: '4px 10px',
-                fontSize: 12, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+                fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
               }}>
                 {photoIndex + 1} / {photoCount}
               </div>
@@ -303,7 +303,7 @@ export default function RestaurantSheet({
             {discountTitle && (
               <div style={{
                 background: '#4ADE80', color: '#fff',
-                fontSize: 11, fontWeight: 700,
+                fontSize: 13, fontWeight: 700,
                 padding: '6px 14px',
                 textAlign: 'center',
                 letterSpacing: 0.5,
@@ -332,7 +332,7 @@ export default function RestaurantSheet({
 
               {/* Subtitle — address, categories, price */}
               <motion.p variants={itemVariants} style={{
-                fontSize: 13, color: '#666', textAlign: 'center', lineHeight: 1.5,
+                fontSize: 15, color: '#666', textAlign: 'center', lineHeight: 1.5,
                 marginBottom: 4,
               }}>
                 {restaurant.address}
@@ -343,12 +343,12 @@ export default function RestaurantSheet({
                 gap: 4, flexWrap: 'wrap', marginBottom: 24,
               }}>
                 {categories.map((cat, i) => (
-                  <span key={cat.name} style={{ fontSize: 13, color: '#666' }}>
+                  <span key={cat.name} style={{ fontSize: 15, color: '#666' }}>
                     {cat.emoji} {cat.name}{i < categories.length - 1 ? ' · ' : ''}
                   </span>
                 ))}
                 {priceLabel && (
-                  <span style={{ fontSize: 13, color: '#666' }}>
+                  <span style={{ fontSize: 15, color: '#666' }}>
                     {categories.length > 0 ? ' · ' : ''}{priceLabel}
                   </span>
                 )}
@@ -362,21 +362,21 @@ export default function RestaurantSheet({
                 {mapsUrl && (
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    fontSize: 15, fontWeight: 600, textDecoration: 'none',
                     background: '#111', color: '#fff',
                   }}>Indicazioni</a>
                 )}
                 {phoneUrl && (
                   <a href={phoneUrl} style={{
                     flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    fontSize: 15, fontWeight: 600, textDecoration: 'none',
                     background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
                   }}>Chiama</a>
                 )}
                 {restaurant.website && (
                   <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    fontSize: 15, fontWeight: 600, textDecoration: 'none',
                     background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
                   }}>Sito</a>
                 )}
@@ -395,13 +395,13 @@ export default function RestaurantSheet({
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 11, fontWeight: 800, flexShrink: 0,
                       }}>Bi</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#2A2219' }}>Recensione di Bi</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#2A2219' }}>Recensione di Bi</span>
                     </div>
-                    <p style={{ fontSize: 15, lineHeight: 1.7, color: '#3D3428' }}>
+                    <p style={{ fontSize: 16, lineHeight: 1.7, color: '#3D3428' }}>
                       "{reviewText}"
                     </p>
                     {!isItalian && (
-                      <p style={{ fontSize: 11, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
+                      <p style={{ fontSize: 13, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
                         {t('restaurant.originalItalian')}
                       </p>
                     )}
@@ -412,8 +412,8 @@ export default function RestaurantSheet({
                         marginTop: 16, paddingTop: 16,
                         borderTop: '1px solid rgba(0,0,0,0.06)',
                       }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: '#E8453C', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
-                        <p style={{ fontSize: 14, lineHeight: 1.6, color: '#3D3428', fontWeight: 500 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: '#E8453C', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
+                        <p style={{ fontSize: 15, lineHeight: 1.6, color: '#3D3428', fontWeight: 500 }}>
                           "{tipText}"
                         </p>
                       </div>
@@ -444,7 +444,7 @@ export default function RestaurantSheet({
                 <motion.div variants={itemVariants} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
                   {restaurant.recommended_for.map(tag => (
                     <span key={tag} style={{
-                      fontSize: 12, fontWeight: 600, color: '#92700C',
+                      fontSize: 14, fontWeight: 600, color: '#92700C',
                       background: '#FEF3C7', padding: '5px 12px', borderRadius: 20,
                     }}>{tag}</span>
                   ))}
@@ -475,8 +475,8 @@ export default function RestaurantSheet({
                       )}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600 }}>{restaurant.tiktok_url ? 'Guarda su TikTok' : 'Guarda su Instagram'}</p>
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Il video di Bi su {restaurant.name}</p>
+                      <p style={{ fontSize: 15, fontWeight: 600 }}>{restaurant.tiktok_url ? 'Guarda su TikTok' : 'Guarda su Instagram'}</p>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>Il video di Bi su {restaurant.name}</p>
                     </div>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0, opacity: 0.6 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   </a>
