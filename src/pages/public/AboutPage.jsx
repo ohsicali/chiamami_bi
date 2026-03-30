@@ -50,6 +50,7 @@ export default function AboutPage() {
   const [formSent, setFormSent] = useState(false)
   const [formStep, setFormStep] = useState(1)
   const [formExpanded, setFormExpanded] = useState(true)
+  const [formError, setFormError] = useState(false)
   const [formData, setFormData] = useState({ name: '', restaurant: '', reason: '' })
 
   const formSteps = [
@@ -60,7 +61,11 @@ export default function AboutPage() {
 
   const handleFormContinue = async () => {
     const currentField = formSteps[formStep - 1].field
-    if (!formData[currentField]?.trim()) return
+    if (!formData[currentField]?.trim()) {
+      setFormError(true)
+      return
+    }
+    setFormError(false)
     if (formStep < 3) {
       setFormStep(formStep + 1)
       setFormExpanded(false)
@@ -148,9 +153,9 @@ export default function AboutPage() {
             {/* Logo */}
             <motion.div variants={fadeUp} style={{ marginBottom: 12 }}>
               <img
-                src="/logo-guida-bi.png"
-                alt="La Guida di Bi"
-                style={{ height: 32, width: 'auto', filter: 'brightness(0) invert(1)' }}
+                src="/logo-full.svg"
+                alt="Chiamami Bi"
+                style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)' }}
                 draggable={false}
               />
             </motion.div>
@@ -509,7 +514,7 @@ export default function AboutPage() {
                                 placeholder={formSteps[formStep - 1].placeholder}
                                 rows={3}
                                 value={formData[formSteps[formStep - 1].field]}
-                                onChange={e => setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value }))}
+                                onChange={e => { setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value })); setFormError(false) }}
                                 style={{
                                   width: '100%', padding: '14px 16px', borderRadius: 14,
                                   border: '1px solid rgba(0,0,0,0.08)',
@@ -523,7 +528,7 @@ export default function AboutPage() {
                                 type="text"
                                 placeholder={formSteps[formStep - 1].placeholder}
                                 value={formData[formSteps[formStep - 1].field]}
-                                onChange={e => setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value }))}
+                                onChange={e => { setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value })); setFormError(false) }}
                                 style={{
                                   width: '100%', padding: '14px 16px', borderRadius: 14,
                                   border: '1px solid rgba(0,0,0,0.08)',
@@ -535,8 +540,22 @@ export default function AboutPage() {
                           </motion.div>
                         </AnimatePresence>
 
+                        {/* Error */}
+                        <AnimatePresence>
+                          {formError && (
+                            <motion.p
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              style={{ fontSize: 12, color: '#E8453C', fontWeight: 600, marginTop: 8 }}
+                            >
+                              Questo campo è obbligatorio
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+
                         {/* Buttons */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: formError ? 10 : 16 }}>
                           {!formExpanded && (
                             <motion.button
                               initial={{ opacity: 0, width: 0, scale: 0.8 }}
