@@ -65,7 +65,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
 
       {/* Info */}
       <div className="flex flex-col gap-1 p-2.5 flex-1">
-        <h4 className="text-left text-xs font-semibold text-primary" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5, minHeight: '2.25em', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <h4 className="text-left text-xs font-semibold text-primary mb-auto" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
           {restaurant.name}
         </h4>
         {(category || priceLabel) && (
@@ -131,7 +131,7 @@ export default function NearbySection({
         {t('restaurant.nearby')}
       </h3>
 
-      <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none">
+      <div className="-mx-5 flex items-stretch gap-3 overflow-x-auto px-5 pb-2 scrollbar-none">
         {nearby.map((restaurant, i) => (
           <NearbyCard
             key={restaurant.id}
