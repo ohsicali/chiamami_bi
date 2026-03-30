@@ -334,24 +334,6 @@ export default function RestaurantSheet({
                     {discountTitle}
                   </span>
                 </div>
-                {/* Curved bottom edge — sides dip down */}
-                <svg
-                  viewBox="0 0 400 20"
-                  preserveAspectRatio="none"
-                  style={{
-                    position: 'relative', zIndex: 1,
-                    display: 'block', width: '100%', height: 16,
-                    marginTop: -1,
-                  }}
-                >
-                  <defs>
-                    <linearGradient id="stripGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#a3e635" />
-                      <stop offset="100%" stopColor="#4ade80" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,0 L0,4 Q200,20 400,4 L400,0 Z" fill="url(#stripGrad)" />
-                </svg>
               </div>
             )}
 
