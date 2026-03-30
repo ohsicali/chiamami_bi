@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Footer from '../../components/Layout/Footer'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -16,8 +18,50 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } },
 }
 
+/* Hook per caricare follower counts da Supabase */
+function useSiteConfig() {
+  const [config, setConfig] = useState({
+    instagram_followers: '—',
+    tiktok_followers: '—',
+    restaurants_count: '—',
+  })
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    supabase
+      .from('site_config')
+      .select('key, value')
+      .in('key', ['instagram_followers', 'tiktok_followers', 'restaurants_count'])
+      .then(({ data }) => {
+        if (data) {
+          const map = {}
+          data.forEach(r => { map[r.key] = r.value })
+          setConfig(prev => ({ ...prev, ...map }))
+        }
+      })
+  }, [])
+
+  return config
+}
+
 export default function AboutPage() {
   const navigate = useNavigate()
+  const config = useSiteConfig()
+  const [formSent, setFormSent] = useState(false)
+  const [formData, setFormData] = useState({ name: '', restaurant: '', reason: '' })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!formData.restaurant.trim()) return
+    if (isSupabaseConfigured()) {
+      await supabase.from('restaurant_suggestions').insert({
+        name: formData.name || null,
+        restaurant_name: formData.restaurant,
+        reason: formData.reason || null,
+      }).then(() => {})
+    }
+    setFormSent(true)
+  }
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: '#22181C' }}>
@@ -99,7 +143,7 @@ export default function AboutPage() {
               La guida che non sapevi di volere
             </motion.p>
 
-            {/* Stats row — integrated in hero */}
+            {/* Stats row */}
             <motion.div
               variants={fadeUp}
               style={{
@@ -110,19 +154,19 @@ export default function AboutPage() {
               }}
             >
               {[
-                { num: '100+', label: 'Posti provati', icon: (
+                { num: config.restaurants_count, label: 'Posti provati', icon: (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
                   </svg>
                 )},
-                { num: '25K', label: 'Instagram', icon: (
+                { num: config.instagram_followers, label: 'Instagram', icon: (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                   </svg>
                 )},
-                { num: '50K', label: 'TikTok', icon: (
+                { num: config.tiktok_followers, label: 'TikTok', icon: (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.4)">
                     <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.8a8.25 8.25 0 004.76 1.5V6.86a4.84 4.84 0 01-1-.17z"/>
                   </svg>
@@ -152,41 +196,78 @@ export default function AboutPage() {
           position: 'relative', zIndex: 2,
         }}>
 
-          {/* ── Story ── */}
-          <section style={{ padding: '36px 24px 28px', maxWidth: 600, margin: '0 auto' }}>
+          {/* ── Pull quote ── */}
+          <section style={{ padding: '40px 24px 12px', maxWidth: 600, margin: '0 auto' }}>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+            >
+              <p style={{
+                fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                fontSize: 26, fontWeight: 700, color: '#22181C',
+                lineHeight: 1.4, textAlign: 'center',
+              }}>
+                "Dove mangiamo<br />stasera?"
+              </p>
+              <p style={{
+                fontSize: 13, color: '#8A8680', textAlign: 'center',
+                marginTop: 10, fontWeight: 500,
+              }}>
+                La domanda da cui è nato tutto
+              </p>
+            </motion.div>
+          </section>
+
+          {/* ── Divider ── */}
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
+            <div style={{ width: 40, height: 3, borderRadius: 2, background: '#E8453C', opacity: 0.3 }} />
+          </div>
+
+          {/* ── Story — editorial blocks ── */}
+          <section style={{ padding: '12px 24px 28px', maxWidth: 600, margin: '0 auto' }}>
             <motion.div
               variants={stagger}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: '-30px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
             >
-              <motion.p variants={fadeUp} style={{
-                fontSize: 16, lineHeight: 1.8, color: '#22181C', fontWeight: 600,
-                marginBottom: 16,
-              }}>
-                Torino è una città che si scopre a tavola. Dietro ogni portone del centro,
-                nelle vie strette del Quadrilatero, tra i palazzi liberty di San Salvario,
-                si nascondono trattorie, osterie e ristoranti che raccontano storie di
-                passione e tradizione.
-              </motion.p>
+              {/* Block 1 — large intro */}
+              <motion.div variants={fadeUp}>
+                <p style={{
+                  fontSize: 18, lineHeight: 1.7, color: '#22181C', fontWeight: 700,
+                }}>
+                  Torino è una città che si scopre a tavola.
+                </p>
+                <p style={{
+                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8,
+                }}>
+                  Dietro ogni portone del centro, nelle vie strette del Quadrilatero, tra i palazzi liberty di San Salvario, si nascondono trattorie, osterie e ristoranti che raccontano storie di passione e tradizione.
+                </p>
+              </motion.div>
 
-              <motion.p variants={fadeUp} style={{
-                fontSize: 16, lineHeight: 1.8, color: '#22181C', fontWeight: 600,
-                marginBottom: 16,
+              {/* Block 2 — with side accent */}
+              <motion.div variants={fadeUp} style={{
+                borderLeft: '3px solid #E8453C',
+                paddingLeft: 16,
               }}>
-                Ho iniziato a esplorare la scena gastronomica torinese per pura curiosità,
-                provando un posto nuovo ogni settimana. Dalle piole storiche dove il vino
-                si beve sfuso ai ramen bar più autentici, dalla pizza napoletana verace
-                al fine dining stellato — ho assaggiato tutto.
-              </motion.p>
+                <p style={{
+                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500,
+                }}>
+                  Ho iniziato a esplorare la scena gastronomica torinese per pura curiosità, provando un posto nuovo ogni settimana. Dalle <strong style={{ color: '#22181C' }}>piole storiche</strong> dove il vino si beve sfuso ai <strong style={{ color: '#22181C' }}>ramen bar</strong> più autentici, dalla <strong style={{ color: '#22181C' }}>pizza napoletana verace</strong> al <strong style={{ color: '#22181C' }}>fine dining stellato</strong>.
+                </p>
+              </motion.div>
 
-              <motion.p variants={fadeUp} style={{
-                fontSize: 16, lineHeight: 1.8, color: '#22181C', fontWeight: 600,
-              }}>
-                Gli amici hanno iniziato a chiedermi: "Dove mangiamo stasera?" E così è
-                nata l'idea di ChiamamiBi — una guida personale, sincera, fatta di posti
-                che ho provato davvero e dove tornerei ad occhi chiusi.
-              </motion.p>
+              {/* Block 3 — conclusion */}
+              <motion.div variants={fadeUp}>
+                <p style={{
+                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500,
+                }}>
+                  Gli amici hanno iniziato a chiedermi consigli. E così è nata <strong style={{ color: '#22181C' }}>ChiamamiBi</strong> — una guida personale, sincera, fatta di posti che ho provato davvero e dove tornerei ad occhi chiusi.
+                </p>
+              </motion.div>
             </motion.div>
           </section>
 
@@ -254,8 +335,8 @@ export default function AboutPage() {
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 2 }}>25K</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Follower Instagram</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 2 }}>{config.instagram_followers}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Follower</p>
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
@@ -294,8 +375,8 @@ export default function AboutPage() {
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 2 }}>50K</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Follower TikTok</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 2 }}>{config.tiktok_followers}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Follower</p>
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
@@ -308,7 +389,7 @@ export default function AboutPage() {
             </motion.div>
           </section>
 
-          {/* ── Suggerisci un posto ── */}
+          {/* ── Suggerisci un posto — dark card ── */}
           <section style={{ padding: '0 24px 40px', maxWidth: 600, margin: '0 auto' }}>
             <motion.div
               initial="hidden"
@@ -317,61 +398,106 @@ export default function AboutPage() {
               variants={fadeUp}
             >
               <div style={{
-                background: '#fff', borderRadius: 16, padding: '24px 20px',
-                border: '1px solid rgba(0,0,0,0.06)',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                background: '#22181C', borderRadius: 16, padding: '28px 22px',
+                position: 'relative', overflow: 'hidden',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                  <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C' }}>Suggerisci un posto</p>
-                </div>
-                <p style={{ fontSize: 14, color: '#8A8680', marginBottom: 18, lineHeight: 1.5 }}>
-                  Conosci un ristorante che dovrei provare? Scrivimi!
-                </p>
+                {/* Accent glow */}
+                <div style={{
+                  position: 'absolute', bottom: -30, right: -30, width: 120, height: 120,
+                  background: 'radial-gradient(circle, rgba(232,69,60,0.1), transparent 70%)',
+                  pointerEvents: 'none',
+                }} />
 
-                <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <input
-                    type="text"
-                    placeholder="Il tuo nome"
-                    style={{
-                      width: '100%', padding: '12px 16px', borderRadius: 12,
-                      border: '1px solid rgba(0,0,0,0.08)', background: '#FAF7F2',
-                      fontSize: 14, color: '#22181C', outline: 'none',
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Nome del ristorante"
-                    style={{
-                      width: '100%', padding: '12px 16px', borderRadius: 12,
-                      border: '1px solid rgba(0,0,0,0.08)', background: '#FAF7F2',
-                      fontSize: 14, color: '#22181C', outline: 'none',
-                    }}
-                  />
-                  <textarea
-                    placeholder="Perché lo consigli?"
-                    rows={3}
-                    style={{
-                      width: '100%', padding: '12px 16px', borderRadius: 12,
-                      border: '1px solid rgba(0,0,0,0.08)', background: '#FAF7F2',
-                      fontSize: 14, color: '#22181C', outline: 'none', resize: 'none',
-                    }}
-                  />
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    type="submit"
-                    style={{
-                      width: '100%', padding: '14px 20px', borderRadius: 12,
-                      background: '#F0EBE3', color: '#22181C', border: 'none',
-                      fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                    }}
-                  >
-                    Invia suggerimento
-                  </motion.button>
-                </form>
+                <AnimatePresence mode="wait">
+                  {formSent ? (
+                    <motion.div
+                      key="success"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        padding: '20px 0', gap: 12,
+                      }}
+                    >
+                      <div style={{
+                        width: 52, height: 52, borderRadius: '50%',
+                        background: 'rgba(163,230,53,0.15)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5"/>
+                        </svg>
+                      </div>
+                      <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Grazie!</p>
+                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
+                        Il tuo suggerimento è stato inviato.<br />Lo proverò presto!
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="form" exit={{ opacity: 0 }}>
+                      <div style={{ position: 'relative', zIndex: 1 }}>
+                        <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>
+                          Hai un posto da consigliarmi?
+                        </p>
+                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 22, lineHeight: 1.5 }}>
+                          Dimmi il nome e perché ci devo andare
+                        </p>
+
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <input
+                            type="text"
+                            placeholder="Il tuo nome"
+                            value={formData.name}
+                            onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                            style={{
+                              width: '100%', padding: '13px 16px', borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              background: 'rgba(255,255,255,0.05)',
+                              fontSize: 14, color: '#fff', outline: 'none',
+                            }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Nome del ristorante *"
+                            required
+                            value={formData.restaurant}
+                            onChange={e => setFormData(p => ({ ...p, restaurant: e.target.value }))}
+                            style={{
+                              width: '100%', padding: '13px 16px', borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              background: 'rgba(255,255,255,0.05)',
+                              fontSize: 14, color: '#fff', outline: 'none',
+                            }}
+                          />
+                          <textarea
+                            placeholder="Perché ci devo andare?"
+                            rows={3}
+                            value={formData.reason}
+                            onChange={e => setFormData(p => ({ ...p, reason: e.target.value }))}
+                            style={{
+                              width: '100%', padding: '13px 16px', borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              background: 'rgba(255,255,255,0.05)',
+                              fontSize: 14, color: '#fff', outline: 'none', resize: 'none',
+                            }}
+                          />
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            type="submit"
+                            style={{
+                              width: '100%', padding: '14px 20px', borderRadius: 12,
+                              background: '#E8453C', color: '#fff', border: 'none',
+                              fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                              marginTop: 4,
+                            }}
+                          >
+                            Invia suggerimento
+                          </motion.button>
+                        </form>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           </section>
