@@ -459,12 +459,10 @@ export default function HomePage() {
             {...barBind()}
             onClick={openSheet}
             style={{
-              background: 'rgba(20,20,20,0.55)',
-              backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
+              background: 'rgba(250,247,242,0.96)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
               borderRadius: '20px 20px 0 0',
-              boxShadow: '0 -2px 20px rgba(0,0,0,0.15)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderBottom: 'none',
+              boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
               padding: '10px 0 14px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
               touchAction: 'none', cursor: 'pointer',
@@ -472,8 +470,8 @@ export default function HomePage() {
               pointerEvents: 'auto',
             }}
           >
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)' }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#E8453C' }}>
               Mostra elenco di {viewportRestaurants.length} ristoranti
             </span>
           </div>
