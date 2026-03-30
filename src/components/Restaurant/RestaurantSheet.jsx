@@ -236,9 +236,9 @@ export default function RestaurantSheet({
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
 
           {/* Photo — sticky, stays in place while content scrolls over it */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '38vh' }}>
+          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
             <div ref={photoRef} style={{ willChange: 'transform' }}>
-              <PhotoCarousel photos={restaurant.photos || []} height="42vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+              <PhotoCarousel photos={restaurant.photos || []} height="48vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
             </div>
 
             {/* Back button — white circle */}
