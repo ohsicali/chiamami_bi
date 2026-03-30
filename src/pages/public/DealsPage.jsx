@@ -49,8 +49,8 @@ export default function DealsPage() {
             background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)',
           }}>
             <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ADE80' }} />
-              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#4ADE80', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
+              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#a3e635' }} />
+              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#a3e635', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
             </span>
             Torino
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5, marginLeft: 2 }}><path d="M6 9l6 6 6-6"/></svg>
@@ -292,7 +292,7 @@ export default function DealsPage() {
                     {[
                       { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
                       { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
-                      { icon: '🎉', bg: 'rgba(74,222,128,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
+                      { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
                     ].map((step, i) => (
                       <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
                         <div style={{

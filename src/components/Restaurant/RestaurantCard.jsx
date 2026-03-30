@@ -221,7 +221,7 @@ export default function RestaurantCard({
       {/* Green discount strip on top */}
       {hasDiscount && discountTitle && (
         <div style={{
-          background: '#4ADE80', color: '#fff',
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff',
           fontSize: 10, fontWeight: 700,
           padding: '4px 10px',
           textAlign: 'center',

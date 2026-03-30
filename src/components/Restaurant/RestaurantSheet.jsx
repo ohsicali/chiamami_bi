@@ -121,7 +121,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: '#4ADE80', color: '#fff', border: 'none',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
@@ -473,7 +473,7 @@ export default function RestaurantSheet({
               {discount && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <motion.div
-                    animate={{ boxShadow: ['0 0 0 0 rgba(74,222,128,0)', '0 0 24px 4px rgba(74,222,128,0.12)', '0 0 0 0 rgba(74,222,128,0)'] }}
+                    animate={{ boxShadow: ['0 0 0 0 rgba(163,230,53,0)', '0 0 24px 4px rgba(163,230,53,0.12)', '0 0 0 0 rgba(163,230,53,0)'] }}
                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     style={{
                       background: 'linear-gradient(145deg, #111 0%, #1a1a1a 100%)',
@@ -497,7 +497,7 @@ export default function RestaurantSheet({
                     <div style={{
                       position: 'absolute', top: -40, right: -40,
                       width: 140, height: 140,
-                      background: 'radial-gradient(circle, rgba(74,222,128,0.12) 0%, transparent 70%)',
+                      background: 'radial-gradient(circle, rgba(163,230,53,0.12) 0%, transparent 70%)',
                       borderRadius: '50%', pointerEvents: 'none',
                     }} />
 
@@ -508,10 +508,10 @@ export default function RestaurantSheet({
                     }}>
                       <div style={{
                         display: 'inline-flex', alignItems: 'center', gap: 6,
-                        background: 'rgba(74,222,128,0.12)', padding: '5px 12px', borderRadius: 20,
+                        background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
                       }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#4ADE80"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
                           Sconto esclusivo da Bi
                         </span>
                       </div>
@@ -571,13 +571,13 @@ export default function RestaurantSheet({
                           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                           style={{
                             width: 52, height: 52, borderRadius: '50%',
-                            background: 'rgba(74,222,128,0.15)',
+                            background: 'rgba(163,230,53,0.15)',
                             backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: '1px solid rgba(74,222,128,0.25)',
+                            border: '1px solid rgba(163,230,53,0.25)',
                           }}
                         >
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                             <path d="M7 11V7a5 5 0 0110 0v4" />
                           </svg>
@@ -592,17 +592,17 @@ export default function RestaurantSheet({
                     }}>
                       {[
                         { icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
                           </svg>
                         ), text: 'Iscriviti gratis' },
                         { icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                           </svg>
                         ), text: 'Sblocca il QR' },
                         { icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                           </svg>
                         ), text: 'Mostralo in cassa' },
@@ -613,7 +613,7 @@ export default function RestaurantSheet({
                           }}>
                             <div style={{
                               width: 40, height: 40, borderRadius: '50%',
-                              background: 'rgba(74,222,128,0.1)',
+                              background: 'rgba(163,230,53,0.1)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
                               {step.icon}
@@ -639,7 +639,7 @@ export default function RestaurantSheet({
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
                           width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: '#4ADE80', color: '#fff', border: 'none',
+                          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
                           position: 'relative', zIndex: 2,
                         }}
