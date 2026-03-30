@@ -97,8 +97,8 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo Bi</p>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
         </div>
 
         {isRedeemed ? (
