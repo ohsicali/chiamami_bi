@@ -220,18 +220,6 @@ export default function RestaurantSheet({
           <div style={{ position: 'sticky', top: 0, zIndex: 0 }}>
             <PhotoCarousel photos={restaurant.photos || []} height="50vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
 
-            {/* Photo counter — bottom right on photo */}
-            {photoCount > 1 && (
-              <div style={{
-                position: 'absolute', bottom: 14, right: 14, zIndex: 2,
-                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-                borderRadius: 14, padding: '4px 10px',
-                fontSize: 12, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
-              }}>
-                {photoIndex + 1} / {photoCount}
-              </div>
-            )}
-
             {/* Back button — white circle */}
             <button
               onClick={handleClose}
@@ -275,6 +263,18 @@ export default function RestaurantSheet({
             position: 'relative', zIndex: 2,
             minHeight: '100vh',
           }}>
+            {/* Photo counter — anchored to white card, moves with it */}
+            {photoCount > 1 && (
+              <div style={{
+                position: 'absolute', top: -36, right: 16, zIndex: 3,
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                borderRadius: 14, padding: '4px 10px',
+                fontSize: 12, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+              }}>
+                {photoIndex + 1} / {photoCount}
+              </div>
+            )}
+
             {/* Green discount strip following the card's rounded corners */}
             {discountTitle && (
               <div style={{
