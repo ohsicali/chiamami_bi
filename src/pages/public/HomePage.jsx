@@ -153,17 +153,17 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
 function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom, hidden }) {
   const btnStyle = {
     width: 44, height: 44, borderRadius: '50%',
-    background: 'rgba(255,255,255,0.92)',
-    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-    border: '1px solid rgba(0,0,0,0.06)',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+    background: 'rgba(20,20,20,0.55)',
+    backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: 'pointer', color: '#374151',
+    cursor: 'pointer', color: '#fff',
     WebkitTapHighlightColor: 'transparent',
   }
   return (
     <div style={{ position: 'absolute', right: 16, bottom, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 15, opacity: hidden ? 0 : 1, visibility: hidden ? 'hidden' : 'visible', transition: 'opacity 0.2s, visibility 0.2s' }}>
-      <button onClick={onLocateMe} style={{ ...btnStyle, color: isLocating ? '#3B82F6' : '#374151' }} aria-label="Posizione">
+      <button onClick={onLocateMe} style={{ ...btnStyle, color: isLocating ? '#3B82F6' : '#fff' }} aria-label="Posizione">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" /><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
         </svg>
@@ -459,10 +459,12 @@ export default function HomePage() {
             {...barBind()}
             onClick={openSheet}
             style={{
-              background: 'rgba(250,247,242,0.96)',
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              background: 'rgba(20,20,20,0.55)',
+              backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
               borderRadius: '20px 20px 0 0',
-              boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
+              boxShadow: '0 -2px 20px rgba(0,0,0,0.15)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderBottom: 'none',
               padding: '10px 0 14px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
               touchAction: 'none', cursor: 'pointer',
@@ -470,8 +472,8 @@ export default function HomePage() {
               pointerEvents: 'auto',
             }}
           >
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)' }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#E8453C' }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
               Mostra elenco di {viewportRestaurants.length} ristoranti
             </span>
           </div>
