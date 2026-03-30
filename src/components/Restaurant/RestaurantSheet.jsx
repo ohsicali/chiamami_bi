@@ -358,58 +358,70 @@ export default function RestaurantSheet({
                 fontFamily: "'TAN Songbird', serif",
                 fontSize: 24, fontWeight: 700, color: '#111',
                 lineHeight: 1.35, textAlign: 'center',
-                marginBottom: 8,
+                marginBottom: 10,
               }}>
                 {restaurant.name}
               </motion.h1>
 
-              {/* Subtitle — address, categories, price */}
+              {/* Address — prominent */}
               <motion.p variants={itemVariants} style={{
-                fontSize: 15, color: '#666', textAlign: 'center', lineHeight: 1.5,
-                marginBottom: 4,
+                fontSize: 16, color: '#333', textAlign: 'center', lineHeight: 1.5,
+                fontWeight: 500, marginBottom: 10,
               }}>
                 {restaurant.address}
-                {distance != null && ` · ${formatDistance(distance)}`}
+                {distance != null && (
+                  <span style={{ color: '#888', fontWeight: 400 }}> · {formatDistance(distance)}</span>
+                )}
               </motion.p>
+
+              {/* Categories + price — pills */}
               <motion.div variants={itemVariants} style={{
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                gap: 4, flexWrap: 'wrap', marginBottom: 24,
+                gap: 6, flexWrap: 'wrap', marginBottom: 20,
               }}>
-                {categories.map((cat, i) => (
-                  <span key={cat.name} style={{ fontSize: 15, color: '#666' }}>
-                    {cat.emoji} {cat.name}{i < categories.length - 1 ? ' · ' : ''}
+                {categories.map((cat) => (
+                  <span key={cat.name} style={{
+                    fontSize: 13, fontWeight: 600,
+                    color: cat.color, border: `1px solid ${cat.color}`,
+                    padding: '4px 12px', borderRadius: 20,
+                  }}>
+                    {cat.emoji} {cat.name}
                   </span>
                 ))}
                 {priceLabel && (
-                  <span style={{ fontSize: 15, color: '#666' }}>
-                    {categories.length > 0 ? ' · ' : ''}{priceLabel}
+                  <span style={{
+                    fontSize: 13, fontWeight: 600, color: '#555',
+                    border: '1px solid rgba(0,0,0,0.15)',
+                    padding: '4px 12px', borderRadius: 20,
+                  }}>
+                    {priceLabel}
                   </span>
                 )}
               </motion.div>
 
               {/* Divider */}
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 24 }} />
+              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 16 }} />
 
-              {/* Action buttons row */}
+              {/* Action buttons — smaller, secondary */}
               <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
                 {mapsUrl && (
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 15, fontWeight: 600, textDecoration: 'none',
-                    background: '#111', color: '#fff',
+                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
                   }}>Indicazioni</a>
                 )}
                 {phoneUrl && (
                   <a href={phoneUrl} style={{
-                    flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 15, fontWeight: 600, textDecoration: 'none',
+                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
                     background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
                   }}>Chiama</a>
                 )}
                 {restaurant.website && (
                   <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, padding: '12px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 15, fontWeight: 600, textDecoration: 'none',
+                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
                     background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
                   }}>Sito</a>
                 )}
