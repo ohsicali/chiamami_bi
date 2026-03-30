@@ -23,7 +23,7 @@ function useSiteConfig() {
   const [config, setConfig] = useState({
     instagram_followers: '—',
     tiktok_followers: '—',
-    restaurants_count: '—',
+    restaurants_count: '400+',
   })
 
   useEffect(() => {
