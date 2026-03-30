@@ -342,7 +342,13 @@ export default function RestaurantSheet({
               variants={contentVariants}
               initial="hidden"
               animate="visible"
-              style={{ padding: '28px 24px 100px' }}
+              style={{
+                padding: '28px 24px 100px',
+                background: '#fff',
+                borderRadius: discountTitle ? '16px 16px 0 0' : '0',
+                position: 'relative', zIndex: 2,
+                marginTop: discountTitle ? -2 : 0,
+              }}
             >
               {/* Restaurant name — centered */}
               <motion.h1 variants={itemVariants} style={{
