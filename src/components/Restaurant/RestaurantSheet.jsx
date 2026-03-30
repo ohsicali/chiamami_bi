@@ -122,7 +122,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
@@ -335,7 +335,7 @@ export default function RestaurantSheet({
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
                   <span style={{
-                    fontSize: 14, fontWeight: 700, color: '#000',
+                    fontSize: 15, fontWeight: 700, color: '#fff',
                     letterSpacing: 0.3,
                   }}>
                     {discountTitle}
@@ -579,7 +579,7 @@ export default function RestaurantSheet({
                           disabled={inlineGenerating || inlineRedemptionLoading}
                           style={{
                             width: '100%', padding: '14px 20px', borderRadius: 12,
-                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
                             fontSize: 15, fontWeight: 700, cursor: 'pointer',
                             opacity: inlineGenerating ? 0.5 : 1,
                           }}
@@ -824,7 +824,7 @@ export default function RestaurantSheet({
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
                           width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
+                          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
                           position: 'relative', zIndex: 2,
                         }}

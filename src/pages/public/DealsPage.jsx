@@ -172,7 +172,7 @@ export default function DealsPage() {
                             Top sconto
                           </span>
                           <span style={{
-                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff',
                             fontSize: 16, fontWeight: 800,
                             padding: '6px 14px', borderRadius: 12,
                           }}>

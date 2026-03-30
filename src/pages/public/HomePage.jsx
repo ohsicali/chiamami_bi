@@ -78,7 +78,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       {/* Green discount strip on top */}
       {discountTitle && (
         <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff',
           fontSize: 12, fontWeight: 700,
           padding: '5px 10px',
           textAlign: 'center',
