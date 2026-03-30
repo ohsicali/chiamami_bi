@@ -301,17 +301,46 @@ export default function RestaurantSheet({
               </div>
             )}
 
-            {/* Green discount strip following the card's rounded corners */}
+            {/* Discount strip — dark card with green glow */}
             {discountTitle && (
               <div style={{
-                background: '#4ADE80', color: '#fff',
-                fontSize: 13, fontWeight: 700,
-                padding: '6px 14px',
-                textAlign: 'center',
-                letterSpacing: 0.5,
+                position: 'relative',
                 borderRadius: '20px 20px 0 0',
+                overflow: 'hidden',
               }}>
-                {discountTitle}
+                {/* Green glow behind */}
+                <div style={{
+                  position: 'absolute', bottom: -8, left: '10%', right: '10%', height: 24,
+                  background: 'rgba(74,222,128,0.5)',
+                  filter: 'blur(16px)',
+                  borderRadius: '50%',
+                  pointerEvents: 'none',
+                }} />
+
+                <div style={{
+                  background: 'radial-gradient(120% 120% at 30% 10%, #1a1a1a 0%, #0f0f10 60%, #0b0b0c 100%)',
+                  padding: '14px 18px',
+                  borderRadius: '20px 20px 0 0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  position: 'relative', zIndex: 1,
+                }}>
+                  <motion.span
+                    animate={{ opacity: [1, 0.4, 1], scale: [1, 0.85, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{
+                      width: 7, height: 7, borderRadius: '50%',
+                      background: '#4ADE80',
+                      boxShadow: '0 0 8px rgba(74,222,128,0.6)',
+                      flexShrink: 0, display: 'inline-block',
+                    }}
+                  />
+                  <span style={{
+                    fontSize: 13, fontWeight: 700, color: '#fff',
+                    letterSpacing: 0.3,
+                  }}>
+                    {discountTitle}
+                  </span>
+                </div>
               </div>
             )}
 
