@@ -11,6 +11,7 @@ import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 
 /* ── animation variants ── */
@@ -168,6 +169,7 @@ export default function RestaurantSheet({
   const [photoIndex, setPhotoIndex] = useState(0)
   const [inlineShowQR, setInlineShowQR] = useState(false)
   const [inlineGenerating, setInlineGenerating] = useState(false)
+  const [newsletterStatus, setNewsletterStatus] = useState(null) // null | 'loading' | 'success' | 'exists'
   const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
 
@@ -590,20 +592,75 @@ export default function RestaurantSheet({
                       )}
 
                       {/* Newsletter CTA */}
-                      <button
-                        onClick={() => navigate('/deals')}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600,
-                          marginTop: 14, width: '100%', padding: 0,
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-                        </svg>
-                        Resta aggiornato sui nuovi sconti
-                      </button>
+                      <AnimatePresence mode="wait">
+                        {newsletterStatus === 'success' || newsletterStatus === 'exists' ? (
+                          <motion.div
+                            key="subscribed"
+                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                              marginTop: 14, padding: '10px 0',
+                            }}
+                          >
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.1, type: 'spring', stiffness: 500, damping: 15 }}
+                              style={{
+                                width: 24, height: 24, borderRadius: '50%',
+                                background: 'rgba(163,230,53,0.2)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            </motion.div>
+                            <span style={{ fontSize: 13, color: '#a3e635', fontWeight: 600 }}>
+                              {newsletterStatus === 'exists' ? 'Sei già iscritto!' : 'Newsletter attivata!'}
+                            </span>
+                          </motion.div>
+                        ) : (
+                          <motion.button
+                            key="subscribe"
+                            exit={{ opacity: 0 }}
+                            onClick={async () => {
+                              if (!user?.email) return
+                              setNewsletterStatus('loading')
+                              if (!isSupabaseConfigured()) {
+                                setTimeout(() => setNewsletterStatus('success'), 500)
+                                return
+                              }
+                              const { error } = await supabase
+                                .from('newsletter_subscribers')
+                                .insert({ email: user.email.trim().toLowerCase() })
+                              if (error?.code === '23505') {
+                                setNewsletterStatus('exists')
+                              } else if (error) {
+                                setNewsletterStatus(null)
+                              } else {
+                                setNewsletterStatus('success')
+                              }
+                            }}
+                            disabled={newsletterStatus === 'loading'}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600,
+                              marginTop: 14, width: '100%', padding: 0,
+                              opacity: newsletterStatus === 'loading' ? 0.5 : 1,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+                            </svg>
+                            {newsletterStatus === 'loading' ? 'Iscrizione...' : 'Resta aggiornato sui nuovi sconti'}
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
                     </div>
                   ) : (
                     /* ── Not logged in: FOMO design ── */
