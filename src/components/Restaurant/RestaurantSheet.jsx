@@ -382,51 +382,59 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* Recensione di Bi */}
+              {/* Recensione di Bi — dark card */}
               {reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <span style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: '#E8453C', color: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 800,
-                    }}>Bi</span>
-                    <div>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Recensione di Bi</p>
-                      <p style={{ fontSize: 12, color: '#888' }}>La guida di Bi</p>
+                  <div style={{
+                    background: '#111', borderRadius: 16, padding: '20px 20px',
+                    color: '#fff',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                      <span style={{
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: '#E8453C', color: '#fff',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 800, flexShrink: 0,
+                      }}>Bi</span>
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>Recensione di Bi</span>
                     </div>
-                  </div>
-                  <p style={{ fontSize: 15, lineHeight: 1.7, color: '#333' }}>
-                    "{reviewText}"
-                  </p>
-                  {!isItalian && (
-                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 6, fontStyle: 'italic' }}>
-                      {t('restaurant.originalItalian')}
+                    <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
+                      "{reviewText}"
                     </p>
-                  )}
+                    {!isItalian && (
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 8, fontStyle: 'italic' }}>
+                        {t('restaurant.originalItalian')}
+                      </p>
+                    )}
+
+                    {/* Tip di Bi — inside the card */}
+                    {tipText && (
+                      <div style={{
+                        marginTop: 16, paddingTop: 16,
+                        borderTop: '1px solid rgba(255,255,255,0.1)',
+                      }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
+                        <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.85)' }}>
+                          "{tipText}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
 
-              {/* Il tip di Bi */}
-              {tipText && (
+              {/* Tip di Bi standalone — only if there's a tip but no review */}
+              {tipText && !reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
-                    background: '#FEF3C7',
-                    borderLeft: '3px solid #E8453C',
-                    borderRadius: '0 12px 12px 0',
-                    padding: '14px 16px',
+                    background: '#111', borderRadius: 16, padding: '20px 20px',
+                    color: '#fff',
                   }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#E8453C', marginBottom: 4 }}>Il tip di Bi</p>
-                    <p style={{ fontSize: 14, lineHeight: 1.6, color: '#78350F', fontWeight: 500 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
+                    <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.85)' }}>
                       "{tipText}"
                     </p>
                   </div>
-                  {!isItalian && (
-                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 6, fontStyle: 'italic' }}>
-                      {t('restaurant.originalItalian')}
-                    </p>
-                  )}
                 </motion.div>
               )}
 
@@ -476,11 +484,6 @@ export default function RestaurantSheet({
                   </a>
                 </motion.div>
               )}
-
-              {/* Community reviews */}
-              <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                <ReviewSection restaurantId={restaurant.id} />
-              </motion.div>
 
               {/* Nearby restaurants */}
               <motion.div variants={itemVariants}>
