@@ -554,7 +554,46 @@ export default function RestaurantSheet({
                       </div>
                     </div>
 
-                    {/* CTA text */}
+                    {/* How it works — 3 steps */}
+                    <div style={{
+                      display: 'flex', gap: 12, margin: '16px 0 20px',
+                      position: 'relative', zIndex: 2,
+                    }}>
+                      {[
+                        { icon: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                          </svg>
+                        ), text: 'Iscriviti gratis' },
+                        { icon: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                          </svg>
+                        ), text: 'Sblocca il QR' },
+                        { icon: (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                          </svg>
+                        ), text: 'Mostralo in cassa' },
+                      ].map((step, i) => (
+                        <div key={i} style={{
+                          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                        }}>
+                          <div style={{
+                            width: 40, height: 40, borderRadius: '50%',
+                            background: 'rgba(74,222,128,0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {step.icon}
+                          </div>
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textAlign: 'center' }}>
+                            {step.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* CTA */}
                     {!user ? (
                       <button
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
@@ -562,7 +601,7 @@ export default function RestaurantSheet({
                           width: '100%', padding: '14px 20px', borderRadius: 12,
                           background: '#4ADE80', color: '#fff', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                          position: 'relative', zIndex: 2, marginTop: 4,
+                          position: 'relative', zIndex: 2,
                         }}
                       >
                         Iscriviti gratis per sbloccare
@@ -570,7 +609,7 @@ export default function RestaurantSheet({
                     ) : (
                       <p style={{
                         fontSize: 13, color: 'rgba(255,255,255,0.35)',
-                        textAlign: 'center', marginTop: 4, position: 'relative', zIndex: 2,
+                        textAlign: 'center', position: 'relative', zIndex: 2,
                       }}>
                         Usa il bottone in basso per sbloccare il tuo sconto
                       </p>
