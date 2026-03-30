@@ -380,7 +380,7 @@ export default function HomePage() {
         isLocating={geoLoading}
         onZoomIn={() => mapRef.current?.zoomIn()}
         onZoomOut={() => mapRef.current?.zoomOut()}
-        bottom={TAB_BAR_HEIGHT + 180}
+        bottom={TAB_BAR_HEIGHT + 220}
         hidden={hideBottomPanel}
       />
 
