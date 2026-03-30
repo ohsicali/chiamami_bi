@@ -382,12 +382,11 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* Recensione di Bi — dark card */}
+              {/* Recensione di Bi — warm cream card */}
               {reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
-                    background: '#111', borderRadius: 16, padding: '20px 20px',
-                    color: '#fff',
+                    background: '#F5EDE3', borderRadius: 16, padding: '22px 20px',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                       <span style={{
@@ -396,13 +395,13 @@ export default function RestaurantSheet({
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 11, fontWeight: 800, flexShrink: 0,
                       }}>Bi</span>
-                      <span style={{ fontSize: 14, fontWeight: 700 }}>Recensione di Bi</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#2A2219' }}>Recensione di Bi</span>
                     </div>
-                    <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
+                    <p style={{ fontSize: 15, lineHeight: 1.7, color: '#3D3428' }}>
                       "{reviewText}"
                     </p>
                     {!isItalian && (
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 8, fontStyle: 'italic' }}>
+                      <p style={{ fontSize: 11, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
                         {t('restaurant.originalItalian')}
                       </p>
                     )}
@@ -411,10 +410,10 @@ export default function RestaurantSheet({
                     {tipText && (
                       <div style={{
                         marginTop: 16, paddingTop: 16,
-                        borderTop: '1px solid rgba(255,255,255,0.1)',
+                        borderTop: '1px solid rgba(0,0,0,0.06)',
                       }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
-                        <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.85)' }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: '#E8453C', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
+                        <p style={{ fontSize: 14, lineHeight: 1.6, color: '#3D3428', fontWeight: 500 }}>
                           "{tipText}"
                         </p>
                       </div>
@@ -427,11 +426,10 @@ export default function RestaurantSheet({
               {tipText && !reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
-                    background: '#111', borderRadius: 16, padding: '20px 20px',
-                    color: '#fff',
+                    background: '#F5EDE3', borderRadius: 16, padding: '22px 20px',
                   }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
-                    <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.85)' }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#E8453C', letterSpacing: 0.5, marginBottom: 6 }}>IL TIP DI BI</p>
+                    <p style={{ fontSize: 14, lineHeight: 1.6, color: '#3D3428', fontWeight: 500 }}>
                       "{tipText}"
                     </p>
                   </div>
