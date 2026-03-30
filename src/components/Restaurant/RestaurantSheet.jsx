@@ -584,15 +584,21 @@ export default function RestaurantSheet({
                         </button>
                       )}
 
-                      {/* Social proof */}
-                      {discount.total_redeemed > 0 && (
-                        <p style={{
-                          fontSize: 12, color: 'rgba(255,255,255,0.25)',
-                          textAlign: 'center', marginTop: 14,
-                        }}>
-                          {discount.total_redeemed} {discount.total_redeemed === 1 ? 'persona ha' : 'persone hanno'} già sbloccato
-                        </p>
-                      )}
+                      {/* Newsletter CTA */}
+                      <button
+                        onClick={() => navigate('/deals')}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600,
+                          marginTop: 14, width: '100%', padding: 0,
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+                        </svg>
+                        Resta aggiornato sui nuovi sconti
+                      </button>
                     </div>
                   ) : (
                     /* ── Not logged in: FOMO design ── */
