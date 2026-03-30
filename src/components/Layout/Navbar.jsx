@@ -178,7 +178,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ flexShrink: 0 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 700, color: '#22181C' }}>
                 Dove vuoi esplorare?
               </h3>
               <button onClick={() => setCityPickerOpen(false)} style={{ padding: 8, borderRadius: '50%', background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer' }}>
@@ -203,7 +203,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                   style={{
                     flex: 1, border: 'none', outline: 'none',
                     background: 'transparent', fontSize: 15, fontWeight: 500,
-                    color: '#111', fontFamily: "'DM Sans', sans-serif",
+                    color: '#22181C', fontFamily: "'DM Sans', sans-serif",
                   }}
                 />
                 {query && (
@@ -225,7 +225,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '12px 14px', borderRadius: 14, marginTop: 6,
-                    background: '#111', border: '1.5px solid #111',
+                    background: '#22181C', border: '1.5px solid #22181C',
                   }}>
                     <div className="flex items-center gap-3">
                       <span style={{ position: 'relative', width: 8, height: 8 }}>
@@ -266,7 +266,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                           }}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{s.name}</div>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: '#22181C' }}>{s.name}</div>
                             <div style={{ fontSize: 12, color: '#8A8680', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.fullName}</div>
                           </div>
                           {count > 0 && (
@@ -364,7 +364,7 @@ function CityRow({ name, count, onSelect }) {
     >
       <div className="flex items-center gap-3">
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ddd' }} />
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{name}</span>
+        <span style={{ fontSize: 15, fontWeight: 600, color: '#22181C' }}>{name}</span>
       </div>
       <span style={{
         fontSize: 11, fontWeight: 600, color: '#a3e635',

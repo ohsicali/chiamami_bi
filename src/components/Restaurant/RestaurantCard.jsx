@@ -66,7 +66,7 @@ export default function RestaurantCard({
         onClick={() => onClick?.(restaurant)}
       >
         {/* Background */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #1a1510, #2a1f18, #111)' }}>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)' }}>
           {photoUrl && (
             <img
               src={photoUrl}
@@ -80,7 +80,7 @@ export default function RestaurantCard({
             background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)',
           }} />
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)',
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(206,129,71,0.1), transparent 50%)',
           }} />
           {/* Shimmer — single light sweep */}
           {imageLoaded && (
@@ -100,7 +100,7 @@ export default function RestaurantCard({
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#C4A265', color: '#fff',
+            background: '#CE8147', color: '#fff',
             fontSize: 11, fontWeight: 700, letterSpacing: 1,
             textTransform: 'uppercase',
             padding: '5px 12px', borderRadius: 10,
@@ -258,7 +258,7 @@ export default function RestaurantCard({
         {/* Name */}
         <h3 style={{
           fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-          fontSize: 14, fontWeight: 600, color: '#111',
+          fontSize: 14, fontWeight: 600, color: '#22181C',
           lineHeight: 1.5, marginBottom: 3,
         }}>
           {restaurant.name}

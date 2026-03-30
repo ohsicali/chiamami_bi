@@ -63,7 +63,7 @@ export default function DealsPage() {
             onClick={() => setTab('available')}
             style={{
               flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 700,
-              background: tab === 'available' ? '#111' : 'transparent',
+              background: tab === 'available' ? '#22181C' : 'transparent',
               color: tab === 'available' ? '#FAF7F2' : '#8A8680',
               border: 'none', cursor: 'pointer',
             }}
@@ -74,7 +74,7 @@ export default function DealsPage() {
             onClick={() => setTab('mine')}
             style={{
               flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 600,
-              background: tab === 'mine' ? '#111' : 'transparent',
+              background: tab === 'mine' ? '#22181C' : 'transparent',
               color: tab === 'mine' ? '#FAF7F2' : '#8A8680',
               border: 'none', cursor: 'pointer',
             }}
@@ -95,10 +95,10 @@ export default function DealsPage() {
               {!user && (
                 <motion.div variants={fadeUp} style={{
                   borderRadius: 18, padding: 20, marginBottom: 16, marginTop: 16,
-                  background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(196,162,101,0.06))',
+                  background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(206,129,71,0.06))',
                   border: '1.5px solid #E8E5DE',
                 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#111', marginBottom: 6 }}>Registrati per sbloccare gli sconti</p>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 6 }}>Registrati per sbloccare gli sconti</p>
                   <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 12 }}>Crea un account gratuito per accedere a sconti esclusivi</p>
                   <Link to="/login" style={{
                     display: 'inline-block', borderRadius: 12, background: '#E8453C', color: '#fff',
@@ -119,7 +119,7 @@ export default function DealsPage() {
               {!loading && discounts.length === 0 && (
                 <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-16 text-center">
                   <span style={{ fontSize: 48, marginBottom: 12 }}>🏷️</span>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>Nessuno sconto attivo</p>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto attivo</p>
                   <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Torna presto, Bi sta preparando nuove offerte!</p>
                   <Link to="/" style={{
                     marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
@@ -148,7 +148,7 @@ export default function DealsPage() {
                     >
                       <div style={{
                         position: 'absolute', inset: 0,
-                        background: 'linear-gradient(135deg, #1a1510, #2a1f18, #111)',
+                        background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)',
                       }}>
                         {featuredDeal.restaurant?.photos?.[0]?.photo_url && (
                           <img
@@ -157,14 +157,14 @@ export default function DealsPage() {
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }}
                           />
                         )}
-                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(206,129,71,0.1), transparent 50%)' }} />
                       </div>
 
                       <div style={{ position: 'relative', zIndex: 2, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
                         <div className="flex justify-between items-start">
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: 4,
-                            background: '#C4A265', color: '#fff',
+                            background: '#CE8147', color: '#fff',
                             fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
                             padding: '4px 10px', borderRadius: 6,
                           }}>
@@ -199,7 +199,7 @@ export default function DealsPage() {
                               <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 2, overflow: 'hidden' }}>
                                 <div style={{
                                   width: `${Math.max(5, ((featuredDeal.max_redemptions - (featuredDeal.current_redemptions || 0)) / featuredDeal.max_redemptions) * 100)}%`,
-                                  height: '100%', background: '#C4A265', borderRadius: 2,
+                                  height: '100%', background: '#CE8147', borderRadius: 2,
                                 }} />
                               </div>
                               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -248,7 +248,7 @@ export default function DealsPage() {
                                 <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
                                   <h3 style={{
                                     fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                                    fontSize: 17, fontWeight: 600, color: '#111', lineHeight: 1.2,
+                                    fontSize: 17, fontWeight: 600, color: '#22181C', lineHeight: 1.2,
                                   }}>
                                     {r?.name}
                                   </h3>
@@ -291,7 +291,7 @@ export default function DealsPage() {
                   <div style={{ background: '#fff', borderRadius: 16, padding: 18, border: '1.5px solid #E8E5DE' }}>
                     {[
                       { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+                      { icon: '✅', bg: 'rgba(206,129,71,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
                       { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
                     ].map((step, i) => (
                       <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
@@ -301,7 +301,7 @@ export default function DealsPage() {
                           fontSize: 16, flexShrink: 0,
                         }}>{step.icon}</div>
                         <div>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 2 }}>{step.title}</p>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>{step.title}</p>
                           <p style={{ fontSize: 11, color: '#8A8680' }}>{step.desc}</p>
                         </div>
                       </div>
@@ -318,7 +318,7 @@ export default function DealsPage() {
               {!user ? (
                 <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-16 text-center">
                   <span style={{ fontSize: 48, marginBottom: 12 }}>🔐</span>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>Accedi per vedere i tuoi sconti</p>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Accedi per vedere i tuoi sconti</p>
                   <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>I tuoi sconti attivi e usati appariranno qui</p>
                   <Link to="/login" style={{
                     marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
@@ -330,7 +330,7 @@ export default function DealsPage() {
               ) : myDiscounts.length === 0 ? (
                 <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-16 text-center">
                   <span style={{ fontSize: 48, marginBottom: 12 }}>📋</span>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>Nessuno sconto riscattato</p>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto riscattato</p>
                   <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Quando riscatti uno sconto, lo troverai qui</p>
                   <button
                     onClick={() => setTab('available')}

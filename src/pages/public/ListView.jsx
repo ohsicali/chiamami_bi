@@ -27,7 +27,7 @@ function slugify(name) {
 
 /* ── Star SVG ── */
 const StarIcon = ({ size = 11 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#C4A265" stroke="none">
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#CE8147" stroke="none">
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
   </svg>
 )
@@ -56,7 +56,7 @@ function PriceDisplay({ level }) {
   return (
     <span style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>
       {[1, 2, 3].map(i => (
-        <span key={i} style={{ color: i <= level ? '#111' : '#D1CDC6' }}>€</span>
+        <span key={i} style={{ color: i <= level ? '#22181C' : '#D1CDC6' }}>€</span>
       ))}
     </span>
   )
@@ -155,7 +155,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         {restaurant.our_rating >= 4.5 && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#C4A265', color: '#fff',
+            background: '#CE8147', color: '#fff',
             fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
             textTransform: 'uppercase',
             padding: '4px 10px', borderRadius: 6, marginBottom: 10,
@@ -177,7 +177,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         }}>
           {restaurant.our_rating && (
             <>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#C4A265', fontWeight: 700 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#CE8147', fontWeight: 700 }}>
                 <StarIcon size={12} />
                 {restaurant.our_rating}
               </span>
@@ -278,7 +278,7 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
         <div style={{
           fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-          fontSize: 18, fontWeight: 600, color: '#111',
+          fontSize: 18, fontWeight: 600, color: '#22181C',
           lineHeight: 1.2, marginBottom: 3,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           paddingRight: 28,
@@ -304,7 +304,7 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
             <div style={{
               display: 'flex', alignItems: 'center', gap: 3,
               background: '#FBF9F4', padding: '3px 8px', borderRadius: 8,
-              fontSize: 12, fontWeight: 700, color: '#111',
+              fontSize: 12, fontWeight: 700, color: '#22181C',
             }}>
               <StarIcon />
               {restaurant.our_rating}
@@ -414,7 +414,7 @@ export default function ListView() {
             <div style={{ width: 100, height: 14, borderRadius: 6, background: '#E8E5DE' }} />
           ) : (
             <span style={{ fontSize: 12, color: '#8A8680', fontWeight: 500 }}>
-              <b style={{ color: '#111', fontWeight: 700 }}>{restaurants.length}</b> ristoranti
+              <b style={{ color: '#22181C', fontWeight: 700 }}>{restaurants.length}</b> ristoranti
             </span>
           )}
         </div>
@@ -429,7 +429,7 @@ export default function ListView() {
         ) : restaurants.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-            <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>Nessun ristorante trovato</p>
+            <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessun ristorante trovato</p>
             <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Prova a cambiare i filtri o la ricerca</p>
           </div>
         ) : (
@@ -487,7 +487,7 @@ export default function ListView() {
         onClick={handleToggleView}
         style={{
           position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 60, background: '#111', color: '#FAF7F2',
+          zIndex: 60, background: '#22181C', color: '#FAF7F2',
           border: 'none', borderRadius: 28,
           padding: '12px 26px',
           fontFamily: "'DM Sans', sans-serif",

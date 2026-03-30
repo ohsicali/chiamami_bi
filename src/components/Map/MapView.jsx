@@ -6,7 +6,7 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
-const GOLD_COLOR = '#C4A265'
+const GOLD_COLOR = '#CE8147'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
@@ -160,7 +160,7 @@ function createClusterEl(count) {
     user-select:none;
   `
   const label = count > 99 ? '99+' : String(count)
-  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#111;line-height:1;pointer-events:none">${label}</span>`
+  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#22181C;line-height:1;pointer-events:none">${label}</span>`
 
   wrap.appendChild(inner)
   return wrap

@@ -54,7 +54,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
         placeholder={t('home.search') || 'Ristorante, cucina, zona...'}
         style={{
           flex: 1, background: 'transparent',
-          fontSize: 14, fontWeight: 500, color: '#111',
+          fontSize: 14, fontWeight: 500, color: '#22181C',
           outline: 'none', border: 'none',
           fontFamily: "'DM Sans', sans-serif",
         }}

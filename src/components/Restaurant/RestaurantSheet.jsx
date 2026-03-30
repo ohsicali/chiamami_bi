@@ -254,7 +254,7 @@ export default function RestaurantSheet({
                 width: 36, height: 36, borderRadius: '50%',
                 background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer', color: '#111',
+                border: 'none', cursor: 'pointer', color: '#22181C',
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -270,7 +270,7 @@ export default function RestaurantSheet({
                   width: 36, height: 36, borderRadius: '50%',
                   background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: 'none', cursor: 'pointer', color: '#111',
+                  border: 'none', cursor: 'pointer', color: '#22181C',
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -356,7 +356,7 @@ export default function RestaurantSheet({
               {/* Restaurant name — centered */}
               <motion.h1 variants={itemVariants} style={{
                 fontFamily: "'TAN Songbird', serif",
-                fontSize: 24, fontWeight: 700, color: '#111',
+                fontSize: 24, fontWeight: 700, color: '#22181C',
                 lineHeight: 1.35, textAlign: 'center',
                 marginBottom: 10,
               }}>
@@ -408,7 +408,7 @@ export default function RestaurantSheet({
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                    background: '#fff', color: '#22181C', border: '1px solid rgba(0,0,0,0.15)',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -421,7 +421,7 @@ export default function RestaurantSheet({
                   <a href={phoneUrl} style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                    background: '#fff', color: '#22181C', border: '1px solid rgba(0,0,0,0.15)',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -434,7 +434,7 @@ export default function RestaurantSheet({
                   <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.15)',
+                    background: '#fff', color: '#22181C', border: '1px solid rgba(0,0,0,0.15)',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -450,7 +450,7 @@ export default function RestaurantSheet({
                 <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
                   <div style={{
                     borderRadius: 18, padding: '24px 22px',
-                    background: 'linear-gradient(145deg, #1a1510 0%, #2a1f18 50%, #111 100%)',
+                    background: 'linear-gradient(145deg, #1e1520 0%, #2e2228 50%, #22181C 100%)',
                     position: 'relative', overflow: 'hidden',
                   }}>
                     {/* Subtle warm glow */}
@@ -496,23 +496,23 @@ export default function RestaurantSheet({
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 18, padding: '24px 22px',
-                    background: 'linear-gradient(135deg, #F5EDE3 0%, #FBF7F2 100%)',
-                    border: '1px solid rgba(196,162,101,0.2)',
+                    background: 'linear-gradient(135deg, #FAF3DD 0%, #FBF7F2 100%)',
+                    border: '1px solid rgba(206,129,71,0.2)',
                   }}>
                     {/* Label with fork-knife icon */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: 8,
-                        background: 'linear-gradient(135deg, #C4A265, #D4B87A)',
+                        background: 'linear-gradient(135deg, #CE8147, #D89A62)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
                         </svg>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#C4A265', letterSpacing: 0.8, textTransform: 'uppercase' }}>Cosa prendere</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#CE8147', letterSpacing: 0.8, textTransform: 'uppercase' }}>Cosa prendere</span>
                     </div>
-                    <p style={{ fontSize: 16, lineHeight: 1.8, color: '#2A2219' }}>
+                    <p style={{ fontSize: 16, lineHeight: 1.8, color: '#22181C' }}>
                       {tipText}
                     </p>
                   </div>
@@ -526,7 +526,7 @@ export default function RestaurantSheet({
                     animate={{ boxShadow: ['0 0 0 0 rgba(163,230,53,0)', '0 0 24px 4px rgba(163,230,53,0.12)', '0 0 0 0 rgba(163,230,53,0)'] }}
                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     style={{
-                      background: 'linear-gradient(145deg, #111 0%, #1a1a1a 100%)',
+                      background: 'linear-gradient(145deg, #22181C 0%, #2a2025 100%)',
                       borderRadius: 16, padding: '24px 20px',
                       position: 'relative', overflow: 'hidden',
                     }}
@@ -725,7 +725,7 @@ export default function RestaurantSheet({
               {/* Chi è Bi */}
               <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                 <div style={{
-                  background: '#F5EDE3', borderRadius: 16, padding: '24px 20px',
+                  background: '#FAF3DD', borderRadius: 16, padding: '24px 20px',
                 }}>
                   {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
@@ -739,7 +739,7 @@ export default function RestaurantSheet({
                       }}
                     />
                     <div>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: '#2A2219' }}>Ciao, sono Bi</p>
+                      <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C' }}>Ciao, sono Bi</p>
                       <p style={{ fontSize: 13, color: '#8C7A62', marginTop: 1 }}>La tua guida a Torino</p>
                     </div>
                   </div>
@@ -754,9 +754,9 @@ export default function RestaurantSheet({
                     <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
                       display: 'flex', alignItems: 'center', gap: 6,
                       background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
-                      textDecoration: 'none', color: '#2A2219', fontSize: 13, fontWeight: 600,
+                      textDecoration: 'none', color: '#22181C', fontSize: 13, fontWeight: 600,
                     }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2A2219" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                         <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
@@ -766,9 +766,9 @@ export default function RestaurantSheet({
                     <a href="https://tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
                       display: 'flex', alignItems: 'center', gap: 6,
                       background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
-                      textDecoration: 'none', color: '#2A2219', fontSize: 13, fontWeight: 600,
+                      textDecoration: 'none', color: '#22181C', fontSize: 13, fontWeight: 600,
                     }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#2A2219">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#22181C">
                         <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.8a8.25 8.25 0 004.76 1.5V6.86a4.84 4.84 0 01-1-.17z"/>
                       </svg>
                       TikTok
@@ -811,7 +811,7 @@ export default function RestaurantSheet({
                     target="_blank" rel="noopener noreferrer"
                     style={{
                       display: 'flex', alignItems: 'center', gap: 14,
-                      background: '#111', borderRadius: 12, padding: 14,
+                      background: '#22181C', borderRadius: 12, padding: 14,
                       textDecoration: 'none', color: '#fff',
                     }}
                   >

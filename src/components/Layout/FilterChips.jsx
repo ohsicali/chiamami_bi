@@ -55,8 +55,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           style={{
             padding: '8px 16px 8px 10px',
             borderRadius: 40,
-            background: selected.length === 0 ? '#111' : '#fff',
-            border: `1.5px solid ${selected.length === 0 ? '#111' : '#E8E5DE'}`,
+            background: selected.length === 0 ? '#22181C' : '#fff',
+            border: `1.5px solid ${selected.length === 0 ? '#22181C' : '#E8E5DE'}`,
             cursor: 'pointer',
             transition: 'all 0.2s',
           }}
@@ -71,7 +71,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           </span>
           <span style={{
             fontSize: 13, fontWeight: 600,
-            color: selected.length === 0 ? '#FAF7F2' : '#111',
+            color: selected.length === 0 ? '#FAF7F2' : '#22181C',
             whiteSpace: 'nowrap',
           }}>
             Tutti
@@ -89,8 +89,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               style={{
                 padding: '8px 16px 8px 10px',
                 borderRadius: 40,
-                background: active ? '#111' : '#fff',
-                border: `1.5px solid ${active ? '#111' : '#E8E5DE'}`,
+                background: active ? '#22181C' : '#fff',
+                border: `1.5px solid ${active ? '#22181C' : '#E8E5DE'}`,
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
@@ -105,7 +105,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               </span>
               <span style={{
                 fontSize: 13, fontWeight: 600,
-                color: active ? '#FAF7F2' : '#111',
+                color: active ? '#FAF7F2' : '#22181C',
                 whiteSpace: 'nowrap',
               }}>
                 {cat.name}
@@ -122,8 +122,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           style={{
             padding: '8px 16px 8px 10px',
             borderRadius: 40,
-            background: selected.length > 0 ? '#111' : '#fff',
-            border: `1.5px solid ${selected.length > 0 ? '#111' : '#E8E5DE'}`,
+            background: selected.length > 0 ? '#22181C' : '#fff',
+            border: `1.5px solid ${selected.length > 0 ? '#22181C' : '#E8E5DE'}`,
           }}
         >
           <span style={{
@@ -136,7 +136,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           </span>
           <span style={{
             fontSize: 13, fontWeight: 600,
-            color: selected.length > 0 ? '#FAF7F2' : '#111',
+            color: selected.length > 0 ? '#FAF7F2' : '#22181C',
             whiteSpace: 'nowrap',
           }}>
             Altro
@@ -163,8 +163,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               fontSize: 12, fontWeight: 600, letterSpacing: 0.2,
               whiteSpace: 'nowrap',
               display: 'flex', alignItems: 'center', gap: 6,
-              border: `1.5px solid ${filters.sortBy === 'distance' ? '#111' : '#E8E5DE'}`,
-              background: filters.sortBy === 'distance' ? '#111' : '#fff',
+              border: `1.5px solid ${filters.sortBy === 'distance' ? '#22181C' : '#E8E5DE'}`,
+              background: filters.sortBy === 'distance' ? '#22181C' : '#fff',
               color: filters.sortBy === 'distance' ? '#FAF7F2' : '#5A564F',
               cursor: 'pointer',
             }}
@@ -216,8 +216,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
             fontSize: 12, fontWeight: 600,
             whiteSpace: 'nowrap',
             display: 'flex', alignItems: 'center', gap: 6,
-            border: `1.5px solid ${(selected.length || filters.priceRange) ? '#111' : '#E8E5DE'}`,
-            background: (selected.length || filters.priceRange) ? '#111' : '#fff',
+            border: `1.5px solid ${(selected.length || filters.priceRange) ? '#22181C' : '#E8E5DE'}`,
+            background: (selected.length || filters.priceRange) ? '#22181C' : '#fff',
             color: (selected.length || filters.priceRange) ? '#FAF7F2' : '#5A564F',
             cursor: 'pointer',
           }}
@@ -259,7 +259,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ borderBottom: '1px solid #E8E5DE' }}>
-                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 600, color: '#111' }}>
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 600, color: '#22181C' }}>
                     Filtri
                   </h3>
                   <button type="button" onClick={() => setModalOpen(false)} className="p-2 rounded-full" style={{ background: 'rgba(0,0,0,0.04)' }}>
@@ -281,7 +281,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                         background: !selected.length ? 'rgba(232,69,60,0.1)' : 'rgba(0,0,0,0.04)',
                         boxShadow: !selected.length ? '0 0 0 2.5px #E8453C' : 'none',
                       }}>🍽️</div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: !selected.length ? '#E8453C' : '#111' }}>Tutti</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: !selected.length ? '#E8453C' : '#22181C' }}>Tutti</span>
                     </button>
 
                     {CUISINE_CATEGORIES.map((cat) => {
@@ -296,7 +296,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                             boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
                             transition: 'all 0.2s',
                           }}>{cat.emoji}</div>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: active ? cat.color : '#111', textAlign: 'center', lineHeight: 1.2 }}>{cat.name}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: active ? cat.color : '#22181C', textAlign: 'center', lineHeight: 1.2 }}>{cat.name}</span>
                         </button>
                       )
                     })}
@@ -316,9 +316,9 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                           style={{
                             flex: 1, padding: '12px 8px', borderRadius: 14,
                             fontSize: 13, fontWeight: 600,
-                            background: active ? '#111' : '#fff',
+                            background: active ? '#22181C' : '#fff',
                             color: active ? '#FAF7F2' : '#5A564F',
-                            border: `1.5px solid ${active ? '#111' : '#E8E5DE'}`,
+                            border: `1.5px solid ${active ? '#22181C' : '#E8E5DE'}`,
                             cursor: 'pointer', transition: 'all 0.2s',
                             textAlign: 'center',
                           }}

@@ -102,7 +102,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
         <div style={{
           fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-          fontSize: 11, fontWeight: 600, color: '#111',
+          fontSize: 11, fontWeight: 600, color: '#22181C',
           lineHeight: 1.6, marginBottom: 2,
           whiteSpace: 'nowrap', textOverflow: 'ellipsis',
           overflow: 'hidden', padding: '2px 0',
@@ -539,7 +539,7 @@ export default function HomePage() {
             ) : viewportRestaurants.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div style={{ marginBottom: 12, fontSize: 40 }}>🔍</div>
-                <p style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{t('home.noResults')}</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>{t('home.noResults')}</p>
                 <p style={{ marginTop: 4, fontSize: 14, color: '#8A8680' }}>{t('home.changeFilters')}</p>
               </div>
             ) : (
