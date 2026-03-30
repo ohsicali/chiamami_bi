@@ -207,7 +207,7 @@ export default function AboutPage() {
               <p style={{
                 fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
                 fontSize: 26, fontWeight: 700, color: '#22181C',
-                lineHeight: 1.4, textAlign: 'center',
+                lineHeight: 1.7, textAlign: 'center',
               }}>
                 "Dove mangiamo<br />stasera?"
               </p>
@@ -242,7 +242,7 @@ export default function AboutPage() {
                   Torino è una città che si scopre a tavola.
                 </p>
                 <p style={{
-                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8,
+                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8, textAlign: 'justify',
                 }}>
                   Dietro ogni portone del centro, nelle vie strette del Quadrilatero, tra i palazzi liberty di San Salvario, si nascondono trattorie, osterie e ristoranti che raccontano storie di passione e tradizione.
                 </p>
@@ -254,7 +254,7 @@ export default function AboutPage() {
                 paddingLeft: 16,
               }}>
                 <p style={{
-                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500,
+                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
                 }}>
                   Ho iniziato a esplorare la scena gastronomica torinese per pura curiosità, provando un posto nuovo ogni settimana. Dalle <strong style={{ color: '#22181C' }}>piole storiche</strong> dove il vino si beve sfuso ai <strong style={{ color: '#22181C' }}>ramen bar</strong> più autentici, dalla <strong style={{ color: '#22181C' }}>pizza napoletana verace</strong> al <strong style={{ color: '#22181C' }}>fine dining stellato</strong>.
                 </p>
@@ -263,7 +263,7 @@ export default function AboutPage() {
               {/* Block 3 — conclusion */}
               <motion.div variants={fadeUp}>
                 <p style={{
-                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500,
+                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
                 }}>
                   Gli amici hanno iniziato a chiedermi consigli. E così è nata <strong style={{ color: '#22181C' }}>ChiamamiBi</strong> — una guida personale, sincera, fatta di posti che ho provato davvero e dove tornerei ad occhi chiusi.
                 </p>
@@ -398,13 +398,13 @@ export default function AboutPage() {
               variants={fadeUp}
             >
               <div style={{
-                background: '#22181C', borderRadius: 16, padding: '28px 22px',
+                background: '#C4A265', borderRadius: 16, padding: '28px 22px',
                 position: 'relative', overflow: 'hidden',
               }}>
                 {/* Accent glow */}
                 <div style={{
                   position: 'absolute', bottom: -30, right: -30, width: 120, height: 120,
-                  background: 'radial-gradient(circle, rgba(232,69,60,0.1), transparent 70%)',
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%)',
                   pointerEvents: 'none',
                 }} />
 
@@ -421,15 +421,15 @@ export default function AboutPage() {
                     >
                       <div style={{
                         width: 52, height: 52, borderRadius: '50%',
-                        background: 'rgba(163,230,53,0.15)',
+                        background: 'rgba(255,255,255,0.2)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5"/>
                         </svg>
                       </div>
                       <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Grazie!</p>
-                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
+                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
                         Il tuo suggerimento è stato inviato.<br />Lo proverò presto!
                       </p>
                     </motion.div>
@@ -439,7 +439,7 @@ export default function AboutPage() {
                         <p style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>
                           Hai un posto da consigliarmi?
                         </p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 22, lineHeight: 1.5 }}>
+                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 22, lineHeight: 1.5 }}>
                           Dimmi il nome e perché ci devo andare
                         </p>
 
@@ -451,8 +451,8 @@ export default function AboutPage() {
                             onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
                             style={{
                               width: '100%', padding: '13px 16px', borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              background: 'rgba(255,255,255,0.12)',
                               fontSize: 14, color: '#fff', outline: 'none',
                             }}
                           />
@@ -464,8 +464,8 @@ export default function AboutPage() {
                             onChange={e => setFormData(p => ({ ...p, restaurant: e.target.value }))}
                             style={{
                               width: '100%', padding: '13px 16px', borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              background: 'rgba(255,255,255,0.12)',
                               fontSize: 14, color: '#fff', outline: 'none',
                             }}
                           />
@@ -476,8 +476,8 @@ export default function AboutPage() {
                             onChange={e => setFormData(p => ({ ...p, reason: e.target.value }))}
                             style={{
                               width: '100%', padding: '13px 16px', borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              background: 'rgba(255,255,255,0.12)',
                               fontSize: 14, color: '#fff', outline: 'none', resize: 'none',
                             }}
                           />
@@ -486,7 +486,7 @@ export default function AboutPage() {
                             type="submit"
                             style={{
                               width: '100%', padding: '14px 20px', borderRadius: 12,
-                              background: '#E8453C', color: '#fff', border: 'none',
+                              background: '#22181C', color: '#fff', border: 'none',
                               fontSize: 15, fontWeight: 700, cursor: 'pointer',
                               marginTop: 4,
                             }}
