@@ -641,6 +641,34 @@ export default function RestaurantSheet({
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
+              {/* Chi è Bi */}
+              <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <div
+                  onClick={() => navigate('/about')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    background: '#F5EDE3', borderRadius: 14, padding: '16px 18px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span style={{
+                    width: 44, height: 44, borderRadius: '50%',
+                    background: '#E8453C', color: '#fff',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, fontWeight: 800, flexShrink: 0,
+                  }}>Bi</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#2A2219' }}>Chi è Bi?</p>
+                    <p style={{ fontSize: 13, color: '#8C7A62', lineHeight: 1.4, marginTop: 2 }}>
+                      Scopri chi sceglie i posti e perché fidarti
+                    </p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8C7A62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </div>
+              </motion.div>
+
               {/* Recommended for */}
               {restaurant.recommended_for?.length > 0 && (
                 <motion.div variants={itemVariants} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
