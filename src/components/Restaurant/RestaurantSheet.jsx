@@ -853,68 +853,80 @@ export default function RestaurantSheet({
               {/* Chi è Bi */}
               <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                 <div style={{
-                  background: '#F0EBE3', borderRadius: 16, padding: '24px 20px',
+                  background: '#22181C', borderRadius: 16, overflow: 'hidden',
+                  position: 'relative',
                 }}>
-                  {/* Header row */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                    <img
-                      src="/bi-photo.JPG"
-                      alt="Bi"
-                      style={{
-                        width: 52, height: 52, borderRadius: '50%',
-                        objectFit: 'cover', flexShrink: 0,
-                        border: '2px solid rgba(232,69,60,0.2)',
-                      }}
-                    />
-                    <div>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C' }}>Ciao, sono Bi</p>
-                      <p style={{ fontSize: 13, color: '#8C7A62', marginTop: 1 }}>La tua guida a Torino</p>
+                  {/* Subtle gradient accent */}
+                  <div style={{
+                    position: 'absolute', top: 0, right: 0, width: '50%', height: '100%',
+                    background: 'radial-gradient(ellipse at 90% 20%, rgba(232,69,60,0.12), transparent 60%)',
+                    pointerEvents: 'none',
+                  }} />
+
+                  <div style={{ padding: '24px 20px', position: 'relative', zIndex: 1 }}>
+                    {/* Header row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                      <img
+                        src="/bi-photo.JPG"
+                        alt="Bi"
+                        style={{
+                          width: 52, height: 52, borderRadius: '50%',
+                          objectFit: 'cover', flexShrink: 0,
+                          border: '2.5px solid rgba(232,69,60,0.4)',
+                        }}
+                      />
+                      <div>
+                        <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Ciao, sono Bi</p>
+                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>La tua guida a Torino</p>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Bio */}
-                  <p style={{ fontSize: 15, lineHeight: 1.7, color: '#3D3428', marginBottom: 16 }}>
-                    Consiglio solo posti dove tornerei. Niente sponsorizzazioni, niente fuffa — solo i locali che amo davvero, provati e riprovati.
-                  </p>
+                    {/* Bio */}
+                    <p style={{ fontSize: 15, lineHeight: 1.8, color: 'rgba(255,255,255,0.75)', marginBottom: 20 }}>
+                      Consiglio solo posti dove tornerei. Niente sponsorizzazioni, niente fuffa — solo i locali che amo davvero, provati e riprovati.
+                    </p>
 
-                  {/* Social links + About */}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
-                      textDecoration: 'none', color: '#22181C', fontSize: 13, fontWeight: 600,
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                      </svg>
-                      Instagram
-                    </a>
-                    <a href="https://tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
-                      textDecoration: 'none', color: '#22181C', fontSize: 13, fontWeight: 600,
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#22181C">
-                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.8a8.25 8.25 0 004.76 1.5V6.86a4.84 4.84 0 01-1-.17z"/>
-                      </svg>
-                      TikTok
-                    </a>
-                    <div style={{ flex: 1 }} />
-                    <button
-                      onClick={() => navigate('/about')}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: '#E8453C', fontSize: 13, fontWeight: 700, padding: '8px 0',
-                      }}
-                    >
-                      Scopri di più
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18l6-6-6-6"/>
-                      </svg>
-                    </button>
+                    {/* Social links row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '9px 14px',
+                        textDecoration: 'none', color: '#fff', fontSize: 13, fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.06)',
+                      }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                        </svg>
+                        Instagram
+                      </a>
+                      <a href="https://tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '9px 14px',
+                        textDecoration: 'none', color: '#fff', fontSize: 13, fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.06)',
+                      }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff">
+                          <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.8a8.25 8.25 0 004.76 1.5V6.86a4.84 4.84 0 01-1-.17z"/>
+                        </svg>
+                        TikTok
+                      </a>
+                      <div style={{ flex: 1 }} />
+                      <button
+                        onClick={() => navigate('/about')}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: '#E8453C', fontSize: 13, fontWeight: 700, padding: '8px 0',
+                        }}
+                      >
+                        Scopri di più
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
