@@ -445,64 +445,50 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* ── Secondo Bi — italic editorial quote ── */}
+              {/* ── Secondo Bi — clean review card ── */}
               {reviewText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                  <div style={{ position: 'relative', padding: '0 4px' }}>
-                    {/* Big decorative quotation marks */}
-                    <span style={{
-                      position: 'absolute', top: -14, left: 2,
-                      fontSize: 56, lineHeight: 1, fontFamily: 'Georgia, "Times New Roman", serif',
-                      color: '#E8453C', opacity: 0.18, userSelect: 'none', pointerEvents: 'none',
-                    }}>"</span>
-                    <span style={{
-                      position: 'absolute', bottom: -32, right: 6,
-                      fontSize: 56, lineHeight: 1, fontFamily: 'Georgia, "Times New Roman", serif',
-                      color: '#E8453C', opacity: 0.18, userSelect: 'none', pointerEvents: 'none',
-                    }}>"</span>
-                    {/* Content */}
-                    <div style={{ paddingTop: 22 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 800, color: '#E8453C',
-                          letterSpacing: 1.2, textTransform: 'uppercase',
-                        }}>Secondo Bi</span>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(232,69,60,0.15)' }} />
-                      </div>
-                      <p style={{
-                        fontSize: 17, lineHeight: 1.85, color: '#22181C',
-                        fontStyle: 'italic', fontFamily: 'Georgia, "Times New Roman", serif',
+                <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
+                  <div style={{
+                    borderRadius: 16, padding: '20px 18px',
+                    background: '#F0EBE3',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: '#E8453C',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
                       }}>
-                        {reviewText}
-                      </p>
-                      {!isItalian && (
-                        <p style={{ fontSize: 12, color: '#A89A86', marginTop: 10, fontStyle: 'italic' }}>
-                          {t('restaurant.originalItalian')}
-                        </p>
-                      )}
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Bi</span>
+                      </div>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#22181C' }}>Recensione di Bi</span>
                     </div>
+                    <p style={{ fontSize: 15, lineHeight: 1.75, color: '#22181C' }}>
+                      {reviewText}
+                    </p>
+                    {!isItalian && (
+                      <p style={{ fontSize: 12, color: '#A89A86', marginTop: 10, fontStyle: 'italic' }}>
+                        {t('restaurant.originalItalian')}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
 
-              {/* ── Cosa prendere — checklist-style tip card ── */}
+              {/* ── Cosa prendere — orange card ── */}
               {tipText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 16, padding: '20px 18px',
-                    background: 'linear-gradient(135deg, rgba(206,129,71,0.07) 0%, rgba(206,129,71,0.02) 100%)',
-                    border: '1px solid rgba(206,129,71,0.15)',
+                    background: '#CE8147',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CE8147" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
                       </svg>
-                      <span style={{
-                        fontSize: 11, fontWeight: 800, color: '#CE8147',
-                        letterSpacing: 1.2, textTransform: 'uppercase',
-                      }}>Cosa prendere</span>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Cosa prendere</span>
                     </div>
-                    <p style={{ fontSize: 16, lineHeight: 1.85, color: '#22181C' }}>
+                    <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(255,255,255,0.95)' }}>
                       {tipText}
                     </p>
                   </div>
