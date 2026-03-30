@@ -337,6 +337,13 @@ export default function RestaurantSheet({
               </div>
             )}
 
+            {/* Green background behind rounded corners */}
+            {discountTitle && (
+              <div style={{ background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)' }}>
+                <div style={{ height: 16, borderRadius: '16px 16px 0 0', background: '#fff' }} />
+              </div>
+            )}
+
             <motion.div
               className="flex flex-col"
               variants={contentVariants}
@@ -345,9 +352,6 @@ export default function RestaurantSheet({
               style={{
                 padding: '28px 24px 100px',
                 background: '#fff',
-                borderRadius: discountTitle ? '16px 16px 0 0' : '0',
-                position: 'relative', zIndex: 2,
-                marginTop: discountTitle ? -2 : 0,
               }}
             >
               {/* Restaurant name — centered */}
