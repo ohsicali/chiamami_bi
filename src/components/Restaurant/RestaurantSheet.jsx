@@ -1,5 +1,5 @@
 import { motion, useAnimate, AnimatePresence } from 'framer-motion'
-import { useRef, useCallback, useState, useEffect } from 'react'
+import { Fragment, useRef, useCallback, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import PhotoCarousel from './PhotoCarousel'
@@ -575,21 +575,30 @@ export default function RestaurantSheet({
                             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
                           </svg>
                         ), text: 'Mostralo in cassa' },
-                      ].map((step, i) => (
-                        <div key={i} style={{
-                          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                        }}>
+                      ].map((step, i, arr) => (
+                        <Fragment key={i}>
                           <div style={{
-                            width: 40, height: 40, borderRadius: '50%',
-                            background: 'rgba(74,222,128,0.1)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                           }}>
-                            {step.icon}
+                            <div style={{
+                              width: 40, height: 40, borderRadius: '50%',
+                              background: 'rgba(74,222,128,0.1)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {step.icon}
+                            </div>
+                            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textAlign: 'center' }}>
+                              {step.text}
+                            </span>
                           </div>
-                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textAlign: 'center' }}>
-                            {step.text}
-                          </span>
-                        </div>
+                          {i < arr.length - 1 && (
+                            <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 20 }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 18l6-6-6-6"/>
+                              </svg>
+                            </div>
+                          )}
+                        </Fragment>
                       ))}
                     </div>
 
