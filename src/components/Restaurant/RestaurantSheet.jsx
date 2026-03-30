@@ -334,11 +334,8 @@ export default function RestaurantSheet({
                   background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                  </svg>
                   <span style={{
-                    fontSize: 13, fontWeight: 700, color: '#000',
+                    fontSize: 14, fontWeight: 700, color: '#000',
                     letterSpacing: 0.3,
                   }}>
                     {discountTitle}
