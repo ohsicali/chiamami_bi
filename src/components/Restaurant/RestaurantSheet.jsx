@@ -405,12 +405,14 @@ export default function RestaurantSheet({
                   display: 'flex', justifyContent: 'center', alignItems: 'center',
                   gap: 6, flexWrap: 'wrap', marginBottom: 20,
                 }}>
-                  {restaurant.recommended_for.map(tag => (
-                    <span key={tag} style={{
-                      fontSize: 12, fontWeight: 500, color: '#999',
-                      padding: '3px 10px', borderRadius: 16,
-                      border: '1px solid rgba(0,0,0,0.08)',
-                    }}>{tag}</span>
+                  {restaurant.recommended_for.map((tag, i) => (
+                    <Fragment key={tag}>
+                      {i > 0 && <span style={{ fontSize: 10, color: '#ccc', userSelect: 'none' }}>·</span>}
+                      <span style={{
+                        fontSize: 12, fontWeight: 500, color: '#A09080',
+                        letterSpacing: 0.3, textTransform: 'lowercase',
+                      }}>{tag}</span>
+                    </Fragment>
                   ))}
                 </motion.div>
               )}
