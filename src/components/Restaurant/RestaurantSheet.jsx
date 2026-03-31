@@ -501,10 +501,10 @@ export default function RestaurantSheet({
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
               {/* Action buttons — with icons */}
-              <motion.div variants={itemVariants} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 {mapsUrl && (
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
                     background: '#F0EBE3', color: '#22181C', border: 'none',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -512,12 +512,12 @@ export default function RestaurantSheet({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="3 11 22 2 13 21 11 13 3 11"/>
                     </svg>
-                    Mappa
+                    Indicazioni
                   </a>
                 )}
                 {phoneUrl && (
                   <a href={phoneUrl} style={{
-                    flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
                     background: '#F0EBE3', color: '#22181C', border: 'none',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -530,7 +530,7 @@ export default function RestaurantSheet({
                 )}
                 {restaurant.website && (
                   <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
                     background: '#F0EBE3', color: '#22181C', border: 'none',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -539,32 +539,6 @@ export default function RestaurantSheet({
                       <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
                     </svg>
                     Sito
-                  </a>
-                )}
-                {restaurant.instagram_reel && (
-                  <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#F0EBE3', color: '#22181C', border: 'none',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                    Reel
-                  </a>
-                )}
-                {restaurant.tiktok_url && (
-                  <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#F0EBE3', color: '#22181C', border: 'none',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                    TikTok
                   </a>
                 )}
               </motion.div>
@@ -599,6 +573,41 @@ export default function RestaurantSheet({
                     <p style={{ fontSize: 16, lineHeight: 1.8, color: 'rgba(255,255,255,0.95)' }}>
                       {tipText}
                     </p>
+                    {(restaurant.instagram_reel || restaurant.tiktok_url) && (
+                      <div style={{
+                        marginTop: 16, paddingTop: 14,
+                        borderTop: '1px solid rgba(255,255,255,0.2)',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                      }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+                          Guarda i miei video
+                        </span>
+                        {restaurant.instagram_reel && (
+                          <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: 34, height: 34, borderRadius: 10,
+                            background: 'rgba(255,255,255,0.15)', textDecoration: 'none',
+                          }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="2" y="2" width="20" height="20" rx="5"/>
+                              <circle cx="12" cy="12" r="5"/>
+                              <circle cx="17.5" cy="6.5" r="1.5" fill="#fff" stroke="none"/>
+                            </svg>
+                          </a>
+                        )}
+                        {restaurant.tiktok_url && (
+                          <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: 34, height: 34, borderRadius: 10,
+                            background: 'rgba(255,255,255,0.15)', textDecoration: 'none',
+                          }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+                              <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
