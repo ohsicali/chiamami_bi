@@ -159,7 +159,7 @@ export default function NearbySection({
             backdropFilter: 'blur(20px) saturate(1.6)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
             border: '1px solid rgba(255,255,255,0.15)',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
+            boxShadow: 'none',
             gap: 6, marginRight: 4,
           }}
         >
