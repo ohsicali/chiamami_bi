@@ -247,7 +247,7 @@ export default function AboutPage() {
 
           {/* ── Divider ── */}
           <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
-            <div style={{ width: 40, height: 3, borderRadius: 2, background: '#E8453C', opacity: 0.3 }} />
+            <div style={{ width: 40, height: 3, borderRadius: 2, background: '#C4A265', opacity: 0.4 }} />
           </div>
 
           {/* ── Story — editorial blocks ── */}
@@ -275,7 +275,7 @@ export default function AboutPage() {
 
               {/* Block 2 — with side accent */}
               <motion.div variants={fadeUp} style={{
-                borderLeft: '3px solid #E8453C',
+                borderLeft: '3px solid #C4A265',
                 paddingLeft: 16,
               }}>
                 <p style={{
@@ -306,7 +306,7 @@ export default function AboutPage() {
             >
               <div style={{
                 borderRadius: 16, padding: '20px 18px',
-                background: '#E8453C',
+                background: '#C4A265',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

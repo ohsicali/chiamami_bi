@@ -133,11 +133,11 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
                 <span style={{
                   position: 'absolute', inset: 0,
-                  borderRadius: '50%', background: '#E8453C',
+                  borderRadius: '50%', background: '#4ade80',
                 }} />
                 <span style={{
                   position: 'absolute', inset: -2,
-                  borderRadius: '50%', background: '#E8453C',
+                  borderRadius: '50%', background: '#4ade80',
                   opacity: 0.4,
                   animation: 'cityPulse 2s ease-in-out infinite',
                 }} />
@@ -229,17 +229,17 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                   }}>
                     <div className="flex items-center gap-3">
                       <span style={{ position: 'relative', width: 8, height: 8 }}>
-                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#E8453C' }} />
+                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80' }} />
                       </span>
                       <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {availableCities[selectedCity] > 0 && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#E8453C' }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
                           {availableCities[selectedCity]} locali
                         </span>
                       )}
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
                     </div>
                   </div>
                 </div>
@@ -271,8 +271,8 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                           </div>
                           {count > 0 && (
                             <span style={{
-                              fontSize: 11, fontWeight: 600, color: '#E8453C',
-                              background: 'rgba(232,69,60,0.08)',
+                              fontSize: 11, fontWeight: 600, color: '#22181C',
+                              background: 'rgba(0,0,0,0.05)',
                               padding: '3px 8px', borderRadius: 10, flexShrink: 0, marginLeft: 10,
                             }}>
                               {count} locali
@@ -367,8 +367,8 @@ function CityRow({ name, count, onSelect }) {
         <span style={{ fontSize: 15, fontWeight: 600, color: '#22181C' }}>{name}</span>
       </div>
       <span style={{
-        fontSize: 11, fontWeight: 600, color: '#E8453C',
-        background: 'rgba(232,69,60,0.08)',
+        fontSize: 11, fontWeight: 600, color: '#22181C',
+        background: 'rgba(0,0,0,0.05)',
         padding: '3px 8px', borderRadius: 10,
       }}>
         {count} locali

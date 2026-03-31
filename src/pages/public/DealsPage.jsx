@@ -49,8 +49,8 @@ export default function DealsPage() {
             background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)',
           }}>
             <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#E8453C' }} />
-              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#E8453C', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
+              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80' }} />
+              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: '#4ade80', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
             </span>
             Torino
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5, marginLeft: 2 }}><path d="M6 9l6 6 6-6"/></svg>
@@ -172,7 +172,7 @@ export default function DealsPage() {
                             Top sconto
                           </span>
                           <span style={{
-                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff',
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
                             fontSize: 16, fontWeight: 800,
                             padding: '6px 14px', borderRadius: 12,
                           }}>

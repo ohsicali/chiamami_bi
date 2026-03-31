@@ -110,7 +110,7 @@ export default function RestaurantCard({
           </div>
           {hasDiscount && discountTitle && (
             <div style={{
-              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
               fontSize: 11, fontWeight: 700,
               padding: '5px 12px', borderRadius: 10,
             }}>
@@ -220,7 +220,7 @@ export default function RestaurantCard({
       {/* Green discount strip on top */}
       {hasDiscount && discountTitle && (
         <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff',
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
           fontSize: 10, fontWeight: 700,
           padding: '4px 10px',
           textAlign: 'center',

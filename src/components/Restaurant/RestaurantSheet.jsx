@@ -139,7 +139,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
@@ -407,7 +407,7 @@ export default function RestaurantSheet({
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
                   <span style={{
-                    fontSize: 15, fontWeight: 700, color: '#fff',
+                    fontSize: 15, fontWeight: 700, color: '#000',
                     letterSpacing: 0.3,
                   }}>
                     {discountTitle}
@@ -555,12 +555,12 @@ export default function RestaurantSheet({
                 </motion.div>
               )}
 
-              {/* ── Cosa prendere — orange card ── */}
+              {/* ── Cosa prendere — gold card ── */}
               {tipText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 16, padding: '20px 18px',
-                    background: '#E8453C',
+                    background: '#C4A265',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -651,7 +651,7 @@ export default function RestaurantSheet({
                           disabled={inlineGenerating || inlineRedemptionLoading}
                           style={{
                             width: '100%', padding: '14px 20px', borderRadius: 12,
-                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
                             fontSize: 15, fontWeight: 700, cursor: 'pointer',
                             opacity: inlineGenerating ? 0.5 : 1,
                           }}
@@ -896,7 +896,7 @@ export default function RestaurantSheet({
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
                           width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#fff', border: 'none',
+                          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
                           position: 'relative', zIndex: 2,
                         }}
