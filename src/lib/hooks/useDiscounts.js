@@ -144,7 +144,7 @@ export function useActiveDiscounts() {
 
     supabase
       .from('discounts')
-      .select('*, restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, our_rating, photos:restaurant_photos(id, photo_url, sort_order))')
+      .select('*, restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, our_rating, tagline, recommended_for, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
       .eq('is_active', true)
       .gt('valid_until', new Date().toISOString())
       .order('created_at', { ascending: false })
