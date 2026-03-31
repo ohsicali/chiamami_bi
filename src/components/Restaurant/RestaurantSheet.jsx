@@ -373,7 +373,7 @@ export default function RestaurantSheet({
             borderRadius: '20px 20px 0 0',
             marginTop: -24,
             position: 'relative', zIndex: 2,
-            minHeight: '100vh',
+            minHeight: '60vh',
           }}>
             {/* Photo counter — anchored to white card, moves with it */}
             {photoCount > 1 && (
