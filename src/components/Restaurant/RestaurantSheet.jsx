@@ -372,7 +372,7 @@ export default function RestaurantSheet({
             background: '#fff',
             borderRadius: '20px 20px 0 0',
             marginTop: -24,
-            marginBottom: 'calc(-45vh + 24px)',
+            marginBottom: '-45vh',
             position: 'relative', zIndex: 2,
           }}>
             {/* Photo counter — anchored to white card, moves with it */}
