@@ -220,10 +220,15 @@ export default function RestaurantSheet({
         photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
         const photoH = el.clientHeight * 0.45 - 60
         setShowStickyHeader(el.scrollTop > photoH)
+        // Clamp scroll: stop at the end of actual content (exclude sticky photo gap)
+        const maxScroll = el.scrollHeight - el.clientHeight - (el.clientHeight * 0.45)
+        if (el.scrollTop > maxScroll && maxScroll > 0) {
+          el.scrollTop = maxScroll
+        }
         ticking = false
       })
     }
-    el.addEventListener('scroll', onScroll, { passive: true })
+    el.addEventListener('scroll', onScroll, { passive: false })
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
@@ -327,7 +332,7 @@ export default function RestaurantSheet({
           </div>
 
           {/* Photo — sticky, stays in place while content scrolls over it */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '45vh', marginBottom: '-45vh' }}>
+          <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
             <div ref={photoRef} style={{ willChange: 'transform' }}>
               <PhotoCarousel photos={restaurant.photos || []} height="48vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
             </div>
@@ -371,7 +376,7 @@ export default function RestaurantSheet({
           <div style={{
             background: '#fff',
             borderRadius: '20px 20px 0 0',
-            marginTop: 'calc(45vh - 24px)',
+            marginTop: -24,
             position: 'relative', zIndex: 2,
           }}>
             {/* Photo counter — anchored to white card, moves with it */}
