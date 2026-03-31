@@ -220,15 +220,10 @@ export default function RestaurantSheet({
         photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
         const photoH = el.clientHeight * 0.45 - 60
         setShowStickyHeader(el.scrollTop > photoH)
-        // Clamp scroll: stop at the end of actual content (exclude sticky photo gap)
-        const maxScroll = el.scrollHeight - el.clientHeight - (el.clientHeight * 0.45)
-        if (el.scrollTop > maxScroll && maxScroll > 0) {
-          el.scrollTop = maxScroll
-        }
         ticking = false
       })
     }
-    el.addEventListener('scroll', onScroll, { passive: false })
+    el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
@@ -377,6 +372,7 @@ export default function RestaurantSheet({
             background: '#fff',
             borderRadius: '20px 20px 0 0',
             marginTop: -24,
+            marginBottom: 'calc(-45vh + 24px)',
             position: 'relative', zIndex: 2,
           }}>
             {/* Photo counter — anchored to white card, moves with it */}
