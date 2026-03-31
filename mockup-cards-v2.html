@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Guida di Bi — Restaurant Cards V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rosso: #E8453C;
+    --crema: #FAF7F2;
+    --nero: #111111;
+    --oro: #C4A265;
+    --grigio: #8A8680;
+    --bordo: #E8E5DE;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex; justify-content: center; align-items: flex-start;
+    min-height: 100vh; background: #080808;
+    font-family: 'DM Sans', sans-serif;
+    padding: 40px 20px;
+    gap: 32px; flex-wrap: wrap;
+  }
+
+  h2 {
+    width: 100%; text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600; color: #fff;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    width: 100%; text-align: center;
+    font-size: 13px; color: #666; margin-bottom: 24px;
+  }
+
+  /* PHONE FRAME */
+  .phone {
+    width: 390px; height: 844px; background: var(--crema);
+    border-radius: 52px; overflow: hidden; position: relative;
+    box-shadow:
+      0 0 0 2px #333,
+      0 0 0 6px #1a1a1a,
+      0 40px 100px rgba(0,0,0,0.8);
+    flex-shrink: 0;
+  }
+
+  .dynamic-island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 126px; height: 36px; background: #000; border-radius: 20px; z-index: 200;
+  }
+
+  /* HEADER — List mode */
+  .header {
+    position: sticky; top: 0; z-index: 50;
+    padding: 58px 22px 14px;
+    background: rgba(250,247,242,0.92);
+    backdrop-filter: blur(20px);
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .logo { display: flex; align-items: baseline; gap: 4px; }
+  .logo-la {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 400; font-size: 13px;
+    color: var(--grigio); letter-spacing: 1px; text-transform: uppercase;
+  }
+  .logo-guida {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600; font-size: 20px; color: var(--nero);
+  }
+  .logo-di {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 400; font-size: 13px; color: var(--grigio);
+  }
+  .logo-bi {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-size: 20px; color: var(--rosso);
+  }
+  .header-count {
+    font-size: 12px; color: var(--grigio); font-weight: 500;
+  }
+  .header-count b { color: var(--nero); font-weight: 700; }
+
+  /* SEARCH */
+  .search {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff; border: 1.5px solid var(--bordo);
+    border-radius: 14px; padding: 12px 16px; margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .search-icon { color: #C0BBB3; flex-shrink: 0; }
+  .search-text { color: #C0BBB3; font-size: 14px; font-weight: 500; }
+
+  /* CATEGORIES MINI */
+  .cats-mini {
+    display: flex; gap: 6px; overflow-x: auto; margin-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+  }
+  .cats-mini::-webkit-scrollbar { display: none; }
+  .cat-pill {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 14px 6px 8px; border-radius: 24px;
+    background: #fff; border: 1.5px solid var(--bordo);
+    font-size: 12px; font-weight: 600; color: #5A564F;
+    white-space: nowrap; flex-shrink: 0;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .cat-pill:hover { border-color: #aaa; }
+  .cat-pill-active {
+    background: var(--nero); border-color: var(--nero); color: var(--crema);
+  }
+  .cat-pill span { font-size: 14px; }
+
+  /* SCROLLABLE CONTENT */
+  .content {
+    height: calc(844px - 220px);
+    overflow-y: auto; padding: 14px 16px 90px;
+    scrollbar-width: none;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--grigio);
+    margin-bottom: 14px; padding-left: 6px;
+  }
+
+  /* ============================================
+     CARD OPTION A — Hero Card (featured)
+     ============================================ */
+  .card-hero {
+    border-radius: 22px; overflow: hidden;
+    position: relative; height: 200px;
+    margin-bottom: 16px; cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .card-hero:hover { transform: scale(0.98); }
+
+  .card-hero-img {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #3a2a1a, #2a1f18, #1a1510);
+    /* Simulated food photo with warm overlay */
+  }
+  .card-hero-img::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%);
+  }
+
+  /* Photo texture simulation */
+  .card-hero-texture {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 60% 40%, rgba(196,162,101,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 30% 70%, rgba(232,69,60,0.08) 0%, transparent 50%);
+    z-index: 1;
+  }
+
+  .card-hero-content {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 20px; z-index: 2;
+  }
+
+  .card-hero-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--oro); color: #fff;
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px; border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
+  .card-hero-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px; font-weight: 600; color: #fff;
+    line-height: 1.1; margin-bottom: 6px;
+  }
+
+  .card-hero-info {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: rgba(255,255,255,0.7);
+  }
+  .card-hero-info .rating {
+    display: flex; align-items: center; gap: 3px;
+    color: var(--oro); font-weight: 700;
+  }
+  .card-hero-info .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+
+  .card-hero-heart {
+    position: absolute; top: 16px; right: 16px; z-index: 3;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .card-hero-heart:hover {
+    background: var(--rosso); border-color: var(--rosso);
+    transform: scale(1.1);
+  }
+
+  .card-hero-discount {
+    position: absolute; top: 16px; left: 16px; z-index: 3;
+    background: var(--rosso);
+    color: #fff; font-size: 11px; font-weight: 700;
+    padding: 5px 12px; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(232,69,60,0.4);
+  }
+
+  /* ============================================
+     CARD OPTION B — Horizontal compact
+     ============================================ */
+  .card-h {
+    display: flex; gap: 14px;
+    padding: 14px; margin-bottom: 12px;
+    background: #fff; border-radius: 18px;
+    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .card-h:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  .card-h-img {
+    width: 88px; height: 88px; border-radius: 14px;
+    flex-shrink: 0; position: relative; overflow: hidden;
+  }
+  .card-h-img-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #e8d5c0, #d4c0a8);
+  }
+  /* Simulated different food photos */
+  .card-h:nth-child(2) .card-h-img-bg { background: linear-gradient(135deg, #c0d4c8, #a8c4b0); }
+  .card-h:nth-child(3) .card-h-img-bg { background: linear-gradient(135deg, #d4c0c8, #c8a8b0); }
+  .card-h:nth-child(4) .card-h-img-bg { background: linear-gradient(135deg, #c0c8d4, #a8b0c8); }
+
+  .card-h-img-emoji {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; opacity: 0.6;
+  }
+
+  .card-h-discount-badge {
+    position: absolute; top: 6px; left: 6px;
+    background: var(--rosso); color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(232,69,60,0.3);
+  }
+
+  .card-h-body {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; min-width: 0;
+  }
+
+  .card-h-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: var(--nero);
+    line-height: 1.2; margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .card-h-cuisine {
+    font-size: 12px; color: var(--grigio); font-weight: 500;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .card-h-cuisine .dot {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: #D1CDC6;
+  }
+
+  .card-h-bottom {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .card-h-rating {
+    display: flex; align-items: center; gap: 3px;
+    background: #FBF9F4; padding: 3px 8px; border-radius: 8px;
+    font-size: 12px; font-weight: 700; color: var(--nero);
+  }
+  .card-h-rating svg { flex-shrink: 0; }
+
+  .card-h-distance {
+    font-size: 11px; color: var(--grigio); font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .card-h-price {
+    font-size: 11px; color: var(--grigio); font-weight: 600;
+    margin-left: auto;
+  }
+  .card-h-price .active { color: var(--nero); }
+
+  .card-h-heart {
+    position: absolute; right: 14px; top: 14px;
+    color: #D1CDC6; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .card-h-heart:hover { color: var(--rosso); transform: scale(1.2); }
+  .card-h-heart-active { color: var(--rosso); }
+
+  /* card-h needs relative for heart */
+  .card-h { position: relative; }
+
+  /* ============================================
+     FLOATING TOGGLE — Mappa mode
+     ============================================ */
+  .floating-btn {
+    position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+    z-index: 60;
+    background: var(--nero);
+    color: var(--crema); border: none;
+    border-radius: 28px;
+    padding: 12px 26px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* TAB BAR */
+  .tabbar {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 50;
+    height: 82px;
+    background: rgba(250,247,242,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    display: flex; align-items: flex-start;
+    justify-content: space-around;
+    padding: 10px 12px 0;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    flex: 1; cursor: pointer; position: relative;
+  }
+  .tab-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .tab-icon svg { width: 22px; height: 22px; }
+  .tab-label { font-size: 10px; font-weight: 500; color: #B5B0A8; }
+  .tab-active .tab-label { color: var(--rosso); font-weight: 700; }
+  .tab-active::before {
+    content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 3px; border-radius: 0 0 3px 3px; background: var(--rosso);
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-hero { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+  .card-h:nth-child(2) { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+  .card-h:nth-child(3) { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+  .card-h:nth-child(4) { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both; }
+  .card-h:nth-child(5) { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
+</style>
+</head>
+<body>
+
+<h2>Restaurant Cards — La Guida di Bi</h2>
+<div class="subtitle">Vista lista con bottom sheet espanso</div>
+
+<!-- PHONE: LIST VIEW -->
+<div class="phone">
+  <div class="dynamic-island"></div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <span class="logo-la">la</span>
+        <span class="logo-guida">Guida</span>
+        <span class="logo-di">di</span>
+        <span class="logo-bi">Bi</span>
+      </div>
+      <div class="header-count"><b>47</b> ristoranti a Torino</div>
+    </div>
+
+    <div class="search">
+      <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="search-text">Cerca ristoranti...</span>
+    </div>
+
+    <div class="cats-mini">
+      <div class="cat-pill cat-pill-active"><span>🍽</span> Tutti</div>
+      <div class="cat-pill"><span>🍷</span> Piemontese</div>
+      <div class="cat-pill"><span>🍝</span> Italiana</div>
+      <div class="cat-pill"><span>🍣</span> Giapponese</div>
+      <div class="cat-pill"><span>🍸</span> Cocktail</div>
+      <div class="cat-pill"><span>🍕</span> Pizzeria</div>
+    </div>
+  </div>
+
+  <!-- SCROLLABLE CARDS -->
+  <div class="content">
+
+    <div class="section-title">In evidenza</div>
+
+    <!-- HERO CARD — Featured restaurant -->
+    <div class="card-hero">
+      <div class="card-hero-img"></div>
+      <div class="card-hero-texture"></div>
+      <div class="card-hero-discount">-20%</div>
+      <div class="card-hero-heart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
+      <div class="card-hero-content">
+        <div class="card-hero-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+          Consigliato da Bi
+        </div>
+        <div class="card-hero-name">Ristorante del Cambio</div>
+        <div class="card-hero-info">
+          <span class="rating">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            4.8
+          </span>
+          <span class="dot"></span>
+          <span>Piemontese</span>
+          <span class="dot"></span>
+          <span>€€€</span>
+          <span class="dot"></span>
+          <span>1.2 km</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Tutti i ristoranti</div>
+
+    <!-- HORIZONTAL CARDS -->
+    <div class="card-h">
+      <div class="card-h-img">
+        <div class="card-h-img-bg"></div>
+        <div class="card-h-img-emoji">🍝</div>
+        <div class="card-h-discount-badge">-15%</div>
+      </div>
+      <div class="card-h-body">
+        <div class="card-h-name">Trattoria Valenza</div>
+        <div class="card-h-cuisine">
+          Italiana
+          <span class="dot"></span>
+          Pasta fresca
+        </div>
+        <div class="card-h-bottom">
+          <div class="card-h-rating">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            4.6
+          </div>
+          <div class="card-h-distance">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            850m
+          </div>
+          <div class="card-h-price">
+            <span class="active">€</span><span class="active">€</span><span>€</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-h-heart">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
+    </div>
+
+    <div class="card-h">
+      <div class="card-h-img">
+        <div class="card-h-img-bg"></div>
+        <div class="card-h-img-emoji">🍣</div>
+      </div>
+      <div class="card-h-body">
+        <div class="card-h-name">Sakura Fusion</div>
+        <div class="card-h-cuisine">
+          Giapponese
+          <span class="dot"></span>
+          Sushi & Ramen
+        </div>
+        <div class="card-h-bottom">
+          <div class="card-h-rating">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            4.5
+          </div>
+          <div class="card-h-distance">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            1.3 km
+          </div>
+          <div class="card-h-price">
+            <span class="active">€</span><span class="active">€</span><span class="active">€</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-h-heart card-h-heart-active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E8453C" stroke="#E8453C" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
+    </div>
+
+    <div class="card-h">
+      <div class="card-h-img">
+        <div class="card-h-img-bg"></div>
+        <div class="card-h-img-emoji">🍸</div>
+        <div class="card-h-discount-badge">-10%</div>
+      </div>
+      <div class="card-h-body">
+        <div class="card-h-name">Cocktail Bar Torino</div>
+        <div class="card-h-cuisine">
+          Bar
+          <span class="dot"></span>
+          Aperitivo & Drinks
+        </div>
+        <div class="card-h-bottom">
+          <div class="card-h-rating">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            4.3
+          </div>
+          <div class="card-h-distance">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            600m
+          </div>
+          <div class="card-h-price">
+            <span class="active">€</span><span class="active">€</span><span>€</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-h-heart">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
+    </div>
+
+    <div class="card-h">
+      <div class="card-h-img">
+        <div class="card-h-img-bg"></div>
+        <div class="card-h-img-emoji">🍕</div>
+      </div>
+      <div class="card-h-body">
+        <div class="card-h-name">Pizzeria Gennaro</div>
+        <div class="card-h-cuisine">
+          Napoletana
+          <span class="dot"></span>
+          Pizza al forno
+        </div>
+        <div class="card-h-bottom">
+          <div class="card-h-rating">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#C4A265" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            4.7
+          </div>
+          <div class="card-h-distance">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            2.1 km
+          </div>
+          <div class="card-h-price">
+            <span class="active">€</span><span>€</span><span>€</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-h-heart">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FLOATING BUTTON — Mappa mode -->
+  <button class="floating-btn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+    Mappa
+  </button>
+
+  <!-- TAB BAR -->
+  <div class="tabbar">
+    <div class="tab tab-active">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#E8453C" stroke-width="2" stroke-linecap="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" fill="rgba(232,69,60,0.12)"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <span class="tab-label">Mappa</span>
+    </div>
+    <div class="tab">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8" stroke-linecap="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+          <circle cx="7" cy="7" r="1" fill="#B5B0A8"/>
+        </svg>
+      </div>
+      <span class="tab-label">Sconti</span>
+    </div>
+    <div class="tab">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8" stroke-linecap="round">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+        </svg>
+      </div>
+      <span class="tab-label">Salvati</span>
+    </div>
+    <div class="tab">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8" stroke-linecap="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <span class="tab-label">Profilo</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -25,69 +25,131 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
     } else {
       next = [...selected, categoryName]
     }
-    onFilterChange?.({
-      ...filters,
-      category: next.length > 0 ? next : null,
-    })
+    onFilterChange?.({ ...filters, category: next.length > 0 ? next : null })
   }
 
   function handlePriceClick(priceLevel) {
-    onFilterChange?.({
-      ...filters,
-      priceRange: filters.priceRange === priceLevel ? null : priceLevel,
-    })
+    onFilterChange?.({ ...filters, priceRange: filters.priceRange === priceLevel ? null : priceLevel })
   }
 
-  const hasActiveFilters = selected.length > 0 || filters.priceRange != null
-  const filterCount = selected.length + (filters.priceRange != null ? 1 : 0)
-
-  const scrollStyle = {
-    scrollbarWidth: 'none',
-    msOverflowStyle: 'none',
-    WebkitOverflowScrolling: 'touch',
-  }
+  // Show first 6 categories as capsule pills
+  const visibleCats = CUISINE_CATEGORIES.slice(0, 6)
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {/* ROW 1: Category circles — 44px with pastel backgrounds */}
-      <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4" style={scrollStyle}>
-        <style>{`.filter-scroll::-webkit-scrollbar { display: none; }`}</style>
-        {CUISINE_CATEGORIES.map((cat) => {
+    <div className="flex flex-col gap-3">
+      {/* Category capsules — editorial pill style */}
+      <div
+        className="flex gap-2 overflow-x-auto -mx-1 px-1"
+        style={{
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+          maskImage: 'linear-gradient(90deg, #000 85%, transparent)',
+          WebkitMaskImage: 'linear-gradient(90deg, #000 85%, transparent)',
+        }}
+      >
+        {/* "Tutti" pill */}
+        <button
+          type="button"
+          onClick={() => onFilterChange?.({ ...filters, category: null })}
+          className="flex items-center gap-2 flex-shrink-0"
+          style={{
+            padding: '8px 16px 8px 10px',
+            borderRadius: 40,
+            background: selected.length === 0 ? '#22181C' : '#fff',
+            border: `1.5px solid ${selected.length === 0 ? '#22181C' : '#E8E5DE'}`,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          <span style={{
+            width: 32, height: 32, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 15,
+            background: selected.length === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)',
+          }}>
+            🍽
+          </span>
+          <span style={{
+            fontSize: 13, fontWeight: 600,
+            color: selected.length === 0 ? '#FAF7F2' : '#22181C',
+            whiteSpace: 'nowrap',
+          }}>
+            Tutti
+          </span>
+        </button>
+
+        {visibleCats.map((cat) => {
           const active = isActive(cat.name)
           return (
             <button
               key={cat.name}
               type="button"
               onClick={() => handleCuisineClick(cat.name)}
-              className="flex flex-col items-center gap-1 flex-shrink-0"
-              style={{ width: 52 }}
+              className="flex items-center gap-2 flex-shrink-0"
+              style={{
+                padding: '8px 16px 8px 10px',
+                borderRadius: 40,
+                background: active ? '#22181C' : '#fff',
+                border: `1.5px solid ${active ? '#22181C' : '#E8E5DE'}`,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
             >
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center text-lg transition-all duration-200"
-                style={{
-                  backgroundColor: active ? cat.color + '30' : cat.color + '15',
-                  boxShadow: active ? `0 0 0 2px ${cat.color}` : 'none',
-                }}
-              >
+              <span style={{
+                width: 32, height: 32, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 15,
+                background: active ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)',
+              }}>
                 {cat.emoji}
-              </div>
-              <span
-                className="text-[9px] font-medium text-center leading-tight line-clamp-1 transition-colors"
-                style={{ color: active ? cat.color : '#888' }}
-              >
+              </span>
+              <span style={{
+                fontSize: 13, fontWeight: 600,
+                color: active ? '#FAF7F2' : '#22181C',
+                whiteSpace: 'nowrap',
+              }}>
                 {cat.name}
               </span>
             </button>
           )
         })}
+
+        {/* "Altro +" to open modal */}
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center gap-2 flex-shrink-0"
+          style={{
+            padding: '8px 16px 8px 10px',
+            borderRadius: 40,
+            background: selected.length > 0 ? '#22181C' : '#fff',
+            border: `1.5px solid ${selected.length > 0 ? '#22181C' : '#E8E5DE'}`,
+          }}
+        >
+          <span style={{
+            width: 32, height: 32, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 15,
+            background: selected.length > 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.04)',
+          }}>
+            ＋
+          </span>
+          <span style={{
+            fontSize: 13, fontWeight: 600,
+            color: selected.length > 0 ? '#FAF7F2' : '#22181C',
+            whiteSpace: 'nowrap',
+          }}>
+            Altro
+          </span>
+        </button>
       </div>
 
-      {/* ROW 2: Chip buttons — [Vicino a me] [Scontati (N)] [Filtri] */}
-      <div className="flex gap-2 overflow-x-auto -mx-4 px-4" style={scrollStyle}>
+      {/* Filter chips row */}
+      <div className="flex gap-2">
         {/* Vicino a me */}
         {onNearbyClick && (
-          <ChipButton
-            active={filters.sortBy === 'distance'}
+          <button
+            type="button"
             onClick={() => {
               if (filters.sortBy === 'distance') {
                 onFilterChange?.({ ...filters, sortBy: null })
@@ -95,38 +157,86 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                 onNearbyClick()
               }
             }}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 24,
+              fontSize: 12, fontWeight: 600, letterSpacing: 0.2,
+              whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: `1.5px solid ${filters.sortBy === 'distance' ? '#22181C' : '#E8E5DE'}`,
+              background: filters.sortBy === 'distance' ? '#22181C' : '#fff',
+              color: filters.sortBy === 'distance' ? '#FAF7F2' : '#5A564F',
+              cursor: 'pointer',
+            }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="4" />
-              <line x1="12" y1="2" x2="12" y2="6" />
-              <line x1="12" y1="18" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="6" y2="12" />
-              <line x1="18" y1="12" x2="22" y2="12" />
-            </svg>
-            {t('home.nearby')}
-          </ChipButton>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            Vicino a me
+          </button>
         )}
 
         {/* Scontati */}
         {onToggleDeals && (
-          <ChipButton active={showDealsOnly} onClick={onToggleDeals}>
-            🏷️ {t('home.discounted')}{dealsCount > 0 ? ` (${dealsCount})` : ''}
-          </ChipButton>
+          <button
+            type="button"
+            onClick={onToggleDeals}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 24,
+              fontSize: 12, fontWeight: 600,
+              whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: `1.5px solid ${showDealsOnly ? '#E8453C' : '#E8E5DE'}`,
+              background: showDealsOnly ? '#E8453C' : '#fff',
+              color: showDealsOnly ? '#fff' : '#5A564F',
+              boxShadow: showDealsOnly ? '0 2px 12px rgba(232,69,60,0.3)' : 'none',
+              cursor: 'pointer',
+            }}
+          >
+            🏷 Scontati
+            {dealsCount > 0 && (
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: showDealsOnly ? 'rgba(255,255,255,0.25)' : 'rgba(232,69,60,0.1)',
+                color: showDealsOnly ? '#fff' : '#E8453C',
+                padding: '1px 6px', borderRadius: 8,
+              }}>
+                {dealsCount}
+              </span>
+            )}
+          </button>
         )}
 
-        {/* Filtri — opens modal with prices + categories */}
-        <ChipButton
-          active={hasActiveFilters}
+        {/* Filtri — opens full modal with categories + price */}
+        <button
+          type="button"
           onClick={() => setModalOpen(true)}
+          style={{
+            padding: '9px 16px',
+            borderRadius: 24,
+            fontSize: 12, fontWeight: 600,
+            whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: 6,
+            border: `1.5px solid ${(selected.length || filters.priceRange) ? '#22181C' : '#E8E5DE'}`,
+            background: (selected.length || filters.priceRange) ? '#22181C' : '#fff',
+            color: (selected.length || filters.priceRange) ? '#FAF7F2' : '#5A564F',
+            cursor: 'pointer',
+          }}
         >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M3 12h12M3 20h6" />
-          </svg>
-          Filtri{filterCount > 0 ? ` (${filterCount})` : ''}
-        </ChipButton>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M4 6h16M4 12h10M4 18h4"/></svg>
+          Filtri
+          {(selected.length > 0 || filters.priceRange) && (
+            <span style={{
+              fontSize: 10, fontWeight: 700,
+              background: 'rgba(255,255,255,0.2)',
+              padding: '1px 6px', borderRadius: 8,
+            }}>
+              {(selected.length || 0) + (filters.priceRange ? 1 : 0)}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Filter modal — categories + prices */}
+      {/* Full filter modal */}
       {createPortal(
         <AnimatePresence>
           {modalOpen && (
@@ -134,7 +244,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+              className="fixed inset-0 z-50"
+              style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
               onClick={() => setModalOpen(false)}
             >
               <motion.div
@@ -142,28 +253,58 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
+                className="absolute bottom-0 left-0 right-0 max-h-[85vh] flex flex-col"
+                style={{ background: '#FAF7F2', borderRadius: '28px 28px 0 0' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b" style={{ borderColor: '#eae7e0' }}>
-                  <h3 className="text-lg font-semibold" style={{ fontFamily: "Georgia, serif" }}>Filtri</h3>
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  >
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ borderBottom: '1px solid #E8E5DE' }}>
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 600, color: '#22181C' }}>
+                    Filtri
+                  </h3>
+                  <button type="button" onClick={() => setModalOpen(false)} className="p-2 rounded-full" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A8680" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex-1 min-h-0 overflow-y-auto p-5" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  {/* Categories grid */}
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 12 }}>Tipo di cucina</p>
+                  <div className="grid grid-cols-4 gap-3 mb-6">
+                    {/* All option */}
+                    <button type="button" onClick={() => { onFilterChange?.({ ...filters, category: null }) }} className="flex flex-col items-center gap-1.5 py-2">
+                      <div style={{
+                        width: 56, height: 56, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 22,
+                        background: !selected.length ? 'rgba(232,69,60,0.1)' : 'rgba(0,0,0,0.04)',
+                        boxShadow: !selected.length ? '0 0 0 2.5px #E8453C' : 'none',
+                      }}>🍽️</div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: !selected.length ? '#E8453C' : '#22181C' }}>Tutti</span>
+                    </button>
+
+                    {CUISINE_CATEGORIES.map((cat) => {
+                      const active = isActive(cat.name)
+                      return (
+                        <button key={cat.name} type="button" onClick={() => handleCuisineClick(cat.name)} className="flex flex-col items-center gap-1.5 py-2">
+                          <div style={{
+                            width: 56, height: 56, borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 22,
+                            background: active ? `${cat.color}20` : 'rgba(0,0,0,0.04)',
+                            boxShadow: active ? `0 0 0 2.5px ${cat.color}` : 'none',
+                            transition: 'all 0.2s',
+                          }}>{cat.emoji}</div>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: active ? cat.color : '#22181C', textAlign: 'center', lineHeight: 1.2 }}>{cat.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
                   {/* Price range */}
-                  <p className="text-sm font-semibold text-primary mb-3">Fascia di prezzo</p>
-                  <div className="flex gap-2 mb-6">
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 12 }}>Fascia di prezzo</p>
+                  <div className="flex gap-2 mb-4">
                     {PRICE_LABELS.slice(1).map((label, idx) => {
                       const priceLevel = idx + 1
                       const active = filters.priceRange === priceLevel
@@ -172,11 +313,14 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                           key={priceLevel}
                           type="button"
                           onClick={() => handlePriceClick(priceLevel)}
-                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
                           style={{
-                            backgroundColor: active ? '#FF5757' : '#f8f6f1',
-                            color: active ? '#fff' : '#555',
-                            border: active ? 'none' : '0.5px solid #eae7e0',
+                            flex: 1, padding: '12px 8px', borderRadius: 14,
+                            fontSize: 13, fontWeight: 600,
+                            background: active ? '#22181C' : '#fff',
+                            color: active ? '#FAF7F2' : '#5A564F',
+                            border: `1.5px solid ${active ? '#22181C' : '#E8E5DE'}`,
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            textAlign: 'center',
                           }}
                         >
                           {label}
@@ -184,82 +328,26 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                       )
                     })}
                   </div>
-
-                  {/* Category grid */}
-                  <p className="text-sm font-semibold text-primary mb-3">{t('home.localeType')}</p>
-                  <div className="grid grid-cols-4 gap-3">
-                    {/* "Tutti" */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onFilterChange?.({ ...filters, category: null })
-                      }}
-                      className="flex flex-col items-center gap-1.5 py-2"
-                    >
-                      <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all"
-                        style={{
-                          backgroundColor: !selected.length ? '#FFF0F0' : '#f8f6f1',
-                          boxShadow: !selected.length ? '0 0 0 2px #FF5757' : 'none',
-                        }}
-                      >
-                        🍽️
-                      </div>
-                      <span className="text-[10px] font-medium" style={{ color: !selected.length ? '#FF5757' : '#888' }}>
-                        {t('home.all')}
-                      </span>
-                    </button>
-
-                    {CUISINE_CATEGORIES.map((cat) => {
-                      const active = isActive(cat.name)
-                      return (
-                        <button
-                          key={cat.name}
-                          type="button"
-                          onClick={() => handleCuisineClick(cat.name)}
-                          className="flex flex-col items-center gap-1.5 py-2"
-                        >
-                          <div
-                            className="w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all"
-                            style={{
-                              backgroundColor: active ? cat.color + '25' : '#f8f6f1',
-                              boxShadow: active ? `0 0 0 2px ${cat.color}` : 'none',
-                            }}
-                          >
-                            {cat.emoji}
-                          </div>
-                          <span className="text-[10px] font-medium" style={{ color: active ? cat.color : '#888' }}>
-                            {cat.name}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
                 </div>
 
                 {/* Footer */}
-                <div className="px-5 py-4 border-t" style={{ borderColor: '#eae7e0' }}>
-                  <div className="flex gap-3">
-                    {hasActiveFilters && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onFilterChange?.({ ...filters, category: null, priceRange: null })
-                        }}
-                        className="flex-1 py-3 rounded-xl text-sm font-medium transition-colors"
-                        style={{ border: '0.5px solid #eae7e0', color: '#555' }}
-                      >
-                        Rimuovi filtri
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setModalOpen(false)}
-                      className="flex-1 py-3 rounded-xl bg-[#FF5757] text-white font-medium text-sm shadow-md hover:bg-[#e64545] transition-colors"
-                    >
-                      {filterCount > 0 ? `Mostra risultati` : 'Chiudi'}
-                    </button>
-                  </div>
+                <div className="px-5 py-4" style={{ borderTop: '1px solid #E8E5DE' }}>
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: 14,
+                      background: '#E8453C', color: '#fff',
+                      fontSize: 14, fontWeight: 700,
+                      border: 'none', cursor: 'pointer',
+                      boxShadow: '0 4px 16px rgba(232,69,60,0.3)',
+                    }}
+                  >
+                    {selected.length > 0 || filters.priceRange
+                      ? `Mostra risultati`
+                      : 'Tutti i ristoranti'
+                    }
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
@@ -268,22 +356,5 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
         document.body
       )}
     </div>
-  )
-}
-
-function ChipButton({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-medium whitespace-nowrap select-none transition-all"
-      style={{
-        backgroundColor: active ? '#1a1a1a' : '#f8f6f1',
-        color: active ? '#fff' : '#555',
-        border: active ? 'none' : '0.5px solid #eae7e0',
-      }}
-    >
-      {children}
-    </button>
   )
 }

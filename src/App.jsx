@@ -77,7 +77,7 @@ export default function App() {
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isHome = location.pathname === '/' || isRestaurantDetail
   const isAdmin = location.pathname.startsWith('/admin')
-  const showTabBar = !isAdmin
+  const showTabBar = !isAdmin && !isRestaurantDetail
 
   return (
     <>
@@ -120,7 +120,7 @@ export default function App() {
     </Suspense>
     </ErrorBoundary>
 
-    {/* Mobile Tab Bar — public pages only */}
+    {/* Mobile Tab Bar */}
     {showTabBar && <MobileTabBar />}
 
     {/* Cookie Banner GDPR */}
@@ -141,7 +141,7 @@ export default function App() {
         borderTop: '1px solid rgba(255,255,255,0.1)',
       }}
       buttonStyle={{
-        background: '#FF5757',
+        background: '#E8453C',
         color: '#fff',
         fontSize: '13px',
         borderRadius: '10px',
@@ -163,7 +163,7 @@ export default function App() {
       expires={365}
     >
       Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
-      <Link to="/privacy" style={{ color: '#FF5757', textDecoration: 'underline' }}>Privacy Policy</Link>
+      <Link to="/privacy" style={{ color: '#E8453C', textDecoration: 'underline' }}>Privacy Policy</Link>
     </CookieConsent>
     </>
   )

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { useNavigate } from 'react-router-dom'
+import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 
 const cardVariants = {
@@ -20,6 +21,7 @@ const cardVariants = {
 function NearbyCard({ restaurant, index, onSelect }) {
   const primaryType = (restaurant.category || [])[0] || restaurant.cuisine_type
   const category = primaryType ? getCategoryInfo(primaryType) : null
+  const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
 
   const photoUrl =
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
@@ -27,6 +29,13 @@ function NearbyCard({ restaurant, index, onSelect }) {
         ? restaurant.photos[0]
         : restaurant.photos[0]?.photo_url
       : null
+
+  // Short description: first ~60 chars of our_review
+  const shortDesc = restaurant.our_review
+    ? restaurant.our_review.length > 60
+      ? restaurant.our_review.slice(0, 60).trimEnd() + '…'
+      : restaurant.our_review
+    : null
 
   return (
     <motion.button
@@ -56,17 +65,29 @@ function NearbyCard({ restaurant, index, onSelect }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-0.5 p-2.5">
-        <h4 className="truncate text-left text-sm font-semibold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="flex flex-col gap-1 p-2.5 flex-1">
+        <h4 className="text-left text-xs font-semibold text-primary mb-auto" style={{ fontFamily: "'TAN Songbird', serif", lineHeight: 1.5 }}>
           {restaurant.name}
         </h4>
-        {category && (
-          <span
-            className="text-left text-[11px] font-medium"
-            style={{ color: category.color }}
-          >
-            {category.emoji} {category.name}
-          </span>
+        {(category || priceLabel) && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {category && (
+              <span
+                className="text-[10px] font-semibold rounded-full px-2 py-0.5"
+                style={{ color: category.color, border: `1px solid ${category.color}` }}
+              >
+                {category.emoji} {category.name}
+              </span>
+            )}
+            {priceLabel && (
+              <span className="text-[10px] font-medium text-secondary">{priceLabel}</span>
+            )}
+          </div>
+        )}
+        {shortDesc && (
+          <p className="text-left text-[11px] text-secondary leading-tight mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {shortDesc}
+          </p>
         )}
       </div>
     </motion.button>
@@ -102,8 +123,11 @@ export default function NearbySection({
   }, [currentRestaurant, allRestaurants])
 
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   if (nearby.length === 0) return null
+
+  const totalCount = allRestaurants.length
 
   return (
     <div className="flex flex-col gap-3">
@@ -111,7 +135,7 @@ export default function NearbySection({
         {t('restaurant.nearby')}
       </h3>
 
-      <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-none">
+      <div className="-mx-5 flex items-stretch gap-3 overflow-x-auto px-5 pb-2 scrollbar-none">
         {nearby.map((restaurant, i) => (
           <NearbyCard
             key={restaurant.id}
@@ -120,6 +144,39 @@ export default function NearbySection({
             onSelect={onSelect}
           />
         ))}
+        {/* "More" card */}
+        <motion.button
+          className="flex w-20 flex-shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl"
+          variants={cardVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-20px' }}
+          custom={nearby.length}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate('/list')}
+          style={{
+            background: 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(20px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            boxShadow: 'none',
+            gap: 6, marginRight: 4,
+          }}
+        >
+          <span style={{
+            width: 30, height: 30, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>
+            {totalCount} locali
+          </span>
+        </motion.button>
       </div>
     </div>
   )

@@ -1,18 +1,21 @@
 import { motion } from 'framer-motion'
+import { TAB_BAR_HEIGHT } from '../Layout/MobileTabBar'
 
-function getButtonStyle(isDark) {
+function getButtonStyle() {
   return {
     width: 44,
     height: 44,
     borderRadius: '50%',
-    background: isDark ? '#1C1C1E' : '#fff',
-    border: 'none',
-    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.15)',
+    background: 'rgba(255,255,255,0.92)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    border: '1px solid rgba(0,0,0,0.06)',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    color: isDark ? '#D1D5DB' : '#374151',
+    color: '#374151',
     fontSize: 20,
     WebkitTapHighlightColor: 'transparent',
     touchAction: 'manipulation',
@@ -60,9 +63,10 @@ export default function MapControls({
   isLocating,
   onZoomIn,
   onZoomOut,
+  bottomOffset,
 }) {
-  const isDark = document.documentElement.classList.contains('dark')
-  const BUTTON_STYLE = getButtonStyle(isDark)
+  const BUTTON_STYLE = getButtonStyle()
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -71,7 +75,7 @@ export default function MapControls({
       style={{
         position: 'absolute',
         right: 16,
-        bottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 200 : 125,
+        bottom: bottomOffset || (TAB_BAR_HEIGHT + 180),
         display: 'flex',
         flexDirection: 'column',
         gap: 10,

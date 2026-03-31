@@ -5,7 +5,8 @@ import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
-const ACCENT_COLOR = '#FF5757'
+const ACCENT_COLOR = '#E8453C'
+const GOLD_COLOR = '#C4A265'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
@@ -49,14 +50,27 @@ function ensureStyles() {
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
-      box-shadow: 0 0 0 3px ${ACCENT_COLOR}44, 0 4px 16px rgba(0,0,0,0.3);
-      border-color: ${ACCENT_COLOR} !important;
+      box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(232,69,60,0.5);
     }
     .cb-inner {
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .cb-marker:hover .cb-inner { transform: scale(1.1); }
+    .cb-marker:hover .cb-inner { transform: scale(1.15); }
     .cb-marker:active .cb-inner { transform: scale(0.92); }
+    @keyframes cb-bounce {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.15); }
+      70% { transform: scale(0.9); }
+      85% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .cb-inner--bounce {
+      animation: cb-bounce 0.5s ease-out;
+    }
+    @keyframes cb-breathe {
+      0%, 100% { box-shadow: 0 4px 20px rgba(232,69,60,0.4), 0 0 0 3px rgba(232,69,60,0.15); }
+      50% { box-shadow: 0 4px 28px rgba(232,69,60,0.6), 0 0 0 8px rgba(232,69,60,0.08); }
+    }
     @keyframes cb-pulse {
       0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }
       50% { box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
@@ -68,35 +82,60 @@ function ensureStyles() {
 /* ------------------------------------------------------------------ */
 /*  Create DOM elements for markers                                    */
 /* ------------------------------------------------------------------ */
-function createPinEl(restaurant, isSaved) {
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r},${g},${b}`
+}
+
+function createPinEl(restaurant, isSaved, discountValue) {
   const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
   const { emoji, color } = getCategoryInfo(primaryType)
+  const pinColor = color || ACCENT_COLOR
+  const rgb = hexToRgb(pinColor)
 
   const wrap = document.createElement('div')
   wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
   const inner = document.createElement('div')
-  inner.className = 'cb-inner'
+  inner.className = 'cb-inner cb-inner--bounce'
   inner.style.cssText = `
-    width:40px;height:40px;border-radius:50%;background:#fff;
-    border:2.5px solid ${color};display:flex;align-items:center;
-    justify-content:center;font-size:18px;position:relative;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);user-select:none;
+    width:44px;height:44px;border-radius:50%;
+    background:${pinColor};opacity:0.85;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;position:relative;user-select:none;
+    box-shadow:0 4px 16px rgba(${rgb},0.4), 0 0 0 3px rgba(${rgb},0.15);
   `
   inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 
   if (isSaved) {
     const heart = document.createElement('span')
     heart.style.cssText = `
-      position:absolute;top:-4px;right:-4px;width:16px;height:16px;
+      position:absolute;top:-4px;right:-4px;width:18px;height:18px;
       background:#fff;border-radius:50%;display:flex;align-items:center;
-      justify-content:center;font-size:9px;line-height:1;
-      border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);
+      justify-content:center;font-size:10px;line-height:1;
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);
       pointer-events:none;
     `
     heart.textContent = '❤️'
     inner.appendChild(heart)
+  }
+
+  if (discountValue) {
+    const badge = document.createElement('span')
+    badge.style.cssText = `
+      position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
+      background:#a3e635;color:#000;
+      font-size:8px;font-weight:800;letter-spacing:0.3px;
+      padding:2px 5px;border-radius:6px;white-space:nowrap;
+      box-shadow:0 2px 6px rgba(163,230,53,0.4);
+      pointer-events:none;
+    `
+    const val = String(discountValue)
+    badge.textContent = val.includes('%') && !val.startsWith('-') ? `-${val}` : val
+    inner.appendChild(badge)
   }
 
   wrap.appendChild(inner)
@@ -108,17 +147,20 @@ function createClusterEl(count) {
   wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
-  const size = count >= 10 ? 48 : 44
+  const size = count >= 10 ? 52 : 46
   const inner = document.createElement('div')
   inner.className = 'cb-inner'
   inner.style.cssText = `
-    width:${size}px;height:${size}px;border-radius:50%;background:#fff;
-    border:2.5px solid ${ACCENT_COLOR};display:flex;align-items:center;
-    justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    width:${size}px;height:${size}px;border-radius:50%;
+    background:rgba(255,255,255,0.88);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1.5px solid rgba(0,0,0,0.08);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 12px rgba(0,0,0,0.1);
     user-select:none;
   `
   const label = count > 99 ? '99+' : String(count)
-  inner.innerHTML = `<span style="font-weight:700;font-size:13px;color:${ACCENT_COLOR};line-height:1;pointer-events:none">${label}</span>`
+  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#22181C;line-height:1;pointer-events:none">${label}</span>`
 
   wrap.appendChild(inner)
   return wrap
@@ -178,7 +220,7 @@ function PlaceholderMap({ restaurants, className }) {
 /* ------------------------------------------------------------------ */
 const MapView = forwardRef(function MapView({
   restaurants, selectedId, onSelectRestaurant, onVisibleRestaurantsChange,
-  userPosition, savedIds, className,
+  userPosition, savedIds, discountMap, className,
 }, ref) {
   const mapContainer = useRef(null)
   const map = useRef(null)
@@ -197,6 +239,8 @@ const MapView = forwardRef(function MapView({
   restaurantsRef.current = restaurants
   const savedIdsRef = useRef(savedIds)
   savedIdsRef.current = savedIds
+  const discountMapRef = useRef(discountMap)
+  discountMapRef.current = discountMap
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -205,11 +249,11 @@ const MapView = forwardRef(function MapView({
     zoomOut: () => map.current?.zoomOut({ duration: 300 }),
     flyToUser: (pos) => {
       if (!map.current || !pos) return
-      map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 16, duration: 1200, essential: true })
+      map.current.flyTo({ center: [pos.lng, pos.lat], zoom: 14, duration: 1200, essential: true })
     },
-    setPadding: (bottomPx) => {
+    flyToCity: (lng, lat, zoom = 13) => {
       if (!map.current) return
-      map.current.easeTo({ padding: { bottom: bottomPx, top: 70, left: 0, right: 0 }, duration: 300 })
+      map.current.flyTo({ center: [lng, lat], zoom, duration: 1400, essential: true })
     },
   }))
 
@@ -300,7 +344,7 @@ const MapView = forwardRef(function MapView({
       } else {
         const r = rests.find((r) => r.id === f.properties.id)
         if (!r) continue
-        el = createPinEl(r, saved?.has(r.id))
+        el = createPinEl(r, saved?.has(r.id), discountMapRef.current?.[r.id])
         el.addEventListener('click', (e) => {
           e.stopPropagation()
           onSelectRef.current?.(r.id)
@@ -359,7 +403,7 @@ const MapView = forwardRef(function MapView({
         }
         // Clean up transition classes from new markers
         for (const { el } of toEnter) {
-          el.classList.remove('cb-marker--fade', 'cb-marker--show')
+          el.classList.remove('cb-marker--fade', '  cb-marker--show')
           el.classList.add('cb-marker--visible')
         }
       }, CROSSFADE_MS + 20)
@@ -429,6 +473,23 @@ const MapView = forwardRef(function MapView({
 
       // During zoom: record that zoom changed (don't sync mid-animation)
       m.on('zoom', onZoom)
+
+      // During movement: update visible restaurant count in real-time
+      let moveRaf = null
+      m.on('move', () => {
+        if (moveRaf) return
+        moveRaf = requestAnimationFrame(() => {
+          moveRaf = null
+          if (!onVisibleRef.current) return
+          const rests = restaurantsRef.current || []
+          const bounds = m.getBounds()
+          const ids = rests
+            .filter((r) => r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude]))
+            .map((r) => r.id)
+          const center = m.getCenter()
+          onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
+        })
+      })
 
       // After all movement settles: sync with animation if zoom changed
       m.on('moveend', () => {

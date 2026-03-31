@@ -40,7 +40,7 @@ export default function QRCodeDisplay({ qrCode, discountTitle, discountValue, on
       >
         {/* Header */}
         <div className="text-center mb-5">
-          <h3 className="text-lg font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>
+          <h3 className="text-lg font-bold text-primary" style={{ fontFamily: "'TAN Songbird', serif" }}>
             {t('discount.yourDiscount')}
           </h3>
           <p className="text-accent font-bold text-xl mt-1">{discountValue}</p>

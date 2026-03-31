@@ -4,7 +4,7 @@ import { useDrag } from '@use-gesture/react'
 
 const swipeThreshold = 50
 
-export default function PhotoCarousel({ photos = [], height = '300px', restaurantName = '', city = '' }) {
+export default function PhotoCarousel({ photos = [], height = '300px', restaurantName = '', city = '', dotsPosition = 'center', showCounter = false, hideDots = false, onIndexChange }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
   const [loadedImages, setLoadedImages] = useState({})
@@ -22,8 +22,9 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
       if (newIndex < 0 || newIndex >= normalizedPhotos.length) return
       setDirection(dir)
       setCurrentIndex(newIndex)
+      onIndexChange?.(newIndex)
     },
-    [normalizedPhotos.length]
+    [normalizedPhotos.length, onIndexChange]
   )
 
   const bind = useDrag(
@@ -124,8 +125,8 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
       </div>
 
       {/* Dot indicators */}
-      {normalizedPhotos.length > 1 && (
-        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5">
+      {normalizedPhotos.length > 1 && !hideDots && (
+        <div className={`absolute bottom-3 flex items-center gap-1.5 ${dotsPosition === 'right' ? 'right-4' : 'left-0 right-0 justify-center'}`}>
           {normalizedPhotos.map((_, i) => (
             <button
               key={i}
@@ -141,10 +142,10 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
         </div>
       )}
 
-      {/* Photo counter */}
-      {normalizedPhotos.length > 1 && (
-        <div className="absolute top-3 right-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
-          {currentIndex + 1}/{normalizedPhotos.length}
+      {/* Photo counter — hidden when dots are right, unless showCounter is forced */}
+      {normalizedPhotos.length > 1 && (dotsPosition !== 'right' || showCounter) && (
+        <div className={`absolute ${showCounter && dotsPosition === 'right' ? 'bottom-3 right-4' : 'top-3 right-3'} rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm`}>
+          {currentIndex + 1} / {normalizedPhotos.length}
         </div>
       )}
     </div>

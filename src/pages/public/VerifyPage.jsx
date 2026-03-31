@@ -287,7 +287,7 @@ export default function VerifyPage() {
               <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-lg border border-white/40">
                 <h2
                   className="text-xl font-bold text-primary text-center mb-2"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontFamily: "'TAN Songbird', serif" }}
                 >
                   Area Ristoratori
                 </h2>
@@ -326,7 +326,7 @@ export default function VerifyPage() {
               <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-lg border border-white/40">
                 <h2
                   className="text-xl font-bold text-primary text-center mb-5"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontFamily: "'TAN Songbird', serif" }}
                 >
                   Validazione Sconto
                 </h2>
@@ -378,7 +378,7 @@ export default function VerifyPage() {
                     </p>
                     {preview.status === 'redeemed' && (
                       <p className="text-xs text-red-500 font-medium mt-1">
-                        Questo QR è già stato utilizzato
+                        Questo QR e gia stato utilizzato
                       </p>
                     )}
                   </motion.div>
@@ -432,7 +432,7 @@ export default function VerifyPage() {
             >
               <h2
                 className="text-xl font-bold text-primary text-center mb-6"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: "'TAN Songbird', serif" }}
               >
                 La tua area riservata
               </h2>
@@ -463,7 +463,7 @@ export default function VerifyPage() {
       {/* Footer */}
       <div className="py-4 text-center">
         <Link to="/" className="text-xs text-secondary">
-          Powered by <span className="font-semibold text-accent">La Guida di Bi</span>
+          Powered by <span className="font-semibold text-accent">ChiamamiBi</span>
         </Link>
       </div>
     </div>

@@ -218,6 +218,7 @@ CREATE TABLE IF NOT EXISTS discounts (
   valid_until timestamptz NOT NULL,
   max_redemptions int,
   total_redeemed int NOT NULL DEFAULT 0,
+  drop_time timestamptz,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );

@@ -101,26 +101,21 @@ export default function AdminDashboard() {
     return { total, published, drafts, cities }
   }, [restaurants])
 
-  // Chart data — restaurants added per week over last 8 weeks (real data)
+  // Chart data — mock weekly registrations over last 8 weeks
   const registrationData = useMemo(() => {
     const weeks = []
     const now = new Date()
     for (let i = 7; i >= 0; i--) {
-      const weekStart = new Date(now)
-      weekStart.setDate(weekStart.getDate() - (i + 1) * 7)
-      const weekEnd = new Date(now)
-      weekEnd.setDate(weekEnd.getDate() - i * 7)
-      const count = restaurants.filter(r => {
-        const created = new Date(r.created_at)
-        return created >= weekStart && created < weekEnd
-      }).length
+      const d = new Date(now)
+      d.setDate(d.getDate() - i * 7)
       weeks.push({
-        week: weekEnd.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
-        ristoranti: count,
+        week: d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+        utenti: Math.floor(Math.random() * 40) + 10 + i * 3,
+        ristoranti: Math.floor(Math.random() * 5) + (i < 3 ? 2 : 0),
       })
     }
     return weeks
-  }, [restaurants])
+  }, [])
 
   // Top restaurants by category
   const topCategoriesData = useMemo(() => {
@@ -274,7 +269,7 @@ export default function AdminDashboard() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-2xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>Dashboard</h1>
+          <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
           <p className="text-sm text-secondary mt-0.5">
             Ciao, {user?.email?.split('@')[0] ?? 'Admin'}
           </p>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sconti — Disponibili / I miei</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:#080808;font-family:'DM Sans',sans-serif}
+.ph{width:390px;height:844px;background:#FAF7F2;border-radius:52px;overflow:hidden;position:relative;box-shadow:0 0 0 2px #333,0 40px 100px rgba(0,0,0,.8)}
+.island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:126px;height:36px;background:#000;border-radius:20px;z-index:200}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:50;padding:58px 22px 14px;background:rgba(250,247,242,.92);backdrop-filter:blur(20px)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{display:flex;align-items:baseline;gap:4px}
+.l1{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:#8A8680;letter-spacing:1px;text-transform:uppercase}
+.l2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:20px;color:#111}
+.l3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:#E8453C}
+.city{display:flex;align-items:center;gap:5px;font-size:12px;color:#8A8680;font-weight:500;padding:6px 12px;border-radius:20px;background:rgba(0,0,0,.04);border:1px solid #E8E5DE;cursor:pointer}
+.city-dot{width:6px;height:6px;border-radius:50%;background:#4ADE80;box-shadow:0 0 6px rgba(74,222,128,.5)}
+.city svg{width:12px;height:12px;opacity:.4;margin-left:2px}
+
+/* TAB SWITCH */
+.sw{display:flex;gap:0;background:#fff;border-radius:12px;padding:4px;border:1.5px solid #E8E5DE}
+.sw-a{flex:1;text-align:center;padding:10px;border-radius:10px;background:#111;color:#FAF7F2;font-size:13px;font-weight:700}
+.sw-b{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:600;color:#8A8680;cursor:pointer}
+
+/* CONTENT */
+.ct{height:calc(844px - 200px);overflow-y:auto;padding:14px 16px 90px;scrollbar-width:none}
+.ct::-webkit-scrollbar{display:none}
+.st{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8A8680;margin-bottom:14px;padding-left:6px}
+
+/* HERO SCONTO — Dark card */
+.hero{border-radius:22px;overflow:hidden;position:relative;height:180px;margin-bottom:16px;cursor:pointer}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a1510,#2a1f18,#111)}
+.hero-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(232,69,60,.12),transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(196,162,101,.1),transparent 50%)}
+.hero-ct{position:relative;z-index:2;padding:20px;display:flex;flex-direction:column;justify-content:space-between;height:100%}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start}
+.hero-badge{display:inline-flex;align-items:center;gap:4px;background:#C4A265;color:#fff;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:6px}
+.hero-disc{background:#E8453C;color:#fff;font-size:16px;font-weight:800;padding:6px 14px;border-radius:12px;box-shadow:0 4px 16px rgba(232,69,60,.4)}
+.hero-bot{}
+.hero-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#fff;line-height:1.1;margin-bottom:4px}
+.hero-info{font-size:12px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:8px}
+.hero-info .dot{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.3)}
+.hero-bar{margin-top:10px;display:flex;align-items:center;gap:8px}
+.hero-bar-bg{flex:1;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+.hero-bar-fill{height:100%;background:#C4A265;border-radius:2px}
+.hero-bar-txt{font-size:10px;color:rgba(255,255,255,.5);font-weight:600;white-space:nowrap}
+
+/* REGULAR SCONTO CARD */
+.ch{display:flex;gap:14px;padding:14px;margin-bottom:12px;background:#fff;border-radius:18px;border:1px solid rgba(0,0,0,.04);box-shadow:0 2px 12px rgba(0,0,0,.04);cursor:pointer;position:relative}
+.ch-img{width:80px;height:80px;border-radius:14px;flex-shrink:0;position:relative;overflow:hidden}
+.ch-img-bg{position:absolute;inset:0}
+.ch-img-e{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.6}
+.ch-body{flex:1;display:flex;flex-direction:column;justify-content:center}
+.ch-row{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.ch-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#111;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-disc{background:rgba(232,69,60,.1);color:#E8453C;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0}
+.ch-cuisine{font-size:12px;color:#8A8680;font-weight:500;margin-bottom:6px}
+.ch-bar{display:flex;align-items:center;gap:8px}
+.ch-bar-bg{flex:1;height:4px;background:#eee;border-radius:2px;overflow:hidden}
+.ch-bar-fill{height:100%;background:#E8453C;border-radius:2px}
+.ch-bar-txt{font-size:10px;color:#8A8680;font-weight:600;white-space:nowrap}
+
+.bg1{background:linear-gradient(135deg,#e8d5c0,#d4c0a8)}
+.bg2{background:linear-gradient(135deg,#d4c0c8,#c8a8b0)}
+
+/* HOW IT WORKS */
+.how{background:#fff;border-radius:16px;padding:18px;border:1.5px solid #E8E5DE}
+.how-row{display:flex;gap:12px;margin-bottom:14px}
+.how-row:last-child{margin-bottom:0}
+.how-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.how-t{font-size:13px;font-weight:700;color:#111;margin-bottom:2px}
+.how-d{font-size:11px;color:#8A8680}
+
+/* TAB BAR */
+.tb{position:absolute;bottom:0;left:0;right:0;z-index:50;height:82px;background:rgba(250,247,242,.95);backdrop-filter:blur(20px);border-top:1px solid rgba(0,0,0,.06);display:flex;align-items:flex-start;justify-content:space-around;padding:10px 12px 0}
+.t{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;cursor:pointer;position:relative}
+.t svg{width:22px;height:22px}
+.tl{font-size:10px;font-weight:500;color:#B5B0A8}
+.ta .tl{color:#E8453C;font-weight:700}
+.ta::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:0 0 3px 3px;background:#E8453C}
+</style>
+</head>
+<body>
+<div class="ph">
+<div class="island"></div>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo"><span class="l1">la </span><span class="l2">Guida </span><span class="l1">di </span><span class="l3">Bi</span></div>
+    <div class="city"><div class="city-dot"></div>Torino<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></div>
+  </div>
+  <div class="sw"><div class="sw-a">Disponibili</div><div class="sw-b">I miei</div></div>
+</div>
+
+<div class="ct">
+  <div class="st">Offerta in evidenza</div>
+
+  <!-- HERO DARK CARD -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-ct">
+      <div class="hero-top">
+        <div class="hero-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg> Top sconto</div>
+        <div class="hero-disc">-20%</div>
+      </div>
+      <div class="hero-bot">
+        <div class="hero-name">Ristorante del Cambio</div>
+        <div class="hero-info"><span>Piemontese</span><span class="dot"></span><span>€€€</span><span class="dot"></span><span>1.2 km</span></div>
+        <div class="hero-bar"><div class="hero-bar-bg"><div class="hero-bar-fill" style="width:20%"></div></div><span class="hero-bar-txt">2/10 rimasti</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st">Altri sconti</div>
+
+  <!-- CARD 1 -->
+  <div class="ch">
+    <div class="ch-img"><div class="ch-img-bg bg1"></div><div class="ch-img-e">🍝</div></div>
+    <div class="ch-body">
+      <div class="ch-row"><div class="ch-name">Trattoria Valenza</div><div class="ch-disc">-15%</div></div>
+      <div class="ch-cuisine">Italiana · Pasta fresca</div>
+      <div class="ch-bar"><div class="ch-bar-bg"><div class="ch-bar-fill" style="width:60%"></div></div><span class="ch-bar-txt">6/10 rimasti</span></div>
+    </div>
+  </div>
+
+  <!-- CARD 2 -->
+  <div class="ch">
+    <div class="ch-img"><div class="ch-img-bg bg2"></div><div class="ch-img-e">🍸</div></div>
+    <div class="ch-body">
+      <div class="ch-row"><div class="ch-name">Cocktail Bar Torino</div><div class="ch-disc">-10%</div></div>
+      <div class="ch-cuisine">Bar · Aperitivo & Drinks</div>
+      <div class="ch-bar"><div class="ch-bar-bg"><div class="ch-bar-fill" style="width:30%"></div></div><span class="ch-bar-txt">3/10 rimasti</span></div>
+    </div>
+  </div>
+
+  <div style="height:20px"></div>
+  <div class="st">Come funziona</div>
+  <div class="how">
+    <div class="how-row">
+      <div class="how-icon" style="background:rgba(232,69,60,.08)">📱</div>
+      <div><div class="how-t">Mostra il QR code</div><div class="how-d">Apri lo sconto e mostra il codice al ristorante</div></div>
+    </div>
+    <div class="how-row">
+      <div class="how-icon" style="background:rgba(196,162,101,.1)">✅</div>
+      <div><div class="how-t">Ottieni lo sconto</div><div class="how-d">Il ristorante valida il codice e applica lo sconto</div></div>
+    </div>
+    <div class="how-row">
+      <div class="how-icon" style="background:rgba(74,222,128,.1)">🎉</div>
+      <div><div class="how-t">Goditi il risparmio</div><div class="how-d">Lo sconto viene applicato direttamente al conto</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR — Sconti active -->
+<div class="tb">
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M14.31 8l5.74-2.69M14.31 8L8 10.69M14.31 8l-1.62 6.69M8 10.69L2.26 8M8 10.69l4.69 4L8 21.44M12.69 14.69l5.57 2.75M12.69 14.69L8 21.44m4.69-6.75L18.26 8"/></svg><span class="tl">Esplora</span></div>
+  <div class="t ta"><svg viewBox="0 0 24 24" fill="none" stroke="#E8453C" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" fill="rgba(232,69,60,.12)"/><circle cx="7" cy="7" r="1" fill="#E8453C"/></svg><span class="tl">Sconti</span></div>
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="tl">Salvati</span></div>
+  <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#B5B0A8" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tl">Profilo</span></div>
+</div>
+</div>
+</body>
+</html>

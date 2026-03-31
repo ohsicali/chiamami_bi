@@ -17,7 +17,7 @@ export default function TermsPage() {
       <div className="flex-1 max-w-screen-md mx-auto px-5 py-8">
         <h1
           className="text-2xl font-bold text-primary mb-6"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontFamily: "'TAN Songbird', serif" }}
         >
           Termini di Servizio
         </h1>
@@ -27,13 +27,13 @@ export default function TermsPage() {
 
           <h2 className="text-lg font-semibold text-primary">1. Accettazione dei termini</h2>
           <p>
-            Utilizzando La Guida di Bi (di seguito anche "ChiamamiBi") accetti i presenti Termini di Servizio. Se non li accetti,
+            Utilizzando ChiamamiBi accetti i presenti Termini di Servizio. Se non li accetti,
             ti preghiamo di non utilizzare il servizio.
           </p>
 
           <h2 className="text-lg font-semibold text-primary">2. Descrizione del servizio</h2>
           <p>
-            La Guida di Bi è una piattaforma web che offre consigli personalizzati su ristoranti,
+            ChiamamiBi è una piattaforma web che offre consigli personalizzati su ristoranti,
             bar e locali a Torino. Il servizio include la scoperta di locali, il sistema di
             sconti esclusivi e la possibilità di salvare i propri posti preferiti.
           </p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
 
           <h2 className="text-lg font-semibold text-primary">4. Contenuti degli utenti</h2>
           <p>
-            Pubblicando recensioni o foto su La Guida di Bi, concedi una licenza non esclusiva
+            Pubblicando recensioni o foto su ChiamamiBi, concedi una licenza non esclusiva
             per la visualizzazione dei contenuti sulla piattaforma. I contenuti devono essere
             veritieri, rispettosi e non violare diritti di terzi.
           </p>
@@ -58,18 +58,18 @@ export default function TermsPage() {
             <li>Gli sconti sono soggetti a disponibilità e condizioni specifiche</li>
             <li>Ogni sconto può essere utilizzato una sola volta</li>
             <li>Gli sconti hanno una data di scadenza</li>
-            <li>La Guida di Bi non è responsabile per eventuali disservizi del ristorante</li>
+            <li>ChiamamiBi non è responsabile per eventuali disservizi del ristorante</li>
           </ul>
 
           <h2 className="text-lg font-semibold text-primary">6. Proprietà intellettuale</h2>
           <p>
-            I contenuti editoriali de La Guida di Bi (recensioni di Bi, fotografie, design)
+            I contenuti editoriali di ChiamamiBi (recensioni di Bi, fotografie, design)
             sono protetti dal diritto d'autore. È vietata la riproduzione senza autorizzazione.
           </p>
 
           <h2 className="text-lg font-semibold text-primary">7. Limitazione di responsabilità</h2>
           <p>
-            La Guida di Bi fornisce informazioni a scopo orientativo. Non garantiamo l'accuratezza
+            ChiamamiBi fornisce informazioni a scopo orientativo. Non garantiamo l'accuratezza
             di orari, prezzi o disponibilità dei ristoranti. Le opinioni espresse sono personali
             e soggettive.
           </p>
