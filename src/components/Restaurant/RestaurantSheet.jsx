@@ -579,37 +579,71 @@ export default function RestaurantSheet({
 
               {/* Video links — "Guarda i miei video" */}
               {(restaurant.instagram_reel || restaurant.tiktok_url) && (
-                <motion.div variants={itemVariants} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  marginBottom: 20,
-                }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#A89A86' }}>
-                    Guarda i miei video
-                  </span>
-                  {restaurant.instagram_reel && (
-                    <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      width: 34, height: 34, borderRadius: 10,
-                      background: '#F0EBE3', textDecoration: 'none',
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5"/>
-                        <circle cx="12" cy="12" r="5"/>
-                        <circle cx="17.5" cy="6.5" r="1.5" fill="#22181C" stroke="none"/>
-                      </svg>
-                    </a>
-                  )}
-                  {restaurant.tiktok_url && (
-                    <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      width: 34, height: 34, borderRadius: 10,
-                      background: '#F0EBE3', textDecoration: 'none',
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#22181C">
-                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
-                      </svg>
-                    </a>
-                  )}
+                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                  <div style={{
+                    borderRadius: 16, padding: '18px 18px',
+                    background: '#22181C',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10,
+                        background: 'rgba(255,255,255,0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 5.14v13.72a.5.5 0 00.77.42l10.38-6.86a.5.5 0 000-.84L8.77 4.72A.5.5 0 008 5.14z" fill="#fff"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3 }}>
+                          Guarda i miei video
+                        </p>
+                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.3 }}>
+                          La recensione di Bi
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {restaurant.instagram_reel && (
+                        <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 7,
+                          padding: '8px 14px', borderRadius: 10,
+                          background: 'rgba(255,255,255,0.1)',
+                          textDecoration: 'none',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <defs>
+                              <linearGradient id="igVid" x1="0%" y1="100%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#F58529"/>
+                                <stop offset="50%" stopColor="#DD2A7B"/>
+                                <stop offset="100%" stopColor="#8134AF"/>
+                              </linearGradient>
+                            </defs>
+                            <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#igVid)" strokeWidth="2" fill="none"/>
+                            <circle cx="12" cy="12" r="5" stroke="url(#igVid)" strokeWidth="2" fill="none"/>
+                            <circle cx="17.5" cy="6.5" r="1.5" fill="#DD2A7B"/>
+                          </svg>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>Reel</span>
+                        </a>
+                      )}
+                      {restaurant.tiktok_url && (
+                        <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 7,
+                          padding: '8px 14px', borderRadius: 10,
+                          background: 'rgba(255,255,255,0.1)',
+                          textDecoration: 'none',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
+                          </svg>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>TikTok</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
