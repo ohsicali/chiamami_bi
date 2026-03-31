@@ -105,12 +105,12 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           style={{
             position: 'absolute', top: -8, right: -8, zIndex: 1,
             width: 24, height: 24, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.9)', border: 'none',
+            background: '#22181C', border: '2px solid rgba(255,255,255,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
