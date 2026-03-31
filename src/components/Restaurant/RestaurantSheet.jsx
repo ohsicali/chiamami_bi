@@ -366,7 +366,7 @@ export default function RestaurantSheet({
               <motion.h1 variants={itemVariants} style={{
                 fontFamily: "'TAN Songbird', serif",
                 fontSize: 24, fontWeight: 700, color: '#22181C',
-                lineHeight: 1.35, textAlign: 'center',
+                lineHeight: 1.5, textAlign: 'center',
                 marginBottom: 10,
               }}>
                 {restaurant.name}
