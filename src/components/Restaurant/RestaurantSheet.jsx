@@ -167,6 +167,7 @@ export default function RestaurantSheet({
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
   const [photoIndex, setPhotoIndex] = useState(0)
+  const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [inlineShowQR, setInlineShowQR] = useState(false)
   const [inlineGenerating, setInlineGenerating] = useState(false)
   const [newsletterStatus, setNewsletterStatus] = useState(null) // null | 'loading' | 'success' | 'exists'
@@ -186,7 +187,7 @@ export default function RestaurantSheet({
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [restaurant?.id])
 
-  // Parallax — photo drifts up at 0.3x scroll speed
+  // Parallax + sticky header detection
   useEffect(() => {
     const el = scrollRef.current
     const photo = photoRef.current
@@ -197,6 +198,8 @@ export default function RestaurantSheet({
       ticking = true
       requestAnimationFrame(() => {
         photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
+        const photoH = el.clientHeight * 0.45 - 60
+        setShowStickyHeader(el.scrollTop > photoH)
         ticking = false
       })
     }
@@ -249,7 +252,58 @@ export default function RestaurantSheet({
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none" style={{ position: 'relative' }}>
+
+          {/* Sticky header bar — appears when scrolled past photo */}
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+            background: '#fff',
+            padding: `calc(10px + env(safe-area-inset-top, 0px)) 14px 10px`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            boxShadow: showStickyHeader ? '0 2px 12px rgba(0,0,0,0.08)' : 'none',
+            transform: showStickyHeader ? 'translateY(0)' : 'translateY(-100%)',
+            transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            pointerEvents: showStickyHeader ? 'auto' : 'none',
+          }}>
+            <button
+              onClick={handleClose}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: '#F0EBE3',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer', color: '#22181C',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+
+            <p style={{
+              fontSize: 15, fontWeight: 700, color: '#22181C',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              maxWidth: '50%', textAlign: 'center',
+            }}>
+              {restaurant.name}
+            </p>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={handleShare}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: '#F0EBE3',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: 'none', cursor: 'pointer', color: '#22181C',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+              </button>
+              {onSaveToggle && <SaveButton saved={saved} onClick={onSaveToggle} size="md" />}
+            </div>
+          </div>
 
           {/* Photo — sticky, stays in place while content scrolls over it */}
           <div style={{ position: 'sticky', top: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
