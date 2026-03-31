@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -15,6 +15,14 @@ function slugify(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.06, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  }),
+}
+
 /* ── Countdown hook ── */
 function useCountdown(targetDate) {
   const calc = useCallback(() => {
@@ -25,6 +33,7 @@ function useCountdown(targetDate) {
       h: Math.floor(diff / 3600000),
       m: Math.floor((diff % 3600000) / 60000),
       s: Math.floor((diff % 60000) / 1000),
+      total: diff,
     }
   }, [targetDate])
   const [time, setTime] = useState(calc)
@@ -36,150 +45,194 @@ function useCountdown(targetDate) {
   return time
 }
 
-const pad = (n) => String(n).padStart(2, '0')
-
-/* ── Discount info strip below a card ── */
-function DiscountStrip({ deal, index }) {
+/* ── Deal Card ── */
+function DealCard({ deal, index, onNavigate }) {
+  const r = deal.restaurant
+  const photo = r?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
   const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
   const soldOut = remaining !== null && remaining <= 0
-  const almostGone = remaining !== null && remaining > 0 && remaining <= Math.ceil(deal.max_redemptions * 0.3)
+  const almostGone = remaining !== null && remaining > 0 && remaining <= Math.ceil(deal.max_redemptions * 0.25)
   const isDrop = deal.drop_time && new Date(deal.drop_time).getTime() > Date.now()
   const time = useCountdown(isDrop ? deal.drop_time : null)
-  const pct = deal.max_redemptions ? Math.max(4, ((deal.total_redeemed || 0) / deal.max_redemptions) * 100) : 0
+  const pad = (n) => String(n).padStart(2, '0')
 
   return (
-    <div style={{
-      padding: '10px 14px 12px',
-      borderTop: '1px solid rgba(0,0,0,0.04)',
-      background: soldOut ? 'rgba(0,0,0,0.02)' : 'transparent',
-    }}>
-      {/* Title + conditions */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: deal.max_redemptions ? 8 : 0 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+    <motion.div
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      custom={index}
+      whileHover={!soldOut && !isDrop ? { y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' } : {}}
+      whileTap={!soldOut && !isDrop ? { scale: 0.98 } : {}}
+      onClick={() => !soldOut && !isDrop && onNavigate(r)}
+      style={{
+        background: '#fff', borderRadius: 18, overflow: 'hidden',
+        border: '1px solid rgba(0,0,0,0.08)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+        cursor: soldOut || isDrop ? 'default' : 'pointer',
+        opacity: soldOut ? 0.65 : 1,
+        transition: 'box-shadow 0.2s ease, opacity 0.3s ease',
+      }}
+    >
+      {/* Discount strip — top, like RestaurantCard */}
+      <div style={{
+        padding: '6px 14px',
+        background: soldOut
+          ? '#D4CFC8'
+          : isDrop
+            ? 'linear-gradient(135deg, #C4A265, #d4b77a)'
+            : 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {almostGone && !soldOut && (
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%', background: '#fff',
+              animation: 'cityPulse 1.5s ease-in-out infinite',
+              boxShadow: '0 0 4px rgba(255,255,255,0.5)',
+            }} />
+          )}
           <span style={{
-            fontSize: 12, fontWeight: 700, color: '#22181C',
+            fontSize: 11, fontWeight: 700, color: soldOut ? '#fff' : isDrop ? '#fff' : '#1a2e05',
             textDecoration: soldOut ? 'line-through' : 'none',
-            opacity: soldOut ? 0.5 : 1,
           }}>
-            {deal.title || 'Sconto attivo'}
+            {deal.discount_value}
           </span>
-          {deal.conditions && (
-            <span style={{ fontSize: 11, color: '#8A8680', marginLeft: 6 }}>
-              · {deal.conditions}
-            </span>
+          {deal.title && (
+            <>
+              <span style={{
+                width: 3, height: 3, borderRadius: '50%',
+                background: soldOut ? 'rgba(255,255,255,0.4)' : isDrop ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.15)',
+                display: 'inline-block',
+              }} />
+              <span style={{
+                fontSize: 11, fontWeight: 600,
+                color: soldOut ? 'rgba(255,255,255,0.7)' : isDrop ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.5)',
+              }}>
+                {deal.title}
+              </span>
+            </>
           )}
         </div>
-
-        {/* Status badges */}
-        {isDrop && time && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'linear-gradient(135deg, #C4A265, #d4b77a)',
-            padding: '3px 10px', borderRadius: 8,
-          }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-            </svg>
-            <span style={{
-              fontSize: 11, fontWeight: 700, color: '#fff',
-              fontVariantNumeric: 'tabular-nums',
-            }}>
-              {pad(time.h)}:{pad(time.m)}:{pad(time.s)}
-            </span>
-          </div>
-        )}
+        {/* Status label */}
         {soldOut && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Esaurito
+          </span>
+        )}
+        {isDrop && time && (
           <span style={{
-            fontSize: 10, fontWeight: 700, color: '#fff', background: '#B0ACA6',
-            padding: '3px 8px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: 0.5,
-          }}>Esaurito</span>
+            fontSize: 11, fontWeight: 700, color: '#fff',
+            fontVariantNumeric: 'tabular-nums', fontFamily: "'DM Sans', sans-serif",
+          }}>
+            {pad(time.h)}:{pad(time.m)}:{pad(time.s)}
+          </span>
         )}
         {almostGone && !soldOut && !isDrop && (
-          <span style={{
-            fontSize: 10, fontWeight: 700, color: '#E8453C',
-            display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            <span style={{
-              width: 5, height: 5, borderRadius: '50%', background: '#E8453C',
-              animation: 'cityPulse 1.5s ease-in-out infinite',
-            }} />
-            Ultimi {remaining}!
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#1a2e05', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Ultimi {remaining}
           </span>
         )}
       </div>
 
-      {/* Progress bar */}
-      {deal.max_redemptions && !isDrop && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ flex: 1, height: 4, background: '#F0EBE3', borderRadius: 2, overflow: 'hidden' }}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${soldOut ? 100 : pct}%` }}
-              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: index * 0.06 + 0.3 }}
+      {/* Card body — same layout as RestaurantCard default */}
+      <div className="flex" style={{ gap: 14, padding: 14 }}>
+        {/* Photo */}
+        <div style={{
+          width: 100, height: 100, borderRadius: 14, flexShrink: 0,
+          overflow: 'hidden', position: 'relative',
+        }}>
+          {photo ? (
+            <img
+              src={photo.photo_url} alt={r?.name}
               style={{
-                height: '100%', borderRadius: 2,
-                background: soldOut
-                  ? '#D4CFC8'
-                  : almostGone
-                    ? 'linear-gradient(90deg, #E8453C, #ff6b6b)'
-                    : 'linear-gradient(90deg, #a3e635, #4ade80)',
+                width: '100%', height: '100%', objectFit: 'cover',
+                filter: soldOut ? 'grayscale(1)' : 'none',
               }}
             />
-          </div>
-          <span style={{
-            fontSize: 10, fontWeight: 600, color: soldOut ? '#B0ACA6' : almostGone ? '#E8453C' : '#8A8680',
-            fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
+          ) : (
+            <div style={{
+              width: '100%', height: '100%', background: '#F0EBE3',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
+            }}>🍽️</div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+          {/* Name */}
+          <h3 style={{
+            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+            fontSize: 14, fontWeight: 600, color: '#22181C',
+            lineHeight: 1.5, marginBottom: 3,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
-            {deal.total_redeemed || 0}/{deal.max_redemptions}
+            {r?.name}
+          </h3>
+
+          {/* Tagline */}
+          {r?.tagline && (
+            <p style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {r.tagline}
+            </p>
+          )}
+
+          {/* Cuisine + city */}
+          <p style={{ fontSize: 11, color: '#8A8680', fontWeight: 500, marginBottom: 6 }}>
+            {r?.cuisine_type}{r?.city ? ` · ${r.city}` : ''}
+          </p>
+
+          {/* Conditions */}
+          {deal.conditions && (
+            <p style={{ fontSize: 10, color: '#A89A86', marginBottom: 6 }}>
+              {deal.conditions}
+            </p>
+          )}
+
+          {/* Progress bar */}
+          {deal.max_redemptions && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 4, background: '#F0EBE3', borderRadius: 2, overflow: 'hidden' }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${soldOut ? 100 : Math.max(4, (remaining / deal.max_redemptions) * 100)}%` }}
+                  transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: index * 0.06 + 0.3 }}
+                  style={{
+                    height: '100%', borderRadius: 2,
+                    background: soldOut
+                      ? '#D4CFC8'
+                      : almostGone
+                        ? '#E8453C'
+                        : 'linear-gradient(90deg, #a3e635, #4ade80)',
+                  }}
+                />
+              </div>
+              <span style={{
+                fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
+                color: soldOut ? '#B0ACA6' : almostGone ? '#E8453C' : '#8A8680',
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {remaining}/{deal.max_redemptions}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Drop countdown expanded — only for drops */}
+      {isDrop && time && (
+        <div style={{
+          padding: '12px 14px 14px', borderTop: '1px solid rgba(0,0,0,0.04)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+          </svg>
+          <span style={{ fontSize: 12, color: '#C4A265', fontWeight: 600 }}>
+            Drop disponibile tra {time.h > 0 ? `${time.h} ore e ` : ''}{time.m} minuti
           </span>
         </div>
       )}
-
-      {/* Drop countdown info */}
-      {isDrop && time && (
-        <p style={{ fontSize: 11, color: '#C4A265', fontWeight: 500, marginTop: 4 }}>
-          Drop tra {time.h > 0 ? `${time.h}h ` : ''}{time.m}min — {deal.max_redemptions || '?'} sconti disponibili
-        </p>
-      )}
-    </div>
-  )
-}
-
-/* ── Deal card: RestaurantCard + discount strip ── */
-function DealCardWrapper({ deal, index, user, isSaved, toggleSave, onNavigate, variant = 'default' }) {
-  const r = deal.restaurant
-  if (!r) return null
-
-  const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
-  const soldOut = remaining !== null && remaining <= 0
-  const isDrop = deal.drop_time && new Date(deal.drop_time).getTime() > Date.now()
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{
-        borderRadius: variant === 'hero' ? 22 : 18,
-        overflow: 'hidden',
-        background: '#fff',
-        border: variant === 'hero' ? 'none' : '1px solid rgba(0,0,0,0.08)',
-        boxShadow: variant === 'hero' ? 'none' : '0 2px 12px rgba(0,0,0,0.05)',
-        opacity: soldOut ? 0.6 : 1,
-        pointerEvents: isDrop ? 'none' : 'auto',
-      }}
-    >
-      <RestaurantCard
-        restaurant={r}
-        index={index}
-        onClick={!soldOut && !isDrop ? onNavigate : () => {}}
-        saved={isSaved(r.id)}
-        onSaveToggle={user ? () => toggleSave(r.id) : () => onNavigate({ slug: 'login' })}
-        hasDiscount={!soldOut}
-        discountTitle={deal.discount_value}
-        variant={variant}
-      />
-      <DiscountStrip deal={deal} index={index} />
     </motion.div>
   )
 }
@@ -199,7 +252,6 @@ export default function DealsPage() {
   const otherDeals = discounts.slice(1)
 
   const handleNavigate = (r) => {
-    if (r?.slug === 'login') { navigate('/login'); return }
     navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
   }
 
@@ -233,255 +285,216 @@ export default function DealsPage() {
 
         {/* Tab switcher */}
         <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid #E8E5DE' }}>
-          {[
-            { key: 'available', label: 'Disponibili' },
-            { key: 'mine', label: 'I miei' },
-          ].map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              style={{
-                flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
-                fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
-                background: tab === t.key ? '#22181C' : 'transparent',
-                color: tab === t.key ? '#FAF7F2' : '#8A8680',
-                border: 'none', cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
+          <button
+            onClick={() => setTab('available')}
+            style={{
+              flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 700,
+              background: tab === 'available' ? '#22181C' : 'transparent',
+              color: tab === 'available' ? '#FAF7F2' : '#8A8680',
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            Disponibili
+          </button>
+          <button
+            onClick={() => setTab('mine')}
+            style={{
+              flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 600,
+              background: tab === 'mine' ? '#22181C' : 'transparent',
+              color: tab === 'mine' ? '#FAF7F2' : '#8A8680',
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            I miei
+          </button>
         </div>
       </div>
 
       {/* ── Content ── */}
       <div className="flex-1 px-4" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
-        <AnimatePresence mode="wait">
 
-          {/* ═══ AVAILABLE TAB ═══ */}
-          {tab === 'available' && (
-            <motion.div
-              key="available"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {/* CTA non-logged */}
-              {!user && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  style={{
-                    borderRadius: 18, padding: 20, marginBottom: 16, marginTop: 16,
-                    background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(196,162,101,0.06))',
-                    border: '1.5px solid #E8E5DE',
-                  }}
-                >
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 6 }}>
-                    Registrati per sbloccare gli sconti
-                  </p>
-                  <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 12 }}>
-                    Crea un account gratuito per accedere a sconti esclusivi nei migliori ristoranti di Torino
-                  </p>
-                  <Link to="/login" style={{
-                    display: 'inline-block', borderRadius: 12, background: '#E8453C', color: '#fff',
-                    padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                    boxShadow: '0 4px 16px rgba(232,69,60,0.3)',
-                  }}>
-                    Registrati gratis
-                  </Link>
-                </motion.div>
-              )}
+        {/* ═══ AVAILABLE TAB ═══ */}
+        {tab === 'available' && (
+          <>
+            {/* CTA non-logged */}
+            {!user && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                style={{
+                  borderRadius: 18, padding: 20, marginBottom: 16, marginTop: 16,
+                  background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(196,162,101,0.06))',
+                  border: '1.5px solid #E8E5DE',
+                }}
+              >
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 6 }}>Registrati per sbloccare gli sconti</p>
+                <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 12 }}>Crea un account gratuito per accedere a sconti esclusivi</p>
+                <Link to="/login" style={{
+                  display: 'inline-block', borderRadius: 12, background: '#E8453C', color: '#fff',
+                  padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                  boxShadow: '0 4px 16px rgba(232,69,60,0.3)',
+                }}>
+                  Registrati gratis
+                </Link>
+              </motion.div>
+            )}
 
-              {/* Loading */}
-              {loading && (
-                <div className="flex flex-col gap-3 mt-4">
-                  {[200, 140, 140].map((h, i) => (
-                    <div key={i} style={{
-                      height: h, borderRadius: 18,
-                      background: '#fff', border: '1px solid rgba(0,0,0,0.06)',
-                    }} className="skeleton" />
-                  ))}
-                </div>
-              )}
+            {/* Loading */}
+            {loading && (
+              <div className="flex flex-col gap-3 mt-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{
+                    height: i === 1 ? 200 : 140, borderRadius: 18,
+                    background: '#fff', border: '1px solid rgba(0,0,0,0.08)',
+                  }} className="skeleton" />
+                ))}
+              </div>
+            )}
 
-              {/* Empty */}
-              {!loading && discounts.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center justify-center py-16 text-center"
-                >
-                  <div style={{
-                    width: 64, height: 64, borderRadius: 20, marginBottom: 16,
-                    background: 'rgba(163,230,53,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
-                  }}>🏷️</div>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto attivo</p>
-                  <p style={{ fontSize: 13, color: '#8A8680', marginTop: 4, maxWidth: 260 }}>
-                    Torna presto, Bi sta preparando nuove offerte!
-                  </p>
-                  <Link to="/" style={{
-                    marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
-                    padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none',
-                  }}>
-                    Esplora i ristoranti
-                  </Link>
-                </motion.div>
-              )}
+            {/* Empty */}
+            {!loading && discounts.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-16 text-center"
+              >
+                <span style={{ fontSize: 48, marginBottom: 12 }}>🏷️</span>
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto attivo</p>
+                <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Torna presto, Bi sta preparando nuove offerte!</p>
+                <Link to="/" style={{
+                  marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
+                  padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+                }}>
+                  Esplora i ristoranti
+                </Link>
+              </motion.div>
+            )}
 
-              {/* Deals */}
-              {!loading && discounts.length > 0 && (
-                <div className="flex flex-col" style={{ gap: 14, marginTop: 16 }}>
+            {/* Deals list */}
+            {!loading && discounts.length > 0 && (
+              <>
+                {/* In evidenza */}
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '16px 0 14px 4px' }}>
+                  In evidenza
+                </p>
 
-                  {/* Section: In evidenza */}
-                  <p style={{
-                    fontSize: 11, fontWeight: 700, letterSpacing: 2,
-                    textTransform: 'uppercase', color: '#8A8680', marginLeft: 4,
-                  }}>
-                    In evidenza
-                  </p>
-
-                  {featuredDeal?.restaurant && (
-                    <DealCardWrapper
-                      deal={featuredDeal}
-                      index={0}
-                      user={user}
-                      isSaved={isSaved}
-                      toggleSave={toggleSave}
-                      onNavigate={handleNavigate}
-                      variant="hero"
-                    />
-                  )}
-
-                  {/* Section: Altri sconti */}
-                  {otherDeals.length > 0 && (
-                    <>
-                      <p style={{
-                        fontSize: 11, fontWeight: 700, letterSpacing: 2,
-                        textTransform: 'uppercase', color: '#8A8680', marginLeft: 4, marginTop: 4,
-                      }}>
-                        Tutti gli sconti
-                      </p>
-
-                      {otherDeals.map((deal, i) => (
-                        <DealCardWrapper
-                          key={deal.id}
-                          deal={deal}
-                          index={i + 1}
-                          user={user}
-                          isSaved={isSaved}
-                          toggleSave={toggleSave}
-                          onNavigate={handleNavigate}
-                        />
-                      ))}
-                    </>
-                  )}
-
-                  {/* Come funziona */}
+                {featuredDeal?.restaurant && (
                   <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    style={{ marginTop: 8 }}
+                    transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    style={{ marginBottom: 16 }}
                   >
-                    <p style={{
-                      fontSize: 11, fontWeight: 700, letterSpacing: 2,
-                      textTransform: 'uppercase', color: '#8A8680', marginLeft: 4, marginBottom: 14,
-                    }}>
-                      Come funziona
+                    <RestaurantCard
+                      restaurant={featuredDeal.restaurant}
+                      index={0}
+                      onClick={handleNavigate}
+                      saved={isSaved(featuredDeal.restaurant.id)}
+                      onSaveToggle={user ? () => toggleSave(featuredDeal.restaurant.id) : () => navigate('/login')}
+                      hasDiscount
+                      discountTitle={featuredDeal.discount_value}
+                      variant="hero"
+                    />
+                  </motion.div>
+                )}
+
+                {/* Tutti gli sconti */}
+                {otherDeals.length > 0 && (
+                  <>
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '4px 0 14px 4px' }}>
+                      Tutti gli sconti
                     </p>
-                    <div style={{
-                      background: '#fff', borderRadius: 18, padding: 18,
-                      border: '1px solid rgba(0,0,0,0.06)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                    }}>
-                      {[
-                        { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-                        { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
-                        { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
-                      ].map((step, i) => (
-                        <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
-                          <div style={{
-                            width: 36, height: 36, borderRadius: 10, background: step.bg,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 16, flexShrink: 0,
-                          }}>{step.icon}</div>
-                          <div>
-                            <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>{step.title}</p>
-                            <p style={{ fontSize: 11, color: '#8A8680' }}>{step.desc}</p>
-                          </div>
-                        </div>
+                    <div className="flex flex-col gap-3">
+                      {otherDeals.map((deal, i) => (
+                        <DealCard key={deal.id} deal={deal} index={i} onNavigate={handleNavigate} />
                       ))}
                     </div>
-                  </motion.div>
-                </div>
-              )}
-            </motion.div>
-          )}
+                  </>
+                )}
 
-          {/* ═══ MY DISCOUNTS TAB ═══ */}
-          {tab === 'mine' && (
-            <motion.div
-              key="mine"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {!user ? (
+                {/* Come funziona */}
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center justify-center py-16 text-center"
+                  transition={{ delay: 0.3, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '24px 0 14px 4px' }}>
+                    Come funziona
+                  </p>
                   <div style={{
-                    width: 64, height: 64, borderRadius: 20, marginBottom: 16,
-                    background: 'rgba(232,69,60,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
-                  }}>🔐</div>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Accedi per vedere i tuoi sconti</p>
-                  <p style={{ fontSize: 13, color: '#8A8680', marginTop: 4 }}>I tuoi sconti attivi e usati appariranno qui</p>
-                  <Link to="/login" style={{
-                    marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
-                    padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+                    background: '#fff', borderRadius: 16, padding: 18,
+                    border: '1px solid #E8E0D6',
+                    boxShadow: '0 2px 8px rgba(34,24,28,0.04)',
                   }}>
-                    Accedi
-                  </Link>
+                    {[
+                      { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
+                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+                      { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
+                    ].map((step, i) => (
+                      <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: 10, background: step.bg,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 16, flexShrink: 0,
+                        }}>{step.icon}</div>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>{step.title}</p>
+                          <p style={{ fontSize: 11, color: '#8A8680' }}>{step.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </motion.div>
-              ) : myDiscounts.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center justify-center py-16 text-center"
-                >
-                  <div style={{
-                    width: 64, height: 64, borderRadius: 20, marginBottom: 16,
-                    background: 'rgba(196,162,101,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
-                  }}>📋</div>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto riscattato</p>
-                  <p style={{ fontSize: 13, color: '#8A8680', marginTop: 4 }}>Quando riscatti uno sconto, lo troverai qui</p>
-                  <button
-                    onClick={() => setTab('available')}
-                    style={{
-                      marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
-                      padding: '12px 24px', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
-                    }}
-                  >
-                    Vedi sconti disponibili
-                  </button>
-                </motion.div>
-              ) : null}
-            </motion.div>
-          )}
+              </>
+            )}
+          </>
+        )}
 
-        </AnimatePresence>
+        {/* ═══ MY DISCOUNTS TAB ═══ */}
+        {tab === 'mine' && (
+          <>
+            {!user ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-16 text-center"
+              >
+                <span style={{ fontSize: 48, marginBottom: 12 }}>🔐</span>
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Accedi per vedere i tuoi sconti</p>
+                <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>I tuoi sconti attivi e usati appariranno qui</p>
+                <Link to="/login" style={{
+                  marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
+                  padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+                }}>
+                  Accedi
+                </Link>
+              </motion.div>
+            ) : myDiscounts.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-16 text-center"
+              >
+                <span style={{ fontSize: 48, marginBottom: 12 }}>📋</span>
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto riscattato</p>
+                <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Quando riscatti uno sconto, lo troverai qui</p>
+                <button
+                  onClick={() => setTab('available')}
+                  style={{
+                    marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
+                    padding: '12px 24px', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+                  }}
+                >
+                  Vedi sconti disponibili
+                </button>
+              </motion.div>
+            ) : null}
+          </>
+        )}
       </div>
 
+      {/* Footer */}
       <Footer />
     </div>
   )
