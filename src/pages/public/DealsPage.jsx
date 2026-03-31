@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -43,176 +43,233 @@ function useCountdown(targetDate) {
   return time
 }
 
-/* ── Countdown display component ── */
+/* ── Countdown display ── */
 function CountdownBadge({ dropTime }) {
   const time = useCountdown(dropTime)
   if (!time) return null
 
   const pad = (n) => String(n).padStart(2, '0')
-  const isUrgent = time.total < 3600000 // less than 1h
+  const isUrgent = time.total < 3600000
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 6,
-      background: isUrgent ? 'rgba(232,69,60,0.08)' : 'rgba(196,162,101,0.08)',
-      border: `1px solid ${isUrgent ? 'rgba(232,69,60,0.15)' : 'rgba(196,162,101,0.15)'}`,
-      borderRadius: 10, padding: '6px 10px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+      background: isUrgent
+        ? 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(232,69,60,0.12))'
+        : 'linear-gradient(135deg, rgba(196,162,101,0.06), rgba(196,162,101,0.12))',
+      borderRadius: 14, padding: '14px 16px',
+      border: `1px solid ${isUrgent ? 'rgba(232,69,60,0.12)' : 'rgba(196,162,101,0.12)'}`,
     }}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isUrgent ? '#E8453C' : '#C4A265'} strokeWidth="2.5" strokeLinecap="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isUrgent ? '#E8453C' : '#C4A265'} strokeWidth="2" strokeLinecap="round">
         <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
       </svg>
-      <span style={{
-        fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
-        color: isUrgent ? '#E8453C' : '#C4A265',
-      }}>
-        Drop tra {pad(time.h)}:{pad(time.m)}:{pad(time.s)}
-      </span>
-    </div>
-  )
-}
-
-/* ── Progress / FOMO bar ── */
-function DealProgress({ max, redeemed }) {
-  if (!max) return null
-  const remaining = max - (redeemed || 0)
-  const pct = Math.max(2, (remaining / max) * 100)
-  const soldOut = remaining <= 0
-  const almostGone = remaining > 0 && remaining <= Math.ceil(max * 0.25)
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-      <div style={{ flex: 1, height: 5, background: '#F0EBE3', borderRadius: 3, overflow: 'hidden' }}>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${soldOut ? 100 : pct}%` }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            height: '100%', borderRadius: 3,
-            background: soldOut
-              ? '#ccc'
-              : almostGone
-                ? 'linear-gradient(135deg, #f87171, #E8453C)'
-                : 'linear-gradient(135deg, #a3e635, #4ade80)',
-          }}
-        />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: isUrgent ? '#E8453C' : '#C4A265', textTransform: 'uppercase', letterSpacing: 1 }}>
+          Drop tra
+        </span>
+        {[pad(time.h), pad(time.m), pad(time.s)].map((v, i) => (
+          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {i > 0 && <span style={{ fontSize: 16, fontWeight: 700, color: isUrgent ? '#E8453C' : '#C4A265', opacity: 0.4 }}>:</span>}
+            <span style={{
+              fontSize: 18, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
+              color: isUrgent ? '#E8453C' : '#C4A265',
+              fontFamily: "'DM Sans', sans-serif",
+            }}>
+              {v}
+            </span>
+          </span>
+        ))}
       </div>
-      <span style={{
-        fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
-        color: soldOut ? '#aaa' : almostGone ? '#E8453C' : '#8A8680',
-      }}>
-        {soldOut ? (
-          'Esauriti'
-        ) : almostGone ? (
-          <>{remaining} rimast{remaining === 1 ? 'o' : 'i'} — affrettati!</>
-        ) : (
-          <>{remaining}/{max} disponibili</>
-        )}
-      </span>
     </div>
   )
 }
 
-/* ── Deal Card ── */
+/* ── Deal Card — visual with photo banner ── */
 function DealCard({ deal, onNavigate }) {
   const r = deal.restaurant
   const photo = r?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
   const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
   const soldOut = remaining !== null && remaining <= 0
+  const almostGone = remaining !== null && remaining > 0 && remaining <= Math.ceil(deal.max_redemptions * 0.25)
   const isDrop = deal.drop_time && new Date(deal.drop_time).getTime() > Date.now()
+  const pct = deal.max_redemptions ? Math.max(2, (remaining / deal.max_redemptions) * 100) : 100
 
   return (
     <motion.div
       variants={fadeUp}
+      whileTap={!soldOut && !isDrop ? { scale: 0.985 } : {}}
       onClick={() => !soldOut && !isDrop && onNavigate(r)}
       style={{
-        background: '#fff', borderRadius: 18,
+        background: '#fff', borderRadius: 20, overflow: 'hidden',
         border: '1px solid #E8E0D6',
-        overflow: 'hidden',
         cursor: soldOut || isDrop ? 'default' : 'pointer',
-        opacity: soldOut ? 0.6 : 1,
       }}
     >
-      {/* Top: Photo + info row */}
-      <div className="flex gap-3.5" style={{ padding: 14, paddingBottom: 0 }}>
-        {/* Photo */}
+      {/* Photo banner */}
+      <div style={{ position: 'relative', height: 140, overflow: 'hidden' }}>
+        {photo ? (
+          <img
+            src={photo.photo_url} alt={r?.name}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              filter: soldOut ? 'grayscale(1) brightness(0.7)' : isDrop ? 'brightness(0.85)' : 'none',
+            }}
+          />
+        ) : (
+          <div style={{
+            width: '100%', height: '100%',
+            background: 'linear-gradient(135deg, #e8d5c0, #d4c0a8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, opacity: 0.5,
+          }}>
+            🍽️
+          </div>
+        )}
+        {/* Gradient overlay */}
         <div style={{
-          width: 80, height: 80, borderRadius: 14, flexShrink: 0,
-          overflow: 'hidden', position: 'relative',
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)',
+        }} />
+
+        {/* Discount badge — top right */}
+        <div style={{
+          position: 'absolute', top: 12, right: 12,
+          background: soldOut ? 'rgba(0,0,0,0.5)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+          color: soldOut ? '#ccc' : '#1a2e05',
+          fontSize: 14, fontWeight: 800,
+          padding: '5px 14px', borderRadius: 10,
+          textDecoration: soldOut ? 'line-through' : 'none',
+          backdropFilter: soldOut ? 'blur(8px)' : 'none',
         }}>
-          {photo ? (
-            <img src={photo.photo_url} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
-              🍽️
-            </div>
-          )}
+          {deal.discount_value}
         </div>
 
-        {/* Info */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {/* Drop label — top left */}
+        {isDrop && (
+          <div style={{
+            position: 'absolute', top: 12, left: 12,
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+            color: '#C4A265', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+            padding: '5px 10px', borderRadius: 8,
+          }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#C4A265"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            Prossimo drop
+          </div>
+        )}
+
+        {/* Sold out label */}
+        {soldOut && (
+          <div style={{
+            position: 'absolute', top: 12, left: 12,
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+            color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+            padding: '5px 10px', borderRadius: 8,
+          }}>
+            Esaurito
+          </div>
+        )}
+
+        {/* FOMO — almost gone pulse */}
+        {almostGone && !soldOut && !isDrop && (
+          <div style={{
+            position: 'absolute', top: 12, left: 12,
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(232,69,60,0.85)', backdropFilter: 'blur(8px)',
+            color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+            padding: '5px 10px', borderRadius: 8,
+            animation: 'fomoPulse 2s ease-in-out infinite',
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%', background: '#fff',
+              animation: 'cityPulse 1.5s ease-in-out infinite',
+            }} />
+            Ultimi {remaining}!
+          </div>
+        )}
+
+        {/* Name on photo */}
+        <div style={{ position: 'absolute', bottom: 12, left: 16, right: 16 }}>
           <h3 style={{
             fontFamily: "'TAN Songbird', serif",
-            fontSize: 17, fontWeight: 600, color: '#22181C', lineHeight: 1.2,
-            marginBottom: 4,
+            fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.15,
+            textShadow: '0 1px 6px rgba(0,0,0,0.3)',
           }}>
             {r?.name}
           </h3>
-          <p style={{ fontSize: 12, color: '#8A8680' }}>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
             {r?.cuisine_type}{r?.city ? ` · ${r.city}` : ''}
           </p>
         </div>
       </div>
 
-      {/* Discount info section */}
-      <div style={{ padding: '12px 14px 14px' }}>
-        {/* Discount badge + title + conditions */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          flexWrap: 'wrap', marginBottom: 4,
-        }}>
-          <span style={{
-            background: soldOut ? '#ddd' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-            color: soldOut ? '#999' : '#1a2e05',
-            fontSize: 13, fontWeight: 800,
-            padding: '4px 12px', borderRadius: 8,
-            textDecoration: soldOut ? 'line-through' : 'none',
-          }}>
-            {deal.discount_value}
-          </span>
-          {deal.title && (
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#22181C' }}>
-              {deal.title}
-            </span>
-          )}
-        </div>
-
+      {/* Info section */}
+      <div style={{ padding: '14px 16px 16px' }}>
+        {/* Title + conditions */}
+        {deal.title && (
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 3 }}>
+            {deal.title}
+          </p>
+        )}
         {deal.conditions && (
-          <p style={{ fontSize: 11, color: '#8A8680', marginBottom: 4 }}>
+          <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 10 }}>
             {deal.conditions}
           </p>
         )}
 
-        {/* Drop countdown */}
-        {isDrop && <CountdownBadge dropTime={deal.drop_time} />}
-
-        {/* Sold out overlay text */}
-        {soldOut && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'rgba(0,0,0,0.04)', borderRadius: 8,
-            padding: '6px 10px', marginTop: 4,
-          }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" strokeLinecap="round">
-              <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
-            </svg>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#999' }}>
-              Sconti esauriti — Torna per il prossimo drop!
-            </span>
+        {/* Drop countdown — centered, prominent */}
+        {isDrop && (
+          <div style={{ marginBottom: 4 }}>
+            <CountdownBadge dropTime={deal.drop_time} />
           </div>
         )}
 
         {/* Progress bar */}
-        <DealProgress max={deal.max_redemptions} redeemed={deal.total_redeemed} />
+        {deal.max_redemptions && !isDrop && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700,
+                color: soldOut ? '#aaa' : almostGone ? '#E8453C' : '#22181C',
+              }}>
+                {soldOut ? (
+                  'Sconti esauriti'
+                ) : almostGone ? (
+                  <>Solo {remaining} rimast{remaining === 1 ? 'o' : 'i'} — affrettati!</>
+                ) : (
+                  <>{remaining} di {deal.max_redemptions} disponibili</>
+                )}
+              </span>
+              {!soldOut && (
+                <span style={{ fontSize: 10, color: '#8A8680', fontWeight: 600 }}>
+                  {Math.round(100 - pct)}% preso
+                </span>
+              )}
+            </div>
+            <div style={{ height: 6, background: '#F0EBE3', borderRadius: 3, overflow: 'hidden' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${soldOut ? 100 : pct}%` }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  height: '100%', borderRadius: 3,
+                  background: soldOut
+                    ? '#D4CFC8'
+                    : almostGone
+                      ? 'linear-gradient(135deg, #f87171, #E8453C)'
+                      : 'linear-gradient(135deg, #a3e635, #4ade80)',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Sold out CTA */}
+        {soldOut && (
+          <p style={{ fontSize: 11, color: '#C4A265', fontWeight: 600, marginTop: 8 }}>
+            Attiva le notifiche per il prossimo drop
+          </p>
+        )}
       </div>
     </motion.div>
   )
@@ -317,7 +374,7 @@ export default function DealsPage() {
 
               {loading && (
                 <div className="flex flex-col gap-4 mt-4">
-                  {[1, 2, 3].map(i => <div key={i} className="skeleton h-44 rounded-2xl" />)}
+                  {[1, 2, 3].map(i => <div key={i} style={{ height: i === 1 ? 200 : 180, borderRadius: 20, background: '#fff', border: '1px solid #E8E0D6' }} className="skeleton" />)}
                 </div>
               )}
 
@@ -341,9 +398,9 @@ export default function DealsPage() {
                     Offerta in evidenza
                   </p>
 
-                  {/* HERO CARD — same as restaurant list featured */}
+                  {/* HERO CARD */}
                   {featuredDeal && featuredDeal.restaurant && (
-                    <div style={{ marginBottom: 16 }}>
+                    <div style={{ marginBottom: 20 }}>
                       <RestaurantCard
                         restaurant={featuredDeal.restaurant}
                         index={0}
@@ -360,10 +417,10 @@ export default function DealsPage() {
                   {/* Other deals */}
                   {otherDeals.length > 0 && (
                     <>
-                      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '0 0 14px 6px' }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '4px 0 14px 6px' }}>
                         Altri sconti
                       </p>
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-4">
                         {otherDeals.map((deal) => (
                           <DealCard
                             key={deal.id}
@@ -376,28 +433,32 @@ export default function DealsPage() {
                   )}
 
                   {/* How it works */}
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '24px 0 14px 6px' }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '28px 0 14px 6px' }}>
                     Come funziona
                   </p>
-                  <div style={{ background: '#fff', borderRadius: 16, padding: 18, border: '1.5px solid #E8E5DE' }}>
+                  <motion.div variants={fadeUp} style={{
+                    background: '#fff', borderRadius: 20, padding: '20px 18px',
+                    border: '1px solid #E8E0D6',
+                  }}>
                     {[
-                      { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
-                      { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
+                      { num: '1', color: '#E8453C', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
+                      { num: '2', color: '#C4A265', title: 'Il ristorante valida', desc: 'Il codice viene verificato e lo sconto applicato' },
+                      { num: '3', color: '#4ade80', title: 'Goditi il risparmio!', desc: 'Lo sconto viene applicato direttamente al conto' },
                     ].map((step, i) => (
-                      <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
+                      <div key={i} className="flex gap-3.5" style={{ marginBottom: i < 2 ? 18 : 0, alignItems: 'flex-start' }}>
                         <div style={{
-                          width: 36, height: 36, borderRadius: 10, background: step.bg,
+                          width: 34, height: 34, borderRadius: 10,
+                          background: `${step.color}12`, border: `1px solid ${step.color}20`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 16, flexShrink: 0,
-                        }}>{step.icon}</div>
-                        <div>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>{step.title}</p>
-                          <p style={{ fontSize: 11, color: '#8A8680' }}>{step.desc}</p>
+                          fontSize: 14, fontWeight: 800, color: step.color, flexShrink: 0,
+                        }}>{step.num}</div>
+                        <div style={{ paddingTop: 3 }}>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>{step.title}</p>
+                          <p style={{ fontSize: 12, color: '#8A8680', lineHeight: 1.5 }}>{step.desc}</p>
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
                 </>
               )}
             </>
