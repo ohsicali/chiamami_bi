@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
-import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import Footer from '../../components/Layout/Footer'
+import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -138,112 +138,18 @@ export default function DealsPage() {
                     Offerta in evidenza
                   </p>
 
-                  {/* HERO DARK CARD — featured deal */}
-                  {featuredDeal && (
-                    <motion.div
-                      variants={fadeUp}
-                      onClick={() => navigate(`/restaurant/${featuredDeal.restaurant?.slug || slugify(featuredDeal.restaurant?.name || '')}`)}
-                      style={{
-                        borderRadius: 22, overflow: 'hidden', position: 'relative', height: 180,
-                        marginBottom: 16, cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)',
-                      }}>
-                        {featuredDeal.restaurant?.photos?.[0]?.photo_url && (
-                          <img
-                            src={featuredDeal.restaurant.photos[0].photo_url}
-                            alt=""
-                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }}
-                          />
-                        )}
-                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
-                      </div>
-
-                      <div style={{ position: 'relative', zIndex: 2, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
-                        <div className="flex justify-between items-start">
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            background: '#C4A265', color: '#fff',
-                            fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
-                            padding: '4px 10px', borderRadius: 6,
-                          }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                            Top sconto
-                          </span>
-                          <span style={{
-                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
-                            fontSize: 16, fontWeight: 800,
-                            padding: '6px 14px', borderRadius: 12,
-                          }}>
-                            {featuredDeal.discount_value}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h3 style={{
-                            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                            fontSize: 24, fontWeight: 600, color: '#fff', lineHeight: 1.1, marginBottom: 4,
-                          }}>
-                            {featuredDeal.restaurant?.name}
-                          </h3>
-                          {(() => {
-                            const r = featuredDeal.restaurant
-                            const primaryType = (r?.category || [])[0] || r?.cuisine_type
-                            const cat = primaryType ? getCategoryInfo(primaryType) : null
-                            const priceStr = PRICE_LABELS[r?.price_range] || ''
-                            return (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap', marginTop: 2 }}>
-                                {cat && (
-                                  <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 3,
-                                    backgroundColor: `${cat.color}30`,
-                                    color: '#fff', fontSize: 11, fontWeight: 600,
-                                    padding: '2px 8px', borderRadius: 20,
-                                  }}>
-                                    {cat.emoji} {cat.name}
-                                  </span>
-                                )}
-                                {r?.recommended_for?.length > 0 && (
-                                  <>
-                                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
-                                    <span>{r.recommended_for[0]}</span>
-                                  </>
-                                )}
-                                {priceStr && (
-                                  <>
-                                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
-                                    <span style={{ fontWeight: 600 }}>{priceStr}</span>
-                                  </>
-                                )}
-                                {r?.city && (
-                                  <>
-                                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
-                                    <span>{r.city}</span>
-                                  </>
-                                )}
-                              </div>
-                            )
-                          })()}
-                          {/* Progress bar */}
-                          {featuredDeal.max_redemptions && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 2, overflow: 'hidden' }}>
-                                <div style={{
-                                  width: `${Math.max(5, ((featuredDeal.max_redemptions - (featuredDeal.current_redemptions || 0)) / featuredDeal.max_redemptions) * 100)}%`,
-                                  height: '100%', background: '#C4A265', borderRadius: 2,
-                                }} />
-                              </div>
-                              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                {featuredDeal.max_redemptions - (featuredDeal.current_redemptions || 0)}/{featuredDeal.max_redemptions} rimasti
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
+                  {/* HERO CARD — same as restaurant list featured */}
+                  {featuredDeal && featuredDeal.restaurant && (
+                    <div style={{ marginBottom: 16 }}>
+                      <RestaurantCard
+                        restaurant={featuredDeal.restaurant}
+                        index={0}
+                        onClick={(r) => navigate(`/restaurant/${r.slug || slugify(r.name || '')}`)}
+                        hasDiscount
+                        discountTitle={featuredDeal.discount_value}
+                        variant="hero"
+                      />
+                    </div>
                   )}
 
                   {/* Other deals */}
