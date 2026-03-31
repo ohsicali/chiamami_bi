@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
+import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import Footer from '../../components/Layout/Footer'
 
 function slugify(name) {
@@ -188,11 +189,44 @@ export default function DealsPage() {
                           }}>
                             {featuredDeal.restaurant?.name}
                           </h3>
-                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span>{featuredDeal.restaurant?.cuisine_type}</span>
-                            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
-                            <span>{featuredDeal.restaurant?.city}</span>
-                          </div>
+                          {(() => {
+                            const r = featuredDeal.restaurant
+                            const primaryType = (r?.category || [])[0] || r?.cuisine_type
+                            const cat = primaryType ? getCategoryInfo(primaryType) : null
+                            const priceStr = PRICE_LABELS[r?.price_range] || ''
+                            return (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap', marginTop: 2 }}>
+                                {cat && (
+                                  <span style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                                    backgroundColor: `${cat.color}30`,
+                                    color: '#fff', fontSize: 11, fontWeight: 600,
+                                    padding: '2px 8px', borderRadius: 20,
+                                  }}>
+                                    {cat.emoji} {cat.name}
+                                  </span>
+                                )}
+                                {r?.recommended_for?.length > 0 && (
+                                  <>
+                                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                                    <span>{r.recommended_for[0]}</span>
+                                  </>
+                                )}
+                                {priceStr && (
+                                  <>
+                                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                                    <span style={{ fontWeight: 600 }}>{priceStr}</span>
+                                  </>
+                                )}
+                                {r?.city && (
+                                  <>
+                                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                                    <span>{r.city}</span>
+                                  </>
+                                )}
+                              </div>
+                            )
+                          })()}
                           {/* Progress bar */}
                           {featuredDeal.max_redemptions && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
