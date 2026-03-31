@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
+import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import Footer from '../../components/Layout/Footer'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 
@@ -22,6 +23,7 @@ const fadeUp = {
 export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts, loading } = useActiveDiscounts()
   const [tab, setTab] = useState('available') // 'available' | 'mine'
 
@@ -145,6 +147,8 @@ export default function DealsPage() {
                         restaurant={featuredDeal.restaurant}
                         index={0}
                         onClick={(r) => navigate(`/restaurant/${r.slug || slugify(r.name || '')}`)}
+                        saved={isSaved(featuredDeal.restaurant.id)}
+                        onSaveToggle={user ? () => toggleSave(featuredDeal.restaurant.id) : () => navigate('/login')}
                         hasDiscount
                         discountTitle={featuredDeal.discount_value}
                         variant="hero"
