@@ -131,6 +131,7 @@ export function useUserRedemption(discountId, userId) {
 
 /**
  * Fetch all active discounts (for deals page)
+ * Separates: activeDrops, upcomingDrops, featured, regular
  */
 export function useActiveDiscounts() {
   const [discounts, setDiscounts] = useState([])
@@ -154,7 +155,51 @@ export function useActiveDiscounts() {
       })
   }, [])
 
-  return { discounts, loading }
+  const now = new Date().toISOString()
+  const activeDrops = discounts.filter(d =>
+    d.is_drop && d.drop_starts_at && d.drop_starts_at <= now &&
+    (!d.drop_ends_at || d.drop_ends_at > now) &&
+    (!d.max_quantity || (d.claimed_count || 0) < d.max_quantity)
+  )
+  const upcomingDrops = discounts.filter(d =>
+    d.is_drop && d.drop_starts_at && d.drop_starts_at > now
+  )
+  const featured = discounts.filter(d => d.is_featured && !d.is_drop)
+  const regular = discounts.filter(d => !d.is_drop && !d.is_featured)
+
+  return { discounts, activeDrops, upcomingDrops, featured, regular, loading }
+}
+
+/**
+ * Fetch user's claimed discounts (active + used) for "I miei" tab
+ */
+export function useMyDiscounts(userId) {
+  const [active, setActive] = useState([])
+  const [used, setUsed] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId || !isSupabaseConfigured()) {
+      setActive([])
+      setUsed([])
+      setLoading(false)
+      return
+    }
+
+    supabase
+      .from('discount_redemptions')
+      .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
+      .eq('user_id', userId)
+      .order('generated_at', { ascending: false })
+      .then(({ data }) => {
+        const items = data || []
+        setActive(items.filter(r => r.status === 'generated'))
+        setUsed(items.filter(r => r.status === 'redeemed'))
+        setLoading(false)
+      })
+  }, [userId])
+
+  return { active, used, loading }
 }
 
 /**
