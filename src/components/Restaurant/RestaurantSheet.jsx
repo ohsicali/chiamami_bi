@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
+import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
 import ReviewSection from '../Review/ReviewSection'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
@@ -1056,6 +1057,11 @@ export default function RestaurantSheet({
                   allRestaurants={allRestaurants}
                   onSelect={onSelectNearby}
                 />
+              </motion.div>
+
+              {/* Footer */}
+              <motion.div variants={itemVariants} style={{ marginTop: 8 }}>
+                <Footer />
               </motion.div>
             </motion.div>
           </div>
