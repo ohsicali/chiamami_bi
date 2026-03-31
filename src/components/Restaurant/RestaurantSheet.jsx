@@ -280,9 +280,10 @@ export default function RestaurantSheet({
             </button>
 
             <p style={{
+              position: 'absolute', left: '50%', transform: 'translateX(-50%)',
               fontSize: 15, fontWeight: 700, color: '#22181C',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              maxWidth: '50%', textAlign: 'center',
+              maxWidth: '55%', textAlign: 'center',
             }}>
               {restaurant.name}
             </p>
