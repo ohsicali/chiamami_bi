@@ -18,29 +18,21 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
 }
 
-const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
-
 export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { discounts, loading } = useActiveDiscounts()
-  const [tab, setTab] = useState('available')
+  const [tab, setTab] = useState('available') // 'available' | 'mine'
 
+  // TODO: fetch user's redeemed discounts for "I miei" tab
   const myDiscounts = []
 
   const featuredDeal = discounts[0]
   const otherDeals = discounts.slice(1)
 
-  const remaining = (deal) =>
-    deal.max_redemptions ? deal.max_redemptions - (deal.current_redemptions || 0) : null
-  const pct = (deal) =>
-    deal.max_redemptions
-      ? Math.max(5, ((deal.max_redemptions - (deal.current_redemptions || 0)) / deal.max_redemptions) * 100)
-      : 100
-
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: '#FAF7F2' }}>
-      {/* ── Header ── */}
+      {/* Header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
@@ -68,199 +60,162 @@ export default function DealsPage() {
 
         {/* Tab switcher */}
         <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid #E8E5DE' }}>
-          {['available', 'mine'].map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 700,
-                background: tab === t ? '#22181C' : 'transparent',
-                color: tab === t ? '#FAF7F2' : '#8A8680',
-                border: 'none', cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {t === 'available' ? 'Disponibili' : 'I miei'}
-            </button>
-          ))}
+          <button
+            onClick={() => setTab('available')}
+            style={{
+              flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 700,
+              background: tab === 'available' ? '#22181C' : 'transparent',
+              color: tab === 'available' ? '#FAF7F2' : '#8A8680',
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            Disponibili
+          </button>
+          <button
+            onClick={() => setTab('mine')}
+            style={{
+              flex: 1, textAlign: 'center', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 600,
+              background: tab === 'mine' ? '#22181C' : 'transparent',
+              color: tab === 'mine' ? '#FAF7F2' : '#8A8680',
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            I miei
+          </button>
         </div>
       </div>
 
-      {/* ── Content ── */}
-      <div className="flex-1 px-5" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
-        <motion.div initial="hidden" animate="visible" variants={stagger}>
+      {/* Content */}
+      <div className="flex-1 px-4" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
+        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
 
-          {/* ═══ AVAILABLE TAB ═══ */}
+          {/* AVAILABLE TAB */}
           {tab === 'available' && (
             <>
               {/* CTA for non-logged users */}
               {!user && (
                 <motion.div variants={fadeUp} style={{
-                  borderRadius: 18, padding: '20px 22px', marginBottom: 20, marginTop: 16,
-                  background: '#fff',
-                  border: '1px solid #E8E0D6',
+                  borderRadius: 18, padding: 20, marginBottom: 16, marginTop: 16,
+                  background: 'linear-gradient(135deg, rgba(232,69,60,0.06), rgba(196,162,101,0.06))',
+                  border: '1.5px solid #E8E5DE',
                 }}>
-                  <div className="flex items-start gap-3">
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 12,
-                      background: 'linear-gradient(135deg, rgba(163,230,53,0.15), rgba(74,222,128,0.15))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, fontSize: 18,
-                    }}>🏷️</div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 4 }}>Registrati per sbloccare gli sconti</p>
-                      <p style={{ fontSize: 12, color: '#8A8680', lineHeight: 1.5, marginBottom: 14 }}>Crea un account gratuito per accedere a sconti esclusivi nei ristoranti selezionati da Bi</p>
-                      <Link to="/login" style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        borderRadius: 12, background: '#E8453C', color: '#fff',
-                        padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                      }}>
-                        Registrati gratis
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                      </Link>
-                    </div>
-                  </div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#22181C', marginBottom: 6 }}>Registrati per sbloccare gli sconti</p>
+                  <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 12 }}>Crea un account gratuito per accedere a sconti esclusivi</p>
+                  <Link to="/login" style={{
+                    display: 'inline-block', borderRadius: 12, background: '#E8453C', color: '#fff',
+                    padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                    boxShadow: '0 4px 16px rgba(232,69,60,0.3)',
+                  }}>
+                    Registrati gratis
+                  </Link>
                 </motion.div>
               )}
 
-              {/* Loading */}
               {loading && (
                 <div className="flex flex-col gap-4 mt-4">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} style={{ height: i === 1 ? 200 : 100, borderRadius: 18, background: '#fff', border: '1px solid #E8E0D6' }} className="skeleton" />
-                  ))}
+                  {[1, 2, 3].map(i => <div key={i} className="skeleton h-44 rounded-2xl" />)}
                 </div>
               )}
 
-              {/* Empty state */}
               {!loading && discounts.length === 0 && (
-                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 60, paddingBottom: 60 }}>
-                  <div style={{
-                    width: 72, height: 72, borderRadius: 20,
-                    background: 'linear-gradient(135deg, rgba(163,230,53,0.12), rgba(74,222,128,0.12))',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 32, marginBottom: 16,
-                  }}>🏷️</div>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: '#22181C', fontFamily: "'TAN Songbird', serif" }}>Nessuno sconto attivo</p>
-                  <p style={{ fontSize: 13, color: '#8A8680', marginTop: 6, maxWidth: 240, lineHeight: 1.5 }}>Torna presto, Bi sta preparando nuove offerte per te!</p>
+                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-16 text-center">
+                  <span style={{ fontSize: 48, marginBottom: 12 }}>🏷️</span>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto attivo</p>
+                  <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Torna presto, Bi sta preparando nuove offerte!</p>
                   <Link to="/" style={{
-                    marginTop: 24, borderRadius: 14, background: '#22181C', color: '#FAF7F2',
-                    padding: '12px 24px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                    marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
+                    padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none',
                   }}>
                     Esplora i ristoranti
                   </Link>
                 </motion.div>
               )}
 
-              {/* Deals list */}
               {!loading && discounts.length > 0 && (
                 <>
-                  {/* Section label */}
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase', color: '#8A8680', margin: '20px 0 14px 2px' }}>
-                    In evidenza
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '16px 0 14px 6px' }}>
+                    Offerta in evidenza
                   </p>
 
-                  {/* ── HERO FEATURED DEAL ── */}
+                  {/* HERO DARK CARD — featured deal */}
                   {featuredDeal && (
                     <motion.div
                       variants={fadeUp}
                       onClick={() => navigate(`/restaurant/${featuredDeal.restaurant?.slug || slugify(featuredDeal.restaurant?.name || '')}`)}
                       style={{
-                        borderRadius: 20, overflow: 'hidden', position: 'relative',
-                        marginBottom: 20, cursor: 'pointer',
-                        background: '#fff', border: '1px solid #E8E0D6',
+                        borderRadius: 22, overflow: 'hidden', position: 'relative', height: 180,
+                        marginBottom: 16, cursor: 'pointer',
                       }}
                     >
-                      {/* Photo */}
-                      <div style={{ position: 'relative', height: 160, overflow: 'hidden' }}>
-                        {featuredDeal.restaurant?.photos?.[0]?.photo_url ? (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)',
+                      }}>
+                        {featuredDeal.restaurant?.photos?.[0]?.photo_url && (
                           <img
                             src={featuredDeal.restaurant.photos[0].photo_url}
-                            alt={featuredDeal.restaurant?.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            alt=""
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }}
                           />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e8d5c0, #d4c0a8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, opacity: 0.5 }}>
-                            🍽️
-                          </div>
                         )}
-                        {/* Gradient overlay at bottom for blending */}
-                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)' }} />
-                        {/* Discount badge */}
-                        <div style={{
-                          position: 'absolute', top: 14, right: 14,
-                          background: 'linear-gradient(135deg, #a3e635, #4ade80)',
-                          color: '#1a2e05', fontSize: 15, fontWeight: 800,
-                          padding: '6px 14px', borderRadius: 12,
-                          boxShadow: '0 4px 12px rgba(163,230,53,0.3)',
-                        }}>
-                          {featuredDeal.discount_value}
-                        </div>
-                        {/* Gold badge */}
-                        <div style={{
-                          position: 'absolute', top: 14, left: 14,
-                          display: 'inline-flex', alignItems: 'center', gap: 4,
-                          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
-                          color: '#C4A265',
-                          fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
-                          padding: '5px 10px', borderRadius: 8,
-                        }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="#C4A265"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-                          Scelto da Bi
-                        </div>
-                        {/* Restaurant name on photo */}
-                        <h3 style={{
-                          position: 'absolute', bottom: 14, left: 18, right: 18,
-                          fontFamily: "'TAN Songbird', serif",
-                          fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.15,
-                          textShadow: '0 1px 8px rgba(0,0,0,0.4)',
-                        }}>
-                          {featuredDeal.restaurant?.name}
-                        </h3>
+                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
                       </div>
 
-                      {/* Info section */}
-                      <div style={{ padding: '16px 18px 18px' }}>
-                        <div className="flex items-center gap-2" style={{ marginBottom: remaining(featuredDeal) !== null ? 12 : 0 }}>
-                          <span style={{ fontSize: 12, color: '#8A8680' }}>
-                            {featuredDeal.restaurant?.cuisine_type}
+                      <div style={{ position: 'relative', zIndex: 2, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                        <div className="flex justify-between items-start">
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            background: '#C4A265', color: '#fff',
+                            fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
+                            padding: '4px 10px', borderRadius: 6,
+                          }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                            Top sconto
                           </span>
-                          <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D4CFC8', display: 'inline-block' }} />
-                          <span style={{ fontSize: 12, color: '#8A8680' }}>
-                            {featuredDeal.restaurant?.city}
+                          <span style={{
+                            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+                            fontSize: 16, fontWeight: 800,
+                            padding: '6px 14px', borderRadius: 12,
+                          }}>
+                            {featuredDeal.discount_value}
                           </span>
-                          {featuredDeal.title && (
-                            <>
-                              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D4CFC8', display: 'inline-block' }} />
-                              <span style={{ fontSize: 12, color: '#22181C', fontWeight: 600 }}>
-                                {featuredDeal.title}
+                        </div>
+
+                        <div>
+                          <h3 style={{
+                            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                            fontSize: 24, fontWeight: 600, color: '#fff', lineHeight: 1.1, marginBottom: 4,
+                          }}>
+                            {featuredDeal.restaurant?.name}
+                          </h3>
+                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span>{featuredDeal.restaurant?.cuisine_type}</span>
+                            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                            <span>{featuredDeal.restaurant?.city}</span>
+                          </div>
+                          {/* Progress bar */}
+                          {featuredDeal.max_redemptions && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.12)', borderRadius: 2, overflow: 'hidden' }}>
+                                <div style={{
+                                  width: `${Math.max(5, ((featuredDeal.max_redemptions - (featuredDeal.current_redemptions || 0)) / featuredDeal.max_redemptions) * 100)}%`,
+                                  height: '100%', background: '#C4A265', borderRadius: 2,
+                                }} />
+                              </div>
+                              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {featuredDeal.max_redemptions - (featuredDeal.current_redemptions || 0)}/{featuredDeal.max_redemptions} rimasti
                               </span>
-                            </>
+                            </div>
                           )}
                         </div>
-                        {/* Progress bar */}
-                        {remaining(featuredDeal) !== null && (
-                          <div className="flex items-center gap-3">
-                            <div style={{ flex: 1, height: 5, background: '#F0EBE3', borderRadius: 3, overflow: 'hidden' }}>
-                              <div style={{
-                                width: `${pct(featuredDeal)}%`,
-                                height: '100%', background: 'linear-gradient(135deg, #a3e635, #4ade80)', borderRadius: 3,
-                                transition: 'width 0.6s ease',
-                              }} />
-                            </div>
-                            <span style={{ fontSize: 11, color: '#8A8680', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              {remaining(featuredDeal)}/{featuredDeal.max_redemptions} rimasti
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </motion.div>
                   )}
 
-                  {/* ── Other deals ── */}
+                  {/* Other deals */}
                   {otherDeals.length > 0 && (
                     <>
-                      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase', color: '#8A8680', margin: '4px 0 14px 2px' }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '0 0 14px 6px' }}>
                         Altri sconti
                       </p>
                       <div className="flex flex-col gap-3">
@@ -275,55 +230,49 @@ export default function DealsPage() {
                               onClick={() => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)}
                               style={{
                                 padding: 14, background: '#fff', borderRadius: 18,
-                                border: '1px solid #E8E0D6',
+                                border: '1px solid rgba(0,0,0,0.04)',
+                                boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
                                 cursor: 'pointer',
-                                transition: 'box-shadow 0.2s ease',
                               }}
                             >
-                              {/* Photo thumbnail */}
-                              <div style={{
-                                width: 80, height: 80, borderRadius: 14, flexShrink: 0, overflow: 'hidden', position: 'relative',
-                              }}>
+                              <div style={{ width: 80, height: 80, borderRadius: 14, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
                                 {photo ? (
                                   <img src={photo.photo_url} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
-                                  <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+                                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e8d5c0, #d4c0a8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, opacity: 0.6 }}>
                                     🍽️
                                   </div>
                                 )}
-                                {/* Discount badge on photo */}
-                                <div style={{
-                                  position: 'absolute', bottom: 6, right: 6,
-                                  background: 'linear-gradient(135deg, #a3e635, #4ade80)',
-                                  color: '#1a2e05', fontSize: 10, fontWeight: 800,
-                                  padding: '3px 7px', borderRadius: 7,
-                                }}>
-                                  {deal.discount_value}
-                                </div>
                               </div>
-
-                              {/* Info */}
                               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <h3 style={{
-                                  fontFamily: "'TAN Songbird', serif",
-                                  fontSize: 16, fontWeight: 600, color: '#22181C', lineHeight: 1.2,
-                                  marginBottom: 4,
-                                }}>
-                                  {r?.name}
-                                </h3>
-                                <p style={{ fontSize: 12, color: '#8A8680', marginBottom: remaining(deal) !== null ? 8 : 0 }}>
+                                <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
+                                  <h3 style={{
+                                    fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                                    fontSize: 17, fontWeight: 600, color: '#22181C', lineHeight: 1.2,
+                                  }}>
+                                    {r?.name}
+                                  </h3>
+                                  <span style={{
+                                    background: 'rgba(163,230,53,0.15)', color: '#22181C',
+                                    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                                    whiteSpace: 'nowrap', flexShrink: 0,
+                                  }}>
+                                    {deal.discount_value}
+                                  </span>
+                                </div>
+                                <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 6 }}>
                                   {r?.cuisine_type} · {r?.city}
                                 </p>
-                                {remaining(deal) !== null && (
-                                  <div className="flex items-center gap-2">
-                                    <div style={{ flex: 1, height: 4, background: '#F0EBE3', borderRadius: 2, overflow: 'hidden' }}>
+                                {deal.max_redemptions && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div style={{ flex: 1, height: 4, background: '#eee', borderRadius: 2, overflow: 'hidden' }}>
                                       <div style={{
-                                        width: `${pct(deal)}%`,
+                                        width: `${Math.max(5, ((deal.max_redemptions - (deal.current_redemptions || 0)) / deal.max_redemptions) * 100)}%`,
                                         height: '100%', background: 'linear-gradient(135deg, #a3e635, #4ade80)', borderRadius: 2,
                                       }} />
                                     </div>
                                     <span style={{ fontSize: 10, color: '#8A8680', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                      {remaining(deal)}/{deal.max_redemptions}
+                                      {deal.max_redemptions - (deal.current_redemptions || 0)}/{deal.max_redemptions} rimasti
                                     </span>
                                   </div>
                                 )}
@@ -335,81 +284,59 @@ export default function DealsPage() {
                     </>
                   )}
 
-                  {/* ── Come funziona ── */}
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase', color: '#8A8680', margin: '28px 0 14px 2px' }}>
+                  {/* How it works */}
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', margin: '24px 0 14px 6px' }}>
                     Come funziona
                   </p>
-                  <motion.div variants={fadeUp} style={{
-                    background: '#fff', borderRadius: 18, padding: '20px 22px',
-                    border: '1px solid #E8E0D6',
-                  }}>
+                  <div style={{ background: '#fff', borderRadius: 16, padding: 18, border: '1.5px solid #E8E5DE' }}>
                     {[
-                      { num: '1', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante', color: '#E8453C' },
-                      { num: '2', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto', color: '#C4A265' },
-                      { num: '3', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto', color: '#4ade80' },
+                      { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
+                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+                      { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
                     ].map((step, i) => (
-                      <div key={i} className="flex gap-3.5" style={{ marginBottom: i < 2 ? 18 : 0, alignItems: 'flex-start' }}>
+                      <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
                         <div style={{
-                          width: 32, height: 32, borderRadius: 10,
-                          background: step.color + '12',
-                          border: `1px solid ${step.color}25`,
+                          width: 36, height: 36, borderRadius: 10, background: step.bg,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 13, fontWeight: 800, color: step.color,
-                          flexShrink: 0,
-                        }}>{step.num}</div>
-                        <div style={{ paddingTop: 2 }}>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 3 }}>{step.title}</p>
-                          <p style={{ fontSize: 12, color: '#8A8680', lineHeight: 1.5 }}>{step.desc}</p>
+                          fontSize: 16, flexShrink: 0,
+                        }}>{step.icon}</div>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>{step.title}</p>
+                          <p style={{ fontSize: 11, color: '#8A8680' }}>{step.desc}</p>
                         </div>
                       </div>
                     ))}
-                  </motion.div>
+                  </div>
                 </>
               )}
             </>
           )}
 
-          {/* ═══ MY DISCOUNTS TAB ═══ */}
+          {/* MY DISCOUNTS TAB */}
           {tab === 'mine' && (
             <>
               {!user ? (
-                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 60, paddingBottom: 60 }}>
-                  <div style={{
-                    width: 72, height: 72, borderRadius: 20,
-                    background: 'rgba(232,69,60,0.08)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 28, marginBottom: 16,
-                  }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                  </div>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: '#22181C', fontFamily: "'TAN Songbird', serif" }}>Accedi per vedere i tuoi sconti</p>
-                  <p style={{ fontSize: 13, color: '#8A8680', marginTop: 6, maxWidth: 240, lineHeight: 1.5 }}>I tuoi sconti attivi e già usati appariranno qui</p>
+                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-16 text-center">
+                  <span style={{ fontSize: 48, marginBottom: 12 }}>🔐</span>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Accedi per vedere i tuoi sconti</p>
+                  <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>I tuoi sconti attivi e usati appariranno qui</p>
                   <Link to="/login" style={{
-                    marginTop: 24, borderRadius: 14, background: '#E8453C', color: '#fff',
-                    padding: '12px 24px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
+                    padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none',
                   }}>
                     Accedi
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                   </Link>
                 </motion.div>
               ) : myDiscounts.length === 0 ? (
-                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 60, paddingBottom: 60 }}>
-                  <div style={{
-                    width: 72, height: 72, borderRadius: 20,
-                    background: 'rgba(196,162,101,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 28, marginBottom: 16,
-                  }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
-                  </div>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: '#22181C', fontFamily: "'TAN Songbird', serif" }}>Nessuno sconto riscattato</p>
-                  <p style={{ fontSize: 13, color: '#8A8680', marginTop: 6, maxWidth: 240, lineHeight: 1.5 }}>Quando riscatti uno sconto, lo troverai qui</p>
+                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-16 text-center">
+                  <span style={{ fontSize: 48, marginBottom: 12 }}>📋</span>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>Nessuno sconto riscattato</p>
+                  <p style={{ fontSize: 14, color: '#8A8680', marginTop: 4 }}>Quando riscatti uno sconto, lo troverai qui</p>
                   <button
                     onClick={() => setTab('available')}
                     style={{
-                      marginTop: 24, borderRadius: 14, background: '#22181C', color: '#FAF7F2',
-                      padding: '12px 24px', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+                      marginTop: 20, borderRadius: 14, background: '#E8453C', color: '#fff',
+                      padding: '12px 24px', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
                     }}
                   >
                     Vedi sconti disponibili
@@ -421,7 +348,7 @@ export default function DealsPage() {
         </motion.div>
       </div>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <Footer />
     </div>
   )
