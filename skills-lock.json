@@ -96,6 +96,11 @@
       "sourceType": "github",
       "computedHash": "49c9d1795813eec119a1fd9344e763fc911c05616411a68117b30d77204fa399"
     },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+    },
     "form-cro": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
