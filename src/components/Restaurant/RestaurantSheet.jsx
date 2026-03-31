@@ -582,7 +582,9 @@ export default function RestaurantSheet({
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 16, padding: '16px 18px',
-                    background: '#F0EBE3',
+                    background: '#fff',
+                    border: '1px solid #E8E0D6',
+                    boxShadow: '0 2px 8px rgba(34,24,28,0.04)',
                   }}>
                     <p style={{
                       fontSize: 14, fontWeight: 700, color: '#22181C',
@@ -595,7 +597,7 @@ export default function RestaurantSheet({
                         <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
                           flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           padding: '10px 14px', borderRadius: 10,
-                          background: '#fff', textDecoration: 'none',
+                          background: '#F0EBE3', textDecoration: 'none',
                           border: 'none',
                         }}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -617,7 +619,7 @@ export default function RestaurantSheet({
                         <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
                           flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           padding: '10px 14px', borderRadius: 10,
-                          background: '#fff', textDecoration: 'none',
+                          background: '#F0EBE3', textDecoration: 'none',
                           border: 'none',
                         }}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="#22181C">
