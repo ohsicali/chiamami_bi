@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -20,18 +20,219 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
 }
 
+/* ── Countdown hook ── */
+function useCountdown(targetDate) {
+  const calc = useCallback(() => {
+    if (!targetDate) return null
+    const diff = new Date(targetDate).getTime() - Date.now()
+    if (diff <= 0) return null
+    const h = Math.floor(diff / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    return { h, m, s, total: diff }
+  }, [targetDate])
+
+  const [time, setTime] = useState(calc)
+
+  useEffect(() => {
+    if (!targetDate) return
+    const id = setInterval(() => setTime(calc()), 1000)
+    return () => clearInterval(id)
+  }, [targetDate, calc])
+
+  return time
+}
+
+/* ── Countdown display component ── */
+function CountdownBadge({ dropTime }) {
+  const time = useCountdown(dropTime)
+  if (!time) return null
+
+  const pad = (n) => String(n).padStart(2, '0')
+  const isUrgent = time.total < 3600000 // less than 1h
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      background: isUrgent ? 'rgba(232,69,60,0.08)' : 'rgba(196,162,101,0.08)',
+      border: `1px solid ${isUrgent ? 'rgba(232,69,60,0.15)' : 'rgba(196,162,101,0.15)'}`,
+      borderRadius: 10, padding: '6px 10px',
+    }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isUrgent ? '#E8453C' : '#C4A265'} strokeWidth="2.5" strokeLinecap="round">
+        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+      </svg>
+      <span style={{
+        fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+        color: isUrgent ? '#E8453C' : '#C4A265',
+      }}>
+        Drop tra {pad(time.h)}:{pad(time.m)}:{pad(time.s)}
+      </span>
+    </div>
+  )
+}
+
+/* ── Progress / FOMO bar ── */
+function DealProgress({ max, redeemed }) {
+  if (!max) return null
+  const remaining = max - (redeemed || 0)
+  const pct = Math.max(2, (remaining / max) * 100)
+  const soldOut = remaining <= 0
+  const almostGone = remaining > 0 && remaining <= Math.ceil(max * 0.25)
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+      <div style={{ flex: 1, height: 5, background: '#F0EBE3', borderRadius: 3, overflow: 'hidden' }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${soldOut ? 100 : pct}%` }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            height: '100%', borderRadius: 3,
+            background: soldOut
+              ? '#ccc'
+              : almostGone
+                ? 'linear-gradient(135deg, #f87171, #E8453C)'
+                : 'linear-gradient(135deg, #a3e635, #4ade80)',
+          }}
+        />
+      </div>
+      <span style={{
+        fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
+        color: soldOut ? '#aaa' : almostGone ? '#E8453C' : '#8A8680',
+      }}>
+        {soldOut ? (
+          'Esauriti'
+        ) : almostGone ? (
+          <>{remaining} rimast{remaining === 1 ? 'o' : 'i'} — affrettati!</>
+        ) : (
+          <>{remaining}/{max} disponibili</>
+        )}
+      </span>
+    </div>
+  )
+}
+
+/* ── Deal Card ── */
+function DealCard({ deal, onNavigate }) {
+  const r = deal.restaurant
+  const photo = r?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
+  const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
+  const soldOut = remaining !== null && remaining <= 0
+  const isDrop = deal.drop_time && new Date(deal.drop_time).getTime() > Date.now()
+
+  return (
+    <motion.div
+      variants={fadeUp}
+      onClick={() => !soldOut && !isDrop && onNavigate(r)}
+      style={{
+        background: '#fff', borderRadius: 18,
+        border: '1px solid #E8E0D6',
+        overflow: 'hidden',
+        cursor: soldOut || isDrop ? 'default' : 'pointer',
+        opacity: soldOut ? 0.6 : 1,
+      }}
+    >
+      {/* Top: Photo + info row */}
+      <div className="flex gap-3.5" style={{ padding: 14, paddingBottom: 0 }}>
+        {/* Photo */}
+        <div style={{
+          width: 80, height: 80, borderRadius: 14, flexShrink: 0,
+          overflow: 'hidden', position: 'relative',
+        }}>
+          {photo ? (
+            <img src={photo.photo_url} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
+              🍽️
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h3 style={{
+            fontFamily: "'TAN Songbird', serif",
+            fontSize: 17, fontWeight: 600, color: '#22181C', lineHeight: 1.2,
+            marginBottom: 4,
+          }}>
+            {r?.name}
+          </h3>
+          <p style={{ fontSize: 12, color: '#8A8680' }}>
+            {r?.cuisine_type}{r?.city ? ` · ${r.city}` : ''}
+          </p>
+        </div>
+      </div>
+
+      {/* Discount info section */}
+      <div style={{ padding: '12px 14px 14px' }}>
+        {/* Discount badge + title + conditions */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          flexWrap: 'wrap', marginBottom: 4,
+        }}>
+          <span style={{
+            background: soldOut ? '#ddd' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+            color: soldOut ? '#999' : '#1a2e05',
+            fontSize: 13, fontWeight: 800,
+            padding: '4px 12px', borderRadius: 8,
+            textDecoration: soldOut ? 'line-through' : 'none',
+          }}>
+            {deal.discount_value}
+          </span>
+          {deal.title && (
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#22181C' }}>
+              {deal.title}
+            </span>
+          )}
+        </div>
+
+        {deal.conditions && (
+          <p style={{ fontSize: 11, color: '#8A8680', marginBottom: 4 }}>
+            {deal.conditions}
+          </p>
+        )}
+
+        {/* Drop countdown */}
+        {isDrop && <CountdownBadge dropTime={deal.drop_time} />}
+
+        {/* Sold out overlay text */}
+        {soldOut && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'rgba(0,0,0,0.04)', borderRadius: 8,
+            padding: '6px 10px', marginTop: 4,
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+            </svg>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#999' }}>
+              Sconti esauriti — Torna per il prossimo drop!
+            </span>
+          </div>
+        )}
+
+        {/* Progress bar */}
+        <DealProgress max={deal.max_redemptions} redeemed={deal.total_redeemed} />
+      </div>
+    </motion.div>
+  )
+}
+
 export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts, loading } = useActiveDiscounts()
-  const [tab, setTab] = useState('available') // 'available' | 'mine'
+  const [tab, setTab] = useState('available')
 
-  // TODO: fetch user's redeemed discounts for "I miei" tab
   const myDiscounts = []
 
   const featuredDeal = discounts[0]
   const otherDeals = discounts.slice(1)
+
+  const handleNavigate = (r) => {
+    navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
+  }
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: '#FAF7F2' }}>
@@ -146,7 +347,7 @@ export default function DealsPage() {
                       <RestaurantCard
                         restaurant={featuredDeal.restaurant}
                         index={0}
-                        onClick={(r) => navigate(`/restaurant/${r.slug || slugify(r.name || '')}`)}
+                        onClick={(r) => handleNavigate(r)}
                         saved={isSaved(featuredDeal.restaurant.id)}
                         onSaveToggle={user ? () => toggleSave(featuredDeal.restaurant.id) : () => navigate('/login')}
                         hasDiscount
@@ -163,67 +364,13 @@ export default function DealsPage() {
                         Altri sconti
                       </p>
                       <div className="flex flex-col gap-3">
-                        {otherDeals.map((deal) => {
-                          const r = deal.restaurant
-                          const photo = r?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
-                          return (
-                            <motion.div
-                              key={deal.id}
-                              variants={fadeUp}
-                              className="flex gap-3.5"
-                              onClick={() => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)}
-                              style={{
-                                padding: 14, background: '#fff', borderRadius: 18,
-                                border: '1px solid rgba(0,0,0,0.04)',
-                                boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <div style={{ width: 80, height: 80, borderRadius: 14, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
-                                {photo ? (
-                                  <img src={photo.photo_url} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e8d5c0, #d4c0a8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, opacity: 0.6 }}>
-                                    🍽️
-                                  </div>
-                                )}
-                              </div>
-                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                <div className="flex items-baseline gap-2" style={{ marginBottom: 3 }}>
-                                  <h3 style={{
-                                    fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                                    fontSize: 17, fontWeight: 600, color: '#22181C', lineHeight: 1.2,
-                                  }}>
-                                    {r?.name}
-                                  </h3>
-                                  <span style={{
-                                    background: 'rgba(163,230,53,0.15)', color: '#22181C',
-                                    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                                    whiteSpace: 'nowrap', flexShrink: 0,
-                                  }}>
-                                    {deal.discount_value}
-                                  </span>
-                                </div>
-                                <p style={{ fontSize: 12, color: '#8A8680', marginBottom: 6 }}>
-                                  {r?.cuisine_type} · {r?.city}
-                                </p>
-                                {deal.max_redemptions && (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <div style={{ flex: 1, height: 4, background: '#eee', borderRadius: 2, overflow: 'hidden' }}>
-                                      <div style={{
-                                        width: `${Math.max(5, ((deal.max_redemptions - (deal.current_redemptions || 0)) / deal.max_redemptions) * 100)}%`,
-                                        height: '100%', background: 'linear-gradient(135deg, #a3e635, #4ade80)', borderRadius: 2,
-                                      }} />
-                                    </div>
-                                    <span style={{ fontSize: 10, color: '#8A8680', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                      {deal.max_redemptions - (deal.current_redemptions || 0)}/{deal.max_redemptions} rimasti
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          )
-                        })}
+                        {otherDeals.map((deal) => (
+                          <DealCard
+                            key={deal.id}
+                            deal={deal}
+                            onNavigate={handleNavigate}
+                          />
+                        ))}
                       </div>
                     </>
                   )}
