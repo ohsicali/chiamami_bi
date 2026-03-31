@@ -51,12 +51,13 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
   const [generating, setGenerating] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
 
   if (!discount && discountLoading) return null
   if (!discount) return null
   const isExpired = new Date(discount.valid_until) < new Date()
   const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
-  if (isExpired || isMaxed) return null
+  if (isExpired || isMaxed || dismissed) return null
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
@@ -84,6 +85,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
       <motion.div
         initial={{ y: 80, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 80, opacity: 0, scale: 0.95 }}
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
         style={{
           position: 'absolute', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, zIndex: 30,
@@ -97,6 +99,21 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           border: '1px solid rgba(255,255,255,0.1)',
         }}
       >
+        {/* Close button */}
+        <button
+          onClick={() => setDismissed(true)}
+          style={{
+            position: 'absolute', top: -8, right: -8, zIndex: 1,
+            width: 24, height: 24, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.9)', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo da Bi</p>
           <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
