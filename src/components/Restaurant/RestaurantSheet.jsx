@@ -543,6 +543,38 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
+              {/* Video buttons — Instagram Reel / TikTok */}
+              {(restaurant.instagram_reel || restaurant.tiktok_url) && (
+                <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                  {restaurant.instagram_reel && (
+                    <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
+                      flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                      fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                      background: '#F0EBE3', color: '#22181C', border: 'none',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                      Reel
+                    </a>
+                  )}
+                  {restaurant.tiktok_url && (
+                    <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
+                      flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
+                      fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                      background: '#F0EBE3', color: '#22181C', border: 'none',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                      TikTok
+                    </a>
+                  )}
+                </motion.div>
+              )}
+
               {/* ── Secondo Bi — plain text ── */}
               {reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20, padding: '0 18px' }}>
@@ -992,71 +1024,6 @@ export default function RestaurantSheet({
                   </div>
                 </div>
               </motion.div>
-
-              {/* Video buttons — Instagram Reel / TikTok */}
-              {(restaurant.instagram_reel || restaurant.tiktok_url) && (
-                <motion.div variants={itemVariants} style={{
-                  display: 'flex', gap: 10,
-                }}>
-                  {restaurant.instagram_reel && (
-                    <motion.a
-                      href={restaurant.instagram_reel}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileTap={{ scale: 0.96 }}
-                      style={{
-                        flex: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                        padding: '14px 16px',
-                        borderRadius: 14,
-                        background: '#22181C',
-                        textDecoration: 'none',
-                        border: 'none',
-                      }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <defs>
-                          <linearGradient id="igBtnGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#F58529"/>
-                            <stop offset="50%" stopColor="#DD2A7B"/>
-                            <stop offset="100%" stopColor="#8134AF"/>
-                          </linearGradient>
-                        </defs>
-                        <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#igBtnGrad)" strokeWidth="2" fill="none"/>
-                        <circle cx="12" cy="12" r="5" stroke="url(#igBtnGrad)" strokeWidth="2" fill="none"/>
-                        <circle cx="17.5" cy="6.5" r="1.5" fill="#DD2A7B"/>
-                      </svg>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
-                        Guarda il Reel
-                      </span>
-                    </motion.a>
-                  )}
-                  {restaurant.tiktok_url && (
-                    <motion.a
-                      href={restaurant.tiktok_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileTap={{ scale: 0.96 }}
-                      style={{
-                        flex: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                        padding: '14px 16px',
-                        borderRadius: 14,
-                        background: '#22181C',
-                        textDecoration: 'none',
-                        border: 'none',
-                      }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
-                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
-                      </svg>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
-                        Guarda il TikTok
-                      </span>
-                    </motion.a>
-                  )}
-                </motion.div>
-              )}
 
               {/* Nearby restaurants */}
               <motion.div variants={itemVariants}>
