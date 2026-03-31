@@ -41,217 +41,7 @@ function useShare(restaurant, t) {
   return { handleShare, copied }
 }
 
-/* ── Reel Preview (Instagram / TikTok) — premium editorial style ── */
-function ReelPreview({ url, restaurantName, fallbackPhoto, isInstagram }) {
-  const [thumbnail, setThumbnail] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [hovered, setHovered] = useState(false)
-
-  useEffect(() => {
-    if (!url) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const resp = await fetch('/api/resolve-reel', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        })
-        const data = await resp.json()
-        if (!cancelled && data.thumbnail) setThumbnail(data.thumbnail)
-      } catch { /* ignore */ }
-      if (!cancelled) setLoading(false)
-    })()
-    return () => { cancelled = true }
-  }, [url])
-
-  const bgImage = thumbnail || fallbackPhoto
-  if (!bgImage && !loading) return null
-
-  const shimmerKeyframes = `@keyframes reelShimmer { 0% { transform: translateX(-100%) } 100% { transform: translateX(100%) } }`
-  const pulseKeyframes = `@keyframes reelPulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5 } 50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0 } }`
-
-  return (
-    <motion.div variants={itemVariants} style={{ marginTop: 4 }}>
-      {/* Section label */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        marginBottom: 12, paddingLeft: 2,
-      }}>
-        <div style={{
-          width: 3, height: 16, borderRadius: 2,
-          background: isInstagram
-            ? 'linear-gradient(180deg, #F58529, #DD2A7B, #8134AF)'
-            : '#22181C',
-        }} />
-        <p style={{
-          fontSize: 13, fontWeight: 700, color: '#22181C',
-          margin: 0, letterSpacing: '0.04em', textTransform: 'uppercase',
-        }}>
-          Video
-        </p>
-      </div>
-
-      <motion.a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onTouchStart={() => setHovered(true)}
-        onTouchEnd={() => setTimeout(() => setHovered(false), 300)}
-        whileTap={{ scale: 0.985 }}
-        style={{
-          display: 'block',
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '9 / 13',
-          maxHeight: 440,
-          borderRadius: 20,
-          overflow: 'hidden',
-          textDecoration: 'none',
-          background: '#22181C',
-          boxShadow: '0 8px 32px rgba(34,24,28,0.18), 0 2px 8px rgba(34,24,28,0.10)',
-        }}
-      >
-        <style>{shimmerKeyframes}{pulseKeyframes}</style>
-
-        {/* Loading shimmer */}
-        {loading && !thumbnail && (
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
-              animation: 'reelShimmer 1.8s ease-in-out infinite',
-            }} />
-          </div>
-        )}
-
-        {/* Background image with zoom on hover */}
-        {bgImage && (
-          <motion.img
-            src={bgImage}
-            alt={restaurantName}
-            animate={{ scale: hovered ? 1.05 : 1 }}
-            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              opacity: loading && !thumbnail ? 0.15 : 1,
-              transition: 'opacity 0.6s ease',
-            }}
-          />
-        )}
-
-        {/* Multi-layer gradient for depth */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: `
-            linear-gradient(180deg, rgba(34,24,28,0.15) 0%, transparent 30%),
-            linear-gradient(0deg, rgba(34,24,28,0.85) 0%, rgba(34,24,28,0.3) 35%, transparent 60%)
-          `,
-        }} />
-
-        {/* Top-right platform badge */}
-        <div style={{
-          position: 'absolute', top: 14, right: 14,
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '6px 12px',
-          borderRadius: 20,
-          background: 'rgba(0,0,0,0.35)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,255,255,0.12)',
-        }}>
-          {isInstagram ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <defs>
-                <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#F58529"/>
-                  <stop offset="50%" stopColor="#DD2A7B"/>
-                  <stop offset="100%" stopColor="#8134AF"/>
-                </linearGradient>
-              </defs>
-              <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#igGrad)" strokeWidth="2" fill="none"/>
-              <circle cx="12" cy="12" r="5" stroke="url(#igGrad)" strokeWidth="2" fill="none"/>
-              <circle cx="17.5" cy="6.5" r="1.5" fill="#DD2A7B"/>
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
-              <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
-            </svg>
-          )}
-          <span style={{
-            fontSize: 11, fontWeight: 600, color: '#fff',
-            letterSpacing: '0.03em',
-          }}>
-            {isInstagram ? 'Reel' : 'TikTok'}
-          </span>
-        </div>
-
-        {/* Center play button with pulse ring */}
-        <div style={{
-          position: 'absolute', top: '46%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-        }}>
-          {/* Pulse ring */}
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%',
-            width: 72, height: 72, borderRadius: '50%',
-            border: '2px solid rgba(255,255,255,0.3)',
-            animation: 'reelPulse 2.5s ease-in-out infinite',
-            pointerEvents: 'none',
-          }} />
-          <motion.div
-            animate={{ scale: hovered ? 1.1 : 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            style={{
-              width: 60, height: 60, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '1.5px solid rgba(255,255,255,0.25)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 2 }}>
-              <path d="M8 5.14v13.72a.5.5 0 00.77.42l10.38-6.86a.5.5 0 000-.84L8.77 4.72A.5.5 0 008 5.14z" fill="#fff"/>
-            </svg>
-          </motion.div>
-        </div>
-
-        {/* Bottom content area */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '28px 18px 18px',
-        }}>
-          {/* Decorative gold line */}
-          <div style={{
-            width: 28, height: 2, borderRadius: 1,
-            background: '#C4A265', marginBottom: 10, opacity: 0.8,
-          }} />
-
-          <p style={{
-            color: '#fff', fontSize: 16, fontWeight: 700,
-            margin: 0, lineHeight: 1.25, letterSpacing: '-0.01em',
-          }}>
-            Guarda il video
-          </p>
-          <p style={{
-            color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 500,
-            margin: '4px 0 0', lineHeight: 1.3, letterSpacing: '0.01em',
-          }}>
-            {restaurantName}
-          </p>
-        </div>
-      </motion.a>
-    </motion.div>
-  )
-}
+/* ── Video Buttons (Instagram Reel / TikTok) ── */
 
 /* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
 function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
@@ -1203,14 +993,69 @@ export default function RestaurantSheet({
                 </div>
               </motion.div>
 
-              {/* Reel / TikTok video preview */}
+              {/* Video buttons — Instagram Reel / TikTok */}
               {(restaurant.instagram_reel || restaurant.tiktok_url) && (
-                <ReelPreview
-                  url={restaurant.instagram_reel || restaurant.tiktok_url}
-                  restaurantName={restaurant.name}
-                  fallbackPhoto={restaurant.photos?.[0]}
-                  isInstagram={!!restaurant.instagram_reel}
-                />
+                <motion.div variants={itemVariants} style={{
+                  display: 'flex', gap: 10,
+                }}>
+                  {restaurant.instagram_reel && (
+                    <motion.a
+                      href={restaurant.instagram_reel}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileTap={{ scale: 0.96 }}
+                      style={{
+                        flex: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        padding: '14px 16px',
+                        borderRadius: 14,
+                        background: '#22181C',
+                        textDecoration: 'none',
+                        border: 'none',
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <defs>
+                          <linearGradient id="igBtnGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#F58529"/>
+                            <stop offset="50%" stopColor="#DD2A7B"/>
+                            <stop offset="100%" stopColor="#8134AF"/>
+                          </linearGradient>
+                        </defs>
+                        <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#igBtnGrad)" strokeWidth="2" fill="none"/>
+                        <circle cx="12" cy="12" r="5" stroke="url(#igBtnGrad)" strokeWidth="2" fill="none"/>
+                        <circle cx="17.5" cy="6.5" r="1.5" fill="#DD2A7B"/>
+                      </svg>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                        Guarda il Reel
+                      </span>
+                    </motion.a>
+                  )}
+                  {restaurant.tiktok_url && (
+                    <motion.a
+                      href={restaurant.tiktok_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileTap={{ scale: 0.96 }}
+                      style={{
+                        flex: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        padding: '14px 16px',
+                        borderRadius: 14,
+                        background: '#22181C',
+                        textDecoration: 'none',
+                        border: 'none',
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
+                      </svg>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+                        Guarda il TikTok
+                      </span>
+                    </motion.a>
+                  )}
+                </motion.div>
               )}
 
               {/* Nearby restaurants */}
