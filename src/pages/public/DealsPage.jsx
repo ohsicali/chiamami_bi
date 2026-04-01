@@ -147,7 +147,7 @@ function LiveDropCard({ deal, onNavigate, locked, onLogin }) {
 }
 
 /* ── UpcomingDropCard — card scura con countdown grande ── */
-function UpcomingDropCard({ deal, reminded, onRemind }) {
+function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const time = useCountdown(deal.drop_starts_at || deal.drop_time)
@@ -232,17 +232,22 @@ function UpcomingDropCard({ deal, reminded, onRemind }) {
           <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{deal.title || deal.discount_value}</span>
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Solo {max} disponibili</span>
         </div>
-        <button onClick={onRemind} style={{
+        <button onClick={() => locked ? onLogin() : onRemind()} style={{
           width: '100%', padding: '12px 0', borderRadius: 14,
-          background: reminded ? 'rgba(196,162,101,0.25)' : 'rgba(196,162,101,0.12)',
-          border: '1px solid rgba(196,162,101,0.2)', color: 'var(--color-oro)',
+          background: locked ? 'rgba(255,255,255,0.08)' : reminded ? 'rgba(196,162,101,0.25)' : 'rgba(196,162,101,0.12)',
+          border: locked ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(196,162,101,0.2)',
+          color: locked ? 'rgba(255,255,255,0.7)' : 'var(--color-oro)',
           fontSize: 14, fontWeight: 700, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          {reminded ? 'Promemoria attivo' : 'Ricordamelo'}
+          {locked ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          )}
+          {locked ? 'Registrati per il promemoria' : reminded ? 'Promemoria attivo' : 'Ricordamelo'}
         </button>
       </div>
     </div>
@@ -582,7 +587,7 @@ export default function DealsPage() {
                     <p style={sectionLabel}>Prossimo drop</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
                       {upcomingDrops.map(deal => (
-                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal.id)} />
+                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal.id)} locked={!user} onLogin={() => navigate('/login')} />
                       ))}
                     </div>
                   </div>
