@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, animate } from '
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useUserDiscounts } from '../../lib/hooks/useDiscounts'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { LogoFull } from '../../components/UI/Logo'
 import Footer from '../../components/Layout/Footer'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
@@ -38,7 +38,7 @@ function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
   const deleteOpacity = useTransform(x, [-120, -60], [1, 0])
   const deleteScale = useTransform(x, [-120, -60], [1, 0.8])
   const restaurant = r.discount?.restaurant
-  const photo = restaurant?.photos?.[0]?.photo_url
+  const photo = proxyImg(restaurant?.photos?.[0]?.photo_url)
 
   const handleDragEnd = (_, info) => {
     if (info.offset.x < -80) {

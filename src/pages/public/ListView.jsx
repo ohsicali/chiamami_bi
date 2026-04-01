@@ -12,6 +12,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { proxyImg } from '../../lib/supabase'
 
 function slugify(name) {
   return name
@@ -66,7 +67,7 @@ function PriceDisplay({ level }) {
 function getPhotoUrl(restaurant) {
   if (Array.isArray(restaurant.photos) && restaurant.photos.length > 0) {
     const p = restaurant.photos[0]
-    return typeof p === 'string' ? p : p?.photo_url
+    return proxyImg(typeof p === 'string' ? p : p?.photo_url)
   }
   return null
 }

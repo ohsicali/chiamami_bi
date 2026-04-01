@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { proxyImg } from '../../lib/supabase'
 
 const cardVariants = {
   hidden: { opacity: 0, x: 40 },
@@ -23,12 +24,13 @@ function NearbyCard({ restaurant, index, onSelect }) {
   const category = primaryType ? getCategoryInfo(primaryType) : null
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
 
-  const photoUrl =
+  const photoUrl = proxyImg(
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
       ? typeof restaurant.photos[0] === 'string'
         ? restaurant.photos[0]
         : restaurant.photos[0]?.photo_url
       : null
+  )
 
   // Short description: first ~60 chars of our_review
   const shortDesc = restaurant.our_review

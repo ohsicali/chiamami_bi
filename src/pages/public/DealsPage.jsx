@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import Footer from '../../components/Layout/Footer'
+import { proxyImg } from '../../lib/supabase'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -103,7 +104,7 @@ function PhotoCategoryTags({ restaurant }) {
 /* ── Photo helper ── */
 function getPhoto(restaurant) {
   const p = restaurant?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
-  return p?.photo_url || null
+  return proxyImg(p?.photo_url || null)
 }
 
 /* ── LiveDropCard — drop attivo con bordo accent ── */

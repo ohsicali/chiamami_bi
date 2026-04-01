@@ -3,6 +3,7 @@ import { useState } from 'react'
 import SaveButton from './SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { proxyImg } from '../../lib/supabase'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -39,11 +40,11 @@ export default function RestaurantCard({
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
     ? restaurant.photos[0]
     : null
-  const photoUrl = firstPhoto
+  const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string'
       ? firstPhoto
       : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null
+    : null)
 
   const distance =
     userPosition && restaurant.latitude && restaurant.longitude

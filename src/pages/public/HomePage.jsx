@@ -17,6 +17,7 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
+import { proxyImg } from '../../lib/supabase'
 
 function slugify(name) {
   return name
@@ -45,9 +46,9 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
   const category = categories[0]
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
     ? restaurant.photos[0] : null
-  const photoUrl = firstPhoto
+  const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null
+    : null)
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
