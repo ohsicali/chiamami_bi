@@ -528,81 +528,60 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
   )
 }
 
-/* ── MyActiveCard — sconto attivo dell'utente ── */
+/* ── MyActiveCard — compact, come nel profilo ── */
 function MyActiveCard({ redemption, onShowQR }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
-  const isDrop = deal?.is_drop
-
   return (
-    <div style={{ borderRadius: 20, overflow: 'hidden', border: '1.5px solid var(--color-success)', background: '#fff' }}>
-      <div style={{ position: 'relative', height: 160, overflow: 'hidden' }}>
+    <div onClick={() => onShowQR(redemption)} className="flex items-center" style={{
+      borderRadius: 16, padding: 12, gap: 12,
+      background: '#fff', border: '1px solid var(--color-bordo)', cursor: 'pointer',
+    }}>
+      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
         )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-
-        {isDrop && (
-          <div style={{ position: 'absolute', top: 14, left: 14, background: 'var(--color-accent)', padding: '5px 12px', borderRadius: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Drop</span>
-          </div>
-        )}
-
-        <div style={{ position: 'absolute', top: 14, right: 14, background: '#fff', padding: '5px 12px', borderRadius: 10 }}>
-          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-primary)' }}>{deal?.discount_value}</span>
-        </div>
-
-        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff' }}>{r?.name}</h3>
-        </div>
       </div>
-
-      <div style={{ padding: '12px 16px 16px' }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title || deal?.discount_value}</p>
-        <button onClick={() => onShowQR(redemption)} style={{
-          width: '100%', marginTop: 12, padding: '14px 0', borderRadius: 14,
-          background: 'var(--color-accent)', color: '#fff',
-          fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-          Mostra QR
-        </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r?.name}</h4>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent)', marginTop: 2 }}>{deal?.discount_value}</p>
+        <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</p>
       </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
     </div>
   )
 }
 
-/* ── MyUsedCard — sconto utilizzato ── */
+/* ── MyUsedCard — compact, come nel profilo ── */
 function MyUsedCard({ redemption }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
   const usedDate = redemption.redeemed_at
-    ? new Date(redemption.redeemed_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
+    ? new Date(redemption.redeemed_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
     : null
 
   return (
     <div className="flex items-center" style={{
-      borderRadius: 20, padding: 14, gap: 14,
+      borderRadius: 16, padding: 12, gap: 12,
       background: '#fff', border: '1px solid var(--color-bordo)',
       opacity: 0.55,
     }}>
-      <div style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.4)' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h4 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{r?.name}</h4>
-        <p style={{ fontSize: 12, color: 'var(--color-secondary)', textDecoration: 'line-through', marginTop: 2 }}>{deal?.discount_value} {deal?.title ? `— ${deal.title}` : ''}</p>
+        <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r?.name}</h4>
+        <p style={{ fontSize: 13, color: 'var(--color-secondary)', textDecoration: 'line-through', marginTop: 2 }}>{deal?.discount_value}</p>
         {usedDate && (
-          <div className="flex items-center gap-1" style={{ marginTop: 4 }}>
+          <div className="flex items-center gap-1" style={{ marginTop: 2 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
             <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 600 }}>Utilizzato il {usedDate}</span>
           </div>
@@ -652,6 +631,7 @@ export default function DealsPage() {
   const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
   const [claiming, setClaiming] = useState(null) // discount id being claimed
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
+  const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
 
   const goTo = (r) => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
 
@@ -881,43 +861,59 @@ export default function DealsPage() {
               </div>
             ) : myLoading ? (
               <div className="flex flex-col gap-3">
-                {[120, 80, 80].map((h, i) => (
-                  <div key={i} className="skeleton" style={{ height: h, borderRadius: 20, background: '#fff', border: '1px solid var(--color-bordo)' }} />
+                {[68, 68, 68].map((h, i) => (
+                  <div key={i} className="skeleton" style={{ height: h, borderRadius: 16, background: '#fff', border: '1px solid var(--color-bordo)' }} />
                 ))}
               </div>
             ) : (
               <>
-                {/* ATTIVI */}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p style={sectionLabel}>Attivi</p>
-                    {myActive.length > 0 && (
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: 'var(--color-success)', borderRadius: 10, padding: '2px 8px' }}>{myActive.length}</span>
-                    )}
-                  </div>
-                  {myActive.length === 0 && (
-                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>Nessuno sconto attivo. Vai su "Disponibili" per prenderne uno!</p>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
-                    {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} />)}
-                  </div>
+                {/* Sub-tabs: Attivi / Utilizzati */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMySubTab('active')}
+                    className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${
+                      mySubTab === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-secondary'
+                    }`}
+                  >
+                    Attivi ({myActive.length})
+                  </button>
+                  <button
+                    onClick={() => setMySubTab('used')}
+                    className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${
+                      mySubTab === 'used'
+                        ? 'bg-gray-200 text-gray-700'
+                        : 'bg-gray-100 text-secondary'
+                    }`}
+                  >
+                    Utilizzati ({myUsed.length})
+                  </button>
                 </div>
 
-                {/* UTILIZZATI */}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p style={sectionLabel}>Utilizzati</p>
-                    {myUsed.length > 0 && (
-                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-secondary)', background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '2px 8px' }}>{myUsed.length}</span>
-                    )}
-                  </div>
-                  {myUsed.length === 0 && (
-                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>Nessuno sconto utilizzato ancora</p>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-                    {myUsed.map(r => <MyUsedCard key={r.id} redemption={r} />)}
-                  </div>
-                </div>
+                {mySubTab === 'active' ? (
+                  myActive.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <span style={{ fontSize: 28, marginBottom: 8 }}>🏷️</span>
+                      <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>Nessuno sconto attivo. Vai su "Disponibili" per prenderne uno!</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} />)}
+                    </div>
+                  )
+                ) : (
+                  myUsed.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <span style={{ fontSize: 28, marginBottom: 8 }}>✨</span>
+                      <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>Nessuno sconto utilizzato ancora</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {myUsed.map(r => <MyUsedCard key={r.id} redemption={r} />)}
+                    </div>
+                  )
+                )}
               </>
             )}
           </div>
