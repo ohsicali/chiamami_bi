@@ -57,9 +57,10 @@ function LiveDropCard({ deal, onNavigate }) {
   return (
     <div style={{
       borderRadius: 20, overflow: 'hidden',
-      border: '1px solid var(--color-bordo)',
+      border: soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
       background: '#fff',
       opacity: soldOut ? 0.6 : 1,
+      animation: soldOut ? 'none' : 'dropPulse 2.5s ease-in-out infinite',
     }}>
       {/* Photo */}
       <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
