@@ -85,7 +85,7 @@ function LiveDropCard({ deal, onNavigate }) {
         {time && !soldOut && (
           <div style={{
             position: 'absolute', top: 14, right: 14,
-            background: 'var(--color-primary)',
+            background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
             padding: '5px 12px', borderRadius: 10, color: '#fff', fontSize: 12, fontWeight: 700,
           }}>
             Scade tra {time.h}h {pad(time.m)}m
