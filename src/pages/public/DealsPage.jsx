@@ -78,24 +78,24 @@ function useCountdown(targetDate) {
   return time
 }
 
-/* ── Categories + price helper ── */
-function CategoryTags({ restaurant }) {
+/* ── Categories on photo overlay ── */
+function PhotoCategoryTags({ restaurant }) {
   const cats = (restaurant?.category || (restaurant?.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name)).filter(Boolean)
   const price = restaurant?.price_range ? '€'.repeat(restaurant.price_range) : null
   if (!cats.length && !price) return null
   return (
-    <div className="flex items-center" style={{ gap: 6, flexWrap: 'wrap' }}>
+    <>
       {cats.slice(0, 2).map((cat, i) => (
         <span key={i} style={{
-          fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 8,
-          background: `${cat.color}18`, color: cat.color,
+          fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8,
+          background: `${cat.color}CC`, color: '#fff',
         }}>{cat.emoji} {cat.name}</span>
       ))}
       {price && (
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)', marginLeft: cats.length ? 2 : 0 }}>{price}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{price}</span>
       )}
-    </div>
+    </>
   )
 }
 
@@ -153,18 +153,18 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           </div>
         )}
 
-        {/* Name */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
+        {/* Name + categories on photo */}
+        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
+          <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+            <PhotoCategoryTags restaurant={r} />
+          </div>
         </div>
       </div>
 
-      {/* Info */}
+      {/* Info — solo sconto */}
       <div style={{ padding: '14px 16px 16px' }}>
-        <CategoryTags restaurant={r} />
-        {r?.tagline && <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 6, lineHeight: 1.4 }}>{r.tagline}</p>}
-        <div className="flex items-center justify-between" style={{ marginBottom: 4, marginTop: 10 }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <div className="flex items-baseline gap-2">
             <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent)' }}>{deal.discount_value}</span>
             <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 500 }}>{deal.title}</span>
@@ -360,18 +360,18 @@ function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           {deal.discount_value}
         </div>
 
-        {/* Name overlay */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
+        {/* Name + categories on photo */}
+        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{r?.city}</p>
+          <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+            <PhotoCategoryTags restaurant={r} />
+          </div>
         </div>
       </div>
 
-      {/* Info + CTA */}
+      {/* Info + CTA — solo sconto */}
       <div style={{ padding: '14px 16px 16px' }}>
-        <CategoryTags restaurant={r} />
-        {r?.tagline && <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 6, lineHeight: 1.4 }}>{r.tagline}</p>}
-        <div className="flex items-center justify-between" style={{ marginBottom: 4, marginTop: 10 }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>{deal.title || deal.discount_value}</p>
           <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-oro)' }}>{deal.discount_value}</span>
         </div>
@@ -438,8 +438,8 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
 
         {/* Gradient overlay */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)',
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 110,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)',
         }} />
 
         {/* Discount badge — top right */}
@@ -478,24 +478,23 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
           </div>
         )}
 
-        {/* Restaurant name on photo */}
+        {/* Name + categories on photo */}
         <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
           <h3 style={{
             fontFamily: "'TAN Songbird', sans-serif",
             fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.2,
           }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{r?.city}</p>
+          <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
+            <PhotoCategoryTags restaurant={r} />
+          </div>
         </div>
       </div>
 
-      {/* Info section */}
+      {/* Info section — solo sconto */}
       <div style={{ padding: '14px 16px 16px' }}>
-        <CategoryTags restaurant={r} />
-        {r?.tagline && <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 6, lineHeight: 1.4 }}>{r.tagline}</p>}
-
         {/* Deal title */}
         <p style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.4, marginTop: 10,
+          fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.4,
         }}>{deal.title}</p>
 
         {/* Conditions */}
