@@ -529,30 +529,51 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
 }
 
 /* ── MyActiveCard — compact, come nel profilo ── */
-function MyActiveCard({ redemption, onShowQR }) {
+function MyActiveCard({ redemption, onShowQR, onGoTo }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
   return (
-    <div onClick={() => onShowQR(redemption)} className="flex items-center" style={{
+    <div className="flex items-center" style={{
       borderRadius: 16, padding: 12, gap: 12,
-      background: '#fff', border: '1px solid var(--color-bordo)', cursor: 'pointer',
+      background: '#fff', border: '1px solid var(--color-bordo)',
     }}>
-      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+      {/* Photo — tap goes to restaurant */}
+      <div onClick={() => onGoTo(r)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
         )}
       </div>
+
+      {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r?.name}</h4>
-        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent)', marginTop: 2 }}>{deal?.discount_value}</p>
-        <span style={{ display: 'inline-block', marginTop: 3, fontSize: 10, fontWeight: 700, color: 'var(--color-success)', background: 'rgba(74,222,128,0.12)', borderRadius: 6, padding: '2px 7px' }}>{deal?.title}</span>
+        <h4 onClick={() => onGoTo(r)} style={{
+          fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+          color: 'var(--color-primary)', cursor: 'pointer',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{r?.name}</h4>
+        <div className="flex items-center gap-2" style={{ marginTop: 3 }}>
+          <span style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
+            background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+            borderRadius: 8, padding: '2px 8px',
+          }}>{deal?.discount_value}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
+        </div>
+        {deal?.conditions && (
+          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions}</p>
+        )}
       </div>
-      <div className="flex flex-col items-center gap-1" style={{ flexShrink: 0 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: 0.5 }}>Utilizza</span>
+
+      {/* Utilizza button + chevron */}
+      <div onClick={() => onShowQR(redemption)} className="flex items-center gap-1" style={{
+        flexShrink: 0, cursor: 'pointer',
+        background: 'var(--color-accent)', borderRadius: 10, padding: '6px 10px',
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Utilizza</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
     </div>
   )
@@ -902,7 +923,7 @@ export default function DealsPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} />)}
+                      {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} onGoTo={goTo} />)}
                     </div>
                   )
                 ) : (
