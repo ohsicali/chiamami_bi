@@ -32,13 +32,20 @@ const itemVariants = {
   },
 }
 
-/* ── Swipeable discount card ── */
-function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
+/* ── Photo helper ── */
+function getDiscountPhoto(restaurant) {
+  const p = restaurant?.photos?.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))?.[0]
+  return proxyImg(p?.photo_url || null)
+}
+
+/* ── ProfileActiveCard — swipeable, matches DealsPage MyActiveCard ── */
+function ProfileActiveCard({ redemption: r, onShowQR, onDelete, onGoTo }) {
   const x = useMotionValue(0)
   const deleteOpacity = useTransform(x, [-120, -60], [1, 0])
   const deleteScale = useTransform(x, [-120, -60], [1, 0.8])
-  const restaurant = r.discount?.restaurant
-  const photo = proxyImg(restaurant?.photos?.[0]?.photo_url)
+  const deal = r.discount
+  const restaurant = deal?.restaurant
+  const photo = getDiscountPhoto(restaurant)
 
   const handleDragEnd = (_, info) => {
     if (info.offset.x < -80) {
@@ -53,11 +60,11 @@ function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden" style={{ borderRadius: 16 }}>
       {/* Delete button behind */}
       <motion.div
-        className="absolute right-0 inset-y-0 flex items-center justify-center w-24 bg-red-500 rounded-2xl"
-        style={{ opacity: deleteOpacity, scale: deleteScale }}
+        className="absolute right-0 inset-y-0 flex items-center justify-center w-24"
+        style={{ opacity: deleteOpacity, scale: deleteScale, background: 'var(--color-accent)', borderRadius: 16 }}
       >
         <button onClick={handleDeleteClick} className="flex flex-col items-center gap-1 text-white">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,43 +76,101 @@ function SwipeableRedemptionCard({ redemption: r, onShowQR, onDelete }) {
 
       {/* Swipeable card */}
       <motion.div
-        className={`relative rounded-2xl bg-card shadow-sm ${r.status === 'generated' ? 'cursor-pointer' : 'opacity-60'}`}
-        style={{ x }}
+        style={{ x, borderRadius: 16, background: '#fff', border: '1px solid var(--color-bordo)' }}
         drag="x"
         dragConstraints={{ left: -90, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        onClick={() => r.status === 'generated' && onShowQR()}
       >
-        <div className="flex items-center gap-3 p-3">
-          {photo ? (
-            <img src={photo} alt="" className="h-16 w-16 rounded-xl object-cover flex-shrink-0" />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-accent/10 text-2xl flex-shrink-0">🏷️</div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-primary truncate">{restaurant?.name || 'Ristorante'}</h3>
-            <p className={`font-semibold text-sm ${r.status === 'redeemed' ? 'text-secondary line-through' : 'text-accent'}`}>{r.discount?.discount_value}</p>
-            <p className="text-xs text-secondary truncate">{r.discount?.title}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                r.status === 'generated' ? 'bg-green-100 text-green-700' :
-                r.status === 'redeemed' ? 'bg-gray-100 text-gray-500' :
-                'bg-red-100 text-red-500'
-              }`}>
-                {r.status === 'generated' ? 'Attivo' :
-                 r.status === 'redeemed' ? `✓ Utilizzato il ${new Date(r.redeemed_at || r.generated_at).toLocaleDateString('it-IT')}` :
-                 'Scaduto'}
-              </span>
-            </div>
+        <div className="flex items-center" style={{ padding: '14px 12px', gap: 12 }}>
+          {/* Photo */}
+          <div onClick={() => onGoTo(restaurant)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
+            {photo ? (
+              <img src={photo} alt={restaurant?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
+            )}
           </div>
-          {r.status === 'generated' && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          )}
+
+          {/* Info */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <h4 onClick={() => onGoTo(restaurant)} style={{
+              fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+              color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
+            }}>{restaurant?.name || 'Ristorante'}</h4>
+            <div className="flex items-center gap-2">
+              <span style={{
+                display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
+                background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+                borderRadius: 8, padding: '2px 8px', flexShrink: 0,
+              }}>{deal?.discount_value}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
+            </div>
+            {deal?.conditions && (
+              <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions}</p>
+            )}
+          </div>
+
+          {/* Utilizza button */}
+          <div onClick={() => onShowQR()} className="flex items-center gap-1" style={{
+            flexShrink: 0, cursor: 'pointer',
+            background: 'var(--color-accent)', borderRadius: 10, padding: '6px 10px',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Utilizza</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
         </div>
       </motion.div>
+    </div>
+  )
+}
+
+/* ── ProfileUsedCard — faded + strikethrough, matches DealsPage MyUsedCard ── */
+function ProfileUsedCard({ redemption: r, onGoTo }) {
+  const deal = r.discount
+  const restaurant = deal?.restaurant
+  const photo = getDiscountPhoto(restaurant)
+  const usedDate = r.redeemed_at
+    ? new Date(r.redeemed_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+    : null
+
+  return (
+    <div className="flex items-center" style={{
+      borderRadius: 16, padding: '14px 12px', gap: 12,
+      background: '#fff', border: '1px solid var(--color-bordo)',
+      opacity: 0.5,
+    }}>
+      {/* Photo */}
+      <div onClick={() => onGoTo(restaurant)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
+        {photo ? (
+          <img src={photo} alt={restaurant?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.5)' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <h4 onClick={() => onGoTo(restaurant)} style={{
+          fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
+        }}>{restaurant?.name || 'Ristorante'}</h4>
+        <div className="flex items-center gap-2">
+          <span style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
+            background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+            borderRadius: 8, padding: '2px 8px', flexShrink: 0,
+            textDecoration: 'line-through', opacity: 0.6,
+          }}>{deal?.discount_value}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-secondary)', textDecoration: 'line-through', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
+        </div>
+        {usedDate && (
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 600 }}>Utilizzato il {usedDate}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1008,6 +1073,7 @@ function SettingsSection({ user, profile, onLogout, onBack, onRefreshProfile }) 
 /* ── Main Profile Page ── */
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const goToRestaurant = (r) => r && navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
   const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   const { redemptions, loading: discountsLoading } = useUserDiscounts(user?.id)
@@ -1287,11 +1353,12 @@ export default function ProfilePage() {
                           ) : (
                             <div className="flex flex-col gap-3">
                               {activeRedemptions.map(r => (
-                                <SwipeableRedemptionCard
+                                <ProfileActiveCard
                                   key={r.id}
                                   redemption={r}
                                   onShowQR={() => setShowQR(r)}
                                   onDelete={handleDeleteRedemption}
+                                  onGoTo={goToRestaurant}
                                 />
                               ))}
                             </div>
@@ -1306,11 +1373,10 @@ export default function ProfilePage() {
                           ) : (
                             <div className="flex flex-col gap-3">
                               {usedRedemptions.map(r => (
-                                <SwipeableRedemptionCard
+                                <ProfileUsedCard
                                   key={r.id}
                                   redemption={r}
-                                  onShowQR={() => {}}
-                                  onDelete={handleDeleteRedemption}
+                                  onGoTo={goToRestaurant}
                                 />
                               ))}
                             </div>
