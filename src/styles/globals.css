@@ -80,6 +80,19 @@ body {
   50% { box-shadow: 0 0 0 4px rgba(232, 69, 60, 0.12); }
 }
 
+/* Progress bar shine effect */
+@keyframes progressShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.progress-shine {
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: progressShine 2s ease-in-out infinite;
+}
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
