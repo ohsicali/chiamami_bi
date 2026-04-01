@@ -578,8 +578,8 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
   )
 }
 
-/* ── MyUsedCard — compact, come nel profilo ── */
-function MyUsedCard({ redemption }) {
+/* ── MyUsedCard — same layout as MyActiveCard but faded + strikethrough ── */
+function MyUsedCard({ redemption, onGoTo }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
@@ -589,22 +589,36 @@ function MyUsedCard({ redemption }) {
 
   return (
     <div className="flex items-center" style={{
-      borderRadius: 16, padding: 12, gap: 12,
+      borderRadius: 16, padding: '14px 12px', gap: 12,
       background: '#fff', border: '1px solid var(--color-bordo)',
-      opacity: 0.55,
+      opacity: 0.5,
     }}>
-      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+      {/* Photo */}
+      <div onClick={() => onGoTo(r)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
         {photo ? (
-          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.4)' }} />
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.5)' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
         )}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r?.name}</h4>
-        <p style={{ fontSize: 13, color: 'var(--color-secondary)', textDecoration: 'line-through', marginTop: 2 }}>{deal?.discount_value}</p>
+
+      {/* Info */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <h4 onClick={() => onGoTo(r)} style={{
+          fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
+        }}>{r?.name}</h4>
+        <div className="flex items-center gap-2">
+          <span style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
+            background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+            borderRadius: 8, padding: '2px 8px', flexShrink: 0,
+            textDecoration: 'line-through', opacity: 0.6,
+          }}>{deal?.discount_value}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-secondary)', textDecoration: 'line-through', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
+        </div>
         {usedDate && (
-          <div className="flex items-center gap-1" style={{ marginTop: 2 }}>
+          <div className="flex items-center gap-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
             <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 600 }}>Utilizzato il {usedDate}</span>
           </div>
@@ -933,7 +947,7 @@ export default function DealsPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {myUsed.map(r => <MyUsedCard key={r.id} redemption={r} />)}
+                      {myUsed.map(r => <MyUsedCard key={r.id} redemption={r} onGoTo={goTo} />)}
                     </div>
                   )
                 )}
