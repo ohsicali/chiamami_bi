@@ -17,7 +17,7 @@ function slugify(name) {
 const pad = (n) => String(n).padStart(2, '0')
 
 const sectionLabel = {
-  fontSize: 10, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase',
+  fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase',
   color: 'var(--color-secondary)', marginLeft: 4,
 }
 
@@ -45,7 +45,7 @@ function getPhoto(restaurant) {
 }
 
 /* ── LiveDropCard — drop attivo con bordo accent ── */
-function LiveDropCard({ deal, onNavigate, locked }) {
+function LiveDropCard({ deal, onNavigate, locked, onLogin }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const claimed = deal.claimed_count || deal.total_redeemed || 0
@@ -131,7 +131,7 @@ function LiveDropCard({ deal, onNavigate, locked }) {
 
         {/* CTA */}
         {!soldOut && (
-          <button onClick={() => locked ? onNavigate({ slug: 'login' }) : onNavigate(r)} style={{
+          <button onClick={() => locked ? onLogin() : onNavigate(r)} style={{
             width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
             background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
             fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
@@ -173,7 +173,7 @@ function UpcomingDropCard({ deal, reminded, onRemind }) {
       background: 'var(--color-primary)',
     }}>
       {/* Photo */}
-      <div style={{ position: 'relative', height: 140, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: 160, overflow: 'hidden' }}>
         {photo && <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
 
@@ -303,7 +303,7 @@ function DealCard({ deal, onNavigate }) {
       border: '1px solid var(--color-bordo)', cursor: soldOut ? 'default' : 'pointer',
       opacity: soldOut ? 0.6 : 1,
     }}>
-      <div style={{ position: 'relative', height: 140, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: 160, overflow: 'hidden' }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
         ) : (
@@ -341,8 +341,8 @@ function DealCard({ deal, onNavigate }) {
               <span style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{deal.total_redeemed || 0}/{deal.max_redemptions}</span>
               {soldOut && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
             </div>
-            <div style={{ height: 4, background: 'var(--color-bordo)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 2, width: `${(deal.total_redeemed || 0) / deal.max_redemptions * 100}%`, background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)', transition: 'width 0.5s ease' }} />
+            <div style={{ height: 8, background: 'var(--color-bordo)', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 4, width: `${(deal.total_redeemed || 0) / deal.max_redemptions * 100}%`, background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)', transition: 'width 0.5s ease' }} />
             </div>
           </div>
         )}
@@ -428,6 +428,34 @@ function MyUsedCard({ redemption }) {
             <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 600 }}>Utilizzato il {usedDate}</span>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/* ── HowItWorks — come funziona section ── */
+function HowItWorks() {
+  return (
+    <div>
+      <p style={{ ...sectionLabel, marginBottom: 10 }}>Come funziona</p>
+      <div style={{ background: '#fff', borderRadius: 20, padding: 18, border: '1px solid var(--color-bordo)' }}>
+        {[
+          { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
+          { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+          { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
+        ].map((step, i) => (
+          <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, background: step.bg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, flexShrink: 0,
+            }}>{step.icon}</div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 2 }}>{step.title}</p>
+              <p style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{step.desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -533,6 +561,9 @@ export default function DealsPage() {
               </div>
             )}
 
+            {/* Come funziona — shown early for guests */}
+            {!user && !loading && <HowItWorks />}
+
             {!loading && (
               <>
                 {/* DROP ATTIVI */}
@@ -540,7 +571,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Drop attivi</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onNavigate={goTo} locked={!user} />)}
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onNavigate={goTo} locked={!user} onLogin={() => navigate('/login')} />)}
                     </div>
                   </div>
                 )}
@@ -586,32 +617,8 @@ export default function DealsPage() {
                   </div>
                 )}
 
-                {/* Come funziona */}
-                <div style={{ marginTop: 8 }}>
-                  <p style={{ ...sectionLabel, marginBottom: 10 }}>Come funziona</p>
-                  <div style={{
-                    background: '#fff', borderRadius: 20, padding: 18,
-                    border: '1px solid var(--color-bordo)',
-                  }}>
-                    {[
-                      { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
-                      { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
-                    ].map((step, i) => (
-                      <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
-                        <div style={{
-                          width: 36, height: 36, borderRadius: 10, background: step.bg,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 16, flexShrink: 0,
-                        }}>{step.icon}</div>
-                        <div>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 2 }}>{step.title}</p>
-                          <p style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{step.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Come funziona — only at bottom for logged-in users (guests see it above) */}
+                {user && <div style={{ marginTop: 8 }}><HowItWorks /></div>}
               </>
             )}
           </div>
@@ -625,6 +632,12 @@ export default function DealsPage() {
                 <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-primary)' }}>Accedi per vedere i tuoi sconti</p>
                 <Link to="/login" style={{ marginTop: 20, borderRadius: 14, background: 'var(--color-accent)', color: '#fff', padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Accedi</Link>
               </div>
+            ) : myLoading ? (
+              <div className="flex flex-col gap-3">
+                {[120, 80, 80].map((h, i) => (
+                  <div key={i} className="skeleton" style={{ height: h, borderRadius: 20, background: '#fff', border: '1px solid var(--color-bordo)' }} />
+                ))}
+              </div>
             ) : (
               <>
                 {/* ATTIVI */}
@@ -636,7 +649,7 @@ export default function DealsPage() {
                     )}
                   </div>
                   {myActive.length === 0 && (
-                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>Nessuno sconto attivo</p>
+                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>Nessuno sconto attivo. Vai su "Disponibili" per prenderne uno!</p>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
                     {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onNavigate={goTo} />)}
@@ -651,6 +664,9 @@ export default function DealsPage() {
                       <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-secondary)', background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '2px 8px' }}>{myUsed.length}</span>
                     )}
                   </div>
+                  {myUsed.length === 0 && (
+                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>Nessuno sconto utilizzato ancora</p>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
                     {myUsed.map(r => <MyUsedCard key={r.id} redemption={r} />)}
                   </div>
