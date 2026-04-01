@@ -57,7 +57,7 @@ function LiveDropCard({ deal, onNavigate }) {
   return (
     <div style={{
       borderRadius: 20, overflow: 'hidden',
-      border: soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-success)',
+      border: '1px solid var(--color-bordo)',
       background: '#fff',
       opacity: soldOut ? 0.6 : 1,
     }}>
@@ -102,7 +102,7 @@ function LiveDropCard({ deal, onNavigate }) {
       <div style={{ padding: '14px 16px 16px' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <div className="flex items-baseline gap-2">
-            <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-success)' }}>{deal.discount_value}</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent)' }}>{deal.discount_value}</span>
             <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 500 }}>{deal.title}</span>
           </div>
           {deal.conditions && <span style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{deal.conditions}</span>}
@@ -112,7 +112,7 @@ function LiveDropCard({ deal, onNavigate }) {
         <div className="flex items-center justify-between" style={{ marginBottom: 6, marginTop: 10 }}>
           <span style={{ fontSize: 12, color: 'var(--color-secondary)' }}>{claimed} di {max} presi</span>
           {remaining > 0 && remaining <= 5 && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-success)' }}>Solo {remaining} rimast{remaining === 1 ? 'o' : 'i'}!</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)' }}>Solo {remaining} rimast{remaining === 1 ? 'o' : 'i'}!</span>
           )}
           {soldOut && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
         </div>
@@ -120,7 +120,7 @@ function LiveDropCard({ deal, onNavigate }) {
           <div style={{
             height: '100%', borderRadius: 3,
             width: `${Math.min(100, (claimed / max) * 100)}%`,
-            background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)',
+            background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, var(--color-accent), #ff6b6b)',
             transition: 'width 0.5s ease',
           }} />
         </div>
@@ -129,7 +129,7 @@ function LiveDropCard({ deal, onNavigate }) {
         {!soldOut && (
           <button onClick={() => onNavigate(r)} style={{
             width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
-            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#1a2e05',
+            background: 'var(--color-accent)', color: '#fff',
             fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
           }}>
             Prendi lo sconto
