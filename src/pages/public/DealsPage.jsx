@@ -303,77 +303,71 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   )
 }
 
-/* ── FeaturedCard — in evidenza ── */
+/* ── FeaturedCard — in evidenza, stile TGTG ── */
 function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   return (
-    <div style={{ borderRadius: 20, overflow: 'hidden', border: '1.5px solid var(--color-oro)', boxShadow: '0 4px 20px rgba(196,162,101,0.12)' }}>
-      <div style={{ position: 'relative', height: 220, overflow: 'hidden' }}>
+    <div className="flex" style={{
+      borderRadius: 16, overflow: 'hidden', background: '#fff',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    }}>
+      {/* Square photo */}
+      <div style={{ position: 'relative', width: 130, minHeight: 130, flexShrink: 0 }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🍽️</div>
         )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 140, background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)' }} />
-
-        {/* In evidenza badge */}
         <div style={{
-          position: 'absolute', top: 14, left: 14,
-          display: 'flex', alignItems: 'center', gap: 4,
-          background: 'var(--color-oro)', padding: '5px 12px', borderRadius: 10,
+          position: 'absolute', top: 8, left: 8,
+          display: 'flex', alignItems: 'center', gap: 3,
+          background: 'var(--color-oro)', padding: '3px 8px', borderRadius: 6,
         }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>In evidenza</span>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+          <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Top</span>
         </div>
+      </div>
 
-        {/* Name */}
-        <div style={{ position: 'absolute', bottom: 56, left: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
-        </div>
-
-        {/* Glassmorphism info bar — overlay on photo */}
-        <div className="flex items-center" style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '10px 14px', gap: 10,
-          background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(255,255,255,0.2)',
-        }}>
+      {/* Info */}
+      <div style={{ flex: 1, padding: '14px 14px 14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
+        <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 16, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.2 }}>{r?.name}</h3>
+        <p style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
+        <div className="flex items-center gap-2">
           <span style={{
-            display: 'inline-block', fontSize: 12, fontWeight: 800, color: '#1a2e05',
+            fontSize: 12, fontWeight: 800, color: '#1a2e05',
             background: 'linear-gradient(135deg, #a3e635, #4ade80)',
-            borderRadius: 8, padding: '3px 10px', flexShrink: 0,
+            borderRadius: 8, padding: '2px 9px',
           }}>{deal.discount_value}</span>
-          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
-          {myRedemption ? (
-            <button onClick={() => onShowQR(myRedemption)} style={{
-              flexShrink: 0, padding: '7px 12px', borderRadius: 10,
-              background: 'var(--color-success)', color: '#fff',
-              fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-              QR
-            </button>
-          ) : (
-            <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-              flexShrink: 0, padding: '7px 12px', borderRadius: 10,
-              background: locked ? 'rgba(255,255,255,0.2)' : 'var(--color-oro)', color: '#fff',
-              fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-              opacity: claiming ? 0.7 : 1,
-            }}>
-              {locked ? 'Accedi' : claiming ? '...' : 'Prendi'}
-            </button>
-          )}
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
         </div>
+        {myRedemption ? (
+          <button onClick={() => onShowQR(myRedemption)} style={{
+            alignSelf: 'flex-start', marginTop: 2, padding: '6px 14px', borderRadius: 10,
+            background: 'var(--color-success)', color: '#fff',
+            fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+            Mostra QR
+          </button>
+        ) : (
+          <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
+            alignSelf: 'flex-start', marginTop: 2, padding: '6px 14px', borderRadius: 10,
+            background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
+            fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            opacity: claiming ? 0.7 : 1,
+          }}>
+            {locked ? 'Accedi' : claiming ? '...' : 'Prendi lo sconto'}
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
-/* ── DealCard — sconto normale ── */
+/* ── DealCard — sconto normale, stile TGTG ── */
 function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -382,79 +376,67 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
   const almostGone = remaining !== null && remaining > 0 && remaining <= 3
 
   return (
-    <div style={{
-      borderRadius: 20, overflow: 'hidden',
-      border: '1px solid var(--color-bordo)',
-      opacity: soldOut ? 0.55 : 1,
+    <div className="flex" style={{
+      borderRadius: 16, overflow: 'hidden', background: '#fff',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+      opacity: soldOut ? 0.5 : 1,
     }}>
-      <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
+      {/* Square photo */}
+      <div style={{ position: 'relative', width: 120, minHeight: 120, flexShrink: 0 }}>
         {photo ? (
-          <img src={photo} alt={r?.name} style={{
-            width: '100%', height: '100%', objectFit: 'cover',
-            filter: soldOut ? 'grayscale(1)' : 'none',
-          }} />
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🍽️</div>
         )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 140, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-
-        {/* Badge top left */}
         {almostGone && !soldOut && (
-          <div style={{ position: 'absolute', top: 14, left: 14, background: 'rgba(232,69,60,0.9)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}!</span>
+          <div style={{ position: 'absolute', top: 8, left: 8, background: 'var(--color-accent)', padding: '3px 7px', borderRadius: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}!</span>
           </div>
         )}
         {soldOut && (
-          <div style={{ position: 'absolute', top: 14, left: 14, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', padding: '5px 12px', borderRadius: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Esaurito</span>
+          <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.6)', padding: '3px 7px', borderRadius: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Esaurito</span>
           </div>
         )}
+      </div>
 
-        {/* Name */}
-        <div style={{ position: 'absolute', bottom: 56, left: 16, right: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
-        </div>
-
-        {/* Glassmorphism info bar — overlay on photo */}
-        <div className="flex items-center" style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '10px 14px', gap: 10,
-          background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(255,255,255,0.15)',
-        }}>
+      {/* Info */}
+      <div style={{ flex: 1, padding: '12px 14px 12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5 }}>
+        <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.2 }}>{r?.name}</h3>
+        <p style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
+        <div className="flex items-center gap-2">
           <span style={{
-            display: 'inline-block', fontSize: 12, fontWeight: 800,
-            color: soldOut ? '#ccc' : '#1a2e05',
-            background: soldOut ? 'rgba(255,255,255,0.2)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-            borderRadius: 8, padding: '3px 10px', flexShrink: 0,
+            fontSize: 12, fontWeight: 800,
+            color: soldOut ? '#999' : '#1a2e05',
+            background: soldOut ? '#e5e5e5' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+            borderRadius: 8, padding: '2px 9px',
             textDecoration: soldOut ? 'line-through' : 'none',
           }}>{deal.discount_value}</span>
-          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
-          {!soldOut && (
-            myRedemption ? (
-              <button onClick={() => onShowQR(myRedemption)} style={{
-                flexShrink: 0, padding: '7px 12px', borderRadius: 10,
-                background: 'var(--color-success)', color: '#fff',
-                fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-                QR
-              </button>
-            ) : (
-              <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-                flexShrink: 0, padding: '7px 12px', borderRadius: 10,
-                background: locked ? 'rgba(255,255,255,0.2)' : 'var(--color-accent)', color: '#fff',
-                fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
-                opacity: claiming ? 0.7 : 1,
-              }}>
-                {locked ? 'Accedi' : claiming ? '...' : 'Prendi'}
-              </button>
-            )
-          )}
+          <span style={{ fontSize: 12, fontWeight: 600, color: soldOut ? 'var(--color-secondary)' : 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: soldOut ? 'line-through' : 'none' }}>{deal.title}</span>
         </div>
+        {!soldOut && (
+          myRedemption ? (
+            <button onClick={() => onShowQR(myRedemption)} style={{
+              alignSelf: 'flex-start', marginTop: 2, padding: '6px 14px', borderRadius: 10,
+              background: 'var(--color-success)', color: '#fff',
+              fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+              Mostra QR
+            </button>
+          ) : (
+            <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
+              alignSelf: 'flex-start', marginTop: 2, padding: '6px 14px', borderRadius: 10,
+              background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
+              fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6,
+              opacity: claiming ? 0.7 : 1,
+            }}>
+              {locked ? 'Accedi' : claiming ? '...' : 'Prendi lo sconto'}
+            </button>
+          )
+        )}
       </div>
     </div>
   )
