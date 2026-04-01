@@ -21,6 +21,44 @@ const sectionLabel = {
   color: 'var(--color-secondary)', marginLeft: 4,
 }
 
+/* ── Add to calendar (.ics) ── */
+function addToCalendar({ title, description, start, url }) {
+  const fmt = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const startDt = fmt(start)
+  // Event lasts 15 minutes (drop window)
+  const endDt = fmt(new Date(new Date(start).getTime() + 15 * 60000))
+  const uid = `drop-${Date.now()}@chiamamibi.com`
+  // Alarm 10 minutes before
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ChiamamiBi//Drop//IT',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTART:${startDt}`,
+    `DTEND:${endDt}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    url ? `URL:${url}` : '',
+    'BEGIN:VALARM',
+    'TRIGGER:-PT10M',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${title} tra 10 minuti!`,
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n')
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = 'drop-chiamamibi.ics'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(link.href)
+}
+
 /* ── Countdown hook ── */
 function useCountdown(targetDate) {
   const calc = useCallback(() => {
@@ -242,12 +280,14 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
         }}>
           {locked ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          ) : reminded ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
           ) : (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           )}
-          {locked ? 'Registrati per il promemoria' : reminded ? 'Promemoria attivo' : 'Ricordamelo'}
+          {locked ? 'Registrati per il promemoria' : reminded ? 'Aggiunto al calendario' : 'Ricordamelo'}
         </button>
       </div>
     </div>
@@ -478,8 +518,20 @@ export default function DealsPage() {
 
   const goTo = (r) => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
 
-  const toggleReminder = (dropId) => {
-    const next = reminders.includes(dropId) ? reminders.filter(id => id !== dropId) : [...reminders, dropId]
+  const toggleReminder = (deal) => {
+    const dropId = deal.id
+    const alreadySet = reminders.includes(dropId)
+    if (!alreadySet) {
+      // Generate .ics and trigger download → opens native calendar
+      const r = deal.restaurant
+      addToCalendar({
+        title: `Drop: ${r?.name || 'Sconto'} — ${deal.discount_value}`,
+        description: `${deal.title || deal.discount_value} da ${r?.name}. Apri l'app per prendere lo sconto! chiamamibi.com/sconti`,
+        start: deal.drop_starts_at || deal.drop_time,
+        url: 'https://chiamamibi.com/sconti',
+      })
+    }
+    const next = alreadySet ? reminders.filter(id => id !== dropId) : [...reminders, dropId]
     setReminders(next)
     localStorage.setItem('drop_reminders', JSON.stringify(next))
   }
@@ -587,7 +639,7 @@ export default function DealsPage() {
                     <p style={sectionLabel}>Prossimo drop</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
                       {upcomingDrops.map(deal => (
-                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal.id)} locked={!user} onLogin={() => navigate('/login')} />
+                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
                       ))}
                     </div>
                   </div>
