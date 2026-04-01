@@ -310,73 +310,8 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   )
 }
 
-/* ── FeaturedCard — in evidenza ── */
-function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
-  const r = deal.restaurant
-  const photo = getPhoto(r)
-  return (
-    <div style={{ borderRadius: 20, overflow: 'hidden', background: '#fff', border: '1.5px solid var(--color-oro)', boxShadow: '0 4px 20px rgba(196,162,101,0.12)' }}>
-      <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
-        )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-
-        {/* In evidenza badge */}
-        <div style={{
-          position: 'absolute', top: 14, left: 14,
-          display: 'flex', alignItems: 'center', gap: 4,
-          background: 'var(--color-oro)', padding: '5px 12px', borderRadius: 10,
-        }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>In evidenza</span>
-        </div>
-
-        {/* Name on photo */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
-        </div>
-      </div>
-
-      {/* Clean info row: tag + title + CTA */}
-      <div className="flex items-center" style={{ padding: '14px 16px', gap: 10 }}>
-        <span style={{
-          display: 'inline-block', fontSize: 12, fontWeight: 800, color: '#1a2e05',
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)',
-          borderRadius: 8, padding: '3px 10px', flexShrink: 0,
-        }}>{deal.discount_value}</span>
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
-        {myRedemption ? (
-          <button onClick={() => onShowQR(myRedemption)} style={{
-            flexShrink: 0, padding: '8px 14px', borderRadius: 10,
-            background: 'var(--color-success)', color: '#fff',
-            fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-            Mostra QR
-          </button>
-        ) : (
-          <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-            flexShrink: 0, padding: '8px 14px', borderRadius: 10,
-            background: locked ? 'var(--color-primary)' : 'var(--color-oro)', color: '#fff',
-            fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-            opacity: claiming ? 0.7 : 1,
-          }}>
-            {locked ? 'Accedi' : claiming ? '...' : 'Prendi'}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ── DealCard — sconto normale ── */
-function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
+/* ── CompactDealCard — horizontal: photo left 90px, info right, chevron ── */
+function CompactDealCard({ deal, isFeatured, onTap }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
@@ -384,74 +319,67 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
   const almostGone = remaining !== null && remaining > 0 && remaining <= 3
 
   return (
-    <div style={{
+    <div onClick={() => !soldOut && onTap(deal)} className="flex" style={{
       borderRadius: 20, overflow: 'hidden', background: '#fff',
-      border: '1px solid var(--color-bordo)',
+      border: isFeatured ? '1.5px solid var(--color-oro)' : '1px solid var(--color-bordo)',
+      boxShadow: isFeatured ? '0 2px 12px rgba(196,162,101,0.10)' : 'none',
       opacity: soldOut ? 0.55 : 1,
+      cursor: soldOut ? 'default' : 'pointer',
     }}>
-      {/* Photo */}
-      <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
+      {/* Photo left */}
+      <div style={{ width: 110, minWidth: 110, height: 110, position: 'relative', overflow: 'hidden' }}>
         {photo ? (
-          <img src={photo} alt={r?.name} style={{
-            width: '100%', height: '100%', objectFit: 'cover',
-            filter: soldOut ? 'grayscale(1)' : 'none',
-          }} />
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🍽️</div>
         )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 110, background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)' }} />
-
-        {/* Badge top left */}
+        {/* Featured star badge */}
+        {isFeatured && (
+          <div style={{ position: 'absolute', top: 6, left: 6, background: 'var(--color-oro)', borderRadius: 6, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Top</span>
+          </div>
+        )}
+        {/* Almost gone / sold out */}
         {almostGone && !soldOut && (
-          <div style={{ position: 'absolute', top: 14, left: 14, background: 'rgba(232,69,60,0.9)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}!</span>
+          <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(232,69,60,0.9)', padding: '2px 6px', borderRadius: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}!</span>
           </div>
         )}
         {soldOut && (
-          <div style={{ position: 'absolute', top: 14, left: 14, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', padding: '5px 12px', borderRadius: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Esaurito</span>
+          <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Esaurito</span>
           </div>
         )}
-
-        {/* Name on photo */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
-        </div>
       </div>
 
-      {/* Clean info row: tag + title + CTA */}
-      <div className="flex items-center" style={{ padding: '14px 16px', gap: 10 }}>
-        <span style={{
-          display: 'inline-block', fontSize: 12, fontWeight: 800,
-          color: soldOut ? '#999' : '#1a2e05',
-          background: soldOut ? '#e5e5e5' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-          borderRadius: 8, padding: '3px 10px', flexShrink: 0,
-          textDecoration: soldOut ? 'line-through' : 'none',
-        }}>{deal.discount_value}</span>
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
+      {/* Info right */}
+      <div className="flex items-center" style={{ flex: 1, minWidth: 0, padding: '12px 12px 12px 14px', gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <h4 style={{
+            fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+            color: 'var(--color-primary)', lineHeight: 1.2,
+          }}>{r?.name}</h4>
+          <div className="flex items-center gap-2">
+            <span style={{
+              display: 'inline-block', fontSize: 11, fontWeight: 800,
+              color: soldOut ? '#999' : '#1a2e05',
+              background: soldOut ? '#e5e5e5' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+              borderRadius: 7, padding: '2px 8px', flexShrink: 0,
+              textDecoration: soldOut ? 'line-through' : 'none',
+            }}>{deal.discount_value}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
+          </div>
+          {deal.conditions && (
+            <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {deal.conditions.split('\n')[0]}
+            </p>
+          )}
+        </div>
+
+        {/* Chevron */}
         {!soldOut && (
-          myRedemption ? (
-            <button onClick={() => onShowQR(myRedemption)} style={{
-              flexShrink: 0, padding: '8px 14px', borderRadius: 10,
-              background: 'var(--color-success)', color: '#fff',
-              fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-              Mostra QR
-            </button>
-          ) : (
-            <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-              flexShrink: 0, padding: '8px 14px', borderRadius: 10,
-              background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
-              fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-              opacity: claiming ? 0.7 : 1,
-            }}>
-              {locked ? 'Accedi' : claiming ? '...' : 'Prendi'}
-            </button>
-          )
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M9 18l6-6-6-6"/></svg>
         )}
       </div>
     </div>
@@ -599,6 +527,7 @@ export default function DealsPage() {
   const [claiming, setClaiming] = useState(null) // discount id being claimed
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
+  const [selectedDeal, setSelectedDeal] = useState(null) // for bottom sheet detail
 
   const goTo = (r) => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
 
@@ -755,8 +684,6 @@ export default function DealsPage() {
               </div>
             )}
 
-            {/* Come funziona — shown early for guests */}
-            {!user && !loading && <HowItWorks />}
 
             {!loading && (
               <>
@@ -783,22 +710,13 @@ export default function DealsPage() {
                   </div>
                 )}
 
-                {/* IN EVIDENZA */}
-                {featured.length > 0 && (
+                {/* SCONTI DISPONIBILI — featured + regular merged */}
+                {(featured.length > 0 || regular.length > 0) && (
                   <div>
-                    <p style={sectionLabel}>In evidenza</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {featured.map(deal => <FeaturedCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
-                    </div>
-                  </div>
-                )}
-
-                {/* TUTTI GLI SCONTI */}
-                {regular.length > 0 && (
-                  <div>
-                    <p style={sectionLabel}>Tutti gli sconti</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {regular.map(deal => <DealCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
+                    <p style={sectionLabel}>Sconti disponibili</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                      {featured.map(deal => <CompactDealCard key={deal.id} deal={deal} isFeatured onTap={setSelectedDeal} />)}
+                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} />)}
                     </div>
                   </div>
                 )}
@@ -812,8 +730,8 @@ export default function DealsPage() {
                   </div>
                 )}
 
-                {/* Come funziona — only at bottom for logged-in users (guests see it above) */}
-                {user && <div style={{ marginTop: 8 }}><HowItWorks /></div>}
+                {/* Come funziona — always at bottom */}
+                <div style={{ marginTop: 8 }}><HowItWorks /></div>
               </>
             )}
           </div>
