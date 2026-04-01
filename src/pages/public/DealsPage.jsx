@@ -113,17 +113,20 @@ function LiveDropCard({ deal, onNavigate }) {
         <div className="flex items-center justify-between" style={{ marginBottom: 6, marginTop: 10 }}>
           <span style={{ fontSize: 12, color: 'var(--color-secondary)' }}>{claimed} di {max} presi</span>
           {remaining > 0 && remaining <= 5 && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)' }}>Solo {remaining} rimast{remaining === 1 ? 'o' : 'i'}!</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-accent)' }}>Solo {remaining} rimast{remaining === 1 ? 'o' : 'i'}!</span>
           )}
           {soldOut && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
         </div>
-        <div style={{ height: 6, background: 'var(--color-bordo)', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ height: 10, background: 'var(--color-bordo)', borderRadius: 5, overflow: 'hidden', position: 'relative' }}>
           <div style={{
-            height: '100%', borderRadius: 3,
+            height: '100%', borderRadius: 5,
             width: `${Math.min(100, (claimed / max) * 100)}%`,
             background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, var(--color-accent), #ff6b6b)',
             transition: 'width 0.5s ease',
-          }} />
+            position: 'relative', overflow: 'hidden',
+          }}>
+            {!soldOut && <div className="progress-shine" />}
+          </div>
         </div>
 
         {/* CTA */}
