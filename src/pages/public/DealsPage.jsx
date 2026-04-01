@@ -100,7 +100,8 @@ function LiveDropCard({ deal, onNavigate }) {
       </div>
 
       {/* Info */}
-      <div style={{ padding: '14px 16px 16px' }}>
+      <div style={{ padding: '14px 16px 16px', marginTop: -20, position: 'relative', background: 'linear-gradient(to bottom, transparent 0%, #fff 20px)' }}>
+        <div style={{ paddingTop: 20 }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <div className="flex items-baseline gap-2">
             <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent)' }}>{deal.discount_value}</span>
@@ -139,6 +140,7 @@ function LiveDropCard({ deal, onNavigate }) {
             Prendi lo sconto
           </button>
         )}
+        </div>
       </div>
     </div>
   )
