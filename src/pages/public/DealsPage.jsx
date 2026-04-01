@@ -486,6 +486,145 @@ function MyUsedCard({ redemption, onGoTo }) {
   )
 }
 
+/* ── DealBottomSheet — detail overlay on tap ── */
+function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, onGoTo }) {
+  const r = deal?.restaurant
+  const photo = getPhoto(r)
+  const remaining = deal?.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
+  const soldOut = remaining !== null && remaining <= 0
+  const conditions = deal?.conditions ? deal.conditions.split('\n').filter(Boolean) : []
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}
+    >
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480, maxHeight: '85vh',
+          background: 'var(--color-bg)', borderRadius: '24px 24px 0 0',
+          overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* Drag handle */}
+        <div style={{ padding: '10px 0 0', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-bordo)' }} />
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 24px' }}>
+          {/* Photo */}
+          <div style={{ borderRadius: 20, overflow: 'hidden', height: 180, marginBottom: 16 }}>
+            {photo ? (
+              <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
+            )}
+          </div>
+
+          {/* Restaurant name — tappable */}
+          <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
+            fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
+            color: 'var(--color-primary)', lineHeight: 1.2, cursor: 'pointer', marginBottom: 4,
+          }}>{r?.name}</h3>
+          <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 14 }}>
+            {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
+          </p>
+
+          {/* Discount tag + title */}
+          <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
+            <span style={{
+              display: 'inline-block', fontSize: 13, fontWeight: 800, color: '#1a2e05',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+              borderRadius: 8, padding: '3px 12px',
+            }}>{deal?.discount_value}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title}</span>
+          </div>
+
+          {/* Conditions list */}
+          {conditions.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, padding: 14, border: '1px solid var(--color-bordo)', marginBottom: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Condizioni</p>
+              {conditions.map((c, i) => (
+                <div key={i} className="flex gap-2" style={{ marginBottom: i < conditions.length - 1 ? 6 : 0 }}>
+                  <span style={{ color: 'var(--color-secondary)', fontSize: 12, flexShrink: 0 }}>•</span>
+                  <span style={{ fontSize: 12, color: 'var(--color-primary)', lineHeight: 1.4 }}>{c}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Quick actions */}
+          <div className="flex gap-3" style={{ marginBottom: 18 }}>
+            <button onClick={() => { onClose(); onGoTo(r); }} style={{
+              flex: 1, padding: '10px 0', borderRadius: 14,
+              background: '#fff', border: '1px solid var(--color-bordo)',
+              fontSize: 12, fontWeight: 600, color: 'var(--color-primary)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Vai al locale
+            </button>
+            {r?.phone && (
+              <a href={`tel:${r.phone}`} style={{
+                flex: 1, padding: '10px 0', borderRadius: 14,
+                background: '#fff', border: '1px solid var(--color-bordo)',
+                fontSize: 12, fontWeight: 600, color: 'var(--color-primary)',
+                textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Chiama
+              </a>
+            )}
+          </div>
+
+          {/* CTA */}
+          {!soldOut && myRedemption ? (
+            <button onClick={() => onShowQR(myRedemption)} style={{
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: 'var(--color-success)', color: '#fff',
+              fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+              Mostra QR
+            </button>
+          ) : !soldOut && (
+            <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
+              fontSize: 15, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              opacity: claiming ? 0.7 : 1,
+            }}>
+              {locked && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+              {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
+            </button>
+          )}
+          {soldOut && (
+            <div style={{
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: 'var(--color-bordo)', textAlign: 'center',
+              fontSize: 15, fontWeight: 700, color: 'var(--color-secondary)',
+            }}>Esaurito</div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 /* ── HowItWorks — come funziona section ── */
 function HowItWorks() {
   return (
@@ -807,6 +946,23 @@ export default function DealsPage() {
       </div>
 
       <Footer />
+
+      {/* Bottom sheet detail */}
+      <AnimatePresence>
+        {selectedDeal && (
+          <DealBottomSheet
+            deal={selectedDeal}
+            onClose={() => setSelectedDeal(null)}
+            onClaim={(d) => { setSelectedDeal(null); claimDeal(d); }}
+            locked={!user}
+            onLogin={() => { setSelectedDeal(null); navigate('/login'); }}
+            claiming={claiming === selectedDeal.id}
+            myRedemption={myActive.find(r => r.discount_id === selectedDeal.id) || justClaimed.find(r => r.discount_id === selectedDeal.id)}
+            onShowQR={(r) => { setSelectedDeal(null); showMyQR(r); }}
+            onGoTo={goTo}
+          />
+        )}
+      </AnimatePresence>
 
       {/* QR Code Modal */}
       <AnimatePresence>
