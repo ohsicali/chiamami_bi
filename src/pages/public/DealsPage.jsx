@@ -85,7 +85,7 @@ function getPhoto(restaurant) {
   return proxyImg(p?.photo_url || null)
 }
 
-/* ── LiveDropCard — drop attivo con bordo accent ── */
+/* ── LiveDropCard — carousel 260px, bordo accent ── */
 function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -97,70 +97,71 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
 
   return (
     <div style={{
+      width: 260, minWidth: 260, scrollSnapAlign: 'start',
       borderRadius: 20, overflow: 'hidden',
       border: soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
       background: '#fff',
       opacity: soldOut ? 0.6 : 1,
       animation: soldOut ? 'none' : 'dropPulse 2.5s ease-in-out infinite',
     }}>
-      {/* Photo */}
-      <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
+      {/* Photo 110px */}
+      <div style={{ position: 'relative', height: 110, overflow: 'hidden' }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🍽️</div>
         )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)' }} />
 
         {/* LIVE badge */}
         <div style={{
-          position: 'absolute', top: 14, left: 14,
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'var(--color-accent)', padding: '5px 12px', borderRadius: 10,
+          position: 'absolute', top: 10, left: 10,
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'var(--color-accent)', padding: '3px 10px', borderRadius: 8,
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
-          <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>Live</span>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>Live</span>
         </div>
 
         {/* Countdown badge */}
         {time && !soldOut && (
           <div style={{
-            position: 'absolute', top: 14, right: 14,
-            background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-            padding: '5px 12px', borderRadius: 10, color: '#fff', fontSize: 12, fontWeight: 700,
+            position: 'absolute', top: 10, right: 10,
+            background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+            padding: '3px 8px', borderRadius: 8, color: '#fff', fontSize: 10, fontWeight: 700,
           }}>
-            Scade tra {time.h}h {pad(time.m)}m
+            {time.h}h {pad(time.m)}m
           </div>
         )}
 
         {/* Name on photo */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.city].filter(Boolean).join(' · ')}</p>
+        <div style={{ position: 'absolute', bottom: 8, left: 10, right: 10 }}>
+          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
         </div>
       </div>
 
       {/* Info */}
-      <div style={{ padding: '14px 16px 16px' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-          <div className="flex items-baseline gap-2">
-            <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent)' }}>{deal.discount_value}</span>
-            <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 500 }}>{deal.title}</span>
-          </div>
-          {deal.conditions && <span style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{deal.conditions}</span>}
+      <div style={{ padding: '10px 12px 12px' }}>
+        <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+          <span style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
+            background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+            borderRadius: 7, padding: '2px 8px', flexShrink: 0,
+          }}>{deal.discount_value}</span>
+          <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center justify-between" style={{ marginBottom: 6, marginTop: 10 }}>
-          <span style={{ fontSize: 12, color: 'var(--color-secondary)' }}>{claimed} di {max} presi</span>
+        {/* Progress bar */}
+        <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{claimed}/{max} presi</span>
           {remaining > 0 && remaining <= 5 && (
-            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-accent)' }}>Solo {remaining} rimast{remaining === 1 ? 'o' : 'i'}!</span>
+            <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-accent)' }}>Ultimi {remaining}!</span>
           )}
-          {soldOut && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
+          {soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
         </div>
-        <div style={{ height: 10, background: 'var(--color-bordo)', borderRadius: 5, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ height: 6, background: 'var(--color-bordo)', borderRadius: 3, overflow: 'hidden', position: 'relative' }}>
           <div style={{
-            height: '100%', borderRadius: 5,
+            height: '100%', borderRadius: 3,
             width: `${Math.min(100, (claimed / max) * 100)}%`,
             background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, var(--color-accent), #ff6b6b)',
             transition: 'width 0.5s ease',
@@ -173,24 +174,23 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
         {/* CTA */}
         {!soldOut && myRedemption ? (
           <button onClick={() => onShowQR(myRedemption)} style={{
-            width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
+            width: '100%', marginTop: 10, padding: '10px 0', borderRadius: 12,
             background: 'var(--color-success)', color: '#fff',
-            fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
             Mostra QR
           </button>
         ) : !soldOut && (
           <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-            width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
+            width: '100%', marginTop: 10, padding: '10px 0', borderRadius: 12,
             background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
-            fontSize: 14, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontSize: 12, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             opacity: claiming ? 0.7 : 1,
           }}>
-            {locked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
-            {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
+            {locked ? 'Accedi' : claiming ? '...' : 'Prendi'}
           </button>
         )}
       </div>
@@ -198,7 +198,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   )
 }
 
-/* ── UpcomingDropCard — card scura, countdown sulla foto ── */
+/* ── UpcomingDropCard — carousel 260px, sfondo scuro ── */
 function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -214,89 +214,96 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
     const isToday = d.toDateString() === now.toDateString()
     const isTomorrow = d.toDateString() === tomorrow.toDateString()
     const timeStr = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-    if (isToday) return `Oggi alle ${timeStr}`
-    if (isTomorrow) return `Domani alle ${timeStr}`
-    return `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} alle ${timeStr}`
+    if (isToday) return `Oggi ${timeStr}`
+    if (isTomorrow) return `Domani ${timeStr}`
+    return `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} ${timeStr}`
   })() : null
 
   return (
-    <div style={{ borderRadius: 20, overflow: 'hidden', background: 'var(--color-primary)' }}>
-      {/* Photo with overlays */}
-      <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
-        {photo && <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
+    <div style={{
+      width: 260, minWidth: 260, scrollSnapAlign: 'start',
+      borderRadius: 20, overflow: 'hidden', background: 'var(--color-primary)',
+    }}>
+      {/* Photo 110px dimmed */}
+      <div style={{ position: 'relative', height: 110, overflow: 'hidden' }}>
+        {photo ? (
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: '#2e2228', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, opacity: 0.5 }}>🍽️</div>
+        )}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
 
-        {/* Drop date badge — top left */}
+        {/* Date badge */}
         {dropLabel && (
           <div style={{
-            position: 'absolute', top: 14, left: 14,
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)',
-            padding: '5px 12px', borderRadius: 10,
+            position: 'absolute', top: 10, left: 10,
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
+            padding: '3px 10px', borderRadius: 8,
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-oro)' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{dropLabel}</span>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-oro)' }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{dropLabel}</span>
           </div>
         )}
 
-        {/* Discount badge — top right */}
+        {/* Discount badge */}
         <div style={{
-          position: 'absolute', top: 14, right: 14,
+          position: 'absolute', top: 10, right: 10,
           background: '#fff', color: 'var(--color-primary)',
-          fontSize: 13, fontWeight: 800, padding: '5px 14px', borderRadius: 10,
+          fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 8,
         }}>
           {deal.discount_value}
         </div>
 
-        {/* Bottom overlay: name left + countdown right */}
-        <div className="flex items-end justify-between" style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
-          <div style={{ minWidth: 0 }}>
-            <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
-          </div>
-          {time && (
-            <div className="flex items-center" style={{ flexShrink: 0, gap: 4 }}>
-              {[{ v: pad(time.h), l: 'ore' }, { v: pad(time.m), l: 'min' }, { v: pad(time.s), l: 'sec' }].map((seg, i) => (
-                <div key={i} className="flex items-center" style={{ gap: 4 }}>
-                  <div style={{
-                    width: 40, padding: '6px 0', textAlign: 'center',
-                    background: 'rgba(196,162,101,0.15)', backdropFilter: 'blur(12px)', borderRadius: 10,
-                  }}>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif", fontVariantNumeric: 'tabular-nums' }}>{seg.v}</span>
-                    <p style={{ fontSize: 7, fontWeight: 600, color: 'var(--color-oro)', marginTop: 1, textTransform: 'uppercase', letterSpacing: 1 }}>{seg.l}</p>
-                  </div>
-                  {i < 2 && <span style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>:</span>}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Name on photo */}
+        <div style={{ position: 'absolute', bottom: 8, left: 10, right: 10 }}>
+          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
         </div>
       </div>
 
-      {/* Info + Ricordamelo */}
-      <div style={{ padding: '12px 16px 16px' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{deal.title || deal.discount_value}</span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Solo {max} disponibili</span>
+      {/* Info + countdown + Ricordamelo */}
+      <div style={{ padding: '10px 12px 12px' }}>
+        {/* Countdown boxes */}
+        {time && (
+          <div className="flex items-center justify-center" style={{ gap: 4, marginBottom: 10 }}>
+            {[{ v: pad(time.h), l: 'ore' }, { v: pad(time.m), l: 'min' }, { v: pad(time.s), l: 'sec' }].map((seg, i) => (
+              <div key={i} className="flex items-center" style={{ gap: 4 }}>
+                <div style={{
+                  width: 36, padding: '4px 0', textAlign: 'center',
+                  background: 'rgba(196,162,101,0.15)', borderRadius: 8,
+                }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif", fontVariantNumeric: 'tabular-nums' }}>{seg.v}</span>
+                  <p style={{ fontSize: 7, fontWeight: 600, color: 'var(--color-oro)', marginTop: 1, textTransform: 'uppercase', letterSpacing: 1 }}>{seg.l}</p>
+                </div>
+                {i < 2 && <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>:</span>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{deal.title}</span>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Solo {max}</span>
         </div>
+
         <button onClick={() => locked ? onLogin() : onRemind()} style={{
-          width: '100%', padding: '12px 0', borderRadius: 14,
+          width: '100%', padding: '9px 0', borderRadius: 12,
           background: locked ? 'rgba(255,255,255,0.08)' : reminded ? 'rgba(196,162,101,0.25)' : 'rgba(196,162,101,0.12)',
           border: locked ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(196,162,101,0.2)',
           color: locked ? 'rgba(255,255,255,0.7)' : 'var(--color-oro)',
-          fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
         }}>
           {locked ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           ) : reminded ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
           ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           )}
-          {locked ? 'Registrati per il promemoria' : reminded ? 'Aggiunto al calendario' : 'Ricordamelo'}
+          {locked ? 'Accedi' : reminded ? 'Aggiunto' : 'Ricordamelo'}
         </button>
       </div>
     </div>
@@ -753,21 +760,22 @@ export default function DealsPage() {
 
             {!loading && (
               <>
-                {/* DROP ATTIVI */}
-                {activeDrops.length > 0 && (
+                {/* DROP — carosello orizzontale */}
+                {(activeDrops.length > 0 || upcomingDrops.length > 0) && (
                   <div>
-                    <p style={sectionLabel}>Drop attivi</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
+                    <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
+                      <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
+                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-accent)' }} />
+                        <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-accent)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
+                      </span>
+                      <p style={sectionLabel}>Drop</p>
                     </div>
-                  </div>
-                )}
-
-                {/* PROSSIMO DROP */}
-                {upcomingDrops.length > 0 && (
-                  <div>
-                    <p style={sectionLabel}>Prossimo drop</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
+                    <div className="drop-carousel" style={{
+                      display: 'flex', gap: 10, overflowX: 'auto',
+                      scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                      paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16,
+                    }}>
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
                       {upcomingDrops.map(deal => (
                         <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
                       ))}

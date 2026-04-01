@@ -93,6 +93,10 @@ body {
   animation: progressShine 2s ease-in-out infinite;
 }
 
+/* Drop carousel scrollbar hide */
+.drop-carousel::-webkit-scrollbar { display: none; }
+.drop-carousel { scrollbar-width: none; -ms-overflow-style: none; }
+
 /* Skeleton shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
