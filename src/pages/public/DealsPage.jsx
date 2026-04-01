@@ -386,18 +386,19 @@ function CompactDealCard({ deal, isFeatured, onTap }) {
   )
 }
 
-/* ── MyActiveCard — compact, come nel profilo ── */
+/* ── MyActiveCard — green border, tappable for QR ── */
 function MyActiveCard({ redemption, onShowQR, onGoTo }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
   return (
-    <div className="flex items-center" style={{
+    <div onClick={() => onShowQR(redemption)} className="flex items-center" style={{
       borderRadius: 16, padding: '14px 12px', gap: 12,
-      background: '#fff', border: '1px solid var(--color-bordo)',
+      background: '#fff', border: '2px solid var(--color-success)',
+      cursor: 'pointer',
     }}>
-      {/* Photo — tap goes to restaurant */}
-      <div onClick={() => onGoTo(r)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
+      {/* Photo */}
+      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
@@ -407,7 +408,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <h4 onClick={() => onGoTo(r)} style={{
+        <h4 onClick={(e) => { e.stopPropagation(); onGoTo(r); }} style={{
           fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
           color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
         }}>{r?.name}</h4>
@@ -420,13 +421,13 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
         </div>
         {deal?.conditions && (
-          <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions}</p>
+          <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions.split('\n')[0]}</p>
         )}
       </div>
 
       {/* Utilizza button + chevron */}
-      <div onClick={() => onShowQR(redemption)} className="flex items-center gap-1" style={{
-        flexShrink: 0, cursor: 'pointer',
+      <div className="flex items-center gap-1" style={{
+        flexShrink: 0,
         background: 'var(--color-accent)', borderRadius: 10, padding: '6px 10px',
       }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Utilizza</span>
@@ -436,7 +437,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
   )
 }
 
-/* ── MyUsedCard — same layout as MyActiveCard but faded + strikethrough ── */
+/* ── MyUsedCard — faded, strikethrough, not tappable ── */
 function MyUsedCard({ redemption, onGoTo }) {
   const deal = redemption.discount
   const r = deal?.restaurant
@@ -449,12 +450,12 @@ function MyUsedCard({ redemption, onGoTo }) {
     <div className="flex items-center" style={{
       borderRadius: 16, padding: '14px 12px', gap: 12,
       background: '#fff', border: '1px solid var(--color-bordo)',
-      opacity: 0.5,
+      opacity: 0.45,
     }}>
       {/* Photo */}
       <div onClick={() => onGoTo(r)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
         {photo ? (
-          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.5)' }} />
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.6)' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
         )}
@@ -464,14 +465,15 @@ function MyUsedCard({ redemption, onGoTo }) {
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <h4 onClick={() => onGoTo(r)} style={{
           fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
-          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
+          color: 'var(--color-secondary)', cursor: 'pointer', lineHeight: 1.2,
+          textDecoration: 'line-through',
         }}>{r?.name}</h4>
         <div className="flex items-center gap-2">
           <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
-            background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#999',
+            background: '#e5e5e5',
             borderRadius: 8, padding: '2px 8px', flexShrink: 0,
-            textDecoration: 'line-through', opacity: 0.6,
+            textDecoration: 'line-through',
           }}>{deal?.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-secondary)', textDecoration: 'line-through', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
         </div>
