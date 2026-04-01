@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
-import { getCategoryInfo } from '../../lib/hooks/useCategories'
 import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
@@ -79,27 +78,6 @@ function useCountdown(targetDate) {
   return time
 }
 
-/* ── Categories on photo overlay (gray outline) ── */
-function PhotoCategoryTags({ restaurant }) {
-  const cats = (restaurant?.category || (restaurant?.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => getCategoryInfo(name)).filter(Boolean)
-  const price = restaurant?.price_range ? '€'.repeat(restaurant.price_range) : null
-  if (!cats.length && !price) return null
-  return (
-    <>
-      {cats.slice(0, 2).map((cat, i) => (
-        <span key={i} style={{
-          fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 8,
-          background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)',
-          color: 'rgba(255,255,255,0.85)',
-        }}>{cat.name}</span>
-      ))}
-      {price && (
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{price}</span>
-      )}
-    </>
-  )
-}
 
 /* ── Photo helper ── */
 function getPhoto(restaurant) {
@@ -155,17 +133,14 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           </div>
         )}
 
-        {/* Name + categories + tagline on photo */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
+        {/* Name on photo */}
+        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
-            <PhotoCategoryTags restaurant={r} />
-          </div>
-          {r?.tagline && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 5, lineHeight: 1.3 }}>{r.tagline}</p>}
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.city].filter(Boolean).join(' · ')}</p>
         </div>
       </div>
 
-      {/* Info — solo sconto */}
+      {/* Info */}
       <div style={{ padding: '14px 16px 16px' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <div className="flex items-baseline gap-2">
@@ -363,17 +338,14 @@ function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           {deal.discount_value}
         </div>
 
-        {/* Name + categories + tagline on photo */}
-        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
+        {/* Name on photo */}
+        <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
-            <PhotoCategoryTags restaurant={r} />
-          </div>
-          {r?.tagline && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 5, lineHeight: 1.3 }}>{r.tagline}</p>}
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
         </div>
       </div>
 
-      {/* Info + CTA — solo sconto */}
+      {/* Info + CTA */}
       <div style={{ padding: '14px 16px 16px' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>{deal.title || deal.discount_value}</p>
@@ -488,16 +460,12 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
             fontFamily: "'TAN Songbird', sans-serif",
             fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.2,
           }}>{r?.name}</h3>
-          <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
-            <PhotoCategoryTags restaurant={r} />
-          </div>
-          {r?.tagline && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 5, lineHeight: 1.3 }}>{r.tagline}</p>}
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}</p>
         </div>
       </div>
 
-      {/* Info section — solo sconto */}
+      {/* Info section */}
       <div style={{ padding: '14px 16px 16px' }}>
-        {/* Deal title */}
         <p style={{
           fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.4,
         }}>{deal.title}</p>
