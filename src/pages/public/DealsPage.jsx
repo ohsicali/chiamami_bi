@@ -354,7 +354,7 @@ function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
         {/* CTA */}
         {myRedemption ? (
           <button onClick={() => onShowQR(myRedemption)} style={{
-            width: '100%', marginTop: 10, padding: '13px 0', borderRadius: 14,
+            width: '100%', marginTop: 10, padding: '14px 0', borderRadius: 14,
             background: 'var(--color-success)', color: '#fff',
             fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -364,7 +364,7 @@ function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           </button>
         ) : (
           <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-            width: '100%', marginTop: 10, padding: '13px 0', borderRadius: 14,
+            width: '100%', marginTop: 10, padding: '14px 0', borderRadius: 14,
             background: locked ? 'var(--color-primary)' : 'var(--color-oro)', color: '#fff',
             fontSize: 14, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -379,7 +379,7 @@ function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   )
 }
 
-/* ── DealCard — sconto normale ── */
+/* ── DealCard — sconto normale (vertical layout, coerente con le altre card) ── */
 function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -391,78 +391,140 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
     <div style={{
       borderRadius: 20, overflow: 'hidden', background: '#fff',
       border: '1px solid var(--color-bordo)',
-      opacity: soldOut ? 0.6 : 1,
+      opacity: soldOut ? 0.55 : 1,
+      transition: 'opacity 0.3s ease',
     }}>
-      {/* Horizontal layout: photo left + info right */}
-      <div className="flex" style={{ gap: 0 }}>
-        {/* Photo */}
-        <div style={{ position: 'relative', width: 120, minHeight: 140, flexShrink: 0, overflow: 'hidden' }}>
-          {photo ? (
-            <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🍽️</div>
-          )}
-          {/* Discount badge */}
+      {/* Photo section — vertical, full-width */}
+      <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
+        {photo ? (
+          <img src={photo} alt={r?.name} style={{
+            width: '100%', height: '100%', objectFit: 'cover',
+            filter: soldOut ? 'grayscale(1)' : 'none',
+            transition: 'filter 0.3s ease',
+          }} />
+        ) : (
           <div style={{
-            position: 'absolute', top: 10, left: 10,
-            background: soldOut ? 'rgba(0,0,0,0.4)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-            color: soldOut ? '#ccc' : '#1a2e05', fontSize: 12, fontWeight: 800,
-            padding: '4px 10px', borderRadius: 8, textDecoration: soldOut ? 'line-through' : 'none',
-          }}>
-            {deal.discount_value}
-          </div>
+            width: '100%', height: '100%',
+            background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40,
+          }}>🍽️</div>
+        )}
+
+        {/* Gradient overlay */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)',
+        }} />
+
+        {/* Discount badge — top right */}
+        <div style={{
+          position: 'absolute', top: 14, right: 14,
+          background: soldOut ? 'rgba(0,0,0,0.4)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+          color: soldOut ? '#ccc' : '#1a2e05',
+          fontSize: 13, fontWeight: 800,
+          padding: '5px 12px', borderRadius: 10,
+          textDecoration: soldOut ? 'line-through' : 'none',
+        }}>
+          {deal.discount_value}
         </div>
 
-        {/* Info */}
-        <div style={{ flex: 1, padding: '14px 14px 14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.3 }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', marginTop: 6 }}>{deal.title}</p>
-          {deal.conditions && <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2 }}>{deal.conditions}</p>}
+        {/* "Almost gone" badge — top left */}
+        {almostGone && !soldOut && (
+          <div style={{
+            position: 'absolute', top: 14, left: 14,
+            background: 'rgba(232,69,60,0.9)', backdropFilter: 'blur(8px)',
+            padding: '5px 10px', borderRadius: 10,
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>
+              Ultimi {remaining}!
+            </span>
+          </div>
+        )}
 
-          {/* Progress bar */}
-          {deal.max_redemptions && (
-            <div style={{ marginTop: 8 }}>
-              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-                <span style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{deal.total_redeemed || 0}/{deal.max_redemptions}</span>
-                {almostGone && !soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-accent)' }}>Ultimi {remaining}!</span>}
-                {soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
-              </div>
-              <div style={{ height: 6, background: 'var(--color-bordo)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 3, width: `${(deal.total_redeemed || 0) / deal.max_redemptions * 100}%`, background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)', transition: 'width 0.5s ease' }} />
-              </div>
-            </div>
-          )}
+        {/* Sold out overlay */}
+        {soldOut && (
+          <div style={{
+            position: 'absolute', top: 14, left: 14,
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+            padding: '5px 12px', borderRadius: 10,
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Esaurito</span>
+          </div>
+        )}
+
+        {/* Restaurant name on photo */}
+        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
+          <h3 style={{
+            fontFamily: "'TAN Songbird', sans-serif",
+            fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.2,
+          }}>{r?.name}</h3>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
+            {r?.cuisine_type} · {r?.city}
+          </p>
         </div>
       </div>
 
-      {/* CTA */}
-      {!soldOut && (
-        <div style={{ padding: '0 14px 14px' }}>
-          {myRedemption ? (
+      {/* Info section */}
+      <div style={{ padding: '14px 16px 16px' }}>
+        {/* Deal title */}
+        <p style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.4,
+        }}>{deal.title}</p>
+
+        {/* Conditions */}
+        {deal.conditions && (
+          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 3, lineHeight: 1.4 }}>
+            {deal.conditions}
+          </p>
+        )}
+
+        {/* Progress bar */}
+        {deal.max_redemptions && (
+          <div style={{ marginTop: 10 }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+              <span style={{ fontSize: 11, color: 'var(--color-secondary)' }}>
+                {deal.total_redeemed || 0} di {deal.max_redemptions} presi
+              </span>
+            </div>
+            <div style={{
+              height: 6, background: 'var(--color-bordo)', borderRadius: 3, overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%', borderRadius: 3,
+                width: `${Math.min(100, (deal.total_redeemed || 0) / deal.max_redemptions * 100)}%`,
+                background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)',
+                transition: 'width 0.5s ease',
+              }} />
+            </div>
+          </div>
+        )}
+
+        {/* CTA button */}
+        {!soldOut && (
+          myRedemption ? (
             <button onClick={() => onShowQR(myRedemption)} style={{
-              width: '100%', padding: '12px 0', borderRadius: 12,
+              width: '100%', marginTop: 12, padding: '12px 0', borderRadius: 14,
               background: 'var(--color-success)', color: '#fff',
-              fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+              fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
               Mostra QR
             </button>
           ) : (
             <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
-              width: '100%', padding: '12px 0', borderRadius: 12,
+              width: '100%', marginTop: 12, padding: '12px 0', borderRadius: 14,
               background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
-              fontSize: 13, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+              fontSize: 14, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: claiming ? 0.7 : 1,
             }}>
               {locked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
               {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
             </button>
-          )}
-        </div>
-      )}
+          )
+        )}
+      </div>
     </div>
   )
 }
@@ -485,12 +547,12 @@ function MyActiveCard({ redemption, onShowQR }) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
 
         {isDrop && (
-          <div style={{ position: 'absolute', top: 14, left: 14, background: 'var(--color-accent)', padding: '4px 10px', borderRadius: 8 }}>
+          <div style={{ position: 'absolute', top: 14, left: 14, background: 'var(--color-accent)', padding: '5px 12px', borderRadius: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Drop</span>
           </div>
         )}
 
-        <div style={{ position: 'absolute', top: 14, right: 14, background: '#fff', padding: '4px 12px', borderRadius: 8 }}>
+        <div style={{ position: 'absolute', top: 14, right: 14, background: '#fff', padding: '5px 12px', borderRadius: 10 }}>
           <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-primary)' }}>{deal?.discount_value}</span>
         </div>
 
