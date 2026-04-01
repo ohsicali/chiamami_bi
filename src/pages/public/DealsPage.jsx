@@ -548,9 +548,12 @@ function MyActiveCard({ redemption, onShowQR }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r?.name}</h4>
         <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent)', marginTop: 2 }}>{deal?.discount_value}</p>
-        <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</p>
+        <span style={{ display: 'inline-block', marginTop: 3, fontSize: 10, fontWeight: 700, color: 'var(--color-success)', background: 'rgba(74,222,128,0.12)', borderRadius: 6, padding: '2px 7px' }}>{deal?.title}</span>
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
+      <div className="flex flex-col items-center gap-1" style={{ flexShrink: 0 }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: 0.5 }}>Utilizza</span>
+      </div>
     </div>
   )
 }
