@@ -535,7 +535,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
   const photo = getPhoto(r)
   return (
     <div className="flex items-center" style={{
-      borderRadius: 16, padding: 12, gap: 12,
+      borderRadius: 16, padding: '14px 12px', gap: 12,
       background: '#fff', border: '1px solid var(--color-bordo)',
     }}>
       {/* Photo — tap goes to restaurant */}
@@ -548,21 +548,21 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
       </div>
 
       {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <h4 onClick={() => onGoTo(r)} style={{
           fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
           color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
         }}>{r?.name}</h4>
-        <div className="flex items-center gap-2" style={{ marginTop: 3 }}>
+        <div className="flex items-center gap-2">
           <span style={{
             display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
             background: 'linear-gradient(135deg, #a3e635, #4ade80)',
-            borderRadius: 8, padding: '2px 8px',
+            borderRadius: 8, padding: '2px 8px', flexShrink: 0,
           }}>{deal?.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
         </div>
         {deal?.conditions && (
-          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions}</p>
+          <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions}</p>
         )}
       </div>
 
