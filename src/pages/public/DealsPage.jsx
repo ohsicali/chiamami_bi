@@ -78,7 +78,7 @@ function useCountdown(targetDate) {
   return time
 }
 
-/* ── Categories on photo overlay ── */
+/* ── Categories on photo overlay (gray outline) ── */
 function PhotoCategoryTags({ restaurant }) {
   const cats = (restaurant?.category || (restaurant?.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name)).filter(Boolean)
@@ -88,12 +88,13 @@ function PhotoCategoryTags({ restaurant }) {
     <>
       {cats.slice(0, 2).map((cat, i) => (
         <span key={i} style={{
-          fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8,
-          background: `${cat.color}CC`, color: '#fff',
-        }}>{cat.emoji} {cat.name}</span>
+          fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 8,
+          background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)',
+          color: 'rgba(255,255,255,0.85)',
+        }}>{cat.name}</span>
       ))}
       {price && (
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>{price}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{price}</span>
       )}
     </>
   )
@@ -153,12 +154,13 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           </div>
         )}
 
-        {/* Name + categories on photo */}
+        {/* Name + categories + tagline on photo */}
         <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
           <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
             <PhotoCategoryTags restaurant={r} />
           </div>
+          {r?.tagline && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 5, lineHeight: 1.3 }}>{r.tagline}</p>}
         </div>
       </div>
 
@@ -360,12 +362,13 @@ function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           {deal.discount_value}
         </div>
 
-        {/* Name + categories on photo */}
+        {/* Name + categories + tagline on photo */}
         <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
           <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
             <PhotoCategoryTags restaurant={r} />
           </div>
+          {r?.tagline && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 5, lineHeight: 1.3 }}>{r.tagline}</p>}
         </div>
       </div>
 
@@ -478,7 +481,7 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
           </div>
         )}
 
-        {/* Name + categories on photo */}
+        {/* Name + categories + tagline on photo */}
         <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
           <h3 style={{
             fontFamily: "'TAN Songbird', sans-serif",
@@ -487,6 +490,7 @@ function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onSh
           <div className="flex items-center" style={{ gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
             <PhotoCategoryTags restaurant={r} />
           </div>
+          {r?.tagline && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 5, lineHeight: 1.3 }}>{r.tagline}</p>}
         </div>
       </div>
 
