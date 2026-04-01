@@ -525,7 +525,7 @@ export default function DealsPage() {
       // Generate .ics and trigger download → opens native calendar
       const r = deal.restaurant
       addToCalendar({
-        title: `Drop: ${r?.name || 'Sconto'} — ${deal.discount_value}`,
+        title: `Sconto limitato: ${r?.name || 'Ristorante'} - ${deal.title || deal.discount_value}`,
         description: `${deal.title || deal.discount_value} da ${r?.name}. Apri l'app per prendere lo sconto! chiamamibi.com/sconti`,
         start: deal.drop_starts_at || deal.drop_time,
         url: 'https://chiamamibi.com/sconti',
