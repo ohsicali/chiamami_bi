@@ -310,7 +310,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   )
 }
 
-/* ── CompactDealCard — coupon/voucher style ── */
+/* ── CompactDealCard — horizontal: photo left 90px, info right, chevron ── */
 function CompactDealCard({ deal, isFeatured, onTap }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -325,65 +325,61 @@ function CompactDealCard({ deal, isFeatured, onTap }) {
       boxShadow: isFeatured ? '0 2px 12px rgba(196,162,101,0.10)' : 'none',
       opacity: soldOut ? 0.55 : 1,
       cursor: soldOut ? 'default' : 'pointer',
-      position: 'relative',
     }}>
-      {/* Left: photo + info */}
-      <div className="flex" style={{ flex: 1, minWidth: 0 }}>
-        {/* Photo */}
-        <div style={{ width: 90, minWidth: 90, alignSelf: 'stretch', position: 'relative', overflow: 'hidden' }}>
-          {photo ? (
-            <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
-          )}
-          {isFeatured && (
-            <div style={{ position: 'absolute', top: 6, left: 6, background: 'var(--color-oro)', borderRadius: 6, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-              <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Top</span>
-            </div>
-          )}
-        </div>
+      {/* Photo left */}
+      <div style={{ width: 110, minWidth: 110, height: 110, position: 'relative', overflow: 'hidden' }}>
+        {photo ? (
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🍽️</div>
+        )}
+        {/* Featured star badge */}
+        {isFeatured && (
+          <div style={{ position: 'absolute', top: 6, left: 6, background: 'var(--color-oro)', borderRadius: 6, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Top</span>
+          </div>
+        )}
+        {/* Almost gone / sold out */}
+        {almostGone && !soldOut && (
+          <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(232,69,60,0.9)', padding: '2px 6px', borderRadius: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}!</span>
+          </div>
+        )}
+        {soldOut && (
+          <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Esaurito</span>
+          </div>
+        )}
+      </div>
 
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0, padding: '12px 12px 12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3 }}>
+      {/* Info right */}
+      <div className="flex items-center" style={{ flex: 1, minWidth: 0, padding: '12px 12px 12px 14px', gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <h4 style={{
-            fontFamily: "'TAN Songbird', sans-serif", fontSize: 14, fontWeight: 600,
+            fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
             color: 'var(--color-primary)', lineHeight: 1.2,
           }}>{r?.name}</h4>
-          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</p>
+          <div className="flex items-center gap-2">
+            <span style={{
+              display: 'inline-block', fontSize: 11, fontWeight: 800,
+              color: soldOut ? '#999' : '#1a2e05',
+              background: soldOut ? '#e5e5e5' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+              borderRadius: 7, padding: '2px 8px', flexShrink: 0,
+              textDecoration: soldOut ? 'line-through' : 'none',
+            }}>{deal.discount_value}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
+          </div>
           {deal.conditions && (
             <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {deal.conditions.split('\n')[0]}
             </p>
           )}
-          {almostGone && !soldOut && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-accent)' }}>Ultimi {remaining} rimasti!</span>
-          )}
         </div>
-      </div>
 
-      {/* Coupon divider — dotted line + semicircle cutouts */}
-      <div style={{ position: 'relative', width: 0, alignSelf: 'stretch' }}>
-        <div style={{ position: 'absolute', top: -1, left: -8, width: 16, height: 8, borderRadius: '0 0 8px 8px', background: 'var(--color-bg)', zIndex: 2 }} />
-        <div style={{ position: 'absolute', bottom: -1, left: -8, width: 16, height: 8, borderRadius: '8px 8px 0 0', background: 'var(--color-bg)', zIndex: 2 }} />
-        <div style={{ position: 'absolute', top: 10, bottom: 10, left: 0, borderLeft: '2px dashed var(--color-bordo)' }} />
-      </div>
-
-      {/* Right: discount value — coupon tab */}
-      <div className="flex flex-col items-center justify-center" style={{
-        width: 80, minWidth: 80, padding: '12px 8px',
-        background: soldOut ? '#f0f0f0' : 'rgba(232,69,60,0.06)',
-      }}>
-        <span style={{
-          fontSize: 20, fontWeight: 800, lineHeight: 1.1,
-          color: soldOut ? 'var(--color-secondary)' : 'var(--color-accent)',
-          textDecoration: soldOut ? 'line-through' : 'none',
-          textAlign: 'center',
-        }}>{deal.discount_value}</span>
-        {soldOut ? (
-          <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--color-secondary)', marginTop: 4 }}>Esaurito</span>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" style={{ marginTop: 6, opacity: 0.6 }}><path d="M9 18l6-6-6-6"/></svg>
+        {/* Chevron */}
+        {!soldOut && (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M9 18l6-6-6-6"/></svg>
         )}
       </div>
     </div>
