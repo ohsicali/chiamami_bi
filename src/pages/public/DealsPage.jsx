@@ -255,15 +255,18 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
           </div>
           {time && (
-            <div className="flex items-center" style={{
-              flexShrink: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)',
-              borderRadius: 10, padding: '6px 10px', gap: 2, fontVariantNumeric: 'tabular-nums',
-            }}>
-              {[pad(time.h), pad(time.m), pad(time.s)].map((v, i) => (
-                <span key={i} className="flex items-center">
-                  <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>{v}</span>
-                  {i < 2 && <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: '0 2px' }}>:</span>}
-                </span>
+            <div className="flex items-center" style={{ flexShrink: 0, gap: 4 }}>
+              {[{ v: pad(time.h), l: 'ore' }, { v: pad(time.m), l: 'min' }, { v: pad(time.s), l: 'sec' }].map((seg, i) => (
+                <div key={i} className="flex items-center" style={{ gap: 4 }}>
+                  <div style={{
+                    width: 40, padding: '6px 0', textAlign: 'center',
+                    background: 'rgba(196,162,101,0.15)', backdropFilter: 'blur(12px)', borderRadius: 10,
+                  }}>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif", fontVariantNumeric: 'tabular-nums' }}>{seg.v}</span>
+                    <p style={{ fontSize: 7, fontWeight: 600, color: 'var(--color-oro)', marginTop: 1, textTransform: 'uppercase', letterSpacing: 1 }}>{seg.l}</p>
+                  </div>
+                  {i < 2 && <span style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>:</span>}
+                </div>
               ))}
             </div>
           )}
