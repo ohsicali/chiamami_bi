@@ -188,7 +188,7 @@ export function useMyDiscounts(userId) {
 
     supabase
       .from('discount_redemptions')
-      .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
+      .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
       .eq('user_id', userId)
       .order('generated_at', { ascending: false })
       .then(({ data }) => {
