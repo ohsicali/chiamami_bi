@@ -45,7 +45,7 @@ function getPhoto(restaurant) {
 }
 
 /* ── LiveDropCard — drop attivo con bordo accent ── */
-function LiveDropCard({ deal, onNavigate }) {
+function LiveDropCard({ deal, onNavigate, locked }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const claimed = deal.claimed_count || deal.total_redeemed || 0
@@ -131,12 +131,14 @@ function LiveDropCard({ deal, onNavigate }) {
 
         {/* CTA */}
         {!soldOut && (
-          <button onClick={() => onNavigate(r)} style={{
+          <button onClick={() => locked ? onNavigate({ slug: 'login' }) : onNavigate(r)} style={{
             width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
-            background: 'var(--color-accent)', color: '#fff',
+            background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
             fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            Prendi lo sconto
+            {locked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+            {locked ? 'Registrati per sbloccare' : 'Prendi lo sconto'}
           </button>
         )}
       </div>
@@ -498,6 +500,39 @@ export default function DealsPage() {
               <div key={i} className="skeleton" style={{ height: h, borderRadius: 20, background: '#fff', border: '1px solid var(--color-bordo)' }} />
             ))}
 
+            {/* CTA per non iscritti */}
+            {!user && !loading && (
+              <div style={{
+                borderRadius: 20, padding: '20px 18px', position: 'relative', overflow: 'hidden',
+                background: 'linear-gradient(135deg, var(--color-primary) 0%, #2e2228 100%)',
+              }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+                    <span style={{ fontSize: 20 }}>🔓</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Sblocca sconti e drop esclusivi</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, marginBottom: 14 }}>
+                    Registrati gratis per accedere a sconti nei migliori ristoranti di Torino. Drop a tempo limitato, sconti esclusivi e QR code per risparmiare subito.
+                  </p>
+                  <Link to="/login" style={{
+                    display: 'inline-block', borderRadius: 12,
+                    background: 'var(--color-accent)', color: '#fff',
+                    padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                  }}>
+                    Registrati gratis
+                  </Link>
+                </div>
+                <div style={{
+                  position: 'absolute', top: -20, right: -20, width: 120, height: 120,
+                  borderRadius: '50%', background: 'rgba(232,69,60,0.12)',
+                }} />
+                <div style={{
+                  position: 'absolute', bottom: -30, right: 40, width: 80, height: 80,
+                  borderRadius: '50%', background: 'rgba(196,162,101,0.1)',
+                }} />
+              </div>
+            )}
+
             {!loading && (
               <>
                 {/* DROP ATTIVI */}
@@ -505,7 +540,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Drop attivi</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onNavigate={goTo} />)}
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onNavigate={goTo} locked={!user} />)}
                     </div>
                   </div>
                 )}
@@ -550,6 +585,33 @@ export default function DealsPage() {
                     <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4 }}>Torna presto!</p>
                   </div>
                 )}
+
+                {/* Come funziona */}
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ ...sectionLabel, marginBottom: 10 }}>Come funziona</p>
+                  <div style={{
+                    background: '#fff', borderRadius: 20, padding: 18,
+                    border: '1px solid var(--color-bordo)',
+                  }}>
+                    {[
+                      { icon: '📱', bg: 'rgba(232,69,60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
+                      { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+                      { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
+                    ].map((step, i) => (
+                      <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: 10, background: step.bg,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 16, flexShrink: 0,
+                        }}>{step.icon}</div>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 2 }}>{step.title}</p>
+                          <p style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{step.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </>
             )}
           </div>
