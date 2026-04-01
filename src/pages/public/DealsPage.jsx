@@ -551,8 +551,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <h4 onClick={() => onGoTo(r)} style={{
           fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
-          color: 'var(--color-primary)', cursor: 'pointer',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
         }}>{r?.name}</h4>
         <div className="flex items-center gap-2" style={{ marginTop: 3 }}>
           <span style={{
