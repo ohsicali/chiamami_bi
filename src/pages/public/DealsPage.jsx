@@ -85,7 +85,7 @@ function LiveDropCard({ deal, onNavigate }) {
         {time && !soldOut && (
           <div style={{
             position: 'absolute', top: 14, right: 14,
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
+            background: 'var(--color-primary)',
             padding: '5px 12px', borderRadius: 10, color: '#fff', fontSize: 12, fontWeight: 700,
           }}>
             Scade tra {time.h}h {pad(time.m)}m
@@ -100,8 +100,7 @@ function LiveDropCard({ deal, onNavigate }) {
       </div>
 
       {/* Info */}
-      <div style={{ padding: '14px 16px 16px', marginTop: -20, position: 'relative', background: 'linear-gradient(to bottom, transparent 0%, #fff 20px)' }}>
-        <div style={{ paddingTop: 20 }}>
+      <div style={{ padding: '14px 16px 16px' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
           <div className="flex items-baseline gap-2">
             <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent)' }}>{deal.discount_value}</span>
@@ -140,7 +139,6 @@ function LiveDropCard({ deal, onNavigate }) {
             Prendi lo sconto
           </button>
         )}
-        </div>
       </div>
     </div>
   )
