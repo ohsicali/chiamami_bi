@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
+import { proxyImg } from '../../lib/supabase'
 
 const swipeThreshold = 50
 
@@ -108,7 +109,7 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
             <div className="absolute inset-0 skeleton" />
 
             <img
-              src={normalizedPhotos[currentIndex].photo_url}
+              src={proxyImg(normalizedPhotos[currentIndex].photo_url)}
               alt={normalizedPhotos[currentIndex].caption || `${restaurantName}${city ? ` - ${city}` : ''}${normalizedPhotos.length > 1 ? ` - Foto ${currentIndex + 1}` : ''}`}
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
               onLoad={() => handleImageLoad(currentIndex)}

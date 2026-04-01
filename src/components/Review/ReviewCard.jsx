@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { proxyImg } from '../../lib/supabase'
 
 function timeAgo(dateStr) {
   const now = new Date()
@@ -39,7 +40,7 @@ export default function ReviewCard({ review }) {
       <div className="flex items-center gap-2.5 mb-2">
         {user?.avatar_url ? (
           <img
-            src={user.avatar_url}
+            src={proxyImg(user.avatar_url)}
             alt={user.full_name}
             className="h-8 w-8 rounded-full object-cover"
           />
@@ -72,7 +73,7 @@ export default function ReviewCard({ review }) {
           {photos.map(photo => (
             <img
               key={photo.id}
-              src={photo.photo_url}
+              src={proxyImg(photo.photo_url)}
               alt=""
               className="h-20 w-20 flex-shrink-0 rounded-lg object-cover"
             />

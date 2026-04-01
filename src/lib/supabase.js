@@ -9,3 +9,9 @@ export const supabase = supabaseUrl && supabaseAnonKey
   : null
 
 export const isSupabaseConfigured = () => !!supabase
+
+// Proxy Supabase storage images through Vercel CDN to reduce egress
+export function proxyImg(url) {
+  if (!url || !url.includes('supabase.co/storage/')) return url
+  return `/api/img?url=${encodeURIComponent(url)}`
+}
