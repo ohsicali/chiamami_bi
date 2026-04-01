@@ -112,6 +112,11 @@ export default function DiscountManager() {
     valid_until: '',
     max_redemptions: '',
     is_active: true,
+    is_drop: false,
+    drop_starts_at: '',
+    drop_ends_at: '',
+    max_quantity: '',
+    is_featured: false,
   })
 
 
@@ -150,6 +155,11 @@ export default function DiscountManager() {
       valid_until: '',
       max_redemptions: '',
       is_active: true,
+      is_drop: false,
+      drop_starts_at: '',
+      drop_ends_at: '',
+      max_quantity: '',
+      is_featured: false,
     })
     setEditing(null)
   }
@@ -166,6 +176,11 @@ export default function DiscountManager() {
       valid_until: discount.valid_until?.split('T')[0] || '',
       max_redemptions: discount.max_redemptions || '',
       is_active: discount.is_active,
+      is_drop: discount.is_drop || false,
+      drop_starts_at: discount.drop_starts_at ? discount.drop_starts_at.slice(0, 16) : '',
+      drop_ends_at: discount.drop_ends_at ? discount.drop_ends_at.slice(0, 16) : '',
+      max_quantity: discount.max_quantity || '',
+      is_featured: discount.is_featured || false,
     })
     setEditing(discount.id)
     setShowForm(true)
@@ -198,6 +213,11 @@ export default function DiscountManager() {
       valid_until: new Date(form.valid_until).toISOString(),
       max_redemptions: form.max_redemptions ? parseInt(form.max_redemptions) : null,
       is_active: form.is_active,
+      is_drop: form.is_drop,
+      drop_starts_at: form.is_drop && form.drop_starts_at ? new Date(form.drop_starts_at).toISOString() : null,
+      drop_ends_at: form.is_drop && form.drop_ends_at ? new Date(form.drop_ends_at).toISOString() : null,
+      max_quantity: form.is_drop && form.max_quantity ? parseInt(form.max_quantity) : null,
+      is_featured: !form.is_drop && form.is_featured,
     }
 
     let result
@@ -386,6 +406,63 @@ export default function DiscountManager() {
                     className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
                   />
                 </div>
+
+                {/* Drop toggle */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.is_drop}
+                    onChange={e => setForm(f => ({ ...f, is_drop: e.target.checked, is_featured: e.target.checked ? false : f.is_featured }))}
+                    className="w-4 h-4 accent-[#E8453C]"
+                  />
+                  <span className="text-sm text-primary font-medium">È un drop?</span>
+                </label>
+
+                {form.is_drop && (
+                  <div className="flex flex-col gap-3 pl-6 border-l-2 border-red-200">
+                    <div>
+                      <label className="text-sm font-medium text-primary block mb-1">Inizio drop</label>
+                      <input
+                        type="datetime-local"
+                        value={form.drop_starts_at}
+                        onChange={e => setForm(f => ({ ...f, drop_starts_at: e.target.value }))}
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-primary block mb-1">Fine drop</label>
+                      <input
+                        type="datetime-local"
+                        value={form.drop_ends_at}
+                        onChange={e => setForm(f => ({ ...f, drop_ends_at: e.target.value }))}
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-primary block mb-1">Quantità massima</label>
+                      <input
+                        type="number"
+                        value={form.max_quantity}
+                        onChange={e => setForm(f => ({ ...f, max_quantity: e.target.value }))}
+                        placeholder="Es. 10"
+                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Featured toggle (only for non-drops) */}
+                {!form.is_drop && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.is_featured}
+                      onChange={e => setForm(f => ({ ...f, is_featured: e.target.checked }))}
+                      className="w-4 h-4 accent-[#C4A265]"
+                    />
+                    <span className="text-sm text-primary">In evidenza ★</span>
+                  </label>
+                )}
 
                 {/* Active toggle */}
                 <label className="flex items-center gap-2 cursor-pointer">
