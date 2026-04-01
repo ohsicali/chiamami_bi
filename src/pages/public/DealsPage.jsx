@@ -84,7 +84,7 @@ function getPhoto(restaurant) {
 }
 
 /* ── LiveDropCard — drop attivo con bordo accent ── */
-function LiveDropCard({ deal, onClaim, locked, onLogin, claiming }) {
+function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const claimed = deal.claimed_count || deal.total_redeemed || 0
@@ -169,7 +169,17 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming }) {
         </div>
 
         {/* CTA */}
-        {!soldOut && (
+        {!soldOut && myRedemption ? (
+          <button onClick={() => onShowQR(myRedemption)} style={{
+            width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
+            background: 'var(--color-success)', color: '#fff',
+            fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+            Mostra QR
+          </button>
+        ) : !soldOut && (
           <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
             width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
             background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
@@ -521,6 +531,7 @@ export default function DealsPage() {
   })
   const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
   const [claiming, setClaiming] = useState(null) // discount id being claimed
+  const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
 
   const goTo = (r) => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
 
@@ -539,6 +550,7 @@ export default function DealsPage() {
         .single()
 
       if (existing?.qr_code) {
+        setJustClaimed(prev => [...prev, { ...existing, discount_id: deal.id, discount: deal }])
         setQrModal({ qrCode: existing.qr_code, title: deal.title, value: deal.discount_value })
         setClaiming(null)
         return
@@ -560,6 +572,7 @@ export default function DealsPage() {
       // Increment counter
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
 
+      setJustClaimed(prev => [...prev, { ...data, discount_id: deal.id, discount: deal }])
       setQrModal({ qrCode: data.qr_code, title: deal.title, value: deal.discount_value })
     } catch (e) {
       console.error('Claim failed:', e)
@@ -685,7 +698,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Drop attivi</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} />)}
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
                     </div>
                   </div>
                 )}
