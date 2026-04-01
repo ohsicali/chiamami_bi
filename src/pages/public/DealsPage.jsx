@@ -198,7 +198,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   )
 }
 
-/* ── UpcomingDropCard — compact dark card ── */
+/* ── UpcomingDropCard — card scura, countdown sulla foto ── */
 function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -220,71 +220,80 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   })() : null
 
   return (
-    <div style={{ borderRadius: 20, overflow: 'hidden', background: 'var(--color-primary)', padding: 16 }}>
-      {/* Top row: photo + info + countdown */}
-      <div className="flex" style={{ gap: 14 }}>
-        {/* Photo */}
-        <div style={{ width: 72, height: 72, borderRadius: 14, overflow: 'hidden', flexShrink: 0 }}>
-          {photo ? (
-            <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🍽️</div>
-          )}
+    <div style={{ borderRadius: 20, overflow: 'hidden', background: 'var(--color-primary)' }}>
+      {/* Photo with overlays */}
+      <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
+        {photo && <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
+
+        {/* Drop date badge — top left */}
+        {dropLabel && (
+          <div style={{
+            position: 'absolute', top: 14, left: 14,
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)',
+            padding: '5px 12px', borderRadius: 10,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-oro)' }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{dropLabel}</span>
+          </div>
+        )}
+
+        {/* Discount badge — top right */}
+        <div style={{
+          position: 'absolute', top: 14, right: 14,
+          background: '#fff', color: 'var(--color-primary)',
+          fontSize: 13, fontWeight: 800, padding: '5px 14px', borderRadius: 10,
+        }}>
+          {deal.discount_value}
         </div>
 
-        {/* Name + meta + discount */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4 }}>
-          <div className="flex items-center justify-between gap-2">
-            <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 17, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-            <span style={{
-              fontSize: 12, fontWeight: 800, color: 'var(--color-primary)',
-              background: '#fff', borderRadius: 8, padding: '3px 10px', flexShrink: 0,
-            }}>{deal.discount_value}</span>
+        {/* Bottom overlay: name left + countdown right */}
+        <div className="flex items-end justify-between" style={{ position: 'absolute', bottom: 14, left: 16, right: 16 }}>
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
           </div>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{r?.cuisine_type} · {r?.city}</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>{deal.title || deal.discount_value}</p>
+          {time && (
+            <div className="flex items-center" style={{
+              flexShrink: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)',
+              borderRadius: 10, padding: '6px 10px', gap: 2, fontVariantNumeric: 'tabular-nums',
+            }}>
+              {[pad(time.h), pad(time.m), pad(time.s)].map((v, i) => (
+                <span key={i} className="flex items-center">
+                  <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>{v}</span>
+                  {i < 2 && <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)', margin: '0 2px' }}>:</span>}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Countdown row */}
-      {time && (
-        <div className="flex items-center justify-between" style={{ marginTop: 14, padding: '10px 12px', background: 'rgba(196,162,101,0.08)', borderRadius: 14 }}>
-          <div className="flex items-center gap-2">
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-oro)' }} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-oro)' }}>{dropLabel || 'Prossimo drop'}</span>
-          </div>
-          <div className="flex items-center gap-1" style={{ fontVariantNumeric: 'tabular-nums' }}>
-            {[pad(time.h), pad(time.m), pad(time.s)].map((v, i) => (
-              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>{v}</span>
-                {i < 2 && <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.2)', margin: '0 1px' }}>:</span>}
-              </span>
-            ))}
-          </div>
+      {/* Info + Ricordamelo */}
+      <div style={{ padding: '12px 16px 16px' }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{deal.title || deal.discount_value}</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Solo {max} disponibili</span>
         </div>
-      )}
-
-      {/* Bottom: disponibili + Ricordamelo */}
-      <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>Solo {max} disponibili</span>
         <button onClick={() => locked ? onLogin() : onRemind()} style={{
-          flex: 1, padding: '10px 0', borderRadius: 12,
+          width: '100%', padding: '12px 0', borderRadius: 14,
           background: locked ? 'rgba(255,255,255,0.08)' : reminded ? 'rgba(196,162,101,0.25)' : 'rgba(196,162,101,0.12)',
           border: locked ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(196,162,101,0.2)',
           color: locked ? 'rgba(255,255,255,0.7)' : 'var(--color-oro)',
-          fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           {locked ? (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           ) : reminded ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
           ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           )}
-          {locked ? 'Registrati' : reminded ? 'Aggiunto' : 'Ricordamelo'}
+          {locked ? 'Registrati per il promemoria' : reminded ? 'Aggiunto al calendario' : 'Ricordamelo'}
         </button>
       </div>
     </div>
