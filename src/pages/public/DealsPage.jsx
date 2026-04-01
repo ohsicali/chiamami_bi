@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
-import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
+import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -83,7 +84,7 @@ function getPhoto(restaurant) {
 }
 
 /* ── LiveDropCard — drop attivo con bordo accent ── */
-function LiveDropCard({ deal, onNavigate, locked, onLogin }) {
+function LiveDropCard({ deal, onClaim, locked, onLogin, claiming }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const claimed = deal.claimed_count || deal.total_redeemed || 0
@@ -169,14 +170,15 @@ function LiveDropCard({ deal, onNavigate, locked, onLogin }) {
 
         {/* CTA */}
         {!soldOut && (
-          <button onClick={() => locked ? onLogin() : onNavigate(r)} style={{
+          <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
             width: '100%', marginTop: 14, padding: '14px 0', borderRadius: 14,
             background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
-            fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+            fontSize: 14, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            opacity: claiming ? 0.7 : 1,
           }}>
             {locked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
-            {locked ? 'Registrati per sbloccare' : 'Prendi lo sconto'}
+            {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
           </button>
         )}
       </div>
@@ -397,7 +399,7 @@ function DealCard({ deal, onNavigate }) {
 }
 
 /* ── MyActiveCard — sconto attivo dell'utente ── */
-function MyActiveCard({ redemption, onNavigate }) {
+function MyActiveCard({ redemption, onShowQR }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
@@ -430,12 +432,14 @@ function MyActiveCard({ redemption, onNavigate }) {
 
       <div style={{ padding: '12px 16px 16px' }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title || deal?.discount_value}</p>
-        <button onClick={() => onNavigate(r)} style={{
+        <button onClick={() => onShowQR(redemption)} style={{
           width: '100%', marginTop: 12, padding: '14px 0', borderRadius: 14,
           background: 'var(--color-accent)', color: '#fff',
           fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
-          Mostra QR al ristorante
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+          Mostra QR
         </button>
       </div>
     </div>
@@ -515,8 +519,61 @@ export default function DealsPage() {
   const [reminders, setReminders] = useState(() => {
     try { return JSON.parse(localStorage.getItem('drop_reminders') || '[]') } catch { return [] }
   })
+  const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
+  const [claiming, setClaiming] = useState(null) // discount id being claimed
 
   const goTo = (r) => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
+
+  const claimDeal = async (deal) => {
+    if (!user || claiming) return
+    setClaiming(deal.id)
+    try {
+      const { supabase } = await import('../../lib/supabase')
+      // Check existing redemption first
+      const { data: existing } = await supabase
+        .from('discount_redemptions')
+        .select('id, qr_code, status')
+        .eq('discount_id', deal.id)
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+
+      if (existing?.qr_code) {
+        setQrModal({ qrCode: existing.qr_code, title: deal.title, value: deal.discount_value })
+        setClaiming(null)
+        return
+      }
+
+      // Generate new redemption
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+      let code = 'BiSc-'
+      for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length))
+
+      const { data, error } = await supabase
+        .from('discount_redemptions')
+        .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated' })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Increment counter
+      await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
+
+      setQrModal({ qrCode: data.qr_code, title: deal.title, value: deal.discount_value })
+    } catch (e) {
+      console.error('Claim failed:', e)
+    }
+    setClaiming(null)
+  }
+
+  const showMyQR = (redemption) => {
+    setQrModal({
+      qrCode: redemption.qr_code,
+      title: redemption.discount?.title,
+      value: redemption.discount?.discount_value,
+    })
+  }
 
   const toggleReminder = (deal) => {
     const dropId = deal.id
@@ -628,7 +685,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Drop attivi</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onNavigate={goTo} locked={!user} onLogin={() => navigate('/login')} />)}
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} />)}
                     </div>
                   </div>
                 )}
@@ -709,7 +766,7 @@ export default function DealsPage() {
                     <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>Nessuno sconto attivo. Vai su "Disponibili" per prenderne uno!</p>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
-                    {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onNavigate={goTo} />)}
+                    {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} />)}
                   </div>
                 </div>
 
@@ -735,6 +792,18 @@ export default function DealsPage() {
       </div>
 
       <Footer />
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {qrModal && (
+          <QRCodeDisplay
+            qrCode={qrModal.qrCode}
+            discountTitle={qrModal.title}
+            discountValue={qrModal.value}
+            onClose={() => setQrModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
