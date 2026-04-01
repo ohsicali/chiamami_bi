@@ -307,22 +307,25 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 }
 
 /* ── FeaturedCard — in evidenza ── */
-function FeaturedCard({ deal, onNavigate }) {
+function FeaturedCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   return (
-    <div onClick={() => onNavigate(r)} style={{ borderRadius: 20, overflow: 'hidden', background: '#fff', border: '1px solid var(--color-bordo)', cursor: 'pointer' }}>
+    <div style={{ borderRadius: 20, overflow: 'hidden', background: '#fff', border: '1.5px solid var(--color-oro)', boxShadow: '0 4px 20px rgba(196,162,101,0.12)' }}>
       <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
         {photo ? (
           <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
         )}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
 
-        <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-oro)', padding: '5px 12px', borderRadius: 10 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>In evidenza</span>
+        {/* Top badges */}
+        <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-oro)', padding: '5px 12px', borderRadius: 10 }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>In evidenza</span>
+          </div>
         </div>
 
         <div style={{
@@ -333,21 +336,51 @@ function FeaturedCard({ deal, onNavigate }) {
           {deal.discount_value}
         </div>
 
+        {/* Name overlay */}
         <div style={{ position: 'absolute', bottom: 14, left: 16 }}>
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{r?.cuisine_type} · {r?.price_range ? '€'.repeat(r.price_range) : ''}</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{r?.cuisine_type} · {r?.price_range ? '€'.repeat(r.price_range) : ''} · {r?.city}</p>
         </div>
       </div>
-      <div style={{ padding: '12px 16px' }}>
-        <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>{deal.title || deal.discount_value}</p>
-        {deal.conditions && <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>{deal.conditions}</p>}
+
+      {/* Info + CTA */}
+      <div style={{ padding: '14px 16px 16px' }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>{deal.title || deal.discount_value}</p>
+          <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-oro)' }}>{deal.discount_value}</span>
+        </div>
+        {deal.conditions && <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 10 }}>{deal.conditions}</p>}
+
+        {/* CTA */}
+        {myRedemption ? (
+          <button onClick={() => onShowQR(myRedemption)} style={{
+            width: '100%', marginTop: 10, padding: '13px 0', borderRadius: 14,
+            background: 'var(--color-success)', color: '#fff',
+            fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+            Mostra QR
+          </button>
+        ) : (
+          <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
+            width: '100%', marginTop: 10, padding: '13px 0', borderRadius: 14,
+            background: locked ? 'var(--color-primary)' : 'var(--color-oro)', color: '#fff',
+            fontSize: 14, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            opacity: claiming ? 0.7 : 1,
+          }}>
+            {locked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+            {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
 /* ── DealCard — sconto normale ── */
-function DealCard({ deal, onNavigate }) {
+function DealCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
@@ -355,55 +388,81 @@ function DealCard({ deal, onNavigate }) {
   const almostGone = remaining !== null && remaining > 0 && remaining <= 3
 
   return (
-    <div onClick={() => !soldOut && onNavigate(r)} style={{
+    <div style={{
       borderRadius: 20, overflow: 'hidden', background: '#fff',
-      border: '1px solid var(--color-bordo)', cursor: soldOut ? 'default' : 'pointer',
+      border: '1px solid var(--color-bordo)',
       opacity: soldOut ? 0.6 : 1,
     }}>
-      <div style={{ position: 'relative', height: 160, overflow: 'hidden' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🍽️</div>
-        )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)' }} />
-
-        {almostGone && !soldOut && (
-          <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)', padding: '5px 10px', borderRadius: 10 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-accent)', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}</span>
+      {/* Horizontal layout: photo left + info right */}
+      <div className="flex" style={{ gap: 0 }}>
+        {/* Photo */}
+        <div style={{ position: 'relative', width: 120, minHeight: 140, flexShrink: 0, overflow: 'hidden' }}>
+          {photo ? (
+            <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🍽️</div>
+          )}
+          {/* Discount badge */}
+          <div style={{
+            position: 'absolute', top: 10, left: 10,
+            background: soldOut ? 'rgba(0,0,0,0.4)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+            color: soldOut ? '#ccc' : '#1a2e05', fontSize: 12, fontWeight: 800,
+            padding: '4px 10px', borderRadius: 8, textDecoration: soldOut ? 'line-through' : 'none',
+          }}>
+            {deal.discount_value}
           </div>
-        )}
-
-        <div style={{
-          position: 'absolute', top: 14, right: 14,
-          background: soldOut ? 'rgba(0,0,0,0.4)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-          color: soldOut ? '#ccc' : '#1a2e05', fontSize: 13, fontWeight: 800,
-          padding: '5px 14px', borderRadius: 10, textDecoration: soldOut ? 'line-through' : 'none',
-        }}>
-          {deal.discount_value}
         </div>
 
-        <div style={{ position: 'absolute', bottom: 12, left: 16 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>{r?.name}</h3>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
+        {/* Info */}
+        <div style={{ flex: 1, padding: '14px 14px 14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--color-primary)', lineHeight: 1.3 }}>{r?.name}</h3>
+          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2 }}>{r?.cuisine_type} · {r?.city}</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', marginTop: 6 }}>{deal.title}</p>
+          {deal.conditions && <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2 }}>{deal.conditions}</p>}
+
+          {/* Progress bar */}
+          {deal.max_redemptions && (
+            <div style={{ marginTop: 8 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{deal.total_redeemed || 0}/{deal.max_redemptions}</span>
+                {almostGone && !soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-accent)' }}>Ultimi {remaining}!</span>}
+                {soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
+              </div>
+              <div style={{ height: 6, background: 'var(--color-bordo)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 3, width: `${(deal.total_redeemed || 0) / deal.max_redemptions * 100}%`, background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)', transition: 'width 0.5s ease' }} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
-      <div style={{ padding: '10px 16px 12px' }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)' }}>{deal.title}</p>
-        {deal.conditions && <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginTop: 2 }}>{deal.conditions}</p>}
-        {deal.max_redemptions && (
-          <div style={{ marginTop: 8 }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-              <span style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{deal.total_redeemed || 0}/{deal.max_redemptions}</span>
-              {soldOut && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-secondary)' }}>Esaurito</span>}
-            </div>
-            <div style={{ height: 8, background: 'var(--color-bordo)', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 4, width: `${(deal.total_redeemed || 0) / deal.max_redemptions * 100}%`, background: soldOut ? 'var(--color-secondary)' : 'linear-gradient(90deg, #a3e635, #4ade80)', transition: 'width 0.5s ease' }} />
-            </div>
-          </div>
-        )}
-      </div>
+
+      {/* CTA */}
+      {!soldOut && (
+        <div style={{ padding: '0 14px 14px' }}>
+          {myRedemption ? (
+            <button onClick={() => onShowQR(myRedemption)} style={{
+              width: '100%', padding: '12px 0', borderRadius: 12,
+              background: 'var(--color-success)', color: '#fff',
+              fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+              Mostra QR
+            </button>
+          ) : (
+            <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
+              width: '100%', padding: '12px 0', borderRadius: 12,
+              background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
+              fontSize: 13, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              opacity: claiming ? 0.7 : 1,
+            }}>
+              {locked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+              {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -720,7 +779,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>In evidenza</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {featured.map(deal => <FeaturedCard key={deal.id} deal={deal} onNavigate={goTo} />)}
+                      {featured.map(deal => <FeaturedCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
                     </div>
                   </div>
                 )}
@@ -730,7 +789,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Tutti gli sconti</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {regular.map(deal => <DealCard key={deal.id} deal={deal} onNavigate={goTo} />)}
+                      {regular.map(deal => <DealCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
                     </div>
                   </div>
                 )}
