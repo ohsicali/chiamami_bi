@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase } from '../../lib/supabase'
@@ -25,8 +26,20 @@ export default function SavedPage() {
   const [filters, setFilters] = useState({ category: null, priceRange: null, sortBy: null })
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
+  const [filtersSticky, setFiltersSticky] = useState(false)
+  const filtersRef = useRef(null)
 
-  // Geolocation requested only on "Vicino a me" click
+  // IntersectionObserver: when filters scroll out, show them in header
+  useEffect(() => {
+    const el = filtersRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setFiltersSticky(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     if (!user?.id || savedIds.size === 0) {
@@ -66,7 +79,6 @@ export default function SavedPage() {
   const displayList = useMemo(() => {
     let list = [...restaurants]
 
-    // Category filter
     if (filters.category) {
       const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
       list = list.filter(r => {
@@ -75,17 +87,14 @@ export default function SavedPage() {
       })
     }
 
-    // Price filter
     if (filters.priceRange) {
       list = list.filter(r => r.price_range === filters.priceRange)
     }
 
-    // Deals only
     if (showDealsOnly) {
       list = list.filter(r => activeDiscounts[r.id])
     }
 
-    // Sort by distance
     if (filters.sortBy === 'distance' && userLocation) {
       list.sort((a, b) => {
         const dA = a.latitude ? getDistance(userLocation.lat, userLocation.lng, a.latitude, a.longitude) : Infinity
@@ -123,9 +132,20 @@ export default function SavedPage() {
     }
   }
 
+  const filterChipsJSX = (
+    <FilterChips
+      filters={filters}
+      onFilterChange={setFilters}
+      onNearbyClick={handleNearbyClick}
+      showDealsOnly={showDealsOnly}
+      onToggleDeals={() => setShowDealsOnly(v => !v)}
+      dealsCount={dealsCount}
+    />
+  )
+
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* Header */}
+      {/* Sticky Header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
@@ -133,7 +153,7 @@ export default function SavedPage() {
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--color-bordo)',
       }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 0 }}>
+        <div className="flex items-center justify-between">
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
@@ -150,9 +170,24 @@ export default function SavedPage() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
+
+        {/* FilterChips — slides into header when scrolled past */}
+        <AnimatePresence>
+          {filtersSticky && restaurants.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginTop: 14 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              style={{ overflow: 'hidden' }}
+            >
+              {filterChipsJSX}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Title */}
+      {/* Title — scrolls away */}
       <div style={{ padding: '20px 22px 12px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           I miei salvati
@@ -162,17 +197,10 @@ export default function SavedPage() {
         </p>
       </div>
 
-      {/* FilterChips — same as ListView */}
+      {/* FilterChips — in-flow position (observed for intersection) */}
       {restaurants.length > 0 && (
-        <div style={{ padding: '0 16px 8px' }}>
-          <FilterChips
-            filters={filters}
-            onFilterChange={setFilters}
-            onNearbyClick={handleNearbyClick}
-            showDealsOnly={showDealsOnly}
-            onToggleDeals={() => setShowDealsOnly(v => !v)}
-            dealsCount={dealsCount}
-          />
+        <div ref={filtersRef} style={{ padding: '0 16px 12px' }}>
+          {filterChipsJSX}
         </div>
       )}
 

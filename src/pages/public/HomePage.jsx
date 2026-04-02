@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
+import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 import MapView from '../../components/Map/MapView'
 import SearchBar from '../../components/Layout/SearchBar'
@@ -208,6 +208,8 @@ export default function HomePage() {
   } = useRestaurants(position)
 
   const [showDealsOnly, setShowDealsOnly] = useState(false)
+  const [sheetFiltersSticky, setSheetFiltersSticky] = useState(false)
+  const sheetFiltersRef = useRef(null)
   const displayedRestaurants = showDealsOnly
     ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
     : restaurants
@@ -305,6 +307,19 @@ export default function HomePage() {
       window.history.replaceState({}, '')
     }
   }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // IntersectionObserver for sheet filters — sticky when scrolled past
+  useEffect(() => {
+    const el = sheetFiltersRef.current
+    const root = scrollRef.current
+    if (!el || !root) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setSheetFiltersSticky(!entry.isIntersecting),
+      { root, threshold: 0, rootMargin: '-10px 0px 0px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isSheetActive])
 
   // Bar drag: pull up to reveal sheet
   const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first, tap }) => {
@@ -502,18 +517,43 @@ export default function HomePage() {
           overflow: 'hidden',
         }}
       >
-        {/* Handle */}
+        {/* Handle + sticky filters area */}
         <div
-          {...handleBind()}
-          style={{
-            paddingTop: 'max(env(safe-area-inset-top, 16px), 56px)',
-            paddingBottom: 10,
-            display: 'flex', justifyContent: 'center',
-            cursor: 'grab', touchAction: 'none', flexShrink: 0,
-            background: '#FAF7F2',
-          }}
+          style={{ flexShrink: 0, background: '#FAF7F2' }}
         >
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
+          <div
+            {...handleBind()}
+            style={{
+              paddingTop: 'max(env(safe-area-inset-top, 16px), 56px)',
+              paddingBottom: 10,
+              display: 'flex', justifyContent: 'center',
+              cursor: 'grab', touchAction: 'none',
+            }}
+          >
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
+          </div>
+
+          {/* Filters slide into sticky area when scrolled past */}
+          <AnimatePresence>
+            {sheetFiltersSticky && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                style={{ overflow: 'hidden', paddingLeft: 20, paddingRight: 20, paddingBottom: 10, borderBottom: '1px solid var(--color-bordo)' }}
+              >
+                <FilterChips
+                  filters={filters}
+                  onFilterChange={setFilters}
+                  onNearbyClick={handleLocateMe}
+                  showDealsOnly={showDealsOnly}
+                  onToggleDeals={() => setShowDealsOnly((v) => !v)}
+                  dealsCount={discountRestaurantIds.size}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Scrollable content */}
@@ -532,7 +572,7 @@ export default function HomePage() {
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
             </div>
 
-            <div style={{ marginBottom: 14 }}>
+            <div ref={sheetFiltersRef} style={{ marginBottom: 14 }}>
               <FilterChips
                 filters={filters}
                 onFilterChange={setFilters}
