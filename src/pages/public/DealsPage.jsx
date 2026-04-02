@@ -1108,9 +1108,10 @@ export default function DealsPage() {
         position: 'sticky',
         top: headerH,
         zIndex: 49,
-        padding: '14px 22px 20px',
-        background: 'linear-gradient(to bottom, rgba(250,247,242,0.85) 60%, rgba(250,247,242,0) 100%)',
+        padding: '14px 22px 14px',
+        background: 'rgba(250,247,242,0.75)',
         backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+        boxShadow: '0 1px 0 0 var(--color-bordo)',
       }}>
         {tabSwitcherJSX}
         {/* Sub-tabs I miei */}
