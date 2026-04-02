@@ -164,10 +164,14 @@ export function useActiveDiscounts() {
   const upcomingDrops = discounts.filter(d =>
     d.is_drop && d.drop_starts_at && d.drop_starts_at > now
   )
-  const featured = discounts.filter(d => d.is_featured && !d.is_drop)
+  const allFeatured = discounts.filter(d => d.is_featured && !d.is_drop)
+  // Pick 1 random featured on each page load — rotates on refresh
+  // Use session-level seed so it's stable during the session but changes on refresh
+  const [featuredSeed] = useState(() => Math.floor(Math.random() * 1000))
+  const featured = allFeatured.length > 0 ? [allFeatured[featuredSeed % allFeatured.length]] : []
   const regular = discounts.filter(d => !d.is_drop && !d.is_featured)
 
-  return { discounts, activeDrops, upcomingDrops, featured, regular, loading }
+  return { discounts, activeDrops, upcomingDrops, featured, allFeatured, regular, loading }
 }
 
 /**

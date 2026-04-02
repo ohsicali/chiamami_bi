@@ -381,8 +381,13 @@ export default function ListView() {
     toggleSave(id)
   }, [user, navigate, toggleSave])
 
-  // First restaurant with discount as featured, or just the first one
-  const featuredRestaurant = restaurants.find(r => discountValueMap[r.id]) || restaurants[0]
+  // Random restaurant with discount as featured — rotates on refresh
+  // Offset by +1 to differ from DealsPage featured pick
+  const [heroSeed] = useState(() => Math.floor(Math.random() * 1000) + 1)
+  const restaurantsWithDiscount = restaurants.filter(r => discountValueMap[r.id])
+  const featuredRestaurant = restaurantsWithDiscount.length > 0
+    ? restaurantsWithDiscount[heroSeed % restaurantsWithDiscount.length]
+    : restaurants[0]
   const otherRestaurants = restaurants.filter(r => r.id !== featuredRestaurant?.id)
 
   return (
