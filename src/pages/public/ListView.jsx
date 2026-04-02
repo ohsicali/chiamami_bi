@@ -355,7 +355,7 @@ export default function ListView() {
     setSearchQuery,
   } = useRestaurants(position)
 
-  const { discounts: activeDiscounts } = useActiveDiscounts()
+  const { discounts: activeDiscounts, allFeatured: featuredDiscounts } = useActiveDiscounts()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
   const discountValueMap = useMemo(() =>
@@ -381,13 +381,14 @@ export default function ListView() {
     toggleSave(id)
   }, [user, navigate, toggleSave])
 
-  // Random restaurant with discount as featured — rotates on refresh
-  // Offset by +1 to differ from DealsPage featured pick
-  const [heroSeed] = useState(() => Math.floor(Math.random() * 1000) + 1)
-  const restaurantsWithDiscount = restaurants.filter(r => discountValueMap[r.id])
+  // Random restaurant with discount as hero — excludes restaurants with featured discounts
+  // (those are shown in DealsPage "In evidenza") so the two pages differ
+  const [heroSeed] = useState(() => Math.floor(Math.random() * 1000))
+  const featuredDiscountRestaurantIds = new Set((featuredDiscounts || []).map(d => d.restaurant_id))
+  const restaurantsWithDiscount = restaurants.filter(r => discountValueMap[r.id] && !featuredDiscountRestaurantIds.has(r.id))
   const featuredRestaurant = restaurantsWithDiscount.length > 0
     ? restaurantsWithDiscount[heroSeed % restaurantsWithDiscount.length]
-    : restaurants[0]
+    : restaurants.filter(r => !featuredDiscountRestaurantIds.has(r.id))[0] || restaurants[0]
   const otherRestaurants = restaurants.filter(r => r.id !== featuredRestaurant?.id)
 
   return (
