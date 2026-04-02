@@ -660,6 +660,10 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.6 }}
+        onDragEnd={(_, info) => { if (info.offset.y > 100 || info.velocity.y > 300) onClose() }}
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 480, maxHeight: '85vh',
@@ -668,7 +672,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
         }}
       >
         {/* Drag handle */}
-        <div style={{ padding: '10px 0 0', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ padding: '10px 0 0', display: 'flex', justifyContent: 'center', cursor: 'grab' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-bordo)' }} />
         </div>
 
