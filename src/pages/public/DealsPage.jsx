@@ -1066,6 +1066,7 @@ export default function DealsPage() {
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: tabsSticky ? '0 1px 0 0 var(--color-bordo)' : 'none',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -1099,7 +1100,6 @@ export default function DealsPage() {
               {tabSwitcherJSX}
               {/* Sub-tabs I miei */}
               {tab === 'mine' && user && !myLoading && subTabsJSX}
-              <div style={{ height: 1, background: 'var(--color-bordo)', margin: '14px -22px 0' }} />
             </motion.div>
           )}
         </AnimatePresence>
