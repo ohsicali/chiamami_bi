@@ -1105,6 +1105,9 @@ export default function DealsPage() {
         </AnimatePresence>
       </div>
 
+      {/* Sentinel for IntersectionObserver — zero height, won't cause layout shifts */}
+      <div ref={tabsRef} style={{ height: 0 }} />
+
       {/* Title — scrolls away */}
       <div style={{ padding: '20px 22px 12px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
@@ -1115,8 +1118,8 @@ export default function DealsPage() {
         </p>
       </div>
 
-      {/* Tab switcher — in-flow position (observed for intersection) */}
-      <div ref={tabsRef} style={{ padding: '0 22px 12px' }}>
+      {/* Tab switcher — in-flow position */}
+      <div style={{ padding: '0 22px 12px' }}>
         {tabSwitcherJSX}
         {/* Sub-tabs I miei */}
         {tab === 'mine' && user && !myLoading && subTabsJSX}

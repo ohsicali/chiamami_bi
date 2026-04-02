@@ -29,8 +29,7 @@ export default function SavedPage() {
   const [filtersSticky, setFiltersSticky] = useState(false)
   const filtersRef = useRef(null)
 
-  // IntersectionObserver: when filters scroll out, show them in header
-  const hasRestaurants = restaurants.length > 0
+  // IntersectionObserver on sentinel div — no layout shift issues
   useEffect(() => {
     const el = filtersRef.current
     if (!el) return
@@ -40,7 +39,7 @@ export default function SavedPage() {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasRestaurants])
+  }, [])
 
   useEffect(() => {
     if (!user?.id || savedIds.size === 0) {
@@ -189,6 +188,9 @@ export default function SavedPage() {
         </AnimatePresence>
       </div>
 
+      {/* Sentinel for IntersectionObserver — zero height, won't cause layout shifts */}
+      <div ref={filtersRef} style={{ height: 0 }} />
+
       {/* Title — scrolls away */}
       <div style={{ padding: '20px 22px 12px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
@@ -199,9 +201,9 @@ export default function SavedPage() {
         </p>
       </div>
 
-      {/* FilterChips — in-flow position (observed for intersection) */}
+      {/* FilterChips — in-flow position */}
       {restaurants.length > 0 && (
-        <div ref={filtersRef} style={{ padding: '0 16px 12px' }}>
+        <div style={{ padding: '0 16px 12px' }}>
           {filterChipsJSX}
         </div>
       )}
