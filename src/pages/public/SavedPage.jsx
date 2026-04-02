@@ -192,8 +192,8 @@ export default function SavedPage() {
           top: headerH,
           zIndex: 49,
           padding: '14px 16px 14px',
-          background: 'rgba(250,247,242,0.92)',
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          background: 'rgba(250,247,242,0.75)',
+          backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
             boxShadow: filtersStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
           transition: 'box-shadow 0.15s ease',
         }}>
