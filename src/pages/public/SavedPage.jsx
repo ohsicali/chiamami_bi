@@ -176,7 +176,7 @@ export default function SavedPage() {
       </div>
 
       {/* Title — scrolls away */}
-      <div style={{ padding: '20px 22px 12px' }}>
+      <div style={{ padding: '20px 22px 20px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           I miei salvati
         </h1>
