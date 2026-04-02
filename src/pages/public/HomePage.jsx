@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'framer-motion'
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 import MapView from '../../components/Map/MapView'
 import SearchBar from '../../components/Layout/SearchBar'
@@ -308,17 +308,21 @@ export default function HomePage() {
     }
   }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // IntersectionObserver for sheet filters — sticky when scrolled past
+  // Scroll-based sticky detection for sheet filters
   useEffect(() => {
-    const el = sheetFiltersRef.current
     const root = scrollRef.current
-    if (!el || !root) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setSheetFiltersSticky(!entry.isIntersecting),
-      { root, threshold: 0, rootMargin: '-10px 0px 0px 0px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    if (!root) return
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        setSheetFiltersSticky(root.scrollTop > 50)
+        ticking = false
+      })
+    }
+    root.addEventListener('scroll', onScroll, { passive: true })
+    return () => root.removeEventListener('scroll', onScroll)
   }, [isSheetActive])
 
   // Bar drag: pull up to reveal sheet
@@ -533,27 +537,6 @@ export default function HomePage() {
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
           </div>
 
-          {/* Filters slide into sticky area when scrolled past */}
-          <AnimatePresence>
-            {sheetFiltersSticky && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                style={{ overflow: 'hidden', paddingLeft: 20, paddingRight: 20, paddingBottom: 10, borderBottom: '1px solid var(--color-bordo)' }}
-              >
-                <FilterChips
-                  filters={filters}
-                  onFilterChange={setFilters}
-                  onNearbyClick={handleLocateMe}
-                  showDealsOnly={showDealsOnly}
-                  onToggleDeals={() => setShowDealsOnly((v) => !v)}
-                  dealsCount={discountRestaurantIds.size}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Scrollable content */}
@@ -572,7 +555,14 @@ export default function HomePage() {
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
             </div>
 
-            <div ref={sheetFiltersRef} style={{ marginBottom: 14 }}>
+            <div ref={sheetFiltersRef} style={{
+              position: 'sticky', top: 0, zIndex: 10,
+              padding: '14px 0',
+              margin: '0 -20px', paddingLeft: 20, paddingRight: 20,
+              background: 'rgba(250,247,242,0.75)',
+              backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+              boxShadow: sheetFiltersSticky ? '0 1px 0 0 var(--color-bordo)' : 'none',
+            }}>
               <FilterChips
                 filters={filters}
                 onFilterChange={setFilters}
