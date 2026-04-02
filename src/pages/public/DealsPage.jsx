@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
+import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
@@ -933,6 +934,7 @@ export default function DealsPage() {
     try { return JSON.parse(localStorage.getItem('drop_reminders') || '[]') } catch { return [] }
   })
   const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
+  const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [claiming, setClaiming] = useState(null) // discount id being claimed
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
@@ -1087,7 +1089,7 @@ export default function DealsPage() {
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
           </Link>
-          <button onClick={() => navigate('/')} className="flex items-center gap-1.5" style={{
+          <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
             fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
             background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
           }}>
@@ -1301,6 +1303,8 @@ export default function DealsPage() {
           />
         )}
       </AnimatePresence>
+
+      <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
     </div>
   )
 }

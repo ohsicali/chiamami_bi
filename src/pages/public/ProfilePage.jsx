@@ -5,6 +5,7 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
+import CityPickerSheet from '../../components/UI/CityPickerSheet'
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -13,6 +14,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
   const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, reviewsCount: 0, totalSaved: 0 })
   const [showSuggest, setShowSuggest] = useState(false)
+  const [cityPickerOpen, setCityPickerOpen] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
@@ -80,7 +82,7 @@ export default function ProfilePage() {
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
           </Link>
-          <button onClick={() => navigate('/')} className="flex items-center gap-1.5" style={{
+          <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
             fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
             background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
           }}>
@@ -318,6 +320,8 @@ export default function ProfilePage() {
       {showSuggest && (
         <SuggestRestaurantSheet userId={user?.id} onClose={() => setShowSuggest(false)} />
       )}
+
+      <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
     </div>
   )
 }

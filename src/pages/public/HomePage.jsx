@@ -306,6 +306,12 @@ export default function HomePage() {
       openSheet()
       window.history.replaceState({}, '')
     }
+    // Fly to city selected from another page's CityPickerSheet
+    if (location.state?.city) {
+      const { lng, lat } = location.state.city
+      mapRef.current?.flyToCity(lng, lat)
+      window.history.replaceState({}, '')
+    }
   }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll-based sticky detection for sheet filters
