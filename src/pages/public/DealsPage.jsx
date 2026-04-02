@@ -322,35 +322,26 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 function CompactDealCard({ deal, onTap }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
-  const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
-  const soldOut = remaining !== null && remaining <= 0
-  const almostGone = remaining !== null && remaining > 0 && remaining <= 3
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
   const category = categories[0]
 
   return (
-    <div onClick={() => !soldOut && onTap(deal)} style={{
+    <div onClick={() => onTap(deal)} style={{
       borderRadius: 18, overflow: 'hidden',
       background: '#fff',
       border: '1px solid rgba(0,0,0,0.08)',
       boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-      opacity: soldOut ? 0.55 : 1,
-      cursor: soldOut ? 'default' : 'pointer',
+      cursor: 'pointer',
     }}>
-      {/* Discount strip on top — green gradient, prominent */}
+      {/* Discount title strip — centered */}
       <div style={{
-        background: soldOut ? '#e5e5e5' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-        color: soldOut ? '#999' : '#1a2e05',
+        background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+        color: '#1a2e05',
         fontSize: 11, fontWeight: 800,
         padding: '5px 14px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        textDecoration: soldOut ? 'line-through' : 'none',
+        textAlign: 'center',
       }}>
-        <span>{deal.discount_value} — {deal.title}</span>
-        {almostGone && !soldOut && (
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#E8453C', textDecoration: 'none' }}>Ultimi {remaining}!</span>
-        )}
-        {soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: '#999', textDecoration: 'none' }}>Esaurito</span>}
+        {deal.title}
       </div>
 
       <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
@@ -358,7 +349,7 @@ function CompactDealCard({ deal, onTap }) {
         <div style={{ width: 100, height: 100, borderRadius: 14, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }} />
           {photo ? (
-            <img src={photo} alt={r?.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+            <img src={photo} alt={r?.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, opacity: 0.6 }}>
               {category?.emoji || '🍽️'}
