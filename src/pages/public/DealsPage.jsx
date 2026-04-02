@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import Footer from '../../components/Layout/Footer'
+import SaveButton from '../../components/Restaurant/SaveButton'
 import { proxyImg } from '../../lib/supabase'
 
 function slugify(name) {
@@ -144,16 +145,9 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
 
       {/* Heart bottom-right */}
       {onSaveToggle && (
-        <button onClick={e => { e.stopPropagation(); onSaveToggle(); }} style={{
-          position: 'absolute', bottom: 12, right: 12,
-          width: 30, height: 30, borderRadius: '50%',
-          background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, zIndex: 2,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#D1CDC6'} strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-          </svg>
-        </button>
+        <div style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 2 }}>
+          <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
+        </div>
       )}
 
       {/* Info — flex-1 to fill space, CTA pushed to bottom */}
@@ -282,16 +276,9 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin, saved, on
 
       {/* Heart bottom-right */}
       {onSaveToggle && (
-        <button onClick={e => { e.stopPropagation(); onSaveToggle(); }} style={{
-          position: 'absolute', bottom: 12, right: 12,
-          width: 30, height: 30, borderRadius: '50%',
-          background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, zIndex: 2,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : 'rgba(255,255,255,0.4)'} strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-          </svg>
-        </button>
+        <div style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 2 }}>
+          <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
+        </div>
       )}
 
       {/* Info + countdown + Ricordamelo — flex-1 to match height */}
@@ -427,16 +414,9 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle }) {
 
       {/* Heart bottom-right */}
       {onSaveToggle && (
-        <button onClick={e => { e.stopPropagation(); onSaveToggle(); }} style={{
-          position: 'absolute', bottom: 12, right: 12,
-          width: 30, height: 30, borderRadius: '50%',
-          background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#D1CDC6'} strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-          </svg>
-        </button>
+        <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
+          <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
+        </div>
       )}
     </div>
   )
