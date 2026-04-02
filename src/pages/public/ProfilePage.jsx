@@ -68,7 +68,7 @@ export default function ProfilePage() {
   const memberSince = createdAt.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
+    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}>
       {/* ── STICKY HEADER — logo + Torino ── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
@@ -99,7 +99,7 @@ export default function ProfilePage() {
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 100%)',
         padding: '20px 22px 0',
-        position: 'relative',
+        position: 'relative', overflow: 'hidden',
       }}>
         {/* Decorative circle */}
         <div style={{
@@ -143,7 +143,7 @@ export default function ProfilePage() {
         {/* ── BARRA RISPARMIO ── */}
         <div style={{
           background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
-          padding: '16px 18px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
+          padding: '16px 22px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
         }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
