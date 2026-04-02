@@ -386,7 +386,7 @@ function CompactDealCard({ deal, onTap }) {
 }
 
 /* ── FeaturedDealCard — hero dark card like restaurant "In evidenza" ── */
-function FeaturedDealCard({ deal, onTap }) {
+function FeaturedDealCard({ deal, onTap, saved, onSaveToggle }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -426,6 +426,29 @@ function FeaturedDealCard({ deal, onTap }) {
         </div>
       </div>
 
+      {/* Heart — top right */}
+      {onSaveToggle && (
+        <div
+          style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
+          onClick={(e) => { e.stopPropagation(); onSaveToggle(); }}
+        >
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1.5px solid rgba(255,255,255,0.25)', cursor: 'pointer',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24"
+              fill={saved ? '#E8453C' : 'none'}
+              stroke={saved ? '#E8453C' : '#fff'}
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          </div>
+        </div>
+      )}
+
       {/* Content — bottom */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
         <h3 style={{
@@ -435,7 +458,7 @@ function FeaturedDealCard({ deal, onTap }) {
         {r?.tagline && (
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 6 }}>{r.tagline}</p>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.6)', flexWrap: 'wrap' }}>
           {category && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 3,
@@ -445,6 +468,12 @@ function FeaturedDealCard({ deal, onTap }) {
             }}>
               {category.emoji} {category.name}
             </span>
+          )}
+          {r?.recommended_for?.length > 0 && (
+            <>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+              <span>{r.recommended_for[0]}</span>
+            </>
           )}
           {r?.price_range && (
             <>
@@ -730,6 +759,7 @@ function HowItWorks() {
 export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { activeDrops, upcomingDrops, featured, regular, loading } = useActiveDiscounts()
   const { active: myActive, used: myUsed, loading: myLoading } = useMyDiscounts(user?.id)
   const [tab, setTab] = useState('available')
@@ -928,7 +958,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>In evidenza</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
-                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} />)}
+                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }} />)}
                     </div>
                   </div>
                 )}
