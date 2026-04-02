@@ -1111,12 +1111,16 @@ export default function DealsPage() {
         padding: '14px 22px 14px',
         background: 'rgba(250,247,242,0.75)',
         backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-        boxShadow: tabsStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
-        transition: 'box-shadow 0.15s ease',
       }}>
         {tabSwitcherJSX}
         {/* Sub-tabs I miei */}
         {tab === 'mine' && user && !myLoading && subTabsJSX}
+        {/* Gradient fade below tabs */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: -16,
+          height: 16, pointerEvents: 'none',
+          background: 'linear-gradient(to bottom, rgba(250,247,242,0.7), transparent)',
+        }} />
       </div>
 
       {/* ── Content ── */}
