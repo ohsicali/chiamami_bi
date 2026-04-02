@@ -33,8 +33,8 @@ export default function SavedPage() {
   useEffect(() => {
     const el = headerRef.current
     if (!el) return
-    const ro = new ResizeObserver(([entry]) => {
-      setHeaderH(entry.contentRect.height)
+    const ro = new ResizeObserver(() => {
+      setHeaderH(el.offsetHeight)
     })
     ro.observe(el)
     return () => ro.disconnect()
