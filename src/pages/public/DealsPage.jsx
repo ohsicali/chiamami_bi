@@ -667,30 +667,29 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
                     <div onClick={() => photoIdx < allPhotos.length - 1 && setPhotoIdx(photoIdx + 1)} style={{ position: 'absolute', top: 0, right: 0, width: '30%', height: '100%', cursor: photoIdx < allPhotos.length - 1 ? 'pointer' : 'default' }} />
                   </>
                 )}
+                {/* Dots on photo */}
+                {allPhotos.length > 1 && (
+                  <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 5 }}>
+                    {allPhotos.map((_, i) => (
+                      <div key={i} onClick={() => setPhotoIdx(i)} style={{
+                        width: i === photoIdx ? 16 : 6, height: 6, borderRadius: 3,
+                        background: i === photoIdx ? '#fff' : 'rgba(255,255,255,0.5)',
+                        transition: 'all 0.3s ease', cursor: 'pointer',
+                      }} />
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
             )}
           </div>
-
-          {/* Dots indicator */}
-          {allPhotos.length > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 5, padding: '10px 0' }}>
-              {allPhotos.map((_, i) => (
-                <div key={i} onClick={() => setPhotoIdx(i)} style={{
-                  width: i === photoIdx ? 16 : 6, height: 6, borderRadius: 3,
-                  background: i === photoIdx ? 'var(--color-primary)' : 'var(--color-bordo)',
-                  transition: 'all 0.3s ease', cursor: 'pointer',
-                }} />
-              ))}
-            </div>
-          )}
-          {allPhotos.length <= 1 && <div style={{ height: 16 }} />}
+          <div style={{ height: 16 }} />
 
           {/* Restaurant name — tappable */}
           <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
             fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
-            color: 'var(--color-primary)', lineHeight: 1.2, cursor: 'pointer', marginBottom: 4,
+            color: 'var(--color-primary)', lineHeight: 1.5, cursor: 'pointer', marginBottom: 4,
           }}>{r?.name}</h3>
           <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 14 }}>
             {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
@@ -708,7 +707,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
 
           {/* Conditions list — green checkmarks */}
           {conditions.length > 0 && (
-            <div style={{ background: '#FAF7F2', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+            <div style={{ background: '#FAF7F2', borderRadius: 14, padding: 14, marginBottom: 14, border: '1px solid var(--color-bordo)' }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: '#22181C', margin: '0 0 8px' }}>Condizioni</p>
               {conditions.map((c, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < conditions.length - 1 ? 6 : 0 }}>
@@ -727,7 +726,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(r?.address || r?.name)}`)}
               style={{
                 flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
-                border: 'none', cursor: 'pointer', textAlign: 'center',
+                border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
@@ -739,7 +738,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               onClick={() => r?.phone && window.open(`tel:${r.phone}`)}
               style={{
                 flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
-                border: 'none', cursor: 'pointer', textAlign: 'center',
+                border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
@@ -751,7 +750,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               onClick={() => onSaveToggle && onSaveToggle(r?.id)}
               style={{
                 flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
-                border: 'none', cursor: 'pointer', textAlign: 'center',
+                border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#22181C'} strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
