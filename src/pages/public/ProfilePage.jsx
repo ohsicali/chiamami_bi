@@ -108,26 +108,30 @@ export default function ProfilePage() {
         }} />
 
         {/* Top row: avatar + name + settings */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
           {/* Avatar */}
           <div style={{
-            width: 56, height: 56, borderRadius: '50%', background: '#fff',
+            width: 48, height: 48, minWidth: 48, borderRadius: '50%', background: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'DM Sans', sans-serif", fontSize: 22, fontWeight: 700,
-            color: 'var(--color-accent)', lineHeight: 1,
+            fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700,
+            color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
           }}>
             {initial}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 22, fontWeight: 700, color: '#fff' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 16, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {displayName}
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{email}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{email}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Amico di Bi</span>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+            </div>
           </div>
           {/* Settings button */}
           <button onClick={() => navigate('/settings')} style={{
-            width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer',
+            width: 34, height: 34, minWidth: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
               <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
@@ -136,21 +140,11 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* ── BARRA "AMICO DI BI" ── */}
+        {/* ── BARRA RISPARMIO ── */}
         <div style={{
           background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
           padding: '16px 18px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-            }}>
-              ❤️
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Amico di Bi</span>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>da {memberSince}</span>
-          </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
               {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
