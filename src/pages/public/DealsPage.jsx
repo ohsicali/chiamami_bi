@@ -665,12 +665,20 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             {allPhotos.length > 0 ? (
               <>
                 <div
-                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)` }}
-                  onTouchStart={e => { e.currentTarget._touchX = e.touches[0].clientX }}
+                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)`, touchAction: 'pan-y' }}
+                  onTouchStart={e => {
+                    e.currentTarget._touchX = e.touches[0].clientX
+                    e.currentTarget._touchY = e.touches[0].clientY
+                  }}
+                  onTouchMove={e => {
+                    const dx = Math.abs(e.touches[0].clientX - e.currentTarget._touchX)
+                    const dy = Math.abs(e.touches[0].clientY - e.currentTarget._touchY)
+                    if (dx > dy) e.preventDefault()
+                  }}
                   onTouchEnd={e => {
                     const diff = e.currentTarget._touchX - e.changedTouches[0].clientX
-                    if (diff > 50 && photoIdx < allPhotos.length - 1) setPhotoIdx(photoIdx + 1)
-                    else if (diff < -50 && photoIdx > 0) setPhotoIdx(photoIdx - 1)
+                    if (diff > 40 && photoIdx < allPhotos.length - 1) setPhotoIdx(photoIdx + 1)
+                    else if (diff < -40 && photoIdx > 0) setPhotoIdx(photoIdx - 1)
                   }}
                 >
                   {allPhotos.map((url, i) => (
