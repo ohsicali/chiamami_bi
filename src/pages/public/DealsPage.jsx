@@ -317,31 +317,29 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   )
 }
 
-/* ── CompactDealCard — horizontal card, featured = dark ── */
-function CompactDealCard({ deal, isFeatured, onTap }) {
+/* ── CompactDealCard — horizontal card ── */
+function CompactDealCard({ deal, onTap }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
   const soldOut = remaining !== null && remaining <= 0
   const almostGone = remaining !== null && remaining > 0 && remaining <= 3
-  const dark = isFeatured && !soldOut
 
   return (
     <div onClick={() => !soldOut && onTap(deal)} className="flex" style={{
       borderRadius: 18, overflow: 'hidden',
-      background: dark ? 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)' : '#fff',
-      border: dark ? 'none' : '1px solid rgba(0,0,0,0.08)',
+      background: '#fff',
+      border: '1px solid rgba(0,0,0,0.08)',
       boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
       opacity: soldOut ? 0.55 : 1,
       cursor: soldOut ? 'default' : 'pointer',
-      position: 'relative',
     }}>
       {/* Photo left */}
       <div style={{ width: 100, minWidth: 100, alignSelf: 'stretch', position: 'relative', overflow: 'hidden' }}>
         {photo ? (
-          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none', opacity: dark ? 0.5 : 1 }} />
+          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: dark ? '#2e2228' : 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🍽️</div>
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🍽️</div>
         )}
         {/* Discount badge on photo — top left */}
         <div style={{
@@ -363,42 +361,82 @@ function CompactDealCard({ deal, isFeatured, onTap }) {
       {/* Info right */}
       <div className="flex items-center" style={{ flex: 1, minWidth: 0, padding: '12px 14px', gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Restaurant name */}
           <h4 style={{
             fontFamily: "'TAN Songbird', sans-serif", fontSize: 14, fontWeight: 600,
-            color: dark ? '#fff' : 'var(--color-primary)', lineHeight: 1.2,
+            color: 'var(--color-primary)', lineHeight: 1.2,
           }}>{r?.name}</h4>
-          {/* Subtitle: category · price · city */}
-          <p style={{ fontSize: 11, color: dark ? 'rgba(255,255,255,0.5)' : 'var(--color-secondary)', marginBottom: 2 }}>
+          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginBottom: 2 }}>
             {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
           </p>
-          {/* Discount title — bold */}
-          <p style={{ fontSize: 13, fontWeight: 700, color: dark ? '#fff' : 'var(--color-primary)' }}>{deal.title}</p>
-          {/* Conditions / description */}
+          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)' }}>{deal.title}</p>
           {deal.conditions && (
-            <p style={{ fontSize: 11, color: dark ? 'rgba(255,255,255,0.45)' : 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {deal.conditions.split('\n').filter(Boolean).join(' · ')}
             </p>
           )}
         </div>
 
-        {/* Chevron */}
         {!soldOut && (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={dark ? 'rgba(255,255,255,0.4)' : 'var(--color-secondary)'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M9 18l6-6-6-6"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M9 18l6-6-6-6"/></svg>
         )}
       </div>
+    </div>
+  )
+}
 
-      {/* Featured badge top-right */}
-      {isFeatured && !soldOut && (
+/* ── FeaturedDealCard — hero dark card like restaurant "In evidenza" ── */
+function FeaturedDealCard({ deal, onTap }) {
+  const r = deal.restaurant
+  const photo = getPhoto(r)
+
+  return (
+    <div onClick={() => onTap(deal)} style={{
+      borderRadius: 22, height: 200, position: 'relative', overflow: 'hidden',
+      cursor: 'pointer', animation: 'hero-pulse 3s ease-in-out infinite',
+    }}>
+      {/* Background */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)' }}>
+        {photo && (
+          <img src={photo} alt={r?.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
+      </div>
+
+      {/* Top badges: In evidenza + Discount */}
+      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{
-          position: 'absolute', top: 8, right: 10,
-          display: 'flex', alignItems: 'center', gap: 3,
-          background: 'var(--color-oro)', borderRadius: 8, padding: '3px 8px',
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          background: '#C4A265', color: '#fff',
+          fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+          padding: '5px 12px', borderRadius: 10,
         }}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>Top</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+          In evidenza
         </div>
-      )}
+        <div style={{
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          fontSize: 11, fontWeight: 700,
+          padding: '5px 12px', borderRadius: 10,
+        }}>
+          {deal.discount_value}
+        </div>
+      </div>
+
+      {/* Content — bottom */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
+        <h3 style={{
+          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.4, marginBottom: 4,
+        }}>{r?.name}</h3>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 600, marginBottom: 6 }}>{deal.title}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+          {r?.cuisine_type && <span>{r.cuisine_type}</span>}
+          {r?.cuisine_type && r?.price_range && <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />}
+          {r?.price_range && <span style={{ fontWeight: 600 }}>{'€'.repeat(r.price_range)}</span>}
+          {r?.city && <><span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} /><span>{r.city}</span></>}
+        </div>
+      </div>
     </div>
   )
 }
@@ -868,12 +906,21 @@ export default function DealsPage() {
                   </div>
                 )}
 
-                {/* SCONTI DISPONIBILI — featured + regular merged */}
-                {(featured.length > 0 || regular.length > 0) && (
+                {/* IN EVIDENZA — hero dark cards */}
+                {featured.length > 0 && (
+                  <div>
+                    <p style={sectionLabel}>In evidenza</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
+                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} />)}
+                    </div>
+                  </div>
+                )}
+
+                {/* SCONTI DISPONIBILI — compact cards */}
+                {regular.length > 0 && (
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-                      {featured.map(deal => <CompactDealCard key={deal.id} deal={deal} isFeatured onTap={setSelectedDeal} />)}
                       {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} />)}
                     </div>
                   </div>
