@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
@@ -388,6 +389,8 @@ function CompactDealCard({ deal, onTap }) {
 function FeaturedDealCard({ deal, onTap }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
+  const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
+  const category = categories[0]
 
   return (
     <div onClick={() => onTap(deal)} style={{
@@ -433,9 +436,22 @@ function FeaturedDealCard({ deal, onTap }) {
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 6 }}>{r.tagline}</p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-          {r?.cuisine_type && <span>{r.cuisine_type}</span>}
-          {r?.cuisine_type && r?.price_range && <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />}
-          {r?.price_range && <span style={{ fontWeight: 600 }}>{'€'.repeat(r.price_range)}</span>}
+          {category && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              backgroundColor: `${category.color}30`,
+              color: '#fff', fontSize: 11, fontWeight: 600,
+              padding: '2px 8px', borderRadius: 20,
+            }}>
+              {category.emoji} {category.name}
+            </span>
+          )}
+          {r?.price_range && (
+            <>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />
+              <span style={{ fontWeight: 600 }}>{'€'.repeat(r.price_range)}</span>
+            </>
+          )}
         </div>
       </div>
     </div>
