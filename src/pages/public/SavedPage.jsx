@@ -131,6 +131,7 @@ export default function SavedPage() {
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--color-bordo)',
       }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 0 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -152,7 +153,7 @@ export default function SavedPage() {
       </div>
 
       {/* Title */}
-      <div style={{ padding: '16px 22px 10px' }}>
+      <div style={{ padding: '20px 22px 10px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 24, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           I miei salvati
         </h1>
