@@ -208,8 +208,20 @@ export default function SavedPage() {
         ) : displayList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <span style={{ fontSize: 28, marginBottom: 8 }}>🔍</span>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Nessun risultato</p>
-            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4 }}>Prova a cambiare i filtri</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Nessun salvato in questa categoria</p>
+            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+              Scopri tutti i ristoranti di questa categoria nell'elenco
+            </p>
+            <button
+              onClick={() => navigate('/list')}
+              style={{
+                background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+                padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
+                border: 'none', cursor: 'pointer',
+              }}
+            >
+              Vedi tutti i ristoranti
+            </button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
