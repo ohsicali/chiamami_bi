@@ -556,7 +556,7 @@ export default function HomePage() {
             </div>
 
             <div ref={sheetFiltersRef} style={{
-              position: 'sticky', top: 0, zIndex: 10,
+              position: 'sticky', top: 0, zIndex: 50,
               padding: '14px 0',
               margin: '0 -20px', paddingLeft: 20, paddingRight: 20,
               background: '#FAF7F2',
