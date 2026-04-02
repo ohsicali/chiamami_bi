@@ -429,12 +429,13 @@ function FeaturedDealCard({ deal, onTap }) {
           fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
           fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.4, marginBottom: 4,
         }}>{r?.name}</h3>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 600, marginBottom: 6 }}>{deal.title}</p>
+        {r?.tagline && (
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 6 }}>{r.tagline}</p>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
           {r?.cuisine_type && <span>{r.cuisine_type}</span>}
           {r?.cuisine_type && r?.price_range && <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} />}
           {r?.price_range && <span style={{ fontWeight: 600 }}>{'€'.repeat(r.price_range)}</span>}
-          {r?.city && <><span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'inline-block' }} /><span>{r.city}</span></>}
         </div>
       </div>
     </div>
