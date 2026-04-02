@@ -27,18 +27,25 @@ export default function SavedPage() {
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
   const [filtersSticky, setFiltersSticky] = useState(false)
-  const filtersRef = useRef(null)
+  const titleRef = useRef(null)
 
-  // IntersectionObserver on sentinel div — no layout shift issues
+  // Scroll-based sticky detection — avoids IntersectionObserver feedback loops
   useEffect(() => {
-    const el = filtersRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setFiltersSticky(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const el = titleRef.current
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          setFiltersSticky(rect.bottom <= 0)
+        }
+        ticking = false
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   useEffect(() => {
@@ -188,11 +195,8 @@ export default function SavedPage() {
         </AnimatePresence>
       </div>
 
-      {/* Sentinel for IntersectionObserver — zero height, won't cause layout shifts */}
-      <div ref={filtersRef} style={{ height: 0 }} />
-
-      {/* Title — scrolls away */}
-      <div style={{ padding: '20px 22px 12px' }}>
+      {/* Title — scrolls away; ref used for scroll-based sticky detection */}
+      <div ref={titleRef} style={{ padding: '20px 22px 12px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           I miei salvati
         </h1>
