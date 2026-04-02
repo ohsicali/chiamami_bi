@@ -1019,6 +1019,7 @@ export default function DealsPage() {
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--color-bordo)',
       }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -1036,16 +1037,6 @@ export default function DealsPage() {
             Torino
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
-        </div>
-
-        {/* Title */}
-        <div style={{ marginBottom: 12 }}>
-          <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 24, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
-            Sconti
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
-            Offerte esclusive nei migliori locali
-          </p>
         </div>
 
         {/* Tab switcher */}
@@ -1078,6 +1069,16 @@ export default function DealsPage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Title */}
+      <div style={{ padding: '20px 22px 12px' }}>
+        <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
+          Sconti
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
+          Offerte esclusive nei migliori locali
+        </p>
       </div>
 
       {/* ── Content ── */}

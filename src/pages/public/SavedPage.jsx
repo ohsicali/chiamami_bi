@@ -153,8 +153,8 @@ export default function SavedPage() {
       </div>
 
       {/* Title */}
-      <div style={{ padding: '20px 22px 10px' }}>
-        <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 24, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
+      <div style={{ padding: '20px 22px 12px' }}>
+        <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           I miei salvati
         </h1>
         <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
