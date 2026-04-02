@@ -608,129 +608,85 @@ function MyUsedCard({ redemption, onGoTo }) {
 function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, onGoTo, saved, onSaveToggle }) {
   const r = deal?.restaurant
   const photo = getPhoto(r)
+  const remaining = deal?.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
+  const soldOut = remaining !== null && remaining <= 0
   const conditions = deal?.conditions ? deal.conditions.split('\n').filter(Boolean) : []
-  const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).filter(Boolean)
-  const validUntil = deal?.valid_until ? new Date(deal.valid_until).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) : null
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.4)',
-          zIndex: 50,
-        }}
-      />
-
-      {/* Bottom Sheet */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}
+    >
       <motion.div
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+        onClick={e => e.stopPropagation()}
         style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
-          background: 'white',
-          borderRadius: '24px 24px 0 0',
-          maxHeight: '85vh',
-          overflowY: 'auto',
-          zIndex: 51,
+          width: '100%', maxWidth: 480, maxHeight: '85vh',
+          background: 'var(--color-bg)', borderRadius: '24px 24px 0 0',
+          overflow: 'hidden', display: 'flex', flexDirection: 'column',
         }}
       >
-        {/* Handle */}
-        <div style={{ width: 36, height: 4, background: '#E8E5DE', borderRadius: 2, margin: '10px auto 6px' }} />
-
-        {/* FOTO CON NOME SOPRA */}
-        <div style={{ position: 'relative', width: '100%', height: 220 }}>
-          {photo ? (
-            <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
-          )}
-          {/* Gradient scuro */}
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)',
-          }} />
-
-          {/* Nome sulla foto */}
-          <div style={{ position: 'absolute', bottom: 16, left: 18, right: 18 }}>
-            <h2 onClick={() => { onClose(); onGoTo(r); }} style={{
-              fontFamily: "'TAN Songbird', Georgia, serif",
-              fontSize: 28, fontWeight: 700, color: 'white', lineHeight: 1, margin: 0, cursor: 'pointer',
-            }}>
-              {r?.name}
-            </h2>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>
-              {[categories[0], r?.price_range ? '€'.repeat(r.price_range) : null, r?.city || 'Torino'].filter(Boolean).join(' · ')}
-            </p>
-          </div>
-
-          {/* X chiudi */}
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute', top: 14, right: 14,
-              width: 34, height: 34,
-              background: 'rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              borderRadius: '50%', border: 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-
-          {/* Badge sconto */}
-          <div style={{
-            position: 'absolute', top: 14, left: 14,
-            background: '#E8453C', color: 'white',
-            fontSize: 13, fontWeight: 700,
-            padding: '5px 14px', borderRadius: 10,
-          }}>
-            {deal?.discount_value}
-          </div>
+        {/* Drag handle */}
+        <div style={{ padding: '10px 0 0', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-bordo)' }} />
         </div>
 
-        {/* CONTENUTO */}
-        <div style={{ padding: '18px 22px 34px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 24px' }}>
+          {/* Photo */}
+          <div style={{ borderRadius: 20, overflow: 'hidden', height: 180, marginBottom: 16 }}>
+            {photo ? (
+              <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
+            )}
+          </div>
 
-          {/* Titolo sconto */}
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: '#22181C', margin: '0 0 4px' }}>
-            {deal?.title}
-          </h3>
-          <p style={{ fontSize: 13, color: '#8A8680', margin: '0 0 16px' }}>
-            {[deal?.description, validUntil ? `Fino al ${validUntil}` : null].filter(Boolean).join(' · ')}
+          {/* Restaurant name — tappable */}
+          <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
+            fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
+            color: 'var(--color-primary)', lineHeight: 1.2, cursor: 'pointer', marginBottom: 4,
+          }}>{r?.name}</h3>
+          <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 14 }}>
+            {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
           </p>
 
-          {/* Box condizioni */}
+          {/* Discount tag + title */}
+          <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
+            <span style={{
+              display: 'inline-block', fontSize: 13, fontWeight: 800, color: '#1a2e05',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)',
+              borderRadius: 8, padding: '3px 12px',
+            }}>{deal?.discount_value}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title}</span>
+          </div>
+
+          {/* Conditions list — green checkmarks */}
           {conditions.length > 0 && (
-            <div style={{
-              background: '#FAF7F2', borderRadius: 14, padding: 14,
-              marginBottom: 16,
-            }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#22181C', margin: '0 0 8px' }}>
-                Condizioni
-              </p>
+            <div style={{ background: '#FAF7F2', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#22181C', margin: '0 0 8px' }}>Condizioni</p>
               {conditions.map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < conditions.length - 1 ? 6 : 0 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: 1 }}>
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  <span style={{ fontSize: 12, color: '#8A8680' }}>{c}</span>
+                  <span style={{ fontSize: 12, color: '#8A8680', lineHeight: 1.4 }}>{c}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* 3 bottoni rapidi */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+          {/* 3 quick action buttons */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
             <button
               onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(r?.address || r?.name)}`)}
               style={{
@@ -769,37 +725,39 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             </button>
           </div>
 
-          {/* CTA grande */}
-          {myRedemption ? (
+          {/* CTA */}
+          {!soldOut && myRedemption ? (
             <button onClick={() => onShowQR(myRedemption)} style={{
-              width: '100%', background: '#22181C', color: 'white',
-              borderRadius: 16, padding: 16, border: 'none',
-              fontSize: 16, fontWeight: 600, textAlign: 'center', cursor: 'pointer',
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: 'var(--color-success)', color: '#fff',
+              fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
               Mostra QR
             </button>
-          ) : (
-            <button
-              onClick={() => locked ? onLogin() : onClaim(deal)}
-              disabled={claiming}
-              style={{
-                width: '100%', background: locked ? '#22181C' : '#E8453C', color: 'white',
-                borderRadius: 16, padding: 16, border: 'none',
-                fontSize: 16, fontWeight: 600, textAlign: 'center',
-                cursor: claiming ? 'wait' : 'pointer',
-                opacity: claiming ? 0.7 : 1,
-              }}
-            >
-              {locked ? 'Sblocca sconto' : claiming ? 'Un momento...' : 'Attiva sconto'}
+          ) : !soldOut && (
+            <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: locked ? 'var(--color-primary)' : 'var(--color-accent)', color: '#fff',
+              fontSize: 15, fontWeight: 700, border: 'none', cursor: claiming ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              opacity: claiming ? 0.7 : 1,
+            }}>
+              {locked && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+              {locked ? 'Registrati per sbloccare' : claiming ? 'Un momento...' : 'Prendi lo sconto'}
             </button>
           )}
-
-          <p style={{ textAlign: 'center', marginTop: 8, fontSize: 11, color: '#8A8680' }}>
-            Mostra il QR al ristorante per applicare lo sconto
-          </p>
+          {soldOut && (
+            <div style={{
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: 'var(--color-bordo)', textAlign: 'center',
+              fontSize: 15, fontWeight: 700, color: 'var(--color-secondary)',
+            }}>Esaurito</div>
+          )}
         </div>
       </motion.div>
-    </>
+    </motion.div>
   )
 }
 
