@@ -1108,19 +1108,13 @@ export default function DealsPage() {
         position: 'sticky',
         top: headerH,
         zIndex: 49,
-        padding: '14px 22px 14px',
-        background: 'rgba(250,247,242,0.75)',
+        padding: '14px 22px 20px',
+        background: 'linear-gradient(to bottom, rgba(250,247,242,0.85) 60%, rgba(250,247,242,0) 100%)',
         backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
       }}>
         {tabSwitcherJSX}
         {/* Sub-tabs I miei */}
         {tab === 'mine' && user && !myLoading && subTabsJSX}
-        {/* Gradient fade below tabs */}
-        <div style={{
-          position: 'absolute', left: 0, right: 0, bottom: -16,
-          height: 16, pointerEvents: 'none',
-          background: 'linear-gradient(to bottom, rgba(250,247,242,0.7), transparent)',
-        }} />
       </div>
 
       {/* ── Content ── */}

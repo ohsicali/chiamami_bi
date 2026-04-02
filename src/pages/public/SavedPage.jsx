@@ -182,8 +182,8 @@ export default function SavedPage() {
           position: 'sticky',
           top: headerH,
           zIndex: 49,
-          padding: '14px 16px 14px',
-          background: 'rgba(250,247,242,0.75)',
+          padding: '14px 16px 20px',
+          background: 'linear-gradient(to bottom, rgba(250,247,242,0.85) 60%, rgba(250,247,242,0) 100%)',
           backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
         }}>
           <FilterChips
@@ -194,12 +194,6 @@ export default function SavedPage() {
             onToggleDeals={() => setShowDealsOnly(v => !v)}
             dealsCount={dealsCount}
           />
-          {/* Gradient fade below filters */}
-          <div style={{
-            position: 'absolute', left: 0, right: 0, bottom: -16,
-            height: 16, pointerEvents: 'none',
-            background: 'linear-gradient(to bottom, rgba(250,247,242,0.7), transparent)',
-          }} />
         </div>
       )}
 
