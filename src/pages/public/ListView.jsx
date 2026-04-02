@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import Navbar from '../../components/Layout/Navbar'
@@ -344,6 +344,7 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
    ============================================ */
 export default function ListView() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { position } = useGeolocation()
   const {
@@ -354,6 +355,15 @@ export default function ListView() {
     searchQuery,
     setSearchQuery,
   } = useRestaurants(position)
+
+  // Apply initial category from navigation state (e.g. from SavedPage)
+  useEffect(() => {
+    if (location.state?.initialCategory) {
+      setFilters(f => ({ ...f, category: location.state.initialCategory }))
+      // Clear state so it doesn't re-apply on re-renders
+      window.history.replaceState({}, '')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { discounts: activeDiscounts, allFeatured: featuredDiscounts } = useActiveDiscounts()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)

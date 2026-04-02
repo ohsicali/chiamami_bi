@@ -213,7 +213,12 @@ export default function SavedPage() {
               Scopri tutti i ristoranti di questa categoria nell'elenco
             </p>
             <button
-              onClick={() => navigate('/list')}
+              onClick={() => {
+                const cat = filters.category
+                  ? (Array.isArray(filters.category) ? filters.category : [filters.category])
+                  : null
+                navigate('/list', { state: { initialCategory: cat } })
+              }}
               style={{
                 background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
