@@ -113,8 +113,8 @@ export default function ProfilePage() {
           <div style={{
             width: 56, height: 56, borderRadius: '50%', background: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'TAN Songbird', serif", fontSize: 22, fontWeight: 700,
-            color: 'var(--color-accent)',
+            fontFamily: "'DM Sans', sans-serif", fontSize: 22, fontWeight: 700,
+            color: 'var(--color-accent)', lineHeight: 1,
           }}>
             {initial}
           </div>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>da {memberSince}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 28, fontWeight: 700, color: '#fff' }}>
+            <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff' }}>
               {stats.totalSaved}€
             </span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
@@ -172,7 +172,7 @@ export default function ProfilePage() {
             textAlign: 'center', border: '1px solid var(--color-bordo)',
             cursor: 'pointer',
           }}>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 24, fontWeight: 700, color: 'var(--color-primary)' }}>
+            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, fontWeight: 700, color: 'var(--color-primary)' }}>
               {stat.value}
             </div>
             <div style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{stat.label}</div>
