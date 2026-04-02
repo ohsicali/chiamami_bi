@@ -88,7 +88,7 @@ function getPhoto(restaurant) {
 }
 
 /* ── LiveDropCard — carousel 260px, bordo accent ── */
-function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, saved, onSaveToggle }) {
+function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const claimed = deal.claimed_count || deal.total_redeemed || 0
@@ -142,13 +142,6 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
         </div>
       </div>
-
-      {/* Heart bottom-right */}
-      {onSaveToggle && (
-        <div style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 2 }}>
-          <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
-        </div>
-      )}
 
       {/* Info — flex-1 to fill space, CTA pushed to bottom */}
       <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -211,7 +204,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
 }
 
 /* ── UpcomingDropCard — carousel 260px, sfondo scuro ── */
-function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin, saved, onSaveToggle }) {
+function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const time = useCountdown(deal.drop_starts_at || deal.drop_time)
@@ -273,13 +266,6 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin, saved, on
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
         </div>
       </div>
-
-      {/* Heart bottom-right */}
-      {onSaveToggle && (
-        <div style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 2 }}>
-          <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
-        </div>
-      )}
 
       {/* Info + countdown + Ricordamelo — flex-1 to match height */}
       <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -633,6 +619,8 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
   const remaining = deal?.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
   const soldOut = remaining !== null && remaining <= 0
   const conditions = deal?.conditions ? deal.conditions.split('\n').filter(Boolean) : []
+  const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
+  const category = categories[0]
   const [photoIdx, setPhotoIdx] = useState(0)
 
   useEffect(() => {
@@ -687,18 +675,13 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             {allPhotos.length > 0 ? (
               <>
                 <div
-                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)`, touchAction: 'pan-y' }}
-                  onTouchStart={e => {
-                    e.currentTarget._touchX = e.touches[0].clientX
-                    e.currentTarget._touchY = e.touches[0].clientY
+                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)`, touchAction: 'pan-y pinch-zoom' }}
+                  onPointerDown={e => {
+                    e.currentTarget._startX = e.clientX
+                    e.currentTarget.setPointerCapture(e.pointerId)
                   }}
-                  onTouchMove={e => {
-                    const dx = Math.abs(e.touches[0].clientX - e.currentTarget._touchX)
-                    const dy = Math.abs(e.touches[0].clientY - e.currentTarget._touchY)
-                    if (dx > dy) e.preventDefault()
-                  }}
-                  onTouchEnd={e => {
-                    const diff = e.currentTarget._touchX - e.changedTouches[0].clientX
+                  onPointerUp={e => {
+                    const diff = (e.currentTarget._startX || 0) - e.clientX
                     if (diff > 40 && photoIdx < allPhotos.length - 1) setPhotoIdx(photoIdx + 1)
                     else if (diff < -40 && photoIdx > 0) setPhotoIdx(photoIdx - 1)
                   }}
@@ -753,11 +736,38 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           {/* Restaurant name — tappable */}
           <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
             fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
-            color: 'var(--color-primary)', lineHeight: 1.5, cursor: 'pointer', marginBottom: 4,
+            color: 'var(--color-primary)', lineHeight: 1.5, cursor: 'pointer', marginBottom: 2,
           }}>{r?.name}</h3>
-          <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 14 }}>
-            {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
-          </p>
+
+          {/* Description */}
+          {r?.tagline && (
+            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginBottom: 8, lineHeight: 1.4 }}>{r.tagline}</p>
+          )}
+
+          {/* Category badge + price */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            {category && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                backgroundColor: `${category.color}20`, color: category.color,
+                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+              }}>
+                {category.emoji} {category.name}
+              </span>
+            )}
+            {r?.recommended_for?.length > 0 && (
+              <>
+                <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />
+                <span style={{ fontSize: 12, color: 'var(--color-secondary)' }}>{r.recommended_for[0]}</span>
+              </>
+            )}
+            {r?.price_range && (
+              <>
+                <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-secondary)' }}>{'€'.repeat(r.price_range)}</span>
+              </>
+            )}
+          </div>
 
           {/* Discount tag + title */}
           <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
@@ -1081,9 +1091,9 @@ export default function DealsPage() {
                       scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
                       paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 18, paddingRight: 18,
                     }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />)}
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
                       {upcomingDrops.map(deal => (
-                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />
+                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
                       ))}
                     </div>
                   </div>
