@@ -160,9 +160,9 @@ export default function SavedPage() {
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
           </Link>
-          <button className="flex items-center gap-1.5" style={{
+          <button onClick={() => navigate('/')} className="flex items-center gap-1.5" style={{
             fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
-            background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)',
+            background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
           }}>
             <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
