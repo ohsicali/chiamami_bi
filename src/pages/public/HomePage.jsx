@@ -559,8 +559,7 @@ export default function HomePage() {
               position: 'sticky', top: 0, zIndex: 10,
               padding: '14px 0',
               margin: '0 -20px', paddingLeft: 20, paddingRight: 20,
-              background: 'rgba(250,247,242,0.75)',
-              backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+              background: '#FAF7F2',
               boxShadow: sheetFiltersSticky ? '0 1px 0 0 var(--color-bordo)' : 'none',
             }}>
               <FilterChips
