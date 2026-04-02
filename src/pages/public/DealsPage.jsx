@@ -633,7 +633,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 480, maxHeight: '85vh',
-          background: 'var(--color-bg)', borderRadius: '24px 24px 0 0',
+          background: '#fff', borderRadius: '24px 24px 0 0',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
         }}
       >
@@ -679,6 +679,23 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
                     ))}
                   </div>
                 )}
+                {/* Heart on photo */}
+                <button
+                  onClick={() => onSaveToggle && onSaveToggle(r?.id)}
+                  style={{
+                    position: 'absolute', top: 10, right: 10,
+                    width: 34, height: 34,
+                    background: 'rgba(0,0,0,0.3)',
+                    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                    borderRadius: '50%', border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : 'white'} strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                  </svg>
+                </button>
               </>
             ) : (
               <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>🍽️</div>
@@ -747,16 +764,16 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Chiama</span>
             </button>
             <button
-              onClick={() => onSaveToggle && onSaveToggle(r?.id)}
+              onClick={() => { onClose(); onGoTo(r); }}
               style={{
                 flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
                 border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#22181C'} strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
-                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-              <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Salva</span>
+              <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Locale</span>
             </button>
           </div>
 
