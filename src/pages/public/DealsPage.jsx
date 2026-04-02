@@ -1052,6 +1052,24 @@ export default function DealsPage() {
         </div>
       </div>
 
+      {/* Sub-tabs I miei — sempre visibili sotto il tab switcher */}
+      {tab === 'mine' && user && !myLoading && (
+        <div className="flex gap-2 px-4" style={{ paddingTop: 12, paddingBottom: 4 }}>
+          <button
+            onClick={() => setMySubTab('active')}
+            className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-secondary'}`}
+          >
+            Attivi ({myActive.length})
+          </button>
+          <button
+            onClick={() => setMySubTab('used')}
+            className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'used' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-secondary'}`}
+          >
+            Utilizzati ({myUsed.length})
+          </button>
+        </div>
+      )}
+
       {/* ── Content ── */}
       <div className="flex-1 px-4" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
         {tab === 'available' && (
@@ -1171,35 +1189,7 @@ export default function DealsPage() {
               </div>
             ) : (
               <>
-                {/* Sub-tabs: Attivi / Utilizzati — sticky */}
-                <div className="flex gap-2" style={{
-                  position: 'sticky', top: 0, zIndex: 10,
-                  background: 'var(--color-bg)',
-                  paddingBottom: 12, paddingTop: 4,
-                  marginBottom: 4,
-                }}>
-                  <button
-                    onClick={() => setMySubTab('active')}
-                    className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${
-                      mySubTab === 'active'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-secondary'
-                    }`}
-                  >
-                    Attivi ({myActive.length})
-                  </button>
-                  <button
-                    onClick={() => setMySubTab('used')}
-                    className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${
-                      mySubTab === 'used'
-                        ? 'bg-gray-200 text-gray-700'
-                        : 'bg-gray-100 text-secondary'
-                    }`}
-                  >
-                    Utilizzati ({myUsed.length})
-                  </button>
-                </div>
-
+                {/* Sub-tabs moved outside scroll area — see above */}
                 {mySubTab === 'active' ? (
                   myActive.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
