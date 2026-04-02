@@ -119,6 +119,7 @@ const NAV_ITEMS = [
   { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
   { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
   { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon },
+  { to: '/admin/suggestions', label: 'Suggerimenti', icon: ApplicationIcon },
   { to: '/admin/settings', label: 'Impostazioni', icon: SettingsIcon },
 ]
 
