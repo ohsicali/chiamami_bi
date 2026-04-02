@@ -152,7 +152,7 @@ export default function SavedPage() {
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-bordo)',
+        borderBottom: filtersSticky ? 'none' : '1px solid var(--color-bordo)',
       }}>
         <div className="flex items-center justify-between">
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -180,7 +180,7 @@ export default function SavedPage() {
               animate={{ height: 'auto', opacity: 1, marginTop: 0 }}
               exit={{ height: 0, opacity: 0, marginTop: 0 }}
               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              style={{ overflow: 'hidden', borderTop: '1px solid var(--color-bordo)', paddingTop: 12, marginTop: 14 }}
+              style={{ overflow: 'hidden', borderTop: '1px solid var(--color-bordo)', paddingTop: 12, paddingBottom: 2, marginTop: 14 }}
             >
               {filterChipsJSX}
             </motion.div>
