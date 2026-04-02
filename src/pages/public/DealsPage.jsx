@@ -633,7 +633,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 480, maxHeight: '85vh',
-          background: '#fff', borderRadius: '24px 24px 0 0',
+          background: '#FAF7F2', borderRadius: '24px 24px 0 0',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
         }}
       >
@@ -724,7 +724,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
 
           {/* Conditions list — green checkmarks */}
           {conditions.length > 0 && (
-            <div style={{ background: '#FAF7F2', borderRadius: 14, padding: 14, marginBottom: 14, border: '1px solid var(--color-bordo)' }}>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 14, border: '1px solid var(--color-bordo)' }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: '#22181C', margin: '0 0 8px' }}>Condizioni</p>
               {conditions.map((c, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < conditions.length - 1 ? 6 : 0 }}>
@@ -742,7 +742,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             <button
               onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(r?.address || r?.name)}`)}
               style={{
-                flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
+                flex: 1, background: '#fff', borderRadius: 12, padding: 12,
                 border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
@@ -752,9 +752,9 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Indicazioni</span>
             </button>
             <button
-              onClick={() => r?.phone && window.open(`tel:${r.phone}`)}
+              onClick={() => r?.phone && (window.location.href = `tel:${r.phone}`)}
               style={{
-                flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
+                flex: 1, background: '#fff', borderRadius: 12, padding: 12,
                 border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
@@ -766,7 +766,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             <button
               onClick={() => { onClose(); onGoTo(r); }}
               style={{
-                flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
+                flex: 1, background: '#fff', borderRadius: 12, padding: 12,
                 border: '1px solid var(--color-bordo)', cursor: 'pointer', textAlign: 'center',
               }}
             >
@@ -781,7 +781,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           {!soldOut && myRedemption ? (
             <button onClick={() => onShowQR(myRedemption)} style={{
               width: '100%', padding: '16px 0', borderRadius: 16,
-              background: 'var(--color-success)', color: '#fff',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#1a2e05',
               fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
