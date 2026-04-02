@@ -318,16 +318,18 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   )
 }
 
-/* ── CompactDealCard — horizontal card ── */
+/* ── CompactDealCard — like RestaurantCard default, with discount focus ── */
 function CompactDealCard({ deal, onTap }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const remaining = deal.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
   const soldOut = remaining !== null && remaining <= 0
   const almostGone = remaining !== null && remaining > 0 && remaining <= 3
+  const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
+  const category = categories[0]
 
   return (
-    <div onClick={() => !soldOut && onTap(deal)} className="flex" style={{
+    <div onClick={() => !soldOut && onTap(deal)} style={{
       borderRadius: 18, overflow: 'hidden',
       background: '#fff',
       border: '1px solid rgba(0,0,0,0.08)',
@@ -335,51 +337,73 @@ function CompactDealCard({ deal, onTap }) {
       opacity: soldOut ? 0.55 : 1,
       cursor: soldOut ? 'default' : 'pointer',
     }}>
-      {/* Photo left */}
-      <div style={{ width: 100, minWidth: 100, alignSelf: 'stretch', position: 'relative', overflow: 'hidden' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🍽️</div>
-        )}
-        {/* Discount badge on photo — top left */}
-        <div style={{
-          position: 'absolute', top: 6, left: 6,
-          background: soldOut ? 'rgba(0,0,0,0.5)' : 'linear-gradient(135deg, #a3e635, #4ade80)',
-          borderRadius: 8, padding: '3px 8px',
-          textDecoration: soldOut ? 'line-through' : 'none',
-        }}>
-          <span style={{ fontSize: 11, fontWeight: 800, color: soldOut ? '#fff' : '#1a2e05' }}>{deal.discount_value}</span>
-        </div>
-        {/* Almost gone badge */}
+      {/* Discount strip on top — green gradient, prominent */}
+      <div style={{
+        background: soldOut ? '#e5e5e5' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+        color: soldOut ? '#999' : '#1a2e05',
+        fontSize: 11, fontWeight: 800,
+        padding: '5px 14px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        textDecoration: soldOut ? 'line-through' : 'none',
+      }}>
+        <span>{deal.discount_value} — {deal.title}</span>
         {almostGone && !soldOut && (
-          <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(232,69,60,0.9)', padding: '2px 7px', borderRadius: 6 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>Ultimi {remaining}!</span>
-          </div>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#E8453C', textDecoration: 'none' }}>Ultimi {remaining}!</span>
         )}
+        {soldOut && <span style={{ fontSize: 10, fontWeight: 700, color: '#999', textDecoration: 'none' }}>Esaurito</span>}
       </div>
 
-      {/* Info right */}
-      <div className="flex items-center" style={{ flex: 1, minWidth: 0, padding: '12px 14px', gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <h4 style={{
-            fontFamily: "'TAN Songbird', sans-serif", fontSize: 14, fontWeight: 600,
-            color: 'var(--color-primary)', lineHeight: 1.2,
-          }}>{r?.name}</h4>
-          <p style={{ fontSize: 11, color: 'var(--color-secondary)', marginBottom: 2 }}>
-            {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
-          </p>
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)' }}>{deal.title}</p>
-          {deal.conditions && (
-            <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {deal.conditions.split('\n').filter(Boolean).join(' · ')}
-            </p>
+      <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
+        {/* Photo */}
+        <div style={{ width: 100, height: 100, borderRadius: 14, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }} />
+          {photo ? (
+            <img src={photo} alt={r?.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, opacity: 0.6 }}>
+              {category?.emoji || '🍽️'}
+            </div>
           )}
         </div>
 
-        {!soldOut && (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M9 18l6-6-6-6"/></svg>
-        )}
+        {/* Body */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {/* Name */}
+          <h3 style={{
+            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+            fontSize: 14, fontWeight: 600, color: '#22181C',
+            lineHeight: 1.5, marginBottom: 3,
+          }}>{r?.name}</h3>
+
+          {/* Tagline */}
+          {r?.tagline && (
+            <p style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 4 }}>{r.tagline}</p>
+          )}
+
+          {/* Category badge */}
+          {category && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                backgroundColor: `${category.color}20`, color: category.color,
+                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+              }}>
+                {category.emoji} {category.name}
+              </span>
+            </div>
+          )}
+
+          {/* Recommended + Price row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8A8680', fontWeight: 500 }}>
+            {r?.recommended_for?.length > 0 && (
+              <>
+                <span>{r.recommended_for[0]}</span>
+                {r?.price_range && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
+              </>
+            )}
+            {r?.price_range && <span style={{ fontWeight: 600 }}>{'€'.repeat(r.price_range)}</span>}
+          </div>
+        </div>
       </div>
     </div>
   )
