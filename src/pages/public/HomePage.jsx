@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
@@ -182,6 +182,7 @@ function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     document.body.classList.add('map-fixed')
@@ -295,6 +296,15 @@ export default function HomePage() {
     animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 })
     setTimeout(() => setIsSheetActive(false), 500)
   }, [sheetY, windowH])
+
+  // Open sheet with category pre-selected (from SavedPage navigation)
+  useEffect(() => {
+    if (location.state?.initialCategory) {
+      setFilters(f => ({ ...f, category: location.state.initialCategory }))
+      openSheet()
+      window.history.replaceState({}, '')
+    }
+  }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Bar drag: pull up to reveal sheet
   const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first, tap }) => {

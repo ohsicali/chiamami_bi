@@ -217,7 +217,7 @@ export default function SavedPage() {
                 const cat = filters.category
                   ? (Array.isArray(filters.category) ? filters.category : [filters.category])
                   : null
-                navigate('/list', { state: { initialCategory: cat } })
+                navigate('/', { state: { initialCategory: cat } })
               }}
               style={{
                 background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
