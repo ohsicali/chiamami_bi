@@ -30,6 +30,7 @@ export default function SavedPage() {
   const filtersRef = useRef(null)
 
   // IntersectionObserver: when filters scroll out, show them in header
+  const hasRestaurants = restaurants.length > 0
   useEffect(() => {
     const el = filtersRef.current
     if (!el) return
@@ -39,7 +40,7 @@ export default function SavedPage() {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [])
+  }, [hasRestaurants])
 
   useEffect(() => {
     if (!user?.id || savedIds.size === 0) {
