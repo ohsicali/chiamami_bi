@@ -1099,6 +1099,7 @@ export default function DealsPage() {
               {tabSwitcherJSX}
               {/* Sub-tabs I miei */}
               {tab === 'mine' && user && !myLoading && subTabsJSX}
+              <div style={{ height: 1, background: 'var(--color-bordo)', margin: '14px -22px 0' }} />
             </motion.div>
           )}
         </AnimatePresence>

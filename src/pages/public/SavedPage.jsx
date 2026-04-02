@@ -183,6 +183,7 @@ export default function SavedPage() {
               style={{ overflow: 'hidden', paddingTop: 12, paddingBottom: 14, marginTop: 0 }}
             >
               {filterChipsJSX}
+              <div style={{ height: 1, background: 'var(--color-bordo)', margin: '14px -22px 0' }} />
             </motion.div>
           )}
         </AnimatePresence>
