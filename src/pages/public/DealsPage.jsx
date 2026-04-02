@@ -1102,15 +1102,6 @@ export default function DealsPage() {
         <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
       </div>
 
-      {/* Title — scrolls away */}
-      <div style={{ padding: '20px 22px 20px' }}>
-        <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
-          Sconti
-        </h1>
-        <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
-          Offerte esclusive nei migliori locali
-        </p>
-      </div>
 
       {/* Tab switcher — CSS sticky, sticks below header naturally */}
       <div style={{
