@@ -180,7 +180,7 @@ export default function SavedPage() {
               animate={{ height: 'auto', opacity: 1, marginTop: 0 }}
               exit={{ height: 0, opacity: 0, marginTop: 0 }}
               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              style={{ overflow: 'hidden', paddingTop: 12, paddingBottom: 2, marginTop: 0 }}
+              style={{ overflow: 'hidden', paddingTop: 12, paddingBottom: 14, marginTop: 0 }}
             >
               {filterChipsJSX}
             </motion.div>
