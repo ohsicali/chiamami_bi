@@ -1171,8 +1171,13 @@ export default function DealsPage() {
               </div>
             ) : (
               <>
-                {/* Sub-tabs: Attivi / Utilizzati */}
-                <div className="flex gap-2">
+                {/* Sub-tabs: Attivi / Utilizzati — sticky */}
+                <div className="flex gap-2" style={{
+                  position: 'sticky', top: 0, zIndex: 10,
+                  background: 'var(--color-bg)',
+                  paddingBottom: 12, paddingTop: 4,
+                  marginBottom: 4,
+                }}>
                   <button
                     onClick={() => setMySubTab('active')}
                     className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${
