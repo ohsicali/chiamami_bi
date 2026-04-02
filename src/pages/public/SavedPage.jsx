@@ -26,15 +26,7 @@ export default function SavedPage() {
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
 
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {},
-        { enableHighAccuracy: false, timeout: 5000 }
-      )
-    }
-  }, [])
+  // Geolocation requested only on "Vicino a me" click
 
   useEffect(() => {
     if (!user?.id || savedIds.size === 0) {
