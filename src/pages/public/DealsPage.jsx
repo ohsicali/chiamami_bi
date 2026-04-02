@@ -928,8 +928,15 @@ export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { city: currentCity } = useCity()
   const { activeDrops: allActiveDrops, upcomingDrops: allUpcomingDrops, featured: allFeatured, regular: allRegular, loading } = useActiveDiscounts()
   const { active: allMyActive, used: allMyUsed, loading: myLoading } = useMyDiscounts(user?.id)
+  const [tab, setTab] = useState('available')
+  const [reminders, setReminders] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('drop_reminders') || '[]') } catch { return [] }
+  })
+  const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
+  const [cityPickerOpen, setCityPickerOpen] = useState(false)
 
   // Filter deals by selected city
   const cityFilter = useCallback((deal) => {
@@ -947,13 +954,6 @@ export default function DealsPage() {
   const regular = useMemo(() => allRegular.filter(cityFilter), [allRegular, cityFilter])
   const myActive = useMemo(() => allMyActive.filter(myFilter), [allMyActive, myFilter])
   const myUsed = useMemo(() => allMyUsed.filter(myFilter), [allMyUsed, myFilter])
-  const [tab, setTab] = useState('available')
-  const [reminders, setReminders] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('drop_reminders') || '[]') } catch { return [] }
-  })
-  const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
-  const [cityPickerOpen, setCityPickerOpen] = useState(false)
-  const { city: currentCity } = useCity()
   const [claiming, setClaiming] = useState(null) // discount id being claimed
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
