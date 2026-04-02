@@ -99,7 +99,7 @@ export default function ProfilePage() {
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 100%)',
         padding: '24px 22px 0',
-        position: 'relative', overflow: 'hidden',
+        position: 'relative',
       }}>
         {/* Decorative circle */}
         <div style={{
