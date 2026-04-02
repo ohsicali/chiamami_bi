@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
+import { useCity } from "../../lib/CityContext";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -28,8 +29,9 @@ function countRestaurantsInCity(cityName, restaurants) {
 
 export default function Navbar({ view = "map", onToggleView, city = "Torino", onCityChange, restaurants = [] }) {
   const { user, profile } = useAuth();
+  const { city: globalCity, selectCity: globalSelectCity } = useCity();
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(city);
+  const [selectedCity, setSelectedCity] = useState(globalCity.name || city);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -51,6 +53,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   function handleCitySelect(name, lng, lat) {
     inputRef.current?.blur();
     setSelectedCity(name);
+    globalSelectCity({ name, lng, lat });
     setQuery("");
     setSuggestions([]);
     setCityPickerOpen(false);

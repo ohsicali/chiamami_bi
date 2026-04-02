@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { useCity } from '../../lib/CityContext'
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
 
@@ -62,9 +63,11 @@ function CityRow({ name, count, onSelect }) {
  *   If NOT provided, navigates to "/" with city in state.
  * - restaurants: array (optional, for showing counts)
  */
-export default function CityPickerSheet({ open, onClose, selectedCity = 'Torino', onCityChange, restaurants: propRestaurants }) {
+export default function CityPickerSheet({ open, onClose, onCityChange, restaurants: propRestaurants }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { city: currentCity, selectCity } = useCity()
+  const selectedCity = currentCity.name
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [searching, setSearching] = useState(false)
@@ -117,6 +120,8 @@ export default function CityPickerSheet({ open, onClose, selectedCity = 'Torino'
     setQuery('')
     setSuggestions([])
     onClose()
+    // Save to shared context so all pages update
+    selectCity({ name, lng, lat })
     if (onCityChange) {
       // Direct callback (used in HomePage where map is available)
       setTimeout(() => onCityChange({ name, lng, lat }), 300)

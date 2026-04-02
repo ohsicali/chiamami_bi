@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
+import { useCity } from '../../lib/CityContext'
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -15,6 +16,7 @@ export default function ProfilePage() {
   const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, reviewsCount: 0, totalSaved: 0 })
   const [showSuggest, setShowSuggest] = useState(false)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
+  const { city: currentCity } = useCity()
 
   useEffect(() => {
     if (!user?.id) return
@@ -90,7 +92,7 @@ export default function ProfilePage() {
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
               <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-success)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
             </span>
-            Torino
+            {currentCity.name}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>

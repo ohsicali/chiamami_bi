@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
+import { useCity } from '../../lib/CityContext'
 import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
@@ -935,6 +936,7 @@ export default function DealsPage() {
   })
   const [qrModal, setQrModal] = useState(null) // { qrCode, title, value }
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
+  const { city: currentCity } = useCity()
   const [claiming, setClaiming] = useState(null) // discount id being claimed
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
@@ -1097,7 +1099,7 @@ export default function DealsPage() {
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
               <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-success)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
             </span>
-            Torino
+            {currentCity.name}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>

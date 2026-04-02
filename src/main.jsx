@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { ToastProvider } from './components/UI/Toast'
+import { CityProvider } from './lib/CityContext'
 import './lib/i18n'
 import './styles/globals.css'
 
@@ -16,9 +17,11 @@ if ('serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
+      <CityProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </CityProvider>
     </BrowserRouter>
   </React.StrictMode>
 )

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
+import { useCity } from '../../lib/CityContext'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase } from '../../lib/supabase'
@@ -30,6 +31,7 @@ export default function SavedPage() {
   const headerRef = useRef(null)
   const [headerH, setHeaderH] = useState(0)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
+  const { city: currentCity } = useCity()
 
   // Measure header height for sticky top offset
   useEffect(() => {
@@ -170,7 +172,7 @@ export default function SavedPage() {
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
               <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-success)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
             </span>
-            Torino
+            {currentCity.name}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
