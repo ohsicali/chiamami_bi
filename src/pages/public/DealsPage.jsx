@@ -511,12 +511,12 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle }) {
 }
 
 /* ── MyActiveCard — green border, tappable for QR ── */
-function MyActiveCard({ redemption, onShowQR, onGoTo }) {
+function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
   return (
-    <div onClick={() => onShowQR(redemption)} className="flex items-center" style={{
+    <div onClick={() => onOpenDeal && onOpenDeal(deal)} className="flex items-center" style={{
       borderRadius: 16, padding: '14px 12px', gap: 12,
       background: '#fff', border: '1px solid var(--color-bordo)',
       cursor: 'pointer',
@@ -532,9 +532,9 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <h4 onClick={(e) => { e.stopPropagation(); onGoTo(r); }} style={{
+        <h4 style={{
           fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
-          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.5,
+          color: 'var(--color-primary)', lineHeight: 1.8,
         }}>{r?.name}</h4>
         <div className="flex items-center gap-2">
           <span style={{
@@ -549,8 +549,8 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
         )}
       </div>
 
-      {/* Utilizza button + chevron */}
-      <div className="flex items-center gap-1" style={{
+      {/* Utilizza button */}
+      <div onClick={e => { e.stopPropagation(); onShowQR(redemption); }} className="flex items-center gap-1" style={{
         flexShrink: 0,
         background: 'var(--color-accent)', borderRadius: 10, padding: '6px 10px',
       }}>
@@ -1203,7 +1203,7 @@ export default function DealsPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} onGoTo={goTo} />)}
+                      {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} onGoTo={goTo} onOpenDeal={setSelectedDeal} />)}
                     </div>
                   )
                 ) : (
