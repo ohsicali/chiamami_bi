@@ -45,8 +45,8 @@ export default function MobileTabBar() {
 
   const isExplore = path === '/' || path === '/list' || path.startsWith('/restaurant/')
   const isDeals = path === '/deals'
-  const isSaved = path === '/profile' && location.search?.includes('tab=saved')
-  const isProfile = path === '/profile' && !isSaved
+  const isSaved = path === '/saved'
+  const isProfile = path === '/profile'
 
   const tabs = [
     {
@@ -69,13 +69,7 @@ export default function MobileTabBar() {
       label: 'Salvati',
       icon: HeartIcon,
       active: isSaved,
-      onClick: () => {
-        if (user) {
-          navigate('/profile?tab=saved')
-        } else {
-          navigate('/login')
-        }
-      },
+      onClick: () => navigate(user ? '/saved' : '/login'),
     },
     {
       key: 'profile',

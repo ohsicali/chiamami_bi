@@ -41,6 +41,7 @@ const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
 const DealsPage = lazy(() => import('./pages/public/DealsPage'))
+const SavedPage = lazy(() => import('./pages/public/SavedPage'))
 const VerifyPage = lazy(() => import('./pages/public/VerifyPage'))
 const DiscountManager = lazy(() => import('./pages/admin/DiscountManager'))
 const PartnerManager = lazy(() => import('./pages/admin/PartnerManager'))
@@ -109,6 +110,7 @@ export default function App() {
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
+          <Route path="/saved" element={<SavedPage />} />
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
