@@ -141,7 +141,7 @@ export default function ProfilePage() {
           background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
           padding: '16px 18px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             <div style={{
               width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
@@ -152,7 +152,7 @@ export default function ProfilePage() {
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>da {memberSince}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff' }}>
+            <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
               {stats.totalSaved}€
             </span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
