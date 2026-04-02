@@ -641,9 +641,9 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-bordo)' }} />
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 24px' }}>
-          {/* Photo */}
-          <div style={{ borderRadius: 20, overflow: 'hidden', height: 180, marginBottom: 16 }}>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {/* Photo — edge to edge */}
+          <div style={{ overflow: 'hidden', height: 200 }}>
             {photo ? (
               <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
@@ -651,10 +651,11 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             )}
           </div>
 
+          <div style={{ padding: '14px 20px 24px' }}>
           {/* Restaurant name — tappable */}
           <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
-            fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
-            color: 'var(--color-primary)', lineHeight: 1.2, cursor: 'pointer', marginBottom: 4,
+            fontFamily: "'TAN Songbird', sans-serif", fontSize: 16, fontWeight: 600,
+            color: 'var(--color-primary)', lineHeight: 1.3, cursor: 'pointer', marginBottom: 4,
           }}>{r?.name}</h3>
           <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 14 }}>
             {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
@@ -755,6 +756,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               fontSize: 15, fontWeight: 700, color: 'var(--color-secondary)',
             }}>Esaurito</div>
           )}
+          </div>
         </div>
       </motion.div>
     </motion.div>
