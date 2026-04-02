@@ -518,7 +518,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
   return (
     <div onClick={() => onShowQR(redemption)} className="flex items-center" style={{
       borderRadius: 16, padding: '14px 12px', gap: 12,
-      background: '#fff', border: '2px solid var(--color-success)',
+      background: '#fff', border: '1px solid var(--color-bordo)',
       cursor: 'pointer',
     }}>
       {/* Photo */}
@@ -534,7 +534,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo }) {
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <h4 onClick={(e) => { e.stopPropagation(); onGoTo(r); }} style={{
           fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
-          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.2,
+          color: 'var(--color-primary)', cursor: 'pointer', lineHeight: 1.5,
         }}>{r?.name}</h4>
         <div className="flex items-center gap-2">
           <span style={{
