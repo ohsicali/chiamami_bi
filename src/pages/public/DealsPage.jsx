@@ -622,7 +622,6 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
   const category = categories[0]
   const [photoIdx, setPhotoIdx] = useState(0)
-  const swipeRef = { startX: 0 }
 
   useEffect(() => {
     const scrollY = window.scrollY
@@ -675,24 +674,16 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           <div style={{ borderRadius: 20, overflow: 'hidden', height: 180, marginBottom: 0, position: 'relative' }}>
             {allPhotos.length > 0 ? (
               <>
-                <div
-                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)`, touchAction: 'none' }}
-                  onTouchStart={e => { swipeRef.startX = e.touches[0].clientX }}
-                  onTouchEnd={e => {
-                    const diff = swipeRef.startX - e.changedTouches[0].clientX
-                    if (diff > 40 && photoIdx < allPhotos.length - 1) setPhotoIdx(prev => Math.min(prev + 1, allPhotos.length - 1))
-                    else if (diff < -40 && photoIdx > 0) setPhotoIdx(prev => Math.max(prev - 1, 0))
-                  }}
-                >
+                <div style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)` }}>
                   {allPhotos.map((url, i) => (
-                    <img key={i} src={url} alt={`${r?.name} ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0 }} />
+                    <img key={i} src={url} alt={`${r?.name} ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0, pointerEvents: 'none' }} />
                   ))}
                 </div>
-                {/* Tap zones */}
+                {/* Tap left = indietro, tap right = avanti */}
                 {allPhotos.length > 1 && (
                   <>
-                    <div onClick={() => photoIdx > 0 && setPhotoIdx(photoIdx - 1)} style={{ position: 'absolute', top: 0, left: 0, width: '30%', height: '100%', cursor: photoIdx > 0 ? 'pointer' : 'default' }} />
-                    <div onClick={() => photoIdx < allPhotos.length - 1 && setPhotoIdx(photoIdx + 1)} style={{ position: 'absolute', top: 0, right: 0, width: '30%', height: '100%', cursor: photoIdx < allPhotos.length - 1 ? 'pointer' : 'default' }} />
+                    <div onClick={() => setPhotoIdx(prev => Math.max(prev - 1, 0))} style={{ position: 'absolute', top: 0, left: 0, width: '50%', height: '100%', cursor: photoIdx > 0 ? 'pointer' : 'default' }} />
+                    <div onClick={() => setPhotoIdx(prev => Math.min(prev + 1, allPhotos.length - 1))} style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', cursor: photoIdx < allPhotos.length - 1 ? 'pointer' : 'default' }} />
                   </>
                 )}
                 {/* Dots on photo */}
