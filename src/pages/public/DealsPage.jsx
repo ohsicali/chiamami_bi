@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -937,6 +937,53 @@ export default function DealsPage() {
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
   const [selectedDeal, setSelectedDeal] = useState(null) // for bottom sheet detail
+  const [tabsSticky, setTabsSticky] = useState(false)
+  const tabsRef = useRef(null)
+
+  // IntersectionObserver: when in-flow tabs scroll out of view, show them in header
+  useEffect(() => {
+    const el = tabsRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setTabsSticky(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // Shared tab switcher JSX
+  const tabSwitcherJSX = useMemo(() => (
+    <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
+      {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
+        <button key={t.key} onClick={() => { setTab(t.key); window.scrollTo({ top: 0 }) }} style={{
+          flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
+          fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
+          background: tab === t.key ? 'var(--color-primary)' : 'transparent',
+          color: tab === t.key ? 'var(--color-bg)' : 'var(--color-secondary)',
+          border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
+        }}>{t.label}</button>
+      ))}
+    </div>
+  ), [tab])
+
+  // Shared sub-tabs JSX for "I miei"
+  const subTabsJSX = useMemo(() => (
+    <div className="flex gap-2" style={{ marginTop: 10 }}>
+      <button
+        onClick={() => setMySubTab('active')}
+        className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-secondary'}`}
+      >
+        Attivi ({myActive.length})
+      </button>
+      <button
+        onClick={() => setMySubTab('used')}
+        className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'used' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-secondary'}`}
+      >
+        Utilizzati ({myUsed.length})
+      </button>
+    </div>
+  ), [mySubTab, myActive.length, myUsed.length])
 
   const goTo = (r) => navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
 
@@ -1013,7 +1060,7 @@ export default function DealsPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* ── Header ── */}
+      {/* ── Sticky Header ── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
@@ -1021,7 +1068,7 @@ export default function DealsPage() {
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--color-bordo)',
       }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+        <div className="flex items-center justify-between">
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
@@ -1039,36 +1086,22 @@ export default function DealsPage() {
           </button>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
-          {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
-            <button key={t.key} onClick={() => { setTab(t.key); window.scrollTo({ top: 0 }) }} style={{
-              flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
-              fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
-              background: tab === t.key ? 'var(--color-primary)' : 'transparent',
-              color: tab === t.key ? 'var(--color-bg)' : 'var(--color-secondary)',
-              border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
-            }}>{t.label}</button>
-          ))}
-        </div>
-
-        {/* Sub-tabs I miei — dentro l'header sticky */}
-        {tab === 'mine' && user && !myLoading && (
-          <div className="flex gap-2" style={{ marginTop: 10 }}>
-            <button
-              onClick={() => setMySubTab('active')}
-              className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-secondary'}`}
+        {/* Tab switcher — slides into header when scrolled past */}
+        <AnimatePresence>
+          {tabsSticky && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginTop: 14 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              style={{ overflow: 'hidden' }}
             >
-              Attivi ({myActive.length})
-            </button>
-            <button
-              onClick={() => setMySubTab('used')}
-              className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'used' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-secondary'}`}
-            >
-              Utilizzati ({myUsed.length})
-            </button>
-          </div>
-        )}
+              {tabSwitcherJSX}
+              {/* Sub-tabs I miei */}
+              {tab === 'mine' && user && !myLoading && subTabsJSX}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Title — scrolls away */}
@@ -1079,6 +1112,13 @@ export default function DealsPage() {
         <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
           Offerte esclusive nei migliori locali
         </p>
+      </div>
+
+      {/* Tab switcher — in-flow position (observed for intersection) */}
+      <div ref={tabsRef} style={{ padding: '0 22px 12px' }}>
+        {tabSwitcherJSX}
+        {/* Sub-tabs I miei */}
+        {tab === 'mine' && user && !myLoading && subTabsJSX}
       </div>
 
       {/* ── Content ── */}
