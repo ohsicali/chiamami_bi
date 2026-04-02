@@ -153,8 +153,7 @@ export default function SavedPage() {
       <div ref={headerRef} style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: 'rgba(250,247,242,0.92)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        background: '#FAF7F2',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -193,9 +192,8 @@ export default function SavedPage() {
           top: headerH,
           zIndex: 49,
           padding: '14px 16px 14px',
-          background: 'rgba(250,247,242,0.92)',
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: filtersStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
+          background: '#FAF7F2',
+            boxShadow: filtersStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
           transition: 'box-shadow 0.15s ease',
         }}>
           <FilterChips
