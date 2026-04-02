@@ -622,6 +622,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
   const category = categories[0]
   const [photoIdx, setPhotoIdx] = useState(0)
+  const swipeRef = { startX: 0 }
 
   useEffect(() => {
     const scrollY = window.scrollY
@@ -675,15 +676,12 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             {allPhotos.length > 0 ? (
               <>
                 <div
-                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)`, touchAction: 'pan-y pinch-zoom' }}
-                  onPointerDown={e => {
-                    e.currentTarget._startX = e.clientX
-                    e.currentTarget.setPointerCapture(e.pointerId)
-                  }}
-                  onPointerUp={e => {
-                    const diff = (e.currentTarget._startX || 0) - e.clientX
-                    if (diff > 40 && photoIdx < allPhotos.length - 1) setPhotoIdx(photoIdx + 1)
-                    else if (diff < -40 && photoIdx > 0) setPhotoIdx(photoIdx - 1)
+                  style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)`, touchAction: 'none' }}
+                  onTouchStart={e => { swipeRef.startX = e.touches[0].clientX }}
+                  onTouchEnd={e => {
+                    const diff = swipeRef.startX - e.changedTouches[0].clientX
+                    if (diff > 40 && photoIdx < allPhotos.length - 1) setPhotoIdx(prev => Math.min(prev + 1, allPhotos.length - 1))
+                    else if (diff < -40 && photoIdx > 0) setPhotoIdx(prev => Math.max(prev - 1, 0))
                   }}
                 >
                   {allPhotos.map((url, i) => (
@@ -736,12 +734,12 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           {/* Restaurant name — tappable */}
           <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
             fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
-            color: 'var(--color-primary)', lineHeight: 1.5, cursor: 'pointer', marginBottom: 2,
+            color: 'var(--color-primary)', lineHeight: 1.5, cursor: 'pointer', marginBottom: 8,
           }}>{r?.name}</h3>
 
           {/* Description */}
           {r?.tagline && (
-            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginBottom: 8, lineHeight: 1.4 }}>{r.tagline}</p>
+            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginBottom: 10, lineHeight: 1.4 }}>{r.tagline}</p>
           )}
 
           {/* Category badge + price */}
