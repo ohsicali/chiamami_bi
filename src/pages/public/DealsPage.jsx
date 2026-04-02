@@ -937,27 +937,36 @@ export default function DealsPage() {
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
   const [selectedDeal, setSelectedDeal] = useState(null) // for bottom sheet detail
-  const [tabsSticky, setTabsSticky] = useState(false)
-  const titleRef = useRef(null)
+  const [tabsStuck, setTabsStuck] = useState(false)
+  const headerRef = useRef(null)
+  const [headerH, setHeaderH] = useState(0)
 
-  // Scroll-based sticky detection — avoids IntersectionObserver feedback loops
+  // Measure header height for sticky top offset
   useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setHeaderH(entry.contentRect.height)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Detect when tabs are stuck (only for border visual — no layout effect)
+  useEffect(() => {
+    if (!headerH) return
     let ticking = false
     const onScroll = () => {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        const el = titleRef.current
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          setTabsSticky(rect.bottom <= 0)
-        }
+        setTabsStuck(window.scrollY > headerH + 70)
         ticking = false
       })
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [headerH])
 
   // Shared tab switcher JSX
   const tabSwitcherJSX = useMemo(() => (
@@ -1067,13 +1076,12 @@ export default function DealsPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* ── Sticky Header ── */}
-      <div style={{
+      {/* ── Sticky Header — logo + border only ── */}
+      <div ref={headerRef} style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        boxShadow: tabsSticky ? '0 1px 0 0 var(--color-bordo)' : 'none',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -1093,27 +1101,10 @@ export default function DealsPage() {
           </button>
         </div>
         <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
-
-        {/* Tab switcher — slides into header when scrolled past */}
-        <AnimatePresence>
-          {tabsSticky && (
-            <motion.div
-              initial={{ height: 0, opacity: 0, marginTop: 0 }}
-              animate={{ height: 'auto', opacity: 1, marginTop: 0 }}
-              exit={{ height: 0, opacity: 0, marginTop: 0 }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              style={{ overflow: 'hidden', paddingTop: 12, paddingBottom: 14, marginTop: 0 }}
-            >
-              {tabSwitcherJSX}
-              {/* Sub-tabs I miei */}
-              {tab === 'mine' && user && !myLoading && subTabsJSX}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Title — scrolls away; ref used for scroll-based sticky detection */}
-      <div ref={titleRef} style={{ padding: '20px 22px 12px' }}>
+      {/* Title — scrolls away */}
+      <div style={{ padding: '20px 22px 12px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           Sconti
         </h1>
@@ -1122,8 +1113,17 @@ export default function DealsPage() {
         </p>
       </div>
 
-      {/* Tab switcher — in-flow position */}
-      <div style={{ padding: '0 22px 12px' }}>
+      {/* Tab switcher — CSS sticky, sticks below header naturally */}
+      <div style={{
+        position: 'sticky',
+        top: headerH,
+        zIndex: 49,
+        padding: '12px 22px 12px',
+        background: 'rgba(250,247,242,0.92)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: tabsStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
+        transition: 'box-shadow 0.15s ease',
+      }}>
         {tabSwitcherJSX}
         {/* Sub-tabs I miei */}
         {tab === 'mine' && user && !myLoading && subTabsJSX}

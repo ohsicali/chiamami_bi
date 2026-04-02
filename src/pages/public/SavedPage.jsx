@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase } from '../../lib/supabase'
@@ -26,27 +25,36 @@ export default function SavedPage() {
   const [filters, setFilters] = useState({ category: null, priceRange: null, sortBy: null })
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
-  const [filtersSticky, setFiltersSticky] = useState(false)
-  const titleRef = useRef(null)
+  const [filtersStuck, setFiltersStuck] = useState(false)
+  const headerRef = useRef(null)
+  const [headerH, setHeaderH] = useState(0)
 
-  // Scroll-based sticky detection — avoids IntersectionObserver feedback loops
+  // Measure header height for sticky top offset
   useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setHeaderH(entry.contentRect.height)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Detect when filters are stuck (only for border visual — no layout effect)
+  useEffect(() => {
+    if (!headerH) return
     let ticking = false
     const onScroll = () => {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        const el = titleRef.current
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          setFiltersSticky(rect.bottom <= 0)
-        }
+        setFiltersStuck(window.scrollY > headerH + 70)
         ticking = false
       })
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [headerH])
 
   useEffect(() => {
     if (!user?.id || savedIds.size === 0) {
@@ -139,26 +147,14 @@ export default function SavedPage() {
     }
   }
 
-  const filterChipsJSX = (
-    <FilterChips
-      filters={filters}
-      onFilterChange={setFilters}
-      onNearbyClick={handleNearbyClick}
-      showDealsOnly={showDealsOnly}
-      onToggleDeals={() => setShowDealsOnly(v => !v)}
-      dealsCount={dealsCount}
-    />
-  )
-
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* Sticky Header */}
-      <div style={{
+      {/* Sticky Header — logo + border only */}
+      <div ref={headerRef} style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        boxShadow: filtersSticky ? '0 1px 0 0 var(--color-bordo)' : 'none',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -178,25 +174,10 @@ export default function SavedPage() {
           </button>
         </div>
         <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
-
-        {/* FilterChips — slides into header when scrolled past */}
-        <AnimatePresence>
-          {filtersSticky && restaurants.length > 0 && (
-            <motion.div
-              initial={{ height: 0, opacity: 0, marginTop: 0 }}
-              animate={{ height: 'auto', opacity: 1, marginTop: 0 }}
-              exit={{ height: 0, opacity: 0, marginTop: 0 }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              style={{ overflow: 'hidden', paddingTop: 12, paddingBottom: 14, marginTop: 0 }}
-            >
-              {filterChipsJSX}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Title — scrolls away; ref used for scroll-based sticky detection */}
-      <div ref={titleRef} style={{ padding: '20px 22px 12px' }}>
+      {/* Title — scrolls away */}
+      <div style={{ padding: '20px 22px 12px' }}>
         <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
           I miei salvati
         </h1>
@@ -205,10 +186,26 @@ export default function SavedPage() {
         </p>
       </div>
 
-      {/* FilterChips — in-flow position */}
+      {/* FilterChips — CSS sticky, sticks below header naturally */}
       {restaurants.length > 0 && (
-        <div style={{ padding: '0 16px 12px' }}>
-          {filterChipsJSX}
+        <div style={{
+          position: 'sticky',
+          top: headerH,
+          zIndex: 49,
+          padding: '12px 16px 12px',
+          background: 'rgba(250,247,242,0.92)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: filtersStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
+          transition: 'box-shadow 0.15s ease',
+        }}>
+          <FilterChips
+            filters={filters}
+            onFilterChange={setFilters}
+            onNearbyClick={handleNearbyClick}
+            showDealsOnly={showDealsOnly}
+            onToggleDeals={() => setShowDealsOnly(v => !v)}
+            dealsCount={dealsCount}
+          />
         </div>
       )}
 
