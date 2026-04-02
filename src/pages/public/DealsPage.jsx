@@ -1224,7 +1224,9 @@ export default function DealsPage() {
         )}
       </div>
 
-      <Footer />
+      <div style={{ paddingBottom: TAB_BAR_HEIGHT }}>
+        <Footer />
+      </div>
 
       {/* Bottom sheet detail */}
       <AnimatePresence>
