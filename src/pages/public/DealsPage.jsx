@@ -613,6 +613,11 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
   const conditions = deal?.conditions ? deal.conditions.split('\n').filter(Boolean) : []
   const [photoIdx, setPhotoIdx] = useState(0)
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
