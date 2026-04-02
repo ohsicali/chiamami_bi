@@ -93,10 +93,20 @@ export default function SavedPage() {
     })
   }, [user?.id, savedIds])
 
-  const dealsCount = useMemo(() => restaurants.filter(r => activeDiscounts[r.id]).length, [restaurants, activeDiscounts])
+  const cityRestaurants = useMemo(() => {
+    if (!currentCity.name) return restaurants
+    return restaurants.filter(r => r.city?.toLowerCase() === currentCity.name.toLowerCase())
+  }, [restaurants, currentCity.name])
+
+  const dealsCount = useMemo(() => cityRestaurants.filter(r => activeDiscounts[r.id]).length, [cityRestaurants, activeDiscounts])
 
   const displayList = useMemo(() => {
     let list = [...restaurants]
+
+    // Filter by selected city
+    if (currentCity.name) {
+      list = list.filter(r => r.city?.toLowerCase() === currentCity.name.toLowerCase())
+    }
 
     if (filters.category) {
       const selected = Array.isArray(filters.category) ? filters.category : [filters.category]

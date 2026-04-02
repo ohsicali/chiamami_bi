@@ -928,8 +928,25 @@ export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
-  const { activeDrops, upcomingDrops, featured, regular, loading } = useActiveDiscounts()
-  const { active: myActive, used: myUsed, loading: myLoading } = useMyDiscounts(user?.id)
+  const { activeDrops: allActiveDrops, upcomingDrops: allUpcomingDrops, featured: allFeatured, regular: allRegular, loading } = useActiveDiscounts()
+  const { active: allMyActive, used: allMyUsed, loading: myLoading } = useMyDiscounts(user?.id)
+
+  // Filter deals by selected city
+  const cityFilter = useCallback((deal) => {
+    if (!currentCity.name) return true
+    return deal.restaurant?.city?.toLowerCase() === currentCity.name.toLowerCase()
+  }, [currentCity.name])
+  const myFilter = useCallback((r) => {
+    if (!currentCity.name) return true
+    return r.discount?.restaurant?.city?.toLowerCase() === currentCity.name.toLowerCase()
+  }, [currentCity.name])
+
+  const activeDrops = useMemo(() => allActiveDrops.filter(cityFilter), [allActiveDrops, cityFilter])
+  const upcomingDrops = useMemo(() => allUpcomingDrops.filter(cityFilter), [allUpcomingDrops, cityFilter])
+  const featured = useMemo(() => allFeatured.filter(cityFilter), [allFeatured, cityFilter])
+  const regular = useMemo(() => allRegular.filter(cityFilter), [allRegular, cityFilter])
+  const myActive = useMemo(() => allMyActive.filter(myFilter), [allMyActive, myFilter])
+  const myUsed = useMemo(() => allMyUsed.filter(myFilter), [allMyUsed, myFilter])
   const [tab, setTab] = useState('available')
   const [reminders, setReminders] = useState(() => {
     try { return JSON.parse(localStorage.getItem('drop_reminders') || '[]') } catch { return [] }
