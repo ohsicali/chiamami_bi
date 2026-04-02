@@ -14,7 +14,8 @@ function slugify(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
-/* ── SVG Icons (same as ListView) ── */
+/* ── Copied 1:1 from ListView.jsx ── */
+
 const StarIcon = ({ size = 11 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="#C4A265" stroke="none">
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
@@ -50,10 +51,143 @@ function PriceDisplay({ level }) {
 
 function getPhotoUrl(restaurant) {
   if (Array.isArray(restaurant.photos) && restaurant.photos.length > 0) {
-    const sorted = [...restaurant.photos].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-    return proxyImg(sorted[0]?.photo_url)
+    const p = restaurant.photos[0]
+    return proxyImg(typeof p === 'string' ? p : p?.photo_url)
   }
   return null
+}
+
+/* ── HorizontalCard — identical to ListView ── */
+function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const photoUrl = getPhotoUrl(restaurant)
+  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+    .map(n => getCategoryInfo(n)).filter(Boolean)
+  const category = categories[0]
+
+  const dist = userPosition && restaurant.latitude
+    ? formatDistance(getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude))
+    : null
+
+  return (
+    <button
+      onClick={() => onClick?.(restaurant)}
+      style={{
+        display: 'flex', gap: 14, padding: 14, marginBottom: 12,
+        background: '#fff', borderRadius: 18,
+        border: '1px solid rgba(0,0,0,0.04)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        cursor: 'pointer', width: '100%', textAlign: 'left',
+        position: 'relative',
+      }}
+    >
+      {/* Image */}
+      <div style={{
+        width: 88, height: 88, borderRadius: 14,
+        flexShrink: 0, position: 'relative', overflow: 'hidden',
+      }}>
+        {photoUrl ? (
+          <>
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
+            }} />
+            <img
+              src={photoUrl} alt={restaurant.name} loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', opacity: imgLoaded ? 1 : 0,
+                transition: 'opacity 0.4s',
+              }}
+            />
+          </>
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 32, opacity: 0.6,
+            background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
+          }}>
+            {category?.emoji || '🍽️'}
+          </div>
+        )}
+        {/* Discount badge on image */}
+        {discountValue && (
+          <div style={{
+            position: 'absolute', top: 6, left: 6,
+            background: '#E8453C', color: '#fff',
+            fontSize: 9, fontWeight: 700,
+            padding: '2px 7px', borderRadius: 6,
+            boxShadow: '0 2px 6px rgba(232,69,60,0.3)',
+          }}>
+            -{discountValue}%
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+        <div style={{
+          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontSize: 18, fontWeight: 600, color: '#22181C',
+          lineHeight: 1.2, marginBottom: 3,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          paddingRight: 28,
+        }}>
+          {restaurant.name}
+        </div>
+        <div style={{
+          fontSize: 12, color: '#8A8680', fontWeight: 500,
+          marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          {category?.name || restaurant.cuisine_type || 'Ristorante'}
+          {restaurant.description && (
+            <>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', flexShrink: 0 }} />
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {restaurant.description.slice(0, 30)}
+              </span>
+            </>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {restaurant.our_rating && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 3,
+              background: '#FBF9F4', padding: '3px 8px', borderRadius: 8,
+              fontSize: 12, fontWeight: 700, color: '#22181C',
+            }}>
+              <StarIcon />
+              {restaurant.our_rating}
+            </div>
+          )}
+          {dist && (
+            <div style={{
+              fontSize: 11, color: '#8A8680', fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              <DistanceIcon />
+              {dist}
+            </div>
+          )}
+          <PriceDisplay level={restaurant.price_range} />
+        </div>
+      </div>
+
+      {/* Heart */}
+      <div
+        onClick={(e) => { e.stopPropagation(); onSave?.() }}
+        style={{
+          position: 'absolute', right: 14, top: 14,
+          color: saved ? '#E8453C' : '#D1CDC6',
+          cursor: 'pointer', padding: 4,
+        }}
+      >
+        <HeartIcon filled={saved} />
+      </div>
+    </button>
+  )
 }
 
 export default function SavedPage() {
@@ -239,139 +373,17 @@ export default function SavedPage() {
             </button>
           </div>
         ) : (
-          displayList.map(r => {
-            const photoUrl = getPhotoUrl(r)
-            const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-              .map(n => getCategoryInfo(n)).filter(Boolean)
-            const category = categories[0]
-            const discount = activeDiscounts[r.id]
-            const discountLabel = discount
-              ? (discount.discount_type === 'percentage' ? `-${discount.discount_value}%` : `-${discount.discount_value}€`)
-              : null
-
-            const dist = userLocation && r.latitude
-              ? formatDistance(getDistance(userLocation.lat, userLocation.lng, r.latitude, r.longitude))
-              : null
-
-            return (
-              <button
-                key={r.id}
-                onClick={() => goTo(r)}
-                style={{
-                  display: 'flex', gap: 14, padding: 14, marginBottom: 12,
-                  background: '#fff', borderRadius: 18,
-                  border: '1px solid rgba(0,0,0,0.04)',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-                  cursor: 'pointer', width: '100%', textAlign: 'left',
-                  position: 'relative',
-                }}
-              >
-                {/* Image */}
-                <div style={{
-                  width: 88, height: 88, borderRadius: 14,
-                  flexShrink: 0, position: 'relative', overflow: 'hidden',
-                }}>
-                  {photoUrl ? (
-                    <>
-                      <div style={{
-                        position: 'absolute', inset: 0,
-                        background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
-                      }} />
-                      <img
-                        src={photoUrl} alt={r.name} loading="lazy"
-                        style={{
-                          position: 'absolute', inset: 0, width: '100%', height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    </>
-                  ) : (
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 32, opacity: 0.6,
-                      background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
-                    }}>
-                      {category?.emoji || '🍽️'}
-                    </div>
-                  )}
-                  {/* Discount badge on image */}
-                  {discountLabel && (
-                    <div style={{
-                      position: 'absolute', top: 6, left: 6,
-                      background: '#E8453C', color: '#fff',
-                      fontSize: 9, fontWeight: 700,
-                      padding: '2px 7px', borderRadius: 6,
-                      boxShadow: '0 2px 6px rgba(232,69,60,0.3)',
-                    }}>
-                      {discountLabel}
-                    </div>
-                  )}
-                </div>
-
-                {/* Body */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
-                  <div style={{
-                    fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                    fontSize: 18, fontWeight: 600, color: '#22181C',
-                    lineHeight: 1.2, marginBottom: 3,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    paddingRight: 28,
-                  }}>
-                    {r.name}
-                  </div>
-                  <div style={{
-                    fontSize: 12, color: '#8A8680', fontWeight: 500,
-                    marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
-                  }}>
-                    {category?.name || r.cuisine_type || 'Ristorante'}
-                    {r.description && (
-                      <>
-                        <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', flexShrink: 0 }} />
-                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {r.description.slice(0, 30)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {r.our_rating && (
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: 3,
-                        background: '#FBF9F4', padding: '3px 8px', borderRadius: 8,
-                        fontSize: 12, fontWeight: 700, color: '#22181C',
-                      }}>
-                        <StarIcon />
-                        {r.our_rating}
-                      </div>
-                    )}
-                    {dist && (
-                      <div style={{
-                        fontSize: 11, color: '#8A8680', fontWeight: 500,
-                        display: 'flex', alignItems: 'center', gap: 4,
-                      }}>
-                        <DistanceIcon />
-                        {dist}
-                      </div>
-                    )}
-                    <PriceDisplay level={r.price_range} />
-                  </div>
-                </div>
-
-                {/* Heart */}
-                <div
-                  onClick={(e) => { e.stopPropagation(); toggleSave(r.id) }}
-                  style={{
-                    position: 'absolute', right: 14, top: 14,
-                    color: '#E8453C',
-                    cursor: 'pointer', padding: 4,
-                  }}
-                >
-                  <HeartIcon filled={true} />
-                </div>
-              </button>
-            )
-          })
+          displayList.map(r => (
+            <HorizontalCard
+              key={r.id}
+              restaurant={r}
+              userPosition={userLocation}
+              discountValue={activeDiscounts[r.id]?.discount_value}
+              saved={true}
+              onSave={() => toggleSave(r.id)}
+              onClick={goTo}
+            />
+          ))
         )}
       </div>
 
