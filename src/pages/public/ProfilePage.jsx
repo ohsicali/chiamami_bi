@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase } from '../../lib/supabase'
@@ -69,10 +69,36 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
+      {/* ── STICKY HEADER — logo + Torino ── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
+        background: '#FAF7F2',
+      }}>
+        <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
+          <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
+            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
+            <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
+          </Link>
+          <button className="flex items-center gap-1.5" style={{
+            fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
+            background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)',
+          }}>
+            <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
+              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
+              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-success)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
+            </span>
+            Torino
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
+      </div>
+
       {/* ── HEADER GRADIENT ── */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 100%)',
-        padding: 'calc(env(safe-area-inset-top, 0px) + 24px) 22px 0',
+        padding: '24px 22px 0',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Decorative circle */}
