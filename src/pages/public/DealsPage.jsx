@@ -1039,6 +1039,16 @@ export default function DealsPage() {
           </button>
         </div>
 
+        {/* Title */}
+        <div style={{ marginTop: 12, marginBottom: 12 }}>
+          <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
+            Sconti
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
+            Offerte esclusive nei migliori locali
+          </p>
+        </div>
+
         {/* Tab switcher */}
         <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
           {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
@@ -1069,16 +1079,6 @@ export default function DealsPage() {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Title */}
-      <div style={{ padding: '20px 22px 12px' }}>
-        <h1 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
-          Sconti
-        </h1>
-        <p style={{ fontSize: 13, color: 'var(--color-secondary)', margin: '4px 0 0' }}>
-          Offerte esclusive nei migliori locali
-        </p>
       </div>
 
       {/* ── Content ── */}
