@@ -87,7 +87,7 @@ function getPhoto(restaurant) {
 }
 
 /* ── LiveDropCard — carousel 260px, bordo accent ── */
-function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
+function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, saved, onSaveToggle }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const claimed = deal.claimed_count || deal.total_redeemed || 0
@@ -99,7 +99,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   return (
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
-      borderRadius: 18, overflow: 'hidden',
+      borderRadius: 18, overflow: 'hidden', position: 'relative',
       border: soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
       background: '#fff',
       opacity: soldOut ? 0.6 : 1,
@@ -141,6 +141,20 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
         </div>
       </div>
+
+      {/* Heart bottom-right */}
+      {onSaveToggle && (
+        <button onClick={e => { e.stopPropagation(); onSaveToggle(); }} style={{
+          position: 'absolute', bottom: 12, right: 12,
+          width: 30, height: 30, borderRadius: '50%',
+          background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, zIndex: 2,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#D1CDC6'} strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+          </svg>
+        </button>
+      )}
 
       {/* Info — flex-1 to fill space, CTA pushed to bottom */}
       <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -203,7 +217,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
 }
 
 /* ── UpcomingDropCard — carousel 260px, sfondo scuro ── */
-function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
+function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin, saved, onSaveToggle }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const time = useCountdown(deal.drop_starts_at || deal.drop_time)
@@ -227,7 +241,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
       borderRadius: 18, overflow: 'hidden', background: 'var(--color-primary)',
-      display: 'flex', flexDirection: 'column',
+      display: 'flex', flexDirection: 'column', position: 'relative',
     }}>
       {/* Photo 110px dimmed */}
       <div style={{ position: 'relative', height: 110, overflow: 'hidden' }}>
@@ -265,6 +279,20 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
           <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
         </div>
       </div>
+
+      {/* Heart bottom-right */}
+      {onSaveToggle && (
+        <button onClick={e => { e.stopPropagation(); onSaveToggle(); }} style={{
+          position: 'absolute', bottom: 12, right: 12,
+          width: 30, height: 30, borderRadius: '50%',
+          background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, zIndex: 2,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : 'rgba(255,255,255,0.4)'} strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+          </svg>
+        </button>
+      )}
 
       {/* Info + countdown + Ricordamelo — flex-1 to match height */}
       <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -319,7 +347,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 }
 
 /* ── CompactDealCard — like RestaurantCard default, with discount focus ── */
-function CompactDealCard({ deal, onTap }) {
+function CompactDealCard({ deal, onTap, saved, onSaveToggle }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -331,7 +359,7 @@ function CompactDealCard({ deal, onTap }) {
       background: '#fff',
       border: '1px solid rgba(0,0,0,0.08)',
       boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-      cursor: 'pointer',
+      cursor: 'pointer', position: 'relative',
     }}>
       {/* Discount title strip — centered */}
       <div style={{
@@ -396,6 +424,20 @@ function CompactDealCard({ deal, onTap }) {
           </div>
         </div>
       </div>
+
+      {/* Heart bottom-right */}
+      {onSaveToggle && (
+        <button onClick={e => { e.stopPropagation(); onSaveToggle(); }} style={{
+          position: 'absolute', bottom: 12, right: 12,
+          width: 30, height: 30, borderRadius: '50%',
+          background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#D1CDC6'} strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
@@ -1059,9 +1101,9 @@ export default function DealsPage() {
                       scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
                       paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 18, paddingRight: 18,
                     }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
+                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />)}
                       {upcomingDrops.map(deal => (
-                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
+                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />
                       ))}
                     </div>
                   </div>
@@ -1082,7 +1124,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} />)}
+                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />)}
                     </div>
                   </div>
                 )}
