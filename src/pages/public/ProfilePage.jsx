@@ -98,7 +98,7 @@ export default function ProfilePage() {
       {/* ── HEADER GRADIENT ── */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 100%)',
-        padding: '24px 22px 0',
+        padding: '20px 22px 0',
         position: 'relative',
       }}>
         {/* Decorative circle */}
@@ -119,7 +119,7 @@ export default function ProfilePage() {
             {initial}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
               {displayName}
             </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{email}</div>
