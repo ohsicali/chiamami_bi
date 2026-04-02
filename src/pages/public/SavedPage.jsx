@@ -192,7 +192,7 @@ export default function SavedPage() {
           position: 'sticky',
           top: headerH,
           zIndex: 49,
-          padding: '12px 16px 12px',
+          padding: '16px 16px 12px',
           background: 'rgba(250,247,242,0.92)',
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           boxShadow: filtersStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
