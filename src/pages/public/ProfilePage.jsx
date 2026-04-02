@@ -153,7 +153,7 @@ export default function ProfilePage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
-              {stats.totalSaved}€
+              {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
             </span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
           </div>
