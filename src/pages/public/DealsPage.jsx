@@ -1091,10 +1091,10 @@ export default function DealsPage() {
           {tabsSticky && (
             <motion.div
               initial={{ height: 0, opacity: 0, marginTop: 0 }}
-              animate={{ height: 'auto', opacity: 1, marginTop: 14 }}
+              animate={{ height: 'auto', opacity: 1, marginTop: 0 }}
               exit={{ height: 0, opacity: 0, marginTop: 0 }}
               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              style={{ overflow: 'hidden' }}
+              style={{ overflow: 'hidden', borderTop: '1px solid var(--color-bordo)', paddingTop: 12, marginTop: 14 }}
             >
               {tabSwitcherJSX}
               {/* Sub-tabs I miei */}
