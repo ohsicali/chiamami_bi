@@ -149,12 +149,11 @@ export default function SavedPage() {
       {/* Sticky Header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
-        padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
+        padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-bordo)',
       }}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" style={{ paddingBottom: 14, borderBottom: '1px solid var(--color-bordo)' }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
