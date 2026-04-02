@@ -31,7 +31,11 @@ export default function RestaurantPage() {
   const restaurant = allRestaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
 
   const handleBack = () => {
-    navigate('/')
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
   }
 
   const handleSelectNearby = (nearby) => {
