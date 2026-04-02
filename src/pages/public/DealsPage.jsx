@@ -1067,7 +1067,7 @@ export default function DealsPage() {
         background: 'rgba(250,247,242,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       }}>
-        <div className="flex items-center justify-between" style={{ paddingBottom: 14, borderBottom: '1px solid var(--color-bordo)' }}>
+        <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
@@ -1084,6 +1084,7 @@ export default function DealsPage() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
           </button>
         </div>
+        <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
 
         {/* Tab switcher — slides into header when scrolled past */}
         <AnimatePresence>
