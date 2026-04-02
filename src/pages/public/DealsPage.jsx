@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -622,6 +622,9 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
   const category = categories[0]
   const [photoIdx, setPhotoIdx] = useState(0)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+  const swiping = useRef(false)
 
   useEffect(() => {
     const scrollY = window.scrollY
@@ -674,18 +677,30 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           <div style={{ borderRadius: 20, overflow: 'hidden', height: 180, marginBottom: 0, position: 'relative' }}>
             {allPhotos.length > 0 ? (
               <>
-                <div style={{ display: 'flex', height: '100%', transition: 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)` }}>
+                <div
+                  style={{ display: 'flex', height: '100%', transition: swiping.current ? 'none' : 'transform 0.3s ease', transform: `translateX(-${photoIdx * 100}%)` }}
+                  onTouchStart={e => {
+                    touchStartX.current = e.touches[0].clientX
+                    touchStartY.current = e.touches[0].clientY
+                    swiping.current = false
+                  }}
+                  onTouchMove={e => {
+                    const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
+                    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+                    if (dx > 10 && dx > dy) swiping.current = true
+                  }}
+                  onTouchEnd={e => {
+                    if (!swiping.current) return
+                    const diff = touchStartX.current - e.changedTouches[0].clientX
+                    if (diff > 30) setPhotoIdx(prev => Math.min(prev + 1, allPhotos.length - 1))
+                    else if (diff < -30) setPhotoIdx(prev => Math.max(prev - 1, 0))
+                    swiping.current = false
+                  }}
+                >
                   {allPhotos.map((url, i) => (
-                    <img key={i} src={url} alt={`${r?.name} ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0, pointerEvents: 'none' }} />
+                    <img key={i} src={url} alt={`${r?.name} ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0, userSelect: 'none', WebkitUserDrag: 'none' }} draggable={false} />
                   ))}
                 </div>
-                {/* Tap left = indietro, tap right = avanti */}
-                {allPhotos.length > 1 && (
-                  <>
-                    <div onClick={() => setPhotoIdx(prev => Math.max(prev - 1, 0))} style={{ position: 'absolute', top: 0, left: 0, width: '50%', height: '100%', cursor: photoIdx > 0 ? 'pointer' : 'default' }} />
-                    <div onClick={() => setPhotoIdx(prev => Math.min(prev + 1, allPhotos.length - 1))} style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', cursor: photoIdx < allPhotos.length - 1 ? 'pointer' : 'default' }} />
-                  </>
-                )}
                 {/* Dots on photo */}
                 {allPhotos.length > 1 && (
                   <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 5 }}>
