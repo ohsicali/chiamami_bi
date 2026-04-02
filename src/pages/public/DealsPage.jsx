@@ -1041,7 +1041,7 @@ export default function DealsPage() {
         {/* Tab switcher */}
         <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
           {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{
+            <button key={t.key} onClick={() => { setTab(t.key); window.scrollTo({ top: 0 }) }} style={{
               flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
               fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
               background: tab === t.key ? 'var(--color-primary)' : 'transparent',
@@ -1050,25 +1050,25 @@ export default function DealsPage() {
             }}>{t.label}</button>
           ))}
         </div>
-      </div>
 
-      {/* Sub-tabs I miei — sempre visibili sotto il tab switcher */}
-      {tab === 'mine' && user && !myLoading && (
-        <div className="flex gap-2 px-4" style={{ paddingTop: 12, paddingBottom: 4 }}>
-          <button
-            onClick={() => setMySubTab('active')}
-            className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-secondary'}`}
-          >
-            Attivi ({myActive.length})
-          </button>
-          <button
-            onClick={() => setMySubTab('used')}
-            className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'used' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-secondary'}`}
-          >
-            Utilizzati ({myUsed.length})
-          </button>
-        </div>
-      )}
+        {/* Sub-tabs I miei — dentro l'header sticky */}
+        {tab === 'mine' && user && !myLoading && (
+          <div className="flex gap-2" style={{ marginTop: 10 }}>
+            <button
+              onClick={() => setMySubTab('active')}
+              className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-secondary'}`}
+            >
+              Attivi ({myActive.length})
+            </button>
+            <button
+              onClick={() => setMySubTab('used')}
+              className={`flex-1 rounded-lg py-2.5 text-xs font-semibold transition-colors ${mySubTab === 'used' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-secondary'}`}
+            >
+              Utilizzati ({myUsed.length})
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ── Content ── */}
       <div className="flex-1 px-4" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
