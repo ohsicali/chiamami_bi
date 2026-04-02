@@ -605,7 +605,7 @@ function MyUsedCard({ redemption, onGoTo }) {
 }
 
 /* ── DealBottomSheet — detail overlay on tap ── */
-function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, onGoTo, saved, onSaveToggle }) {
+function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, onGoTo }) {
   const r = deal?.restaurant
   const photo = getPhoto(r)
   const remaining = deal?.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
@@ -641,9 +641,9 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-bordo)' }} />
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {/* Photo — edge to edge */}
-          <div style={{ overflow: 'hidden', height: 200 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 24px' }}>
+          {/* Photo */}
+          <div style={{ borderRadius: 20, overflow: 'hidden', height: 180, marginBottom: 16 }}>
             {photo ? (
               <img src={photo} alt={r?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
@@ -651,11 +651,10 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             )}
           </div>
 
-          <div style={{ padding: '14px 20px 24px' }}>
           {/* Restaurant name — tappable */}
           <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
-            fontFamily: "'TAN Songbird', sans-serif", fontSize: 16, fontWeight: 600,
-            color: 'var(--color-primary)', lineHeight: 1.3, cursor: 'pointer', marginBottom: 4,
+            fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
+            color: 'var(--color-primary)', lineHeight: 1.2, cursor: 'pointer', marginBottom: 4,
           }}>{r?.name}</h3>
           <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 14 }}>
             {[r?.cuisine_type, r?.price_range ? '€'.repeat(r.price_range) : null, r?.city].filter(Boolean).join(' · ')}
@@ -671,59 +670,41 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title}</span>
           </div>
 
-          {/* Conditions list — green checkmarks */}
+          {/* Conditions list */}
           {conditions.length > 0 && (
-            <div style={{ background: '#FAF7F2', borderRadius: 14, padding: 14, marginBottom: 14 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: '#22181C', margin: '0 0 8px' }}>Condizioni</p>
+            <div style={{ background: '#fff', borderRadius: 16, padding: 14, border: '1px solid var(--color-bordo)', marginBottom: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Condizioni</p>
               {conditions.map((c, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < conditions.length - 1 ? 6 : 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: 1 }}>
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  <span style={{ fontSize: 12, color: '#8A8680', lineHeight: 1.4 }}>{c}</span>
+                <div key={i} className="flex gap-2" style={{ marginBottom: i < conditions.length - 1 ? 6 : 0 }}>
+                  <span style={{ color: 'var(--color-secondary)', fontSize: 12, flexShrink: 0 }}>•</span>
+                  <span style={{ fontSize: 12, color: 'var(--color-primary)', lineHeight: 1.4 }}>{c}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* 3 quick action buttons */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
-            <button
-              onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(r?.address || r?.name)}`)}
-              style={{
-                flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
-                border: 'none', cursor: 'pointer', textAlign: 'center',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-              </svg>
-              <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Indicazioni</span>
+          {/* Quick actions */}
+          <div className="flex gap-3" style={{ marginBottom: 18 }}>
+            <button onClick={() => { onClose(); onGoTo(r); }} style={{
+              flex: 1, padding: '10px 0', borderRadius: 14,
+              background: '#fff', border: '1px solid var(--color-bordo)',
+              fontSize: 12, fontWeight: 600, color: 'var(--color-primary)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Vai al locale
             </button>
-            <button
-              onClick={() => r?.phone && window.open(`tel:${r.phone}`)}
-              style={{
-                flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
-                border: 'none', cursor: 'pointer', textAlign: 'center',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72"/>
-              </svg>
-              <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Chiama</span>
-            </button>
-            <button
-              onClick={() => onSaveToggle && onSaveToggle(r?.id)}
-              style={{
-                flex: 1, background: '#FAF7F2', borderRadius: 12, padding: 12,
-                border: 'none', cursor: 'pointer', textAlign: 'center',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : '#22181C'} strokeWidth="1.8" style={{ display: 'block', margin: '0 auto 4px' }}>
-                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-              </svg>
-              <span style={{ fontSize: 11, color: '#22181C', fontWeight: 500 }}>Salva</span>
-            </button>
+            {r?.phone && (
+              <a href={`tel:${r.phone}`} style={{
+                flex: 1, padding: '10px 0', borderRadius: 14,
+                background: '#fff', border: '1px solid var(--color-bordo)',
+                fontSize: 12, fontWeight: 600, color: 'var(--color-primary)',
+                textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Chiama
+              </a>
+            )}
           </div>
 
           {/* CTA */}
@@ -756,7 +737,6 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               fontSize: 15, fontWeight: 700, color: 'var(--color-secondary)',
             }}>Esaurito</div>
           )}
-          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -1108,8 +1088,6 @@ export default function DealsPage() {
             myRedemption={myActive.find(r => r.discount_id === selectedDeal.id) || justClaimed.find(r => r.discount_id === selectedDeal.id)}
             onShowQR={(r) => { setSelectedDeal(null); showMyQR(r); }}
             onGoTo={goTo}
-            saved={isSaved(selectedDeal.restaurant?.id)}
-            onSaveToggle={(id) => toggleSave(id)}
           />
         )}
       </AnimatePresence>
