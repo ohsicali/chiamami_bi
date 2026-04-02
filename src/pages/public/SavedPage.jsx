@@ -3,10 +3,11 @@ import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase } from '../../lib/supabase'
-import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import FilterChips from '../../components/Layout/FilterChips'
 
 function slugify(name) {
   return name.toLowerCase().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
@@ -21,7 +22,8 @@ export default function SavedPage() {
   const [restaurants, setRestaurants] = useState([])
   const [activeDiscounts, setActiveDiscounts] = useState({})
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
+  const [filters, setFilters] = useState({ category: null, priceRange: null, sortBy: null })
+  const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
 
   useEffect(() => {
@@ -67,26 +69,41 @@ export default function SavedPage() {
     })
   }, [user?.id, savedIds])
 
+  const dealsCount = useMemo(() => restaurants.filter(r => activeDiscounts[r.id]).length, [restaurants, activeDiscounts])
+
   const displayList = useMemo(() => {
     let list = [...restaurants]
 
-    if (filter === 'discounted') {
+    // Category filter
+    if (filters.category) {
+      const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
+      list = list.filter(r => {
+        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+        return selected.some(s => cats.includes(s))
+      })
+    }
+
+    // Price filter
+    if (filters.priceRange) {
+      list = list.filter(r => r.price_range === filters.priceRange)
+    }
+
+    // Deals only
+    if (showDealsOnly) {
       list = list.filter(r => activeDiscounts[r.id])
     }
 
-    if (filter === 'nearby' && userLocation) {
-      list = list
-        .map(r => ({
-          ...r,
-          _distance: r.latitude && r.longitude
-            ? getDistance(userLocation.lat, userLocation.lng, r.latitude, r.longitude)
-            : Infinity,
-        }))
-        .sort((a, b) => a._distance - b._distance)
+    // Sort by distance
+    if (filters.sortBy === 'distance' && userLocation) {
+      list.sort((a, b) => {
+        const dA = a.latitude ? getDistance(userLocation.lat, userLocation.lng, a.latitude, a.longitude) : Infinity
+        const dB = b.latitude ? getDistance(userLocation.lat, userLocation.lng, b.latitude, b.longitude) : Infinity
+        return dA - dB
+      })
     }
 
     return list
-  }, [restaurants, filter, activeDiscounts, userLocation])
+  }, [restaurants, filters, showDealsOnly, activeDiscounts, userLocation])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
 
@@ -97,6 +114,21 @@ export default function SavedPage() {
   const handleSave = (id) => {
     if (!user) { navigate('/login'); return }
     toggleSave(id)
+  }
+
+  const handleNearbyClick = () => {
+    if (userLocation) {
+      setFilters(f => ({ ...f, sortBy: 'distance' }))
+    } else if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+          setFilters(f => ({ ...f, sortBy: 'distance' }))
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 10000 }
+      )
+    }
   }
 
   return (
@@ -137,28 +169,17 @@ export default function SavedPage() {
         </p>
       </div>
 
-      {/* Filter chips */}
+      {/* FilterChips — same as ListView */}
       {restaurants.length > 0 && (
-        <div className="flex" style={{ padding: '0 22px 8px', gap: 6 }}>
-          {[
-            { key: 'all', label: `Tutti (${restaurants.length})` },
-            { key: 'discounted', label: 'Scontati' },
-            { key: 'nearby', label: 'Vicino a me' },
-          ].map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              style={{
-                fontSize: 12, borderRadius: 18, padding: '6px 14px',
-                fontWeight: filter === f.key ? 500 : 400, cursor: 'pointer',
-                background: filter === f.key ? 'var(--color-primary)' : '#fff',
-                color: filter === f.key ? '#fff' : 'var(--color-secondary)',
-                border: filter === f.key ? 'none' : '1px solid var(--color-bordo)',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div style={{ padding: '0 16px 8px' }}>
+          <FilterChips
+            filters={filters}
+            onFilterChange={setFilters}
+            onNearbyClick={handleNearbyClick}
+            showDealsOnly={showDealsOnly}
+            onToggleDeals={() => setShowDealsOnly(v => !v)}
+            dealsCount={dealsCount}
+          />
         </div>
       )}
 
@@ -169,13 +190,6 @@ export default function SavedPage() {
             {[120, 120, 120].map((h, i) => (
               <div key={i} className="shimmer" style={{ height: h, borderRadius: 18 }} />
             ))}
-          </div>
-        ) : displayList.length === 0 && filter !== 'all' ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <span style={{ fontSize: 28, marginBottom: 8 }}>{filter === 'discounted' ? '🏷️' : '📍'}</span>
-            <p style={{ fontSize: 14, color: 'var(--color-secondary)' }}>
-              {filter === 'discounted' ? 'Nessuno dei tuoi salvati ha uno sconto attivo' : 'Attiva la geolocalizzazione per ordinare per distanza'}
-            </p>
           </div>
         ) : restaurants.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 40px' }}>
@@ -198,6 +212,12 @@ export default function SavedPage() {
             >
               Esplora la mappa
             </button>
+          </div>
+        ) : displayList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <span style={{ fontSize: 28, marginBottom: 8 }}>🔍</span>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Nessun risultato</p>
+            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4 }}>Prova a cambiare i filtri</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
