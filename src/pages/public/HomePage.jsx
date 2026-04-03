@@ -61,7 +61,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         background: 'rgba(255,255,255,0.35)',
         backdropFilter: 'blur(20px) saturate(1.6)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-        boxShadow: '0 6px 6px rgba(0,0,0,0.15), 0 0 20px rgba(0,0,0,0.06), inset 2px 2px 1px rgba(255,255,255,0.5), inset -1px -1px 1px rgba(255,255,255,0.4)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         border: '1px solid rgba(255,255,255,0.45)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
@@ -70,17 +70,6 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         position: 'relative',
       }}
     >
-      {discountTitle && (
-        <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
-          fontSize: 12, fontWeight: 700,
-          padding: '5px 10px',
-          textAlign: 'center',
-          letterSpacing: 0.5,
-        }}>
-          {discountTitle}
-        </div>
-      )}
       <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
         <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
           {photoUrl ? (
@@ -106,6 +95,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
               {restaurant.tagline}
             </div>
           )}
+          {/* Category + price + distance */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
             {category && (
               <span style={{
@@ -120,9 +110,23 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
               </span>
             )}
             {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+            {distance != null && (
+              <>
+                <span style={{ fontSize: 9, color: '#B5B0AA' }}>·</span>
+                <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
+              </>
+            )}
           </div>
-          {distance != null && (
-            <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
+          {/* Discount badge */}
+          {discountTitle && (
+            <span style={{
+              display: 'inline-block', alignSelf: 'flex-start',
+              fontSize: 9, fontWeight: 600, color: '#1a2e05',
+              background: 'linear-gradient(135deg, #a3e63540, #4ade8040)',
+              padding: '2px 7px', borderRadius: 6,
+            }}>
+              {discountTitle}
+            </span>
           )}
         </div>
         {onSave && (
