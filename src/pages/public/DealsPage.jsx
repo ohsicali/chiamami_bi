@@ -1229,9 +1229,19 @@ export default function DealsPage() {
                 {/* Empty state */}
                 {activeDrops.length === 0 && upcomingDrops.length === 0 && featured.length === 0 && regular.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, marginBottom: 16 }}>🏷️</div>
-                    <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-primary)' }}>Nessuno sconto attivo</p>
-                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4 }}>Torna presto!</p>
+                    <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, marginBottom: 16 }}>📍</div>
+                    <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-primary)' }}>Nessuno sconto a {currentCity.name}</p>
+                    <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4 }}>Prova a selezionare un'altra città</p>
+                    <button
+                      onClick={() => setCityPickerOpen(true)}
+                      style={{
+                        background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+                        padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
+                        border: 'none', cursor: 'pointer',
+                      }}
+                    >
+                      Cambia città
+                    </button>
                   </div>
                 )}
 
@@ -1262,8 +1272,12 @@ export default function DealsPage() {
                 {mySubTab === 'active' ? (
                   myActive.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <span style={{ fontSize: 28, marginBottom: 8 }}>🏷️</span>
-                      <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>Nessuno sconto attivo. Vai su "Disponibili" per prenderne uno!</p>
+                      <span style={{ fontSize: 28, marginBottom: 8 }}>{allMyActive.length > 0 ? '📍' : '🏷️'}</span>
+                      <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>
+                        {allMyActive.length > 0
+                          ? `Nessuno sconto attivo a ${currentCity.name}`
+                          : 'Nessuno sconto attivo. Vai su "Disponibili" per prenderne uno!'}
+                      </p>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1273,8 +1287,12 @@ export default function DealsPage() {
                 ) : (
                   myUsed.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <span style={{ fontSize: 28, marginBottom: 8 }}>✨</span>
-                      <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>Nessuno sconto utilizzato ancora</p>
+                      <span style={{ fontSize: 28, marginBottom: 8 }}>{allMyUsed.length > 0 ? '📍' : '✨'}</span>
+                      <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>
+                        {allMyUsed.length > 0
+                          ? `Nessuno sconto utilizzato a ${currentCity.name}`
+                          : 'Nessuno sconto utilizzato ancora'}
+                      </p>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

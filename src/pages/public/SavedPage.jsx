@@ -242,6 +242,24 @@ export default function SavedPage() {
               Esplora la mappa
             </button>
           </div>
+        ) : cityRestaurants.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <span style={{ fontSize: 28, marginBottom: 8 }}>📍</span>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Nessun locale salvato a {currentCity.name}</p>
+            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+              Prova a selezionare un'altra città
+            </p>
+            <button
+              onClick={() => setCityPickerOpen(true)}
+              style={{
+                background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+                padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
+                border: 'none', cursor: 'pointer',
+              }}
+            >
+              Cambia città
+            </button>
+          </div>
         ) : displayList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <span style={{ fontSize: 28, marginBottom: 8 }}>🔍</span>
