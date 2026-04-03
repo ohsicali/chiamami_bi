@@ -430,7 +430,7 @@ export default function HomePage() {
           opacity: sheetOpacity,
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           zIndex: isSheetActive ? 35 : -1,
-          background: '#FAF7F2',
+          background: '#fff',
           display: 'flex', flexDirection: 'column',
           pointerEvents: isSheetActive ? 'auto' : 'none',
           willChange: 'transform',
@@ -439,7 +439,7 @@ export default function HomePage() {
       >
         {/* Handle + sticky filters area */}
         <div
-          style={{ flexShrink: 0, background: '#FAF7F2' }}
+          style={{ flexShrink: 0, background: '#fff' }}
         >
           <div
             {...handleBind()}
@@ -475,7 +475,7 @@ export default function HomePage() {
               position: 'sticky', top: 0, zIndex: 50,
               padding: '14px 0',
               margin: '0 -20px', paddingLeft: 20, paddingRight: 20,
-              background: '#FAF7F2',
+              background: '#fff',
               boxShadow: sheetFiltersSticky ? '0 1px 0 0 var(--color-bordo)' : 'none',
             }}>
               <FilterChips

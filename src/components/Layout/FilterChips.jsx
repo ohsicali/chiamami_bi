@@ -71,7 +71,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           </span>
           <span style={{
             fontSize: 13, fontWeight: 600,
-            color: selected.length === 0 ? '#FAF7F2' : '#22181C',
+            color: selected.length === 0 ? '#fff' : '#22181C',
             whiteSpace: 'nowrap',
           }}>
             Tutti
@@ -105,7 +105,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               </span>
               <span style={{
                 fontSize: 13, fontWeight: 600,
-                color: active ? '#FAF7F2' : '#22181C',
+                color: active ? '#fff' : '#22181C',
                 whiteSpace: 'nowrap',
               }}>
                 {cat.name}
@@ -136,7 +136,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
           </span>
           <span style={{
             fontSize: 13, fontWeight: 600,
-            color: selected.length > 0 ? '#FAF7F2' : '#22181C',
+            color: selected.length > 0 ? '#fff' : '#22181C',
             whiteSpace: 'nowrap',
           }}>
             Altro
@@ -165,7 +165,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               display: 'flex', alignItems: 'center', gap: 6,
               border: `1.5px solid ${filters.sortBy === 'distance' ? '#22181C' : '#E8E5DE'}`,
               background: filters.sortBy === 'distance' ? '#22181C' : '#fff',
-              color: filters.sortBy === 'distance' ? '#FAF7F2' : '#5A564F',
+              color: filters.sortBy === 'distance' ? '#fff' : '#5A564F',
               cursor: 'pointer',
             }}
           >
@@ -218,7 +218,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
             display: 'flex', alignItems: 'center', gap: 6,
             border: `1.5px solid ${(selected.length || filters.priceRange) ? '#22181C' : '#E8E5DE'}`,
             background: (selected.length || filters.priceRange) ? '#22181C' : '#fff',
-            color: (selected.length || filters.priceRange) ? '#FAF7F2' : '#5A564F',
+            color: (selected.length || filters.priceRange) ? '#fff' : '#5A564F',
             cursor: 'pointer',
           }}
         >
@@ -254,7 +254,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 35 }}
                 className="absolute bottom-0 left-0 right-0 max-h-[85vh] flex flex-col"
-                style={{ background: '#FAF7F2', borderRadius: '28px 28px 0 0' }}
+                style={{ background: '#fff', borderRadius: '28px 28px 0 0' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
@@ -317,7 +317,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                             flex: 1, padding: '12px 8px', borderRadius: 14,
                             fontSize: 13, fontWeight: 600,
                             background: active ? '#22181C' : '#fff',
-                            color: active ? '#FAF7F2' : '#5A564F',
+                            color: active ? '#fff' : '#5A564F',
                             border: `1.5px solid ${active ? '#22181C' : '#E8E5DE'}`,
                             cursor: 'pointer', transition: 'all 0.2s',
                             textAlign: 'center',

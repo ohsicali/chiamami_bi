@@ -13,12 +13,12 @@
   --color-secondary: #8A8680;
   --color-accent: #E8453C;
   --color-accent-light: rgba(232, 69, 60, 0.1);
-  --color-bg: #FAF7F2;
+  --color-bg: #FFFFFF;
   --color-card: #FFFFFF;
   --color-success: #4ADE80;
   --color-oro: #C4A265;
   --color-bordo: #E8E5DE;
-  --color-surface-glass: rgba(250, 247, 242, 0.92);
+  --color-surface-glass: rgba(255, 255, 255, 0.92);
   --font-display: 'DM Sans', sans-serif;
   --font-editorial: 'DM Sans', sans-serif;
   --font-sans: 'DM Sans', sans-serif;

@@ -145,7 +145,7 @@ export default function CityPickerSheet({ open, onClose, onCityChange, restauran
       <div
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: '#FAF7F2', borderRadius: '28px 28px 0 0',
+          background: '#fff', borderRadius: '28px 28px 0 0',
           paddingBottom: 'env(safe-area-inset-bottom, 20px)',
           maxHeight: '60%', display: 'flex', flexDirection: 'column',
         }}
@@ -197,7 +197,7 @@ export default function CityPickerSheet({ open, onClose, onCityChange, restauran
                   <span style={{ position: 'relative', width: 8, height: 8 }}>
                     <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80' }} />
                   </span>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>{selectedCity}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {cities[selectedCity] > 0 && (

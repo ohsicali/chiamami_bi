@@ -215,7 +215,7 @@ export default function AboutPage() {
 
         {/* ── Content on cream ── */}
         <div style={{
-          background: '#FAF7F2',
+          background: '#fff',
           borderRadius: '24px 24px 0 0',
           marginTop: -1,
           position: 'relative', zIndex: 2,
@@ -518,7 +518,7 @@ export default function AboutPage() {
                                 style={{
                                   width: '100%', padding: '14px 16px', borderRadius: 14,
                                   border: '1px solid rgba(0,0,0,0.08)',
-                                  background: '#FAF7F2',
+                                  background: '#fff',
                                   fontSize: 15, color: '#22181C', outline: 'none', resize: 'none',
                                 }}
                               />
@@ -532,7 +532,7 @@ export default function AboutPage() {
                                 style={{
                                   width: '100%', padding: '14px 16px', borderRadius: 14,
                                   border: '1px solid rgba(0,0,0,0.08)',
-                                  background: '#FAF7F2',
+                                  background: '#fff',
                                   fontSize: 15, color: '#22181C', outline: 'none',
                                 }}
                               />

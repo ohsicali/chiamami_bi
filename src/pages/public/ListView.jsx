@@ -395,7 +395,7 @@ export default function ListView() {
     <div
       ref={scrollContainerRef}
       style={{
-        minHeight: '100dvh', background: '#FAF7F2',
+        minHeight: '100dvh', background: '#fff',
         display: 'flex', flexDirection: 'column',
         paddingBottom: 80,
       }}
@@ -494,7 +494,7 @@ export default function ListView() {
         onClick={handleToggleView}
         style={{
           position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 60, background: '#22181C', color: '#FAF7F2',
+          zIndex: 60, background: '#22181C', color: '#fff',
           border: 'none', borderRadius: 28,
           padding: '12px 26px',
           fontFamily: "'DM Sans', sans-serif",

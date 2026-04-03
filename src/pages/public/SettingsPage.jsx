@@ -368,7 +368,7 @@ export default function SettingsPage() {
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: '#FAF7F2',
+        background: '#fff',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <button onClick={() => navigate(-1)} style={{
