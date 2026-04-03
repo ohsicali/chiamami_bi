@@ -123,9 +123,9 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           background: '#FAF7F2', borderRadius: '24px 24px 0 0',
-          maxHeight: '85vh', overflowY: 'auto',
+          maxHeight: '90vh', overflowY: 'auto',
           padding: '0 22px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 34px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 40px)',
         }}
       >
         {/* Drag handle */}
@@ -186,7 +186,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
             {/* Nome ristorante */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--color-bg)', borderRadius: 14, padding: '14px 16px', marginBottom: 12,
+              background: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 12,
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
@@ -205,7 +205,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
             {/* Indirizzo */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--color-bg)', borderRadius: 14, padding: '14px 16px', marginBottom: 12,
+              background: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 12,
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
@@ -228,7 +228,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
             {/* Maps URL */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--color-bg)', borderRadius: 14, padding: '14px 16px', marginBottom: 24,
+              background: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 24,
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                 <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
@@ -299,7 +299,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
               onChange={e => setDescription(e.target.value)}
               placeholder="Cosa ci consigli di ordinare, quando andare..."
               style={{
-                width: '100%', minHeight: 80, background: 'var(--color-bg)',
+                width: '100%', minHeight: 80, background: '#fff',
                 borderRadius: 14, padding: '14px 16px', border: 'none',
                 fontSize: 14, color: 'var(--color-primary)',
                 outline: 'none', resize: 'vertical', fontFamily: 'inherit',
