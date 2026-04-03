@@ -67,22 +67,23 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         position: 'relative',
       }}
     >
-      {discountTitle && (
-        <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
-          fontSize: 10, fontWeight: 700, padding: '3px 10px',
-          textAlign: 'center', letterSpacing: 0.3,
-        }}>
-          {discountTitle}
-        </div>
-      )}
       <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
-        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
           {photoUrl ? (
             <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
           ) : (
             <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
               {category?.emoji || '🍽️'}
+            </div>
+          )}
+          {discountTitle && (
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              background: '#4ADE80', color: '#22181C',
+              fontSize: 8, fontWeight: 700, textAlign: 'center',
+              padding: '2px 0',
+            }}>
+              {discountTitle}
             </div>
           )}
         </div>
@@ -336,7 +337,7 @@ export default function HomePage() {
         <button
           onClick={openSheet}
           style={{
-            position: 'absolute', bottom: TAB_BAR_HEIGHT + 140, left: '50%',
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 120, left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
             background: 'var(--color-primary)', borderRadius: 20,
             padding: '9px 18px', border: 'none', cursor: 'pointer',
