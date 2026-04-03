@@ -153,6 +153,9 @@ export default function HomePage() {
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
   const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
+  const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id,
+    d.discount_type === 'percentage' ? `-${d.discount_value}%` : `-${d.discount_value}€`
+  ]))
 
   const {
     restaurants,
@@ -378,7 +381,7 @@ export default function HomePage() {
                 <MiniCard
                   restaurant={r}
                   userPosition={position}
-                  discountTitle={discountTitleMap[r.id]}
+                  discountTitle={discountLabelMap[r.id]}
                   saved={isSaved(r.id)}
                   onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                   onClick={handleCardClick}
