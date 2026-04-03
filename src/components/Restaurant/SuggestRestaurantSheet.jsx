@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useDrag } from '@use-gesture/react'
 import { supabase } from '../../lib/supabase'
 
 const TAGS = [
@@ -57,32 +56,24 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef(null)
-  const scrollRef = useRef(null)
-  const [dragY, setDragY] = useState(0)
 
-  // Block body scroll
+  // Block ALL background scroll
   useEffect(() => {
+    const scrollY = window.scrollY
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.left = '0'
+    document.body.style.right = '0'
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.left = ''
+      document.body.style.right = ''
+      document.body.style.overflow = ''
+      window.scrollTo(0, scrollY)
+    }
   }, [])
-
-  // Swipe down to close
-  const bind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], cancel, last }) => {
-    // Only allow downward drag when scroll is at top
-    if (scrollRef.current && scrollRef.current.scrollTop > 0) {
-      cancel()
-      return
-    }
-    if (my < 0) { setDragY(0); return }
-    setDragY(my)
-    if (last) {
-      if (my > 120 || (vy > 0.5 && dy > 0)) {
-        onClose()
-      } else {
-        setDragY(0)
-      }
-    }
-  }, { filterTaps: true, axis: 'y' })
 
   const toggleTag = (label) => {
     setSelectedTags(prev => prev.includes(label) ? prev.filter(t => t !== label) : [...prev, label])
@@ -149,14 +140,9 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
     border: 'none', cursor: 'pointer',
   }
 
-  // Which buttons to show in the sticky footer
   const renderFooter = () => {
     if (success) {
-      return (
-        <button onClick={onClose} style={{ ...btnSecondary, flex: 'none', width: '100%' }}>
-          Chiudi
-        </button>
-      )
+      return <button onClick={onClose} style={{ ...btnSecondary, flex: 'none', width: '100%' }}>Chiudi</button>
     }
     if (step === 1) {
       return (
@@ -197,29 +183,33 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+      onTouchMove={e => {
+        // Allow scroll only inside the sheet content
+        if (!e.target.closest('[data-sheet-scroll]')) e.preventDefault()
+      }}
+    >
       {/* Overlay */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', touchAction: 'none' }}
       />
 
       {/* Sheet */}
       <motion.div
-        {...bind()}
         initial={{ y: '100%' }}
-        animate={{ y: dragY }}
+        animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={dragY > 0 ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 300 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           background: '#FAF7F2', borderRadius: '24px 24px 0 0',
-          maxHeight: '92vh',
           display: 'flex', flexDirection: 'column',
-          touchAction: 'none',
+          maxHeight: 'calc(100dvh - 40px)',
         }}
       >
         {/* Drag handle */}
@@ -242,11 +232,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
 
         {/* Scrollable content */}
         <div
-          ref={scrollRef}
+          data-sheet-scroll
           style={{
             flex: 1, overflowY: 'auto', padding: '0 22px',
             WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y',
+            overscrollBehavior: 'contain',
           }}
         >
           <Stepper current={success ? 4 : step} />
@@ -397,12 +387,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
           )}
         </div>
 
-        {/* Sticky footer with buttons — always visible */}
+        {/* Sticky footer — always visible */}
         <div style={{
           flexShrink: 0, padding: '16px 22px',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
           background: '#FAF7F2',
-          borderTop: '1px solid var(--color-bordo)',
         }}>
           {renderFooter()}
         </div>
