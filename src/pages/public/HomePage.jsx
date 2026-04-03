@@ -153,9 +153,10 @@ export default function HomePage() {
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
   const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
-  const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id,
-    d.discount_type === 'percentage' ? `-${d.discount_value}%` : `-${d.discount_value}€`
-  ]))
+  const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
+    const v = String(d.discount_value).replace(/[%€]/g, '')
+    return [d.restaurant_id, d.discount_type === 'percentage' ? `-${v}%` : `-${v}€`]
+  }))
 
   const {
     restaurants,
