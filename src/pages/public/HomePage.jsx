@@ -69,9 +69,9 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
     >
       {discountTitle && (
         <div style={{
-          background: 'var(--color-primary)', color: '#fff',
-          fontSize: 11, fontWeight: 600, padding: '4px 10px',
-          textAlign: 'center', letterSpacing: 0.3,
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          fontSize: 12, fontWeight: 700, padding: '5px 10px',
+          textAlign: 'center', letterSpacing: 0.5,
         }}>
           {discountTitle}
         </div>
@@ -106,8 +106,8 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
             {category && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 2,
-                backgroundColor: '#F3F1ED',
-                color: '#8A8680',
+                backgroundColor: `${category.color}20`,
+                color: category.color,
                 fontSize: 9, fontWeight: 600,
                 padding: '1px 6px', borderRadius: 12,
                 whiteSpace: 'nowrap',
@@ -336,11 +336,13 @@ export default function HomePage() {
         <button
           onClick={openSheet}
           style={{
-            position: 'absolute', bottom: TAB_BAR_HEIGHT + 160, left: '50%',
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 130, left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
-            background: 'var(--color-primary)', borderRadius: 20,
+            background: 'rgba(20,20,20,0.55)', borderRadius: 20,
             padding: '9px 18px', border: 'none', cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            backdropFilter: 'saturate(180%) blur(40px)',
+            WebkitBackdropFilter: 'saturate(180%) blur(40px)',
             display: 'flex', alignItems: 'center', gap: 7,
             WebkitTapHighlightColor: 'transparent',
           }}
@@ -393,15 +395,19 @@ export default function HomePage() {
                 style={{
                   width: 72, height: 88, scrollSnapAlign: 'start', borderRadius: 14,
                   marginRight: 16,
-                  background: 'var(--color-primary)',
+                  background: 'rgba(0,0,0,0.45)',
+                  backdropFilter: 'blur(20px) saturate(1.6)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
                   gap: 6,
                 }}
               >
                 <span style={{
                   width: 30, height: 30, borderRadius: '50%',
                   background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
