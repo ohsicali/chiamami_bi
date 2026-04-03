@@ -13,7 +13,7 @@ const TAGS = [
 
 function Stepper({ current }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '20px 0 8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '12px 0 16px' }}>
       {[1, 2, 3].map((step, i) => {
         const done = step < current
         const active = step === current
@@ -122,25 +122,31 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
-          background: '#fff', borderRadius: '24px 24px 0 0',
+          background: '#FAF7F2', borderRadius: '24px 24px 0 0',
           maxHeight: '85vh', overflowY: 'auto',
-          padding: '0 22px 34px',
+          padding: '0 22px',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 34px)',
         }}
       >
-        <Stepper current={success ? 4 : step} />
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-bordo)' }} />
+        </div>
 
         {/* Close button */}
         <button onClick={onClose} style={{
-          position: 'absolute', top: 16, right: 16,
-          width: 30, height: 30, borderRadius: '50%', background: 'var(--color-bg)',
-          border: 'none', cursor: 'pointer',
+          position: 'absolute', top: 14, right: 16,
+          width: 30, height: 30, borderRadius: '50%', background: '#fff',
+          border: '1px solid var(--color-bordo)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 2,
         }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
+
+        <Stepper current={success ? 4 : step} />
 
         {success ? (
           /* ── SUCCESS STATE ── */
@@ -169,11 +175,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
           </div>
         ) : step === 1 ? (
           /* ── STEP 1 ── */
-          <div>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+          <div style={{ paddingBottom: 8 }}>
+            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
               Consiglia un ristorante
             </div>
-            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20, marginTop: 0 }}>
               Dicci dove dovrebbe andare Bi!
             </p>
 
@@ -255,11 +261,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
           </div>
         ) : step === 2 ? (
           /* ── STEP 2 ── */
-          <div>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+          <div style={{ paddingBottom: 8 }}>
+            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
               Perché ti piace?
             </div>
-            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20, marginTop: 0 }}>
               Step 2 di 3
             </p>
 
@@ -321,11 +327,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
           </div>
         ) : (
           /* ── STEP 3 ── */
-          <div>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+          <div style={{ paddingBottom: 8 }}>
+            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
               Una foto?
             </div>
-            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20, marginTop: 0 }}>
               Facoltativo
             </p>
 
