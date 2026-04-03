@@ -669,7 +669,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 480, maxHeight: '85vh',
-          background: '#fff', borderRadius: '24px 24px 0 0',
+          background: '#FAF7F2', borderRadius: '24px 24px 0 0',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
         }}
       >
@@ -1101,7 +1101,7 @@ export default function DealsPage() {
       <div ref={headerRef} style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: '#fff',
+        background: '#FAF7F2',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -1130,7 +1130,7 @@ export default function DealsPage() {
         top: headerH,
         zIndex: 49,
         padding: '14px 22px 14px',
-        background: 'rgba(255,255,255,0.75)',
+        background: 'rgba(250,247,242,0.75)',
         backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
         boxShadow: tabsStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
       }}>
