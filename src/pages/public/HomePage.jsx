@@ -336,7 +336,7 @@ export default function HomePage() {
         <button
           onClick={openSheet}
           style={{
-            position: 'absolute', bottom: TAB_BAR_HEIGHT + 130, left: '50%',
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 160, left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
             background: 'rgba(20,20,20,0.55)', borderRadius: 20,
             padding: '9px 18px', border: 'none', cursor: 'pointer',
