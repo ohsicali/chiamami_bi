@@ -58,8 +58,8 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         width: 260,
         scrollSnapAlign: 'start',
         borderRadius: 14,
-        background: '#FAF7F2',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        background: '#fff',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
@@ -67,65 +67,57 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         position: 'relative',
       }}
     >
-      {discountTitle && (
-        <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
-          fontSize: 10, fontWeight: 700, padding: '3px 10px',
-          textAlign: 'center', letterSpacing: 0.3,
-        }}>
-          {discountTitle}
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
-        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 8, padding: 10, position: 'relative' }}>
+        {/* Photo with discount overlay */}
+        <div style={{ width: 52, height: 52, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
           {photoUrl ? (
             <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
           ) : (
-            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
               {category?.emoji || '🍽️'}
             </div>
           )}
+          {discountTitle && (
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              background: '#4ADE80', color: '#22181C',
+              fontSize: 8, fontWeight: 700, textAlign: 'center',
+              padding: '2px 0',
+            }}>
+              {discountTitle}
+            </div>
+          )}
         </div>
+        {/* Info */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
           <div style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 11, fontWeight: 600, color: '#22181C',
-            lineHeight: 1.6, marginBottom: 2,
+            fontSize: 14, fontWeight: 600, color: '#22181C',
+            lineHeight: 1.3, marginBottom: 2,
             whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-            overflow: 'hidden', padding: '2px 0',
+            overflow: 'hidden',
           }}>
             {restaurant.name}
           </div>
-          {restaurant.tagline && (
-            <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-              {restaurant.tagline}
-            </div>
-          )}
-          {/* Category + price + distance */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {category && (
               <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 2,
-                backgroundColor: `${category.color}20`,
-                color: category.color,
-                fontSize: 9, fontWeight: 600,
-                padding: '1px 6px', borderRadius: 12,
-                whiteSpace: 'nowrap',
+                fontSize: 10, color: 'var(--color-secondary)',
               }}>
                 {category.emoji} {category.name}
               </span>
             )}
-            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+            {priceStr && <span style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{priceStr}</span>}
             {distance != null && (
               <>
                 <span style={{ fontSize: 9, color: '#B5B0AA' }}>·</span>
-                <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
+                <span style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{formatDistance(distance)}</span>
               </>
             )}
           </div>
         </div>
         {onSave && (
-          <div style={{ position: 'absolute', top: 6, right: 6 }}>
+          <div style={{ position: 'absolute', top: 8, right: 8 }}>
             <SaveButton saved={saved} onClick={onSave} size="xs" />
           </div>
         )}
@@ -336,13 +328,11 @@ export default function HomePage() {
         <button
           onClick={openSheet}
           style={{
-            position: 'absolute', bottom: TAB_BAR_HEIGHT + 140, left: '50%',
+            position: 'absolute', bottom: 100, left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
-            background: 'rgba(20,20,20,0.55)', borderRadius: 20,
+            background: 'var(--color-primary)', borderRadius: 20,
             padding: '9px 18px', border: 'none', cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-            backdropFilter: 'saturate(180%) blur(40px)',
-            WebkitBackdropFilter: 'saturate(180%) blur(40px)',
             display: 'flex', alignItems: 'center', gap: 7,
             WebkitTapHighlightColor: 'transparent',
           }}
