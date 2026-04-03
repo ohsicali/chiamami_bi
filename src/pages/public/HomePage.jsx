@@ -7,7 +7,9 @@ import MapView from '../../components/Map/MapView'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import SaveButton from '../../components/Restaurant/SaveButton'
 import Navbar from '../../components/Layout/Navbar'
+import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -42,70 +44,93 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
     : null)
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
+  const distance = userPosition && restaurant.latitude && restaurant.longitude
+    ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
+    : null
 
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={() => onClick?.(restaurant)}
+      className="flex-shrink-0"
       style={{
-        flex: 1, minWidth: 0,
-        borderRadius: 14, background: '#fff', padding: 10,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-        cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center',
+        width: 260,
+        scrollSnapAlign: 'start',
+        borderRadius: 14,
+        background: 'rgba(255,255,255,0.35)',
+        backdropFilter: 'blur(20px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+        boxShadow: '0 6px 6px rgba(0,0,0,0.15), 0 0 20px rgba(0,0,0,0.06), inset 2px 2px 1px rgba(255,255,255,0.5), inset -1px -1px 1px rgba(255,255,255,0.4)',
+        border: '1px solid rgba(255,255,255,0.45)',
+        cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
         position: 'relative',
       }}
     >
-      {/* Photo */}
-      <div style={{ width: 52, height: 52, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
-        {photoUrl ? (
-          <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-            {category?.emoji || '🍽️'}
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0, paddingRight: 22 }}>
+      {discountTitle && (
         <div style={{
-          fontFamily: "'TAN Songbird', serif", fontSize: 14, fontWeight: 700,
-          color: 'var(--color-primary)', lineHeight: 1.3,
-          whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          fontSize: 12, fontWeight: 700,
+          padding: '5px 10px',
+          textAlign: 'center',
+          letterSpacing: 0.5,
         }}>
-          {restaurant.name}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--color-secondary)', marginTop: 2 }}>
-          {category?.name || ''}{priceStr ? ` · ${priceStr}` : ''}
-        </div>
-        {discountTitle && (
-          <div style={{
-            marginTop: 3, display: 'inline-block',
-            fontSize: 9, color: 'var(--color-accent)', fontWeight: 500,
-            background: 'rgba(232,69,60,0.1)', padding: '2px 6px', borderRadius: 4,
-          }}>
-            {discountTitle}
-          </div>
-        )}
-      </div>
-
-      {/* Heart */}
-      {onSave && (
-        <div
-          onClick={e => { e.stopPropagation(); onSave() }}
-          style={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24"
-            fill={saved ? 'var(--color-accent)' : 'none'}
-            stroke={saved ? 'var(--color-accent)' : 'var(--color-bordo)'}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-          </svg>
+          {discountTitle}
         </div>
       )}
+      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
+        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+          {photoUrl ? (
+            <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+              {category?.emoji || '🍽️'}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
+          <div style={{
+            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+            fontSize: 11, fontWeight: 600, color: '#22181C',
+            lineHeight: 1.6, marginBottom: 2,
+            whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+            overflow: 'hidden', padding: '2px 0',
+          }}>
+            {restaurant.name}
+          </div>
+          {restaurant.tagline && (
+            <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {restaurant.tagline}
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+            {category && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 2,
+                backgroundColor: `${category.color}20`,
+                color: category.color,
+                fontSize: 9, fontWeight: 600,
+                padding: '1px 6px', borderRadius: 12,
+                whiteSpace: 'nowrap',
+              }}>
+                {category.emoji} {category.name}
+              </span>
+            )}
+            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+          </div>
+          {distance != null && (
+            <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
+          )}
+        </div>
+        {onSave && (
+          <div style={{ position: 'absolute', top: 6, right: 6 }}>
+            <SaveButton saved={saved} onClick={onSave} size="xs" />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -331,26 +356,69 @@ export default function HomePage() {
         </button>
       )}
 
-      {/* === Mini cards on map === */}
+      {/* === Mini cards carousel on map === */}
       {!hideBottomPanel && carouselRestaurants.length > 0 && (
         <div
           style={{
-            position: 'absolute', bottom: TAB_BAR_HEIGHT + 16, left: 10, right: 10,
-            zIndex: 5, display: 'flex', gap: 8,
-            pointerEvents: 'auto',
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 16, left: 0, right: 0,
+            zIndex: 5, pointerEvents: 'auto',
           }}
         >
-          {carouselRestaurants.slice(0, 2).map(r => (
-            <MiniCard
-              key={r.id}
-              restaurant={r}
-              userPosition={position}
-              discountTitle={discountTitleMap[r.id]}
-              saved={isSaved(r.id)}
-              onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
-              onClick={handleCardClick}
-            />
-          ))}
+          <div
+            className="flex items-end gap-2.5 overflow-x-auto carousel-scroll"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none', msOverflowStyle: 'none',
+              paddingBottom: 4,
+            }}
+          >
+            <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
+            {carouselRestaurants.map((r, i) => (
+              <div key={r.id} className="flex-shrink-0" style={i === 0 ? { marginLeft: 16 } : undefined}>
+                <MiniCard
+                  restaurant={r}
+                  userPosition={position}
+                  discountTitle={discountTitleMap[r.id]}
+                  saved={isSaved(r.id)}
+                  onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
+                  onClick={handleCardClick}
+                />
+              </div>
+            ))}
+            {viewportRestaurants.length > CAROUSEL_MAX && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={openSheet}
+                className="flex-shrink-0 flex flex-col items-center justify-center"
+                style={{
+                  width: 72, height: 88, scrollSnapAlign: 'start', borderRadius: 14,
+                  marginRight: 16,
+                  background: 'rgba(0,0,0,0.45)',
+                  backdropFilter: 'blur(20px) saturate(1.6)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  cursor: 'pointer',
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
+                  gap: 6,
+                }}
+              >
+                <span style={{
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>
+                  {viewportRestaurants.length} locali
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
