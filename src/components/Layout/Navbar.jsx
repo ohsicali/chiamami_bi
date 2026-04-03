@@ -153,7 +153,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               <button
                 onClick={onLocateMe}
                 style={{
-                  width: 36, height: 36, borderRadius: '50%',
+                  width: 32, height: 32, borderRadius: '50%',
                   background: '#fff', border: '1px solid var(--color-bordo)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', flexShrink: 0,
