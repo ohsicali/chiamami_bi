@@ -79,7 +79,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
           {discountTitle && (
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: '#4ADE80', color: '#22181C',
+              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
               fontSize: 8, fontWeight: 700, textAlign: 'center',
               padding: '2px 0',
             }}>
@@ -155,7 +155,9 @@ export default function HomePage() {
   const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
   const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
     const v = String(d.discount_value).replace(/[%€]/g, '')
-    return [d.restaurant_id, d.discount_type === 'percentage' ? `-${v}%` : `-${v}€`]
+    const isNumeric = /^\d+(\.\d+)?$/.test(v)
+    const label = !isNumeric ? v : d.discount_type === 'percentage' ? `-${v}%` : `-${v}€`
+    return [d.restaurant_id, label]
   }))
 
   const {
