@@ -58,7 +58,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         width: 260,
         scrollSnapAlign: 'start',
         borderRadius: 14,
-        background: '#fff',
+        background: '#FAF7F2',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
