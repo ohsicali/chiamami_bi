@@ -183,13 +183,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
   }
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 60 }}
-      onTouchMove={e => {
-        // Allow scroll only inside the sheet content
-        if (!e.target.closest('[data-sheet-scroll]')) e.preventDefault()
-      }}
-    >
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, touchAction: 'none' }}>
       {/* Overlay */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -204,12 +198,12 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+        transition={{ type: 'tween', duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           background: '#FAF7F2', borderRadius: '24px 24px 0 0',
           display: 'flex', flexDirection: 'column',
-          maxHeight: 'calc(100dvh - 40px)',
+          height: 'calc(100dvh - 60px)',
         }}
       >
         {/* Drag handle */}
@@ -232,11 +226,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
 
         {/* Scrollable content */}
         <div
-          data-sheet-scroll
           style={{
             flex: 1, overflowY: 'auto', padding: '0 22px',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
           }}
         >
           <Stepper current={success ? 4 : step} />
