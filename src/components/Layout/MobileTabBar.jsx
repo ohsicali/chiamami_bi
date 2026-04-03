@@ -86,9 +86,8 @@ export default function MobileTabBar() {
       style={{
         height: TAB_BAR_HEIGHT,
         zIndex: 50,
-        background: '#FFFFFF',
-        borderTop: '1px solid rgba(0,0,0,0.04)',
-        boxShadow: '0 -1px 4px rgba(0,0,0,0.03)',
+        background: '#fff',
+        borderTop: '1px solid rgba(0,0,0,0.06)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
