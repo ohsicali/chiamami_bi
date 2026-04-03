@@ -187,17 +187,19 @@ export default function HomePage() {
     setMapCenter(center)
   }, [])
 
+  const WIDE_RADIUS_KM = 5
   const viewportRestaurants = (() => {
-    if (!visibleIds || !mapCenter) return displayedRestaurants
-    const inView = displayedRestaurants.filter((r) => visibleIds.has(r.id))
+    if (!mapCenter) return displayedRestaurants
     const toRad = (d) => (d * Math.PI) / 180
-    const dist = (r) => {
+    const haversine = (r) => {
       const dLat = toRad(r.latitude - mapCenter.lat)
       const dLng = toRad(r.longitude - mapCenter.lng)
-      return dLat * dLat + dLng * dLng
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(mapCenter.lat)) * Math.cos(toRad(r.latitude)) * Math.sin(dLng / 2) ** 2
+      return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     }
-    inView.sort((a, b) => dist(a) - dist(b))
-    return inView
+    const nearby = displayedRestaurants.filter(r => r.latitude && r.longitude && haversine(r) <= WIDE_RADIUS_KM)
+    nearby.sort((a, b) => haversine(a) - haversine(b))
+    return nearby
   })()
 
   const handleLocateMe = useCallback(() => {
