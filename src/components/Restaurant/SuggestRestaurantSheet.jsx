@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useDrag } from '@use-gesture/react'
 import { supabase } from '../../lib/supabase'
 
 const TAGS = [
@@ -56,12 +57,32 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef(null)
+  const scrollRef = useRef(null)
+  const [dragY, setDragY] = useState(0)
 
-  // Block body scroll when sheet is open
+  // Block body scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
+
+  // Swipe down to close
+  const bind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], cancel, last }) => {
+    // Only allow downward drag when scroll is at top
+    if (scrollRef.current && scrollRef.current.scrollTop > 0) {
+      cancel()
+      return
+    }
+    if (my < 0) { setDragY(0); return }
+    setDragY(my)
+    if (last) {
+      if (my > 120 || (vy > 0.5 && dy > 0)) {
+        onClose()
+      } else {
+        setDragY(0)
+      }
+    }
+  }, { filterTaps: true, axis: 'y' })
 
   const toggleTag = (label) => {
     setSelectedTags(prev => prev.includes(label) ? prev.filter(t => t !== label) : [...prev, label])
@@ -128,6 +149,53 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
     border: 'none', cursor: 'pointer',
   }
 
+  // Which buttons to show in the sticky footer
+  const renderFooter = () => {
+    if (success) {
+      return (
+        <button onClick={onClose} style={{ ...btnSecondary, flex: 'none', width: '100%' }}>
+          Chiudi
+        </button>
+      )
+    }
+    if (step === 1) {
+      return (
+        <button
+          disabled={!nameValid}
+          onClick={() => setStep(2)}
+          style={{
+            width: '100%', background: nameValid ? 'var(--color-accent)' : 'var(--color-bordo)',
+            color: nameValid ? '#fff' : 'var(--color-secondary)',
+            borderRadius: 16, padding: 16, fontSize: 14, fontWeight: 600,
+            border: 'none', cursor: nameValid ? 'pointer' : 'default',
+          }}
+        >
+          Avanti
+        </button>
+      )
+    }
+    if (step === 2) {
+      return (
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={() => setStep(1)} style={btnSecondary}>Indietro</button>
+          <button onClick={() => setStep(3)} style={btnPrimary}>Avanti</button>
+        </div>
+      )
+    }
+    return (
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={() => setStep(2)} style={btnSecondary}>Salta</button>
+        <button
+          onClick={handleSubmit}
+          disabled={submitting}
+          style={{ ...btnPrimary, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1 }}
+        >
+          {submitting ? 'Invio...' : 'Invia a Bi'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
       {/* Overlay */}
@@ -141,15 +209,17 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
 
       {/* Sheet */}
       <motion.div
+        {...bind()}
         initial={{ y: '100%' }}
-        animate={{ y: 0 }}
+        animate={{ y: dragY }}
         exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        transition={dragY > 0 ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 300 }}
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           background: '#FAF7F2', borderRadius: '24px 24px 0 0',
           maxHeight: '92vh',
           display: 'flex', flexDirection: 'column',
+          touchAction: 'none',
         }}
       >
         {/* Drag handle */}
@@ -171,14 +241,17 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
         </button>
 
         {/* Scrollable content */}
-        <div style={{
-          flex: 1, overflowY: 'auto', padding: '0 22px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 40px)',
-        }}>
+        <div
+          ref={scrollRef}
+          style={{
+            flex: 1, overflowY: 'auto', padding: '0 22px',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+          }}
+        >
           <Stepper current={success ? 4 : step} />
 
           {success ? (
-            /* ── SUCCESS STATE ── */
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{
                 width: 56, height: 56, borderRadius: '50%', background: 'var(--color-success)',
@@ -194,14 +267,8 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
               <p style={{ fontSize: 13, color: 'var(--color-secondary)', lineHeight: 1.5, margin: '0 auto 20px', maxWidth: 280 }}>
                 Bi valuterà il tuo consiglio e magari il prossimo ristorante della guida sarà il tuo!
               </p>
-              <button onClick={onClose} style={{
-                ...btnSecondary, flex: 'none', width: '100%',
-              }}>
-                Chiudi
-              </button>
             </div>
           ) : step === 1 ? (
-            /* ── STEP 1 ── */
             <div>
               <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
                 Consiglia un ristorante
@@ -210,7 +277,6 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Dicci dove dovrebbe andare Bi!
               </p>
 
-              {/* Nome ristorante */}
               <div style={inputStyle}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                   <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
@@ -218,7 +284,6 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome ristorante" style={fieldStyle} />
               </div>
 
-              {/* Indirizzo */}
               <div style={inputStyle}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
@@ -230,31 +295,15 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Oppure incolla il link di Google Maps
               </p>
 
-              {/* Maps URL */}
-              <div style={{ ...inputStyle, marginBottom: 24 }}>
+              <div style={{ ...inputStyle, marginBottom: 0 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                   <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
                   <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
                 </svg>
                 <input value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="Link Google Maps" style={fieldStyle} />
               </div>
-
-              <button
-                disabled={!nameValid}
-                onClick={() => setStep(2)}
-                style={{
-                  width: '100%', background: nameValid ? 'var(--color-accent)' : 'var(--color-bordo)',
-                  color: nameValid ? '#fff' : 'var(--color-secondary)',
-                  borderRadius: 16, padding: 16, fontSize: 14, fontWeight: 600,
-                  border: 'none', cursor: nameValid ? 'pointer' : 'default',
-                  transition: 'background 0.2s',
-                }}
-              >
-                Avanti
-              </button>
             </div>
           ) : step === 2 ? (
-            /* ── STEP 2 ── */
             <div>
               <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
                 Perché ti piace?
@@ -263,7 +312,6 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Step 2 di 3
               </p>
 
-              {/* Tags */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
                 {TAGS.map(tag => {
                   const active = selectedTags.includes(tag.label)
@@ -287,7 +335,6 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 })}
               </div>
 
-              {/* Description */}
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -300,15 +347,8 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                   boxSizing: 'border-box',
                 }}
               />
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                <button onClick={() => setStep(1)} style={btnSecondary}>Indietro</button>
-                <button onClick={() => setStep(3)} style={btnPrimary}>Avanti</button>
-              </div>
             </div>
           ) : (
-            /* ── STEP 3 ── */
             <div>
               <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
                 Una foto?
@@ -317,7 +357,6 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Facoltativo
               </p>
 
-              {/* Upload area */}
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
               {photoPreview ? (
                 <div style={{ position: 'relative', marginBottom: 20 }}>
@@ -354,20 +393,18 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
               {error && (
                 <p style={{ fontSize: 12, color: 'var(--color-accent)', marginBottom: 12, textAlign: 'center' }}>{error}</p>
               )}
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setStep(2)} style={btnSecondary}>Salta</button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  style={{ ...btnPrimary, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1 }}
-                >
-                  {submitting ? 'Invio...' : 'Invia a Bi'}
-                </button>
-              </div>
             </div>
           )}
+        </div>
+
+        {/* Sticky footer with buttons — always visible */}
+        <div style={{
+          flexShrink: 0, padding: '16px 22px',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
+          background: '#FAF7F2',
+          borderTop: '1px solid var(--color-bordo)',
+        }}>
+          {renderFooter()}
         </div>
       </motion.div>
     </div>
