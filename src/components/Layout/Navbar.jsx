@@ -27,7 +27,7 @@ function countRestaurantsInCity(cityName, restaurants) {
   return restaurants.filter(r => r.city?.toLowerCase() === lower).length;
 }
 
-export default function Navbar({ view = "map", onToggleView, city = "Torino", onCityChange, restaurants = [] }) {
+export default function Navbar({ view = "map", onToggleView, city = "Torino", onCityChange, restaurants = [], onLocateMe }) {
   const { user, profile } = useAuth();
   const { city: globalCity, selectCity: globalSelectCity } = useCity();
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
@@ -118,7 +118,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center" style={{ gap: 8 }}>
             <div className="hidden md:block">
               <LanguageSwitcher />
             </div>
@@ -148,6 +148,24 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               {selectedCity}
               <ChevronDown />
             </button>
+
+            {onLocateMe && (
+              <button
+                onClick={onLocateMe}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: '#fff', border: '1px solid var(--color-bordo)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', flexShrink: 0,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+                aria-label="La mia posizione"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="none">
+                  <path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </nav>

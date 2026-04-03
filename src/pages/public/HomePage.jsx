@@ -7,10 +7,8 @@ import MapView from '../../components/Map/MapView'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
-import SaveButton from '../../components/Restaurant/SaveButton'
 import Navbar from '../../components/Layout/Navbar'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -34,12 +32,6 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
-/*
- * MiniCard — uses <div role="button"> not <button> to avoid
- * the implicit overflow:hidden that buttons have in some browsers.
- * Title uses Cormorant Garamond (not TAN Songbird) at small size
- * to avoid ascender/descender clipping.
- */
 function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
@@ -50,134 +42,74 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
     : null)
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
-  const distance = userPosition && restaurant.latitude && restaurant.longitude
-    ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
-    : null
 
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={() => onClick?.(restaurant)}
-      className="flex-shrink-0"
       style={{
-        width: 260,
-        scrollSnapAlign: 'start',
-        borderRadius: 14,
-        background: 'rgba(255,255,255,0.35)',
-        backdropFilter: 'blur(20px) saturate(1.6)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-        boxShadow: '0 6px 6px rgba(0,0,0,0.15), 0 0 20px rgba(0,0,0,0.06), inset 2px 2px 1px rgba(255,255,255,0.5), inset -1px -1px 1px rgba(255,255,255,0.4)',
-        border: '1px solid rgba(255,255,255,0.45)',
-        cursor: 'pointer',
+        flex: 1, minWidth: 0,
+        borderRadius: 14, background: '#fff', padding: 10,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+        cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center',
         WebkitTapHighlightColor: 'transparent',
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
         position: 'relative',
       }}
     >
-      {/* Green discount strip on top */}
-      {discountTitle && (
-        <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
-          fontSize: 12, fontWeight: 700,
-          padding: '5px 10px',
-          textAlign: 'center',
-          letterSpacing: 0.5,
-        }}>
-          {discountTitle}
-        </div>
-      )}
-
-      {/* Main content row */}
-      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
-      <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+      {/* Photo */}
+      <div style={{ width: 52, height: 52, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
             {category?.emoji || '🍽️'}
           </div>
         )}
       </div>
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
+
+      {/* Info */}
+      <div style={{ flex: 1, minWidth: 0, paddingRight: 22 }}>
         <div style={{
-          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-          fontSize: 11, fontWeight: 600, color: '#22181C',
-          lineHeight: 1.6, marginBottom: 2,
-          whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-          overflow: 'hidden', padding: '2px 0',
+          fontFamily: "'TAN Songbird', serif", fontSize: 14, fontWeight: 700,
+          color: 'var(--color-primary)', lineHeight: 1.3,
+          whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
         }}>
           {restaurant.name}
         </div>
-        {/* Tagline */}
-        {restaurant.tagline && (
-          <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-            {restaurant.tagline}
+        <div style={{ fontSize: 10, color: 'var(--color-secondary)', marginTop: 2 }}>
+          {category?.name || ''}{priceStr ? ` · ${priceStr}` : ''}
+        </div>
+        {discountTitle && (
+          <div style={{
+            marginTop: 3, display: 'inline-block',
+            fontSize: 9, color: 'var(--color-accent)', fontWeight: 500,
+            background: 'rgba(232,69,60,0.1)', padding: '2px 6px', borderRadius: 4,
+          }}>
+            {discountTitle}
           </div>
         )}
-        {/* Category + price */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-          {category && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 2,
-              backgroundColor: `${category.color}20`,
-              color: category.color,
-              fontSize: 9, fontWeight: 600,
-              padding: '1px 6px', borderRadius: 12,
-              whiteSpace: 'nowrap',
-            }}>
-              {category.emoji} {category.name}
-            </span>
-          )}
-          {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
-        </div>
-        {/* Distance */}
-        {distance != null && (
-          <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
-        )}
       </div>
+
+      {/* Heart */}
       {onSave && (
-        <div style={{ position: 'absolute', top: 6, right: 6 }}>
-          <SaveButton saved={saved} onClick={onSave} size="xs" />
+        <div
+          onClick={e => { e.stopPropagation(); onSave() }}
+          style={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24"
+            fill={saved ? 'var(--color-accent)' : 'none'}
+            stroke={saved ? 'var(--color-accent)' : 'var(--color-bordo)'}
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+          </svg>
         </div>
       )}
-      </div>
     </div>
   )
 }
 
-/*
- * Inline map controls — rendered here directly instead of a separate component
- * so we have full control over positioning without prop-passing issues.
- */
-function InlineMapControls({ onLocateMe, isLocating, onZoomIn, onZoomOut, bottom, hidden }) {
-  const btnStyle = {
-    width: 44, height: 44, borderRadius: '50%',
-    background: 'rgba(20,20,20,0.55)',
-    backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: 'pointer', color: '#fff',
-    WebkitTapHighlightColor: 'transparent',
-  }
-  return (
-    <div style={{ position: 'absolute', right: 16, bottom, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 15, opacity: hidden ? 0 : 1, visibility: hidden ? 'hidden' : 'visible', transition: 'opacity 0.2s, visibility 0.2s' }}>
-      <button onClick={onLocateMe} style={{ ...btnStyle, color: isLocating ? '#3B82F6' : '#fff' }} aria-label="Posizione">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" /><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
-        </svg>
-      </button>
-      <button onClick={onZoomIn} style={btnStyle} aria-label="Zoom +">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-      </button>
-      <button onClick={onZoomOut} style={btnStyle} aria-label="Zoom -">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
-      </button>
-    </div>
-  )
-}
 
 export default function HomePage() {
   const { t } = useTranslation()
@@ -218,20 +150,6 @@ export default function HomePage() {
   const [visibleIds, setVisibleIds] = useState(null)
   const [mapCenter, setMapCenter] = useState(null)
   const mapRef = useRef(null)
-  const bottomPanelRef = useRef(null)
-  const [bottomPanelH, setBottomPanelH] = useState(160)
-
-  // Measure actual bottom panel height with ResizeObserver (no render loops)
-  useEffect(() => {
-    const el = bottomPanelRef.current
-    if (!el) return
-    const ro = new ResizeObserver(([entry]) => {
-      const h = entry.contentRect.height
-      if (h > 0) setBottomPanelH(h)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
   const handleVisibleRestaurantsChange = useCallback((ids, center) => {
     setVisibleIds(new Set(ids))
@@ -281,20 +199,17 @@ export default function HomePage() {
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
   const sheetY = useMotionValue(windowH)
   const [isSheetActive, setIsSheetActive] = useState(false)
-  const [isDraggingBar, setIsDraggingBar] = useState(false)
   const sheetOpacity = useTransform(sheetY, [windowH, windowH * 0.4, 0], [0, 1, 1])
-
-  // Show sheet = fully open; hide bottom panel only when sheet is open AND not mid-drag
-  const hideBottomPanel = isSheetActive && !isDraggingBar
+  const hideBottomPanel = isSheetActive
 
   const openSheet = useCallback(() => {
-    setIsDraggingBar(false)
+
     setIsSheetActive(true)
     animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
   }, [sheetY])
 
   const closeSheet = useCallback(() => {
-    setIsDraggingBar(false)
+
     animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 })
     setTimeout(() => setIsSheetActive(false), 500)
   }, [sheetY, windowH])
@@ -330,26 +245,6 @@ export default function HomePage() {
     root.addEventListener('scroll', onScroll, { passive: true })
     return () => root.removeEventListener('scroll', onScroll)
   }, [isSheetActive])
-
-  // Bar drag: pull up to reveal sheet
-  const barBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first, tap }) => {
-    if (tap) return // let onClick handle taps
-    if (first) {
-      setIsDraggingBar(true)
-      setIsSheetActive(true) // make sheet z-index visible
-    }
-    if (active) {
-      // my < 0 when dragging up. Map windowH+my so sheet slides in.
-      sheetY.set(Math.max(0, Math.min(windowH, windowH + my)))
-    } else {
-      setIsDraggingBar(false)
-      if (sheetY.get() < windowH * 0.6 || (vy > 0.3 && dy < 0)) {
-        openSheet()
-      } else {
-        closeSheet()
-      }
-    }
-  }, { axis: 'y', filterTaps: true, pointer: { touch: true } })
 
   // Sheet handle drag: pull down to close
   const handleBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active }) => {
@@ -396,6 +291,7 @@ export default function HomePage() {
         onToggleView={() => isSheetActive ? closeSheet() : openSheet()}
         restaurants={allRestaurants}
         onCityChange={handleCityChange}
+        onLocateMe={handleLocateMe}
       />
 
       <MapView
@@ -410,108 +306,53 @@ export default function HomePage() {
         className="absolute inset-0"
       />
 
-      {/* Map controls — use measured bottom panel height */}
-      <InlineMapControls
-        onLocateMe={handleLocateMe}
-        isLocating={geoLoading}
-        onZoomIn={() => mapRef.current?.zoomIn()}
-        onZoomOut={() => mapRef.current?.zoomOut()}
-        bottom={TAB_BAR_HEIGHT + 200}
-        hidden={hideBottomPanel}
-      />
 
-      {/* === Bottom panel on map — never unmount, hide with CSS so drag stays alive === */}
-      <div
-        ref={bottomPanelRef}
-        className="absolute left-0 right-0"
-        style={{
-          bottom: TAB_BAR_HEIGHT, zIndex: 20, pointerEvents: 'none',
-          opacity: hideBottomPanel ? 0 : 1,
-          visibility: hideBottomPanel ? 'hidden' : 'visible',
-          transition: 'opacity 0.2s, visibility 0.2s',
-        }}
-      >
-          {/* Floating cards */}
-          {carouselRestaurants.length > 0 && (
-            <div
-              className="flex items-end gap-2.5 pb-3 overflow-x-auto carousel-scroll"
-              style={{
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none', msOverflowStyle: 'none',
-                pointerEvents: 'auto',
-              }}
-            >
-              <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
-              {carouselRestaurants.map((r, i) => (
-                <div key={r.id} className="flex-shrink-0" style={i === 0 ? { marginLeft: 16 } : undefined}>
-                  <MiniCard
-                    restaurant={r}
-                    userPosition={position}
-                    discountTitle={discountTitleMap[r.id]}
-                    saved={isSaved(r.id)}
-                    onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
-                    onClick={handleCardClick}
-                  />
-                </div>
-              ))}
-              {viewportRestaurants.length > CAROUSEL_MAX && (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={openSheet}
-                  className="flex-shrink-0 flex flex-col items-center justify-center"
-                  style={{
-                    width: 72, height: 88, scrollSnapAlign: 'start', borderRadius: 14,
-                    marginRight: 16,
-                    background: 'rgba(0,0,0,0.45)',
-                    backdropFilter: 'blur(20px) saturate(1.6)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    cursor: 'pointer',
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
-                    gap: 6,
-                  }}
-                >
-                  <span style={{
-                    width: 30, height: 30, borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>
-                    {viewportRestaurants.length} locali
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+      {/* === Floating "Lista" pill === */}
+      {!hideBottomPanel && viewportRestaurants.length > 0 && (
+        <button
+          onClick={openSheet}
+          style={{
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 130, left: '50%',
+            transform: 'translateX(-50%)', zIndex: 10,
+            background: 'var(--color-primary)', borderRadius: 20,
+            padding: '9px 18px', border: 'none', cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            display: 'flex', alignItems: 'center', gap: 7,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Lista</span>
+          <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{viewportRestaurants.length}</span>
+        </button>
+      )}
 
-          {/* "Mostra elenco" bar */}
-          <div
-            {...barBind()}
-            onClick={openSheet}
-            style={{
-              background: 'rgba(250,247,242,0.96)',
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-              borderRadius: '20px 20px 0 0',
-              boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
-              padding: '10px 0 14px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-              touchAction: 'none', cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-              pointerEvents: 'auto',
-            }}
-          >
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)' }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#E8453C' }}>
-              Mostra elenco di {viewportRestaurants.length} ristoranti
-            </span>
-          </div>
+      {/* === Mini cards on map === */}
+      {!hideBottomPanel && carouselRestaurants.length > 0 && (
+        <div
+          style={{
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 16, left: 10, right: 10,
+            zIndex: 5, display: 'flex', gap: 8,
+            pointerEvents: 'auto',
+          }}
+        >
+          {carouselRestaurants.slice(0, 2).map(r => (
+            <MiniCard
+              key={r.id}
+              restaurant={r}
+              userPosition={position}
+              discountTitle={discountTitleMap[r.id]}
+              saved={isSaved(r.id)}
+              onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
+              onClick={handleCardClick}
+            />
+          ))}
         </div>
+      )}
 
       {/* === SHEET — always in DOM, translated off-screen when closed === */}
       <motion.div
