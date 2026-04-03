@@ -129,8 +129,8 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               style={{
                 fontSize: 12, color: '#555', fontWeight: 600,
                 padding: '6px 12px', borderRadius: 20,
-                background: 'rgba(0,0,0,0.04)',
-                border: '1px solid rgba(0,0,0,0.08)',
+                background: '#fff',
+                border: '1px solid var(--color-bordo)',
               }}
             >
               <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
