@@ -70,8 +70,8 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       {discountTitle && (
         <div style={{
           background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
-          fontSize: 12, fontWeight: 700, padding: '5px 10px',
-          textAlign: 'center', letterSpacing: 0.5,
+          fontSize: 10, fontWeight: 700, padding: '3px 10px',
+          textAlign: 'center', letterSpacing: 0.3,
         }}>
           {discountTitle}
         </div>
@@ -336,7 +336,7 @@ export default function HomePage() {
         <button
           onClick={openSheet}
           style={{
-            position: 'absolute', bottom: TAB_BAR_HEIGHT + 160, left: '50%',
+            position: 'absolute', bottom: TAB_BAR_HEIGHT + 140, left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
             background: 'rgba(20,20,20,0.55)', borderRadius: 20,
             padding: '9px 18px', border: 'none', cursor: 'pointer',
