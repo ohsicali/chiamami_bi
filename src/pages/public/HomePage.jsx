@@ -58,11 +58,8 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         width: 260,
         scrollSnapAlign: 'start',
         borderRadius: 14,
-        background: 'rgba(255,255,255,0.35)',
-        backdropFilter: 'blur(20px) saturate(1.6)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid rgba(255,255,255,0.45)',
+        background: '#fff',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
@@ -70,6 +67,15 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         position: 'relative',
       }}
     >
+      {discountTitle && (
+        <div style={{
+          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          fontSize: 12, fontWeight: 700, padding: '5px 10px',
+          textAlign: 'center', letterSpacing: 0.5,
+        }}>
+          {discountTitle}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
         <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
           {photoUrl ? (
@@ -117,17 +123,6 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
               </>
             )}
           </div>
-          {/* Discount badge */}
-          {discountTitle && (
-            <span style={{
-              display: 'inline-block', alignSelf: 'flex-start',
-              fontSize: 9, fontWeight: 600, color: '#1a2e05',
-              background: 'linear-gradient(135deg, #a3e63540, #4ade8040)',
-              padding: '2px 7px', borderRadius: 6,
-            }}>
-              {discountTitle}
-            </span>
-          )}
         </div>
         {onSave && (
           <div style={{ position: 'absolute', top: 6, right: 6 }}>
@@ -343,9 +338,11 @@ export default function HomePage() {
           style={{
             position: 'absolute', bottom: TAB_BAR_HEIGHT + 130, left: '50%',
             transform: 'translateX(-50%)', zIndex: 10,
-            background: 'var(--color-primary)', borderRadius: 20,
+            background: 'rgba(20,20,20,0.55)', borderRadius: 20,
             padding: '9px 18px', border: 'none', cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            backdropFilter: 'saturate(180%) blur(40px)',
+            WebkitBackdropFilter: 'saturate(180%) blur(40px)',
             display: 'flex', alignItems: 'center', gap: 7,
             WebkitTapHighlightColor: 'transparent',
           }}
