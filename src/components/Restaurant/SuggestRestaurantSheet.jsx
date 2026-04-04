@@ -140,48 +140,6 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
     border: 'none', cursor: 'pointer',
   }
 
-  const renderFooter = () => {
-    if (success) {
-      return <button onClick={onClose} style={{ ...btnSecondary, flex: 'none', width: '100%' }}>Chiudi</button>
-    }
-    if (step === 1) {
-      return (
-        <button
-          disabled={!nameValid}
-          onClick={() => setStep(2)}
-          style={{
-            width: '100%', background: nameValid ? 'var(--color-accent)' : 'var(--color-bordo)',
-            color: nameValid ? '#fff' : 'var(--color-secondary)',
-            borderRadius: 16, padding: 16, fontSize: 14, fontWeight: 600,
-            border: 'none', cursor: nameValid ? 'pointer' : 'default',
-          }}
-        >
-          Avanti
-        </button>
-      )
-    }
-    if (step === 2) {
-      return (
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => setStep(1)} style={btnSecondary}>Indietro</button>
-          <button onClick={() => setStep(3)} style={btnPrimary}>Avanti</button>
-        </div>
-      )
-    }
-    return (
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={() => setStep(2)} style={btnSecondary}>Salta</button>
-        <button
-          onClick={handleSubmit}
-          disabled={submitting}
-          style={{ ...btnPrimary, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1 }}
-        >
-          {submitting ? 'Invio...' : 'Invia a Bi'}
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, touchAction: 'none' }}>
       {/* Overlay */}
@@ -202,8 +160,9 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           background: '#FAF7F2', borderRadius: '24px 24px 0 0',
-          display: 'flex', flexDirection: 'column',
-          height: 'calc(100% - 60px)',
+          maxHeight: 'calc(100% - 60px)',
+          overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain', touchAction: 'pan-y',
         }}
       >
         {/* Drag handle */}
@@ -224,15 +183,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
           </svg>
         </button>
 
-        {/* Scrollable content */}
-        <div
-          style={{
-            flex: 1, overflowY: 'auto', padding: '0 22px',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            touchAction: 'pan-y',
-          }}
-        >
+        <div style={{ padding: '0 22px 80px' }}>
           <Stepper current={success ? 4 : step} />
 
           {success ? (
@@ -251,6 +202,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
               <p style={{ fontSize: 13, color: 'var(--color-secondary)', lineHeight: 1.5, margin: '0 auto 20px', maxWidth: 280 }}>
                 Bi valuterà il tuo consiglio e magari il prossimo ristorante della guida sarà il tuo!
               </p>
+              <button onClick={onClose} style={{ ...btnSecondary, flex: 'none', width: '100%' }}>Chiudi</button>
             </div>
           ) : step === 1 ? (
             <div>
@@ -279,13 +231,26 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Oppure incolla il link di Google Maps
               </p>
 
-              <div style={{ ...inputStyle, marginBottom: 0 }}>
+              <div style={{ ...inputStyle, marginBottom: 24 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                   <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
                   <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
                 </svg>
                 <input value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="Link Google Maps" style={fieldStyle} />
               </div>
+
+              <button
+                disabled={!nameValid}
+                onClick={() => setStep(2)}
+                style={{
+                  width: '100%', background: nameValid ? 'var(--color-accent)' : 'var(--color-bordo)',
+                  color: nameValid ? '#fff' : 'var(--color-secondary)',
+                  borderRadius: 16, padding: 16, fontSize: 14, fontWeight: 600,
+                  border: 'none', cursor: nameValid ? 'pointer' : 'default',
+                }}
+              >
+                Avanti
+              </button>
             </div>
           ) : step === 2 ? (
             <div>
@@ -331,6 +296,11 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                   boxSizing: 'border-box',
                 }}
               />
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={() => setStep(1)} style={btnSecondary}>Indietro</button>
+                <button onClick={() => setStep(3)} style={btnPrimary}>Avanti</button>
+              </div>
             </div>
           ) : (
             <div>
@@ -377,16 +347,19 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
               {error && (
                 <p style={{ fontSize: 12, color: 'var(--color-accent)', marginBottom: 12, textAlign: 'center' }}>{error}</p>
               )}
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setStep(2)} style={btnSecondary}>Salta</button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  style={{ ...btnPrimary, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1 }}
+                >
+                  {submitting ? 'Invio...' : 'Invia a Bi'}
+                </button>
+              </div>
             </div>
           )}
-        </div>
-
-        {/* Sticky footer — always visible above tab bar */}
-        <div style={{
-          flexShrink: 0, padding: '16px 22px 80px',
-          background: '#FAF7F2',
-        }}>
-          {renderFooter()}
         </div>
       </motion.div>
     </div>
