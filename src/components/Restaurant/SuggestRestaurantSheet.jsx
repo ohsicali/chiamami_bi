@@ -200,10 +200,10 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
         exit={{ y: '100%' }}
         transition={{ type: 'tween', duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
         style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
+          position: 'absolute', bottom: 0, left: 0, right: 0,
           background: '#FAF7F2', borderRadius: '24px 24px 0 0',
           display: 'flex', flexDirection: 'column',
-          height: 'calc(100dvh - 60px)',
+          height: 'calc(100% - 60px)',
         }}
       >
         {/* Drag handle */}
@@ -381,10 +381,9 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
           )}
         </div>
 
-        {/* Sticky footer — always visible */}
+        {/* Sticky footer — always visible above tab bar */}
         <div style={{
-          flexShrink: 0, padding: '16px 22px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
+          flexShrink: 0, padding: '16px 22px 80px',
           background: '#FAF7F2',
         }}>
           {renderFooter()}
