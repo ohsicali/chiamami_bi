@@ -51,45 +51,6 @@ export default function AboutPage() {
   const { user } = useAuth()
   const config = useSiteConfig()
   const [showSuggest, setShowSuggest] = useState(false)
-  const [formSent, setFormSent] = useState(false)
-  const [formStep, setFormStep] = useState(1)
-  const [formExpanded, setFormExpanded] = useState(true)
-  const [formError, setFormError] = useState(false)
-  const [formData, setFormData] = useState({ name: '', restaurant: '', reason: '' })
-
-  const formSteps = [
-    { key: 'name', label: 'Come ti chiami?', placeholder: 'Il tuo nome', field: 'name' },
-    { key: 'restaurant', label: 'Che posto mi consigli?', placeholder: 'Nome del ristorante', field: 'restaurant' },
-    { key: 'reason', label: 'Perché ci devo andare?', placeholder: 'Raccontami...', field: 'reason', multiline: true },
-  ]
-
-  const handleFormContinue = async () => {
-    const currentField = formSteps[formStep - 1].field
-    if (!formData[currentField]?.trim()) {
-      setFormError(true)
-      return
-    }
-    setFormError(false)
-    if (formStep < 3) {
-      setFormStep(formStep + 1)
-      setFormExpanded(false)
-    } else {
-      // Submit
-      if (isSupabaseConfigured()) {
-        await supabase.from('restaurant_suggestions').insert({
-          name: formData.name,
-          restaurant_name: formData.restaurant,
-          reason: formData.reason,
-        })
-      }
-      setFormSent(true)
-    }
-  }
-
-  const handleFormBack = () => {
-    if (formStep === 2) setFormExpanded(true)
-    if (formStep > 1) setFormStep(formStep - 1)
-  }
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: '#22181C' }}>
@@ -418,221 +379,20 @@ export default function AboutPage() {
             </motion.div>
           </section>
 
-          {/* ── Suggerisci un posto — dark card ── */}
+          {/* ── Consiglia un ristorante ── */}
           <section style={{ padding: '0 24px 40px', maxWidth: 600, margin: '0 auto' }}>
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-30px' }}
-              variants={fadeUp}
+            <button
+              onClick={() => setShowSuggest(true)}
+              style={{
+                width: '100%', background: 'var(--color-accent)', color: '#fff',
+                borderRadius: 16, padding: 18, fontSize: 15, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+              }}
             >
-              <div style={{
-                background: '#fff', borderRadius: 16, padding: '28px 22px',
-                position: 'relative', overflow: 'hidden',
-                border: '1px solid rgba(0,0,0,0.08)',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-              }}>
-
-                <AnimatePresence mode="wait">
-                  {formSent ? (
-                    <motion.div
-                      key="success"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center',
-                        padding: '20px 0', gap: 12,
-                      }}
-                    >
-                      <div style={{
-                        width: 52, height: 52, borderRadius: '50%',
-                        background: 'rgba(74,222,128,0.12)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 6L9 17l-5-5"/>
-                        </svg>
-                      </div>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C' }}>Grazie!</p>
-                      <p style={{ fontSize: 14, color: '#8A8680', textAlign: 'center' }}>
-                        Il tuo suggerimento è stato inviato.<br />Lo proverò presto!
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <motion.div key="form" exit={{ opacity: 0 }}>
-                      <div style={{ position: 'relative', zIndex: 1 }}>
-                        {/* Title */}
-                        <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C', marginBottom: 6 }}>
-                          Hai un posto da consigliarmi?
-                        </p>
-                        <p style={{ fontSize: 13, color: '#8A8680', marginBottom: 22 }}>
-                          Rispondi a 3 domande veloci
-                        </p>
-
-                        {/* Progress dots */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 24, position: 'relative', marginBottom: 24 }}>
-                          {[1, 2, 3].map((dot) => (
-                            <div
-                              key={dot}
-                              style={{
-                                width: 8, height: 8, borderRadius: '50%',
-                                background: dot <= formStep ? '#fff' : 'rgba(0,0,0,0.1)',
-                                position: 'relative', zIndex: 2,
-                                transition: 'background 0.3s',
-                              }}
-                            />
-                          ))}
-                          {/* Red progress bar */}
-                          <motion.div
-                            initial={{ width: 24 }}
-                            animate={{
-                              width: formStep === 1 ? 24 : formStep === 2 ? 56 : 88,
-                            }}
-                            transition={{
-                              type: 'spring', stiffness: 300, damping: 20, mass: 0.8,
-                            }}
-                            style={{
-                              position: 'absolute', left: -8, top: -8,
-                              height: 24, borderRadius: 12,
-                              background: '#E8453C',
-                              zIndex: 1,
-                            }}
-                          />
-                        </div>
-
-                        {/* Step question + input */}
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={formStep}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.25 }}
-                          >
-                            <p style={{ fontSize: 16, fontWeight: 700, color: '#22181C', marginBottom: 14 }}>
-                              {formSteps[formStep - 1].label}
-                            </p>
-                            {formSteps[formStep - 1].multiline ? (
-                              <textarea
-                                autoFocus
-                                placeholder={formSteps[formStep - 1].placeholder}
-                                rows={3}
-                                value={formData[formSteps[formStep - 1].field]}
-                                onChange={e => { setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value })); setFormError(false) }}
-                                style={{
-                                  width: '100%', padding: '14px 16px', borderRadius: 14,
-                                  border: '1px solid rgba(0,0,0,0.08)',
-                                  background: '#FAF7F2',
-                                  fontSize: 15, color: '#22181C', outline: 'none', resize: 'none',
-                                }}
-                              />
-                            ) : (
-                              <input
-                                autoFocus
-                                type="text"
-                                placeholder={formSteps[formStep - 1].placeholder}
-                                value={formData[formSteps[formStep - 1].field]}
-                                onChange={e => { setFormData(p => ({ ...p, [formSteps[formStep - 1].field]: e.target.value })); setFormError(false) }}
-                                style={{
-                                  width: '100%', padding: '14px 16px', borderRadius: 14,
-                                  border: '1px solid rgba(0,0,0,0.08)',
-                                  background: '#FAF7F2',
-                                  fontSize: 15, color: '#22181C', outline: 'none',
-                                }}
-                              />
-                            )}
-                          </motion.div>
-                        </AnimatePresence>
-
-                        {/* Error */}
-                        <AnimatePresence>
-                          {formError && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -4 }}
-                              style={{ fontSize: 12, color: '#E8453C', fontWeight: 600, marginTop: 8 }}
-                            >
-                              Questo campo è obbligatorio
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
-
-                        {/* Buttons */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: formError ? 10 : 16 }}>
-                          {!formExpanded && (
-                            <motion.button
-                              initial={{ opacity: 0, width: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, width: 64, scale: 1 }}
-                              transition={{
-                                type: 'spring', stiffness: 400, damping: 15, mass: 0.8,
-                                opacity: { duration: 0.2 },
-                              }}
-                              onClick={handleFormBack}
-                              style={{
-                                padding: '13px 16px', borderRadius: 50,
-                                background: '#F0EBE3', color: '#22181C',
-                                border: 'none', fontSize: 14, fontWeight: 600,
-                                cursor: 'pointer', flexShrink: 0,
-                              }}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 12H5M12 19l-7-7 7-7"/>
-                              </svg>
-                            </motion.button>
-                          )}
-                          <motion.button
-                            onClick={handleFormContinue}
-                            whileTap={{ scale: 0.97 }}
-                            animate={{ flex: formExpanded ? 1 : 'inherit' }}
-                            style={{
-                              padding: '13px 20px', borderRadius: 50,
-                              background: '#E8453C', color: '#fff', border: 'none',
-                              fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                              flex: formExpanded ? 1 : undefined,
-                              width: formExpanded ? undefined : 200,
-                            }}
-                          >
-                            {formStep === 3 && (
-                              <motion.div
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 15, mass: 0.5 }}
-                                style={{ display: 'flex' }}
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                                  <path d="M22 4L12 14.01l-3-3"/>
-                                </svg>
-                              </motion.div>
-                            )}
-                            {formStep === 3 ? 'Invia' : 'Continua'}
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
+              Consiglia un ristorante
+            </button>
           </section>
         </div>
-      </div>
-
-      {/* Consiglia un ristorante CTA */}
-      <div style={{ padding: '0 22px 40px', textAlign: 'center' }}>
-        <button
-          onClick={() => setShowSuggest(true)}
-          style={{
-            width: '100%', maxWidth: 400,
-            background: 'var(--color-accent)', color: '#fff',
-            borderRadius: 16, padding: 16, fontSize: 14, fontWeight: 600,
-            border: 'none', cursor: 'pointer',
-          }}
-        >
-          Consiglia un ristorante
-        </button>
       </div>
 
       {showSuggest && (
