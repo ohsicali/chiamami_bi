@@ -119,7 +119,7 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
     setSubmitting(false)
   }
 
-  const nameValid = name.trim().length >= 2
+  const nameValid = name.trim().length >= 2 || mapsUrl.trim().length >= 5
 
   const inputStyle = {
     display: 'flex', alignItems: 'center', gap: 10,
