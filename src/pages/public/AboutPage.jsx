@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Footer from '../../components/Layout/Footer'
+import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
+import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 const fadeUp = {
@@ -46,7 +48,9 @@ function useSiteConfig() {
 
 export default function AboutPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const config = useSiteConfig()
+  const [showSuggest, setShowSuggest] = useState(false)
   const [formSent, setFormSent] = useState(false)
   const [formStep, setFormStep] = useState(1)
   const [formExpanded, setFormExpanded] = useState(true)
@@ -615,6 +619,25 @@ export default function AboutPage() {
           </section>
         </div>
       </div>
+
+      {/* Consiglia un ristorante CTA */}
+      <div style={{ padding: '0 22px 40px', textAlign: 'center' }}>
+        <button
+          onClick={() => setShowSuggest(true)}
+          style={{
+            width: '100%', maxWidth: 400,
+            background: 'var(--color-accent)', color: '#fff',
+            borderRadius: 16, padding: 16, fontSize: 14, fontWeight: 600,
+            border: 'none', cursor: 'pointer',
+          }}
+        >
+          Consiglia un ristorante
+        </button>
+      </div>
+
+      {showSuggest && (
+        <SuggestRestaurantSheet userId={user?.id} onClose={() => setShowSuggest(false)} />
+      )}
 
       <Footer />
     </div>
