@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
-import { supabase } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
@@ -16,6 +17,8 @@ export default function ProfilePage() {
   const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, reviewsCount: 0, totalSaved: 0 })
   const [showSuggest, setShowSuggest] = useState(false)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
+  const [newsletterEnabled, setNewsletterEnabled] = useState(false)
+  const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const { city: currentCity } = useCity()
 
   useEffect(() => {
@@ -43,6 +46,20 @@ export default function ProfilePage() {
       })
     })
   }, [user?.id, savedIds.size])
+
+  // Newsletter status
+  useEffect(() => {
+    if (!user?.email || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
+    supabase.from('newsletter_subscribers').select('id').eq('email', user.email).single()
+      .then(({ data }) => { setNewsletterEnabled(!!data); setLoadingNewsletter(false) })
+  }, [user?.email])
+
+  const handleToggleNewsletter = async () => {
+    const newState = !newsletterEnabled
+    setNewsletterEnabled(newState)
+    if (newState) { await supabase.from('newsletter_subscribers').upsert({ email: user.email, source: 'profile_toggle' }, { onConflict: 'email' }) }
+    else { await supabase.from('newsletter_subscribers').delete().eq('email', user.email) }
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -274,6 +291,35 @@ export default function ProfilePage() {
             </div>
           </button>
         ))}
+      </div>
+
+      {/* ── NEWSLETTER TOGGLE ── */}
+      <div style={{
+        margin: '0 22px 16px', padding: '14px 16px',
+        background: '#fff', borderRadius: 16,
+        border: '1px solid var(--color-bordo)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</div>
+          <div style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</div>
+        </div>
+        <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
+          position: 'relative', width: 48, height: 28, borderRadius: 14,
+          background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
+          border: 'none', cursor: 'pointer', transition: 'background 0.2s',
+          flexShrink: 0,
+        }}>
+          <motion.div
+            style={{
+              position: 'absolute', top: 2, width: 24, height: 24,
+              borderRadius: 12, background: '#fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+            }}
+            animate={{ left: newsletterEnabled ? 22 : 2 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          />
+        </button>
       </div>
 
       {/* ── SOCIAL BUTTONS ── */}
