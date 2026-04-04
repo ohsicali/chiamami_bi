@@ -13,7 +13,7 @@ const TAGS = [
 
 function Stepper({ current }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '4px 0 12px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '4px 0 24px' }}>
       {[1, 2, 3].map((step, i) => {
         const done = step < current
         const active = step === current
