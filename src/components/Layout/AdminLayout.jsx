@@ -97,6 +97,17 @@ function ApplicationIcon(props) {
     </svg>
   )
 }
+function PartnerIcon(props) {
+  return (
+    <svg {...iconProps} {...props}>
+      <path d="M20 21v-2a4 4 0 00-3-3.87" />
+      <path d="M4 21v-2a4 4 0 013-3.87" />
+      <circle cx="12" cy="7" r="4" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+      <path d="M8 3.13a4 4 0 000 7.75" />
+    </svg>
+  )
+}
 function NewsletterIcon(props) {
   return (
     <svg {...iconProps} {...props}>
@@ -153,7 +164,7 @@ const MENU_SECTIONS = [
     label: 'COMMUNITY',
     items: [
       { to: '/admin/users', label: 'Utenti', icon: UsersIcon },
-      { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
+      { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon, dotKey: 'reviews', dotColor: '#b45309' },
       { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, dotKey: 'suggestions', dotColor: '#E8453C' },
     ],
   },
@@ -161,6 +172,7 @@ const MENU_SECTIONS = [
     label: 'BUSINESS',
     items: [
       { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, dotKey: 'applications', dotColor: '#C4A265' },
+      { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
       { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
     ],
   },
@@ -394,7 +406,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
 export default function AdminLayout({ children, title }) {
   const { user, loading: authLoading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0 })
+  const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0, reviews: 0 })
   const location = useLocation()
 
   // Close mobile menu on route change
@@ -421,7 +433,7 @@ export default function AdminLayout({ children, title }) {
 
     async function fetchCounts() {
       try {
-        const [restRes, suggRes, appRes] = await Promise.all([
+        const [restRes, suggRes, appRes, revRes] = await Promise.all([
           supabase.from('restaurants').select('id', { count: 'exact', head: true }),
           supabase
             .from('restaurant_suggestions')
@@ -431,12 +443,17 @@ export default function AdminLayout({ children, title }) {
             .from('partner_applications')
             .select('id', { count: 'exact', head: true })
             .eq('status', 'pending'),
+          supabase
+            .from('user_reviews')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending'),
         ])
         if (cancelled) return
         setCounts({
           restaurants: restRes.count || 0,
           suggestions: suggRes.count || 0,
           applications: appRes.count || 0,
+          reviews: revRes.count || 0,
         })
       } catch (err) {
         // Silent fail — some tables may not exist yet
