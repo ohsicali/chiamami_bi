@@ -447,6 +447,42 @@ export default function LoginPage() {
             </>
           )}
         </motion.p>
+
+        {/* Public entry points — visible without an account */}
+        <motion.div className="w-full flex flex-col gap-3 pt-2" variants={itemVariants}>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-[11px] uppercase tracking-widest text-secondary">Scopri Bi</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/partner')}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-primary border border-gray-200 hover:border-accent transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                <path d="M16 3.13a4 4 0 010 7.75" />
+              </svg>
+              Per i ristoratori
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/about')}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-primary border border-gray-200 hover:border-accent transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              Chi è Bi
+            </button>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   )
