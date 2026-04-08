@@ -251,37 +251,17 @@ export default function LoginPage() {
           animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
         >
-          {/* Brand icon */}
-          <motion.div
-            variants={itemVariants}
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 20,
-              background: 'linear-gradient(135deg, var(--color-accent), #f07068)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '40px auto 20px',
-              boxShadow: '0 10px 30px rgba(232,69,60,0.25)',
-            }}
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-          </motion.div>
-
           {/* Title */}
           <motion.h1
             variants={itemVariants}
             style={{
               fontFamily: "'TAN Songbird', 'DM Sans', serif",
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: 700,
               color: 'var(--color-primary)',
               textAlign: 'center',
               lineHeight: 1.7,
-              margin: 0,
+              margin: '24px 0 0',
             }}
           >
             {titleText}
@@ -291,12 +271,12 @@ export default function LoginPage() {
           <motion.p
             variants={itemVariants}
             style={{
-              fontSize: 14,
+              fontSize: 13,
               color: 'var(--color-secondary)',
               textAlign: 'center',
               lineHeight: 1.5,
-              marginTop: 10,
-              marginBottom: 32,
+              marginTop: 8,
+              marginBottom: 20,
             }}
           >
             {subtitleText}
@@ -315,17 +295,17 @@ export default function LoginPage() {
                   background: '#fff',
                   border: '1px solid var(--color-bordo)',
                   borderRadius: 14,
-                  padding: 15,
+                  padding: 13,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 10,
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: 500,
                   color: 'var(--color-primary)',
                   cursor: 'pointer',
                   fontFamily: "'DM Sans', sans-serif",
-                  marginBottom: 20,
+                  marginBottom: 14,
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
