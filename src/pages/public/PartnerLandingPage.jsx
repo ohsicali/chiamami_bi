@@ -294,10 +294,10 @@ export default function PartnerLandingPage() {
           </div>
           <h1 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 26,
+            fontSize: 22,
             fontWeight: 700,
             color: '#fff',
-            lineHeight: 1.35,
+            lineHeight: 1.7,
             marginBottom: 16,
           }}>
             Fatti scoprire da migliaia di foodie a Torino
