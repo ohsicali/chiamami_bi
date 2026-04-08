@@ -291,19 +291,41 @@ export default function AnalyticsPage() {
         let withCounts = []
         if (discountIdsWithActivity.length > 0) {
           // Fetch discount details regardless of is_active/valid_until
-          const { data: discDetails } = await supabase
+          // (no embed — restaurants joined client-side from useRestaurants hook)
+          const { data: discDetails, error: discErr } = await supabase
             .from('discounts')
-            .select(
-              'id, title, discount_value, discount_type, drop_time, max_redemptions, is_active, valid_until, restaurant:restaurants(id, name, photos)'
-            )
+            .select('id, title, discount_value, discount_type, drop_time, max_redemptions, is_active, valid_until, restaurant_id')
             .in('id', discountIdsWithActivity)
+
+          if (discErr) {
+            console.warn('Analytics discounts fetch error:', discErr.message)
+          }
+
+          const restMap = {}
+          ;(restaurants || []).forEach((r) => { restMap[r.id] = r })
+
           withCounts = (discDetails || [])
             .map((d) => ({
               ...d,
+              restaurant: restMap[d.restaurant_id] || null,
               generatedCount: discountCounts[d.id]?.gen || 0,
               redeemedCount: discountCounts[d.id]?.used || 0,
             }))
             .sort((a, b) => b.generatedCount - a.generatedCount)
+
+          // Fallback: if the discounts fetch returned nothing (RLS quirk etc.)
+          // but we do have redemption activity, show minimal rows using only
+          // the redemption data so the admin sees *something*.
+          if (withCounts.length === 0) {
+            withCounts = discountIdsWithActivity.map((id) => ({
+              id,
+              title: 'Sconto',
+              discount_value: '—',
+              restaurant: null,
+              generatedCount: discountCounts[id].gen,
+              redeemedCount: discountCounts[id].used,
+            }))
+          }
         }
         if (!cancelled) setActiveDiscounts(withCounts)
 
