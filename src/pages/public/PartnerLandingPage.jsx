@@ -150,14 +150,14 @@ export default function PartnerLandingPage() {
       iconColor: 'var(--color-accent)',
       iconBg: 'rgba(232,69,60,0.1)',
       title: 'Visibilità',
-      desc: 'Card In Evidenza sulla mappa e nella lista dei ristoranti',
+      desc: 'In Evidenza sulla mappa e nella guida di Bi',
     },
     {
       icon: UsersIcon,
       iconColor: 'var(--color-oro)',
       iconBg: 'rgba(196,162,101,0.1)',
       title: 'Community',
-      desc: 'Accesso a migliaia di foodie torinesi attivi ogni mese',
+      desc: 'Accesso a migliaia di persone attive a Torino ogni mese',
     },
     {
       icon: TagIcon,
@@ -171,14 +171,14 @@ export default function PartnerLandingPage() {
       iconColor: 'var(--color-accent)',
       iconBg: 'rgba(232,69,60,0.1)',
       title: 'Contenuti',
-      desc: 'Foto e video professionali con Bi per i tuoi social',
+      desc: 'Foto e video professionali con Bi per i tuoi canali',
     },
   ]
 
   const steps = [
-    { title: 'Candidati', desc: 'Compila il form qui sotto con le info del tuo locale' },
+    { title: 'Candidati', desc: 'Compila il form qui sotto con le info del tuo locale o brand' },
     { title: 'Ti contattiamo', desc: 'Bi valuta la candidatura e ti ricontatta entro 48h' },
-    { title: 'Sei nella guida', desc: 'Il tuo ristorante appare In Evidenza sulla mappa e nella lista' },
+    { title: 'Sei nella guida', desc: 'Il tuo ristorante o brand appare In Evidenza davanti alla community' },
   ]
 
   /* ── Success state ── */
@@ -215,7 +215,7 @@ export default function PartnerLandingPage() {
             maxWidth: 320,
             marginBottom: 32,
           }}>
-            Ti ricontatteremo entro 48 ore per parlare di come portare il tuo locale nella guida.
+            Ti ricontatteremo entro 48 ore per parlare di come portare il tuo ristorante o brand nella guida di Bi.
           </p>
           <button
             onClick={() => navigate('/')}
@@ -239,10 +239,60 @@ export default function PartnerLandingPage() {
 
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-primary)', display: 'flex', flexDirection: 'column' }}>
+      {/* ─── STICKY HEADER ─── */}
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+        background: 'rgba(34,24,28,0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 18px 12px',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}>
+          <button
+            onClick={() => navigate(-1)}
+            aria-label="Torna indietro"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.08)',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img
+              src="/logo-full.svg"
+              alt="ChiamamiBi"
+              style={{ height: 20, width: 'auto', filter: 'brightness(0) invert(1)' }}
+            />
+          </Link>
+          <div style={{ width: 36, height: 36 }} />
+        </div>
+      </header>
+
       {/* ─── HERO — DARK ─── */}
       <section style={{
         background: 'var(--color-primary)',
-        padding: 'calc(env(safe-area-inset-top, 0px) + 18px) 22px 48px',
+        padding: '40px 22px 48px',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -252,28 +302,6 @@ export default function PartnerLandingPage() {
           background: 'radial-gradient(ellipse at 50% 0%, rgba(232,69,60,0.15), transparent 60%)',
           pointerEvents: 'none',
         }} />
-
-        {/* Header row */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          position: 'relative', zIndex: 1,
-          marginBottom: 56,
-        }}>
-          <Link to="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, textDecoration: 'none' }}>
-            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto', filter: 'brightness(0) invert(1) drop-shadow(0 0 0 #E8453C)' }} />
-          </Link>
-          <Link
-            to="/"
-            style={{
-              fontSize: 12,
-              color: 'rgba(255,255,255,0.5)',
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
-            ← Torna alla mappa
-          </Link>
-        </div>
 
         {/* Hero content */}
         <motion.div
@@ -290,7 +318,7 @@ export default function PartnerLandingPage() {
             marginBottom: 12,
             textTransform: 'uppercase',
           }}>
-            Per i ristoratori
+            Per ristoranti e brand
           </div>
           <h1 style={{
             fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
@@ -300,7 +328,7 @@ export default function PartnerLandingPage() {
             lineHeight: 1.7,
             marginBottom: 16,
           }}>
-            Fatti scoprire da migliaia di foodie a Torino
+            Fatti scoprire da migliaia di persone a Torino
           </h1>
           <p style={{
             fontSize: 14,
@@ -308,7 +336,7 @@ export default function PartnerLandingPage() {
             lineHeight: 1.6,
             marginBottom: 32,
           }}>
-            Entra nella guida gastronomica più seguita della città. Il tuo ristorante in evidenza davanti alla community di Bi.
+            Entra nella guida più seguita della città. Il tuo ristorante o brand in evidenza davanti alla community di Bi.
           </p>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -469,7 +497,7 @@ export default function PartnerLandingPage() {
           <div style={labelPillStyle}>Candidati</div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={labelStyle}>Nome del ristorante *</label>
+              <label style={labelStyle}>Nome del ristorante o brand *</label>
               <input
                 type="text"
                 name="restaurant_name"
@@ -520,7 +548,7 @@ export default function PartnerLandingPage() {
             </div>
 
             <div>
-              <label style={labelStyle}>Indirizzo del locale *</label>
+              <label style={labelStyle}>Indirizzo o sede *</label>
               <input
                 type="text"
                 name="address"
