@@ -1219,31 +1219,119 @@ export default function RestaurantForm() {
 
   return (
     <AdminLayout title={isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}>
-      <div className="max-w-3xl mx-auto">
-        {/* Action bar */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-lg font-semibold text-primary">
-            {isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}
-          </h1>
-          <div className="flex items-center gap-2">
-            {isEditing && (
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
-              >
-                Elimina
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => navigate('/admin')}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
+      {/* ── Sticky header ── */}
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 15,
+          background: 'rgba(250,250,250,0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1px solid #eee',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        {/* Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/restaurants')}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 4,
+              cursor: 'pointer',
+              color: '#999',
+              display: 'flex',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+            aria-label="Torna ai ristoranti"
+          >
+            <ArrowLeftIcon className="w-[18px] h-[18px]" />
+          </button>
+          <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Link
+              to="/admin/restaurants"
+              className="hidden sm:inline"
+              style={{
+                fontSize: 12,
+                color: '#999',
+                textDecoration: 'none',
+                flexShrink: 0,
+              }}
             >
-              Annulla
-            </button>
+              Ristoranti
+            </Link>
+            <span className="hidden sm:inline" style={{ color: '#ccc', fontSize: 12, flexShrink: 0 }}>›</span>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#1a1a1f',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {isEditing ? (form.name || 'Modifica ristorante') : 'Nuovo ristorante'}
+            </div>
           </div>
         </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="hidden md:inline-flex"
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                background: 'transparent',
+                border: '1px solid #eee',
+                color: '#b91c1c',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              Elimina
+            </button>
+          )}
+          <button
+            type="submit"
+            form="restaurant-form"
+            disabled={saving}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              background: '#E8453C',
+              border: 'none',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.6 : 1,
+              whiteSpace: 'nowrap',
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+          >
+            {saving ? 'Salvataggio...' : (isEditing ? 'Salva' : 'Pubblica')}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Form body ── */}
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '22px 20px 48px' }}>
 
       {/* Form */}
       <motion.div
@@ -1251,7 +1339,7 @@ export default function RestaurantForm() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <form onSubmit={handleSave} className="space-y-8">
+        <form id="restaurant-form" onSubmit={handleSave} className="space-y-6">
           {/* --- Google Maps autofill --- */}
           <Section title="Compilazione rapida">
             <Field label="Link Google Maps">
@@ -1796,30 +1884,154 @@ export default function RestaurantForm() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
+/*  Helpers — admin design                                             */
 /* ------------------------------------------------------------------ */
 function Section({ title, children }) {
   return (
-    <section className="bg-card rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h2 className="text-base font-semibold text-primary mb-5">{title}</h2>
-      <div className="space-y-4">{children}</div>
+    <section
+      style={{
+        background: '#fff',
+        borderRadius: 12,
+        border: '1px solid #eee',
+        padding: '20px 22px',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      <h2
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: '#1a1a1f',
+          margin: 0,
+          marginBottom: 16,
+          letterSpacing: '-0.1px',
+        }}
+      >
+        {title}
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
+    </section>
+  )
+}
+
+function CollapsibleSection({ title, subtitle, defaultOpen = true, children }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <section
+      style={{
+        background: '#fff',
+        borderRadius: 12,
+        border: '1px solid #eee',
+        overflow: 'hidden',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 22px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <h2
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#1a1a1f',
+              margin: 0,
+              letterSpacing: '-0.1px',
+            }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: 11,
+                color: '#999',
+                margin: '2px 0 0',
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <motion.svg
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          width={16}
+          height={16}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#999"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ flexShrink: 0 }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </motion.svg>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div
+              style={{
+                padding: '6px 22px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+                borderTop: '1px solid #f3f3f3',
+              }}
+            >
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }
 
 function Field({ label, children, error }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-primary mb-1.5">{label}</label>
+    <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <label
+        style={{
+          display: 'block',
+          fontSize: 12,
+          fontWeight: 500,
+          color: '#1a1a1f',
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </label>
       {children}
     </div>
   )
 }
 
 function inputClass(hasError) {
-  return `w-full px-4 py-2.5 rounded-xl border text-base text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 transition-all duration-200 ${
+  return `w-full px-3.5 py-2.5 rounded-lg border text-sm text-[#1a1a1f] placeholder:text-[#aaa] focus:outline-none focus:ring-2 transition-all duration-150 ${
     hasError
-      ? 'border-red-300 focus:ring-red-300/40 focus:border-red-400 bg-red-50/30'
-      : 'border-gray-200 focus:ring-accent/30 focus:border-accent bg-bg'
+      ? 'border-red-300 focus:ring-red-300/30 focus:border-red-400 bg-red-50/30'
+      : 'border-[#eee] focus:ring-[#E8453C]/15 focus:border-[#E8453C]/50 bg-white'
   }`
 }
