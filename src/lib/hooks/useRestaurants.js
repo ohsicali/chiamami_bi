@@ -359,7 +359,11 @@ export function useRestaurants(userPosition = null) {
           .from('restaurants')
           .select('*, restaurant_photos(*)')
           .order('name')
-        if (dbError) throw dbError
+        if (dbError) {
+          // eslint-disable-next-line no-console
+          console.error('[useRestaurants] Supabase error:', dbError)
+          throw dbError
+        }
         const mapped = (data || []).map(r => {
           const { restaurant_photos, ...rest } = r
           return {
@@ -369,12 +373,17 @@ export function useRestaurants(userPosition = null) {
         })
         setAllRestaurants(mapped)
       } else {
+        // Only use mocks when Supabase is NOT configured (local dev without env vars)
         await new Promise(r => setTimeout(r, 300))
         setAllRestaurants(MOCK_RESTAURANTS)
       }
     } catch (err) {
-      setError(err.message)
-      setAllRestaurants(MOCK_RESTAURANTS)
+      // eslint-disable-next-line no-console
+      console.error('[useRestaurants] Fetch failed:', err)
+      setError(err.message || 'Errore nel caricamento dei ristoranti')
+      // Do NOT fallback to MOCK_RESTAURANTS in production — it hides real errors.
+      // Show an empty list so the error is visible to the user.
+      setAllRestaurants([])
     } finally {
       setLoading(false)
     }
