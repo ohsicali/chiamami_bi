@@ -527,7 +527,7 @@ export default function AdminLayout({ children, title }) {
 
       {/* ── Mobile top header ── */}
       <div
-        className="md:hidden"
+        className="flex md:hidden"
         style={{
           position: 'fixed',
           top: 0,
@@ -536,7 +536,6 @@ export default function AdminLayout({ children, title }) {
           height: 48,
           background: '#1a1a1f',
           zIndex: 20,
-          display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 14px',
