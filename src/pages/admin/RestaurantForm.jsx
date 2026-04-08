@@ -1211,7 +1211,12 @@ export default function RestaurantForm() {
       <motion.p
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-xs text-red-500 mt-1"
+        style={{
+          fontSize: 11,
+          color: '#dc2626',
+          marginTop: 6,
+          fontWeight: 500,
+        }}
       >
         {errors[field]}
       </motion.p>
@@ -1221,6 +1226,7 @@ export default function RestaurantForm() {
     <AdminLayout title={isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}>
       {/* ── Sticky header ── */}
       <div
+        className="px-3 md:px-6"
         style={{
           position: 'sticky',
           top: 0,
@@ -1229,11 +1235,12 @@ export default function RestaurantForm() {
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderBottom: '1px solid #eee',
-          padding: '12px 20px',
+          paddingTop: 12,
+          paddingBottom: 12,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 12,
+          gap: 10,
           fontFamily: "'DM Sans', sans-serif",
         }}
       >
@@ -1325,7 +1332,7 @@ export default function RestaurantForm() {
               fontFamily: "'DM Sans', sans-serif",
             }}
           >
-            {saving ? 'Salvataggio...' : (isEditing ? 'Salva' : 'Pubblica')}
+            {saving ? 'Salvataggio...' : 'Salva'}
           </button>
         </div>
       </div>
@@ -1351,13 +1358,13 @@ export default function RestaurantForm() {
                 className={inputClass()}
               />
             </Field>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 onClick={handleGoogleFill}
                 disabled={googleFilling || !form.google_maps_url.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border-2 border-blue-400 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1a1a1f] text-white hover:bg-[#2a2a2f] transition-colors disabled:opacity-40 disabled:cursor-not-allowed self-start"
               >
                 {googleFilling ? (
                   <>
@@ -1367,10 +1374,15 @@ export default function RestaurantForm() {
                     Ricerca in corso...
                   </>
                 ) : (
-                  'Compila automaticamente'
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Compila automaticamente
+                  </>
                 )}
               </motion.button>
-              <p className="text-xs text-secondary self-center">
+              <p style={{ fontSize: 11, color: '#999', lineHeight: 1.5 }}>
                 Dall'app Google Maps tocca "Condividi" → "Copia link". Funzionano anche i link lunghi dal browser.
               </p>
             </div>
@@ -1384,8 +1396,16 @@ export default function RestaurantForm() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200">
-                    <p className="text-sm font-medium text-amber-800 mb-3">
+                  <div
+                    style={{
+                      marginTop: 12,
+                      padding: 14,
+                      borderRadius: 10,
+                      background: '#fef3c7',
+                      border: '1px solid #fde68a',
+                    }}
+                  >
+                    <p style={{ fontSize: 12, fontWeight: 500, color: '#b45309', marginBottom: 10 }}>
                       Google ha bloccato il link. Cerca il ristorante per nome:
                     </p>
                     <div className="flex gap-2">
@@ -1402,7 +1422,19 @@ export default function RestaurantForm() {
                         whileTap={{ scale: 0.97 }}
                         onClick={handleNameSearch}
                         disabled={nameSearching || !nameQuery.trim()}
-                        className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                        style={{
+                          flexShrink: 0,
+                          padding: '8px 16px',
+                          borderRadius: 8,
+                          background: '#b45309',
+                          color: '#fff',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          border: 'none',
+                          cursor: nameSearching || !nameQuery.trim() ? 'not-allowed' : 'pointer',
+                          opacity: nameSearching || !nameQuery.trim() ? 0.5 : 1,
+                          fontFamily: "'DM Sans', sans-serif",
+                        }}
                       >
                         {nameSearching ? 'Cerco...' : 'Cerca'}
                       </motion.button>
@@ -1801,34 +1833,29 @@ export default function RestaurantForm() {
             />
           </Section>
 
-          {/* --- Submit --- */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => navigate('/admin')}
-              className="px-6 py-2.5 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
-            >
-              Annulla
-            </button>
-            <motion.button
-              type="submit"
-              disabled={saving}
-              whileTap={{ scale: 0.97 }}
-              whileHover={{ scale: 1.01 }}
-              className="px-6 py-2.5 rounded-xl text-sm font-medium bg-accent text-white shadow-md hover:bg-[#e64545] transition-colors disabled:opacity-50"
-            >
-              {saving ? (
-                <span className="inline-flex items-center gap-2">
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
-                  </svg>
-                  Salvataggio...
-                </span>
-              ) : (
-                isEditing ? 'Salva Modifiche' : 'Crea Ristorante'
-              )}
-            </motion.button>
-          </div>
+          {/* --- Mobile-only delete (sticky header hides it on small screens) --- */}
+          {isEditing && (
+            <div className="md:hidden" style={{ paddingTop: 8 }}>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  background: '#fff',
+                  border: '1px solid #eee',
+                  color: '#b91c1c',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  fontFamily: "'DM Sans', sans-serif",
+                  cursor: 'pointer',
+                }}
+              >
+                Elimina ristorante
+              </button>
+            </div>
+          )}
         </form>
       </motion.div>
 
@@ -1839,7 +1866,12 @@ export default function RestaurantForm() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{
+              background: 'rgba(26,26,31,0.5)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
             onClick={() => setShowDeleteModal(false)}
           >
             <motion.div
@@ -1847,24 +1879,56 @@ export default function RestaurantForm() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="bg-card rounded-2xl shadow-xl p-6 max-w-sm w-full"
+              style={{
+                background: '#fff',
+                borderRadius: 14,
+                border: '1px solid #eee',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                padding: 24,
+                maxWidth: 380,
+                width: '100%',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold text-primary mb-2">Conferma eliminazione</h3>
-              <p className="text-sm text-secondary mb-6">
-                Sei sicuro di voler eliminare <strong>{form.name}</strong>? Questa azione non puo essere annullata.
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
+                Conferma eliminazione
+              </h3>
+              <p style={{ fontSize: 13, color: '#666', marginBottom: 20, lineHeight: 1.5 }}>
+                Sei sicuro di voler eliminare <strong style={{ color: '#1a1a1f' }}>{form.name}</strong>? Questa azione non può essere annullata.
               </p>
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: 8,
+                    background: 'transparent',
+                    border: '1px solid #eee',
+                    color: '#666',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
                 >
                   Annulla
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={saving}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm disabled:opacity-50"
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: 8,
+                    background: '#dc2626',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    opacity: saving ? 0.6 : 1,
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
                 >
                   {saving ? 'Eliminazione...' : 'Elimina'}
                 </button>
