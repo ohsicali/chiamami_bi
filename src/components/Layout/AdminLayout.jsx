@@ -409,9 +409,10 @@ export default function AdminLayout({ children, title }) {
   const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0, reviews: 0 })
   const location = useLocation()
 
-  // Close mobile menu on route change
+  // Close mobile menu + scroll to top on route change
   useEffect(() => {
     setMobileOpen(false)
+    window.scrollTo(0, 0)
   }, [location.pathname])
 
   // Lock body scroll when mobile sidebar is open
@@ -446,7 +447,7 @@ export default function AdminLayout({ children, title }) {
           supabase
             .from('user_reviews')
             .select('id', { count: 'exact', head: true })
-            .eq('status', 'pending'),
+            .eq('status', 'pending_review'),
         ])
         if (cancelled) return
         setCounts({
@@ -645,8 +646,6 @@ export default function AdminLayout({ children, title }) {
           style={{
             flex: 1,
             minWidth: 0,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
           }}
         >
           {children}
