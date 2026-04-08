@@ -1,128 +1,238 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Link, useSearchParams, Navigate } from 'react-router-dom'
-import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useMemo } from 'react'
+import { Link, Navigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { useAllReviews } from '../../lib/hooks/useReviews'
-import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
-import Badge from '../../components/UI/Badge'
+import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
 
 /* ------------------------------------------------------------------ */
-/*  Relative time helper                                               */
+/*  Format helpers                                                     */
 /* ------------------------------------------------------------------ */
-function timeAgo(date) {
+function formatDate(date) {
+  if (!date) return ''
+  const d = new Date(date)
   const now = new Date()
-  const diff = Math.floor((now - date) / 1000)
+  const diff = Math.floor((now - d) / 1000)
   if (diff < 60) return 'Adesso'
   if (diff < 3600) return `${Math.floor(diff / 60)} min fa`
   if (diff < 86400) return `${Math.floor(diff / 3600)} ore fa`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} giorni fa`
-  return date.toLocaleDateString('it-IT')
-}
-
-/* ------------------------------------------------------------------ */
-/*  Animated counter component                                         */
-/* ------------------------------------------------------------------ */
-function AnimatedCounter({ value, duration = 1.2 }) {
-  const motionVal = useMotionValue(0)
-  const [display, setDisplay] = useState(0)
-
-  useEffect(() => {
-    const controls = animate(motionVal, value, {
-      duration,
-      ease: 'easeOut',
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    })
-    return () => controls.stop()
-  }, [value, duration, motionVal])
-
-  return <span>{display}</span>
+  if (diff < 172800) return 'Ieri'
+  if (diff < 604800) return `${Math.floor(diff / 86400)} g fa`
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
 }
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                              */
 /* ------------------------------------------------------------------ */
-function PlusIcon({ className }) {
+const ic = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.8,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+}
+
+function PlusIcon({ w = 14 }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    <svg {...ic} width={w} height={w}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   )
 }
-function SearchIcon({ className }) {
+function ChevronRight({ w = 14 }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+    <svg {...ic} width={w} height={w}>
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   )
 }
-function ChevronIcon({ className, direction = 'up' }) {
-  const rotation = direction === 'up' ? '' : 'rotate-180'
+function SuggestionIc({ w = 16 }) {
   return (
-    <svg className={`${className} ${rotation}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+    <svg {...ic} width={w} height={w}>
+      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+    </svg>
+  )
+}
+function ApplicationIc({ w = 16 }) {
+  return (
+    <svg {...ic} width={w} height={w}>
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  )
+}
+function ReviewIc({ w = 16 }) {
+  return (
+    <svg {...ic} width={w} height={w}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main Dashboard Page                                                */
+/*  Main Dashboard                                                     */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
 
-  const [search, setSearch] = useState('')
-  const [sortCol, setSortCol] = useState('name')
-  const [sortDir, setSortDir] = useState('asc')
-  const [deleteId, setDeleteId] = useState(null)
-  const [searchParams] = useSearchParams()
-  const restaurantTableRef = useRef(null)
+  const [metrics, setMetrics] = useState({
+    restaurantsTotal: 0,
+    usersTotal: 0,
+    usersThisWeek: 0,
+    discountsActive: 0,
+    dropsActive: 0,
+    qrUsed: 0,
+    qrUsedThisWeek: 0,
+    pendingSuggestions: 0,
+    pendingApplications: 0,
+    pendingReviews: 0,
+  })
+  const [recentRestaurants, setRecentRestaurants] = useState([])
 
-
-  // Scroll to restaurants table if ?section=restaurants
+  // Fetch metrics from Supabase
   useEffect(() => {
-    if (searchParams.get('section') === 'restaurants' && restaurantTableRef.current) {
-      setTimeout(() => {
-        restaurantTableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 300)
+    if (!isSupabaseConfigured() || !user) return
+    let cancelled = false
+
+    async function fetchMetrics() {
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const nowIso = new Date().toISOString()
+
+      try {
+        const [
+          restCount,
+          usersCount,
+          usersWeek,
+          activeDiscounts,
+          qrUsed,
+          qrUsedWeek,
+          pendSugg,
+          pendApp,
+          pendRev,
+          recentRest,
+        ] = await Promise.all([
+          supabase.from('restaurants').select('id', { count: 'exact', head: true }),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
+          supabase
+            .from('discounts')
+            .select('id, drop_time', { count: 'exact' })
+            .eq('is_active', true)
+            .gte('valid_until', nowIso),
+          supabase
+            .from('discount_redemptions')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'redeemed'),
+          supabase
+            .from('discount_redemptions')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'redeemed')
+            .gte('redeemed_at', weekAgo),
+          supabase
+            .from('restaurant_suggestions')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending'),
+          supabase
+            .from('partner_applications')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending'),
+          supabase
+            .from('user_reviews')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending_review'),
+          supabase
+            .from('restaurants')
+            .select('id, name, slug, cuisine_type, category, photos, is_published, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5),
+        ])
+
+        if (cancelled) return
+
+        const dropsActive = (activeDiscounts.data || []).filter((d) => d.drop_time != null).length
+
+        setMetrics({
+          restaurantsTotal: restCount.count || 0,
+          usersTotal: usersCount.count || 0,
+          usersThisWeek: usersWeek.count || 0,
+          discountsActive: activeDiscounts.count || 0,
+          dropsActive,
+          qrUsed: qrUsed.count || 0,
+          qrUsedThisWeek: qrUsedWeek.count || 0,
+          pendingSuggestions: pendSugg.count || 0,
+          pendingApplications: pendApp.count || 0,
+          pendingReviews: pendRev.count || 0,
+        })
+        setRecentRestaurants(recentRest.data || [])
+      } catch (err) {
+        console.warn('Dashboard metrics error:', err?.message || err)
+      }
     }
-  }, [searchParams, dataLoading])
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = restaurants.length
-    const published = restaurants.filter((r) => r.is_published !== false).length
-    const drafts = total - published
-    const cities = new Set(restaurants.map((r) => r.city || 'Torino')).size
-    return { total, published, drafts, cities }
-  }, [restaurants])
+    fetchMetrics()
+  }, [user])
 
-  // Chart data — mock weekly registrations over last 8 weeks
-  const registrationData = useMemo(() => {
-    const weeks = []
-    const now = new Date()
-    for (let i = 7; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i * 7)
-      weeks.push({
-        week: d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
-        utenti: Math.floor(Math.random() * 40) + 10 + i * 3,
-        ristoranti: Math.floor(Math.random() * 5) + (i < 3 ? 2 : 0),
-      })
+  // Chart: weekly registrations (last 8 weeks) — we try to get real data
+  const [registrationData, setRegistrationData] = useState([])
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !user) return
+    let cancelled = false
+
+    async function fetchRegistrations() {
+      try {
+        const eightWeeksAgo = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000).toISOString()
+        const { data } = await supabase
+          .from('profiles')
+          .select('created_at')
+          .gte('created_at', eightWeeksAgo)
+          .order('created_at', { ascending: true })
+
+        if (cancelled) return
+
+        // Bucket by week
+        const buckets = []
+        const now = new Date()
+        for (let i = 7; i >= 0; i--) {
+          const start = new Date(now)
+          start.setDate(start.getDate() - i * 7)
+          const label = start.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+          buckets.push({ week: label, start: start.getTime(), count: 0 })
+        }
+        ;(data || []).forEach((row) => {
+          const t = new Date(row.created_at).getTime()
+          // Find bucket
+          for (let i = buckets.length - 1; i >= 0; i--) {
+            if (t >= buckets[i].start) {
+              buckets[i].count += 1
+              break
+            }
+          }
+        })
+        setRegistrationData(buckets)
+      } catch (err) {
+        console.warn('Registration chart error:', err?.message || err)
+      }
     }
-    return weeks
-  }, [])
+    fetchRegistrations()
+  }, [user])
 
-  // Top restaurants by category
+  // Top categories chart
   const topCategoriesData = useMemo(() => {
     const counts = {}
-    restaurants.forEach(r => {
+    restaurants.forEach((r) => {
       const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-      cats.forEach(c => { counts[c] = (counts[c] || 0) + 1 })
+      cats.forEach((c) => {
+        counts[c] = (counts[c] || 0) + 1
+      })
     })
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
@@ -130,493 +240,596 @@ export default function AdminDashboard() {
       .map(([name, count]) => ({ name, count }))
   }, [restaurants])
 
-  // Reviews for moderation
-  const { reviews: allReviews, updateStatus: updateReviewStatus } = useAllReviews()
-  const pendingReviews = useMemo(() => allReviews.filter(r => r.status === 'pending_review'), [allReviews])
-
-  // Real recent activity feed
-  const [activityFeed, setActivityFeed] = useState([])
-  useEffect(() => {
-    if (!isSupabaseConfigured()) return
-    const fetchActivity = async () => {
-      try {
-        const items = []
-        // Latest restaurants
-        const { data: recentRestaurants } = await supabase
-          .from('restaurants')
-          .select('id, name, created_at')
-          .order('created_at', { ascending: false })
-          .limit(3)
-        ;(recentRestaurants || []).forEach(r => {
-          items.push({ id: `r-${r.id}`, type: 'restaurant', text: `Ristorante aggiunto: ${r.name}`, time: r.created_at, icon: '🍽️' })
-        })
-        // Latest reviews
-        const { data: recentReviews } = await supabase
-          .from('user_reviews')
-          .select('id, created_at, status, restaurant:restaurants(name), user:profiles(full_name)')
-          .order('created_at', { ascending: false })
-          .limit(3)
-        ;(recentReviews || []).forEach(r => {
-          items.push({ id: `rev-${r.id}`, type: 'review', text: `Recensione su ${r.restaurant?.name || '?'} da ${r.user?.full_name || 'Utente'}`, time: r.created_at, icon: r.status === 'pending_review' ? '⏳' : '⭐' })
-        })
-        // Latest redemptions
-        const { data: recentRedemptions } = await supabase
-          .from('discount_redemptions')
-          .select('id, generated_at, redeemed_at, status, discount:discounts(title, discount_value, restaurant:restaurants(name))')
-          .order('generated_at', { ascending: false })
-          .limit(3)
-        ;(recentRedemptions || []).forEach(r => {
-          const action = r.status === 'redeemed' ? 'Sconto usato' : 'QR generato'
-          items.push({ id: `d-${r.id}`, type: 'discount', text: `${action}: ${r.discount?.discount_value || ''} da ${r.discount?.restaurant?.name || '?'}`, time: r.redeemed_at || r.generated_at, icon: '🎟️' })
-        })
-        // Latest partner applications
-        const { data: recentPartners } = await supabase
-          .from('partner_applications')
-          .select('id, created_at, restaurant_name')
-          .order('created_at', { ascending: false })
-          .limit(2)
-        ;(recentPartners || []).forEach(p => {
-          items.push({ id: `p-${p.id}`, type: 'partner', text: `Candidatura partner: ${p.restaurant_name}`, time: p.created_at, icon: '🤝' })
-        })
-        // Sort by time descending
-        items.sort((a, b) => new Date(b.time) - new Date(a.time))
-        setActivityFeed(items.slice(0, 8))
-      } catch (err) {
-        console.error('Failed to fetch activity:', err)
-      }
-    }
-    fetchActivity()
-  }, [])
-
-  // Filtered + sorted
-  const rows = useMemo(() => {
-    let result = [...restaurants]
-
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      result = result.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          (r.cuisine_type || '').toLowerCase().includes(q) ||
-          (r.city || 'Torino').toLowerCase().includes(q) ||
-          (r.address || '').toLowerCase().includes(q)
-      )
-    }
-
-    result.sort((a, b) => {
-      let cmp = 0
-      if (sortCol === 'name') cmp = a.name.localeCompare(b.name, 'it')
-      else if (sortCol === 'city') cmp = (a.city || 'Torino').localeCompare(b.city || 'Torino', 'it')
-      else if (sortCol === 'status') cmp = (a.is_published === false ? 1 : 0) - (b.is_published === false ? 1 : 0)
-      return sortDir === 'asc' ? cmp : -cmp
-    })
-    return result
-  }, [restaurants, search, sortCol, sortDir])
-
-  const handleSort = (col) => {
-    if (sortCol === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    else { setSortCol(col); setSortDir('asc') }
-  }
-
-  const handleTogglePublish = (id) => {
-    // In mock mode this is a no-op visual change; with Supabase it would update the row
-    console.log('Toggle publish:', id)
-  }
-
-  const handleDelete = (id) => {
-    // Mock delete
-    console.log('Delete restaurant:', id)
-    setDeleteId(null)
-  }
-
-
   if (authLoading || dataLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <LoadingSpinner />
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#fafafa',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            border: '3px solid #E8453C',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
+  const userName = user?.email?.split('@')[0] ?? 'Admin'
+
+  // Stat cards data
   const statCards = [
-    { label: 'Ristoranti', value: stats.total, color: '#FF5757', icon: '🍽️' },
-    { label: 'Pubblicati', value: stats.published, color: '#34C759', icon: '✅' },
-    { label: 'Bozze', value: stats.drafts, color: '#F59E0B', icon: '📝' },
-    { label: 'Citta', value: stats.cities, color: '#6366F1', icon: '🏙️' },
+    {
+      label: 'Ristoranti',
+      value: metrics.restaurantsTotal,
+      trend: null,
+    },
+    {
+      label: 'Utenti',
+      value: metrics.usersTotal,
+      trend: metrics.usersThisWeek > 0 ? `+${metrics.usersThisWeek} settimana` : null,
+    },
+    {
+      label: 'Sconti attivi',
+      value: metrics.discountsActive,
+      trend: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
+    },
+    {
+      label: 'QR usati',
+      value: metrics.qrUsed,
+      trend: metrics.qrUsedThisWeek > 0 ? `+${metrics.qrUsedThisWeek} settimana` : null,
+    },
   ]
 
-  const SortHeader = ({ col, children, className = '' }) => (
-    <th
-      className={`px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider cursor-pointer select-none hover:text-primary transition-colors ${className}`}
-      onClick={() => handleSort(col)}
-    >
-      <span className="inline-flex items-center gap-1">
-        {children}
-        {sortCol === col && <ChevronIcon className="w-3 h-3" direction={sortDir === 'asc' ? 'up' : 'down'} />}
-      </span>
-    </th>
-  )
+  // "Da gestire" items
+  const manageItems = [
+    {
+      count: metrics.pendingSuggestions,
+      title: metrics.pendingSuggestions === 1 ? '1 suggerimento utente' : `${metrics.pendingSuggestions} suggerimenti utenti`,
+      subtitle: metrics.pendingSuggestions > 0 ? 'Nuovi da rivedere' : 'Nessun nuovo',
+      color: '#E8453C',
+      bg: 'rgba(232,69,60,0.08)',
+      to: '/admin/suggestions',
+      Icon: SuggestionIc,
+    },
+    {
+      count: metrics.pendingApplications,
+      title: metrics.pendingApplications === 1 ? '1 candidatura partner' : `${metrics.pendingApplications} candidature partner`,
+      subtitle: metrics.pendingApplications > 0 ? 'Da contattare' : 'Nessuna nuova',
+      color: '#C4A265',
+      bg: 'rgba(196,162,101,0.12)',
+      to: '/admin/applications',
+      Icon: ApplicationIc,
+    },
+    {
+      count: metrics.pendingReviews,
+      title: metrics.pendingReviews === 1 ? '1 recensione da moderare' : `${metrics.pendingReviews} recensioni da moderare`,
+      subtitle: metrics.pendingReviews > 0 ? 'In attesa' : 'Tutto a posto',
+      color: '#666',
+      bg: '#f5f5f5',
+      to: '/admin/reviews',
+      Icon: ReviewIc,
+    },
+  ]
 
   return (
     <AdminLayout title="Dashboard">
-      {/* Page header */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
+      {/* ─── HEADER ─── */}
+      <div
+        style={{
+          borderBottom: '1px solid #eee',
+          background: '#fff',
+        }}
+        className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]"
       >
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
-          <p className="text-sm text-secondary mt-0.5">
-            Ciao, {user?.email?.split('@')[0] ?? 'Admin'}
-          </p>
-        </div>
-
-        <Link
-          to="/admin/restaurant/new"
-          className="inline-flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-md hover:bg-[#e64545] transition-colors"
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}
         >
-          <PlusIcon className="w-4 h-4" />
-          Nuovo Ristorante
-        </Link>
-      </motion.div>
-
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statCards.map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08, duration: 0.4 }}
-            className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xl">{s.icon}</span>
-              <span
-                className="inline-block w-2 h-2 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Desktop title */}
+            <div className="hidden md:block">
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Dashboard</h1>
+              <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>Panoramica della guida</p>
             </div>
-            <p className="text-2xl font-bold text-primary">
-              <AnimatedCounter value={s.value} />
-            </p>
-            <p className="text-xs text-secondary mt-0.5">{s.label}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Registrations line chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.4 }}
-          className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
-        >
-          <h3 className="text-sm font-semibold text-primary mb-4">Registrazioni settimanali</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={registrationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-              <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
-              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-              <Line type="monotone" dataKey="utenti" stroke="#FF5757" strokeWidth={2} dot={{ r: 3 }} name="Utenti" />
-              <Line type="monotone" dataKey="ristoranti" stroke="#6366F1" strokeWidth={2} dot={{ r: 3 }} name="Ristoranti" />
-            </LineChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* Top categories bar chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm"
-        >
-          <h3 className="text-sm font-semibold text-primary mb-4">Top categorie</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={topCategoriesData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis type="number" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9ca3af" width={90} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="count" fill="#FF5757" radius={[0, 6, 6, 0]} name="Ristoranti" />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-      </div>
-
-      {/* Reviews moderation section */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.42, duration: 0.4 }}
-        className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-primary">Recensioni</h3>
-            {pendingReviews.length > 0 && (
-              <span className="rounded-full bg-red-500 text-white text-[10px] font-bold px-2 py-0.5">
-                {pendingReviews.length} da moderare
-              </span>
-            )}
+            {/* Mobile title */}
+            <div className="md:hidden">
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+                Ciao, {userName}
+              </h1>
+              <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
+                Ecco cosa succede sulla guida
+              </p>
+            </div>
           </div>
-          <Link to="/admin/reviews" className="text-xs text-accent font-medium">
-            Vedi tutte
+
+          {/* Desktop: new restaurant button */}
+          <Link
+            to="/admin/restaurant/new"
+            className="hidden md:inline-flex"
+            style={{
+              alignItems: 'center',
+              gap: 6,
+              background: '#E8453C',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <PlusIcon w={14} /> Nuovo ristorante
           </Link>
         </div>
-        {pendingReviews.length === 0 ? (
-          <p className="text-sm text-secondary">Nessuna recensione da moderare</p>
-        ) : (
-          <div className="space-y-3">
-            {pendingReviews.slice(0, 5).map(review => (
-              <div key={review.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-primary">{review.user?.full_name || 'Utente'}</span>
-                    <span className="text-xs text-secondary">su {review.restaurant?.name || '?'}</span>
-                  </div>
-                  <p className="text-sm text-secondary line-clamp-2">{review.comment}</p>
-                  {review.ai_reason && (
-                    <p className="text-xs text-amber-600 mt-1">AI: {review.ai_reason}</p>
-                  )}
-                </div>
-                <div className="flex gap-1.5 shrink-0">
-                  <button
-                    onClick={() => updateReviewStatus(review.id, 'published')}
-                    className="rounded-lg bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 transition-colors"
-                  >
-                    Approva
-                  </button>
-                  <button
-                    onClick={() => updateReviewStatus(review.id, 'rejected')}
-                    className="rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors"
-                  >
-                    Rifiuta
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
 
-      {/* Recent activity feed */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.4 }}
-        className="bg-card rounded-2xl border border-gray-100 p-5 shadow-sm mb-8"
-      >
-        <h3 className="text-sm font-semibold text-primary mb-4">Attivita recente</h3>
-        {activityFeed.length === 0 ? (
-          <p className="text-sm text-secondary">Nessuna attivita recente</p>
-        ) : (
-          <div className="space-y-3">
-            {activityFeed.map(item => {
-              const ago = item.time ? timeAgo(new Date(item.time)) : ''
-              return (
-                <div key={item.id} className="flex items-start gap-3">
-                  <span className="text-lg flex-shrink-0 mt-0.5">{item.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-primary">{item.text}</p>
-                    <p className="text-xs text-secondary">{ago}</p>
-                  </div>
+        {/* Mobile quick actions — horizontal scroll */}
+        <div
+          className="md:hidden"
+          style={{
+            display: 'flex',
+            gap: 8,
+            marginTop: 14,
+            overflowX: 'auto',
+            paddingBottom: 4,
+            scrollbarWidth: 'none',
+          }}
+        >
+          <Link
+            to="/admin/restaurant/new"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#E8453C',
+              color: '#fff',
+              padding: '10px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            <PlusIcon w={12} /> Nuovo ristorante
+          </Link>
+          <Link
+            to="/admin/discounts"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#fff',
+              color: '#1a1a1f',
+              border: '1px solid #eee',
+              padding: '10px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            <PlusIcon w={12} /> Nuovo sconto
+          </Link>
+        </div>
+      </div>
+
+      {/* ─── CONTENT ─── */}
+      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* ─── 4 STAT CARDS ─── */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 10,
+          }}
+          className="md:!grid-cols-4 md:gap-4"
+        >
+          {statCards.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.3 }}
+              style={{
+                background: '#fff',
+                border: '1px solid #eee',
+                borderRadius: 10,
+                padding: 16,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  color: '#999',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  fontWeight: 500,
+                }}
+              >
+                {s.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  color: '#1a1a1f',
+                  marginTop: 4,
+                  lineHeight: 1.1,
+                }}
+                className="md:!text-[26px]"
+              >
+                {s.value}
+              </div>
+              {s.trend && (
+                <div
+                  style={{
+                    display: 'inline-block',
+                    marginTop: 8,
+                    fontSize: 10,
+                    padding: '2px 6px',
+                    background: '#ecfdf5',
+                    color: '#059669',
+                    borderRadius: 4,
+                    fontWeight: 500,
+                  }}
+                >
+                  {s.trend}
                 </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ─── DA GESTIRE ─── */}
+        <div>
+          <h2
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#1a1a1f',
+              margin: '0 0 10px',
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+          >
+            Da gestire
+          </h2>
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 14,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            {manageItems.map((item, i) => {
+              const isZero = item.count === 0
+              const Content = (
+                <>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: isZero ? '#f5f5f5' : item.bg,
+                      color: isZero ? '#bbb' : item.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <item.Icon w={16} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: isZero ? '#999' : '#1a1a1f',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {item.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: '#999',
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.subtitle}
+                    </div>
+                  </div>
+                  {!isZero && (
+                    <div style={{ color: '#ccc', flexShrink: 0 }}>
+                      <ChevronRight w={14} />
+                    </div>
+                  )}
+                </>
+              )
+              return isZero ? (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 10,
+                    borderRadius: 8,
+                    background: '#fafafa',
+                  }}
+                >
+                  {Content}
+                </div>
+              ) : (
+                <Link
+                  key={i}
+                  to={item.to}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 10,
+                    borderRadius: 8,
+                    background: item.bg,
+                    textDecoration: 'none',
+                  }}
+                >
+                  {Content}
+                </Link>
               )
             })}
           </div>
-        )}
-      </motion.div>
-
-      {/* Search */}
-      <motion.div
-        ref={restaurantTableRef}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mb-4 scroll-mt-20"
-      >
-        <div className="relative max-w-md">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cerca ristoranti..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
-          />
         </div>
-      </motion.div>
 
-      {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-        className="bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead className="border-b border-gray-100 bg-gray-50/50">
-              <tr>
-                <th className="px-4 py-3 w-12" />
-                <SortHeader col="name">Nome</SortHeader>
-                <SortHeader col="city">Citta</SortHeader>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider">Categoria</th>
-                <SortHeader col="status">Stato</SortHeader>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider">Azioni</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {rows.map((r) => {
-                const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-                  .map(name => getCategoryInfo(name))
-                  .filter(Boolean)
-                const cat = cats[0]
-                const isPublished = r.is_published !== false
-                const thumb = proxyImg(
-                  Array.isArray(r.photos) && r.photos.length > 0
-                    ? (typeof r.photos[0] === 'string' ? r.photos[0] : (r.photos[0]?.thumb_url || r.photos[0]?.photo_url))
-                    : null
-                )
-
-                return (
-                  <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
-                    {/* Thumbnail */}
-                    <td className="px-4 py-3">
-                      {thumb ? (
-                        <img src={thumb} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-secondary text-xs">
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4-4a3 3 0 014.24 0L16 16m-2-2l1.17-1.17a3 3 0 014.24 0L21 14M3 6h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1z" />
-                          </svg>
-                        </div>
-                      )}
-                    </td>
-                    {/* Name */}
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-primary">{r.name}</p>
-                      <p className="text-xs text-secondary truncate max-w-[200px]">{r.address}</p>
-                    </td>
-                    {/* City */}
-                    <td className="px-4 py-3 text-sm text-secondary">{r.city || 'Torino'}</td>
-                    {/* Category */}
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {cats.length > 0 ? cats.map(c => (
-                          <Badge key={c.name} color={c.color}>
-                            {c.emoji} {c.name}
-                          </Badge>
-                        )) : (
-                          <span className="text-xs text-secondary">—</span>
-                        )}
-                      </div>
-                    </td>
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPublished ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-                        {isPublished ? 'Pubblicato' : 'Bozza'}
-                      </span>
-                    </td>
-                    {/* Actions */}
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <Link
-                          to={`/admin/restaurant/${r.id}/edit`}
-                          className="p-2 rounded-lg text-secondary hover:text-accent hover:bg-accent/5 transition-colors"
-                          title="Modifica"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </Link>
-                        <button
-                          onClick={() => handleTogglePublish(r.id)}
-                          className={`p-2 rounded-lg transition-colors ${isPublished ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`}
-                          title={isPublished ? 'Nascondi' : 'Pubblica'}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            {isPublished ? (
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
-                            ) : (
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.17-3.592M6.7 6.7A9.965 9.965 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.162 5.175M15 12a3 3 0 01-6 0M3 3l18 18" />
-                            )}
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(r.id)}
-                          className="p-2 rounded-lg text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
-                          title="Elimina"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-secondary text-sm">
-                    {search ? 'Nessun ristorante trovato.' : 'Nessun ristorante ancora.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
-
-      {/* Delete confirmation modal */}
-      <AnimatePresence>
-        {deleteId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4"
-            onClick={() => setDeleteId(null)}
+        {/* ─── ULTIMI AGGIUNTI ─── */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+            }}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="bg-card rounded-2xl shadow-xl p-6 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
+            <h2
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#1a1a1f',
+                margin: 0,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
             >
-              <h3 className="text-lg font-semibold text-primary mb-2">Conferma eliminazione</h3>
-              <p className="text-sm text-secondary mb-6">
-                Sei sicuro di voler eliminare questo ristorante? Questa azione non puo essere annullata.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setDeleteId(null)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
+              Ultimi aggiunti
+            </h2>
+            <Link
+              to="/admin/restaurants"
+              style={{
+                fontSize: 12,
+                color: '#E8453C',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}
+            >
+              Tutti →
+            </Link>
+          </div>
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 8,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {recentRestaurants.slice(0, 3).map((r) => {
+              const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
+                .map((name) => getCategoryInfo(name))
+                .filter(Boolean)
+              const firstCat = cats[0]
+              const thumb = proxyImg(
+                Array.isArray(r.photos) && r.photos.length > 0
+                  ? typeof r.photos[0] === 'string'
+                    ? r.photos[0]
+                    : r.photos[0]?.thumb_url || r.photos[0]?.photo_url
+                  : null
+              )
+              const isPublished = r.is_published !== false
+              return (
+                <Link
+                  key={r.id}
+                  to={`/admin/restaurant/${r.id}/edit`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '8px 8px',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                  }}
                 >
-                  Annulla
-                </button>
-                <button
-                  onClick={() => handleDelete(deleteId)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
-                >
-                  Elimina
-                </button>
+                  {thumb ? (
+                    <img
+                      src={thumb}
+                      alt={r.name}
+                      style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        background: '#f0f0f0',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: '#1a1a1f',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {r.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+                      {firstCat?.name || '—'} · {formatDate(r.created_at)}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontWeight: 500,
+                      background: isPublished ? '#ecfdf5' : '#fef3c7',
+                      color: isPublished ? '#059669' : '#b45309',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isPublished ? 'Live' : 'Bozza'}
+                  </span>
+                </Link>
+              )
+            })}
+            {recentRestaurants.length === 0 && (
+              <div style={{ padding: 14, textAlign: 'center', fontSize: 12, color: '#999' }}>
+                Nessun ristorante
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+
+        {/* ─── GRAFICI — solo desktop ─── */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* Registrazioni */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 16,
+            }}
+          >
+            <h3
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#1a1a1f',
+                margin: '0 0 12px',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              Registrazioni settimanali
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={registrationData}>
+                <defs>
+                  <linearGradient id="reggrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#E8453C" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+                <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" />
+                <YAxis tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid #eee',
+                    fontSize: 12,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  }}
+                />
+                <Area type="monotone" dataKey="count" stroke="#E8453C" strokeWidth={2} fill="url(#reggrad)" name="Utenti" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Top categorie */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 16,
+            }}
+          >
+            <h3
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#1a1a1f',
+                margin: '0 0 12px',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              Top categorie
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={topCategoriesData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: '#999' }}
+                  stroke="#eee"
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid #eee',
+                    fontSize: 12,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  }}
+                />
+                <Bar dataKey="count" fill="#E8453C" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
     </AdminLayout>
   )
 }
