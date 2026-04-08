@@ -28,7 +28,7 @@ function NearbyCard({ restaurant, index, onSelect }) {
     Array.isArray(restaurant.photos) && restaurant.photos.length > 0
       ? typeof restaurant.photos[0] === 'string'
         ? restaurant.photos[0]
-        : restaurant.photos[0]?.photo_url
+        : restaurant.photos[0]?.thumb_url || restaurant.photos[0]?.photo_url
       : null
   )
 

@@ -42,6 +42,8 @@ export default function ReviewCard({ review }) {
           <img
             src={proxyImg(user.avatar_url)}
             alt={user.full_name}
+            loading="lazy"
+            decoding="async"
             className="h-8 w-8 rounded-full object-cover"
           />
         ) : (
@@ -73,8 +75,10 @@ export default function ReviewCard({ review }) {
           {photos.map(photo => (
             <img
               key={photo.id}
-              src={proxyImg(photo.photo_url)}
+              src={proxyImg(photo.thumb_url || photo.photo_url)}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="h-20 w-20 flex-shrink-0 rounded-lg object-cover"
             />
           ))}

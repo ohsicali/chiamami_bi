@@ -604,6 +604,8 @@ function PhotoManager({ photos, onChange }) {
             <img
               src={photo.url}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="w-16 h-16 rounded-lg object-cover shrink-0"
               onError={(e) => { e.target.style.display = 'none' }}
             />

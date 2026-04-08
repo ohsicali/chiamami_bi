@@ -115,7 +115,7 @@ export default function SuggestionsManager() {
 
                   {/* Photo */}
                   {s.photo_url && (
-                    <img src={proxyImg(s.photo_url)} alt="" style={{
+                    <img src={proxyImg(s.photo_url)} alt="" loading="lazy" decoding="async" style={{
                       width: 120, height: 80, objectFit: 'cover', borderRadius: 10, marginBottom: 10,
                     }} />
                   )}

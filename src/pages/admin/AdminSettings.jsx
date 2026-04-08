@@ -514,7 +514,7 @@ function AdminList({ currentUserId }) {
           {admins.map((admin) => (
             <div key={admin.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
               {admin.avatar_url ? (
-                <img src={admin.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                <img src={admin.avatar_url} alt="" loading="lazy" decoding="async" className="w-8 h-8 rounded-full object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent">
                   {(admin.full_name || admin.email || '?')[0].toUpperCase()}

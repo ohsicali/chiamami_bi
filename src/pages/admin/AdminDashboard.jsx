@@ -7,7 +7,7 @@ import { useAllReviews } from '../../lib/hooks/useReviews'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import Badge from '../../components/UI/Badge'
 import AdminLayout from '../../components/Layout/AdminLayout'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 /* ------------------------------------------------------------------ */
@@ -481,16 +481,18 @@ export default function AdminDashboard() {
                   .filter(Boolean)
                 const cat = cats[0]
                 const isPublished = r.is_published !== false
-                const thumb = Array.isArray(r.photos) && r.photos.length > 0
-                  ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.photo_url)
-                  : null
+                const thumb = proxyImg(
+                  Array.isArray(r.photos) && r.photos.length > 0
+                    ? (typeof r.photos[0] === 'string' ? r.photos[0] : (r.photos[0]?.thumb_url || r.photos[0]?.photo_url))
+                    : null
+                )
 
                 return (
                   <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
                     {/* Thumbnail */}
                     <td className="px-4 py-3">
                       {thumb ? (
-                        <img src={thumb} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                        <img src={thumb} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-lg object-cover" />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-secondary text-xs">
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
