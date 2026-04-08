@@ -76,7 +76,7 @@ export default function MobileTabBar() {
       label: 'Profilo',
       icon: UserIcon,
       active: isProfile,
-      onClick: () => navigate(user ? '/profile' : '/login'),
+      onClick: () => navigate('/profile'),
     },
   ]
 
