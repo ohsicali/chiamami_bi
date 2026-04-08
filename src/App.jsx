@@ -80,7 +80,8 @@ export default function App() {
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isHome = location.pathname === '/' || isRestaurantDetail
   const isAdmin = location.pathname.startsWith('/admin')
-  const showTabBar = !isAdmin && !isRestaurantDetail
+  const isPartner = location.pathname === '/partner'
+  const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner
 
   return (
     <>
