@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -10,6 +11,20 @@ const itemVariants = {
     y: 0,
     transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
   },
+}
+
+const inputStyle = {
+  width: '100%',
+  background: '#fff',
+  border: '1px solid var(--color-bordo)',
+  borderRadius: 12,
+  padding: '14px 16px',
+  fontSize: 14,
+  color: 'var(--color-primary)',
+  outline: 'none',
+  fontFamily: "'DM Sans', sans-serif",
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s',
 }
 
 export default function LoginPage() {
@@ -120,407 +135,602 @@ export default function LoginPage() {
     }
   }
 
+  const titleText =
+    mode === 'forgot' ? 'Password dimenticata?'
+    : mode === 'recovery_forgot' ? 'Recupero account'
+    : mode === 'recovery_otp' ? 'Inserisci il codice'
+    : mode === 'recovery_newpwd' ? 'Nuova password'
+    : mode === 'login' ? 'Ciao di nuovo!'
+    : 'Unisciti a noi'
+
+  const subtitleText =
+    mode === 'forgot' ? 'Inserisci la tua email e ti invieremo un link per reimpostarla'
+    : mode === 'recovery_forgot' ? 'Ti invieremo un codice sull\u2019email di recupero'
+    : mode === 'recovery_otp' ? `Abbiamo inviato un codice a ${maskedRecovery || 'la tua email di recupero'}`
+    : mode === 'recovery_newpwd' ? 'Scegli una nuova password per il tuo account'
+    : mode === 'login' ? 'Accedi per salvare i tuoi ristoranti preferiti e sbloccare gli sconti esclusivi'
+    : 'Crea un account per salvare i tuoi posti del cuore'
+
   return (
-    <div className="min-h-dvh bg-bg flex flex-col">
-      {/* ─── STICKY HEADER ─── */}
+    <div
+      className="flex flex-col min-h-dvh"
+      style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}
+    >
+      {/* ─── HEADER — logo + Esplora la mappa ─── */}
       <header
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 30,
-          background: 'rgba(250,247,242,0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid var(--color-bordo)',
-          padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 18px 12px',
+          background: 'var(--color-bg)',
+          borderBottom: '1px solid rgba(0,0,0,0.04)',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <button
-            onClick={() => navigate('/')}
-            aria-label="Torna alla mappa"
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <Link
+            to="/"
             style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              borderRadius: 12,
-              background: 'rgba(0,0,0,0.04)',
-              border: '1px solid var(--color-bordo)',
-              color: 'var(--color-primary)',
-              cursor: 'pointer',
-              padding: 0,
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: 1,
+              textDecoration: 'none',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
+            <img
+              src="/logo-guida-bi.png"
+              alt="La Guida di Bi"
+              style={{ height: 22, width: 'auto' }}
+            />
+            <span
+              style={{
+                fontSize: 9,
+                color: 'var(--color-secondary)',
+                fontWeight: 500,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+              }}
+            >
+              by Chiamami Bi
+            </span>
+          </Link>
           <button
             type="button"
             onClick={() => navigate('/')}
             style={{
-              fontSize: 12,
-              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
               color: 'var(--color-secondary)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              letterSpacing: 0.2,
+              fontWeight: 500,
+              padding: 0,
             }}
           >
-            Torna alla mappa
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            Esplora la mappa
           </button>
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
-      <motion.div
-        className="w-full max-w-sm flex flex-col items-center gap-8"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          visible: { transition: { staggerChildren: 0.06 } },
+      {/* ─── CONTENUTO CENTRATO ─── */}
+      <div
+        style={{
+          flex: 1,
+          padding: `0 22px`,
+          paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT + 24}px)`,
         }}
       >
-        {/* Title */}
-        <motion.div className="text-center" variants={itemVariants}>
-          <h1
-            className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "'TAN Songbird', serif" }}
-          >
-            {mode === 'forgot' ? 'Password dimenticata?' : mode === 'login' ? 'Ciao di nuovo!' : 'Unisciti a noi'}
-          </h1>
-          <p className="mt-2 text-sm text-secondary">
-            {mode === 'forgot'
-              ? 'Inserisci la tua email e ti invieremo un link per reimpostarla'
-              : mode === 'login'
-              ? 'Accedi per salvare i tuoi ristoranti preferiti'
-              : 'Crea un account per salvare i tuoi posti del cuore'}
-          </p>
-        </motion.div>
-
-        {/* Google OAuth — hidden in forgot mode */}
-        {mode !== 'forgot' && (
-          <>
-            <motion.button
-              type="button"
-              onClick={handleGoogle}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-card px-5 py-3.5 text-sm font-semibold text-primary shadow-sm transition-shadow hover:shadow-md"
-              variants={itemVariants}
-              whileTap={{ scale: 0.97 }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Continua con Google
-            </motion.button>
-
-            {/* Divider */}
-            <motion.div
-              className="flex w-full items-center gap-3"
-              variants={itemVariants}
-            >
-              <div className="h-px flex-1 bg-gray-200" />
-              <span className="text-xs text-secondary">oppure</span>
-              <div className="h-px flex-1 bg-gray-200" />
-            </motion.div>
-          </>
-        )}
-
-        {/* Form */}
-        <motion.form
-          onSubmit={handleSubmit}
-          className="flex w-full flex-col gap-4"
-          variants={itemVariants}
+        <motion.div
+          className="w-full max-w-sm"
+          style={{ margin: '0 auto' }}
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
         >
-          <AnimatePresence mode="wait">
-            {mode === 'register' && (
-              <motion.input
-                key="name"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                type="text"
-                placeholder="Il tuo nome"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-                required
-              />
-            )}
-          </AnimatePresence>
-
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-            required
-          />
-
-          {/* Password — hidden in forgot/recovery modes */}
-          <AnimatePresence mode="wait">
-            {(mode === 'login' || mode === 'register') && (
-              <motion.div
-                key="password-field"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-                  required
-                  minLength={6}
-                />
-                {mode === 'login' && (
-                  <button
-                    type="button"
-                    onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
-                    className="mt-2 text-xs text-accent hover:underline"
-                  >
-                    Password dimenticata?
-                  </button>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Forgot mode — "Non ho accesso all'email" link */}
-          <AnimatePresence mode="wait">
-            {mode === 'forgot' && (
-              <motion.div
-                key="forgot-recovery"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <button
-                  type="button"
-                  onClick={() => { setMode('recovery_forgot'); setError(''); setSuccess('') }}
-                  className="text-xs text-secondary hover:text-accent transition-colors"
-                >
-                  Non ho accesso all'email
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Recovery OTP input */}
-          <AnimatePresence mode="wait">
-            {mode === 'recovery_otp' && (
-              <motion.div
-                key="recovery-otp-field"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <input
-                  type="text"
-                  placeholder="Codice a 6 cifre"
-                  value={recoveryOtp}
-                  onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary text-center tracking-widest font-mono shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-                  required
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Recovery new password fields */}
-          <AnimatePresence mode="wait">
-            {mode === 'recovery_newpwd' && (
-              <motion.div
-                key="recovery-pwd-fields"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex flex-col gap-3"
-              >
-                <input
-                  type="password"
-                  placeholder="Nuova password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-                  required
-                  minLength={6}
-                />
-                <input
-                  type="password"
-                  placeholder="Conferma password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-2xl bg-card px-4 py-3.5 text-sm text-primary shadow-sm outline-none ring-1 ring-gray-200 focus:ring-accent transition-shadow"
-                  required
-                  minLength={6}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Consent checkboxes — only in register mode */}
-          <AnimatePresence mode="wait">
-            {mode === 'register' && (
-              <motion.div
-                key="consent"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex flex-col gap-2"
-              >
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 rounded accent-accent"
-                    required
-                  />
-                  <span className="text-xs text-secondary leading-relaxed">
-                    Ho letto e accetto la{' '}
-                    <Link to="/privacy" className="text-accent underline" target="_blank">Privacy Policy</Link>
-                    {' '}e i{' '}
-                    <Link to="/terms" className="text-accent underline" target="_blank">Termini di Servizio</Link>
-                  </span>
-                </label>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Error / success */}
-          <AnimatePresence>
-            {error && (
-              <motion.p
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="text-sm text-red-500 text-center"
-              >
-                {error}
-              </motion.p>
-            )}
-            {success && (
-              <motion.p
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="text-sm text-success text-center"
-              >
-                {success}
-              </motion.p>
-            )}
-          </AnimatePresence>
-
-          {/* Submit */}
-          <motion.button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-2xl bg-accent px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#e64545] disabled:opacity-50"
-            whileTap={{ scale: 0.97 }}
+          {/* Brand icon */}
+          <motion.div
+            variants={itemVariants}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              background: 'linear-gradient(135deg, var(--color-accent), #f07068)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '40px auto 20px',
+              boxShadow: '0 10px 30px rgba(232,69,60,0.25)',
+            }}
           >
-            {submitting
-              ? '...'
-              : mode === 'forgot'
-                ? 'Invia link di reset'
-                : mode === 'recovery_forgot'
-                ? 'Invia codice di recupero'
-                : mode === 'recovery_otp'
-                ? 'Verifica codice'
-                : mode === 'recovery_newpwd'
-                ? 'Reimposta password'
-                : mode === 'login'
-                ? 'Accedi'
-                : 'Crea account'}
-          </motion.button>
-        </motion.form>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          </motion.div>
 
-        {/* Toggle mode */}
-        <motion.p className="text-sm text-secondary" variants={itemVariants}>
-          {(mode === 'forgot' || mode === 'recovery_forgot' || mode === 'recovery_otp' || mode === 'recovery_newpwd') ? (
+          {/* Title */}
+          <motion.h1
+            variants={itemVariants}
+            style={{
+              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+              fontSize: 28,
+              fontWeight: 700,
+              color: 'var(--color-primary)',
+              textAlign: 'center',
+              lineHeight: 1.7,
+              margin: 0,
+            }}
+          >
+            {titleText}
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            variants={itemVariants}
+            style={{
+              fontSize: 14,
+              color: 'var(--color-secondary)',
+              textAlign: 'center',
+              lineHeight: 1.5,
+              marginTop: 10,
+              marginBottom: 32,
+            }}
+          >
+            {subtitleText}
+          </motion.p>
+
+          {/* Google OAuth — hidden in forgot/recovery modes */}
+          {(mode === 'login' || mode === 'register') && (
             <>
-              Ricordi la password?{' '}
-              <button
+              <motion.button
                 type="button"
-                onClick={() => { setMode('login'); setError(''); setSuccess(''); setRecoveryOtp(''); setNewPassword(''); setConfirmPassword('') }}
-                className="font-semibold text-accent"
+                onClick={handleGoogle}
+                variants={itemVariants}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  width: '100%',
+                  background: '#fff',
+                  border: '1px solid var(--color-bordo)',
+                  borderRadius: 14,
+                  padding: 15,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                  marginBottom: 20,
+                }}
               >
-                Torna al login
-              </button>
-            </>
-          ) : mode === 'login' ? (
-            <>
-              Non hai un account?{' '}
-              <button
-                type="button"
-                onClick={() => { setMode('register'); setError(''); setSuccess('') }}
-                className="font-semibold text-accent"
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Continua con Google
+              </motion.button>
+
+              {/* Divider */}
+              <motion.div
+                variants={itemVariants}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginBottom: 20,
+                }}
               >
-                Registrati
-              </button>
-            </>
-          ) : (
-            <>
-              Hai gia un account?{' '}
-              <button
-                type="button"
-                onClick={() => { setMode('login'); setError(''); setSuccess('') }}
-                className="font-semibold text-accent"
-              >
-                Accedi
-              </button>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
+                <span style={{ fontSize: 12, color: '#B5B0AA' }}>oppure</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
+              </motion.div>
             </>
           )}
-        </motion.p>
 
-        {/* Public entry points — visible without an account */}
-        <motion.div className="w-full flex flex-col gap-3 pt-2" variants={itemVariants}>
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-200" />
-            <span className="text-[11px] uppercase tracking-widest text-secondary">Scopri Bi</span>
-            <div className="h-px flex-1 bg-gray-200" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/partner')}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-primary border border-gray-200 hover:border-accent transition-colors"
+          {/* Form */}
+          <motion.form
+            onSubmit={handleSubmit}
+            variants={itemVariants}
+            style={{ display: 'flex', flexDirection: 'column' }}
+          >
+            <AnimatePresence mode="wait">
+              {mode === 'register' && (
+                <motion.input
+                  key="name"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  type="text"
+                  placeholder="Il tuo nome"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  style={{ ...inputStyle, marginBottom: 12 }}
+                  required
+                />
+              )}
+            </AnimatePresence>
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ ...inputStyle, marginBottom: (mode === 'login' || mode === 'register') ? 12 : 18 }}
+              required
+            />
+
+            {/* Password — login / register */}
+            <AnimatePresence mode="wait">
+              {(mode === 'login' || mode === 'register') && (
+                <motion.div
+                  key="password-field"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={{ ...inputStyle, marginBottom: 8 }}
+                    required
+                    minLength={6}
+                  />
+                  {mode === 'login' && (
+                    <div style={{ textAlign: 'right', marginBottom: 18 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--color-accent)',
+                          fontWeight: 500,
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                      >
+                        Password dimenticata?
+                      </button>
+                    </div>
+                  )}
+                  {mode === 'register' && <div style={{ marginBottom: 10 }} />}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Forgot mode — "Non ho accesso all'email" link */}
+            <AnimatePresence mode="wait">
+              {mode === 'forgot' && (
+                <motion.div
+                  key="forgot-recovery"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ marginBottom: 18 }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { setMode('recovery_forgot'); setError(''); setSuccess('') }}
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--color-secondary)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    Non ho accesso all'email
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Recovery OTP input */}
+            <AnimatePresence mode="wait">
+              {mode === 'recovery_otp' && (
+                <motion.div
+                  key="recovery-otp-field"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ marginBottom: 18 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Codice a 6 cifre"
+                    value={recoveryOtp}
+                    onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    style={{
+                      ...inputStyle,
+                      textAlign: 'center',
+                      letterSpacing: 8,
+                      fontFamily: 'monospace',
+                      fontSize: 18,
+                    }}
+                    required
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Recovery new password fields */}
+            <AnimatePresence mode="wait">
+              {mode === 'recovery_newpwd' && (
+                <motion.div
+                  key="recovery-pwd-fields"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}
+                >
+                  <input
+                    type="password"
+                    placeholder="Nuova password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={inputStyle}
+                    required
+                    minLength={6}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Conferma password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    style={inputStyle}
+                    required
+                    minLength={6}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Consent checkboxes — only in register mode */}
+            <AnimatePresence mode="wait">
+              {mode === 'register' && (
+                <motion.div
+                  key="consent"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ marginBottom: 14 }}
+                >
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      style={{ marginTop: 2, accentColor: 'var(--color-accent)' }}
+                      required
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--color-secondary)', lineHeight: 1.5 }}>
+                      Ho letto e accetto la{' '}
+                      <Link to="/privacy" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }} target="_blank">Privacy Policy</Link>
+                      {' '}e i{' '}
+                      <Link to="/terms" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }} target="_blank">Termini di Servizio</Link>
+                    </span>
+                  </label>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error / success */}
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--color-accent)',
+                    textAlign: 'center',
+                    marginTop: 4,
+                    marginBottom: 12,
+                  }}
+                >
+                  {error}
+                </motion.p>
+              )}
+              {success && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--color-success)',
+                    textAlign: 'center',
+                    marginTop: 4,
+                    marginBottom: 12,
+                  }}
+                >
+                  {success}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            {/* Submit */}
+            <motion.button
+              type="submit"
+              disabled={submitting}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                width: '100%',
+                background: submitting ? 'var(--color-secondary)' : 'var(--color-accent)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 14,
+                padding: 16,
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
+                textAlign: 'center',
+                marginBottom: 20,
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                <path d="M16 3.13a4 4 0 010 7.75" />
-              </svg>
-              Per i ristoratori
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/about')}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-primary border border-gray-200 hover:border-accent transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-              Chi è Bi
-            </button>
-          </div>
+              {submitting
+                ? '...'
+                : mode === 'forgot'
+                  ? 'Invia link di reset'
+                  : mode === 'recovery_forgot'
+                  ? 'Invia codice di recupero'
+                  : mode === 'recovery_otp'
+                  ? 'Verifica codice'
+                  : mode === 'recovery_newpwd'
+                  ? 'Reimposta password'
+                  : mode === 'login'
+                  ? 'Accedi'
+                  : 'Crea account'}
+            </motion.button>
+          </motion.form>
+
+          {/* Toggle mode */}
+          <motion.p
+            variants={itemVariants}
+            style={{
+              fontSize: 14,
+              color: 'var(--color-secondary)',
+              textAlign: 'center',
+              marginBottom: 28,
+            }}
+          >
+            {(mode === 'forgot' || mode === 'recovery_forgot' || mode === 'recovery_otp' || mode === 'recovery_newpwd') ? (
+              <>
+                Ricordi la password?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); setError(''); setSuccess(''); setRecoveryOtp(''); setNewPassword(''); setConfirmPassword('') }}
+                  style={{ color: 'var(--color-accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Torna al login
+                </button>
+              </>
+            ) : mode === 'login' ? (
+              <>
+                Non hai un account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('register'); setError(''); setSuccess('') }}
+                  style={{ color: 'var(--color-accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Registrati
+                </button>
+              </>
+            ) : (
+              <>
+                Hai già un account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+                  style={{ color: 'var(--color-accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Accedi
+                </button>
+              </>
+            )}
+          </motion.p>
+
+          {/* Scopri Bi */}
+          <motion.div variants={itemVariants} style={{ paddingBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
+              <span style={{ fontSize: 10, color: '#B5B0AA', letterSpacing: 1.5, fontWeight: 600 }}>SCOPRI BI</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => navigate('/partner')}
+                style={{
+                  flex: 1,
+                  background: '#fff',
+                  border: '1px solid var(--color-bordo)',
+                  borderRadius: 12,
+                  padding: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                  <path d="M16 3.13a4 4 0 010 7.75" />
+                </svg>
+                Ristoratori
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/about')}
+                style={{
+                  flex: 1,
+                  background: '#fff',
+                  border: '1px solid var(--color-bordo)',
+                  borderRadius: 12,
+                  padding: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+                Chi è Bi
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
       </div>
     </div>
   )
