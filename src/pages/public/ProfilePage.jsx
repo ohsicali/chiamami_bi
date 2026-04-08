@@ -133,12 +133,12 @@ export default function ProfilePage() {
             <div style={{
               fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
               fontSize: 20, fontWeight: 700, color: '#fff',
-              lineHeight: 1.35, marginBottom: 8, position: 'relative', zIndex: 1,
+              lineHeight: 1.9, marginBottom: 14, position: 'relative', zIndex: 1,
             }}>
               Accedi per salvare i tuoi posti preferiti
             </div>
             <div style={{
-              fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6,
+              fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7,
               marginBottom: 18, position: 'relative', zIndex: 1,
             }}>
               Sblocca sconti, recensioni e la tua guida personale ai ristoranti di Torino.
