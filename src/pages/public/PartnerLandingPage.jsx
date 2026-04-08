@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
+import Footer from '../../components/Layout/Footer'
 
 /* ─── Benefit icons ─── */
 function EyeIcon({ color }) {
@@ -233,6 +234,7 @@ export default function PartnerLandingPage() {
             Torna alla mappa
           </button>
         </div>
+        <Footer />
       </div>
     )
   }
@@ -632,6 +634,8 @@ export default function PartnerLandingPage() {
             </p>
           </form>
         </section>
+
+        <Footer />
       </div>
     </div>
   )
