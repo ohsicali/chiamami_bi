@@ -1413,8 +1413,8 @@ export default function RestaurantForm() {
             </AnimatePresence>
           </Section>
 
-          {/* --- Basic info --- */}
-          <Section title="Informazioni base">
+          {/* --- Informazioni --- */}
+          <CollapsibleSection title="Informazioni" subtitle="Nome, categorie, prezzo">
             <Field label="Nome *" error={errors.name}>
               <input
                 type="text"
@@ -1435,11 +1435,36 @@ export default function RestaurantForm() {
                 maxLength={60}
                 className={inputClass()}
               />
-              <span style={{ fontSize: 11, color: '#8A8680', marginTop: 2 }}>
+              <span style={{ fontSize: 11, color: '#999', marginTop: 4, display: 'block' }}>
                 {form.tagline.length}/60 — Apparirà sotto il nome nelle card
               </span>
             </Field>
 
+            <Field label="Categorie *" error={errors.categories}>
+              <CategorySelector
+                selected={form.categories}
+                onChange={(v) => update('categories', v)}
+              />
+              <FieldError field="categories" />
+            </Field>
+
+            <Field label="Fascia di prezzo">
+              <PriceSelector
+                value={form.price_range}
+                onChange={(v) => update('price_range', v)}
+              />
+            </Field>
+
+            <Field label="Consigliato per...">
+              <RecommendedForSelector
+                selected={form.recommended_for}
+                onChange={(v) => update('recommended_for', v)}
+              />
+            </Field>
+          </CollapsibleSection>
+
+          {/* --- Posizione --- */}
+          <CollapsibleSection title="Posizione" subtitle="Indirizzo e coordinate sulla mappa">
             <Field label="Indirizzo *" error={errors.address}>
               <input
                 type="text"
@@ -1471,7 +1496,6 @@ export default function RestaurantForm() {
               </Field>
             </div>
 
-            {/* Coordinates */}
             <div className="grid grid-cols-2 gap-4">
               <Field label="Latitudine">
                 <input
@@ -1492,34 +1516,35 @@ export default function RestaurantForm() {
                 />
               </Field>
             </div>
+
             <motion.button
               type="button"
               whileTap={{ scale: 0.97 }}
               onClick={handleGeocode}
               disabled={geocoding}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border-2 border-accent text-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E8453C] text-[#E8453C] hover:bg-[#E8453C]/5 transition-colors disabled:opacity-50 self-start"
             >
               {geocoding ? (
                 <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="45" className="opacity-40" />
                   </svg>
                   Geocodifica in corso...
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  Geocodifica Indirizzo
+                  Trova coordinate da indirizzo
                 </>
               )}
             </motion.button>
-          </Section>
+          </CollapsibleSection>
 
-          {/* --- Contact --- */}
-          <Section title="Contatti">
+          {/* --- Contatti & Social --- */}
+          <CollapsibleSection title="Contatti & Social" subtitle="Telefono, sito, Instagram, TikTok" defaultOpen={false}>
             <Field label="Telefono">
               <input
                 type="tel"
@@ -1545,100 +1570,6 @@ export default function RestaurantForm() {
                 className={inputClass()}
               />
             </Field>
-          </Section>
-
-          {/* --- Classification --- */}
-          <Section title="Classificazione">
-            <Field label="Categorie *" error={errors.categories}>
-              <CategorySelector
-                selected={form.categories}
-                onChange={(v) => update('categories', v)}
-              />
-              <FieldError field="categories" />
-            </Field>
-
-            <Field label="Fascia di prezzo">
-              <PriceSelector
-                value={form.price_range}
-                onChange={(v) => update('price_range', v)}
-              />
-            </Field>
-
-            <Field label="Consigliato per...">
-              <RecommendedForSelector
-                selected={form.recommended_for}
-                onChange={(v) => update('recommended_for', v)}
-              />
-            </Field>
-
-          </Section>
-
-          {/* --- Review & Tip --- */}
-          <Section title="Recensione e consigli">
-            <Field label="La nostra recensione">
-              <textarea
-                value={form.our_review}
-                onChange={(e) => update('our_review', e.target.value)}
-                rows={4}
-                placeholder="Scrivi la tua recensione del ristorante..."
-                className={inputClass() + ' resize-y'}
-              />
-              {form.our_review.trim() && (
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleAiCorrect('our_review')}
-                  disabled={!!aiCorrecting}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
-                >
-                  {aiCorrecting === 'our_review' ? 'Correzione...' : 'Correggi'}
-                </motion.button>
-              )}
-              {aiSuggestion?.field === 'our_review' && (
-                <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
-                  <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
-                  <p className="text-sm text-primary whitespace-pre-wrap">{aiSuggestion.corrected}</p>
-                  <div className="flex gap-2 mt-3">
-                    <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
-                    <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-secondary">Rifiuta</button>
-                  </div>
-                </div>
-              )}
-            </Field>
-            <Field label="I suggerimenti di Bi">
-              <textarea
-                value={form.our_tip}
-                onChange={(e) => update('our_tip', e.target.value)}
-                rows={3}
-                placeholder="I suggerimenti di Bi per chi visita il locale..."
-                className={inputClass() + ' resize-y'}
-              />
-              {form.our_tip.trim() && (
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleAiCorrect('our_tip')}
-                  disabled={!!aiCorrecting}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
-                >
-                  {aiCorrecting === 'our_tip' ? 'Correzione...' : 'Correggi'}
-                </motion.button>
-              )}
-              {aiSuggestion?.field === 'our_tip' && (
-                <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
-                  <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
-                  <p className="text-sm text-primary whitespace-pre-wrap">{aiSuggestion.corrected}</p>
-                  <div className="flex gap-2 mt-3">
-                    <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
-                    <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-secondary">Rifiuta</button>
-                  </div>
-                </div>
-              )}
-            </Field>
-          </Section>
-
-          {/* --- Social / Video --- */}
-          <Section title="Social e Video">
             <Field label="Link Reel Instagram (opzionale)">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-pink-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -1667,19 +1598,83 @@ export default function RestaurantForm() {
                 />
               </div>
             </Field>
-          </Section>
+          </CollapsibleSection>
+
+          {/* --- Recensione Bi --- */}
+          <CollapsibleSection title="Recensione Bi" subtitle="La nostra opinione e i consigli del team" defaultOpen={false}>
+            <Field label="La nostra recensione">
+              <textarea
+                value={form.our_review}
+                onChange={(e) => update('our_review', e.target.value)}
+                rows={4}
+                placeholder="Scrivi la tua recensione del ristorante..."
+                className={inputClass() + ' resize-y'}
+              />
+              {form.our_review.trim() && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleAiCorrect('our_review')}
+                  disabled={!!aiCorrecting}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
+                >
+                  {aiCorrecting === 'our_review' ? 'Correzione...' : 'Correggi con AI'}
+                </motion.button>
+              )}
+              {aiSuggestion?.field === 'our_review' && (
+                <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
+                  <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
+                  <p className="text-sm text-[#1a1a1f] whitespace-pre-wrap">{aiSuggestion.corrected}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
+                    <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-[#666]">Rifiuta</button>
+                  </div>
+                </div>
+              )}
+            </Field>
+            <Field label="I suggerimenti di Bi">
+              <textarea
+                value={form.our_tip}
+                onChange={(e) => update('our_tip', e.target.value)}
+                rows={3}
+                placeholder="I suggerimenti di Bi per chi visita il locale..."
+                className={inputClass() + ' resize-y'}
+              />
+              {form.our_tip.trim() && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleAiCorrect('our_tip')}
+                  disabled={!!aiCorrecting}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
+                >
+                  {aiCorrecting === 'our_tip' ? 'Correzione...' : 'Correggi con AI'}
+                </motion.button>
+              )}
+              {aiSuggestion?.field === 'our_tip' && (
+                <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
+                  <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
+                  <p className="text-sm text-[#1a1a1f] whitespace-pre-wrap">{aiSuggestion.corrected}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
+                    <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-[#666]">Rifiuta</button>
+                  </div>
+                </div>
+              )}
+            </Field>
+          </CollapsibleSection>
 
           {/* --- Photos --- */}
-          <Section title="Foto">
+          <CollapsibleSection title="Foto" subtitle="Galleria del locale (WebP + thumbnail automatici)">
             <PhotoManager
               photos={form.photos}
               onChange={(photos) => update('photos', photos)}
             />
-          </Section>
+          </CollapsibleSection>
 
           {/* --- Discount (inline) --- */}
           {isEditing && (
-            <Section title="Sconto attivo">
+            <CollapsibleSection title="Sconto attivo" subtitle="Gestisci lo sconto del locale" defaultOpen={false}>
               {discountLoading ? (
                 <p className="text-sm text-secondary">Caricamento sconto...</p>
               ) : (
@@ -1794,15 +1789,15 @@ export default function RestaurantForm() {
                   </div>
                 </div>
               )}
-            </Section>
+            </CollapsibleSection>
           )}
 
-          {/* --- Publishing --- */}
+          {/* --- Publishing (non-collapsible, always visible) --- */}
           <Section title="Pubblicazione">
             <Toggle
               checked={form.published}
               onChange={(v) => update('published', v)}
-              label={form.published ? 'Pubblicato' : 'Bozza'}
+              label={form.published ? 'Pubblicato — visibile sulla mappa' : 'Bozza — non visibile'}
             />
           </Section>
 
