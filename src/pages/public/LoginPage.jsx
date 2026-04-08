@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { LogoFull } from '../../components/UI/Logo'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -122,19 +121,62 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-bg flex flex-col items-center justify-center px-5 py-10">
-      {/* Back button */}
-      <Link
-        to="/"
-        className="absolute top-4 left-4 flex items-center gap-1.5 text-sm text-secondary hover:text-primary transition-colors"
+    <div className="min-h-dvh bg-bg flex flex-col">
+      {/* ─── STICKY HEADER ─── */}
+      <header
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+          background: 'rgba(250,247,242,0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid var(--color-bordo)',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 18px 12px',
+        }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5" />
-          <path d="M12 19l-7-7 7-7" />
-        </svg>
-        Torna alla mappa
-      </Link>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <button
+            onClick={() => navigate('/')}
+            aria-label="Torna alla mappa"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              background: 'rgba(0,0,0,0.04)',
+              border: '1px solid var(--color-bordo)',
+              color: 'var(--color-primary)',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--color-secondary)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              letterSpacing: 0.2,
+            }}
+          >
+            Torna alla mappa
+          </button>
+        </div>
+      </header>
 
+      <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
       <motion.div
         className="w-full max-w-sm flex flex-col items-center gap-8"
         initial="hidden"
@@ -143,18 +185,13 @@ export default function LoginPage() {
           visible: { transition: { staggerChildren: 0.06 } },
         }}
       >
-        {/* Logo */}
-        <motion.div variants={itemVariants}>
-          <LogoFull height={36} />
-        </motion.div>
-
         {/* Title */}
         <motion.div className="text-center" variants={itemVariants}>
           <h1
             className="text-2xl font-bold text-primary"
             style={{ fontFamily: "'TAN Songbird', serif" }}
           >
-            {mode === 'forgot' ? 'Password dimenticata?' : mode === 'login' ? 'Bentornata!' : 'Unisciti a noi'}
+            {mode === 'forgot' ? 'Password dimenticata?' : mode === 'login' ? 'Ciao di nuovo!' : 'Unisciti a noi'}
           </h1>
           <p className="mt-2 text-sm text-secondary">
             {mode === 'forgot'
@@ -484,6 +521,7 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </motion.div>
+      </div>
     </div>
   )
 }
