@@ -36,6 +36,9 @@ const ListView = lazy(() => import('./pages/public/ListView'))
 const AboutPage = lazy(() => import('./pages/public/AboutPage'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminRestaurants = lazy(() => import('./pages/admin/AdminRestaurants'))
+const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'))
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 const RestaurantForm = lazy(() => import('./pages/admin/RestaurantForm'))
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
@@ -102,6 +105,9 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AnalyticsPage />} />
+          <Route path="/admin/restaurants" element={<AdminRestaurants />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/restaurant/new" element={<RestaurantForm />} />
           <Route path="/admin/restaurant/:id/edit" element={<RestaurantForm />} />
           <Route path="/admin/categories" element={<CategoryManager />} />

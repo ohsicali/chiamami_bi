@@ -2,299 +2,636 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { LogoFull } from '../UI/Logo'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 /* ------------------------------------------------------------------ */
 /*  SVG Icons                                                          */
 /* ------------------------------------------------------------------ */
-function DashboardIcon({ className }) {
+const iconProps = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.8,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+}
+
+function DashboardIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+    <svg {...iconProps} {...props}>
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="12" width="7" height="9" rx="1" />
+      <rect x="3" y="16" width="7" height="5" rx="1" />
     </svg>
   )
 }
-function RestaurantIcon({ className }) {
+function AnalyticsIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+    <svg {...iconProps} {...props}>
+      <path d="M3 3v18h18" />
+      <path d="M7 14l4-4 4 4 5-5" />
     </svg>
   )
 }
-function DiscountIcon({ className }) {
+function RestaurantIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z" />
+    <svg {...iconProps} {...props}>
+      <path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 002-2V2" />
+      <path d="M5 2v20" />
+      <path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zM16 15v7" />
     </svg>
   )
 }
-function PartnerIcon({ className }) {
+function DiscountIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    <svg {...iconProps} {...props}>
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
     </svg>
   )
 }
-function ReviewIcon({ className }) {
+function CategoryIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+    <svg {...iconProps} {...props}>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
     </svg>
   )
 }
-function NewsletterIcon({ className }) {
+function UsersIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    <svg {...iconProps} {...props}>
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
     </svg>
   )
 }
-function ApplicationIcon({ className }) {
+function ReviewIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    <svg {...iconProps} {...props}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   )
 }
-function SettingsIcon({ className }) {
+function SuggestionIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <svg {...iconProps} {...props}>
+      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
     </svg>
   )
 }
-function LogoutIcon({ className }) {
+function ApplicationIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+    <svg {...iconProps} {...props}>
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
     </svg>
   )
 }
-function ArrowLeftIcon({ className }) {
+function NewsletterIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    <svg {...iconProps} {...props}>
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
     </svg>
   )
 }
-function MenuIcon({ className }) {
+function SettingsIcon(props) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+    <svg {...iconProps} {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
   )
 }
-function XIcon({ className }) {
+function MenuIcon({ width = 18 }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    <svg width={width} height={width} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+      <line x1="4" y1="9" x2="20" y2="9" />
+      <line x1="4" y1="15" x2="14" y2="15" />
     </svg>
   )
 }
-function ChevronRightIcon({ className }) {
+function XIcon({ width = 18 }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  )
-}
-function HomeIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+    <svg width={width} height={width} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Sidebar navigation items                                           */
+/*  Menu structure                                                     */
 /* ------------------------------------------------------------------ */
-const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: DashboardIcon, exact: true },
-  { to: '/admin?section=restaurants', label: 'Ristoranti', icon: RestaurantIcon },
-  { to: '/admin/categories', label: 'Categorie', icon: ApplicationIcon },
-  { to: '/admin/discounts', label: 'Sconti', icon: DiscountIcon },
-  { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
-  { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
-  { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
-  { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon },
-  { to: '/admin/suggestions', label: 'Suggerimenti', icon: ApplicationIcon },
-  { to: '/admin/settings', label: 'Impostazioni', icon: SettingsIcon },
+const MENU_SECTIONS = [
+  {
+    label: null,
+    items: [
+      { to: '/admin', label: 'Dashboard', icon: DashboardIcon, exact: true },
+      { to: '/admin/analytics', label: 'Analytics', icon: AnalyticsIcon },
+    ],
+  },
+  {
+    label: 'GESTIONE',
+    items: [
+      { to: '/admin/restaurants', label: 'Ristoranti', icon: RestaurantIcon, counterKey: 'restaurants' },
+      { to: '/admin/discounts', label: 'Sconti & Drop', icon: DiscountIcon },
+      { to: '/admin/categories', label: 'Categorie', icon: CategoryIcon },
+    ],
+  },
+  {
+    label: 'COMMUNITY',
+    items: [
+      { to: '/admin/users', label: 'Utenti', icon: UsersIcon },
+      { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon },
+      { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, dotKey: 'suggestions', dotColor: '#E8453C' },
+    ],
+  },
+  {
+    label: 'BUSINESS',
+    items: [
+      { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, dotKey: 'applications', dotColor: '#C4A265' },
+      { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
-/*  Sidebar content (shared between desktop and mobile)                */
+/*  Sidebar content                                                    */
 /* ------------------------------------------------------------------ */
-function SidebarContent({ user, onLogout, onNavClick }) {
-  const location = useLocation()
-
+function SidebarContent({ user, location, counts, onNavClick, onClose }) {
   const isActive = (item) => {
-    const itemPath = item.to.split('?')[0]
-    if (item.exact) return location.pathname === itemPath && !location.search
-    return location.pathname === itemPath && (!item.to.includes('?') || location.search === '?' + item.to.split('?')[1])
+    if (item.exact) return location.pathname === item.to
+    return location.pathname === item.to
   }
 
+  const initials = (user?.email || 'A')[0].toUpperCase()
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Logo + back arrow */}
-      <div className="px-5 pt-6 pb-6 flex items-center gap-3">
-        <Link
-          to="/"
-          className="p-1.5 rounded-lg text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
-          title="Torna al sito"
-          onClick={onNavClick}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        background: '#1a1a1f',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      {/* Close button mobile */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 14,
+            right: 14,
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255,255,255,0.6)',
+            cursor: 'pointer',
+            padding: 4,
+            zIndex: 2,
+          }}
         >
-          <ArrowLeftIcon className="w-4 h-4" />
-        </Link>
-        <Link to="/admin" className="flex-1" onClick={onNavClick}>
-          <LogoFull height={20} />
+          <XIcon width={18} />
+        </button>
+      )}
+
+      {/* Logo */}
+      <div style={{ padding: '20px 16px 16px' }}>
+        <Link
+          to="/admin"
+          onClick={onNavClick}
+          style={{
+            display: 'block',
+            textDecoration: 'none',
+            lineHeight: 1.1,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+              fontSize: 13,
+              fontWeight: 700,
+              color: '#E8453C',
+              letterSpacing: 0.3,
+            }}
+          >
+            LA GUIDA DI BI
+          </div>
+          <div
+            style={{
+              fontSize: 9,
+              color: 'rgba(255,255,255,0.25)',
+              letterSpacing: 1.5,
+              marginTop: 4,
+              fontWeight: 600,
+            }}
+          >
+            ADMIN PANEL
+          </div>
         </Link>
       </div>
 
-      {/* Nav links */}
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item)
-          const Icon = item.icon
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              onClick={onNavClick}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-secondary hover:text-primary hover:bg-gray-50'
-              }`}
-            >
-              <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-              {item.label}
-            </Link>
-          )
-        })}
+      {/* Menu */}
+      <nav
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '0 10px',
+        }}
+      >
+        {MENU_SECTIONS.map((section, sIdx) => (
+          <div key={sIdx}>
+            {section.label && (
+              <div
+                style={{
+                  fontSize: 9,
+                  color: 'rgba(255,255,255,0.25)',
+                  letterSpacing: 1.5,
+                  padding: '14px 10px 6px',
+                  fontWeight: 600,
+                }}
+              >
+                {section.label}
+              </div>
+            )}
+            {section.items.map((item) => {
+              const active = isActive(item)
+              const Icon = item.icon
+              const count = item.counterKey ? counts[item.counterKey] : null
+              const showDot = item.dotKey && counts[item.dotKey] > 0
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={onNavClick}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '9px 10px',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    fontSize: 13,
+                    fontWeight: active ? 500 : 400,
+                    color: active ? '#E8453C' : 'rgba(255,255,255,0.6)',
+                    background: active ? 'rgba(232,69,60,0.1)' : 'transparent',
+                    marginBottom: 1,
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
+                >
+                  <Icon
+                    width={16}
+                    height={16}
+                    style={{
+                      color: active ? '#E8453C' : 'rgba(255,255,255,0.4)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {count != null && count > 0 && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: 'rgba(255,255,255,0.2)',
+                        background: 'rgba(255,255,255,0.06)',
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                  {showDot && (
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: item.dotColor,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
-      {/* User info + logout */}
-      <div className="px-5 py-4 border-t border-gray-100 mt-2">
-        <p className="text-xs text-secondary truncate mb-2">{user?.email ?? 'Admin'}</p>
-        <button
-          onClick={() => { onLogout(); onNavClick?.() }}
-          className="flex items-center gap-2 text-sm text-secondary hover:text-red-500 transition-colors"
+      {/* Footer with user */}
+      <div
+        style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '12px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: 'rgba(232,69,60,0.15)',
+            color: '#E8453C',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 11,
+            fontWeight: 600,
+            flexShrink: 0,
+          }}
         >
-          <LogoutIcon className="w-4 h-4" />
-          Esci
-        </button>
+          {initials}
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.6)',
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {user?.email || 'Admin'}
+        </div>
+        <Link
+          to="/admin/settings"
+          onClick={onNavClick}
+          style={{
+            color: 'rgba(255,255,255,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 4,
+          }}
+        >
+          <SettingsIcon width={16} height={16} />
+        </Link>
       </div>
     </div>
   )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main AdminLayout component                                         */
+/*  Main AdminLayout                                                   */
 /* ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title }) {
-  const { user, loading: authLoading, signOut } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0 })
+  const location = useLocation()
 
   // Close mobile menu on route change
-  const location = useLocation()
   useEffect(() => {
     setMobileOpen(false)
   }, [location.pathname])
 
-  // Prevent body scroll when mobile menu is open
+  // Lock body scroll when mobile sidebar is open
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [mobileOpen])
 
-  const closeMobile = () => setMobileOpen(false)
+  // Fetch sidebar counts
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !user) return
+    let cancelled = false
+
+    async function fetchCounts() {
+      try {
+        const [restRes, suggRes, appRes] = await Promise.all([
+          supabase.from('restaurants').select('id', { count: 'exact', head: true }),
+          supabase
+            .from('restaurant_suggestions')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending'),
+          supabase
+            .from('partner_applications')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending'),
+        ])
+        if (cancelled) return
+        setCounts({
+          restaurants: restRes.count || 0,
+          suggestions: suggRes.count || 0,
+          applications: appRes.count || 0,
+        })
+      } catch (err) {
+        // Silent fail — some tables may not exist yet
+        if (!cancelled) console.warn('AdminLayout counts error:', err.message)
+      }
+    }
+
+    fetchCounts()
+    return () => {
+      cancelled = true
+    }
+  }, [user, location.pathname])
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-3 border-accent border-t-transparent rounded-full" />
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#fafafa',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            border: '3px solid #E8453C',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
+
   if (!user) return <Navigate to="/admin/login" replace />
 
+  const initials = (user?.email || 'A')[0].toUpperCase()
+
   return (
-    <div className="min-h-screen bg-bg flex" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#fafafa',
+        display: 'flex',
+        fontFamily: "'DM Sans', sans-serif",
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex flex-col w-60 bg-white border-r border-gray-100 shrink-0 fixed inset-y-0 left-0 z-30">
-        <SidebarContent user={user} onLogout={signOut} onNavClick={() => {}} />
+      <aside
+        className="hidden md:flex"
+        style={{
+          flexDirection: 'column',
+          width: 220,
+          flexShrink: 0,
+          position: 'fixed',
+          top: 0,
+          bottom: 0,
+          left: 0,
+          zIndex: 30,
+        }}
+      >
+        <SidebarContent user={user} location={location} counts={counts} onNavClick={() => {}} />
       </aside>
+
+      {/* ── Mobile top header ── */}
+      <div
+        className="md:hidden"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 48,
+          background: '#1a1a1f',
+          zIndex: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 14px',
+        }}
+      >
+        <button
+          onClick={() => setMobileOpen(true)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255,255,255,0.6)',
+            padding: 6,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+          aria-label="Apri menu"
+        >
+          <MenuIcon width={18} />
+        </button>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#E8453C',
+            letterSpacing: 1,
+          }}
+        >
+          ADMIN
+        </div>
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: 'rgba(232,69,60,0.15)',
+            color: '#E8453C',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 11,
+            fontWeight: 600,
+          }}
+        >
+          {initials}
+        </div>
+      </div>
 
       {/* ── Mobile overlay sidebar ── */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/40 z-40 md:hidden"
-              onClick={closeMobile}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 40,
+              }}
+              className="md:hidden"
+              onClick={() => setMobileOpen(false)}
             />
-            {/* Drawer */}
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white z-50 shadow-xl md:hidden"
+              style={{
+                position: 'fixed',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: 260,
+                zIndex: 50,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
+              }}
+              className="md:hidden"
             >
-              {/* Close button */}
-              <button
-                onClick={closeMobile}
-                className="absolute top-4 right-4 p-2 rounded-xl text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-              <SidebarContent user={user} onLogout={signOut} onNavClick={closeMobile} />
+              <SidebarContent
+                user={user}
+                location={location}
+                counts={counts}
+                onNavClick={() => setMobileOpen(false)}
+                onClose={() => setMobileOpen(false)}
+              />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      {/* ── Main content area ── */}
-      <div className="flex-1 md:ml-60 min-w-0 flex flex-col">
-        {/* Mobile top bar */}
-        <div className="md:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-1.5 rounded-xl text-secondary hover:text-primary hover:bg-gray-100 transition-colors"
-          >
-            <MenuIcon className="w-5 h-5" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 text-xs text-secondary">
-              <HomeIcon className="w-3 h-3 flex-shrink-0" />
-              <ChevronRightIcon className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate font-medium text-primary">{title}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop breadcrumb bar */}
-        <div className="hidden md:block px-8 pt-6 pb-0">
-          <div className="flex items-center gap-1.5 text-sm text-secondary">
-            <Link to="/admin" className="hover:text-primary transition-colors">Admin</Link>
-            <ChevronRightIcon className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="font-medium text-primary">{title}</span>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="flex-1 min-w-0 md:px-8 md:py-6 px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* ── Main content ── */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#fafafa',
+        }}
+        className="md:ml-[220px] pt-[48px] md:pt-0"
+      >
+        <main
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           {children}
         </main>
       </div>
