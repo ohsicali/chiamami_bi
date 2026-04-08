@@ -192,8 +192,23 @@ export default function DiscountManager() {
     Promise.all([
       supabase.from('discounts').select('*, restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
       supabase.from('restaurants').select('id, name').order('name'),
-    ]).then(([discRes, restRes]) => {
-      setDiscounts(discRes.data || [])
+      supabase.from('discount_redemptions').select('discount_id, status'),
+    ]).then(([discRes, restRes, redRes]) => {
+      // Compute real counts per discount
+      const genMap = {}
+      const usedMap = {}
+      ;(redRes.data || []).forEach((r) => {
+        genMap[r.discount_id] = (genMap[r.discount_id] || 0) + 1
+        if (r.status === 'redeemed') {
+          usedMap[r.discount_id] = (usedMap[r.discount_id] || 0) + 1
+        }
+      })
+      const enriched = (discRes.data || []).map((d) => ({
+        ...d,
+        generated_count: genMap[d.id] || 0,
+        redeemed_count: usedMap[d.id] || 0,
+      }))
+      setDiscounts(enriched)
       setRestaurants(restRes.data || [])
       setLoading(false)
     })
@@ -294,7 +309,7 @@ export default function DiscountManager() {
     const total = discounts.length
     const active = discounts.filter((d) => isActive(d)).length
     const drops = discounts.filter((d) => d.is_drop && isActive(d)).length
-    const redemptions = discounts.reduce((s, d) => s + (d.total_redeemed || 0), 0)
+    const redemptions = discounts.reduce((s, d) => s + (d.redeemed_count || 0), 0)
     return { total, active, drops, redemptions }
   }, [discounts])
 
@@ -437,7 +452,7 @@ export default function DiscountManager() {
                     <th style={thStyle}>Sconto</th>
                     <th style={thStyle}>Tipo</th>
                     <th style={thStyle}>Scadenza</th>
-                    <th style={thStyle}>Utilizzi</th>
+                    <th style={thStyle}>QR presi / usati</th>
                     <th style={thStyle}>Stato</th>
                     <th style={{ ...thStyle, width: 100 }}></th>
                   </tr>
@@ -465,7 +480,10 @@ export default function DiscountManager() {
                       <td style={{ ...tdStyle, color: '#666' }}>{TYPE_LABELS[d.discount_type] || d.discount_type}</td>
                       <td style={{ ...tdStyle, color: '#666' }}>{formatDate(d.valid_until)}</td>
                       <td style={{ ...tdStyle, color: '#666' }}>
-                        {d.total_redeemed || 0}{d.max_redemptions ? ` / ${d.max_redemptions}` : ''}
+                        <span style={{ color: '#1a1a1f', fontWeight: 600 }}>{d.generated_count || 0}</span>
+                        <span style={{ color: '#999' }}> / </span>
+                        <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
+                        {d.max_redemptions ? <span style={{ color: '#999' }}> · max {d.max_redemptions}</span> : null}
                       </td>
                       <td style={tdStyle}>
                         <StatusBadge discount={d} />
@@ -542,7 +560,10 @@ export default function DiscountManager() {
                   }}
                 >
                   <span>
-                    {d.total_redeemed || 0}{d.max_redemptions ? `/${d.max_redemptions}` : ''} utilizzi · Scade {formatDate(d.valid_until)}
+                    <span style={{ color: '#1a1a1f', fontWeight: 600 }}>{d.generated_count || 0}</span>
+                    <span> presi · </span>
+                    <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
+                    <span> usati{d.max_redemptions ? ` · max ${d.max_redemptions}` : ''} · Scade {formatDate(d.valid_until)}</span>
                   </span>
                   <button
                     type="button"

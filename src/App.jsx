@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
+import { usePageTracking } from './lib/hooks/usePageTracking'
 
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
@@ -73,6 +74,9 @@ function PageLoader() {
 
 export default function App() {
   const location = useLocation()
+
+  // Track page views (skips /admin routes internally)
+  usePageTracking()
 
   // Preload the restaurant page chunk after initial render
   useEffect(() => {

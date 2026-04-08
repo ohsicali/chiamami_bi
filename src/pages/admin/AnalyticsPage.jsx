@@ -150,8 +150,7 @@ export default function AnalyticsPage() {
   const { allRestaurants: restaurants } = useRestaurants()
   const [period, setPeriod] = useState('7d')
 
-  // Live visitors — TODO: implement real tracking with page_views or active_sessions table
-  // For now polls profiles updated_at as a rough proxy (recent activity)
+  // Live visitors — distinct session_id from page_views in last 5 minutes
   const [liveVisitors, setLiveVisitors] = useState(null)
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
@@ -160,14 +159,14 @@ export default function AnalyticsPage() {
 
     async function fetchLive() {
       try {
-        // TODO: replace with proper active_sessions/page_views table query
-        // Placeholder: estimate based on recent discount redemption generations (last 5 min)
         const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-        const { count } = await supabase
-          .from('discount_redemptions')
-          .select('id', { count: 'exact', head: true })
-          .gte('generated_at', fiveMinAgo)
-        if (!cancelled) setLiveVisitors(count || 0)
+        const { data } = await supabase
+          .from('page_views')
+          .select('session_id')
+          .gte('created_at', fiveMinAgo)
+        if (cancelled) return
+        const uniq = new Set((data || []).map((r) => r.session_id))
+        setLiveVisitors(uniq.size)
       } catch {
         if (!cancelled) setLiveVisitors(0)
       }
@@ -183,7 +182,7 @@ export default function AnalyticsPage() {
 
   // Core metrics (filtered by period)
   const [metrics, setMetrics] = useState({
-    totalVisits: null,
+    totalVisits: 0,
     usersTotal: 0,
     usersInPeriod: 0,
     qrGenerated: 0,
@@ -191,6 +190,7 @@ export default function AnalyticsPage() {
   })
   const [activeDiscounts, setActiveDiscounts] = useState([])
   const [topRestaurants, setTopRestaurants] = useState([])
+  const [pageBreakdown, setPageBreakdown] = useState([])
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
@@ -201,7 +201,7 @@ export default function AnalyticsPage() {
       const start = periodStart(days)
 
       try {
-        const [usersTotal, usersInPeriod, qrGen, qrUsed, discData, savedTop] = await Promise.all([
+        const [usersTotal, usersInPeriod, qrGen, qrUsed, discData, savedTop, pvTotal, pvByPath] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase
             .from('profiles')
@@ -228,17 +228,55 @@ export default function AnalyticsPage() {
             .from('saved_restaurants')
             .select('restaurant_id')
             .gte('created_at', start),
+          supabase
+            .from('page_views')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', start),
+          supabase
+            .from('page_views')
+            .select('path, session_id')
+            .gte('created_at', start),
         ])
 
         if (cancelled) return
 
         setMetrics({
-          totalVisits: null, // TODO: page_views table
+          totalVisits: pvTotal.count || 0,
           usersTotal: usersTotal.count || 0,
           usersInPeriod: usersInPeriod.count || 0,
           qrGenerated: qrGen.count || 0,
           qrRedeemed: qrUsed.count || 0,
         })
+
+        // Page breakdown: distinct sessions per page category
+        const rows = pvByPath.data || []
+        const buckets = {
+          'Mappa (home)': new Set(),
+          'Scheda ristorante': new Set(),
+          'Pagina sconti': new Set(),
+          'Profilo': new Set(),
+          'Salvati': new Set(),
+          'Lista': new Set(),
+        }
+        rows.forEach((r) => {
+          const p = r.path || ''
+          if (p === '/' || p === '') buckets['Mappa (home)'].add(r.session_id)
+          else if (p.startsWith('/restaurant/')) buckets['Scheda ristorante'].add(r.session_id)
+          else if (p === '/deals') buckets['Pagina sconti'].add(r.session_id)
+          else if (p === '/profile') buckets['Profilo'].add(r.session_id)
+          else if (p === '/saved') buckets['Salvati'].add(r.session_id)
+          else if (p === '/list') buckets['Lista'].add(r.session_id)
+        })
+        const maxCount = Math.max(...Object.values(buckets).map((s) => s.size), 1)
+        const breakdown = Object.entries(buckets)
+          .map(([label, set]) => ({
+            label,
+            count: set.size,
+            pct: Math.round((set.size / maxCount) * 100),
+          }))
+          .filter((b) => b.count > 0)
+          .sort((a, b) => b.count - a.count)
+        setPageBreakdown(breakdown)
 
         // Fetch detail for each active discount: real generated/used counts
         const discounts = discData.data || []
@@ -282,7 +320,7 @@ export default function AnalyticsPage() {
     fetchAll()
   }, [period, user, restaurants])
 
-  // Visits chart data: try to get real data, otherwise empty
+  // Visits chart data — real page_views bucketed by time
   const [visitsChartData, setVisitsChartData] = useState([])
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
@@ -293,18 +331,21 @@ export default function AnalyticsPage() {
         const days = PERIODS.find((p) => p.key === period)?.days || 7
         const points = days === 1 ? 24 : Math.min(days, 30)
 
-        // Bucket registrations by day as proxy for "unique users"
-        const { data: regs } = await supabase
-          .from('profiles')
-          .select('created_at')
-          .gte('created_at', periodStart(days))
-
-        const { data: qrs } = await supabase
-          .from('discount_redemptions')
-          .select('generated_at')
-          .gte('generated_at', periodStart(days))
+        const [pvRes, regsRes] = await Promise.all([
+          supabase
+            .from('page_views')
+            .select('created_at')
+            .gte('created_at', periodStart(days)),
+          supabase
+            .from('profiles')
+            .select('created_at')
+            .gte('created_at', periodStart(days)),
+        ])
 
         if (cancelled) return
+
+        const pvs = pvRes.data || []
+        const regs = regsRes.data || []
 
         // Build buckets
         const buckets = []
@@ -323,20 +364,20 @@ export default function AnalyticsPage() {
             start: start.getTime(),
           })
         }
-        ;(regs || []).forEach((row) => {
+        pvs.forEach((row) => {
           const t = new Date(row.created_at).getTime()
           for (let i = buckets.length - 1; i >= 0; i--) {
             if (t >= buckets[i].start) {
-              buckets[i].utenti += 1
+              buckets[i].visite += 1
               break
             }
           }
         })
-        ;(qrs || []).forEach((row) => {
-          const t = new Date(row.generated_at).getTime()
+        regs.forEach((row) => {
+          const t = new Date(row.created_at).getTime()
           for (let i = buckets.length - 1; i >= 0; i--) {
             if (t >= buckets[i].start) {
-              buckets[i].visite += 1
+              buckets[i].utenti += 1
               break
             }
           }
@@ -348,15 +389,6 @@ export default function AnalyticsPage() {
     }
     fetchChart()
   }, [period, user])
-
-  // Mock "utenti per pagina" breakdown — TODO: implement real page tracking
-  const pageBreakdown = [
-    { label: 'Mappa (home)', pct: 100 },
-    { label: 'Scheda ristorante', pct: 68 },
-    { label: 'Pagina sconti', pct: 42 },
-    { label: 'Profilo', pct: 24 },
-    { label: 'Salvati', pct: 18 },
-  ]
 
   if (authLoading) {
     return (
@@ -471,8 +503,7 @@ export default function AnalyticsPage() {
             className="hidden md:block"
             style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}
           >
-            {/* TODO: real page breakdown from page_views table */}
-            Mappa · Sconti · Profilo
+            tracking realtime · aggiornamento ogni 30s
           </div>
         </div>
         <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }`}</style>
@@ -489,8 +520,8 @@ export default function AnalyticsPage() {
           <StatCard
             Icon={EyeIcon}
             label="Visite totali"
-            value={metrics.totalVisits != null ? metrics.totalVisits : '—'}
-            sublabel="<i>tracking in arrivo</i>"
+            value={metrics.totalVisits}
+            sublabel="pagine viste nel periodo"
             index={0}
           />
           <StatCard
@@ -559,7 +590,7 @@ export default function AnalyticsPage() {
               <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 2, background: '#E8453C' }} />
-                  <span style={{ color: '#666' }}>QR presi</span>
+                  <span style={{ color: '#666' }}>Visite</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 2, background: '#C4A265' }} />
@@ -593,7 +624,7 @@ export default function AnalyticsPage() {
                     stroke="#E8453C"
                     strokeWidth={2}
                     fill="url(#grad1)"
-                    name="QR presi"
+                    name="Visite"
                   />
                   <Line
                     type="monotone"
@@ -641,47 +672,53 @@ export default function AnalyticsPage() {
                 letterSpacing: 0.5,
               }}
             >
-              Utenti per pagina
+              Visitatori per pagina
             </h3>
             <div style={{ fontSize: 10, color: '#bbb', marginBottom: 14, fontStyle: 'italic' }}>
-              stima — tracking preciso in arrivo
+              sessioni uniche nel periodo
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {pageBreakdown.map((p, i) => {
-                const opacity = 1 - i * 0.18
-                return (
-                  <div key={p.label}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: 4,
-                      }}
-                    >
-                      <span style={{ fontSize: 11, color: '#444' }}>{p.label}</span>
-                      <span style={{ fontSize: 11, color: '#999' }}>{p.pct}%</span>
-                    </div>
-                    <div
-                      style={{
-                        height: 8,
-                        background: '#f0f0f0',
-                        borderRadius: 4,
-                        overflow: 'hidden',
-                      }}
-                    >
+            {pageBreakdown.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
+                Nessun dato ancora
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {pageBreakdown.map((p, i) => {
+                  const opacity = 1 - i * 0.15
+                  return (
+                    <div key={p.label}>
                       <div
                         style={{
-                          width: `${p.pct}%`,
-                          height: '100%',
-                          background: `rgba(232,69,60,${Math.max(opacity, 0.2)})`,
-                          borderRadius: 4,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: 4,
                         }}
-                      />
+                      >
+                        <span style={{ fontSize: 11, color: '#444' }}>{p.label}</span>
+                        <span style={{ fontSize: 11, color: '#999' }}>{p.count}</span>
+                      </div>
+                      <div
+                        style={{
+                          height: 8,
+                          background: '#f0f0f0',
+                          borderRadius: 4,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${p.pct}%`,
+                            height: '100%',
+                            background: `rgba(232,69,60,${Math.max(opacity, 0.25)})`,
+                            borderRadius: 4,
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
 
