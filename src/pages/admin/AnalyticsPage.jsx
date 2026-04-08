@@ -201,7 +201,7 @@ export default function AnalyticsPage() {
       const start = periodStart(days)
 
       try {
-        const [usersTotal, usersInPeriod, qrGen, qrUsed, discData, savedTop, pvTotal, pvByPath] = await Promise.all([
+        const [usersTotal, usersInPeriod, qrGen, qrUsed, periodRedemptions, savedTop, pvTotal, pvByPath] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase
             .from('profiles')
@@ -216,14 +216,11 @@ export default function AnalyticsPage() {
             .select('id', { count: 'exact', head: true })
             .eq('status', 'redeemed')
             .gte('redeemed_at', start),
+          // Fetch all redemptions in the period (with status) to group by discount
           supabase
-            .from('discounts')
-            .select(
-              'id, title, discount_value, discount_type, drop_time, max_redemptions, total_redeemed, is_active, valid_until, restaurant:restaurants(id, name, photos)'
-            )
-            .eq('is_active', true)
-            .gte('valid_until', new Date().toISOString())
-            .limit(10),
+            .from('discount_redemptions')
+            .select('discount_id, status')
+            .gte('generated_at', start),
           supabase
             .from('saved_restaurants')
             .select('restaurant_id')
@@ -278,28 +275,36 @@ export default function AnalyticsPage() {
           .sort((a, b) => b.count - a.count)
         setPageBreakdown(breakdown)
 
-        // Fetch detail for each active discount: real generated/used counts
-        const discounts = discData.data || []
-        const withCounts = await Promise.all(
-          discounts.map(async (d) => {
-            const [genRes, usedRes] = await Promise.all([
-              supabase
-                .from('discount_redemptions')
-                .select('id', { count: 'exact', head: true })
-                .eq('discount_id', d.id),
-              supabase
-                .from('discount_redemptions')
-                .select('id', { count: 'exact', head: true })
-                .eq('discount_id', d.id)
-                .eq('status', 'redeemed'),
-            ])
-            return {
+        // Group redemptions by discount_id to compute period counts
+        const discountCounts = {}
+        ;(periodRedemptions.data || []).forEach((r) => {
+          if (!discountCounts[r.discount_id]) {
+            discountCounts[r.discount_id] = { gen: 0, used: 0 }
+          }
+          discountCounts[r.discount_id].gen += 1
+          if (r.status === 'redeemed') {
+            discountCounts[r.discount_id].used += 1
+          }
+        })
+
+        const discountIdsWithActivity = Object.keys(discountCounts)
+        let withCounts = []
+        if (discountIdsWithActivity.length > 0) {
+          // Fetch discount details regardless of is_active/valid_until
+          const { data: discDetails } = await supabase
+            .from('discounts')
+            .select(
+              'id, title, discount_value, discount_type, drop_time, max_redemptions, is_active, valid_until, restaurant:restaurants(id, name, photos)'
+            )
+            .in('id', discountIdsWithActivity)
+          withCounts = (discDetails || [])
+            .map((d) => ({
               ...d,
-              generatedCount: genRes.count || 0,
-              redeemedCount: usedRes.count || 0,
-            }
-          })
-        )
+              generatedCount: discountCounts[d.id]?.gen || 0,
+              redeemedCount: discountCounts[d.id]?.used || 0,
+            }))
+            .sort((a, b) => b.generatedCount - a.generatedCount)
+        }
         if (!cancelled) setActiveDiscounts(withCounts)
 
         // Top restaurants: by saved count in period
@@ -754,7 +759,7 @@ export default function AnalyticsPage() {
             </h3>
             {activeDiscounts.length === 0 ? (
               <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
-                Nessuno sconto attivo
+                Nessuna attività QR nel periodo
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
