@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Footer from '../../components/Layout/Footer'
@@ -54,6 +54,56 @@ export default function AboutPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: '#22181C' }}>
+      {/* ─── STICKY HEADER ─── */}
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 30,
+        background: 'rgba(34,24,28,0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 18px 12px',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}>
+          <button
+            onClick={() => navigate(-1)}
+            aria-label="Torna indietro"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.08)',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img
+              src="/logo-full.svg"
+              alt="ChiamamiBi"
+              style={{ height: 20, width: 'auto', filter: 'brightness(0) invert(1)' }}
+            />
+          </Link>
+          <div style={{ width: 36, height: 36 }} />
+        </div>
+      </header>
+
       <div className="flex-1">
 
         {/* ── Full-bleed hero ── */}
@@ -65,28 +115,6 @@ export default function AboutPage() {
             pointerEvents: 'none',
           }} />
 
-          {/* Back button */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            onClick={() => navigate(-1)}
-            style={{
-              position: 'absolute', top: 16, left: 16, zIndex: 20,
-              width: 40, height: 40, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: '#fff',
-            }}
-            aria-label="Torna indietro"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-          </motion.button>
-
           <motion.div
             variants={stagger}
             initial="hidden"
@@ -94,7 +122,7 @@ export default function AboutPage() {
             style={{
               position: 'relative', zIndex: 1,
               display: 'flex', flexDirection: 'column', alignItems: 'center',
-              padding: '90px 24px 50px',
+              padding: '40px 24px 50px',
             }}
           >
             {/* Photo with glow */}

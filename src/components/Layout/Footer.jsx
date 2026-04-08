@@ -1,13 +1,28 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation, matchPath } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LogoFull } from '../UI/Logo'
 
 export default function Footer() {
   const { t } = useTranslation()
+  const location = useLocation()
+
+  // Mirror the visibility logic from App.jsx so the footer clears the mobile
+  // tab bar on pages where it's shown.
+  const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
+  const isAdmin = location.pathname.startsWith('/admin')
+  const isPartner = location.pathname === '/partner'
+  const tabBarVisible = !isAdmin && !isRestaurantDetail && !isPartner
 
   return (
     <footer className="bg-white border-t border-gray-100">
-      <div className="max-w-screen-lg mx-auto px-5 py-10">
+      <div
+        className="max-w-screen-lg mx-auto px-5 pt-10 pb-10"
+        style={
+          tabBarVisible
+            ? { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }
+            : undefined
+        }
+      >
         {/* Top section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
           <LogoFull height={28} />
