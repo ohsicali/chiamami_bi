@@ -240,8 +240,11 @@ export default function LoginPage() {
       <div
         style={{
           flex: 1,
-          padding: `0 22px`,
-          paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT + 24}px)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: `16px 22px`,
+          paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT + 16}px)`,
         }}
       >
         <motion.div
@@ -261,7 +264,7 @@ export default function LoginPage() {
               color: 'var(--color-primary)',
               textAlign: 'center',
               lineHeight: 1.7,
-              margin: '24px 0 0',
+              margin: 0,
             }}
           >
             {titleText}
@@ -646,7 +649,7 @@ export default function LoginPage() {
           </motion.p>
 
           {/* Scopri Bi */}
-          <motion.div variants={itemVariants} style={{ paddingBottom: 24 }}>
+          <motion.div variants={itemVariants}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
               <span style={{ fontSize: 10, color: '#B5B0AA', letterSpacing: 1.5, fontWeight: 600 }}>SCOPRI BI</span>
