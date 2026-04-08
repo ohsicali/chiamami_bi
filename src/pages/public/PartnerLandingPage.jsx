@@ -150,35 +150,35 @@ export default function PartnerLandingPage() {
       iconColor: 'var(--color-accent)',
       iconBg: 'rgba(232,69,60,0.1)',
       title: 'Visibilità',
-      desc: 'In Evidenza sulla mappa e nella guida di Bi',
+      desc: 'Primo piano sulla mappa e dentro la guida di Bi',
     },
     {
       icon: UsersIcon,
       iconColor: 'var(--color-oro)',
       iconBg: 'rgba(196,162,101,0.1)',
-      title: 'Community',
-      desc: 'Accesso a migliaia di persone attive a Torino ogni mese',
+      title: 'Pubblico giusto',
+      desc: 'Arriva davanti a chi a Torino cerca dove mangiare, ogni giorno',
     },
     {
       icon: TagIcon,
       iconColor: 'var(--color-success)',
       iconBg: 'rgba(74,222,128,0.1)',
       title: 'Sconti & Drop',
-      desc: 'Crea sconti esclusivi e drop a tempo per portare clienti',
+      desc: 'Offerte esclusive e drop a tempo per far provare il tuo locale',
     },
     {
       icon: CameraIcon,
       iconColor: 'var(--color-accent)',
       iconBg: 'rgba(232,69,60,0.1)',
-      title: 'Contenuti',
-      desc: 'Foto e video professionali con Bi per i tuoi canali',
+      title: 'Racconto',
+      desc: 'Foto, video e contenuti curati da Bi per raccontarti al meglio',
     },
   ]
 
   const steps = [
-    { title: 'Candidati', desc: 'Compila il form qui sotto con le info del tuo locale o brand' },
-    { title: 'Ti contattiamo', desc: 'Bi valuta la candidatura e ti ricontatta entro 48h' },
-    { title: 'Sei nella guida', desc: 'Il tuo ristorante o brand appare In Evidenza davanti alla community' },
+    { title: 'Candidati', desc: 'Raccontaci in due minuti chi sei e cosa proponi' },
+    { title: 'Ti conosciamo', desc: 'Bi legge la candidatura e ti risponde entro 48 ore' },
+    { title: 'Entri nella guida', desc: 'Il tuo locale arriva davanti alla community food di Torino' },
   ]
 
   /* ── Success state ── */
@@ -215,7 +215,7 @@ export default function PartnerLandingPage() {
             maxWidth: 320,
             marginBottom: 32,
           }}>
-            Ti ricontatteremo entro 48 ore per parlare di come portare il tuo ristorante o brand nella guida di Bi.
+            Ti scriviamo entro 48 ore per conoscerti meglio e capire come raccontarti alla community food di Torino.
           </p>
           <button
             onClick={() => navigate('/')}
@@ -325,18 +325,18 @@ export default function PartnerLandingPage() {
             fontSize: 22,
             fontWeight: 700,
             color: '#fff',
-            lineHeight: 1.7,
-            marginBottom: 16,
+            lineHeight: 2,
+            marginBottom: 18,
           }}>
-            Fatti scoprire da migliaia di persone a Torino
+            Fatti scoprire da chi ama la buona tavola a Torino
           </h1>
           <p style={{
             fontSize: 14,
-            color: 'rgba(255,255,255,0.5)',
-            lineHeight: 1.6,
+            color: 'rgba(255,255,255,0.55)',
+            lineHeight: 1.7,
             marginBottom: 32,
           }}>
-            Entra nella guida più seguita della città. Il tuo ristorante o brand in evidenza davanti alla community di Bi.
+            Bi è la guida che racconta la scena food della città a chi cerca ogni giorno un posto nuovo dove mangiare, un brand da provare, una storia da assaggiare. Ristoranti, locali, progetti food: fai parte della guida.
           </p>
           <motion.button
             whileTap={{ scale: 0.97 }}
