@@ -1222,7 +1222,7 @@ export default function DealsPage() {
                 {regular.length > 0 && (
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
-                    <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-3">
+                    <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
                       {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />)}
                     </div>
                   </div>

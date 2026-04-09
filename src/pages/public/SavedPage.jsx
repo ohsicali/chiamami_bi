@@ -286,7 +286,7 @@ export default function SavedPage() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 md:grid md:grid-cols-3">
+          <div className="flex flex-col gap-3 md:grid md:grid-cols-2 lg:grid-cols-3">
             {displayList.map((r, i) => {
               const discount = activeDiscounts[r.id]
               return (

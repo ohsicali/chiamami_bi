@@ -263,13 +263,14 @@ export default function RestaurantSheet({
           }
           /* Photo area: constrain to left content area */
           .restaurant-sheet-root .rs-photo-area {
-            right: 400px !important;
+            right: 320px !important;
             height: 320px !important;
           }
           .restaurant-sheet-root .rs-photo-area > div { height: 320px !important; }
           /* Scroll area: left side */
           .restaurant-sheet-root .rs-scroll {
             flex: 1; min-width: 0;
+            max-width: calc(100% - 320px);
           }
           /* Content card: photo is 320px, overlap 24px */
           .restaurant-sheet-root .rs-content-card {
@@ -279,7 +280,7 @@ export default function RestaurantSheet({
           /* Sticky header: don't span side map */
           .restaurant-sheet-root .rs-sticky-header {
             top: 56px !important;
-            right: 400px !important;
+            right: 320px !important;
           }
           /* Buttons: constrain within left area */
           .restaurant-sheet-root .rs-back-btn { top: 14px !important; }
@@ -287,11 +288,17 @@ export default function RestaurantSheet({
           /* Side map panel */
           .restaurant-sheet-root .rs-side-map {
             display: flex !important;
-            width: 400px; flex-shrink: 0;
+            width: 320px; flex-shrink: 0;
             border-left: 1px solid #E8E5DE;
             flex-direction: column;
             background: #F5F3EE;
           }
+        }
+        @media (min-width: 1024px) {
+          .restaurant-sheet-root .rs-side-map { width: 400px; }
+          .restaurant-sheet-root .rs-scroll { max-width: calc(100% - 400px); }
+          .restaurant-sheet-root .rs-sticky-header { right: 400px !important; }
+          .restaurant-sheet-root .rs-photo-area { right: 400px !important; }
         }
       `}</style>
 

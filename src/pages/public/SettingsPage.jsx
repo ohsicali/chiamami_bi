@@ -364,8 +364,8 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* ── STICKY HEADER ── */}
-      <div style={{
+      {/* ── STICKY HEADER (mobile only) ── */}
+      <div className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: '#FAF7F2',
@@ -386,7 +386,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── CONTENT ── */}
-      <div style={{ padding: '20px 22px', paddingBottom: TAB_BAR_HEIGHT + 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="md:max-w-[640px] md:mx-auto md:w-full" style={{ padding: '20px 22px', paddingBottom: TAB_BAR_HEIGHT + 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* ── NOME ── */}
         <div style={cardStyle}>

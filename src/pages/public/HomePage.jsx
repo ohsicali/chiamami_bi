@@ -411,7 +411,7 @@ export default function HomePage() {
       />
 
       {/* Single MapView — repositioned via CSS for desktop vs mobile */}
-      <div className="absolute inset-0 md:top-[56px] md:left-[420px]">
+      <div className="absolute inset-0 md:top-[56px] md:left-[360px] lg:left-[420px]">
         <MapView
           ref={mapRef}
           restaurants={allRestaurants}
@@ -427,13 +427,12 @@ export default function HomePage() {
 
       {/* ═══ DESKTOP LIST PANEL (≥768px) ═══ */}
       <div
-        className="hidden md:block"
+        className="hidden md:block md:w-[360px] lg:w-[420px]"
         style={{
           position: 'absolute',
           top: 56,
           left: 0,
           bottom: 0,
-          width: 420,
           overflowY: 'auto',
           borderRight: '1px solid var(--color-bordo, #E8E5DE)',
           background: '#fff',
