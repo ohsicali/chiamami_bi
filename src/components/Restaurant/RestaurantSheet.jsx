@@ -276,7 +276,8 @@ export default function RestaurantSheet({
             pointer-events: auto !important;
             width: 520px !important;
             max-width: 520px !important;
-            flex: none !important;
+            /* flex: 1 so sheet fills parent height → enables scroll */
+            flex: 1 1 0% !important;
             border-right: 1px solid #E8E5DE;
             box-shadow: 4px 0 24px rgba(0,0,0,0.06);
           }
@@ -440,31 +441,31 @@ export default function RestaurantSheet({
             {(() => {
               const photos = restaurant.photos || []
               if (photos.length === 0) return null
-              const getUrl = (p) => proxyImg(typeof p === 'string' ? p : p?.photo_url || p?.thumb_url)
+              const getUrl = (p) => typeof p === 'string' ? p : p?.photo_url || p?.thumb_url
               const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', display: 'block' }
 
               if (photos.length === 1) {
                 return (
                   <div className="hidden md:block" style={{ height: 280, overflow: 'hidden' }}>
-                    <img src={getUrl(photos[0])} alt={restaurant.name} style={imgStyle} />
+                    <img src={getUrl(photos[0])} alt={restaurant.name} style={imgStyle} loading="eager" decoding="async" />
                   </div>
                 )
               }
               if (photos.length === 2) {
                 return (
                   <div className="hidden md:grid" style={{ height: 280, gridTemplateColumns: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
-                    <img src={getUrl(photos[0])} alt="" style={imgStyle} />
-                    <img src={getUrl(photos[1])} alt="" style={imgStyle} />
+                    <img src={getUrl(photos[0])} alt="" style={imgStyle} loading="eager" decoding="async" />
+                    <img src={getUrl(photos[1])} alt="" style={imgStyle} loading="eager" decoding="async" />
                   </div>
                 )
               }
               // 3+ photos: Airbnb-style grid
               return (
                 <div className="hidden md:grid" style={{ height: 280, gridTemplateColumns: '3fr 2fr', gridTemplateRows: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
-                  <img src={getUrl(photos[0])} alt={restaurant.name} style={{ ...imgStyle, gridRow: '1 / 3' }} />
-                  <img src={getUrl(photos[1])} alt="" style={imgStyle} />
+                  <img src={getUrl(photos[0])} alt={restaurant.name} style={{ ...imgStyle, gridRow: '1 / 3' }} loading="eager" decoding="async" />
+                  <img src={getUrl(photos[1])} alt="" style={imgStyle} loading="eager" decoding="async" />
                   <div style={{ position: 'relative', overflow: 'hidden' }}>
-                    <img src={getUrl(photos[2])} alt="" style={imgStyle} />
+                    <img src={getUrl(photos[2])} alt="" style={imgStyle} loading="lazy" decoding="async" />
                     {photos.length > 3 && (
                       <div style={{
                         position: 'absolute', inset: 0,
