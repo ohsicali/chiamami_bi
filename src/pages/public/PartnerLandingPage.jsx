@@ -307,7 +307,7 @@ export default function PartnerLandingPage() {
 
         {/* Hero content */}
         <motion.div
-          className="md:max-w-[800px] md:mx-auto"
+          className="md:max-w-[900px] md:mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -377,7 +377,7 @@ export default function PartnerLandingPage() {
       }}>
 
         {/* ─── COSA OTTIENI ─── */}
-        <section className="md:max-w-[800px] md:mx-auto" style={{ padding: '0 22px 44px' }}>
+        <section className="md:max-w-[900px] md:mx-auto" style={{ padding: '0 22px 44px' }}>
           <div style={labelPillStyle}>Cosa ottieni</div>
           <motion.div
             initial="hidden"
@@ -441,18 +441,19 @@ export default function PartnerLandingPage() {
         </section>
 
         {/* ─── COME FUNZIONA ─── */}
-        <section className="md:max-w-[800px] md:mx-auto" style={{ padding: '0 22px 44px' }}>
+        <section className="md:max-w-[900px] md:mx-auto" style={{ padding: '0 22px 44px' }}>
           <div style={labelPillStyle}>Come funziona</div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col md:flex-row md:gap-6">
             {steps.map((step, i) => (
               <motion.div
                 key={step.title}
+                className="md:flex-1"
                 initial={{ opacity: 0, x: -16 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ delay: i * 0.1, duration: 0.4 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                <div className="flex items-start gap-3.5 md:flex-col md:items-center md:text-center">
                   <div style={{
                     width: 32, minWidth: 32, height: 32, borderRadius: '50%',
                     background: 'var(--color-accent)',
@@ -481,8 +482,9 @@ export default function PartnerLandingPage() {
                     </div>
                   </div>
                 </div>
+                {/* Vertical connector — mobile only */}
                 {i < steps.length - 1 && (
-                  <div style={{
+                  <div className="md:hidden" style={{
                     width: 1,
                     height: 16,
                     background: 'var(--color-bordo)',
@@ -497,7 +499,7 @@ export default function PartnerLandingPage() {
         </section>
 
         {/* ─── FORM ─── */}
-        <section ref={formRef} className="md:max-w-[800px] md:mx-auto" style={{ padding: '0 22px 48px', scrollMarginTop: 16 }}>
+        <section ref={formRef} className="md:max-w-[900px] md:mx-auto" style={{ padding: '0 22px 48px', scrollMarginTop: 16 }}>
           <div style={labelPillStyle}>Candidati</div>
           <form onSubmit={handleSubmit} className="md:grid md:grid-cols-2 md:gap-x-4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
