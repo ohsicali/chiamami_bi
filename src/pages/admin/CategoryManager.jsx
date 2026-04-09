@@ -1,46 +1,26 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useCategories } from '../../lib/hooks/useCategories'
-import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
+import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
 /* ------------------------------------------------------------------ */
-/*  Icons                                                              */
+/*  Icons (inline SVG)                                                 */
 /* ------------------------------------------------------------------ */
-function PencilIcon({ className }) {
+const ic = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+
+function PencilIcon() {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+    <svg {...ic} width={15} height={15} viewBox="0 0 24 24">
+      <path d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   )
 }
-function TrashIcon({ className }) {
+function TrashIcon() {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-  )
-}
-function CheckIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  )
-}
-function XIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  )
-}
-function PlusIcon({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    <svg {...ic} width={15} height={15} viewBox="0 0 24 24">
+      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
   )
 }
@@ -59,6 +39,7 @@ const COLOR_PRESETS = [
 export default function CategoryManager() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const { categories, loading: catsLoading, addCategory, updateCategory, deleteCategory } = useCategories()
+  const { allRestaurants: restaurants } = useRestaurants()
 
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', emoji: '', color: '' })
@@ -66,6 +47,17 @@ export default function CategoryManager() {
   const [addForm, setAddForm] = useState({ name: '', emoji: '', color: COLOR_PRESETS[0] })
   const [deleteId, setDeleteId] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  // Count restaurants per category name
+  const countMap = useMemo(() => {
+    const m = {}
+    ;(restaurants || []).forEach((r) => {
+      ;(r.category || []).forEach((catName) => {
+        m[catName] = (m[catName] || 0) + 1
+      })
+    })
+    return m
+  }, [restaurants])
 
   const startEdit = (cat) => {
     setEditingId(cat.id)
@@ -103,276 +95,331 @@ export default function CategoryManager() {
 
   if (authLoading || catsLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <LoadingSpinner />
+      <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #E8453C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
+  const inputStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    fontSize: 13,
+    border: '1px solid #eee',
+    borderRadius: 8,
+    background: '#fafafa',
+    color: '#1a1a1f',
+    outline: 'none',
+    fontFamily: 'inherit',
+  }
+
   return (
     <AdminLayout title="Categorie">
-      <div className="max-w-2xl mx-auto">
-        {/* Header with Add button */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-lg font-semibold text-primary">Categorie</h1>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+      {/* ─── HEADER ─── */}
+      <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Categorie</h1>
+            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>{categories.length} categorie totali</p>
+          </div>
+          <button
             onClick={() => { setShowAdd(true); setEditingId(null) }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-medium shadow-sm hover:bg-[#e64545] transition-colors"
+            style={{
+              padding: '8px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              background: '#E8453C',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
           >
-            <PlusIcon className="w-4 h-4" />
-            Aggiungi
-          </motion.button>
+            + Aggiungi
+          </button>
         </div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        {/* Add form (inline) */}
-        <AnimatePresence>
-          {showAdd && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden mb-4"
-            >
-              <div className="bg-card rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-primary mb-4">Nuova categoria</h3>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-[1fr_80px] gap-3">
-                    <input
-                      type="text"
-                      value={addForm.name}
-                      onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
-                      placeholder="Nome categoria"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm text-primary placeholder:text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30"
-                      autoFocus
-                    />
-                    <input
-                      type="text"
-                      value={addForm.emoji}
-                      onChange={(e) => setAddForm((p) => ({ ...p, emoji: e.target.value }))}
-                      placeholder="🍴"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-bg text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent/30"
-                      maxLength={4}
-                    />
-                  </div>
+      {/* ─── CONTENT ─── */}
+      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-                  {/* Color picker */}
-                  <div>
-                    <p className="text-xs text-secondary mb-2">Colore</p>
-                    <div className="flex flex-wrap gap-2">
-                      {COLOR_PRESETS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setAddForm((p) => ({ ...p, color: c }))}
-                          className={`w-7 h-7 rounded-full border-2 transition-all ${
-                            addForm.color === c ? 'border-primary scale-110 shadow-sm' : 'border-transparent'
-                          }`}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                      <input
-                        type="color"
-                        value={addForm.color}
-                        onChange={(e) => setAddForm((p) => ({ ...p, color: e.target.value }))}
-                        className="w-7 h-7 rounded-full cursor-pointer border-0 p-0"
-                        title="Colore personalizzato"
-                      />
-                    </div>
-                  </div>
+        {/* ─── ADD FORM ─── */}
+        {showAdd && (
+          <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', margin: '0 0 12px' }}>Nuova categoria</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px', gap: 8 }}>
+                <input
+                  type="text"
+                  value={addForm.name}
+                  onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Nome categoria"
+                  style={inputStyle}
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  value={addForm.emoji}
+                  onChange={(e) => setAddForm((p) => ({ ...p, emoji: e.target.value }))}
+                  placeholder="🍴"
+                  style={{ ...inputStyle, textAlign: 'center' }}
+                  maxLength={4}
+                />
+              </div>
 
-                  <div className="flex gap-2 justify-end pt-1">
+              {/* Color picker */}
+              <div>
+                <p style={{ fontSize: 11, color: '#999', margin: '0 0 6px' }}>Colore</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {COLOR_PRESETS.map((c) => (
                     <button
-                      onClick={() => setShowAdd(false)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
-                    >
-                      Annulla
-                    </button>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleAdd}
-                      disabled={!addForm.name.trim() || saving}
-                      className="px-4 py-2 rounded-xl text-sm font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50"
-                    >
-                      {saving ? '...' : 'Aggiungi'}
-                    </motion.button>
-                  </div>
+                      key={c}
+                      type="button"
+                      onClick={() => setAddForm((p) => ({ ...p, color: c }))}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        background: c,
+                        border: addForm.color === c ? '2px solid #1a1a1f' : '2px solid transparent',
+                        cursor: 'pointer',
+                        padding: 0,
+                        transform: addForm.color === c ? 'scale(1.15)' : 'none',
+                        transition: 'transform 0.15s',
+                      }}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={addForm.color}
+                    onChange={(e) => setAddForm((p) => ({ ...p, color: e.target.value }))}
+                    style={{ width: 24, height: 24, borderRadius: '50%', cursor: 'pointer', border: 'none', padding: 0 }}
+                    title="Colore personalizzato"
+                  />
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Category list */}
-        <div className="bg-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="divide-y divide-gray-50">
-            {categories.map((cat, i) => {
-              const isEditing = editingId === cat.id
-              return (
-                <motion.div
-                  key={cat.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="px-5 py-4"
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+                <button
+                  onClick={() => setShowAdd(false)}
+                  style={{ padding: '7px 14px', fontSize: 12, fontWeight: 500, background: 'transparent', border: '1px solid #eee', borderRadius: 8, color: '#666', cursor: 'pointer' }}
                 >
-                  {isEditing ? (
-                    /* Edit mode */
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-[1fr_80px] gap-3">
+                  Annulla
+                </button>
+                <button
+                  onClick={handleAdd}
+                  disabled={!addForm.name.trim() || saving}
+                  style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, background: '#E8453C', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: (!addForm.name.trim() || saving) ? 0.5 : 1 }}
+                >
+                  {saving ? '...' : 'Aggiungi'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── CATEGORY GRID ─── */}
+        {categories.length === 0 ? (
+          <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: '40px 20px', textAlign: 'center', color: '#999', fontSize: 13 }}>
+            Nessuna categoria. Aggiungine una!
+          </div>
+        ) : (
+          <div
+            style={{ display: 'grid', gap: 10 }}
+            className="grid-cols-1 md:!grid-cols-2 lg:!grid-cols-3"
+          >
+            {categories.map((cat) => {
+              const isEditing = editingId === cat.id
+              const count = countMap[cat.name] || 0
+
+              if (isEditing) {
+                return (
+                  <div key={cat.id} style={{ background: '#fff', border: '1px solid #E8453C', borderRadius: 10, padding: 14 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: 8 }}>
                         <input
                           type="text"
                           value={editForm.name}
                           onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-bg text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          style={inputStyle}
                           autoFocus
                         />
                         <input
                           type="text"
                           value={editForm.emoji}
                           onChange={(e) => setEditForm((p) => ({ ...p, emoji: e.target.value }))}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-bg text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          style={{ ...inputStyle, textAlign: 'center' }}
                           maxLength={4}
                         />
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                         {COLOR_PRESETS.map((c) => (
                           <button
                             key={c}
                             type="button"
                             onClick={() => setEditForm((p) => ({ ...p, color: c }))}
-                            className={`w-6 h-6 rounded-full border-2 transition-all ${
-                              editForm.color === c ? 'border-primary scale-110' : 'border-transparent'
-                            }`}
-                            style={{ backgroundColor: c }}
+                            style={{
+                              width: 20,
+                              height: 20,
+                              borderRadius: '50%',
+                              background: c,
+                              border: editForm.color === c ? '2px solid #1a1a1f' : '2px solid transparent',
+                              cursor: 'pointer',
+                              padding: 0,
+                            }}
                           />
                         ))}
                         <input
                           type="color"
                           value={editForm.color}
                           onChange={(e) => setEditForm((p) => ({ ...p, color: e.target.value }))}
-                          className="w-6 h-6 rounded-full cursor-pointer border-0 p-0"
+                          style={{ width: 20, height: 20, borderRadius: '50%', cursor: 'pointer', border: 'none', padding: 0 }}
                         />
                       </div>
-                      <div className="flex gap-1.5 justify-end">
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                         <button
                           onClick={cancelEdit}
-                          className="p-2 rounded-lg text-secondary hover:bg-gray-100 transition-colors"
-                          title="Annulla"
+                          style={{ padding: '6px 12px', fontSize: 11, fontWeight: 500, background: 'transparent', border: '1px solid #eee', borderRadius: 6, color: '#666', cursor: 'pointer' }}
                         >
-                          <XIcon className="w-4 h-4" />
+                          Annulla
                         </button>
                         <button
                           onClick={saveEdit}
                           disabled={saving}
-                          className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
-                          title="Salva"
+                          style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, background: '#059669', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}
                         >
-                          <CheckIcon className="w-4 h-4" />
+                          {saving ? '...' : 'Salva'}
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    /* Display mode */
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-9 h-9 rounded-xl flex items-center justify-center text-base"
-                          style={{ backgroundColor: `${cat.color}15` }}
-                        >
-                          {cat.emoji}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-primary">{cat.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span
-                              className="inline-block w-3 h-3 rounded-full"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            <span className="text-xs text-secondary">{cat.color}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => startEdit(cat)}
-                          className="p-2 rounded-lg text-secondary hover:text-accent hover:bg-accent/5 transition-colors"
-                          title="Modifica"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(cat.id)}
-                          className="p-2 rounded-lg text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
-                          title="Elimina"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div
+                  key={cat.id}
+                  style={{
+                    background: '#fff',
+                    border: '1px solid #eee',
+                    borderRadius: 10,
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  {/* Emoji circle */}
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: `${cat.color}18`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 18,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {cat.emoji}
+                  </div>
+
+                  {/* Name + count */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cat.name}
                     </div>
-                  )}
-                </motion.div>
+                    <div style={{ fontSize: 11, color: '#999', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: cat.color, display: 'inline-block', flexShrink: 0 }} />
+                      {count} {count === 1 ? 'ristorante' : 'ristoranti'}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    <button
+                      onClick={() => startEdit(cat)}
+                      style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', borderRadius: 6, cursor: 'pointer', color: '#999' }}
+                      title="Modifica"
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#f5f5f5'; e.currentTarget.style.color = '#E8453C' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#999' }}
+                    >
+                      <PencilIcon />
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(cat.id)}
+                      style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', borderRadius: 6, cursor: 'pointer', color: '#999' }}
+                      title="Elimina"
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#ef4444' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#999' }}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                </div>
               )
             })}
+          </div>
+        )}
+      </div>
 
-            {categories.length === 0 && (
-              <div className="px-5 py-12 text-center text-secondary text-sm">
-                Nessuna categoria. Aggiungine una!
-              </div>
-            )}
+      {/* ─── DELETE MODAL ─── */}
+      {deleteId !== null && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(4px)',
+            padding: 16,
+          }}
+          onClick={() => setDeleteId(null)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: 24,
+              maxWidth: 360,
+              width: '100%',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: '0 0 8px' }}>Elimina categoria</h3>
+            <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
+              Sei sicuro di voler eliminare questa categoria? I ristoranti associati manterranno il riferimento attuale.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDeleteId(null)}
+                style={{ padding: '8px 16px', fontSize: 13, fontWeight: 500, background: 'transparent', border: '1px solid #eee', borderRadius: 8, color: '#666', cursor: 'pointer' }}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={() => handleDelete(deleteId)}
+                disabled={saving}
+                style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600, background: '#ef4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}
+              >
+                {saving ? '...' : 'Elimina'}
+              </button>
+            </div>
           </div>
         </div>
-      </motion.div>
-
-      {/* Delete confirmation modal */}
-      <AnimatePresence>
-        {deleteId !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4"
-            onClick={() => setDeleteId(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="bg-card rounded-2xl shadow-xl p-6 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-semibold text-primary mb-2">Elimina categoria</h3>
-              <p className="text-sm text-secondary mb-6">
-                Sei sicuro di voler eliminare questa categoria? I ristoranti associati manterranno il riferimento attuale.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setDeleteId(null)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-secondary hover:bg-gray-100 transition-colors"
-                >
-                  Annulla
-                </button>
-                <button
-                  onClick={() => handleDelete(deleteId)}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {saving ? '...' : 'Elimina'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      )}
     </AdminLayout>
   )
 }
