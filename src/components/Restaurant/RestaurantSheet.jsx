@@ -276,17 +276,20 @@ export default function RestaurantSheet({
             pointer-events: auto !important;
             width: 520px !important;
             max-width: 520px !important;
-            /* flex: 1 so sheet fills parent height → enables scroll */
-            flex: 1 1 0% !important;
+            height: 100% !important;
+            overflow: hidden !important;
             border-right: 1px solid #E8E5DE;
             box-shadow: 4px 0 24px rgba(0,0,0,0.06);
           }
           /* Hide mobile photo carousel — replaced by inline grid */
           .restaurant-sheet-root .rs-photo-area { display: none !important; }
           /* back/actions buttons hidden on desktop — see sticky header rules below */
-          /* Scroll: full width of panel */
+          /* Scroll: fill sheet height, enable vertical scroll */
           .restaurant-sheet-root .rs-scroll {
-            flex: 1; min-width: 0; max-width: 100%;
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
           }
           .restaurant-sheet-root .rs-content-card {
             margin-top: 0 !important;
@@ -441,7 +444,10 @@ export default function RestaurantSheet({
             {(() => {
               const photos = restaurant.photos || []
               if (photos.length === 0) return null
-              const getUrl = (p) => typeof p === 'string' ? p : p?.photo_url || p?.thumb_url
+              const getUrl = (p) => {
+                const raw = typeof p === 'string' ? p : p?.photo_url || p?.thumb_url
+                return raw?.includes('supabase.co/storage/') ? proxyImg(raw) : raw
+              }
               const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', display: 'block' }
 
               if (photos.length === 1) {
