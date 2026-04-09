@@ -282,9 +282,7 @@ export default function RestaurantSheet({
           }
           /* Hide mobile photo carousel — replaced by inline grid */
           .restaurant-sheet-root .rs-photo-area { display: none !important; }
-          /* Keep back/actions buttons for closing panel */
-          .restaurant-sheet-root .rs-back-btn { top: 14px !important; }
-          .restaurant-sheet-root .rs-top-actions { top: 14px !important; }
+          /* back/actions buttons hidden on desktop — see sticky header rules below */
           /* Scroll: full width of panel */
           .restaurant-sheet-root .rs-scroll {
             flex: 1; min-width: 0; max-width: 100%;
@@ -292,13 +290,18 @@ export default function RestaurantSheet({
           .restaurant-sheet-root .rs-content-card {
             margin-top: 0 !important;
             border-radius: 0 !important;
+            padding-top: 56px !important;
           }
-          /* Sticky header: constrained to panel */
+          /* Sticky header: constrained to panel, z-index below navbar (40) */
           .restaurant-sheet-root .rs-sticky-header {
             top: 56px !important;
             width: 520px !important;
             right: auto !important;
+            z-index: 39 !important;
           }
+          /* Hide floating buttons on desktop — sticky header provides back/share/save */
+          .restaurant-sheet-root .rs-back-btn { display: none !important; }
+          .restaurant-sheet-root .rs-top-actions { display: none !important; }
           /* Hide side map — main map visible behind panel */
           .restaurant-sheet-root .rs-side-map { display: none !important; }
         }
@@ -380,10 +383,10 @@ export default function RestaurantSheet({
             background: '#fff',
             padding: `calc(10px + env(safe-area-inset-top, 0px)) 14px 10px`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            boxShadow: showStickyHeader ? '0 2px 12px rgba(0,0,0,0.08)' : 'none',
-            transform: showStickyHeader ? 'translateY(0)' : 'translateY(-100%)',
+            boxShadow: (isDesktop || showStickyHeader) ? '0 2px 12px rgba(0,0,0,0.08)' : 'none',
+            transform: (isDesktop || showStickyHeader) ? 'translateY(0)' : 'translateY(-100%)',
             transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-            pointerEvents: showStickyHeader ? 'auto' : 'none',
+            pointerEvents: (isDesktop || showStickyHeader) ? 'auto' : 'none',
           }}>
             <button
               onClick={handleClose}
@@ -442,14 +445,14 @@ export default function RestaurantSheet({
 
               if (photos.length === 1) {
                 return (
-                  <div className="hidden md:block" style={{ height: 360, overflow: 'hidden' }}>
+                  <div className="hidden md:block" style={{ height: 280, overflow: 'hidden' }}>
                     <img src={getUrl(photos[0])} alt={restaurant.name} style={imgStyle} />
                   </div>
                 )
               }
               if (photos.length === 2) {
                 return (
-                  <div className="hidden md:grid" style={{ height: 360, gridTemplateColumns: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
+                  <div className="hidden md:grid" style={{ height: 280, gridTemplateColumns: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
                     <img src={getUrl(photos[0])} alt="" style={imgStyle} />
                     <img src={getUrl(photos[1])} alt="" style={imgStyle} />
                   </div>
@@ -457,7 +460,7 @@ export default function RestaurantSheet({
               }
               // 3+ photos: Airbnb-style grid
               return (
-                <div className="hidden md:grid" style={{ height: 360, gridTemplateColumns: '3fr 2fr', gridTemplateRows: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
+                <div className="hidden md:grid" style={{ height: 280, gridTemplateColumns: '3fr 2fr', gridTemplateRows: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
                   <img src={getUrl(photos[0])} alt={restaurant.name} style={{ ...imgStyle, gridRow: '1 / 3' }} />
                   <img src={getUrl(photos[1])} alt="" style={imgStyle} />
                   <div style={{ position: 'relative', overflow: 'hidden' }}>
