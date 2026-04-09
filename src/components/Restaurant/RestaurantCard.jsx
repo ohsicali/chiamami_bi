@@ -57,8 +57,8 @@ export default function RestaurantCard({
   if (variant === 'hero') {
     return (
       <motion.button
-        className="w-full text-left relative overflow-hidden"
-        style={{ borderRadius: 22, height: 200, animation: 'hero-pulse 3s ease-in-out infinite' }}
+        className="w-full text-left relative overflow-hidden h-[200px] md:h-[160px]"
+        style={{ borderRadius: 22, animation: 'hero-pulse 3s ease-in-out infinite' }}
         variants={cardVariants}
         initial="hidden"
         animate="visible"
@@ -202,10 +202,9 @@ export default function RestaurantCard({
   // DEFAULT VARIANT — horizontal compact card
   return (
     <motion.button
-      className="w-full text-left relative"
+      className="w-full text-left relative rounded-[18px] md:rounded-[14px]"
       style={{
         background: '#fff',
-        borderRadius: 18,
         border: '1px solid rgba(0,0,0,0.08)',
         boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
         overflow: 'hidden',
@@ -233,7 +232,7 @@ export default function RestaurantCard({
 
       <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
       {/* Photo */}
-      <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 100, height: 100, borderRadius: 14 }}>
+      <div className="relative flex-shrink-0 overflow-hidden w-[100px] h-[100px] md:w-[72px] md:h-[72px] rounded-[14px] md:rounded-[10px]">
         <div
           className="absolute inset-0"
           style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }}
