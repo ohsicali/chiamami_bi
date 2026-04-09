@@ -1097,8 +1097,8 @@ export default function DealsPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* ── Sticky Header — logo + border only ── */}
-      <div ref={headerRef} style={{
+      {/* ── Sticky Header — logo + border only (mobile only) ── */}
+      <div ref={headerRef} className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: '#FAF7F2',
@@ -1125,7 +1125,7 @@ export default function DealsPage() {
 
 
       {/* Tab switcher — CSS sticky, sticks below header naturally */}
-      <div style={{
+      <div className="deals-tabs-sticky" style={{
         position: 'sticky',
         top: headerH,
         zIndex: 49,
@@ -1134,13 +1134,15 @@ export default function DealsPage() {
         backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
         boxShadow: tabsStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
       }}>
-        {tabSwitcherJSX}
-        {/* Sub-tabs I miei */}
-        {tab === 'mine' && user && !myLoading && subTabsJSX}
+        <div className="md:max-w-[940px] md:mx-auto">
+          {tabSwitcherJSX}
+          {/* Sub-tabs I miei */}
+          {tab === 'mine' && user && !myLoading && subTabsJSX}
+        </div>
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 px-4" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
+      <div className="flex-1 px-4 md:max-w-[940px] md:mx-auto md:w-full" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
         {tab === 'available' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
             {loading && [200, 160, 160].map((h, i) => (
@@ -1210,7 +1212,7 @@ export default function DealsPage() {
                 {featured.length > 0 && (
                   <div>
                     <p style={sectionLabel}>In evidenza</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 10 }}>
+                    <div className="flex flex-col gap-3.5 mt-2.5 md:grid md:grid-cols-2">
                       {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }} />)}
                     </div>
                   </div>
@@ -1220,7 +1222,7 @@ export default function DealsPage() {
                 {regular.length > 0 && (
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                    <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-3">
                       {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />)}
                     </div>
                   </div>
@@ -1280,7 +1282,7 @@ export default function DealsPage() {
                       </p>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div className="flex flex-col gap-2.5 md:grid md:grid-cols-2">
                       {myActive.map(r => <MyActiveCard key={r.id} redemption={r} onShowQR={showMyQR} onGoTo={goTo} onOpenDeal={setSelectedDeal} />)}
                     </div>
                   )
@@ -1295,7 +1297,7 @@ export default function DealsPage() {
                       </p>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div className="flex flex-col gap-2.5 md:grid md:grid-cols-2">
                       {myUsed.map(r => <MyUsedCard key={r.id} redemption={r} onGoTo={goTo} />)}
                     </div>
                   )
