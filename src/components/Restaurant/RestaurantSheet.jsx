@@ -190,9 +190,12 @@ export default function RestaurantSheet({
   const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [inlineShowQR, setInlineShowQR] = useState(false)
   const [inlineGenerating, setInlineGenerating] = useState(false)
-  const [newsletterStatus, setNewsletterStatus] = useState(null) // null | 'loading' | 'success' | 'exists'
+  const [newsletterStatus, setNewsletterStatus] = useState(null)
   const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
+
+  // Desktop detection for animation direction
+  const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
 
   // Match Safari toolbar to white bottom bar
   useEffect(() => {
@@ -211,29 +214,36 @@ export default function RestaurantSheet({
   useEffect(() => {
     const el = scrollRef.current
     const photo = photoRef.current
-    if (!el || !photo) return
+    if (!el) return
     let ticking = false
     const onScroll = () => {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
-        const photoH = el.clientHeight * 0.45 - 60
+        // Parallax only on mobile (photo carousel)
+        if (photo && !isDesktop) {
+          photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
+        }
+        // Sticky header threshold: 45vh-60 on mobile, 300px on desktop (after photo grid)
+        const photoH = isDesktop ? 300 : el.clientHeight * 0.45 - 60
         setShowStickyHeader(el.scrollTop > photoH)
         ticking = false
       })
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [isDesktop])
 
   const handleClose = useCallback(async () => {
-    await Promise.all([
-      animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' }),
-      animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, { duration: 0.28, ease: [0.4, 0, 0.7, 0.2] }),
-    ])
+    const exitAnim = isDesktop
+      ? animateSheet(sheetScope.current, { x: '-100%' }, { duration: 0.3, ease: [0.4, 0, 0.7, 0.2] })
+      : Promise.all([
+          animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' }),
+          animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, { duration: 0.28, ease: [0.4, 0, 0.7, 0.2] }),
+        ])
+    await exitAnim
     onClose()
-  }, [onClose, animateBackdrop, animateSheet, backdropScope, sheetScope])
+  }, [onClose, animateBackdrop, animateSheet, backdropScope, sheetScope, isDesktop])
 
   if (!restaurant) return null
 
@@ -255,45 +265,46 @@ export default function RestaurantSheet({
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
         @media (min-width: 768px) {
-          .restaurant-sheet-root { top: 56px !important; }
+          /* Root: pass-through clicks to map behind */
+          .restaurant-sheet-root {
+            top: 56px !important;
+            pointer-events: none !important;
+          }
           .restaurant-sheet-root .rs-backdrop { display: none !important; }
           .restaurant-sheet-root .rs-sheet {
-            transform: none !important; opacity: 1 !important;
-            flex-direction: row !important;
+            /* Side panel — animation handled by framer-motion (x direction) */
+            pointer-events: auto !important;
+            width: 520px !important;
+            max-width: 520px !important;
+            flex: none !important;
+            border-right: 1px solid #E8E5DE;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.06);
           }
-          /* Hide photo carousel — replaced by inline grid */
+          /* Hide mobile photo carousel — replaced by inline grid */
           .restaurant-sheet-root .rs-photo-area { display: none !important; }
-          /* Hide back/actions buttons over photo area */
-          .restaurant-sheet-root .rs-back-btn { display: none !important; }
-          .restaurant-sheet-root .rs-top-actions { display: none !important; }
-          /* Scroll area: left side */
+          /* Keep back/actions buttons for closing panel */
+          .restaurant-sheet-root .rs-back-btn { top: 14px !important; }
+          .restaurant-sheet-root .rs-top-actions { top: 14px !important; }
+          /* Scroll: full width of panel */
           .restaurant-sheet-root .rs-scroll {
-            flex: 1; min-width: 0;
-            max-width: calc(100% - 320px);
+            flex: 1; min-width: 0; max-width: 100%;
           }
-          /* Content card: no margin (photo grid is inline) */
           .restaurant-sheet-root .rs-content-card {
             margin-top: 0 !important;
             border-radius: 0 !important;
           }
-          /* Sticky header: don't span side map */
+          /* Sticky header: constrained to panel */
           .restaurant-sheet-root .rs-sticky-header {
             top: 56px !important;
-            right: 320px !important;
+            width: 520px !important;
+            right: auto !important;
           }
-          /* Side map panel */
-          .restaurant-sheet-root .rs-side-map {
-            display: flex !important;
-            width: 320px; flex-shrink: 0;
-            border-left: 1px solid #E8E5DE;
-            flex-direction: column;
-            background: #F5F3EE;
-          }
+          /* Hide side map — main map visible behind panel */
+          .restaurant-sheet-root .rs-side-map { display: none !important; }
         }
         @media (min-width: 1024px) {
-          .restaurant-sheet-root .rs-side-map { width: 400px; }
-          .restaurant-sheet-root .rs-scroll { max-width: calc(100% - 400px); }
-          .restaurant-sheet-root .rs-sticky-header { right: 400px !important; }
+          .restaurant-sheet-root .rs-sheet { width: 560px !important; max-width: 560px !important; }
+          .restaurant-sheet-root .rs-sticky-header { width: 560px !important; }
         }
       `}</style>
 
@@ -307,13 +318,16 @@ export default function RestaurantSheet({
         onClick={handleClose}
       />
 
-      {/* Full page sheet */}
+      {/* Full page sheet — slides from bottom on mobile, from left on desktop */}
       <motion.div
         ref={sheetScope}
         className="relative flex flex-1 flex-col overflow-hidden bg-white rs-sheet"
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+        initial={isDesktop ? { x: '-100%' } : { y: '100%', opacity: 0 }}
+        animate={isDesktop ? { x: 0 } : { y: 0, opacity: 1 }}
+        transition={isDesktop
+          ? { type: 'spring', damping: 30, stiffness: 280, mass: 0.9 }
+          : { type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }
+        }
       >
         {/* Photo — absolute in sheet, behind scroll content */}
         <div className="rs-photo-area" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
