@@ -724,24 +724,31 @@ export default function AdminSettings() {
           </p>
         </div>
 
-        <div style={{ maxWidth: 600 }}>
-          {/* Account section */}
-          <div style={{ marginBottom: 28 }}>
-            <div style={sectionLabel}>ACCOUNT</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <ChangeEmail currentEmail={user.email} user={user} />
-              <ChangePassword userEmail={user.email} />
-            </div>
+        {/* Account section — 2 cols on desktop */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={sectionLabel}>ACCOUNT</div>
+          <div
+            style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}
+            className="md:!grid-cols-2"
+          >
+            <ChangeEmail currentEmail={user.email} user={user} />
+            <ChangePassword userEmail={user.email} />
           </div>
+        </div>
 
+        {/* Team + Tools — 2 cols on desktop */}
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 28 }}
+          className="md:!grid-cols-2 md:!gap-x-16"
+        >
           {/* Team section */}
-          <div style={{ marginBottom: 28 }}>
+          <div>
             <div style={sectionLabel}>TEAM</div>
             <AdminList currentUserId={user.id} />
           </div>
 
           {/* Tools section */}
-          <div style={{ marginBottom: 28 }}>
+          <div>
             <div style={sectionLabel}>STRUMENTI</div>
             <ThumbnailTool />
           </div>
