@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -19,50 +18,6 @@ import {
 } from 'recharts'
 
 /* ------------------------------------------------------------------ */
-/*  Icons                                                              */
-/* ------------------------------------------------------------------ */
-const ic = {
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.8,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-}
-function EyeIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
-}
-function UsersIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 00-3-3.87" />
-      <path d="M16 3.13a4 4 0 010 7.75" />
-    </svg>
-  )
-}
-function TagIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-      <line x1="7" y1="7" x2="7.01" y2="7" />
-    </svg>
-  )
-}
-function CheckIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Period helpers                                                     */
 /* ------------------------------------------------------------------ */
 const PERIODS = [
@@ -77,68 +32,28 @@ function periodStart(days) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  StatCard                                                           */
+/*  StatCard — compact, no animation                                   */
 /* ------------------------------------------------------------------ */
-function StatCard({ Icon, label, value, sublabel, trend, trendPositive, index }) {
+function StatCard({ label, value, sub, subColor }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      style={{
-        background: '#fff',
-        border: '1px solid #eee',
-        borderRadius: 10,
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 6,
-        }}
-      >
-        <div
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: 6,
-            background: '#fafafa',
-            color: '#666',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon w={12} />
-        </div>
-        {trend && (
-          <div
-            style={{
-              fontSize: 10,
-              padding: '2px 6px',
-              background: trendPositive ? '#ecfdf5' : '#fef2f2',
-              color: trendPositive ? '#059669' : '#dc2626',
-              borderRadius: 4,
-              fontWeight: 500,
-            }}
-          >
-            {trend}
-          </div>
-        )}
-      </div>
+    <div style={{
+      background: '#fff',
+      border: '1px solid #eee',
+      borderRadius: 10,
+      padding: '12px 14px',
+    }}>
       <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {label}
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1f', marginTop: 4, lineHeight: 1.1 }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', marginTop: 4, lineHeight: 1.1 }}>
         {value}
       </div>
-      {sublabel && (
-        <div style={{ fontSize: 10, color: '#999', marginTop: 4 }} dangerouslySetInnerHTML={{ __html: sublabel }} />
+      {sub && (
+        <div style={{ fontSize: 11, color: subColor || '#999', fontWeight: 500, marginTop: 4 }}>
+          {sub}
+        </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
@@ -489,7 +404,7 @@ export default function AnalyticsPage() {
       {/* ─── CONTENT ─── */}
       <div
         className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]"
-        style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         {/* ─── LIVE BANNER ─── */}
         <div
@@ -540,40 +455,14 @@ export default function AnalyticsPage() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 10,
+            gap: 8,
           }}
-          className="md:!grid-cols-4 md:gap-4"
+          className="md:!grid-cols-4 md:!gap-[10px]"
         >
-          <StatCard
-            Icon={EyeIcon}
-            label="Visite totali"
-            value={metrics.totalVisits}
-            sublabel="pagine viste nel periodo"
-            index={0}
-          />
-          <StatCard
-            Icon={UsersIcon}
-            label="Utenti registrati"
-            value={metrics.usersTotal}
-            trend={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod}` : null}
-            trendPositive
-            sublabel={`${metrics.usersInPeriod} nel periodo`}
-            index={1}
-          />
-          <StatCard
-            Icon={TagIcon}
-            label="QR presi"
-            value={metrics.qrGenerated}
-            sublabel="sconti attivati dagli utenti"
-            index={2}
-          />
-          <StatCard
-            Icon={CheckIcon}
-            label="QR utilizzati"
-            value={metrics.qrRedeemed}
-            sublabel={`<span style="color:#E8453C;font-weight:500">${conversionRate}%</span> tasso conversione`}
-            index={3}
-          />
+          <StatCard label="Visite totali" value={metrics.totalVisits} sub="pagine viste nel periodo" />
+          <StatCard label="Utenti registrati" value={metrics.usersTotal} sub={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod} nel periodo` : null} subColor="#059669" />
+          <StatCard label="QR presi" value={metrics.qrGenerated} sub="sconti attivati" />
+          <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="#E8453C" />
         </div>
 
         {/* ─── VISITS CHART + PAGE BREAKDOWN ─── */}
