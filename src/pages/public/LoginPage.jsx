@@ -249,7 +249,7 @@ export default function LoginPage() {
         }}
       >
         <motion.div
-          className="w-full max-w-sm"
+          className="w-full max-w-[380px]"
           style={{ margin: '0 auto' }}
           initial="hidden"
           animate="visible"
