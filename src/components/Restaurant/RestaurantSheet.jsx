@@ -252,11 +252,53 @@ export default function RestaurantSheet({
   const photoCount = (restaurant.photos || []).length
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
+      <style>{`
+        @media (min-width: 768px) {
+          .restaurant-sheet-root { top: 56px !important; }
+          .restaurant-sheet-root .rs-backdrop { display: none !important; }
+          .restaurant-sheet-root .rs-sheet {
+            transform: none !important; opacity: 1 !important;
+            flex-direction: row !important;
+          }
+          /* Photo area: constrain to left content area */
+          .restaurant-sheet-root .rs-photo-area {
+            right: 400px !important;
+            height: 320px !important;
+          }
+          .restaurant-sheet-root .rs-photo-area > div { height: 320px !important; }
+          /* Scroll area: left side */
+          .restaurant-sheet-root .rs-scroll {
+            flex: 1; min-width: 0;
+          }
+          /* Content card: photo is 320px, overlap 24px */
+          .restaurant-sheet-root .rs-content-card {
+            margin-top: 296px !important;
+            border-radius: 0 !important;
+          }
+          /* Sticky header: don't span side map */
+          .restaurant-sheet-root .rs-sticky-header {
+            top: 56px !important;
+            right: 400px !important;
+          }
+          /* Buttons: constrain within left area */
+          .restaurant-sheet-root .rs-back-btn { top: 14px !important; }
+          .restaurant-sheet-root .rs-top-actions { top: 14px !important; }
+          /* Side map panel */
+          .restaurant-sheet-root .rs-side-map {
+            display: flex !important;
+            width: 400px; flex-shrink: 0;
+            border-left: 1px solid #E8E5DE;
+            flex-direction: column;
+            background: #F5F3EE;
+          }
+        }
+      `}</style>
+
+      {/* Backdrop — mobile only */}
       <motion.div
         ref={backdropScope}
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50 rs-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
@@ -266,13 +308,13 @@ export default function RestaurantSheet({
       {/* Full page sheet */}
       <motion.div
         ref={sheetScope}
-        className="relative flex flex-1 flex-col overflow-hidden bg-white"
+        className="relative flex flex-1 flex-col overflow-hidden bg-white rs-sheet"
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
         {/* Photo — absolute in sheet, behind scroll content */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
+        <div className="rs-photo-area" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
           <div ref={photoRef} style={{ willChange: 'transform' }}>
             <PhotoCarousel photos={restaurant.photos || []} height="48vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
           </div>
@@ -280,6 +322,7 @@ export default function RestaurantSheet({
 
         {/* Back button — above scroll content */}
         <button
+          className="rs-back-btn"
           onClick={handleClose}
           style={{
             position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 14, zIndex: 20,
@@ -295,7 +338,7 @@ export default function RestaurantSheet({
         </button>
 
         {/* Share + Save — above scroll content */}
-        <div style={{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', right: 14, zIndex: 20, display: 'flex', gap: 10 }}>
+        <div className="rs-top-actions" style={{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', right: 14, zIndex: 20, display: 'flex', gap: 10 }}>
           <button
             onClick={handleShare}
             style={{
@@ -313,10 +356,10 @@ export default function RestaurantSheet({
         </div>
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none" style={{ position: 'relative', zIndex: 1 }}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1 }}>
 
           {/* Sticky header bar — appears when scrolled past photo */}
-          <div style={{
+          <div className="rs-sticky-header" style={{
             position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
             background: '#fff',
             padding: `calc(10px + env(safe-area-inset-top, 0px)) 14px 10px`,
@@ -368,7 +411,7 @@ export default function RestaurantSheet({
           </div>
 
           {/* White content card — scrolls up over photo */}
-          <div style={{
+          <div className="rs-content-card" style={{
             background: '#fff',
             borderRadius: '20px 20px 0 0',
             marginTop: 'calc(45vh - 24px)',
@@ -1063,6 +1106,52 @@ export default function RestaurantSheet({
                 <Footer />
               </motion.div>
             </motion.div>
+          </div>
+        </div>
+
+        {/* Desktop side map panel — hidden on mobile, shown on ≥768px */}
+        <div className="rs-side-map" style={{ display: 'none' }}>
+          {restaurant.latitude && restaurant.longitude && (
+            <div style={{ flex: 1, position: 'relative' }}>
+              <img
+                src={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+E8453C(${restaurant.longitude},${restaurant.latitude})/${restaurant.longitude},${restaurant.latitude},15,0/400x600@2x?access_token=${import.meta.env.VITE_MAPBOX_TOKEN || ''}`}
+                alt="Mappa"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          )}
+          <div style={{
+            padding: '16px 20px',
+            borderTop: '1px solid #E8E5DE',
+            display: 'flex', gap: 10,
+            background: '#fff',
+          }}>
+            {mapsUrl && (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
+                fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                background: '#E8453C', color: '#fff', border: 'none',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                </svg>
+                Indicazioni
+              </a>
+            )}
+            {phoneUrl && (
+              <a href={phoneUrl} style={{
+                flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
+                fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                background: '#F0EBE3', color: '#22181C', border: 'none',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+                </svg>
+                Chiama
+              </a>
+            )}
           </div>
         </div>
 
