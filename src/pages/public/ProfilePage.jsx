@@ -117,7 +117,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Desktop centered wrapper */}
-      <div className="md:max-w-[640px] md:mx-auto md:w-full">
+      <div className="md:max-w-[800px] md:mx-auto md:w-full">
 
       {/* ── HEADER GRADIENT ── */}
       <div style={{
@@ -134,8 +134,8 @@ export default function ProfilePage() {
         {/* Top row: avatar + name + settings */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
           {/* Avatar */}
-          <div style={{
-            width: 48, height: 48, minWidth: 48, borderRadius: '50%', background: '#fff',
+          <div className="w-[48px] h-[48px] min-w-[48px] md:w-[64px] md:h-[64px] md:min-w-[64px]" style={{
+            borderRadius: '50%', background: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700,
             color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
@@ -198,10 +198,27 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* ── CONTENT AREA: two-column on desktop ── */}
+      <style>{`
+        @media (min-width: 768px) {
+          .profile-content-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 240px;
+            gap: 16px;
+          }
+          .profile-invite { grid-column: 1; grid-row: 1; margin: 0 !important; }
+          .profile-links { grid-column: 2; grid-row: 1 / 4; }
+          .profile-links > div { grid-template-columns: 1fr !important; }
+          .profile-newsletter { grid-column: 1; grid-row: 2; margin: 0 !important; }
+          .profile-social { grid-column: 1; grid-row: 3; padding: 0 !important; }
+        }
+      `}</style>
+      <div className="profile-content-grid" style={{ padding: '0 22px 20px' }}>
+
       {/* ── CARD INVITA UN AMICO ── */}
-      <div style={{
+      <div className="profile-invite" style={{
         background: 'var(--color-primary)', borderRadius: 20, padding: 18,
-        margin: '0 22px 24px', position: 'relative', overflow: 'hidden',
+        marginBottom: 24, position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: -15, right: -15, width: 80, height: 80,
@@ -225,11 +242,11 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* ── GRIGLIA LINK 2x2 (4-col on desktop) ── */}
-      <div className="md:!grid-cols-4" style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
-        padding: '0 22px 20px',
-      }}>
+      {/* ── GRIGLIA LINK ── */}
+      <div className="profile-links" style={{ marginBottom: 20 }}>
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+        }}>
         {[
           {
             icon: (
@@ -294,11 +311,12 @@ export default function ProfilePage() {
             </div>
           </button>
         ))}
+        </div>
       </div>
 
       {/* ── NEWSLETTER TOGGLE ── */}
-      <div style={{
-        margin: '0 22px 16px', padding: '14px 16px',
+      <div className="profile-newsletter" style={{
+        marginBottom: 16, padding: '14px 16px',
         background: '#fff', borderRadius: 16,
         border: '1px solid var(--color-bordo)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -326,7 +344,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ── SOCIAL BUTTONS ── */}
-      <div style={{ display: 'flex', gap: 10, padding: '0 22px 20px' }}>
+      <div className="profile-social" style={{ display: 'flex', gap: 10, paddingBottom: 20 }}>
         <a href="https://www.tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           background: 'var(--color-primary)', borderRadius: 14, padding: '13px 0',
@@ -351,6 +369,8 @@ export default function ProfilePage() {
           Instagram
         </a>
       </div>
+
+      </div>{/* end profile-content-grid */}
 
       {/* ── FOOTER MINIMAL ── */}
       <div style={{ flex: 1 }} />
