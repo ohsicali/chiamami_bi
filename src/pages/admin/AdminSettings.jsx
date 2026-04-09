@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Navigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -708,24 +707,36 @@ function AdminList({ currentUserId }) {
 /*  Main page                                                          */
 /* ------------------------------------------------------------------ */
 export default function AdminSettings() {
-  const { user, isAdmin, loading } = useAuth()
+  const { user, isAdmin, loading, signOut } = useAuth()
+  const navigate = useNavigate()
 
   if (loading) return null
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/admin/login')
+  }
+
   return (
     <AdminLayout title="Impostazioni">
-      <div style={{ padding: '20px 28px', fontFamily: "'DM Sans', sans-serif" }}>
-        {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Impostazioni</h1>
-          <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
-            Strumenti di manutenzione e configurazione
-          </p>
+      {/* ─── HEADER ─── */}
+      <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Impostazioni</h1>
+            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>
+              Strumenti di manutenzione e configurazione
+            </p>
+          </div>
         </div>
+      </div>
+
+      {/* ─── CONTENT ─── */}
+      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Account section — 2 cols on desktop */}
-        <div style={{ marginBottom: 28 }}>
+        <div>
           <div style={sectionLabel}>ACCOUNT</div>
           <div
             style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}
@@ -738,7 +749,7 @@ export default function AdminSettings() {
 
         {/* Team + Tools — 2 cols on desktop */}
         <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 28 }}
+          style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}
           className="md:!grid-cols-2 md:!gap-x-16"
         >
           {/* Team section */}
@@ -752,6 +763,32 @@ export default function AdminSettings() {
             <div style={sectionLabel}>STRUMENTI</div>
             <ThumbnailTool />
           </div>
+        </div>
+
+        {/* Logout */}
+        <div style={{ borderTop: '1px solid #eee', paddingTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '10px 24px',
+              fontSize: 13,
+              fontWeight: 600,
+              background: 'transparent',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              color: '#E8453C',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Esci
+          </button>
         </div>
       </div>
     </AdminLayout>
