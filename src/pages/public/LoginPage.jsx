@@ -156,8 +156,9 @@ export default function LoginPage() {
       className="flex flex-col min-h-dvh"
       style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}
     >
-      {/* ─── HEADER — logo + Esplora la mappa ─── */}
+      {/* ─── HEADER — logo + Esplora la mappa (mobile only) ─── */}
       <header
+        className="md:hidden"
         style={{
           position: 'sticky',
           top: 0,
