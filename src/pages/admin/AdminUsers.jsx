@@ -283,7 +283,7 @@ export default function AdminUsers() {
             </div>
 
             {/* ─── MOBILE CARDS ─── */}
-            <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2 md:hidden">
               {filtered.map(u => (
                 <div key={u.id} style={{
                   background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 12,
