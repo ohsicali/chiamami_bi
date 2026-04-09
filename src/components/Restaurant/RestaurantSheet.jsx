@@ -12,7 +12,7 @@ import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 
 /* ── animation variants ── */
@@ -261,20 +261,19 @@ export default function RestaurantSheet({
             transform: none !important; opacity: 1 !important;
             flex-direction: row !important;
           }
-          /* Photo area: constrain to left content area */
-          .restaurant-sheet-root .rs-photo-area {
-            right: 320px !important;
-            height: 320px !important;
-          }
-          .restaurant-sheet-root .rs-photo-area > div { height: 320px !important; }
+          /* Hide photo carousel — replaced by inline grid */
+          .restaurant-sheet-root .rs-photo-area { display: none !important; }
+          /* Hide back/actions buttons over photo area */
+          .restaurant-sheet-root .rs-back-btn { display: none !important; }
+          .restaurant-sheet-root .rs-top-actions { display: none !important; }
           /* Scroll area: left side */
           .restaurant-sheet-root .rs-scroll {
             flex: 1; min-width: 0;
             max-width: calc(100% - 320px);
           }
-          /* Content card: photo is 320px, overlap 24px */
+          /* Content card: no margin (photo grid is inline) */
           .restaurant-sheet-root .rs-content-card {
-            margin-top: 296px !important;
+            margin-top: 0 !important;
             border-radius: 0 !important;
           }
           /* Sticky header: don't span side map */
@@ -282,9 +281,6 @@ export default function RestaurantSheet({
             top: 56px !important;
             right: 320px !important;
           }
-          /* Buttons: constrain within left area */
-          .restaurant-sheet-root .rs-back-btn { top: 14px !important; }
-          .restaurant-sheet-root .rs-top-actions { top: 14px !important; }
           /* Side map panel */
           .restaurant-sheet-root .rs-side-map {
             display: flex !important;
@@ -298,7 +294,6 @@ export default function RestaurantSheet({
           .restaurant-sheet-root .rs-side-map { width: 400px; }
           .restaurant-sheet-root .rs-scroll { max-width: calc(100% - 400px); }
           .restaurant-sheet-root .rs-sticky-header { right: 400px !important; }
-          .restaurant-sheet-root .rs-photo-area { right: 400px !important; }
         }
       `}</style>
 
@@ -424,9 +419,56 @@ export default function RestaurantSheet({
             marginTop: 'calc(45vh - 24px)',
             position: 'relative', zIndex: 2,
           }}>
-            {/* Photo counter — anchored to white card, moves with it */}
+            {/* Desktop photo grid — replaces carousel on ≥768px */}
+            {(() => {
+              const photos = restaurant.photos || []
+              if (photos.length === 0) return null
+              const getUrl = (p) => proxyImg(typeof p === 'string' ? p : p?.photo_url || p?.thumb_url)
+              const imgStyle = { width: '100%', height: '100%', objectFit: 'cover', display: 'block' }
+
+              if (photos.length === 1) {
+                return (
+                  <div className="hidden md:block" style={{ height: 360, overflow: 'hidden' }}>
+                    <img src={getUrl(photos[0])} alt={restaurant.name} style={imgStyle} />
+                  </div>
+                )
+              }
+              if (photos.length === 2) {
+                return (
+                  <div className="hidden md:grid" style={{ height: 360, gridTemplateColumns: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
+                    <img src={getUrl(photos[0])} alt="" style={imgStyle} />
+                    <img src={getUrl(photos[1])} alt="" style={imgStyle} />
+                  </div>
+                )
+              }
+              // 3+ photos: Airbnb-style grid
+              return (
+                <div className="hidden md:grid" style={{ height: 360, gridTemplateColumns: '3fr 2fr', gridTemplateRows: '1fr 1fr', gap: 2, overflow: 'hidden' }}>
+                  <img src={getUrl(photos[0])} alt={restaurant.name} style={{ ...imgStyle, gridRow: '1 / 3' }} />
+                  <img src={getUrl(photos[1])} alt="" style={imgStyle} />
+                  <div style={{ position: 'relative', overflow: 'hidden' }}>
+                    <img src={getUrl(photos[2])} alt="" style={imgStyle} />
+                    {photos.length > 3 && (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        background: 'rgba(0,0,0,0.45)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', fontSize: 14, fontWeight: 600, gap: 6,
+                      }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                        Tutte le foto ({photos.length})
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Photo counter — anchored to white card, mobile only */}
             {photoCount > 1 && (
-              <div style={{
+              <div className="md:hidden" style={{
                 position: 'absolute', top: -36, right: 16, zIndex: 3,
                 background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
                 borderRadius: 14, padding: '4px 10px',
