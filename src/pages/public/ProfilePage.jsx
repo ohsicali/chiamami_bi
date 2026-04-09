@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [newsletterEnabled, setNewsletterEnabled] = useState(false)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const { city: currentCity } = useCity()
+  const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
 
   useEffect(() => {
     if (!user?.id) return
@@ -118,9 +119,9 @@ export default function ProfilePage() {
       </div>
 
       {/* ── HEADER GRADIENT — full width ── */}
-      <div className="profile-header-gradient" style={{
+      <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 50%, #e85d4a 100%)',
-        padding: '20px 22px 0',
+        padding: isDesktop ? '56px 40px 0' : '20px 22px 0',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Decorative shapes */}
@@ -128,73 +129,76 @@ export default function ProfilePage() {
           position: 'absolute', top: -30, right: -30, width: 120, height: 120,
           borderRadius: '50%', background: 'rgba(255,255,255,0.06)',
         }} />
-        <div className="hidden md:block" style={{
-          position: 'absolute', top: 20, left: '15%', width: 300, height: 300,
-          borderRadius: '50%', background: 'rgba(255,255,255,0.03)',
-        }} />
-        <div className="hidden md:block" style={{
-          position: 'absolute', bottom: -60, right: '10%', width: 220, height: 220,
-          borderRadius: '50%', background: 'rgba(255,255,255,0.04)',
-        }} />
-        <div className="hidden md:block" style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)',
-        }} />
+        {isDesktop && <>
+          <div style={{ position: 'absolute', top: 20, left: '15%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+          <div style={{ position: 'absolute', bottom: -60, right: '10%', width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)' }} />
+        </>}
 
-        <style>{`
-          @media (min-width: 768px) {
-            .profile-header-gradient { padding: 48px 40px 0 !important; }
-            .profile-header-inner { flex-direction: column !important; align-items: center !important; gap: 16px !important; text-align: center; }
-            .profile-header-info { align-items: center !important; }
-            .profile-header-badge { justify-content: center !important; }
-            .profile-settings-btn { position: absolute !important; top: 0 !important; right: 0 !important; }
-            .profile-savings-bar { margin-top: 32px !important; }
-            .profile-savings-bar > div { justify-content: center !important; }
-            .profile-stats-row { margin-top: -28px !important; position: relative; z-index: 2; }
-            .profile-stats-row button {
-              background: rgba(255,255,255,0.95) !important;
-              backdrop-filter: blur(12px) !important;
-              border: none !important;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
-            }
-          }
-        `}</style>
-
-        <div className="md:max-w-[1080px] md:mx-auto" style={{ position: 'relative' }}>
-          {/* Top row: avatar + name + settings — becomes vertical centered on desktop */}
-          <div className="profile-header-inner" style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: isDesktop ? 1080 : undefined, margin: isDesktop ? '0 auto' : undefined, position: 'relative' }}>
+          {/* Profile info — horizontal on mobile, vertical centered on desktop */}
+          <div style={{
+            display: 'flex',
+            flexDirection: isDesktop ? 'column' : 'row',
+            alignItems: 'center',
+            gap: isDesktop ? 20 : 12,
+            textAlign: isDesktop ? 'center' : 'left',
+            position: 'relative', zIndex: 1,
+          }}>
             {/* Avatar */}
-            <div className="w-[48px] h-[48px] min-w-[48px] md:w-[96px] md:h-[96px] md:min-w-[96px]" style={{
+            <div style={{
+              width: isDesktop ? 96 : 48, height: isDesktop ? 96 : 48,
+              minWidth: isDesktop ? 96 : 48,
               borderRadius: '50%', background: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+              fontSize: isDesktop ? 40 : 20,
               color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+              boxShadow: isDesktop ? '0 8px 32px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.1)',
             }}>
-              <span className="text-[20px] md:text-[36px]">{initial}</span>
+              {initial}
             </div>
-            <div className="profile-header-info" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              <div className="text-[17px] md:text-[28px]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
+
+            <div style={{
+              flex: isDesktop ? undefined : 1, minWidth: 0,
+              display: 'flex', flexDirection: 'column',
+              alignItems: isDesktop ? 'center' : 'flex-start',
+            }}>
+              <div style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: isDesktop ? 32 : 17,
+                fontWeight: 700, color: '#fff', lineHeight: 1.3,
+              }}>
                 {displayName}
               </div>
-              <div className="text-[11px] md:text-[14px]" style={{ color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{email}</div>
-              <div className="profile-header-badge" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <div style={{ fontSize: isDesktop ? 15 : 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
+                {email}
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                marginTop: isDesktop ? 12 : 6,
+                justifyContent: isDesktop ? 'center' : 'flex-start',
+              }}>
                 <span style={{
-                  fontSize: 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
-                  background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 12px',
+                  fontSize: isDesktop ? 12 : 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+                  background: 'rgba(255,255,255,0.15)', borderRadius: 20,
+                  padding: isDesktop ? '5px 16px' : '4px 12px',
                   backdropFilter: 'blur(8px)',
                 }}>
                   Amico di Bi
                 </span>
-                <span className="text-[10px] md:text-[12px]" style={{ color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+                <span style={{ fontSize: isDesktop ? 12 : 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
               </div>
             </div>
-            {/* Settings button */}
-            <button className="profile-settings-btn" onClick={() => navigate('/settings')} style={{
-              width: 38, height: 38, minWidth: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
+
+            {/* Settings button — absolute top-right on desktop */}
+            <button onClick={() => navigate('/settings')} style={{
+              width: 38, height: 38, minWidth: 38, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', cursor: 'pointer', flexShrink: 0,
               backdropFilter: 'blur(8px)',
+              ...(isDesktop ? { position: 'absolute', top: 0, right: 0 } : {}),
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
                 <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
@@ -204,65 +208,75 @@ export default function ProfilePage() {
           </div>
 
           {/* ── BARRA RISPARMIO ── */}
-          <div className="profile-savings-bar" style={{
+          <div style={{
             background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
-            padding: '16px 22px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
+            padding: isDesktop ? '20px 32px' : '16px 22px',
+            margin: isDesktop ? '36px -40px 0' : '20px -22px 0',
+            position: 'relative', zIndex: 1,
           }}>
-            <div className="md:text-center" style={{ display: 'flex', alignItems: 'baseline', gap: 6, justifyContent: 'flex-start' }}>
-              <span className="md:text-[24px]" style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
-                {stats.totalSaved}<span className="md:text-[18px]" style={{ fontSize: 14 }}>€</span>
+            <div style={{
+              display: 'flex', alignItems: 'baseline', gap: 8,
+              justifyContent: isDesktop ? 'center' : 'flex-start',
+            }}>
+              <span style={{
+                fontFamily: "'TAN Songbird', serif",
+                fontSize: isDesktop ? 26 : 20,
+                fontWeight: 700, color: '#fff', letterSpacing: 2,
+              }}>
+                {stats.totalSaved}<span style={{ fontSize: isDesktop ? 18 : 14 }}>€</span>
               </span>
-              <span className="md:text-[13px]" style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
+              <span style={{ fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── CONTENT — centered container ── */}
-      <div className="md:max-w-[1080px] md:mx-auto md:w-full">
+      <div style={{ maxWidth: isDesktop ? 1080 : undefined, margin: isDesktop ? '0 auto' : undefined, width: '100%' }}>
 
       {/* ── 3 STATS CARDS — overlapping header on desktop ── */}
-      <div className="profile-stats-row" style={{ display: 'flex', gap: 10, padding: '18px 22px' }}>
+      <div style={{
+        display: 'flex', gap: isDesktop ? 16 : 10,
+        padding: isDesktop ? '0 22px' : '18px 22px',
+        marginTop: isDesktop ? -28 : 0,
+        position: 'relative', zIndex: 2,
+      }}>
         {[
           { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
           { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
           { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
         ].map((stat, i) => (
           <button key={i} onClick={stat.onClick} style={{
-            flex: 1, background: '#fff', borderRadius: 16, padding: 16,
-            textAlign: 'center', border: '1px solid var(--color-bordo)',
-            cursor: 'pointer',
+            flex: 1, borderRadius: 16,
+            padding: isDesktop ? 20 : 16,
+            textAlign: 'center', cursor: 'pointer',
+            ...(isDesktop
+              ? { background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }
+              : { background: '#fff', border: '1px solid var(--color-bordo)' }
+            ),
           }}>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, fontWeight: 700, color: 'var(--color-primary)' }}>
+            <div style={{
+              fontFamily: "'TAN Songbird', serif",
+              fontSize: isDesktop ? 22 : 18,
+              fontWeight: 700, color: 'var(--color-primary)',
+            }}>
               {stat.value}
             </div>
-            <div style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{stat.label}</div>
+            <div style={{ fontSize: isDesktop ? 11 : 10, color: 'var(--color-secondary)', marginTop: 2 }}>{stat.label}</div>
           </button>
         ))}
       </div>
 
-      {/* ── DESKTOP GRID LAYOUT ── */}
-      <style>{`
-        @media (min-width: 768px) {
-          .profile-desktop-grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-          }
-          .profile-desktop-grid .profile-invite { margin-bottom: 0 !important; }
-          .profile-desktop-grid .profile-newsletter { margin-bottom: 0 !important; }
-          .profile-links-desktop {
-            grid-template-columns: repeat(4, 1fr) !important;
-          }
-        }
-      `}</style>
-
-      <div className="profile-desktop-grid" style={{ padding: '0 22px 20px' }}>
+      {/* ── INVITE + NEWSLETTER GRID ── */}
+      <div style={{
+        padding: isDesktop ? '16px 22px 20px' : '0 22px 20px',
+        ...(isDesktop ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 } : {}),
+      }}>
 
       {/* ── CARD INVITA UN AMICO ── */}
-      <div className="profile-invite" style={{
+      <div style={{
         background: 'var(--color-primary)', borderRadius: 20, padding: 18,
-        marginBottom: 16, position: 'relative', overflow: 'hidden',
+        marginBottom: isDesktop ? 0 : 16, position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: -15, right: -15, width: 80, height: 80,
@@ -287,8 +301,8 @@ export default function ProfilePage() {
       </div>
 
       {/* ── NEWSLETTER TOGGLE ── */}
-      <div className="profile-newsletter" style={{
-        marginBottom: 16, padding: '18px 20px',
+      <div style={{
+        marginBottom: isDesktop ? 0 : 16, padding: '18px 20px',
         background: '#fff', borderRadius: 20,
         border: '1px solid var(--color-bordo)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -318,8 +332,8 @@ export default function ProfilePage() {
       </div>{/* end profile-desktop-grid */}
 
       {/* ── 4 LINK BUTTONS — full row on desktop ── */}
-      <div className="profile-links-desktop" style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+      <div style={{
+        display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(4, 1fr)' : '1fr 1fr', gap: 10,
         padding: '0 22px 16px',
       }}>
         {[
