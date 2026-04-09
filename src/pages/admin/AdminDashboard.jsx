@@ -270,27 +270,40 @@ export default function AdminDashboard() {
 
   const userName = user?.email?.split('@')[0] ?? 'Admin'
 
+  const publishedCount = restaurants.filter(r => r.is_published !== false).length
+
+  // "Ultimi aggiunti" from useRestaurants hook (always available)
+  const latestRestaurants = useMemo(() => {
+    return [...restaurants]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 3)
+  }, [restaurants])
+
   // Stat cards data
   const statCards = [
     {
       label: 'Ristoranti',
       value: metrics.restaurantsTotal,
-      trend: null,
+      sub: publishedCount > 0 ? `${publishedCount} pubblicati` : null,
+      subColor: '#059669',
     },
     {
       label: 'Utenti',
       value: metrics.usersTotal,
-      trend: metrics.usersThisWeek > 0 ? `+${metrics.usersThisWeek} settimana` : null,
+      sub: metrics.usersThisWeek > 0 ? `+${metrics.usersThisWeek} questa settimana` : null,
+      subColor: '#059669',
     },
     {
       label: 'Sconti attivi',
       value: metrics.discountsActive,
-      trend: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
+      sub: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
+      subColor: '#C4A265',
     },
     {
       label: 'QR usati',
       value: metrics.qrUsed,
-      trend: metrics.qrUsedThisWeek > 0 ? `+${metrics.qrUsedThisWeek} settimana` : null,
+      sub: metrics.qrUsedThisWeek > 0 ? `+${metrics.qrUsedThisWeek} questa settimana` : null,
+      subColor: '#059669',
     },
   ]
 
@@ -442,60 +455,32 @@ export default function AdminDashboard() {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 10,
+            gap: 8,
           }}
-          className="md:!grid-cols-4 md:gap-4"
+          className="md:!grid-cols-4 md:!gap-[10px]"
         >
           {statCards.map((s, i) => (
             <motion.div
               key={s.label}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
+              transition={{ delay: i * 0.04, duration: 0.25 }}
               style={{
                 background: '#fff',
                 border: '1px solid #eee',
                 borderRadius: 10,
-                padding: 16,
+                padding: '12px 14px',
               }}
             >
-              <div
-                style={{
-                  fontSize: 10,
-                  color: '#999',
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                  fontWeight: 500,
-                }}
-              >
+              <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 {s.label}
               </div>
-              <div
-                style={{
-                  fontSize: 24,
-                  fontWeight: 700,
-                  color: '#1a1a1f',
-                  marginTop: 4,
-                  lineHeight: 1.1,
-                }}
-                className="md:!text-[26px]"
-              >
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', marginTop: 4, lineHeight: 1.1 }}>
                 {s.value}
               </div>
-              {s.trend && (
-                <div
-                  style={{
-                    display: 'inline-block',
-                    marginTop: 8,
-                    fontSize: 10,
-                    padding: '2px 6px',
-                    background: '#ecfdf5',
-                    color: '#059669',
-                    borderRadius: 4,
-                    fontWeight: 500,
-                  }}
-                >
-                  {s.trend}
+              {s.sub && (
+                <div style={{ fontSize: 11, color: s.subColor, fontWeight: 500, marginTop: 4 }}>
+                  {s.sub}
                 </div>
               )}
             </motion.div>
@@ -653,7 +638,7 @@ export default function AdminDashboard() {
               flexDirection: 'column',
             }}
           >
-            {recentRestaurants.slice(0, 3).map((r) => {
+            {latestRestaurants.map((r) => {
               const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
                 .map((name) => getCategoryInfo(name))
                 .filter(Boolean)
@@ -729,7 +714,7 @@ export default function AdminDashboard() {
                 </Link>
               )
             })}
-            {recentRestaurants.length === 0 && (
+            {latestRestaurants.length === 0 && (
               <div style={{ padding: 14, textAlign: 'center', fontSize: 12, color: '#999' }}>
                 Nessun ristorante
               </div>
