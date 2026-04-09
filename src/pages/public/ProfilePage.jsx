@@ -118,47 +118,83 @@ export default function ProfilePage() {
       </div>
 
       {/* ── HEADER GRADIENT — full width ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 100%)',
+      <div className="profile-header-gradient" style={{
+        background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 50%, #e85d4a 100%)',
         padding: '20px 22px 0',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Decorative circle */}
+        {/* Decorative shapes */}
         <div style={{
           position: 'absolute', top: -30, right: -30, width: 120, height: 120,
           borderRadius: '50%', background: 'rgba(255,255,255,0.06)',
         }} />
         <div className="hidden md:block" style={{
-          position: 'absolute', bottom: -40, left: '30%', width: 200, height: 200,
+          position: 'absolute', top: 20, left: '15%', width: 300, height: 300,
+          borderRadius: '50%', background: 'rgba(255,255,255,0.03)',
+        }} />
+        <div className="hidden md:block" style={{
+          position: 'absolute', bottom: -60, right: '10%', width: 220, height: 220,
           borderRadius: '50%', background: 'rgba(255,255,255,0.04)',
         }} />
+        <div className="hidden md:block" style={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+          width: 500, height: 500, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)',
+        }} />
 
-        <div className="md:max-w-[1080px] md:mx-auto">
-          {/* Top row: avatar + name + settings */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
+        <style>{`
+          @media (min-width: 768px) {
+            .profile-header-gradient { padding: 48px 40px 0 !important; }
+            .profile-header-inner { flex-direction: column !important; align-items: center !important; gap: 16px !important; text-align: center; }
+            .profile-header-info { align-items: center !important; }
+            .profile-header-badge { justify-content: center !important; }
+            .profile-settings-btn { position: absolute !important; top: 0 !important; right: 0 !important; }
+            .profile-savings-bar { margin-top: 32px !important; }
+            .profile-savings-bar > div { justify-content: center !important; }
+            .profile-stats-row { margin-top: -28px !important; position: relative; z-index: 2; }
+            .profile-stats-row button {
+              background: rgba(255,255,255,0.95) !important;
+              backdrop-filter: blur(12px) !important;
+              border: none !important;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+            }
+          }
+        `}</style>
+
+        <div className="md:max-w-[1080px] md:mx-auto" style={{ position: 'relative' }}>
+          {/* Top row: avatar + name + settings — becomes vertical centered on desktop */}
+          <div className="profile-header-inner" style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
             {/* Avatar */}
-            <div className="w-[48px] h-[48px] min-w-[48px] md:w-[72px] md:h-[72px] md:min-w-[72px]" style={{
+            <div className="w-[48px] h-[48px] min-w-[48px] md:w-[96px] md:h-[96px] md:min-w-[96px]" style={{
               borderRadius: '50%', background: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
               color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
             }}>
-              <span className="text-[20px] md:text-[28px]">{initial}</span>
+              <span className="text-[20px] md:text-[36px]">{initial}</span>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="text-[17px] md:text-[22px]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
+            <div className="profile-header-info" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <div className="text-[17px] md:text-[28px]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
                 {displayName}
               </div>
-              <div className="text-[11px] md:text-[13px]" style={{ color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{email}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <span className="text-[11px] md:text-[12px]" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Amico di Bi</span>
-                <span className="text-[10px] md:text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+              <div className="text-[11px] md:text-[14px]" style={{ color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{email}</div>
+              <div className="profile-header-badge" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+                  background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 12px',
+                  backdropFilter: 'blur(8px)',
+                }}>
+                  Amico di Bi
+                </span>
+                <span className="text-[10px] md:text-[12px]" style={{ color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
               </div>
             </div>
             {/* Settings button */}
-            <button onClick={() => navigate('/settings')} style={{
-              width: 34, height: 34, minWidth: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
+            <button className="profile-settings-btn" onClick={() => navigate('/settings')} style={{
+              width: 38, height: 38, minWidth: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
+              backdropFilter: 'blur(8px)',
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
                 <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
@@ -168,15 +204,15 @@ export default function ProfilePage() {
           </div>
 
           {/* ── BARRA RISPARMIO ── */}
-          <div style={{
+          <div className="profile-savings-bar" style={{
             background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
             padding: '16px 22px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
           }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
-                {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
+            <div className="md:text-center" style={{ display: 'flex', alignItems: 'baseline', gap: 6, justifyContent: 'flex-start' }}>
+              <span className="md:text-[24px]" style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
+                {stats.totalSaved}<span className="md:text-[18px]" style={{ fontSize: 14 }}>€</span>
               </span>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
+              <span className="md:text-[13px]" style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
             </div>
           </div>
         </div>
@@ -185,8 +221,8 @@ export default function ProfilePage() {
       {/* ── CONTENT — centered container ── */}
       <div className="md:max-w-[1080px] md:mx-auto md:w-full">
 
-      {/* ── 3 STATS CARDS ── */}
-      <div style={{ display: 'flex', gap: 10, padding: '18px 22px' }}>
+      {/* ── 3 STATS CARDS — overlapping header on desktop ── */}
+      <div className="profile-stats-row" style={{ display: 'flex', gap: 10, padding: '18px 22px' }}>
         {[
           { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
           { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
