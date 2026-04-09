@@ -90,8 +90,8 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}>
-      {/* ── STICKY HEADER — logo + Torino ── */}
-      <div style={{
+      {/* ── STICKY HEADER — logo + Torino (mobile only) ── */}
+      <div className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
         background: '#FAF7F2',
@@ -115,6 +115,9 @@ export default function ProfilePage() {
         </div>
         <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
       </div>
+
+      {/* Desktop centered wrapper */}
+      <div className="md:max-w-[640px] md:mx-auto md:w-full">
 
       {/* ── HEADER GRADIENT ── */}
       <div style={{
@@ -222,8 +225,8 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* ── GRIGLIA LINK 2x2 ── */}
-      <div style={{
+      {/* ── GRIGLIA LINK 2x2 (4-col on desktop) ── */}
+      <div className="md:!grid-cols-4" style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
         padding: '0 22px 20px',
       }}>
@@ -363,6 +366,8 @@ export default function ProfilePage() {
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-bordo)' }}>La Guida di Bi · v1.0</div>
       </div>
+
+      </div>{/* end desktop centered wrapper */}
 
       {/* ── SUGGEST RESTAURANT SHEET ── */}
       {showSuggest && (
