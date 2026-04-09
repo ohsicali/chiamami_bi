@@ -54,8 +54,8 @@ export default function AboutPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: '#22181C' }}>
-      {/* ─── STICKY HEADER ─── */}
-      <header style={{
+      {/* ─── STICKY HEADER (mobile only) ─── */}
+      <header className="md:hidden" style={{
         position: 'sticky',
         top: 0,
         zIndex: 30,
