@@ -117,10 +117,7 @@ export default function ProfilePage() {
         <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
       </div>
 
-      {/* Desktop centered wrapper */}
-      <div className="md:max-w-[800px] md:mx-auto md:w-full">
-
-      {/* ── HEADER GRADIENT ── */}
+      {/* ── HEADER GRADIENT — full width ── */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 100%)',
         padding: '20px 22px 0',
@@ -131,53 +128,62 @@ export default function ProfilePage() {
           position: 'absolute', top: -30, right: -30, width: 120, height: 120,
           borderRadius: '50%', background: 'rgba(255,255,255,0.06)',
         }} />
+        <div className="hidden md:block" style={{
+          position: 'absolute', bottom: -40, left: '30%', width: 200, height: 200,
+          borderRadius: '50%', background: 'rgba(255,255,255,0.04)',
+        }} />
 
-        {/* Top row: avatar + name + settings */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
-          {/* Avatar */}
-          <div className="w-[48px] h-[48px] min-w-[48px] md:w-[64px] md:h-[64px] md:min-w-[64px]" style={{
-            borderRadius: '50%', background: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700,
-            color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
-          }}>
-            {initial}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
-              {displayName}
+        <div className="md:max-w-[1080px] md:mx-auto">
+          {/* Top row: avatar + name + settings */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
+            {/* Avatar */}
+            <div className="w-[48px] h-[48px] min-w-[48px] md:w-[72px] md:h-[72px] md:min-w-[72px]" style={{
+              borderRadius: '50%', background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+              color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
+            }}>
+              <span className="text-[20px] md:text-[28px]">{initial}</span>
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{email}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Amico di Bi</span>
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="text-[17px] md:text-[22px]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
+                {displayName}
+              </div>
+              <div className="text-[11px] md:text-[13px]" style={{ color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{email}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                <span className="text-[11px] md:text-[12px]" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Amico di Bi</span>
+                <span className="text-[10px] md:text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+              </div>
             </div>
+            {/* Settings button */}
+            <button onClick={() => navigate('/settings')} style={{
+              width: 34, height: 34, minWidth: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
           </div>
-          {/* Settings button */}
-          <button onClick={() => navigate('/settings')} style={{
-            width: 34, height: 34, minWidth: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-              <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </button>
-        </div>
 
-        {/* ── BARRA RISPARMIO ── */}
-        <div style={{
-          background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
-          padding: '16px 22px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
-              {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
-            </span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
+          {/* ── BARRA RISPARMIO ── */}
+          <div style={{
+            background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
+            padding: '16px 22px', margin: '20px -22px 0', position: 'relative', zIndex: 1,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
+                {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
+              </span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ── CONTENT — centered container ── */}
+      <div className="md:max-w-[1080px] md:mx-auto md:w-full">
 
       {/* ── 3 STATS CARDS ── */}
       <div style={{ display: 'flex', gap: 10, padding: '18px 22px' }}>
@@ -199,27 +205,28 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* ── CONTENT AREA: two-column on desktop ── */}
+      {/* ── DESKTOP GRID LAYOUT ── */}
       <style>{`
         @media (min-width: 768px) {
-          .profile-content-grid {
+          .profile-desktop-grid {
             display: grid !important;
-            grid-template-columns: 1fr 240px;
+            grid-template-columns: 1fr 1fr;
             gap: 16px;
           }
-          .profile-invite { grid-column: 1; grid-row: 1; margin: 0 !important; }
-          .profile-links { grid-column: 2; grid-row: 1 / 4; }
-          .profile-links > div { grid-template-columns: 1fr !important; }
-          .profile-newsletter { grid-column: 1; grid-row: 2; margin: 0 !important; }
-          .profile-social { grid-column: 1; grid-row: 3; padding: 0 !important; }
+          .profile-desktop-grid .profile-invite { margin-bottom: 0 !important; }
+          .profile-desktop-grid .profile-newsletter { margin-bottom: 0 !important; }
+          .profile-links-desktop {
+            grid-template-columns: repeat(4, 1fr) !important;
+          }
         }
       `}</style>
-      <div className="profile-content-grid" style={{ padding: '0 22px 20px' }}>
+
+      <div className="profile-desktop-grid" style={{ padding: '0 22px 20px' }}>
 
       {/* ── CARD INVITA UN AMICO ── */}
       <div className="profile-invite" style={{
         background: 'var(--color-primary)', borderRadius: 20, padding: 18,
-        marginBottom: 24, position: 'relative', overflow: 'hidden',
+        marginBottom: 16, position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: -15, right: -15, width: 80, height: 80,
@@ -243,11 +250,42 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* ── GRIGLIA LINK ── */}
-      <div className="profile-links" style={{ marginBottom: 20 }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+      {/* ── NEWSLETTER TOGGLE ── */}
+      <div className="profile-newsletter" style={{
+        marginBottom: 16, padding: '18px 20px',
+        background: '#fff', borderRadius: 20,
+        border: '1px solid var(--color-bordo)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</div>
+          <div style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</div>
+        </div>
+        <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
+          position: 'relative', width: 48, height: 28, borderRadius: 14,
+          background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
+          border: 'none', cursor: 'pointer', transition: 'background 0.2s',
+          flexShrink: 0,
         }}>
+          <motion.div
+            style={{
+              position: 'absolute', top: 2, width: 24, height: 24,
+              borderRadius: 12, background: '#fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+            }}
+            animate={{ left: newsletterEnabled ? 22 : 2 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          />
+        </button>
+      </div>
+
+      </div>{/* end profile-desktop-grid */}
+
+      {/* ── 4 LINK BUTTONS — full row on desktop ── */}
+      <div className="profile-links-desktop" style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+        padding: '0 22px 16px',
+      }}>
         {[
           {
             icon: (
@@ -312,40 +350,10 @@ export default function ProfilePage() {
             </div>
           </button>
         ))}
-        </div>
-      </div>
-
-      {/* ── NEWSLETTER TOGGLE ── */}
-      <div className="profile-newsletter" style={{
-        marginBottom: 16, padding: '14px 16px',
-        background: '#fff', borderRadius: 16,
-        border: '1px solid var(--color-bordo)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</div>
-          <div style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</div>
-        </div>
-        <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
-          position: 'relative', width: 48, height: 28, borderRadius: 14,
-          background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
-          border: 'none', cursor: 'pointer', transition: 'background 0.2s',
-          flexShrink: 0,
-        }}>
-          <motion.div
-            style={{
-              position: 'absolute', top: 2, width: 24, height: 24,
-              borderRadius: 12, background: '#fff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-            }}
-            animate={{ left: newsletterEnabled ? 22 : 2 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          />
-        </button>
       </div>
 
       {/* ── SOCIAL BUTTONS ── */}
-      <div className="profile-social" style={{ display: 'flex', gap: 10, paddingBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 10, padding: '0 22px 24px' }}>
         <a href="https://www.tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           background: 'var(--color-primary)', borderRadius: 14, padding: '13px 0',
@@ -371,7 +379,7 @@ export default function ProfilePage() {
         </a>
       </div>
 
-      </div>{/* end profile-content-grid */}
+      </div>{/* end centered container */}
 
       {/* ── FOOTER MINIMAL — mobile only ── */}
       <div className="md:hidden" style={{ flex: 1 }} />
@@ -390,8 +398,6 @@ export default function ProfilePage() {
 
       {/* Desktop full footer */}
       <div className="hidden md:block"><Footer /></div>
-
-      </div>{/* end desktop centered wrapper */}
 
       {/* ── SUGGEST RESTAURANT SHEET ── */}
       {showSuggest && (
