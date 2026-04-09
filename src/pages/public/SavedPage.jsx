@@ -4,11 +4,13 @@ import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
-import { supabase } from '../../lib/supabase'
+import { supabase, proxyImg } from '../../lib/supabase'
 import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import SaveButton from '../../components/Restaurant/SaveButton'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import FilterChips from '../../components/Layout/FilterChips'
 
 function slugify(name) {
@@ -286,24 +288,86 @@ export default function SavedPage() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 md:grid md:grid-cols-2 lg:grid-cols-3">
-            {displayList.map((r, i) => {
-              const discount = activeDiscounts[r.id]
-              return (
-                <RestaurantCard
-                  key={r.id}
-                  restaurant={r}
-                  index={i}
-                  userPosition={userLocation}
-                  onClick={handleClick}
-                  saved={isSaved(r.id)}
-                  onSaveToggle={() => handleSave(r.id)}
-                  hasDiscount={!!discount}
-                  discountTitle={discount?.title || discount?.discount_value}
-                />
-              )
-            })}
-          </div>
+          <>
+            {/* Mobile: horizontal RestaurantCard list */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {displayList.map((r, i) => {
+                const discount = activeDiscounts[r.id]
+                return (
+                  <RestaurantCard
+                    key={r.id}
+                    restaurant={r}
+                    index={i}
+                    userPosition={userLocation}
+                    onClick={handleClick}
+                    saved={isSaved(r.id)}
+                    onSaveToggle={() => handleSave(r.id)}
+                    hasDiscount={!!discount}
+                    discountTitle={discount?.title || discount?.discount_value}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Desktop: vertical photo cards grid */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {displayList.map((r) => {
+                const discount = activeDiscounts[r.id]
+                const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
+                const category = categories[0]
+                const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
+                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
+                const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
+
+                return (
+                  <div
+                    key={r.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleClick(r)}
+                    className="relative overflow-hidden cursor-pointer group"
+                    style={{ height: 220, borderRadius: 16 }}
+                  >
+                    {/* Photo background */}
+                    {photoUrl ? (
+                      <img src={photoUrl} alt={r.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : '#E8E5DE', fontSize: 40, opacity: 0.6 }}>
+                        {category?.emoji || '🍽️'}
+                      </div>
+                    )}
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 45%, transparent 100%)' }} />
+                    {/* Discount badge */}
+                    {discount && (
+                      <div style={{
+                        position: 'absolute', top: 10, left: 10, zIndex: 2,
+                        background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+                        fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 8,
+                      }}>
+                        {discount.title || discount.discount_value}
+                      </div>
+                    )}
+                    {/* Save button */}
+                    <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }} onClick={(e) => { e.stopPropagation(); handleSave(r.id) }}>
+                      <SaveButton saved={isSaved(r.id)} onClick={() => {}} size="sm" />
+                    </div>
+                    {/* Info at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0" style={{ padding: '14px 16px', zIndex: 2 }}>
+                      <h3 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.4, marginBottom: 4 }}>
+                        {r.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+                        {category && <span>{category.emoji} {category.name}</span>}
+                        {category && priceStr && <span style={{ opacity: 0.5 }}>·</span>}
+                        {priceStr && <span>{priceStr}</span>}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
 
