@@ -241,8 +241,8 @@ export default function PartnerLandingPage() {
 
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--color-primary)', display: 'flex', flexDirection: 'column' }}>
-      {/* ─── STICKY HEADER ─── */}
-      <header style={{
+      {/* ─── STICKY HEADER (mobile only) ─── */}
+      <header className="md:hidden" style={{
         position: 'sticky',
         top: 0,
         zIndex: 20,
@@ -307,6 +307,7 @@ export default function PartnerLandingPage() {
 
         {/* Hero content */}
         <motion.div
+          className="md:max-w-[800px] md:mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -376,13 +377,14 @@ export default function PartnerLandingPage() {
       }}>
 
         {/* ─── COSA OTTIENI ─── */}
-        <section style={{ padding: '0 22px 44px' }}>
+        <section className="md:max-w-[800px] md:mx-auto" style={{ padding: '0 22px 44px' }}>
           <div style={labelPillStyle}>Cosa ottieni</div>
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-50px' }}
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+            className="md:!grid-cols-4"
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -439,7 +441,7 @@ export default function PartnerLandingPage() {
         </section>
 
         {/* ─── COME FUNZIONA ─── */}
-        <section style={{ padding: '0 22px 44px' }}>
+        <section className="md:max-w-[800px] md:mx-auto" style={{ padding: '0 22px 44px' }}>
           <div style={labelPillStyle}>Come funziona</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {steps.map((step, i) => (
@@ -495,9 +497,9 @@ export default function PartnerLandingPage() {
         </section>
 
         {/* ─── FORM ─── */}
-        <section ref={formRef} style={{ padding: '0 22px 48px', scrollMarginTop: 16 }}>
+        <section ref={formRef} className="md:max-w-[800px] md:mx-auto" style={{ padding: '0 22px 48px', scrollMarginTop: 16 }}>
           <div style={labelPillStyle}>Candidati</div>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form onSubmit={handleSubmit} className="md:grid md:grid-cols-2 md:gap-x-4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <label style={labelStyle}>Nome del ristorante o brand *</label>
               <input
@@ -574,7 +576,7 @@ export default function PartnerLandingPage() {
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label style={labelStyle}>Perché dovremmo sceglierti?</label>
               <textarea
                 name="motivation"
@@ -587,6 +589,7 @@ export default function PartnerLandingPage() {
 
             {error && (
               <motion.div
+                className="md:col-span-2"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 style={{
@@ -604,6 +607,7 @@ export default function PartnerLandingPage() {
             )}
 
             <motion.button
+              className="md:col-span-2"
               type="submit"
               disabled={submitting}
               whileTap={{ scale: 0.98 }}
@@ -624,7 +628,7 @@ export default function PartnerLandingPage() {
               {submitting ? 'Invio in corso...' : 'Invia candidatura'}
             </motion.button>
 
-            <p style={{
+            <p className="md:col-span-2" style={{
               fontSize: 11,
               color: 'var(--color-secondary)',
               textAlign: 'center',
