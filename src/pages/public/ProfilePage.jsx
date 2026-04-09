@@ -121,151 +121,147 @@ export default function ProfilePage() {
       {/* ── HEADER GRADIENT — full width ── */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 50%, #e85d4a 100%)',
-        padding: isDesktop ? '56px 40px 0' : '20px 22px 0',
+        padding: isDesktop ? '60px 40px 40px' : '20px 22px 0',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Decorative shapes */}
-        <div style={{
-          position: 'absolute', top: -30, right: -30, width: 120, height: 120,
-          borderRadius: '50%', background: 'rgba(255,255,255,0.06)',
-        }} />
+        <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
         {isDesktop && <>
-          <div style={{ position: 'absolute', top: 20, left: '15%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
-          <div style={{ position: 'absolute', bottom: -60, right: '10%', width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)' }} />
+          <div style={{ position: 'absolute', top: -40, left: '12%', width: 320, height: 320, borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+          <div style={{ position: 'absolute', bottom: -80, right: '8%', width: 260, height: 260, borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
         </>}
 
         <div style={{ maxWidth: isDesktop ? 1080 : undefined, margin: isDesktop ? '0 auto' : undefined, position: 'relative' }}>
-          {/* Profile info — horizontal on mobile, vertical centered on desktop */}
-          <div style={{
-            display: 'flex',
-            flexDirection: isDesktop ? 'column' : 'row',
-            alignItems: 'center',
-            gap: isDesktop ? 20 : 12,
-            textAlign: isDesktop ? 'center' : 'left',
-            position: 'relative', zIndex: 1,
-          }}>
-            {/* Avatar */}
-            <div style={{
-              width: isDesktop ? 96 : 48, height: isDesktop ? 96 : 48,
-              minWidth: isDesktop ? 96 : 48,
-              borderRadius: '50%', background: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
-              fontSize: isDesktop ? 40 : 20,
-              color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
-              boxShadow: isDesktop ? '0 8px 32px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.1)',
-            }}>
-              {initial}
-            </div>
 
-            <div style={{
-              flex: isDesktop ? undefined : 1, minWidth: 0,
-              display: 'flex', flexDirection: 'column',
-              alignItems: isDesktop ? 'center' : 'flex-start',
-            }}>
-              <div style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: isDesktop ? 32 : 17,
-                fontWeight: 700, color: '#fff', lineHeight: 1.3,
-              }}>
-                {displayName}
-              </div>
-              <div style={{ fontSize: isDesktop ? 15 : 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
-                {email}
-              </div>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                marginTop: isDesktop ? 12 : 6,
-                justifyContent: isDesktop ? 'center' : 'flex-start',
-              }}>
-                <span style={{
-                  fontSize: isDesktop ? 12 : 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
-                  background: 'rgba(255,255,255,0.15)', borderRadius: 20,
-                  padding: isDesktop ? '5px 16px' : '4px 12px',
-                  backdropFilter: 'blur(8px)',
-                }}>
-                  Amico di Bi
-                </span>
-                <span style={{ fontSize: isDesktop ? 12 : 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
-              </div>
-            </div>
-
-            {/* Settings button — absolute top-right on desktop */}
+          {/* Settings button — absolute top-right on desktop */}
+          {isDesktop && (
             <button onClick={() => navigate('/settings')} style={{
-              width: 38, height: 38, minWidth: 38, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
+              position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: 'none', cursor: 'pointer', flexShrink: 0,
-              backdropFilter: 'blur(8px)',
-              ...(isDesktop ? { position: 'absolute', top: 0, right: 0 } : {}),
+              border: 'none', cursor: 'pointer', zIndex: 2,
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
                 <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
             </button>
-          </div>
+          )}
 
-          {/* ── BARRA RISPARMIO ── */}
+          {/* Profile info — horizontal on mobile, vertical centered on desktop */}
           <div style={{
-            background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
-            padding: isDesktop ? '20px 32px' : '16px 22px',
-            margin: isDesktop ? '36px -40px 0' : '20px -22px 0',
+            display: 'flex',
+            flexDirection: isDesktop ? 'column' : 'row',
+            alignItems: 'center',
+            gap: isDesktop ? 16 : 12,
+            textAlign: isDesktop ? 'center' : 'left',
             position: 'relative', zIndex: 1,
           }}>
             <div style={{
-              display: 'flex', alignItems: 'baseline', gap: 8,
-              justifyContent: isDesktop ? 'center' : 'flex-start',
+              width: isDesktop ? 88 : 48, height: isDesktop ? 88 : 48,
+              minWidth: isDesktop ? 88 : 48,
+              borderRadius: '50%', background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+              fontSize: isDesktop ? 36 : 20,
+              color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
             }}>
-              <span style={{
-                fontFamily: "'TAN Songbird', serif",
-                fontSize: isDesktop ? 26 : 20,
-                fontWeight: 700, color: '#fff', letterSpacing: 2,
-              }}>
-                {stats.totalSaved}<span style={{ fontSize: isDesktop ? 18 : 14 }}>€</span>
-              </span>
-              <span style={{ fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
+              {initial}
             </div>
+
+            <div style={{ flex: isDesktop ? undefined : 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: isDesktop ? 'center' : 'flex-start' }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: isDesktop ? 28 : 17, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
+                {displayName}
+              </div>
+              <div style={{ fontSize: isDesktop ? 14 : 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{email}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: isDesktop ? 10 : 6, justifyContent: isDesktop ? 'center' : 'flex-start' }}>
+                <span style={{
+                  fontSize: isDesktop ? 12 : 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+                  background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: isDesktop ? '5px 16px' : '4px 12px',
+                }}>Amico di Bi</span>
+                <span style={{ fontSize: isDesktop ? 12 : 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+              </div>
+            </div>
+
+            {/* Settings button — inline on mobile only */}
+            {!isDesktop && (
+              <button onClick={() => navigate('/settings')} style={{
+                width: 34, height: 34, minWidth: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+                  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            )}
           </div>
+
+          {/* ── DESKTOP: Stats + savings inline in header ── */}
+          {isDesktop ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, marginTop: 36 }}>
+              {/* Savings */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 28, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
+                  {stats.totalSaved}<span style={{ fontSize: 18 }}>€</span>
+                </span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>risparmiati</span>
+              </div>
+              {/* Divider */}
+              <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.15)' }} />
+              {/* Stats row */}
+              {[
+                { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
+                { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
+                { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
+              ].map((stat, i) => (
+                <button key={i} onClick={stat.onClick} style={{
+                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: '4px 12px',
+                }}>
+                  <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 24, fontWeight: 700, color: '#fff' }}>{stat.value}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>{stat.label}</div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* ── MOBILE: Savings bar at bottom of header ── */
+            <div style={{
+              background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
+              padding: '16px 22px', margin: '20px -22px 0',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
+                  {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
+                </span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── CONTENT — centered container ── */}
       <div style={{ maxWidth: isDesktop ? 1080 : undefined, margin: isDesktop ? '0 auto' : undefined, width: '100%' }}>
 
-      {/* ── 3 STATS CARDS — overlapping header on desktop ── */}
-      <div style={{
-        display: 'flex', gap: isDesktop ? 16 : 10,
-        padding: isDesktop ? '0 22px' : '18px 22px',
-        marginTop: isDesktop ? -28 : 0,
-        position: 'relative', zIndex: 2,
-      }}>
-        {[
-          { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
-          { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
-          { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
-        ].map((stat, i) => (
-          <button key={i} onClick={stat.onClick} style={{
-            flex: 1, borderRadius: 16,
-            padding: isDesktop ? 20 : 16,
-            textAlign: 'center', cursor: 'pointer',
-            ...(isDesktop
-              ? { background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }
-              : { background: '#fff', border: '1px solid var(--color-bordo)' }
-            ),
-          }}>
-            <div style={{
-              fontFamily: "'TAN Songbird', serif",
-              fontSize: isDesktop ? 22 : 18,
-              fontWeight: 700, color: 'var(--color-primary)',
+      {/* ── MOBILE STATS CARDS ── */}
+      {!isDesktop && (
+        <div style={{ display: 'flex', gap: 10, padding: '18px 22px' }}>
+          {[
+            { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
+            { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
+            { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
+          ].map((stat, i) => (
+            <button key={i} onClick={stat.onClick} style={{
+              flex: 1, background: '#fff', borderRadius: 16, padding: 16,
+              textAlign: 'center', border: '1px solid var(--color-bordo)', cursor: 'pointer',
             }}>
-              {stat.value}
-            </div>
-            <div style={{ fontSize: isDesktop ? 11 : 10, color: 'var(--color-secondary)', marginTop: 2 }}>{stat.label}</div>
-          </button>
-        ))}
-      </div>
+              <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, fontWeight: 700, color: 'var(--color-primary)' }}>{stat.value}</div>
+              <div style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{stat.label}</div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── INVITE + NEWSLETTER GRID ── */}
       <div style={{
