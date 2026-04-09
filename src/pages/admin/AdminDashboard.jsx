@@ -240,6 +240,13 @@ export default function AdminDashboard() {
       .map(([name, count]) => ({ name, count }))
   }, [restaurants])
 
+  // "Ultimi aggiunti" from useRestaurants hook (always available)
+  const latestRestaurants = useMemo(() => {
+    return [...restaurants]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 3)
+  }, [restaurants])
+
   if (authLoading || dataLoading) {
     return (
       <div
@@ -271,13 +278,6 @@ export default function AdminDashboard() {
   const userName = user?.email?.split('@')[0] ?? 'Admin'
 
   const publishedCount = restaurants.filter(r => r.is_published !== false).length
-
-  // "Ultimi aggiunti" from useRestaurants hook (always available)
-  const latestRestaurants = useMemo(() => {
-    return [...restaurants]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 3)
-  }, [restaurants])
 
   // Stat cards data
   const statCards = [
