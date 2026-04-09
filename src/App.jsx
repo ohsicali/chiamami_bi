@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
+import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 
 class ErrorBoundary extends Component {
@@ -89,10 +90,14 @@ export default function App() {
   const isAdmin = location.pathname.startsWith('/admin')
   const isPartner = location.pathname === '/partner'
   const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner
+  const showDesktopNav = !isAdmin
 
   return (
     <>
     <ErrorBoundary>
+    {/* Desktop Navbar — hidden on mobile, hidden on admin */}
+    {showDesktopNav && <DesktopNavbar />}
+
     <Suspense fallback={<PageLoader />}>
       {/* HomePage stays mounted when viewing restaurant detail */}
       {isHome && <HomePage />}
@@ -102,6 +107,7 @@ export default function App() {
 
       {/* Other routes replace the page normally */}
       {!isHome && (
+        <div className={!isAdmin ? 'desktop-nav-offset' : undefined}>
         <Routes location={location} key={location.pathname}>
           <Route path="/list" element={<ListView />} />
           <Route path="/about" element={<AboutPage />} />
@@ -133,6 +139,7 @@ export default function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </div>
       )}
     </Suspense>
     </ErrorBoundary>

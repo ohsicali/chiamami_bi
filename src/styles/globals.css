@@ -135,6 +135,13 @@ body {
 
 /* Legacy admin scroll class — no longer needed, body scrolls by default */
 
+/* Desktop navbar offset — adds top padding only on ≥768px for fixed navbar */
+@media (min-width: 768px) {
+  .desktop-nav-offset {
+    padding-top: 56px;
+  }
+}
+
 /* Prevent iOS Safari zoom on input focus (font-size >= 16px) */
 @supports (-webkit-touch-callout: none) {
   input, select, textarea {
