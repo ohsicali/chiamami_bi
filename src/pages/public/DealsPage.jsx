@@ -991,17 +991,41 @@ export default function DealsPage() {
 
   // Shared tab switcher JSX
   const tabSwitcherJSX = useMemo(() => (
-    <div className="flex" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
-      {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
-        <button key={t.key} onClick={() => { setTab(t.key); window.scrollTo({ top: 0 }) }} style={{
-          flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
-          fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
-          background: tab === t.key ? 'var(--color-primary)' : 'transparent',
-          color: tab === t.key ? 'var(--color-bg)' : 'var(--color-secondary)',
-          border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
-        }}>{t.label}</button>
-      ))}
-    </div>
+    <>
+      <style>{`
+        @media (min-width: 768px) {
+          .deals-tab-switcher {
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 2px solid var(--color-bordo) !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+          }
+          .deals-tab-switcher button {
+            border-radius: 0 !important;
+            background: transparent !important;
+            color: var(--color-secondary) !important;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+          }
+          .deals-tab-switcher .deals-tab-active {
+            color: var(--color-accent) !important;
+            border-bottom-color: var(--color-accent) !important;
+          }
+        }
+      `}</style>
+      <div className="flex deals-tab-switcher" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
+        {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
+          <button key={t.key} className={tab === t.key ? 'deals-tab-active' : ''} onClick={() => { setTab(t.key); window.scrollTo({ top: 0 }) }} style={{
+            flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
+            fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
+            background: tab === t.key ? 'var(--color-primary)' : 'transparent',
+            color: tab === t.key ? 'var(--color-bg)' : 'var(--color-secondary)',
+            border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
+          }}>{t.label}</button>
+        ))}
+      </div>
+    </>
   ), [tab])
 
   // Shared sub-tabs JSX for "I miei"
@@ -1134,7 +1158,7 @@ export default function DealsPage() {
         backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
         boxShadow: tabsStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
       }}>
-        <div className="md:max-w-[940px] md:mx-auto">
+        <div className="md:max-w-[960px] md:mx-auto">
           {tabSwitcherJSX}
           {/* Sub-tabs I miei */}
           {tab === 'mine' && user && !myLoading && subTabsJSX}
@@ -1142,7 +1166,7 @@ export default function DealsPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 px-4 md:max-w-[940px] md:mx-auto md:w-full" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
+      <div className="flex-1 px-4 md:max-w-[960px] md:mx-auto md:w-full" style={{ paddingBottom: TAB_BAR_HEIGHT + 16 }}>
         {tab === 'available' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
             {loading && [200, 160, 160].map((h, i) => (
