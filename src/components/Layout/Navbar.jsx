@@ -101,7 +101,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40"
+      <nav className="fixed top-0 left-0 right-0 z-40 md:hidden"
         style={{
           padding: '0 22px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
