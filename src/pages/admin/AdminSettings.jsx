@@ -1,15 +1,64 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 /* ------------------------------------------------------------------ */
+/*  Shared styles                                                      */
+/* ------------------------------------------------------------------ */
+const cardStyle = {
+  background: '#fff',
+  border: '1px solid #eee',
+  borderRadius: 12,
+  padding: 18,
+}
+
+const inputStyle = {
+  flex: '1 1 200px',
+  padding: '10px 14px',
+  borderRadius: 10,
+  border: '1px solid #e5e5e5',
+  background: '#fff',
+  fontSize: 13,
+  fontFamily: 'inherit',
+  color: '#1a1a1f',
+  outline: 'none',
+}
+
+const btnPrimary = {
+  padding: '10px 18px',
+  borderRadius: 10,
+  border: 'none',
+  background: '#E8453C',
+  color: '#fff',
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  whiteSpace: 'nowrap',
+}
+
+const btnDark = {
+  ...btnPrimary,
+  background: '#1a1a1f',
+}
+
+const sectionLabel = {
+  fontSize: 10,
+  color: '#999',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: 1.2,
+  marginBottom: 12,
+}
+
+/* ------------------------------------------------------------------ */
 /*  Tool: Regenerate thumbnails for existing photos                    */
 /* ------------------------------------------------------------------ */
 function ThumbnailTool() {
-  const [progress, setProgress] = useState(null) // { done, total, current } | null
+  const [progress, setProgress] = useState(null)
 
   const run = useCallback(async () => {
     if (!isSupabaseConfigured()) return
@@ -81,38 +130,53 @@ function ThumbnailTool() {
   const running = progress !== null && progress.total > 0 && progress.done < progress.total
 
   return (
-    <div className="flex items-start gap-4 p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
-      <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <div style={{ ...cardStyle, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: 10,
+        background: '#eef2ff', color: '#4338ca',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold text-primary">Rigenera thumbnail</h3>
-        <p className="text-xs text-secondary mt-0.5 mb-3">
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f' }}>Rigenera thumbnail</div>
+        <p style={{ fontSize: 12, color: '#666', margin: '4px 0 12px', lineHeight: 1.5 }}>
           Genera thumbnail (400px WebP) per tutte le foto che non ne hanno ancora una.
           Utile dopo il primo setup o se cambi le impostazioni di compressione.
         </p>
+
         {progress && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between text-xs text-secondary mb-1">
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#666', marginBottom: 4 }}>
               <span>{progress.current}</span>
               {progress.total > 0 && <span>{progress.done}/{progress.total}</span>}
             </div>
             {progress.total > 0 && (
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
-                />
+              <div style={{ height: 6, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${Math.round((progress.done / progress.total) * 100)}%`,
+                  background: '#4338ca',
+                  borderRadius: 3,
+                  transition: 'width 0.3s',
+                }} />
               </div>
             )}
           </div>
         )}
+
         <button
           onClick={run}
           disabled={running}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            ...btnDark,
+            background: '#4338ca',
+            opacity: running ? 0.5 : 1,
+            cursor: running ? 'not-allowed' : 'pointer',
+          }}
         >
           {running ? 'In corso...' : 'Avvia'}
         </button>
@@ -122,17 +186,16 @@ function ThumbnailTool() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Account: Change email (OTP on current email, then immediate change) */
+/*  Account: Change email                                              */
 /* ------------------------------------------------------------------ */
 function ChangeEmail({ currentEmail, user }) {
   const isGoogleUser = user?.app_metadata?.provider === 'google' || user?.app_metadata?.providers?.includes('google')
-  const [step, setStep] = useState('form') // 'form' | 'otp' | 'done'
+  const [step, setStep] = useState('form')
   const [newEmail, setNewEmail] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // Google users: update only profile email (contact email)
   const handleGoogleEmailChange = async (e) => {
     e.preventDefault()
     if (!newEmail.trim()) return
@@ -196,34 +259,34 @@ function ChangeEmail({ currentEmail, user }) {
   }
 
   return (
-    <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
-      <h3 className="text-sm font-semibold text-primary mb-1">
+    <div style={cardStyle}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', marginBottom: 4 }}>
         {isGoogleUser ? 'Email di contatto' : 'Cambia email'}
-      </h3>
+      </div>
       {isGoogleUser ? (
-        <p className="text-xs text-secondary mb-3">
+        <p style={{ fontSize: 12, color: '#666', margin: '0 0 12px' }}>
           Accesso con Google ({currentEmail}). Puoi impostare un'email di contatto diversa.
         </p>
       ) : (
-        <p className="text-xs text-secondary mb-3">
-          Email attuale: <span className="font-medium text-primary">{currentEmail}</span>
+        <p style={{ fontSize: 12, color: '#666', margin: '0 0 12px' }}>
+          Email attuale: <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{currentEmail}</span>
         </p>
       )}
 
       {step === 'form' && isGoogleUser && (
-        <form onSubmit={handleGoogleEmailChange} className="flex flex-col sm:flex-row gap-2">
+        <form onSubmit={handleGoogleEmailChange} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder="Email di contatto"
             required
-            className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            style={inputStyle}
           />
           <button
             type="submit"
             disabled={loading || !newEmail.trim()}
-            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            style={{ ...btnPrimary, opacity: loading || !newEmail.trim() ? 0.5 : 1, cursor: loading || !newEmail.trim() ? 'not-allowed' : 'pointer' }}
           >
             {loading ? 'Salvataggio...' : 'Salva'}
           </button>
@@ -231,19 +294,19 @@ function ChangeEmail({ currentEmail, user }) {
       )}
 
       {step === 'form' && !isGoogleUser && (
-        <form onSubmit={handleSendOtp} className="flex flex-col sm:flex-row gap-2">
+        <form onSubmit={handleSendOtp} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input
             type="email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder="Nuova email"
             required
-            className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            style={inputStyle}
           />
           <button
             type="submit"
             disabled={loading || !newEmail.trim() || newEmail === currentEmail}
-            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            style={{ ...btnPrimary, opacity: loading || !newEmail.trim() || newEmail === currentEmail ? 0.5 : 1, cursor: loading || !newEmail.trim() || newEmail === currentEmail ? 'not-allowed' : 'pointer' }}
           >
             {loading ? 'Invio...' : 'Cambia email'}
           </button>
@@ -251,11 +314,11 @@ function ChangeEmail({ currentEmail, user }) {
       )}
 
       {step === 'otp' && (
-        <form onSubmit={handleVerifyAndUpdate} className="space-y-2">
-          <p className="text-xs text-secondary">
+        <div>
+          <p style={{ fontSize: 12, color: '#666', marginBottom: 10 }}>
             Inserisci il codice ricevuto su <strong>{currentEmail}</strong>
           </p>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <form onSubmit={handleVerifyAndUpdate} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
             <input
               type="text"
               value={otpCode}
@@ -264,30 +327,37 @@ function ChangeEmail({ currentEmail, user }) {
               required
               inputMode="numeric"
               autoComplete="one-time-code"
-              className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              style={{ ...inputStyle, textAlign: 'center', letterSpacing: 4, fontFamily: 'monospace' }}
             />
             <button
               type="submit"
               disabled={loading || otpCode.length < 6}
-              className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              style={{ ...btnPrimary, opacity: loading || otpCode.length < 6 ? 0.5 : 1, cursor: loading || otpCode.length < 6 ? 'not-allowed' : 'pointer' }}
             >
               {loading ? 'Verifica...' : 'Conferma'}
             </button>
-          </div>
-          <button type="button" onClick={handleReset} className="text-xs text-secondary hover:text-primary transition-colors">
+          </form>
+          <button
+            type="button"
+            onClick={handleReset}
+            style={{ background: 'none', border: 'none', fontSize: 12, color: '#999', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
             Annulla
           </button>
-        </form>
+        </div>
       )}
 
       {step === 'done' && (
-        <button onClick={handleReset} className="text-xs text-accent hover:underline">
+        <button
+          onClick={handleReset}
+          style={{ background: 'none', border: 'none', fontSize: 12, color: '#E8453C', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}
+        >
           Cambia di nuovo
         </button>
       )}
 
       {status && (
-        <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+        <p style={{ fontSize: 12, color: status.type === 'error' ? '#dc2626' : '#059669', marginTop: 10 }}>
           {status.msg}
         </p>
       )}
@@ -296,7 +366,7 @@ function ChangeEmail({ currentEmail, user }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Account: Change password (requires current password to unlock)     */
+/*  Account: Change password                                           */
 /* ------------------------------------------------------------------ */
 function ChangePassword({ userEmail }) {
   const [currentPwd, setCurrentPwd] = useState('')
@@ -312,7 +382,6 @@ function ChangePassword({ userEmail }) {
     if (!currentPwd) return
     setVerifying(true)
     setStatus(null)
-    // Verify current password by re-authenticating
     const { error } = await supabase.auth.signInWithPassword({
       email: userEmail,
       password: currentPwd,
@@ -352,31 +421,34 @@ function ChangePassword({ userEmail }) {
   }
 
   return (
-    <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
-      <h3 className="text-sm font-semibold text-primary mb-3">Cambia password</h3>
+    <div style={cardStyle}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', marginBottom: 12 }}>Cambia password</div>
+
       {!unlocked ? (
-        <form onSubmit={handleVerify} className="space-y-2">
-          <p className="text-xs text-secondary mb-1">Inserisci la password attuale per procedere</p>
-          <div className="flex flex-col sm:flex-row gap-2">
+        <div>
+          <p style={{ fontSize: 12, color: '#666', marginBottom: 10 }}>
+            Inserisci la password attuale per procedere
+          </p>
+          <form onSubmit={handleVerify} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input
               type="password"
               value={currentPwd}
               onChange={(e) => setCurrentPwd(e.target.value)}
               placeholder="Password attuale"
               required
-              className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              style={inputStyle}
             />
             <button
               type="submit"
               disabled={verifying || !currentPwd}
-              className="px-4 py-2 rounded-xl text-xs font-medium bg-gray-800 text-white hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              style={{ ...btnDark, opacity: verifying || !currentPwd ? 0.5 : 1, cursor: verifying || !currentPwd ? 'not-allowed' : 'pointer' }}
             >
               {verifying ? 'Verifica...' : 'Verifica'}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input
             type="password"
             value={password}
@@ -384,7 +456,7 @@ function ChangePassword({ userEmail }) {
             placeholder="Nuova password (min. 6 caratteri)"
             required
             minLength={6}
-            className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            style={{ ...inputStyle, flex: 'none', width: '100%' }}
           />
           <input
             type="password"
@@ -392,28 +464,33 @@ function ChangePassword({ userEmail }) {
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Conferma nuova password"
             required
-            className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            style={{ ...inputStyle, flex: 'none', width: '100%' }}
           />
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: 10 }}>
             <button
               type="submit"
               disabled={saving || !password || !confirm}
-              className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ ...btnPrimary, opacity: saving || !password || !confirm ? 0.5 : 1, cursor: saving || !password || !confirm ? 'not-allowed' : 'pointer' }}
             >
               {saving ? 'Salvataggio...' : 'Aggiorna password'}
             </button>
             <button
               type="button"
               onClick={() => { setUnlocked(false); setPassword(''); setConfirm(''); setCurrentPwd(''); setStatus(null) }}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-secondary hover:bg-gray-100 transition-colors"
+              style={{
+                padding: '10px 18px', borderRadius: 10, border: '1px solid #e5e5e5',
+                background: '#fff', color: '#666', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
             >
               Annulla
             </button>
           </div>
         </form>
       )}
+
       {status && (
-        <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+        <p style={{ fontSize: 12, color: status.type === 'error' ? '#dc2626' : '#059669', marginTop: 10 }}>
           {status.msg}
         </p>
       )}
@@ -452,7 +529,6 @@ function AdminList({ currentUserId }) {
     setActionLoading(true)
     setStatus(null)
 
-    // Find profile by email
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select('id, email, full_name')
@@ -504,46 +580,73 @@ function AdminList({ currentUserId }) {
   }
 
   return (
-    <div className="p-5 bg-card rounded-2xl border border-gray-100 shadow-sm">
-      <h3 className="text-sm font-semibold text-primary mb-3">Amministratori</h3>
+    <div style={cardStyle}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', marginBottom: 14 }}>Amministratori</div>
 
       {loading ? (
-        <div className="animate-pulse h-10 bg-gray-100 rounded-xl" />
+        <div style={{ height: 40, background: '#f3f3f3', borderRadius: 10 }} />
       ) : (
-        <div className="space-y-2 mb-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
           {admins.map((admin) => (
-            <div key={admin.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+            <div key={admin.id} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 14px', borderRadius: 10, background: '#fafafa',
+            }}>
               {admin.avatar_url ? (
-                <img src={admin.avatar_url} alt="" loading="lazy" decoding="async" className="w-8 h-8 rounded-full object-cover" />
+                <img
+                  src={admin.avatar_url} alt="" loading="lazy" decoding="async"
+                  style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent">
+                <div style={{
+                  width: 34, height: 34, borderRadius: '50%',
+                  background: 'rgba(232,69,60,0.1)', color: '#E8453C',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700, flexShrink: 0,
+                }}>
                   {(admin.full_name || admin.email || '?')[0].toUpperCase()}
                 </div>
               )}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-primary truncate">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {admin.full_name || 'Admin'}
-                </p>
+                </div>
                 {admin.email && (
-                  <p className="text-xs text-secondary truncate">{admin.email}</p>
+                  <div style={{ fontSize: 11, color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
+                    {admin.email}
+                  </div>
                 )}
               </div>
+
               {admin.id === currentUserId ? (
-                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
+                <span style={{
+                  padding: '3px 9px', borderRadius: 10,
+                  background: '#ecfdf5', color: '#059669',
+                  fontSize: 10, fontWeight: 700, flexShrink: 0,
+                }}>
                   Tu
                 </span>
               ) : removeId === admin.id ? (
-                <div className="flex items-center gap-1.5">
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                   <button
                     onClick={() => handleRemove(admin.id)}
                     disabled={actionLoading}
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                    style={{
+                      padding: '5px 10px', borderRadius: 8, border: 'none',
+                      background: '#dc2626', color: '#fff',
+                      fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                      opacity: actionLoading ? 0.5 : 1,
+                    }}
                   >
                     Conferma
                   </button>
                   <button
                     onClick={() => setRemoveId(null)}
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-medium text-secondary hover:bg-gray-200 transition-colors"
+                    style={{
+                      padding: '5px 10px', borderRadius: 8, border: '1px solid #e5e5e5',
+                      background: '#fff', color: '#666',
+                      fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    }}
                   >
                     No
                   </button>
@@ -551,10 +654,14 @@ function AdminList({ currentUserId }) {
               ) : (
                 <button
                   onClick={() => setRemoveId(admin.id)}
-                  className="p-1.5 rounded-lg text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
                   title="Rimuovi admin"
+                  style={{
+                    padding: 6, borderRadius: 8, border: 'none',
+                    background: 'transparent', color: '#999', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', flexShrink: 0,
+                  }}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
@@ -562,33 +669,33 @@ function AdminList({ currentUserId }) {
             </div>
           ))}
           {admins.length === 0 && (
-            <p className="text-xs text-secondary">Nessun admin trovato</p>
+            <p style={{ fontSize: 12, color: '#999' }}>Nessun admin trovato</p>
           )}
         </div>
       )}
 
       {/* Add admin form */}
-      <div className="border-t border-gray-100 pt-4">
-        <p className="text-xs font-medium text-secondary mb-2">Aggiungi amministratore</p>
-        <form onSubmit={handleAdd} className="flex gap-2">
+      <div style={{ borderTop: '1px solid #f3f3f3', paddingTop: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#666', marginBottom: 8 }}>Aggiungi amministratore</div>
+        <form onSubmit={handleAdd} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email dell'utente"
             required
-            className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            style={inputStyle}
           />
           <button
             type="submit"
             disabled={actionLoading || !email.trim()}
-            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent text-white hover:bg-[#e64545] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            style={{ ...btnPrimary, opacity: actionLoading || !email.trim() ? 0.5 : 1, cursor: actionLoading || !email.trim() ? 'not-allowed' : 'pointer' }}
           >
             {actionLoading ? '...' : 'Aggiungi'}
           </button>
         </form>
         {status && (
-          <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+          <p style={{ fontSize: 12, color: status.type === 'error' ? '#dc2626' : '#059669', marginTop: 10 }}>
             {status.msg}
           </p>
         )}
@@ -603,65 +710,43 @@ function AdminList({ currentUserId }) {
 export default function AdminSettings() {
   const { user, isAdmin, loading } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-3 border-accent border-t-transparent rounded-full" />
-      </div>
-    )
-  }
+  if (loading) return null
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Impostazioni">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mb-6"
-      >
-        <h1 className="text-2xl font-bold text-primary">Impostazioni</h1>
-        <p className="text-sm text-secondary mt-0.5">Strumenti di manutenzione e configurazione</p>
-      </motion.div>
-
-      {/* Account section */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
-        className="mb-8"
-      >
-        <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Account</h2>
-        <div className="space-y-4 max-w-2xl">
-          <ChangeEmail currentEmail={user.email} user={user} />
-          <ChangePassword userEmail={user.email} />
+      <div style={{ padding: '20px 28px', fontFamily: "'DM Sans', sans-serif" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Impostazioni</h1>
+          <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
+            Strumenti di manutenzione e configurazione
+          </p>
         </div>
-      </motion.div>
 
-      {/* Admin list */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
-        className="mb-8"
-      >
-        <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Team</h2>
-        <div className="max-w-2xl">
-          <AdminList currentUserId={user.id} />
-        </div>
-      </motion.div>
+        <div style={{ maxWidth: 600 }}>
+          {/* Account section */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={sectionLabel}>ACCOUNT</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <ChangeEmail currentEmail={user.email} user={user} />
+              <ChangePassword userEmail={user.email} />
+            </div>
+          </div>
 
-      {/* Tools section */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        <h2 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">Strumenti</h2>
-        <div className="space-y-4 max-w-2xl">
-          <ThumbnailTool />
+          {/* Team section */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={sectionLabel}>TEAM</div>
+            <AdminList currentUserId={user.id} />
+          </div>
+
+          {/* Tools section */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={sectionLabel}>STRUMENTI</div>
+            <ThumbnailTool />
+          </div>
         </div>
-      </motion.div>
+      </div>
     </AdminLayout>
   )
 }
