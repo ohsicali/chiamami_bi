@@ -320,7 +320,7 @@ export default function HomePage() {
   /* Shared list content — used by both desktop panel and mobile sheet */
   const listContent = (
     <>
-      <div style={{ marginBottom: 14 }}>
+      <div className="md:hidden" style={{ marginBottom: 14 }}>
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
