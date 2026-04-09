@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
+import Footer from '../../components/Layout/Footer'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -715,6 +716,11 @@ export default function LoginPage() {
             </div>
           </motion.div>
         </motion.div>
+      </div>
+
+      {/* Desktop footer */}
+      <div className="hidden md:block">
+        <Footer />
       </div>
     </div>
   )

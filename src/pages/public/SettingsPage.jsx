@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
+import Footer from '../../components/Layout/Footer'
 
 const inputStyle = {
   width: '100%', background: 'var(--color-bg)', borderRadius: 14,
@@ -608,6 +609,11 @@ export default function SettingsPage() {
           <span style={{ fontSize: 18 }}>🗑️</span>
           <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-accent)' }}>Cancella il mio account</span>
         </button>
+      </div>
+
+      {/* Desktop footer */}
+      <div className="hidden md:block">
+        <Footer />
       </div>
 
       {/* ── DELETE MODAL ── */}

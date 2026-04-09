@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
+import Footer from '../../components/Layout/Footer'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
@@ -372,9 +373,9 @@ export default function ProfilePage() {
 
       </div>{/* end profile-content-grid */}
 
-      {/* ── FOOTER MINIMAL ── */}
-      <div style={{ flex: 1 }} />
-      <div style={{ textAlign: 'center', padding: '20px 22px', paddingBottom: TAB_BAR_HEIGHT + 20 }}>
+      {/* ── FOOTER MINIMAL — mobile only ── */}
+      <div className="md:hidden" style={{ flex: 1 }} />
+      <div className="md:hidden" style={{ textAlign: 'center', padding: '20px 22px', paddingBottom: TAB_BAR_HEIGHT + 20 }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 8 }}>
           <a href="/privacy" style={{ fontSize: 12, color: 'var(--color-secondary)', textDecoration: 'none' }}>Privacy</a>
           <span style={{ fontSize: 12, color: 'var(--color-bordo)' }}>·</span>
@@ -386,6 +387,9 @@ export default function ProfilePage() {
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-bordo)' }}>La Guida di Bi · v1.0</div>
       </div>
+
+      {/* Desktop full footer */}
+      <div className="hidden md:block"><Footer /></div>
 
       </div>{/* end desktop centered wrapper */}
 
