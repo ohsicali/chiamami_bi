@@ -4,32 +4,30 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
+/* ------------------------------------------------------------------ */
+/*  StatCard                                                           */
+/* ------------------------------------------------------------------ */
 function StatCard({ label, value, color = '#1a1a1f' }) {
   return (
     <div style={{
       background: '#fff',
       border: '1px solid #eee',
-      borderRadius: 12,
-      padding: '16px 18px',
-      flex: 1,
-      minWidth: 140,
+      borderRadius: 10,
+      padding: 12,
     }}>
-      <div style={{ fontSize: 11, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {label}
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700, color, marginTop: 6 }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color, marginTop: 4, lineHeight: 1.1 }}>
         {value}
       </div>
     </div>
   )
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
 function timeAgo(dateStr) {
   if (!dateStr) return '—'
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -42,12 +40,15 @@ function timeAgo(dateStr) {
   return `${Math.floor(days / 365)} anni fa`
 }
 
+/* ------------------------------------------------------------------ */
+/*  Main                                                               */
+/* ------------------------------------------------------------------ */
 export default function AdminUsers() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all') // all | admin | recent
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     if (authLoading || !isAdmin) return
@@ -67,7 +68,6 @@ export default function AdminUsers() {
       return
     }
 
-    // Fetch counts: reviews, saved, redemptions per user
     const [reviewsRes, savedRes, redeemRes] = await Promise.all([
       supabase.from('user_reviews').select('user_id'),
       supabase.from('saved_restaurants').select('user_id'),
@@ -75,26 +75,18 @@ export default function AdminUsers() {
     ])
 
     const reviewCounts = {}
-    ;(reviewsRes.data || []).forEach(r => {
-      reviewCounts[r.user_id] = (reviewCounts[r.user_id] || 0) + 1
-    })
+    ;(reviewsRes.data || []).forEach(r => { reviewCounts[r.user_id] = (reviewCounts[r.user_id] || 0) + 1 })
     const savedCounts = {}
-    ;(savedRes.data || []).forEach(s => {
-      savedCounts[s.user_id] = (savedCounts[s.user_id] || 0) + 1
-    })
+    ;(savedRes.data || []).forEach(s => { savedCounts[s.user_id] = (savedCounts[s.user_id] || 0) + 1 })
     const redeemCounts = {}
-    ;(redeemRes.data || []).forEach(r => {
-      redeemCounts[r.user_id] = (redeemCounts[r.user_id] || 0) + 1
-    })
+    ;(redeemRes.data || []).forEach(r => { redeemCounts[r.user_id] = (redeemCounts[r.user_id] || 0) + 1 })
 
-    const enriched = profiles.map(p => ({
+    setUsers(profiles.map(p => ({
       ...p,
       review_count: reviewCounts[p.id] || 0,
       saved_count: savedCounts[p.id] || 0,
       redeem_count: redeemCounts[p.id] || 0,
-    }))
-
-    setUsers(enriched)
+    })))
     setLoading(false)
   }
 
@@ -132,123 +124,115 @@ export default function AdminUsers() {
 
   return (
     <AdminLayout title="Utenti">
-      <div style={{ padding: '20px 28px', fontFamily: "'DM Sans', sans-serif" }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Utenti</h1>
-            <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
-              Gestisci gli utenti registrati sulla piattaforma
-            </p>
-          </div>
-        </div>
+      {/* ─── HEADER ─── */}
+      <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
+        <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Utenti</h1>
+        <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>{users.length} utenti registrati</p>
+      </div>
 
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+      {/* ─── CONTENT ─── */}
+      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column' }}>
+
+        {/* ─── STATS 2x2 mobile, 4 cols desktop ─── */}
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}
+          className="md:!grid-cols-4"
+        >
           <StatCard label="Totali" value={stats.total} />
-          <StatCard label="Admin" value={stats.admins} color="#E8453C" />
-          <StatCard label="Nuovi 7gg" value={stats.newWeek} color="#059669" />
-          <StatCard label="Nuovi 30gg" value={stats.newMonth} color="#059669" />
+          <StatCard label="Admin" value={stats.admins} color="#b91c1c" />
+          <StatCard label="Nuovi 7gg" value={stats.newWeek} color="#047857" />
+          <StatCard label="Nuovi 30gg" value={stats.newMonth} color="#047857" />
         </div>
 
-        {/* Search + Filters */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        {/* ─── SEARCH ─── */}
+        <div style={{ marginBottom: 8 }}>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cerca per nome o email..."
             style={{
-              flex: '1 1 240px',
+              width: '100%',
               padding: '10px 14px',
               borderRadius: 10,
-              border: '1px solid #e5e5e5',
+              border: '1px solid #eee',
               background: '#fff',
               fontSize: 13,
               fontFamily: 'inherit',
               color: '#1a1a1f',
               outline: 'none',
+              boxSizing: 'border-box',
             }}
           />
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
-            {[
-              { key: 'all', label: 'Tutti', count: users.length },
-              { key: 'admin', label: 'Admin', count: stats.admins },
-              { key: 'recent', label: 'Recenti 7gg', count: stats.newWeek },
-            ].map(f => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                style={{
-                  padding: '9px 14px',
-                  borderRadius: 10,
-                  border: '1px solid',
-                  borderColor: filter === f.key ? '#1a1a1f' : '#e5e5e5',
-                  background: filter === f.key ? '#1a1a1f' : '#fff',
-                  color: filter === f.key ? '#fff' : '#1a1a1f',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  whiteSpace: 'nowrap',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                {f.label}
-                <span style={{
-                  background: filter === f.key ? 'rgba(255,255,255,0.2)' : '#f3f3f3',
-                  color: filter === f.key ? '#fff' : '#666',
-                  borderRadius: 10,
-                  padding: '2px 7px',
-                  fontSize: 10,
-                  fontWeight: 700,
-                }}>{f.count}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Content */}
+        {/* ─── FILTERS ─── */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto' }}>
+          {[
+            { key: 'all', label: 'Tutti', count: users.length },
+            { key: 'admin', label: 'Admin', count: stats.admins },
+            { key: 'recent', label: 'Recenti 7gg', count: stats.newWeek },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              style={{
+                padding: '7px 12px',
+                borderRadius: 8,
+                border: '1px solid',
+                borderColor: filter === f.key ? '#1a1a1f' : '#eee',
+                background: filter === f.key ? '#1a1a1f' : '#fff',
+                color: filter === f.key ? '#fff' : '#1a1a1f',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {f.label}
+              <span style={{
+                background: filter === f.key ? 'rgba(255,255,255,0.2)' : '#f3f3f3',
+                color: filter === f.key ? '#fff' : '#666',
+                borderRadius: 8,
+                padding: '1px 6px',
+                fontSize: 10,
+                fontWeight: 700,
+              }}>{f.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ─── LIST ─── */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: 60, color: '#999', fontSize: 13 }}>
             Caricamento...
           </div>
         ) : filtered.length === 0 ? (
           <div style={{
-            background: '#fff',
-            border: '1px solid #eee',
-            borderRadius: 12,
-            padding: 60,
-            textAlign: 'center',
-            color: '#999',
+            background: '#fff', border: '1px solid #eee', borderRadius: 12,
+            padding: 60, textAlign: 'center',
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
-              Nessun utente trovato
-            </p>
-            <p style={{ fontSize: 12, margin: '4px 0 0' }}>
-              Prova a modificare i filtri
-            </p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Nessun utente trovato</p>
+            <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>Prova a modificare i filtri</p>
           </div>
         ) : (
           <>
-            {/* Desktop table */}
+            {/* ─── DESKTOP TABLE ─── */}
             <div className="hidden md:block" style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 12,
-              overflow: 'hidden',
+              background: '#fff', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden',
             }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
                     <th style={thStyle}>Utente</th>
-                    <th style={thStyle}>Email</th>
+                    <th style={thStyle}>Registrato</th>
                     <th style={thStyle}>Recensioni</th>
                     <th style={thStyle}>Salvati</th>
                     <th style={thStyle}>QR</th>
-                    <th style={thStyle}>Registrato</th>
                     <th style={{ ...thStyle, textAlign: 'right' }}>Ruolo</th>
                   </tr>
                 </thead>
@@ -257,46 +241,38 @@ export default function AdminUsers() {
                     <tr key={u.id} style={{ borderBottom: '1px solid #f3f3f3' }}>
                       <td style={tdStyle}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          {u.avatar_url ? (
-                            <img src={u.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                          ) : (
-                            <div style={{
-                              width: 32, height: 32, borderRadius: '50%',
-                              background: '#f3f3f3', color: '#666',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 12, fontWeight: 700,
-                            }}>
-                              {(u.full_name || u.email || '?')[0]?.toUpperCase()}
+                          <div style={{
+                            width: 32, height: 32, borderRadius: '50%',
+                            background: 'rgba(232,69,60,0.15)', color: '#E8453C',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 12, fontWeight: 600, flexShrink: 0,
+                          }}>
+                            {(u.full_name || u.email || '?')[0]?.toUpperCase()}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {u.full_name || '—'}
                             </div>
-                          )}
-                          <span style={{ fontWeight: 600, color: '#1a1a1f' }}>
-                            {u.full_name || '—'}
-                          </span>
+                            <div style={{ fontSize: 11, color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
+                              {u.email || '—'}
+                            </div>
+                          </div>
                         </div>
                       </td>
-                      <td style={{ ...tdStyle, color: '#666' }}>{u.email || '—'}</td>
+                      <td style={{ ...tdStyle, color: '#666', fontSize: 12 }}>{timeAgo(u.created_at)}</td>
                       <td style={tdStyle}>{u.review_count}</td>
                       <td style={tdStyle}>{u.saved_count}</td>
                       <td style={tdStyle}>{u.redeem_count}</td>
-                      <td style={{ ...tdStyle, color: '#666', fontSize: 12 }}>{timeAgo(u.created_at)}</td>
                       <td style={{ ...tdStyle, textAlign: 'right' }}>
                         {u.is_admin ? (
                           <span style={{
-                            background: '#fee4e2',
-                            color: '#E8453C',
-                            padding: '3px 9px',
-                            borderRadius: 10,
-                            fontSize: 11,
-                            fontWeight: 700,
+                            background: 'rgba(232,69,60,0.1)', color: '#E8453C',
+                            padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
                           }}>Admin</span>
                         ) : (
                           <span style={{
-                            background: '#f3f3f3',
-                            color: '#666',
-                            padding: '3px 9px',
-                            borderRadius: 10,
-                            fontSize: 11,
-                            fontWeight: 600,
+                            background: '#f3f3f3', color: '#666',
+                            padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600,
                           }}>Utente</span>
                         )}
                       </td>
@@ -306,54 +282,53 @@ export default function AdminUsers() {
               </table>
             </div>
 
-            {/* Mobile cards */}
-            <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* ─── MOBILE CARDS ─── */}
+            <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {filtered.map(u => (
                 <div key={u.id} style={{
-                  background: '#fff',
-                  border: '1px solid #eee',
-                  borderRadius: 12,
-                  padding: 14,
+                  background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 12,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    {u.avatar_url ? (
-                      <img src={u.avatar_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{
-                        width: 40, height: 40, borderRadius: '50%',
-                        background: '#f3f3f3', color: '#666',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 14, fontWeight: 700,
-                      }}>
-                        {(u.full_name || u.email || '?')[0]?.toUpperCase()}
-                      </div>
-                    )}
+                  {/* Row 1: Avatar + Name/Email + Admin badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: 'rgba(232,69,60,0.15)', color: '#E8453C',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 14, fontWeight: 600, flexShrink: 0,
+                    }}>
+                      {(u.full_name || u.email || '?')[0]?.toUpperCase()}
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {u.full_name || '—'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {u.full_name || '—'}
+                        </span>
+                        {u.is_admin && (
+                          <span style={{
+                            background: 'rgba(232,69,60,0.1)', color: '#E8453C',
+                            fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                            flexShrink: 0,
+                          }}>Admin</span>
+                        )}
                       </div>
-                      <div style={{ fontSize: 12, color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 11, color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
                         {u.email}
                       </div>
                     </div>
-                    {u.is_admin && (
-                      <span style={{
-                        background: '#fee4e2',
-                        color: '#E8453C',
-                        padding: '3px 8px',
-                        borderRadius: 10,
-                        fontSize: 10,
-                        fontWeight: 700,
-                      }}>Admin</span>
-                    )}
                   </div>
-                  <div style={{ display: 'flex', gap: 16, paddingTop: 10, borderTop: '1px solid #f3f3f3', fontSize: 12, color: '#666' }}>
-                    <span><strong style={{ color: '#1a1a1f' }}>{u.review_count}</strong> recensioni</span>
-                    <span><strong style={{ color: '#1a1a1f' }}>{u.saved_count}</strong> salvati</span>
-                    <span><strong style={{ color: '#1a1a1f' }}>{u.redeem_count}</strong> QR</span>
-                  </div>
+
+                  {/* Row 2: Activity stats — NO separator */}
                   <div style={{ fontSize: 11, color: '#999', marginTop: 8 }}>
-                    Registrato {timeAgo(u.created_at)} · {formatDate(u.created_at)}
+                    <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.review_count}</span> recensioni
+                    {' · '}
+                    <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.saved_count}</span> salvati
+                    {' · '}
+                    <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.redeem_count}</span> QR
+                  </div>
+
+                  {/* Row 3: Relative time */}
+                  <div style={{ fontSize: 10, color: '#bbb', marginTop: 4 }}>
+                    Registrato {timeAgo(u.created_at)}
                   </div>
                 </div>
               ))}
@@ -367,8 +342,8 @@ export default function AdminUsers() {
 
 const thStyle = {
   textAlign: 'left',
-  padding: '12px 16px',
-  fontSize: 11,
+  padding: '10px 14px',
+  fontSize: 10,
   fontWeight: 600,
   color: '#999',
   textTransform: 'uppercase',
@@ -376,6 +351,6 @@ const thStyle = {
 }
 
 const tdStyle = {
-  padding: '14px 16px',
+  padding: '10px 14px',
   color: '#1a1a1f',
 }
