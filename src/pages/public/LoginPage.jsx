@@ -250,12 +250,32 @@ export default function LoginPage() {
         }}
       >
         <motion.div
-          className="w-full max-w-[380px]"
+          className="w-full max-w-[400px]"
           style={{ margin: '0 auto' }}
           initial="hidden"
           animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
         >
+          {/* Desktop-only gradient icon */}
+          <motion.div
+            variants={itemVariants}
+            className="hidden md:flex"
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              background: 'linear-gradient(135deg, #E8453C 0%, #f07068 100%)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 18px',
+              boxShadow: '0 8px 24px rgba(232,69,60,0.25)',
+            }}
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          </motion.div>
+
           {/* Title */}
           <motion.h1
             variants={itemVariants}
