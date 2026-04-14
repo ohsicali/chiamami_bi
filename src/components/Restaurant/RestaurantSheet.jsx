@@ -395,7 +395,7 @@ export default function RestaurantSheet({
           : { type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }
         }
       >
-        {/* Back button — above scroll content */}
+        {/* Back button — above scroll content (hidden once sticky header appears) */}
         <button
           className="rs-back-btn"
           onClick={handleClose}
@@ -405,6 +405,9 @@ export default function RestaurantSheet({
             background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             border: 'none', cursor: 'pointer', color: '#22181C',
+            opacity: showStickyHeader ? 0 : 1,
+            pointerEvents: showStickyHeader ? 'none' : 'auto',
+            transition: 'opacity 0.2s ease',
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -412,8 +415,14 @@ export default function RestaurantSheet({
           </svg>
         </button>
 
-        {/* Share + Save — above scroll content */}
-        <div className="rs-top-actions" style={{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', right: 14, zIndex: 20, display: 'flex', gap: 10 }}>
+        {/* Share + Save — above scroll content (hidden once sticky header appears) */}
+        <div className="rs-top-actions" style={{
+          position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', right: 14, zIndex: 20,
+          display: 'flex', gap: 10,
+          opacity: showStickyHeader ? 0 : 1,
+          pointerEvents: showStickyHeader ? 'none' : 'auto',
+          transition: 'opacity 0.2s ease',
+        }}>
           <button
             onClick={handleShare}
             style={{
