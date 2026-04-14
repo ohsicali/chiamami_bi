@@ -674,7 +674,7 @@ export default function RestaurantForm() {
   const isEditing = !!id
   const navigate = useNavigate()
   const { user, isAdmin, loading: authLoading } = useAuth()
-  const { restaurants } = useRestaurants()
+  const { allRestaurants } = useRestaurants()
   const { addToast } = useToast()
 
   const [form, setForm] = useState(EMPTY_FORM)
@@ -704,8 +704,8 @@ export default function RestaurantForm() {
 
   // Load restaurant data when editing
   useEffect(() => {
-    if (isEditing && restaurants.length > 0) {
-      const r = restaurants.find((r) => r.id === id)
+    if (isEditing && allRestaurants.length > 0) {
+      const r = allRestaurants.find((r) => r.id === id)
       if (r) {
         setForm({
           name: r.name || '',
@@ -736,7 +736,7 @@ export default function RestaurantForm() {
         })
       }
     }
-  }, [isEditing, id, restaurants])
+  }, [isEditing, id, allRestaurants])
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -1225,12 +1225,24 @@ export default function RestaurantForm() {
   return (
     <AdminLayout title={isEditing ? 'Modifica Ristorante' : 'Nuovo Ristorante'}>
       {/* ── Sticky header ── */}
+      {/* On mobile, AdminLayout shows a fixed 48px black ADMIN bar (z:20).
+          So we sit this sticky header at top:48 on mobile (top:0 on desktop)
+          with z-index higher than the admin bar. */}
+      <style>{`
+        .restaurant-form-sticky-header {
+          position: sticky;
+          top: 48px;
+          z-index: 25;
+        }
+        @media (min-width: 768px) {
+          .restaurant-form-sticky-header {
+            top: 0;
+          }
+        }
+      `}</style>
       <div
-        className="px-3 md:px-6"
+        className="restaurant-form-sticky-header px-3 md:px-6"
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 15,
           background: 'rgba(250,250,250,0.92)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
