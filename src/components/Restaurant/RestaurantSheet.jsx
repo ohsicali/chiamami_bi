@@ -274,20 +274,15 @@ export default function RestaurantSheet({
     if (scrollRef.current) scrollRef.current.scrollTop = 0
   }, [restaurant?.id])
 
-  // Parallax + sticky header detection
+  // Sticky header detection (photo is now in-flow inside scroll — no parallax needed)
   useEffect(() => {
     const el = scrollRef.current
-    const photo = photoRef.current
     if (!el) return
     let ticking = false
     const onScroll = () => {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        // Parallax only on mobile (photo carousel)
-        if (photo && !isDesktop) {
-          photo.style.transform = `translateY(${-el.scrollTop * 0.15}px)`
-        }
         // Sticky header threshold: 45vh-60 on mobile, 300px on desktop (after photo grid)
         const photoH = isDesktop ? 300 : el.clientHeight * 0.45 - 60
         setShowStickyHeader(el.scrollTop > photoH)
@@ -328,21 +323,7 @@ export default function RestaurantSheet({
   return (
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
-        /* Mobile: the scroll wrapper sits above the photo carousel (z-index 1 vs 0);
-           to let horizontal swipes reach the carousel below, make the scroll wrapper's
-           own bare area transparent to pointer events. Direct children (sticky header,
-           content card) keep pointer-events: auto, so vertical scroll and taps work
-           normally on the content. */
-        .restaurant-sheet-root .rs-scroll {
-          pointer-events: none;
-        }
-        .restaurant-sheet-root .rs-scroll > * {
-          pointer-events: auto;
-        }
         @media (min-width: 768px) {
-          .restaurant-sheet-root .rs-scroll {
-            pointer-events: auto !important;
-          }
           /* Root: pass-through clicks to map behind */
           .restaurant-sheet-root {
             top: 56px !important;
@@ -414,13 +395,6 @@ export default function RestaurantSheet({
           : { type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }
         }
       >
-        {/* Photo — absolute in sheet, behind scroll content */}
-        <div className="rs-photo-area" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 0, overflow: 'hidden', height: '45vh' }}>
-          <div ref={photoRef} style={{ willChange: 'transform' }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="48vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
-          </div>
-        </div>
-
         {/* Back button — above scroll content */}
         <button
           className="rs-back-btn"
@@ -458,6 +432,12 @@ export default function RestaurantSheet({
 
         {/* Scrollable content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1 }}>
+
+          {/* Mobile photo carousel — inside scroll so horizontal swipes hit useDrag
+              and vertical swipes bubble up to the scroll container. Hidden on desktop. */}
+          <div ref={photoRef} className="rs-photo-area md:hidden" style={{ height: '45vh', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
+            <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+          </div>
 
           {/* Sticky header bar — appears when scrolled past photo */}
           <div className="rs-sticky-header" style={{
@@ -515,7 +495,7 @@ export default function RestaurantSheet({
           <div className="rs-content-card" style={{
             background: '#fff',
             borderRadius: '20px 20px 0 0',
-            marginTop: 'calc(45vh - 24px)',
+            marginTop: -24,
             position: 'relative', zIndex: 2,
           }}>
             {/* Desktop photo grid — hidden on mobile (mobile uses absolute PhotoCarousel) */}
