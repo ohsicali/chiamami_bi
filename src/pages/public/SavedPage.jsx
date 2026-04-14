@@ -192,17 +192,56 @@ export default function SavedPage() {
       </div>
 
 
-      {/* Desktop-only page title */}
-      <div className="hidden md:block md:max-w-[940px] md:mx-auto md:w-full" style={{ padding: '32px 16px 8px' }}>
-        <h1 style={{
-          fontFamily: 'Georgia, serif',
-          fontSize: 26,
-          fontWeight: 700,
-          color: 'var(--color-primary)',
-          letterSpacing: -0.3,
-        }}>
-          I miei salvati
-        </h1>
+      {/* Desktop-only page header — title + chip filters on the right */}
+      <div className="hidden md:flex md:max-w-[940px] md:mx-auto md:w-full" style={{
+        padding: '32px 16px 18px',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        gap: 16,
+      }}>
+        <div>
+          <h1 style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: 26,
+            fontWeight: 700,
+            color: 'var(--color-primary)',
+            letterSpacing: -0.3,
+            marginBottom: 4,
+          }}>
+            I miei salvati
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>
+            {cityRestaurants.length} {cityRestaurants.length === 1 ? 'ristorante salvato' : 'ristoranti salvati'}
+          </p>
+        </div>
+        {restaurants.length > 0 && (
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[
+              { key: 'all', label: `Tutti (${cityRestaurants.length})`, active: !showDealsOnly && filters.sortBy !== 'distance', onClick: () => { setShowDealsOnly(false); setFilters(f => ({ ...f, sortBy: null })) } },
+              { key: 'deals', label: `Scontati${dealsCount ? ` (${dealsCount})` : ''}`, active: showDealsOnly, onClick: () => { setShowDealsOnly(v => !v); setFilters(f => ({ ...f, sortBy: null })) } },
+              { key: 'near', label: 'Vicino a me', active: filters.sortBy === 'distance', onClick: () => { setShowDealsOnly(false); handleNearbyClick() } },
+            ].map(chip => (
+              <button
+                key={chip.key}
+                onClick={chip.onClick}
+                style={{
+                  padding: '7px 14px',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  borderRadius: 999,
+                  border: `1px solid ${chip.active ? '#22181C' : '#E8E5DE'}`,
+                  background: chip.active ? '#22181C' : '#ffffff',
+                  color: chip.active ? '#ffffff' : '#22181C',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* FilterChips — CSS sticky, sticks below header naturally (hidden on desktop) */}
@@ -379,6 +418,35 @@ export default function SavedPage() {
                   </div>
                 )
               })}
+              {/* Placeholder "Esplora la mappa" when fewer than 3 saved — fills the row */}
+              {displayList.length > 0 && displayList.length < 3 && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate('/')}
+                  className="saved-empty-card"
+                  style={{
+                    height: 250,
+                    borderRadius: 16,
+                    border: '2px dashed #E8E5DE',
+                    background: '#FAF7F2',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s ease, background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#D1CDC6'; e.currentTarget.style.background = '#fff' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E8E5DE'; e.currentTarget.style.background = '#FAF7F2' }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D1CDC6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}>
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                  </svg>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#8A8680' }}>Esplora la mappa</span>
+                  <span style={{ fontSize: 11, color: '#B5B0AA', marginTop: 3 }}>per salvare altri ristoranti</span>
+                </div>
+              )}
             </div>
           </>
         )}
