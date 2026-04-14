@@ -14,9 +14,9 @@ export default function Footer() {
   const tabBarVisible = !isAdmin && !isRestaurantDetail && !isPartner
 
   return (
-    <footer className="bg-white border-t border-gray-100">
+    <footer className="bg-white border-t border-gray-100 md:mt-12">
       <div
-        className="max-w-screen-lg mx-auto px-5 pt-10 pb-10"
+        className="max-w-screen-lg md:max-w-[960px] mx-auto px-5 pt-10 pb-10"
         style={
           tabBarVisible
             ? { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }
@@ -25,7 +25,29 @@ export default function Footer() {
       >
         {/* Top section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
-          <LogoFull height={28} />
+          {/* Mobile: image logo; Desktop: red text logo */}
+          <div className="md:hidden"><LogoFull height={28} /></div>
+          <Link to="/" className="hidden md:block" style={{ textDecoration: 'none', lineHeight: 1 }}>
+            <div style={{
+              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--color-accent, #E8453C)',
+              letterSpacing: 0.3,
+              lineHeight: 1.1,
+            }}>
+              LA GUIDA DI BI
+            </div>
+            <div style={{
+              fontSize: 9,
+              color: 'var(--color-secondary, #8A8680)',
+              letterSpacing: 1,
+              fontWeight: 600,
+              marginTop: 3,
+            }}>
+              BY CHIAMAMI BI
+            </div>
+          </Link>
           <div className="flex items-center gap-4">
             {/* TikTok */}
             <a
