@@ -701,6 +701,13 @@ export default function RestaurantForm() {
     max_redemptions: '',
   })
 
+  // Autosave draft — survives tab close / connection loss / refresh.
+  // Stored per-id (or 'new') in localStorage; cleared on successful save/delete.
+  const draftKey = `restaurant-form-draft:${id || 'new'}`
+  const [draftLoaded, setDraftLoaded] = useState(false)
+  const [savedDraftAt, setSavedDraftAt] = useState(null)
+  const [pendingDraft, setPendingDraft] = useState(null) // { form, savedAt } if restore prompt needed
+
 
   // Load restaurant data when editing
   useEffect(() => {
@@ -737,6 +744,70 @@ export default function RestaurantForm() {
       }
     }
   }, [isEditing, id, allRestaurants])
+
+  // Check for an existing draft on mount (and after DB load for editing)
+  useEffect(() => {
+    // Wait for DB data to load when editing — otherwise we'd overwrite form
+    // right after offering to restore
+    if (isEditing && allRestaurants.length === 0) return
+    if (draftLoaded) return
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && parsed.form && parsed.savedAt) {
+          setPendingDraft(parsed)
+        }
+      }
+    } catch {
+      // corrupt draft — ignore
+    }
+    setDraftLoaded(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, allRestaurants.length, draftKey])
+
+  // Debounced autosave — writes form to localStorage ~1s after last change.
+  // Skips File objects in photos (not serializable); uploaded URLs are kept.
+  useEffect(() => {
+    if (!draftLoaded) return
+    const handle = setTimeout(() => {
+      try {
+        // For "new" forms, only save once something is actually entered
+        const hasContent =
+          isEditing ||
+          form.name?.trim() ||
+          form.address?.trim() ||
+          form.our_review?.trim() ||
+          form.our_tip?.trim() ||
+          (form.photos?.length > 0)
+        if (!hasContent) return
+        const serializable = {
+          ...form,
+          photos: (form.photos || [])
+            .filter((p) => p.url && !p.url.startsWith('blob:'))
+            .map((p) => ({ url: p.url, caption: p.caption || '', sort_order: p.sort_order })),
+        }
+        localStorage.setItem(draftKey, JSON.stringify({ form: serializable, savedAt: Date.now() }))
+        setSavedDraftAt(Date.now())
+      } catch {
+        // quota exceeded or disabled — silent
+      }
+    }, 1000)
+    return () => clearTimeout(handle)
+  }, [form, draftKey, draftLoaded, isEditing])
+
+  const restoreDraft = () => {
+    if (!pendingDraft?.form) return
+    setForm((prev) => ({ ...prev, ...pendingDraft.form }))
+    setPendingDraft(null)
+    addToast('Bozza ripristinata', 'success')
+  }
+
+  const discardDraft = () => {
+    try { localStorage.removeItem(draftKey) } catch {}
+    setPendingDraft(null)
+    setSavedDraftAt(null)
+  }
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -1159,11 +1230,13 @@ export default function RestaurantForm() {
           await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
         }
 
+        try { localStorage.removeItem(draftKey) } catch {}
         addToast(isEditing ? 'Ristorante aggiornato!' : 'Ristorante creato!', 'success')
         navigate('/admin')
       } else {
         // Mock mode
         await new Promise((resolve) => setTimeout(resolve, 500))
+        try { localStorage.removeItem(draftKey) } catch {}
         addToast(
           isEditing ? 'Ristorante aggiornato (mock)!' : 'Ristorante creato (mock)!',
           'success'
@@ -1186,6 +1259,7 @@ export default function RestaurantForm() {
       } else {
         await new Promise((resolve) => setTimeout(resolve, 300))
       }
+      try { localStorage.removeItem(draftKey) } catch {}
       addToast('Ristorante eliminato', 'success')
       navigate('/admin')
     } catch (err) {
@@ -1359,6 +1433,46 @@ export default function RestaurantForm() {
         transition={{ duration: 0.4 }}
       >
         <form id="restaurant-form" onSubmit={handleSave} className="space-y-6">
+          {/* Draft restore banner + autosave status */}
+          {pendingDraft && (
+            <div style={{
+              background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10,
+              padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            }}>
+              <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#9A3412' }}>
+                  Bozza non salvata trovata
+                </div>
+                <div style={{ fontSize: 12, color: '#9A3412', marginTop: 2 }}>
+                  Salvata {new Date(pendingDraft.savedAt).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}
+                  {' '}— vuoi ripristinarla?
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={restoreDraft} style={{
+                  background: '#22181C', color: '#fff', border: 'none', borderRadius: 8,
+                  padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  Ripristina
+                </button>
+                <button type="button" onClick={discardDraft} style={{
+                  background: '#fff', color: '#9A3412', border: '1px solid #FED7AA', borderRadius: 8,
+                  padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  Scarta
+                </button>
+              </div>
+            </div>
+          )}
+          {savedDraftAt && !pendingDraft && (
+            <div style={{ fontSize: 11, color: '#16A34A', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Bozza salvata alle {new Date(savedDraftAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
+
           {/* --- Google Maps autofill --- */}
           <Section title="Compilazione rapida">
             <Field label="Link Google Maps">
