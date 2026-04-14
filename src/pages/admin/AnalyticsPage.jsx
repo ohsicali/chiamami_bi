@@ -98,6 +98,7 @@ export default function AnalyticsPage() {
   // Core metrics (filtered by period)
   const [metrics, setMetrics] = useState({
     totalVisits: 0,
+    uniqueSessions: 0,
     usersTotal: 0,
     usersInPeriod: 0,
     qrGenerated: 0,
@@ -147,13 +148,18 @@ export default function AnalyticsPage() {
           supabase
             .from('page_views')
             .select('path, session_id')
-            .gte('created_at', start),
+            .gte('created_at', start)
+            .limit(50000),
         ])
 
         if (cancelled) return
 
+        // Unique sessions count — dedup session_ids from the path rows
+        const allSessions = new Set((pvByPath.data || []).map((r) => r.session_id).filter(Boolean))
+
         setMetrics({
           totalVisits: pvTotal.count || 0,
+          uniqueSessions: allSessions.size,
           usersTotal: usersTotal.count || 0,
           usersInPeriod: usersInPeriod.count || 0,
           qrGenerated: qrGen.count || 0,
@@ -459,7 +465,7 @@ export default function AnalyticsPage() {
           }}
           className="md:!grid-cols-4 md:!gap-[10px]"
         >
-          <StatCard label="Visite totali" value={metrics.totalVisits} sub="pagine viste nel periodo" />
+          <StatCard label="Visitatori unici" value={metrics.uniqueSessions} sub={metrics.totalVisits > 0 ? `${metrics.totalVisits} pagine viste` : 'sessioni distinte'} />
           <StatCard label="Utenti registrati" value={metrics.usersTotal} sub={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod} nel periodo` : null} subColor="#059669" />
           <StatCard label="QR presi" value={metrics.qrGenerated} sub="sconti attivati" />
           <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="#E8453C" />

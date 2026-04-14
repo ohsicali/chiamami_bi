@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import App from './App'
 import { ToastProvider } from './components/UI/Toast'
 import { CityProvider } from './lib/CityContext'
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <CityProvider>
         <ToastProvider>
           <App />
+          <Analytics />
         </ToastProvider>
       </CityProvider>
     </BrowserRouter>
