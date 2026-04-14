@@ -42,98 +42,65 @@ function useShare(restaurant, t) {
   return { handleShare, copied }
 }
 
-/* ── Desktop Photo Carousel (arrows + dots, click navigation) ── */
-function DesktopPhotoCarousel({ photos = [], restaurantName = '' }) {
-  const [idx, setIdx] = useState(0)
-  const [dir, setDir] = useState(0)
-  const total = photos.length
-  const norm = photos.map(p => typeof p === 'string' ? p : p?.photo_url || p?.thumb_url)
+/* ── Desktop Photo Grid — Airbnb-style: 1 main + up to 2 side stacked, 300px height ── */
+function DesktopPhotoGrid({ photos = [], restaurantName = '' }) {
+  const norm = photos
+    .map(p => (typeof p === 'string' ? p : p?.photo_url || p?.thumb_url))
+    .filter(Boolean)
+  if (norm.length === 0) return null
 
-  const go = useCallback((i, d) => {
-    if (i < 0 || i >= total) return
-    setDir(d)
-    setIdx(i)
-  }, [total])
-
-  const variants = {
-    enter: (d) => ({ x: d > 0 ? '100%' : '-100%', opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (d) => ({ x: d > 0 ? '-100%' : '100%', opacity: 0 }),
-  }
-
-  const arrowStyle = (side) => ({
-    position: 'absolute', top: '50%', [side]: 12, transform: 'translateY(-50%)',
-    width: 36, height: 36, borderRadius: '50%', zIndex: 3,
-    background: 'rgba(255,255,255,0.92)', border: 'none', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-    transition: 'opacity 0.2s, transform 0.15s',
-  })
+  const main = norm[0]
+  const side = norm.slice(1, 3)
+  const extra = Math.max(0, norm.length - 3)
 
   return (
-    <div className="hidden md:block" style={{ position: 'relative', height: 280, overflow: 'hidden', background: '#f0ebe3' }}>
-      {/* Animated slides */}
-      <AnimatePresence initial={false} custom={dir} mode="popLayout">
-        <motion.img
-          key={idx}
-          src={proxyImg(norm[idx])}
-          alt={`${restaurantName} - ${idx + 1}/${total}`}
-          custom={dir}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-          draggable={false}
-        />
-      </AnimatePresence>
-
-      {total > 1 && (
-        <>
-          {/* Left arrow */}
-          <button
-            onClick={() => go(idx - 1, -1)}
-            aria-label="Foto precedente"
-            style={{ ...arrowStyle('left'), opacity: idx === 0 ? 0 : 1, pointerEvents: idx === 0 ? 'none' : 'auto' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          {/* Right arrow */}
-          <button
-            onClick={() => go(idx + 1, 1)}
-            aria-label="Foto successiva"
-            style={{ ...arrowStyle('right'), opacity: idx >= total - 1 ? 0 : 1, pointerEvents: idx >= total - 1 ? 'none' : 'auto' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-
-          {/* Dots */}
-          <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6, zIndex: 3 }}>
-            {photos.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => go(i, i > idx ? 1 : -1)}
-                style={{
-                  width: i === idx ? 24 : 8, height: 8, borderRadius: 4, border: 'none', cursor: 'pointer', padding: 0,
-                  background: i === idx ? '#fff' : 'rgba(255,255,255,0.5)',
-                  transition: 'width 0.3s ease, background 0.3s ease',
-                }}
-                aria-label={`Foto ${i + 1}`}
-              />
-            ))}
-          </div>
-
-          {/* Counter */}
-          <div style={{
-            position: 'absolute', top: 12, right: 12, zIndex: 3,
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-            borderRadius: 12, padding: '4px 10px',
-            fontSize: 12, fontWeight: 600, color: '#fff',
-          }}>
-            {idx + 1} / {total}
-          </div>
-        </>
+    <div
+      className="hidden md:grid"
+      style={{
+        height: 300,
+        gridTemplateColumns: side.length > 0 ? '2fr 1fr' : '1fr',
+        gap: 4,
+        background: '#f0ebe3',
+        overflow: 'hidden',
+      }}
+    >
+      <img
+        src={proxyImg(main)}
+        alt={`${restaurantName} - 1`}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        loading="lazy"
+      />
+      {side.length > 0 && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateRows: side.length === 2 ? '1fr 1fr' : '1fr',
+            gap: 4,
+            position: 'relative',
+          }}
+        >
+          {side.map((p, i) => (
+            <img
+              key={i}
+              src={proxyImg(p)}
+              alt={`${restaurantName} - ${i + 2}`}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              loading="lazy"
+            />
+          ))}
+          {extra > 0 && (
+            <div
+              style={{
+                position: 'absolute', bottom: 8, right: 8,
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                color: '#fff', fontSize: 12, fontWeight: 600,
+                padding: '4px 10px', borderRadius: 12,
+              }}
+            >
+              +{extra}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
@@ -537,9 +504,9 @@ export default function RestaurantSheet({
             marginTop: 'calc(45vh - 24px)',
             position: 'relative', zIndex: 2,
           }}>
-            {/* Desktop photo carousel with arrows + dots — hidden on mobile */}
+            {/* Desktop photo grid — hidden on mobile (mobile uses absolute PhotoCarousel) */}
             {(restaurant.photos || []).length > 0 && (
-              <DesktopPhotoCarousel photos={restaurant.photos} restaurantName={restaurant.name} />
+              <DesktopPhotoGrid photos={restaurant.photos} restaurantName={restaurant.name} />
             )}
 
             {/* Photo counter — anchored to white card, mobile only */}
