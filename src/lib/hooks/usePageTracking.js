@@ -60,14 +60,38 @@ export function usePageTracking() {
       try {
         const { data: authData } = await supabase.auth.getUser()
         const userId = authData?.user?.id || null
+        const referrer = document.referrer || null
 
-        await supabase.from('page_views').insert({
-          path,
-          user_id: userId,
-          session_id: sessionId,
-          referrer: document.referrer || null,
-          user_agent: navigator.userAgent?.slice(0, 255) || null,
-        })
+        // Try server-side /api/track first — it enriches with Vercel geo headers
+        // (country/city/region + device_type). Falls back to direct Supabase
+        // insert on local dev or if the endpoint is unreachable.
+        let tracked = false
+        try {
+          const resp = await fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              path,
+              user_id: userId,
+              session_id: sessionId,
+              referrer,
+            }),
+            keepalive: true,
+          })
+          tracked = resp.ok
+        } catch {
+          // network/404 — fall through to direct insert
+        }
+
+        if (!tracked) {
+          await supabase.from('page_views').insert({
+            path,
+            user_id: userId,
+            session_id: sessionId,
+            referrer,
+            user_agent: navigator.userAgent?.slice(0, 255) || null,
+          })
+        }
       } catch {
         // silent fail — analytics must never break the app
       }

@@ -58,6 +58,58 @@ function StatCard({ label, value, sub, subColor }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  GeoCard — compact horizontal-bar list (country/city/device)        */
+/* ------------------------------------------------------------------ */
+const COUNTRY_FLAG = (code) => {
+  if (!code || code.length !== 2) return ''
+  const cc = code.toUpperCase()
+  return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)))
+}
+const DEVICE_LABEL = { mobile: 'Mobile', tablet: 'Tablet', desktop: 'Desktop', unknown: 'Sconosciuto' }
+
+function GeoCard({ title, rows, emptyLabel }) {
+  const isDevice = title === 'Dispositivi'
+  const isCountry = title === 'Top paesi'
+  return (
+    <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
+      <h3 style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1f', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {title}
+      </h3>
+      <div style={{ fontSize: 10, color: '#bbb', marginBottom: 14, fontStyle: 'italic' }}>
+        sessioni uniche nel periodo
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 12, color: '#999', textAlign: 'center', padding: 20 }}>
+          {emptyLabel}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {rows.map((r, i) => {
+            const opacity = 1 - i * 0.12
+            const display = isDevice
+              ? (DEVICE_LABEL[r.label] || r.label)
+              : isCountry
+                ? `${COUNTRY_FLAG(r.label)} ${r.label}`
+                : r.label
+            return (
+              <div key={r.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 11, color: '#444' }}>{display}</span>
+                  <span style={{ fontSize: 11, color: '#999' }}>{r.count}</span>
+                </div>
+                <div style={{ height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ width: `${r.pct}%`, height: '100%', background: `rgba(232,69,60,${Math.max(opacity, 0.25)})`, borderRadius: 4 }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Analytics page                                                */
 /* ------------------------------------------------------------------ */
 export default function AnalyticsPage() {
@@ -107,6 +159,9 @@ export default function AnalyticsPage() {
   const [activeDiscounts, setActiveDiscounts] = useState([])
   const [topRestaurants, setTopRestaurants] = useState([])
   const [pageBreakdown, setPageBreakdown] = useState([])
+  const [countryBreakdown, setCountryBreakdown] = useState([])
+  const [cityBreakdown, setCityBreakdown] = useState([])
+  const [deviceBreakdown, setDeviceBreakdown] = useState([])
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
@@ -147,7 +202,7 @@ export default function AnalyticsPage() {
             .gte('created_at', start),
           supabase
             .from('page_views')
-            .select('path, session_id')
+            .select('path, session_id, country, city, device_type')
             .gte('created_at', start)
             .limit(50000),
         ])
@@ -195,6 +250,35 @@ export default function AnalyticsPage() {
           .filter((b) => b.count > 0)
           .sort((a, b) => b.count - a.count)
         setPageBreakdown(breakdown)
+
+        // Geo + device breakdowns — unique sessions per country/city/device
+        const byCountry = {}
+        const byCity = {}
+        const byDevice = {}
+        rows.forEach((r) => {
+          if (!r.session_id) return
+          if (r.country) {
+            if (!byCountry[r.country]) byCountry[r.country] = new Set()
+            byCountry[r.country].add(r.session_id)
+          }
+          if (r.city) {
+            if (!byCity[r.city]) byCity[r.city] = new Set()
+            byCity[r.city].add(r.session_id)
+          }
+          if (r.device_type) {
+            if (!byDevice[r.device_type]) byDevice[r.device_type] = new Set()
+            byDevice[r.device_type].add(r.session_id)
+          }
+        })
+        const toSortedList = (obj, limit = 8) => {
+          const entries = Object.entries(obj).map(([label, set]) => ({ label, count: set.size }))
+          entries.sort((a, b) => b.count - a.count)
+          const max = entries[0]?.count || 1
+          return entries.slice(0, limit).map((e) => ({ ...e, pct: Math.round((e.count / max) * 100) }))
+        }
+        setCountryBreakdown(toSortedList(byCountry))
+        setCityBreakdown(toSortedList(byCity))
+        setDeviceBreakdown(toSortedList(byDevice, 4))
 
         // Group redemptions by discount_id to compute period counts
         const discountCounts = {}
@@ -643,6 +727,22 @@ export default function AnalyticsPage() {
             )}
           </div>
         </div>
+
+        {/* ─── GEO + DEVICE BREAKDOWN ─── */}
+        {(countryBreakdown.length > 0 || cityBreakdown.length > 0 || deviceBreakdown.length > 0) && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: 16,
+            }}
+            className="md:!grid-cols-3"
+          >
+            <GeoCard title="Top paesi" rows={countryBreakdown} emptyLabel="In attesa di dati geo" />
+            <GeoCard title="Top città" rows={cityBreakdown} emptyLabel="In attesa di dati geo" />
+            <GeoCard title="Dispositivi" rows={deviceBreakdown} emptyLabel="In attesa di dati" />
+          </div>
+        )}
 
         {/* ─── SCONTI QR + TOP RESTAURANTS ─── */}
         <div
