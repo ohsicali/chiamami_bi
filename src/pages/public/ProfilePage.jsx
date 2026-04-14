@@ -207,8 +207,8 @@ export default function ProfilePage() {
         ...(isDesktop ? {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 24,
-          padding: '28px 40px 32px',
+          gap: 28,
+          padding: '28px 40px 8px',
           alignItems: 'start',
         } : {}),
       }}>
@@ -216,7 +216,14 @@ export default function ProfilePage() {
       {/* ═══ LEFT COLUMN (desktop) / TOP (mobile) ═══ */}
       <div>
 
-      {/* ── STATS CARDS — 3 cards row (mobile) / stacked (desktop) ── */}
+      {/* ── Section label (desktop only) ── */}
+      {isDesktop && (
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 10 }}>
+          Le tue statistiche
+        </div>
+      )}
+
+      {/* ── STATS CARDS — 3 cards row (mobile) / row (desktop) ── */}
       <div style={{
         display: isDesktop ? 'grid' : 'flex',
         gridTemplateColumns: isDesktop ? 'repeat(3, 1fr)' : undefined,
@@ -239,30 +246,37 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* ── CARD INVITA UN AMICO (dark) ── */}
+      {/* ── CARD INVITA UN AMICO (dark) — horizontal on desktop ── */}
       <div style={{
-        background: 'var(--color-primary)', borderRadius: 20, padding: isDesktop ? 22 : 18,
+        background: 'var(--color-primary)', borderRadius: 20, padding: isDesktop ? '18px 22px' : 18,
         marginBottom: isDesktop ? 0 : 16,
         marginLeft: isDesktop ? 0 : 22, marginRight: isDesktop ? 0 : 22,
         position: 'relative', overflow: 'hidden',
+        ...(isDesktop ? {
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+        } : {}),
       }}>
         <div style={{
           position: 'absolute', top: -15, right: -15, width: 80, height: 80,
           borderRadius: '50%', background: 'rgba(232,69,60,0.15)',
         }} />
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#C4A265', letterSpacing: 2, marginBottom: 8 }}>
-          INVITA UN AMICO
-        </div>
-        <div style={{ fontSize: isDesktop ? 17 : 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
-          Condividi La Guida di Bi
-        </div>
-        <div style={{ fontSize: isDesktop ? 13 : 12, color: 'rgba(255,255,255,0.4)', marginBottom: 14, lineHeight: 1.5 }}>
-          Fai scoprire i migliori ristoranti di Torino ai tuoi amici
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#C4A265', letterSpacing: 2, marginBottom: 6 }}>
+            INVITA UN AMICO
+          </div>
+          <div style={{ fontSize: isDesktop ? 16 : 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+            Condividi La Guida di Bi
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: isDesktop ? 0 : 14 }}>
+            Fai scoprire i migliori ristoranti di Torino ai tuoi amici
+          </div>
         </div>
         <button onClick={handleShare} style={{
           background: '#fff', color: 'var(--color-primary)', borderRadius: 12,
-          padding: 11, fontSize: 13, fontWeight: 600, border: 'none',
-          cursor: 'pointer', width: '100%',
+          padding: isDesktop ? '10px 22px' : 11, fontSize: 13, fontWeight: 600, border: 'none',
+          cursor: 'pointer',
+          width: isDesktop ? 'auto' : '100%',
+          flexShrink: 0, position: 'relative', zIndex: 1,
         }}>
           Condividi link
         </button>
@@ -273,10 +287,18 @@ export default function ProfilePage() {
       {/* ═══ RIGHT COLUMN (desktop) / BOTTOM (mobile) ═══ */}
       <div>
 
-      {/* ── NEWSLETTER TOGGLE ── */}
+      {/* ── Section label (desktop only) ── */}
+      {isDesktop && (
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 10 }}>
+          Azioni rapide
+        </div>
+      )}
+
+      {/* ── Newsletter TOGGLE — mobile only (desktop version is full-width below) ── */}
+      {!isDesktop && (
       <div style={{
         marginBottom: 16, padding: '18px 20px',
-        marginLeft: isDesktop ? 0 : 22, marginRight: isDesktop ? 0 : 22,
+        marginLeft: 22, marginRight: 22,
         background: '#fff', borderRadius: 20,
         border: '1px solid var(--color-bordo)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -302,6 +324,7 @@ export default function ProfilePage() {
           />
         </button>
       </div>
+      )}
 
       {/* ── 4 LINK BUTTONS — 2x2 on desktop and mobile ── */}
       <div style={{
@@ -405,6 +428,39 @@ export default function ProfilePage() {
       </div>{/* end right col */}
 
       </div>{/* end centered container */}
+
+      {/* ── NEWSLETTER — full-width below grid (desktop only) ── */}
+      {isDesktop && (
+        <div style={{ maxWidth: 1080, margin: '0 auto', width: '100%', padding: '0 40px 32px' }}>
+          <div style={{
+            padding: '18px 24px',
+            background: '#fff', borderRadius: 20,
+            border: '1px solid var(--color-bordo)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</div>
+              <div style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</div>
+            </div>
+            <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
+              position: 'relative', width: 48, height: 28, borderRadius: 14,
+              background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
+              border: 'none', cursor: 'pointer', transition: 'background 0.2s',
+              flexShrink: 0,
+            }}>
+              <motion.div
+                style={{
+                  position: 'absolute', top: 2, width: 24, height: 24,
+                  borderRadius: 12, background: '#fff',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                }}
+                animate={{ left: newsletterEnabled ? 22 : 2 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── FOOTER MINIMAL — mobile only ── */}
       <div className="md:hidden" style={{ flex: 1 }} />
