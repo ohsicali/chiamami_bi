@@ -186,6 +186,22 @@ body {
     font-weight: 600 !important;
     color: #22181C !important;
   }
+  /* Ensure image inside the 72px container fills it completely */
+  .rcard .rcard-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+  /* Tagline: soft grey, readable size */
+  .rcard .rcard-tagline {
+    color: #8A8680 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+  }
+  /* Category pills row & meta row — stay on a single line where possible */
+  .rcard .rcard-cats {
+    gap: 5px !important;
+  }
   /* Hide the full-width green strip on desktop; badge on photo is used instead */
   .rcard .rcard-discount-strip {
     display: none !important;
