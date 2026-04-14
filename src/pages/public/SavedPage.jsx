@@ -192,9 +192,22 @@ export default function SavedPage() {
       </div>
 
 
-      {/* FilterChips — CSS sticky, sticks below header naturally */}
+      {/* Desktop-only page title */}
+      <div className="hidden md:block md:max-w-[940px] md:mx-auto md:w-full" style={{ padding: '32px 16px 8px' }}>
+        <h1 style={{
+          fontFamily: 'Georgia, serif',
+          fontSize: 26,
+          fontWeight: 700,
+          color: 'var(--color-primary)',
+          letterSpacing: -0.3,
+        }}>
+          I miei salvati
+        </h1>
+      </div>
+
+      {/* FilterChips — CSS sticky, sticks below header naturally (hidden on desktop) */}
       {restaurants.length > 0 && (
-        <div style={{
+        <div className="md:hidden" style={{
           position: 'sticky',
           top: headerH,
           zIndex: 49,
@@ -309,8 +322,8 @@ export default function SavedPage() {
               })}
             </div>
 
-            {/* Desktop: vertical photo cards grid */}
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Desktop: vertical photo cards grid (3-col) */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5 md:pt-2">
               {displayList.map((r) => {
                 const discount = activeDiscounts[r.id]
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -326,7 +339,7 @@ export default function SavedPage() {
                     tabIndex={0}
                     onClick={() => handleClick(r)}
                     className="relative overflow-hidden cursor-pointer group"
-                    style={{ height: 220, borderRadius: 16 }}
+                    style={{ height: 250, borderRadius: 16 }}
                   >
                     {/* Photo background */}
                     {photoUrl ? (
