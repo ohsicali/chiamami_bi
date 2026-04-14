@@ -121,7 +121,7 @@ export default function ProfilePage() {
       {/* ── HEADER GRADIENT — full width ── */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-accent) 0%, #f07068 50%, #e85d4a 100%)',
-        padding: isDesktop ? '60px 40px 40px' : '20px 22px 0',
+        padding: isDesktop ? '28px 40px' : '20px 22px 0',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Decorative shapes */}
@@ -133,99 +133,57 @@ export default function ProfilePage() {
 
         <div style={{ maxWidth: isDesktop ? 1080 : undefined, margin: isDesktop ? '0 auto' : undefined, position: 'relative' }}>
 
-          {/* Settings button — absolute top-right on desktop */}
-          {isDesktop && (
-            <button onClick={() => navigate('/settings')} style={{
-              position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: 'none', cursor: 'pointer', zIndex: 2,
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
-          )}
-
-          {/* Profile info — horizontal on mobile, vertical centered on desktop */}
+          {/* Profile info — horizontal on both mobile and desktop */}
           <div style={{
             display: 'flex',
-            flexDirection: isDesktop ? 'column' : 'row',
+            flexDirection: 'row',
             alignItems: 'center',
-            gap: isDesktop ? 16 : 12,
-            textAlign: isDesktop ? 'center' : 'left',
+            gap: isDesktop ? 18 : 12,
+            textAlign: 'left',
             position: 'relative', zIndex: 1,
           }}>
             <div style={{
-              width: isDesktop ? 88 : 48, height: isDesktop ? 88 : 48,
-              minWidth: isDesktop ? 88 : 48,
+              width: isDesktop ? 68 : 48, height: isDesktop ? 68 : 48,
+              minWidth: isDesktop ? 68 : 48,
               borderRadius: '50%', background: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
-              fontSize: isDesktop ? 36 : 20,
+              fontSize: isDesktop ? 28 : 20,
               color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
               boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
             }}>
               {initial}
             </div>
 
-            <div style={{ flex: isDesktop ? undefined : 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: isDesktop ? 'center' : 'flex-start' }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: isDesktop ? 28 : 17, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: isDesktop ? 20 : 17, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
                 {displayName}
               </div>
-              <div style={{ fontSize: isDesktop ? 14 : 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{email}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: isDesktop ? 10 : 6, justifyContent: isDesktop ? 'center' : 'flex-start' }}>
+              <div style={{ fontSize: isDesktop ? 13 : 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{email}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                 <span style={{
-                  fontSize: isDesktop ? 12 : 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
-                  background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: isDesktop ? '5px 16px' : '4px 12px',
+                  fontSize: 11, fontWeight: 600, color: '#fff', letterSpacing: 0.5,
+                  background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 12px',
                 }}>Amico di Bi</span>
-                <span style={{ fontSize: isDesktop ? 12 : 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
+                <span style={{ fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.45)' }}>da {memberSince}</span>
               </div>
             </div>
 
-            {/* Settings button — inline on mobile only */}
-            {!isDesktop && (
-              <button onClick={() => navigate('/settings')} style={{
-                width: 34, height: 34, minWidth: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-                  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </button>
-            )}
+            {/* Settings button — always inline */}
+            <button onClick={() => navigate('/settings')} style={{
+              width: isDesktop ? 38 : 34, height: isDesktop ? 38 : 34, minWidth: isDesktop ? 38 : 34,
+              borderRadius: '50%', background: 'rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
           </div>
 
-          {/* ── DESKTOP: Stats + savings inline in header ── */}
-          {isDesktop ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, marginTop: 36 }}>
-              {/* Savings */}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 28, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
-                  {stats.totalSaved}<span style={{ fontSize: 18 }}>€</span>
-                </span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>risparmiati</span>
-              </div>
-              {/* Divider */}
-              <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.15)' }} />
-              {/* Stats row */}
-              {[
-                { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
-                { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
-                { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
-              ].map((stat, i) => (
-                <button key={i} onClick={stat.onClick} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', padding: '4px 12px',
-                }}>
-                  <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 24, fontWeight: 700, color: '#fff' }}>{stat.value}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>{stat.label}</div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            /* ── MOBILE: Savings bar at bottom of header ── */
+          {/* ── MOBILE: Savings bar at bottom of header (hidden on desktop) ── */}
+          {!isDesktop && (
             <div style={{
               background: 'rgba(255,255,255,0.1)', borderRadius: '20px 20px 0 0',
               padding: '16px 22px', margin: '20px -22px 0',
@@ -242,37 +200,51 @@ export default function ProfilePage() {
       </div>
 
       {/* ── CONTENT — centered container ── */}
-      <div style={{ maxWidth: isDesktop ? 1080 : undefined, margin: isDesktop ? '0 auto' : undefined, width: '100%' }}>
-
-      {/* ── MOBILE STATS CARDS ── */}
-      {!isDesktop && (
-        <div style={{ display: 'flex', gap: 10, padding: '18px 22px' }}>
-          {[
-            { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
-            { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
-            { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
-          ].map((stat, i) => (
-            <button key={i} onClick={stat.onClick} style={{
-              flex: 1, background: '#fff', borderRadius: 16, padding: 16,
-              textAlign: 'center', border: '1px solid var(--color-bordo)', cursor: 'pointer',
-            }}>
-              <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, fontWeight: 700, color: 'var(--color-primary)' }}>{stat.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--color-secondary)' }}>{stat.label}</div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── INVITE + NEWSLETTER GRID ── */}
       <div style={{
-        padding: isDesktop ? '16px 22px 20px' : '0 22px 20px',
-        ...(isDesktop ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 } : {}),
+        maxWidth: isDesktop ? 1080 : undefined,
+        margin: isDesktop ? '0 auto' : undefined,
+        width: '100%',
+        ...(isDesktop ? {
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 24,
+          padding: '28px 40px 32px',
+          alignItems: 'start',
+        } : {}),
       }}>
 
-      {/* ── CARD INVITA UN AMICO ── */}
+      {/* ═══ LEFT COLUMN (desktop) / TOP (mobile) ═══ */}
+      <div>
+
+      {/* ── STATS CARDS — 3 cards row (mobile) / stacked (desktop) ── */}
       <div style={{
-        background: 'var(--color-primary)', borderRadius: 20, padding: 18,
-        marginBottom: isDesktop ? 0 : 16, position: 'relative', overflow: 'hidden',
+        display: isDesktop ? 'grid' : 'flex',
+        gridTemplateColumns: isDesktop ? 'repeat(3, 1fr)' : undefined,
+        gap: 10,
+        padding: isDesktop ? '0 0 16px' : '18px 22px',
+      }}>
+        {[
+          { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
+          { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
+          { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
+        ].map((stat, i) => (
+          <button key={i} onClick={stat.onClick} style={{
+            flex: isDesktop ? undefined : 1,
+            background: '#fff', borderRadius: 16, padding: isDesktop ? '18px 14px' : 16,
+            textAlign: 'center', border: '1px solid var(--color-bordo)', cursor: 'pointer',
+          }}>
+            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: isDesktop ? 24 : 18, fontWeight: 700, color: 'var(--color-primary)' }}>{stat.value}</div>
+            <div style={{ fontSize: isDesktop ? 11 : 10, color: 'var(--color-secondary)', marginTop: 2 }}>{stat.label}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* ── CARD INVITA UN AMICO (dark) ── */}
+      <div style={{
+        background: 'var(--color-primary)', borderRadius: 20, padding: isDesktop ? 22 : 18,
+        marginBottom: isDesktop ? 0 : 16,
+        marginLeft: isDesktop ? 0 : 22, marginRight: isDesktop ? 0 : 22,
+        position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: -15, right: -15, width: 80, height: 80,
@@ -281,10 +253,10 @@ export default function ProfilePage() {
         <div style={{ fontSize: 10, fontWeight: 700, color: '#C4A265', letterSpacing: 2, marginBottom: 8 }}>
           INVITA UN AMICO
         </div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+        <div style={{ fontSize: isDesktop ? 17 : 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
           Condividi La Guida di Bi
         </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 14, lineHeight: 1.5 }}>
+        <div style={{ fontSize: isDesktop ? 13 : 12, color: 'rgba(255,255,255,0.4)', marginBottom: 14, lineHeight: 1.5 }}>
           Fai scoprire i migliori ristoranti di Torino ai tuoi amici
         </div>
         <button onClick={handleShare} style={{
@@ -296,9 +268,15 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      </div>{/* end left col */}
+
+      {/* ═══ RIGHT COLUMN (desktop) / BOTTOM (mobile) ═══ */}
+      <div>
+
       {/* ── NEWSLETTER TOGGLE ── */}
       <div style={{
-        marginBottom: isDesktop ? 0 : 16, padding: '18px 20px',
+        marginBottom: 16, padding: '18px 20px',
+        marginLeft: isDesktop ? 0 : 22, marginRight: isDesktop ? 0 : 22,
         background: '#fff', borderRadius: 20,
         border: '1px solid var(--color-bordo)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -325,12 +303,11 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      </div>{/* end profile-desktop-grid */}
-
-      {/* ── 4 LINK BUTTONS — full row on desktop ── */}
+      {/* ── 4 LINK BUTTONS — 2x2 on desktop and mobile ── */}
       <div style={{
-        display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(4, 1fr)' : '1fr 1fr', gap: 10,
-        padding: '0 22px 16px',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+        padding: isDesktop ? 0 : '0 22px 16px',
+        marginBottom: isDesktop ? 16 : 0,
       }}>
         {[
           {
@@ -399,7 +376,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ── SOCIAL BUTTONS ── */}
-      <div style={{ display: 'flex', gap: 10, padding: '0 22px 24px' }}>
+      <div style={{ display: 'flex', gap: 10, padding: isDesktop ? 0 : '0 22px 24px' }}>
         <a href="https://www.tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           background: 'var(--color-primary)', borderRadius: 14, padding: '13px 0',
@@ -424,6 +401,8 @@ export default function ProfilePage() {
           Instagram
         </a>
       </div>
+
+      </div>{/* end right col */}
 
       </div>{/* end centered container */}
 
