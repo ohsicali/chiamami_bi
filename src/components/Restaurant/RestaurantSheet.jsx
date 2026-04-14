@@ -328,7 +328,21 @@ export default function RestaurantSheet({
   return (
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
+        /* Mobile: the scroll wrapper sits above the photo carousel (z-index 1 vs 0);
+           to let horizontal swipes reach the carousel below, make the scroll wrapper's
+           own bare area transparent to pointer events. Direct children (sticky header,
+           content card) keep pointer-events: auto, so vertical scroll and taps work
+           normally on the content. */
+        .restaurant-sheet-root .rs-scroll {
+          pointer-events: none;
+        }
+        .restaurant-sheet-root .rs-scroll > * {
+          pointer-events: auto;
+        }
         @media (min-width: 768px) {
+          .restaurant-sheet-root .rs-scroll {
+            pointer-events: auto !important;
+          }
           /* Root: pass-through clicks to map behind */
           .restaurant-sheet-root {
             top: 56px !important;
