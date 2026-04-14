@@ -994,14 +994,20 @@ export default function DealsPage() {
     <>
       <style>{`
         @media (min-width: 768px) {
+          /* Chip tabs: inline, not full-width */
           .deals-tab-switcher {
+            display: inline-flex !important;
+            width: auto !important;
             background: transparent !important;
             border: none !important;
             border-bottom: 2px solid var(--color-bordo) !important;
             border-radius: 0 !important;
             padding: 0 !important;
+            gap: 4px;
           }
           .deals-tab-switcher button {
+            flex: 0 0 auto !important;
+            padding: 10px 22px !important;
             border-radius: 0 !important;
             background: transparent !important;
             color: var(--color-secondary) !important;
@@ -1011,6 +1017,10 @@ export default function DealsPage() {
           .deals-tab-switcher .deals-tab-active {
             color: var(--color-accent) !important;
             border-bottom-color: var(--color-accent) !important;
+          }
+          /* Drop carousel: wider cards on desktop */
+          .drop-carousel > * {
+            min-width: 360px;
           }
         }
       `}</style>
