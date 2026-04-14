@@ -994,29 +994,29 @@ export default function DealsPage() {
     <>
       <style>{`
         @media (min-width: 768px) {
-          /* Chip tabs: inline, not full-width */
+          /* Chip pill tabs: inline, rounded, dark-active */
           .deals-tab-switcher {
             display: inline-flex !important;
             width: auto !important;
-            background: transparent !important;
-            border: none !important;
-            border-bottom: 2px solid var(--color-bordo) !important;
-            border-radius: 0 !important;
-            padding: 0 !important;
+            background: #FAF7F2 !important;
+            border: 1px solid #E8E5DE !important;
+            border-radius: 14px !important;
+            padding: 4px !important;
             gap: 4px;
           }
           .deals-tab-switcher button {
             flex: 0 0 auto !important;
-            padding: 10px 22px !important;
-            border-radius: 0 !important;
+            padding: 9px 24px !important;
+            border-radius: 11px !important;
+            font-size: 13px !important;
             background: transparent !important;
-            color: var(--color-secondary) !important;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
+            color: #8A8680 !important;
+            border: none !important;
+            margin: 0 !important;
           }
           .deals-tab-switcher .deals-tab-active {
-            color: var(--color-accent) !important;
-            border-bottom-color: var(--color-accent) !important;
+            background: #22181C !important;
+            color: #ffffff !important;
           }
           /* Drop carousel: wider cards on desktop */
           .drop-carousel > * {
