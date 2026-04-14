@@ -202,7 +202,7 @@ export default function RestaurantCard({
   // DEFAULT VARIANT — horizontal compact card
   return (
     <motion.button
-      className="w-full text-left relative rounded-[18px] md:rounded-[14px]"
+      className="rcard w-full text-left relative rounded-[18px] md:rounded-[14px]"
       style={{
         background: '#fff',
         border: '1px solid rgba(0,0,0,0.08)',
@@ -213,13 +213,12 @@ export default function RestaurantCard({
       initial="hidden"
       animate="visible"
       custom={index}
-      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick?.(restaurant)}
     >
       {/* Green discount strip on top */}
       {hasDiscount && discountTitle && (
-        <div style={{
+        <div className="rcard-discount-strip" style={{
           background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
           fontSize: 10, fontWeight: 700,
           padding: '4px 10px',
@@ -230,9 +229,9 @@ export default function RestaurantCard({
         </div>
       )}
 
-      <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
+      <div className="rcard-inner flex w-full items-center gap-3.5" style={{ padding: 14 }}>
       {/* Photo */}
-      <div className="relative flex-shrink-0 overflow-hidden w-[100px] h-[100px] md:w-[72px] md:h-[72px] rounded-[14px] md:rounded-[10px]">
+      <div className="rcard-photo relative flex-shrink-0 overflow-hidden w-[100px] h-[100px] md:w-[72px] md:h-[72px] rounded-[14px] md:rounded-[10px]">
         <div
           className="absolute inset-0"
           style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }}
@@ -250,12 +249,24 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
+        {/* Desktop-only discount badge on photo */}
+        {hasDiscount && discountTitle && (
+          <div className="rcard-photo-badge hidden md:block" style={{
+            position: 'absolute', top: 6, left: 6,
+            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+            fontSize: 9, fontWeight: 700,
+            padding: '2px 7px', borderRadius: 6,
+            letterSpacing: 0.3,
+          }}>
+            {discountTitle}
+          </div>
+        )}
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
+      <div className="rcard-body flex-1 min-w-0 flex flex-col justify-center">
         {/* Name */}
-        <h3 style={{
+        <h3 className="rcard-name" style={{
           fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
           fontSize: 14, fontWeight: 600, color: '#22181C',
           lineHeight: 1.5, marginBottom: 3,
@@ -265,13 +276,13 @@ export default function RestaurantCard({
 
         {/* Tagline */}
         {restaurant.tagline && (
-          <p style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 4 }}>
+          <p className="rcard-tagline" style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 4 }}>
             {restaurant.tagline}
           </p>
         )}
 
         {/* Category badges — max 2 visible */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+        <div className="rcard-cats" style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
           {categories.slice(0, 2).map(cat => (
             <span
               key={cat.name}

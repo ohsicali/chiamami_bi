@@ -351,7 +351,7 @@ export default function HomePage() {
           <p style={{ marginTop: 4, fontSize: 14, color: '#8A8680' }}>{t('home.changeFilters')}</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 pb-8">
+        <div className="flex flex-col gap-3 md:gap-0 pb-8">
           {/* IN EVIDENZA section */}
           {featuredRestaurant && (
             <>
