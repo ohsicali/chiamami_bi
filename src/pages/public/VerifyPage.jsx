@@ -2198,62 +2198,126 @@ function formatShortDate(d) {
 function RangePicker({ range, onChange }) {
   const [showCalendar, setShowCalendar] = useState(false)
   const presets = [
-    { kind: '7d', label: '7 gg' },
-    { kind: '30d', label: '30 gg' },
-    { kind: '365d', label: '365 gg' },
-    { kind: 'custom', label: 'Personalizzato' },
+    { kind: '7d', label: '7 giorni' },
+    { kind: '30d', label: '30 giorni' },
+    { kind: '365d', label: '12 mesi' },
   ]
   const isCustom = range?.kind === 'custom'
-  const customLabel = isCustom
+  const customDates = isCustom
     ? `${formatShortDate(range.from)} – ${formatShortDate(range.to)}`
-    : 'Personalizzato'
+    : null
 
   return (
     <>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 6,
-          padding: 4,
-          marginBottom: 16,
-          background: '#F5F1EA',
-          borderRadius: 14,
-          border: '1px solid #E8E0D4',
+          display: 'flex',
+          alignItems: 'stretch',
+          gap: 8,
+          marginBottom: 14,
           width: '100%',
         }}
       >
-        {presets.map((p) => {
-          const active = range?.kind === p.kind
-          const label = p.kind === 'custom' ? customLabel : p.label
-          const onClick =
-            p.kind === 'custom'
-              ? () => setShowCalendar(true)
-              : () => onChange(buildPresetRange(p.kind))
-          return (
-            <button
-              key={p.kind}
-              onClick={onClick}
-              style={{
-                padding: '11px 8px',
-                borderRadius: 10,
-                border: 'none',
-                background: active ? '#22181C' : 'transparent',
-                color: active ? '#fff' : '#22181C',
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.18s ease',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {label}
-            </button>
-          )
-        })}
+        <div
+          role="tablist"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 4,
+            padding: 4,
+            background: '#F5F1EA',
+            borderRadius: 12,
+            border: '1px solid #E8E0D4',
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          {presets.map((p) => {
+            const active = range?.kind === p.kind
+            return (
+              <button
+                key={p.kind}
+                role="tab"
+                aria-selected={active}
+                onClick={() => onChange(buildPresetRange(p.kind))}
+                style={{
+                  padding: '10px 6px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: active ? '#22181C' : 'transparent',
+                  color: active ? '#fff' : '#4A3F44',
+                  fontSize: 14,
+                  fontWeight: active ? 700 : 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  whiteSpace: 'nowrap',
+                  boxShadow: active ? '0 2px 6px rgba(34,24,28,0.18)' : 'none',
+                }}
+              >
+                {p.label}
+              </button>
+            )
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCalendar(true)}
+          aria-label="Scegli periodo personalizzato"
+          title="Personalizzato"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '0 14px',
+            minWidth: 52,
+            borderRadius: 12,
+            border: isCustom ? '1px solid #22181C' : '1px solid #E8E0D4',
+            background: isCustom ? '#22181C' : '#fff',
+            color: isCustom ? '#fff' : '#22181C',
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 600,
+            transition: 'all 0.18s ease',
+            boxShadow: isCustom ? '0 2px 6px rgba(34,24,28,0.18)' : 'none',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </button>
       </div>
+
+      {isCustom && (
+        <button
+          type="button"
+          onClick={() => setShowCalendar(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            padding: '10px 14px',
+            marginBottom: 14,
+            borderRadius: 10,
+            border: '1px solid #E8E0D4',
+            background: '#fff',
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 600,
+            color: '#22181C',
+          }}
+        >
+          <span style={{ fontSize: 13, color: '#8A8680', fontWeight: 500 }}>
+            Periodo selezionato
+          </span>
+          <span>{customDates}</span>
+        </button>
+      )}
+
       {showCalendar && (
         <CalendarRangeModal
           initialFrom={range?.from}
