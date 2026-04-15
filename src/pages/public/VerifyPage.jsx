@@ -564,11 +564,51 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
     <>
       {/* ---- MOBILE (< 768px) ---- */}
       <div className="md:hidden" style={{ minHeight: '100dvh', background: '#FAF7F2' }}>
+        {/* Brand bar — ChiamamiBi logo + link to main site for people who
+            stumbled onto /verify by mistake. Matches RestaurantHeader's
+            brand bar style so the experience is consistent once logged in. */}
+        <div
+          style={{
+            background: '#22181C',
+            padding: '18px 16px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <Link
+            to="/"
+            aria-label="Torna al sito ChiamamiBi"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              textDecoration: 'none',
+            }}
+          >
+            <LogoFull height={26} />
+          </Link>
+          <Link
+            to="/"
+            style={{
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.7)',
+              textDecoration: 'none',
+              fontWeight: 500,
+              padding: '6px 10px',
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.15)',
+            }}
+          >
+            ← Al sito
+          </Link>
+        </div>
+
         {/* Header scuro */}
         <div
           style={{
             background: '#22181C',
-            padding: '20px',
+            padding: '16px 20px 24px',
             textAlign: 'center',
           }}
         >
@@ -668,18 +708,28 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
         <InstructionsBlock desktop={false} />
         <ContactBox desktop={false} />
 
-        {/* Footer */}
-        <div style={{ padding: '0 20px 24px', textAlign: 'center' }}>
+        {/* Footer — explicit way out for people who landed on /verify by
+            mistake (e.g. clicked a link not meant for them). */}
+        <div style={{ padding: '8px 20px 28px', textAlign: 'center' }}>
           <Link
             to="/"
             style={{
-              fontSize: 11,
-              color: '#8A8680',
+              display: 'inline-block',
+              fontSize: 13,
+              color: '#4A3F44',
               textDecoration: 'none',
+              fontWeight: 600,
+              padding: '10px 18px',
+              borderRadius: 10,
+              border: '1px solid #E8E0D4',
+              background: '#fff',
             }}
           >
-            ← Torna alla guida
+            ← Torna al sito ChiamamiBi
           </Link>
+          <div style={{ marginTop: 10, fontSize: 11, color: '#B5B0AA' }}>
+            Questa pagina è dedicata ai ristoranti partner
+          </div>
         </div>
       </div>
 
@@ -691,9 +741,41 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           background: '#FAF7F2',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: '56px 24px 48px',
+          padding: '32px 24px 48px',
         }}
       >
+        {/* Brand row — ChiamamiBi logo above the card for anyone who arrived
+            here without going through the main site. */}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 440,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+          }}
+        >
+          <Link to="/" aria-label="Torna al sito ChiamamiBi" style={{ display: 'inline-flex', textDecoration: 'none' }}>
+            <LogoFull height={28} />
+          </Link>
+          <Link
+            to="/"
+            style={{
+              fontSize: 13,
+              color: '#4A3F44',
+              textDecoration: 'none',
+              fontWeight: 600,
+              padding: '8px 14px',
+              borderRadius: 10,
+              border: '1px solid #E8E0D4',
+              background: '#fff',
+            }}
+          >
+            ← Torna al sito
+          </Link>
+        </div>
+
         <div
           style={{
             width: '100%',
@@ -803,6 +885,13 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
         <div style={{ width: '100%', maxWidth: 440, marginTop: 32 }}>
           <InstructionsBlock desktop />
           <ContactBox desktop />
+        </div>
+
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#B5B0AA' }}>
+          Questa pagina è dedicata ai ristoranti partner.{' '}
+          <Link to="/" style={{ color: '#4A3F44', fontWeight: 600, textDecoration: 'underline' }}>
+            Torna al sito
+          </Link>
         </div>
       </div>
     </>
