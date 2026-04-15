@@ -637,18 +637,21 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           >
             Area Ristoratori
           </h1>
-          <p
-            style={{
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            Inserisci il PIN del tuo ristorante
-          </p>
         </div>
 
         {/* PIN + submit */}
         <div style={{ padding: '24px 20px' }}>
+          <p
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: '#22181C',
+              marginBottom: 14,
+              textAlign: 'center',
+            }}
+          >
+            Inserisci il PIN del tuo ristorante
+          </p>
           <PinInput
             value={pin}
             onChange={setPin}
@@ -821,11 +824,19 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             >
               Area Ristoratori
             </h1>
-            <p style={{ fontSize: 13, color: '#8A8680' }}>
-              Inserisci il PIN del tuo ristorante
-            </p>
           </div>
 
+          <p
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: '#22181C',
+              marginBottom: 14,
+              textAlign: 'center',
+            }}
+          >
+            Inserisci il PIN del tuo ristorante
+          </p>
           <PinInput
             value={pin}
             onChange={setPin}
