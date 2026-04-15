@@ -97,16 +97,19 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   const max = deal.max_quantity || deal.max_redemptions || 10
   const remaining = max - claimed
   const soldOut = remaining <= 0
+  const alreadyUsed = myRedemption?.status === 'redeemed'
   const time = useCountdown(deal.drop_ends_at || deal.valid_until)
 
   return (
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
       borderRadius: 18, overflow: 'hidden', position: 'relative',
-      border: soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
+      border: alreadyUsed ? '2px solid var(--color-bordo)' : soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
       background: '#fff',
-      opacity: soldOut ? 0.6 : 1,
-      animation: soldOut ? 'none' : 'dropPulse 2.5s ease-in-out infinite',
+      opacity: alreadyUsed ? 0.55 : soldOut ? 0.6 : 1,
+      filter: alreadyUsed ? 'grayscale(0.7)' : 'none',
+      animation: (soldOut || alreadyUsed) ? 'none' : 'dropPulse 2.5s ease-in-out infinite',
+      transition: 'opacity 0.6s ease, filter 0.6s ease, border-color 0.6s ease',
       display: 'flex', flexDirection: 'column',
     }}>
       {/* Photo 110px */}
@@ -178,7 +181,18 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
 
         {/* CTA — pushed to bottom */}
         <div style={{ marginTop: 'auto', paddingTop: 10 }}>
-          {!soldOut && myRedemption ? (
+          {alreadyUsed ? (
+            <div style={{
+              width: '100%', padding: '10px 0', borderRadius: 12,
+              background: '#e5e5e5', color: '#6b7280',
+              fontSize: 12, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              textDecoration: 'line-through',
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Già usato
+            </div>
+          ) : !soldOut && myRedemption ? (
             <button onClick={() => onShowQR(myRedemption)} style={{
               width: '100%', padding: '10px 0', borderRadius: 12,
               background: 'var(--color-success)', color: '#fff',
@@ -186,7 +200,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-              Mostra QR
+              Utilizza sconto
             </button>
           ) : !soldOut && (
             <button onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
@@ -322,7 +336,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 }
 
 /* ── CompactDealCard — like RestaurantCard default, with discount focus ── */
-function CompactDealCard({ deal, onTap, saved, onSaveToggle }) {
+function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -335,7 +349,24 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle }) {
       border: '1px solid rgba(0,0,0,0.08)',
       boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
       cursor: 'pointer', position: 'relative',
+      opacity: alreadyUsed ? 0.55 : 1,
+      filter: alreadyUsed ? 'grayscale(0.7)' : 'none',
+      transition: 'opacity 0.6s ease, filter 0.6s ease',
     }}>
+      {alreadyUsed && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 3,
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          background: 'rgba(34,24,28,0.88)', color: '#fff',
+          fontSize: 10, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase',
+          padding: '4px 9px', borderRadius: 999,
+          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+          animation: 'usedBadgeIn 0.5s ease',
+        }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Già usato
+        </div>
+      )}
       {/* Discount title strip — centered */}
       <div style={{
         background: 'linear-gradient(135deg, #a3e635, #4ade80)',
@@ -411,7 +442,7 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle }) {
 }
 
 /* ── FeaturedDealCard — hero dark card like restaurant "In evidenza" ── */
-function FeaturedDealCard({ deal, onTap, saved, onSaveToggle }) {
+function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -420,7 +451,11 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle }) {
   return (
     <div onClick={() => onTap(deal)} style={{
       borderRadius: 22, height: 200, position: 'relative', overflow: 'hidden',
-      cursor: 'pointer', animation: 'hero-pulse 3s ease-in-out infinite',
+      cursor: 'pointer',
+      animation: alreadyUsed ? 'none' : 'hero-pulse 3s ease-in-out infinite',
+      opacity: alreadyUsed ? 0.6 : 1,
+      filter: alreadyUsed ? 'grayscale(0.75)' : 'none',
+      transition: 'opacity 0.6s ease, filter 0.6s ease',
     }}>
       {/* Background */}
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)' }}>
@@ -431,21 +466,38 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle }) {
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232,69,60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
       </div>
 
-      {/* Top badges: In evidenza + Discount */}
+      {/* Top badges: In evidenza / Già usato + Discount */}
       <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {alreadyUsed ? (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: 'rgba(34,24,28,0.9)', color: '#fff',
+            fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+            padding: '5px 12px', borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.25)',
+            animation: 'usedBadgeIn 0.5s ease',
+          }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            Già usato
+          </div>
+        ) : (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: '#C4A265', color: '#fff',
+            fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+            padding: '5px 12px', borderRadius: 10,
+          }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            In evidenza
+          </div>
+        )}
         <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          background: '#C4A265', color: '#fff',
-          fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
-          padding: '5px 12px', borderRadius: 10,
-        }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-          In evidenza
-        </div>
-        <div style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          background: alreadyUsed ? '#9ca3af' : 'linear-gradient(135deg, #a3e635, #4ade80)',
+          color: alreadyUsed ? '#fff' : '#000',
           fontSize: 11, fontWeight: 700,
           padding: '5px 12px', borderRadius: 10,
+          textDecoration: alreadyUsed ? 'line-through' : 'none',
+          transition: 'background 0.6s ease, color 0.6s ease',
         }}>
           {deal.discount_value}
         </div>
@@ -857,7 +909,18 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           </div>
 
           {/* CTA */}
-          {!soldOut && myRedemption ? (
+          {!soldOut && myRedemption?.status === 'redeemed' ? (
+            <div style={{
+              width: '100%', padding: '16px 0', borderRadius: 16,
+              background: '#e5e5e5', color: '#6b7280',
+              fontSize: 15, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              textDecoration: 'line-through',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Sconto già utilizzato
+            </div>
+          ) : !soldOut && myRedemption ? (
             <motion.button whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} onClick={() => onShowQR(myRedemption)} style={{
               width: '100%', padding: '16px 0', borderRadius: 16,
               background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#1a2e05',
@@ -865,7 +928,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
-              Mostra QR
+              Utilizza sconto
             </motion.button>
           ) : !soldOut && (
             <motion.button whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} onClick={() => locked ? onLogin() : onClaim(deal)} disabled={claiming} style={{
@@ -954,6 +1017,12 @@ export default function DealsPage() {
   const regular = useMemo(() => allRegular.filter(cityFilter), [allRegular, cityFilter])
   const myActive = useMemo(() => allMyActive.filter(myFilter), [allMyActive, myFilter])
   const myUsed = useMemo(() => allMyUsed.filter(myFilter), [allMyUsed, myFilter])
+  // Set of discount_ids the user has already redeemed (across all cities).
+  // Used to dim cards in "Disponibili" so it's clear the user can't reuse them.
+  const usedDealIds = useMemo(
+    () => new Set(allMyUsed.map(r => r.discount_id)),
+    [allMyUsed]
+  )
   const [claiming, setClaiming] = useState(null) // discount id being claimed
   const [justClaimed, setJustClaimed] = useState([]) // redemptions claimed this session
   const [mySubTab, setMySubTab] = useState('active') // 'active' | 'used'
@@ -1234,7 +1303,12 @@ export default function DealsPage() {
                       scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
                       paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 18, paddingRight: 18,
                     }}>
-                      {activeDrops.map(deal => <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myActive.find(r => r.discount_id === deal.id) || justClaimed.find(r => r.discount_id === deal.id)} onShowQR={showMyQR} />)}
+                      {activeDrops.map(deal => {
+                        const myRedemption = myActive.find(r => r.discount_id === deal.id)
+                          || justClaimed.find(r => r.discount_id === deal.id)
+                          || allMyUsed.find(r => r.discount_id === deal.id)
+                        return <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myRedemption} onShowQR={showMyQR} />
+                      })}
                       {upcomingDrops.map(deal => (
                         <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
                       ))}
@@ -1247,7 +1321,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>In evidenza</p>
                     <div className="flex flex-col gap-3.5 mt-2.5 md:grid md:grid-cols-2">
-                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }} />)}
+                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }} alreadyUsed={usedDealIds.has(deal.id)} />)}
                     </div>
                   </div>
                 )}
@@ -1257,7 +1331,7 @@ export default function DealsPage() {
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
                     <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
-                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} />)}
+                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} alreadyUsed={usedDealIds.has(deal.id)} />)}
                     </div>
                   </div>
                 )}
@@ -1356,7 +1430,7 @@ export default function DealsPage() {
             locked={!user}
             onLogin={() => { setSelectedDeal(null); navigate('/login'); }}
             claiming={claiming === selectedDeal.id}
-            myRedemption={myActive.find(r => r.discount_id === selectedDeal.id) || justClaimed.find(r => r.discount_id === selectedDeal.id)}
+            myRedemption={myActive.find(r => r.discount_id === selectedDeal.id) || justClaimed.find(r => r.discount_id === selectedDeal.id) || allMyUsed.find(r => r.discount_id === selectedDeal.id)}
             onShowQR={(r) => { setSelectedDeal(null); showMyQR(r); }}
             onGoTo={goTo}
             saved={isSaved(selectedDeal.restaurant?.id)}

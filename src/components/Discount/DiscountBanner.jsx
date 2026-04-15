@@ -59,15 +59,26 @@ export default function DiscountBanner({ restaurantId }) {
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
+  const [justRedeemed, setJustRedeemed] = useState(false)
 
-  // If the restaurant scans the QR while the modal is open, close it so
-  // the user sees the "used" state (realtime push flips status in-place).
+  // When the restaurant scans the QR, the redemption flips from
+  // 'generated' to 'redeemed' via realtime. Auto-close the QR modal,
+  // vibrate briefly, and flash a confirmation animation on the banner
+  // so the user immediately sees that the validation happened.
   useEffect(() => {
-    if (isRedeemed && showQR) {
-      setShowQR(false)
+    if (!isRedeemed) return
+    if (showQR) setShowQR(false)
+    // Only flash on the transition, not on initial mount of an already-used
+    // discount. We detect this by checking if the redeemed_at timestamp is
+    // very recent (last 5s).
+    const redeemedAt = redemption?.redeemed_at ? new Date(redemption.redeemed_at).getTime() : 0
+    if (redeemedAt && Date.now() - redeemedAt < 5000) {
+      setJustRedeemed(true)
       try { navigator.vibrate?.([30, 40, 30]) } catch {}
+      const t = setTimeout(() => setJustRedeemed(false), 1800)
+      return () => clearTimeout(t)
     }
-  }, [isRedeemed, showQR])
+  }, [isRedeemed, redemption?.redeemed_at, showQR])
 
   return (
     <>
@@ -76,6 +87,9 @@ export default function DiscountBanner({ restaurantId }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        style={{
+          animation: justRedeemed ? 'usedFlash 1.2s ease-out' : 'none',
+        }}
       >
         {/* Background gradient */}
         <div
@@ -84,8 +98,22 @@ export default function DiscountBanner({ restaurantId }) {
             background: isRedeemed
               ? 'linear-gradient(135deg, #f3f4f6, #e5e7eb)'
               : 'linear-gradient(135deg, #FFF0F0, #FFE0E0, #FFF5F0)',
+            transition: 'background 0.6s ease',
           }}
         />
+
+        {/* Green success flash overlay shown for ~1.2s when realtime flips
+            status to redeemed — gives immediate visual feedback. */}
+        {justRedeemed && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(74,222,128,0.55), rgba(74,222,128,0) 70%)',
+              animation: 'usedFlashOverlay 1.4s ease-out forwards',
+              zIndex: 2,
+            }}
+          />
+        )}
 
         <div className="relative p-5">
           {/* Header */}

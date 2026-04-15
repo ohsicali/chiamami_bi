@@ -80,6 +80,27 @@ body {
   50% { box-shadow: 0 0 0 4px rgba(232, 69, 60, 0.12); }
 }
 
+/* "Già usato" badge entrance animation — scale + fade */
+@keyframes usedBadgeIn {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Soft green flash on card when realtime flips to redeemed */
+@keyframes usedFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  30%  { box-shadow: 0 0 0 8px rgba(74,222,128,0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+}
+
+/* Radial green flash overlay for DiscountBanner on realtime redemption */
+@keyframes usedFlashOverlay {
+  0%   { opacity: 0; transform: scale(0.6); }
+  30%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
 /* Progress bar shine effect */
 @keyframes progressShine {
   0% { transform: translateX(-100%); }

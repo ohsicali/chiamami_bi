@@ -82,31 +82,40 @@ export function useUserRedemption(discountId, userId) {
 
     // Realtime subscription: when the restaurant marks this redemption as
     // redeemed, auto-update the UI so the user sees the dimmed/used state
-    // without a page refresh.
+    // without a page refresh. Filter client-side so we catch every event
+    // reliably even if the server-side filter semantics change.
     const channel = supabase
-      .channel(`redemption:${userId}:${discountId}`)
+      .channel(`redemption:${userId}:${discountId}:${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'discount_redemptions',
-          filter: `user_id=eq.${userId}`,
-        },
+        { event: '*', schema: 'public', table: 'discount_redemptions' },
         (payload) => {
           const row = payload.new || payload.old
-          if (!row || row.discount_id !== discountId) return
+          if (!row) return
+          if (row.user_id !== userId) return
+          if (row.discount_id !== discountId) return
           if (payload.eventType === 'DELETE') {
             setRedemption(null)
           } else {
-            setRedemption(payload.new)
+            // Refetch so we always have a fresh, fully-joined row
+            load()
           }
         }
       )
       .subscribe()
 
+    // Fallback: refetch when the user returns to the tab. Covers cases
+    // where the realtime websocket may have disconnected in the background.
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    window.addEventListener('visibilitychange', onFocus)
+    window.addEventListener('focus', onFocus)
+
     return () => {
       cancelled = true
+      window.removeEventListener('visibilitychange', onFocus)
+      window.removeEventListener('focus', onFocus)
       try { supabase.removeChannel(channel) } catch {}
     }
   }, [discountId, userId])
@@ -248,22 +257,32 @@ export function useMyDiscounts(userId) {
 
     // Realtime: when restaurant validates a QR (status: generated→redeemed),
     // refetch so the item moves from "active" to "used" (dimmed) automatically.
+    // Filter client-side for reliability across event types.
     const channel = supabase
-      .channel(`my-discounts:${userId}`)
+      .channel(`my-discounts:${userId}:${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'discount_redemptions',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => { load() }
+        { event: '*', schema: 'public', table: 'discount_redemptions' },
+        (payload) => {
+          const row = payload.new || payload.old
+          if (!row || row.user_id !== userId) return
+          load()
+        }
       )
       .subscribe()
 
+    // Fallback: refetch on tab focus so data stays fresh even if realtime
+    // misses an event (eg. connection dropped in background).
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    window.addEventListener('visibilitychange', onFocus)
+    window.addEventListener('focus', onFocus)
+
     return () => {
       cancelled = true
+      window.removeEventListener('visibilitychange', onFocus)
+      window.removeEventListener('focus', onFocus)
       try { supabase.removeChannel(channel) } catch {}
     }
   }, [userId])
