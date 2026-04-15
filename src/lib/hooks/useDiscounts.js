@@ -137,6 +137,20 @@ export function useUserRedemption(discountId, userId) {
       return existing
     }
 
+    // Capture the user's display name so the restaurant's verify dashboard
+    // can show it in the activity feed without needing RLS access to profiles.
+    let userName = null
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .maybeSingle()
+      userName = profile?.full_name || null
+    } catch {
+      // profile fetch is best-effort; ignore errors
+    }
+
     const qrCode = generateQRCode()
     const { data, error } = await supabase
       .from('discount_redemptions')
@@ -145,6 +159,7 @@ export function useUserRedemption(discountId, userId) {
         user_id: userId,
         qr_code: qrCode,
         status: 'generated',
+        user_name: userName,
       })
       .select()
       .single()

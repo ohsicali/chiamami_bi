@@ -1153,9 +1153,23 @@ export default function DealsPage() {
       let code = 'BiSc-'
       for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length))
 
+      // Capture the user's name so the restaurant's verify dashboard can show
+      // it in its activity feed without needing RLS access to profiles.
+      let userName = null
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle()
+        userName = profile?.full_name || null
+      } catch {
+        // best-effort; ignore errors
+      }
+
       const { data, error } = await supabase
         .from('discount_redemptions')
-        .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated' })
+        .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated', user_name: userName })
         .select()
         .single()
 

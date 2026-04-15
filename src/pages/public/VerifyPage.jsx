@@ -1410,6 +1410,10 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
   const scannerRef = useRef(null)
   const lastScanRef = useRef({ code: null, at: 0 })
   const onScanRef = useRef(onScan)
+  // Start as 'running' when the browser has already granted camera permission
+  // for this origin — skips the "Avvio fotocamera…" flash on subsequent visits.
+  // Browsers persist mediaDevices permissions per-site automatically, so once
+  // granted the user won't be prompted again on return visits.
   const [status, setStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
   const [errorMsg, setErrorMsg] = useState(null)
 
@@ -1454,6 +1458,23 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
       }
 
       if (cancelled || !videoRef.current) return
+
+      // Pre-check permission state. When it's already 'denied' we can skip
+      // the failing getUserMedia attempt and show the fallback immediately.
+      // When it's 'granted' we know the camera will start instantly, so we
+      // don't need to show the spinner either. Not supported on Safari < 16,
+      // so we fall through to the normal flow on failure.
+      if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
+        try {
+          const perm = await navigator.permissions.query({ name: 'camera' })
+          if (!cancelled && perm.state === 'denied') {
+            setStatus('denied')
+            return
+          }
+        } catch {
+          // Not supported (e.g. older Safari) — proceed with normal flow
+        }
+      }
 
       // Ensure a camera exists before asking for permission — nicer UX
       try {
@@ -2180,6 +2201,7 @@ function RangePicker({ range, onChange }) {
     { kind: '7d', label: '7 gg' },
     { kind: '30d', label: '30 gg' },
     { kind: '365d', label: '365 gg' },
+    { kind: 'custom', label: 'Personalizzato' },
   ]
   const isCustom = range?.kind === 'custom'
   const customLabel = isCustom
@@ -2190,70 +2212,47 @@ function RangePicker({ range, onChange }) {
     <>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 6,
+          padding: 4,
           marginBottom: 16,
-          flexWrap: 'wrap',
+          background: '#F5F1EA',
+          borderRadius: 14,
+          border: '1px solid #E8E0D4',
+          width: '100%',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            gap: 4,
-            padding: 4,
-            background: '#F5F1EA',
-            borderRadius: 12,
-            border: '1px solid #E8E0D4',
-          }}
-        >
-          {presets.map((p) => {
-            const active = range?.kind === p.kind
-            return (
-              <button
-                key={p.kind}
-                onClick={() => onChange(buildPresetRange(p.kind))}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: active ? '#22181C' : 'transparent',
-                  color: active ? '#fff' : '#22181C',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  minWidth: 52,
-                }}
-              >
-                {p.label}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          onClick={() => setShowCalendar(true)}
-          style={{
-            padding: '9px 14px',
-            borderRadius: 10,
-            border: isCustom ? '1px solid #22181C' : '1px solid #E8E0D4',
-            background: isCustom ? '#22181C' : '#fff',
-            color: isCustom ? '#fff' : '#22181C',
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'all 0.18s ease',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M16 2v4M8 2v4M3 10h18" />
-          </svg>
-          {customLabel}
-        </button>
+        {presets.map((p) => {
+          const active = range?.kind === p.kind
+          const label = p.kind === 'custom' ? customLabel : p.label
+          const onClick =
+            p.kind === 'custom'
+              ? () => setShowCalendar(true)
+              : () => onChange(buildPresetRange(p.kind))
+          return (
+            <button
+              key={p.kind}
+              onClick={onClick}
+              style={{
+                padding: '11px 8px',
+                borderRadius: 10,
+                border: 'none',
+                background: active ? '#22181C' : 'transparent',
+                color: active ? '#fff' : '#22181C',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
       {showCalendar && (
         <CalendarRangeModal
@@ -2319,26 +2318,15 @@ function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
   const rangeStop = fromTs && rangeEnd ? Math.max(fromTs, rangeEnd) : null
 
   return (
-    <div style={{ flex: 1 }}>
-      <div
-        style={{
-          textAlign: 'center',
-          fontSize: 13,
-          fontWeight: 700,
-          color: '#22181C',
-          marginBottom: 10,
-        }}
-      >
-        {MONTHS_IT[first.getMonth()]} {first.getFullYear()}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
+    <div style={{ width: '100%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
         {WEEKDAYS_IT.map((w, i) => (
-          <div key={i} style={{ textAlign: 'center', fontSize: 10, color: '#8A8680', fontWeight: 600 }}>
+          <div key={i} style={{ textAlign: 'center', fontSize: 12, color: '#8A8680', fontWeight: 600 }}>
             {w}
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {cells.map((c, i) => {
           if (!c) return <div key={i} />
           const ts = dayTs(c)
@@ -2357,13 +2345,13 @@ function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
               onMouseEnter={() => onHover(c)}
               style={{
                 aspectRatio: '1',
-                minHeight: 32,
+                minHeight: 40,
                 border: 'none',
                 background: bg,
                 color,
-                fontSize: 12,
+                fontSize: 15,
                 fontWeight: isEdge ? 700 : 500,
-                borderRadius: 8,
+                borderRadius: 10,
                 cursor: isFuture ? 'not-allowed' : 'pointer',
                 opacity: isFuture ? 0.5 : 1,
                 transition: 'background 0.12s ease',
@@ -2379,17 +2367,14 @@ function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
 }
 
 function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
-  const [leftMonth, setLeftMonth] = useState(() => {
+  const [month, setMonth] = useState(() => {
     const base = initialFrom ? new Date(initialFrom) : new Date()
     base.setDate(1)
-    base.setMonth(base.getMonth() - 1)
     return base
   })
   const [from, setFrom] = useState(initialFrom ? new Date(initialFrom) : null)
   const [to, setTo] = useState(initialTo ? new Date(initialTo) : null)
   const [hover, setHover] = useState(null)
-
-  const rightMonth = new Date(leftMonth.getFullYear(), leftMonth.getMonth() + 1, 1)
 
   function handlePick(d) {
     if (!from || (from && to)) {
@@ -2413,13 +2398,13 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.55)',
         backdropFilter: 'blur(4px)',
         zIndex: 150,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: 16,
+        padding: 0,
         animation: 'verifyFadeIn 0.18s ease-out',
       }}
     >
@@ -2427,62 +2412,112 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#fff',
-          borderRadius: 20,
-          padding: 20,
+          borderRadius: '20px 20px 0 0',
           width: '100%',
-          maxWidth: 640,
-          maxHeight: '92vh',
-          overflow: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          maxWidth: 520,
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '85dvh',
+          boxShadow: '0 -20px 60px rgba(0,0,0,0.25)',
           animation: 'verifyFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#22181C' }}>Seleziona periodo</div>
+        {/* Header — bigger X, bigger title */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '18px 20px 14px',
+            borderBottom: '1px solid #F0EAE0',
+          }}
+        >
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#22181C' }}>Seleziona periodo</div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#8A8680', padding: 4 }}
+            style={{
+              background: '#F5F1EA',
+              border: 'none',
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              cursor: 'pointer',
+              color: '#22181C',
+              fontSize: 24,
+              fontWeight: 400,
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             aria-label="Chiudi"
           >
             ×
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <button
-            onClick={() => setLeftMonth(new Date(leftMonth.getFullYear(), leftMonth.getMonth() - 1, 1))}
-            style={{ background: '#F5F1EA', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14, color: '#22181C' }}
-            aria-label="Mese precedente"
+        {/* Body — scrollable if needed */}
+        <div style={{ padding: '16px 20px', overflow: 'auto', flex: 1 }}>
+          {/* Month nav */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <button
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: '#22181C' }}
+              aria-label="Mese precedente"
+            >
+              ‹
+            </button>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#22181C' }}>
+              {MONTHS_IT[month.getMonth()]} {month.getFullYear()}
+            </div>
+            <button
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: '#22181C' }}
+              aria-label="Mese successivo"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* Selected range summary */}
+          <div
+            style={{
+              fontSize: 13,
+              color: '#8A8680',
+              fontWeight: 600,
+              textAlign: 'center',
+              marginBottom: 14,
+              padding: '8px 12px',
+              background: '#F5F1EA',
+              borderRadius: 10,
+            }}
           >
-            ‹
-          </button>
-          <div style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>
             {from ? formatShortDate(from) : '—'} → {to ? formatShortDate(to) : '—'}
           </div>
-          <button
-            onClick={() => setLeftMonth(new Date(leftMonth.getFullYear(), leftMonth.getMonth() + 1, 1))}
-            style={{ background: '#F5F1EA', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14, color: '#22181C' }}
-            aria-label="Mese successivo"
-          >
-            ›
-          </button>
+
+          <MonthView monthDate={month} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
         </div>
 
-        <div className="verify-cal-grid" style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-          <MonthView monthDate={leftMonth} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
-          <MonthView monthDate={rightMonth} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        {/* Footer — always visible */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            padding: '14px 20px',
+            paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))',
+            borderTop: '1px solid #F0EAE0',
+            background: '#fff',
+          }}
+        >
           <button
             onClick={() => { setFrom(null); setTo(null); setHover(null) }}
             style={{
-              padding: '9px 16px',
-              borderRadius: 10,
+              padding: '13px 16px',
+              borderRadius: 12,
               border: '1px solid #E8E0D4',
               background: '#fff',
               color: '#22181C',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -2493,14 +2528,16 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
             disabled={!canApply}
             onClick={() => onApply(from, to)}
             style={{
-              padding: '9px 20px',
-              borderRadius: 10,
+              flex: 1,
+              padding: '13px 20px',
+              borderRadius: 12,
               border: 'none',
               background: canApply ? '#E8453C' : '#F5F1EA',
               color: canApply ? '#fff' : '#8A8680',
-              fontSize: 12,
+              fontSize: 15,
               fontWeight: 700,
               cursor: canApply ? 'pointer' : 'not-allowed',
+              transition: 'background 0.18s ease',
             }}
           >
             Applica
@@ -2559,7 +2596,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         // 3) Recent activity (discount_redemptions is public-read)
         const activityPromise = supabase
           .from('discount_redemptions')
-          .select('id, qr_code, status, generated_at, redeemed_at, user_id, discount:discounts!inner(id, title, restaurant_id)')
+          .select('id, qr_code, status, generated_at, redeemed_at, user_id, user_name, discount:discounts!inner(id, title, restaurant_id)')
           .eq('discount.restaurant_id', restaurant.id)
           .order('generated_at', { ascending: false })
           .limit(10)
@@ -2755,7 +2792,7 @@ function StatGrid({ stats, range }) {
           style={{
             background: '#fff',
             borderRadius: 14,
-            padding: '14px 14px 12px',
+            padding: '16px 16px 14px',
             border: '1px solid #F0EAE0',
           }}
         >
@@ -2765,19 +2802,19 @@ function StatGrid({ stats, range }) {
               alignItems: 'center',
               gap: 6,
               color: c.color,
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 700,
               letterSpacing: 0.3,
               textTransform: 'uppercase',
-              marginBottom: 4,
+              marginBottom: 6,
             }}
           >
-            <span style={{ fontSize: 13 }}>{c.icon}</span>
+            <span style={{ fontSize: 15 }}>{c.icon}</span>
             <span>{c.label}</span>
           </div>
           <div
             style={{
-              fontSize: 26,
+              fontSize: 30,
               fontWeight: 800,
               color: '#22181C',
               lineHeight: 1,
@@ -2786,7 +2823,7 @@ function StatGrid({ stats, range }) {
           >
             {c.value.toLocaleString('it-IT')}
           </div>
-          <div style={{ fontSize: 10, color: '#8A8680', marginTop: 4 }}>{c.sublabel}</div>
+          <div style={{ fontSize: 12, color: '#8A8680', marginTop: 6 }}>{c.sublabel}</div>
         </div>
       ))}
     </div>
@@ -2818,26 +2855,26 @@ function ActiveDiscountCard({ discount }) {
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: 12,
           color: '#E8453C',
           fontWeight: 700,
           letterSpacing: 0.8,
           textTransform: 'uppercase',
-          marginBottom: 6,
+          marginBottom: 8,
         }}
       >
         Sconto attivo
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
-        <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
-        <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
+        <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
+        <div style={{ fontSize: 16, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
       </div>
       {discount.description && (
-        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 12, lineHeight: 1.4 }}>
+        <div style={{ fontSize: 14, opacity: 0.7, marginBottom: 14, lineHeight: 1.45 }}>
           {discount.description}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 14, fontSize: 11, opacity: 0.85 }}>
+      <div style={{ display: 'flex', gap: 14, fontSize: 13, opacity: 0.9 }}>
         <span>
           <strong style={{ color: '#fff' }}>{discount.total_redeemed || 0}</strong> usati
           {discount.max_redemptions ? ` / ${discount.max_redemptions}` : ''}
@@ -2880,7 +2917,7 @@ function FunnelCard({ stats, range }) {
     { label: 'Sconti usati', value: stats.redemptions_used || 0, color: '#10B981' },
   ]
   const max = Math.max(...steps.map((s) => s.value), 1)
-  const funnelLabel = range?.label ? `Funnel — ${range.label}` : 'Funnel'
+  const funnelLabel = range?.label ? `Andamento — ${range.label}` : 'Andamento'
 
   return (
     <div
@@ -2894,17 +2931,17 @@ function FunnelCard({ stats, range }) {
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           color: '#8A8680',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
-          marginBottom: 12,
+          marginBottom: 14,
         }}
       >
         {funnelLabel}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {steps.map((s) => {
           const pct = (s.value / max) * 100
           return (
@@ -2913,20 +2950,20 @@ function FunnelCard({ stats, range }) {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: 12,
-                  marginBottom: 4,
+                  fontSize: 14,
+                  marginBottom: 6,
                 }}
               >
                 <span style={{ color: '#22181C', fontWeight: 500 }}>{s.label}</span>
                 <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
               </div>
-              <div style={{ height: 8, background: '#F5F1EA', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ height: 10, background: '#F5F1EA', borderRadius: 5, overflow: 'hidden' }}>
                 <div
                   style={{
                     width: `${Math.max(2, pct)}%`,
                     height: '100%',
                     background: s.color,
-                    borderRadius: 4,
+                    borderRadius: 5,
                     transition: 'width 0.4s',
                   }}
                 />
@@ -2953,17 +2990,17 @@ function ActivityList({ activity }) {
       >
         <div
           style={{
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 700,
             color: '#8A8680',
             letterSpacing: 0.5,
             textTransform: 'uppercase',
-            marginBottom: 8,
+            marginBottom: 10,
           }}
         >
           Attività recente
         </div>
-        <div style={{ fontSize: 13, color: '#8A8680' }}>
+        <div style={{ fontSize: 14, color: '#8A8680' }}>
           Nessuno sconto ancora generato.
         </div>
       </div>
@@ -2981,12 +3018,12 @@ function ActivityList({ activity }) {
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 700,
           color: '#8A8680',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
-          padding: '14px 16px 8px',
+          padding: '16px 18px 10px',
         }}
       >
         Attività recente
@@ -3009,27 +3046,40 @@ function ActivityRow({ item }) {
         minute: '2-digit',
       })
     : ''
+  const actionLabel = isRedeemed ? 'Validato sconto' : 'Generato sconto'
+  const userName = (item.user_name || '').trim()
+  const discountTitle = item.discount?.title || ''
+  // Primary line: prefer the person's name since that's what the restaurant
+  // owner wants to see at a glance (e.g. "Validato sconto — Beatrice")
+  const primary = userName
+    ? `${actionLabel} — ${userName}`
+    : `${actionLabel}${discountTitle ? ' · ' + discountTitle : ''}`
+  // Secondary line: discount title when we already showed the name, plus time.
+  const secondaryParts = []
+  if (userName && discountTitle) secondaryParts.push(discountTitle)
+  if (when) secondaryParts.push(when)
+  const secondary = secondaryParts.join(' · ')
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: '10px 16px',
+        padding: '12px 18px',
         borderTop: '1px solid #F5F1EA',
       }}
     >
       <div
         style={{
-          width: 28,
-          height: 28,
+          width: 34,
+          height: 34,
           borderRadius: '50%',
           background: isRedeemed ? '#10B981' : '#F59E0B',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 13,
+          fontSize: 16,
           fontWeight: 700,
           flexShrink: 0,
         }}
@@ -3039,7 +3089,7 @@ function ActivityRow({ item }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: 600,
             color: '#22181C',
             whiteSpace: 'nowrap',
@@ -3047,10 +3097,19 @@ function ActivityRow({ item }) {
             textOverflow: 'ellipsis',
           }}
         >
-          {isRedeemed ? 'Usato' : 'Generato'} · {item.discount?.title || '—'}
+          {primary}
         </div>
-        <div style={{ fontSize: 11, color: '#8A8680', marginTop: 1 }}>
-          {item.qr_code} · {when}
+        <div
+          style={{
+            fontSize: 13,
+            color: '#8A8680',
+            marginTop: 2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {secondary}
         </div>
       </div>
     </div>
