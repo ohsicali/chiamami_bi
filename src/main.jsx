@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react'
 import App from './App'
 import { ToastProvider } from './components/UI/Toast'
 import { CityProvider } from './lib/CityContext'
+import { AuthProvider } from './lib/hooks/useAuth'
 import './lib/i18n'
 import './styles/globals.css'
 
@@ -18,12 +19,14 @@ if ('serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <CityProvider>
-        <ToastProvider>
-          <App />
-          <Analytics />
-        </ToastProvider>
-      </CityProvider>
+      <AuthProvider>
+        <CityProvider>
+          <ToastProvider>
+            <App />
+            <Analytics />
+          </ToastProvider>
+        </CityProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 )

@@ -1,7 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 
-export function useAuth() {
+// Single source of truth for the auth+profile state. Previously each call
+// site of `useAuth()` ran its own getSession + fetch profile effect — so
+// mounting N components that use this hook triggered N duplicate
+// `GET /rest/v1/profiles?...` requests (flagged by Supabase advisor).
+// Now the fetch runs once inside AuthProvider and all consumers share it.
+const AuthContext = createContext(null)
+
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -165,5 +172,16 @@ export function useAuth() {
 
   const isAdmin = profile?.is_admin === true
 
-  return { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
+  const value = { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
+  return React.createElement(AuthContext.Provider, { value }, children)
+}
+
+// Public hook — unchanged signature so all 30 consumer sites keep working.
+// Throws if used outside the Provider to catch misconfiguration early.
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (ctx === null) {
+    throw new Error('useAuth() must be used inside <AuthProvider>. Wrap the app tree in main.jsx.')
+  }
+  return ctx
 }
