@@ -60,18 +60,55 @@ export function useUserRedemption(discountId, userId) {
       return
     }
 
-    supabase
-      .from('discount_redemptions')
-      .select('*')
-      .eq('discount_id', discountId)
-      .eq('user_id', userId)
-      .order('generated_at', { ascending: false })
-      .limit(1)
-      .single()
-      .then(({ data }) => {
-        setRedemption(data || null)
-        setLoading(false)
-      })
+    let cancelled = false
+
+    const load = () => {
+      supabase
+        .from('discount_redemptions')
+        .select('*')
+        .eq('discount_id', discountId)
+        .eq('user_id', userId)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .single()
+        .then(({ data }) => {
+          if (cancelled) return
+          setRedemption(data || null)
+          setLoading(false)
+        })
+    }
+
+    load()
+
+    // Realtime subscription: when the restaurant marks this redemption as
+    // redeemed, auto-update the UI so the user sees the dimmed/used state
+    // without a page refresh.
+    const channel = supabase
+      .channel(`redemption:${userId}:${discountId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'discount_redemptions',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const row = payload.new || payload.old
+          if (!row || row.discount_id !== discountId) return
+          if (payload.eventType === 'DELETE') {
+            setRedemption(null)
+          } else {
+            setRedemption(payload.new)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      cancelled = true
+      try { supabase.removeChannel(channel) } catch {}
+    }
   }, [discountId, userId])
 
   const generateRedemption = useCallback(async () => {
@@ -190,17 +227,45 @@ export function useMyDiscounts(userId) {
       return
     }
 
-    supabase
-      .from('discount_redemptions')
-      .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
-      .eq('user_id', userId)
-      .order('generated_at', { ascending: false })
-      .then(({ data }) => {
-        const items = data || []
-        setActive(items.filter(r => r.status === 'generated'))
-        setUsed(items.filter(r => r.status === 'redeemed'))
-        setLoading(false)
-      })
+    let cancelled = false
+
+    const load = () => {
+      supabase
+        .from('discount_redemptions')
+        .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
+        .eq('user_id', userId)
+        .order('generated_at', { ascending: false })
+        .then(({ data }) => {
+          if (cancelled) return
+          const items = data || []
+          setActive(items.filter(r => r.status === 'generated'))
+          setUsed(items.filter(r => r.status === 'redeemed'))
+          setLoading(false)
+        })
+    }
+
+    load()
+
+    // Realtime: when restaurant validates a QR (status: generated→redeemed),
+    // refetch so the item moves from "active" to "used" (dimmed) automatically.
+    const channel = supabase
+      .channel(`my-discounts:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'discount_redemptions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => { load() }
+      )
+      .subscribe()
+
+    return () => {
+      cancelled = true
+      try { supabase.removeChannel(channel) } catch {}
+    }
   }, [userId])
 
   return { active, used, loading }

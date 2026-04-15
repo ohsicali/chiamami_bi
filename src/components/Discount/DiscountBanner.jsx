@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -59,6 +59,15 @@ export default function DiscountBanner({ restaurantId }) {
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
+
+  // If the restaurant scans the QR while the modal is open, close it so
+  // the user sees the "used" state (realtime push flips status in-place).
+  useEffect(() => {
+    if (isRedeemed && showQR) {
+      setShowQR(false)
+      try { navigator.vibrate?.([30, 40, 30]) } catch {}
+    }
+  }, [isRedeemed, showQR])
 
   return (
     <>
