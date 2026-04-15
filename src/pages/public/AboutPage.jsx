@@ -155,7 +155,7 @@ export default function AboutPage() {
 
             {/* Tagline */}
             <motion.p variants={fadeUp} style={{
-              fontSize: 15, color: 'rgba(255,255,255,0.4)',
+              fontSize: 13, color: 'rgba(255,255,255,0.4)',
               fontWeight: 500, textAlign: 'center', letterSpacing: 0.5,
             }}>
               La guida food di Torino, raccontata come a un'amica
@@ -215,7 +215,7 @@ export default function AboutPage() {
         }}>
 
           {/* ── Pull quote ── */}
-          <section style={{ padding: '40px 24px 12px', maxWidth: 600, margin: '0 auto' }}>
+          <section style={{ padding: '36px 24px 10px', maxWidth: 600, margin: '0 auto' }}>
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -224,14 +224,14 @@ export default function AboutPage() {
             >
               <p style={{
                 fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                fontSize: 26, fontWeight: 700, color: '#22181C',
+                fontSize: 20, fontWeight: 700, color: '#22181C',
                 lineHeight: 1.5, textAlign: 'center',
               }}>
                 "Mi chiamavano tutti Bea,<br />e io rispondevo sempre:<br />chiamami Bi!"
               </p>
               <p style={{
-                fontSize: 13, color: '#8A8680', textAlign: 'center',
-                marginTop: 14, fontWeight: 500,
+                fontSize: 12, color: '#8A8680', textAlign: 'center',
+                marginTop: 12, fontWeight: 500,
               }}>
                 Da qui è nato tutto
               </p>
@@ -252,38 +252,52 @@ export default function AboutPage() {
               viewport={{ once: true, margin: '-30px' }}
               style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
             >
-              {/* Block 1 — large intro */}
+              {/* Block 1 — who she is + numbers */}
               <motion.div variants={fadeUp}>
                 <p style={{
-                  fontSize: 18, lineHeight: 1.7, color: '#22181C', fontWeight: 700,
+                  fontSize: 16, lineHeight: 1.6, color: '#22181C', fontWeight: 700,
                 }}>
-                  Torino è una città che si scopre a tavola.
+                  Beatrice, 22 anni, Torino.
                 </p>
                 <p style={{
-                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8, textAlign: 'justify',
+                  fontSize: 14, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8, textAlign: 'justify',
                 }}>
-                  Panini giganteschi, pizze, pancakes, spaghettate da trattoria, porzioni abbondanti. <strong style={{ color: '#22181C' }}>Cibo pop</strong>: quello che si mangia con le mani, si racconta con il sorriso e parla allo stomaco della gente — non in senso metaforico.
+                  Studentessa di giurisprudenza e food creator, Bi è oggi una delle voci più seguite del food popolare italiano. Oltre <strong style={{ color: '#22181C' }}>130mila follower su Instagram</strong> e milioni di visualizzazioni ogni mese tra i suoi canali: una community che si affida ai suoi consigli per decidere dove mangiare stasera a Torino.
                 </p>
               </motion.div>
 
-              {/* Block 2 — with side accent */}
+              {/* Block 2 — what she does, with her quote */}
               <motion.div variants={fadeUp} style={{
                 borderLeft: '3px solid #C4A265',
                 paddingLeft: 16,
               }}>
                 <p style={{
-                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
+                  fontSize: 14, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
                 }}>
-                  Ho aperto la mia pagina a <strong style={{ color: '#22181C' }}>marzo 2024</strong>, insieme al mio ragazzo, un po' per gioco. Studio giurisprudenza, ho 22 anni, e pubblicavo su Instagram gli stessi consigli che davo agli amici. <strong style={{ color: '#22181C' }}>Ed è ancora così oggi.</strong>
+                  Racconta il <strong style={{ color: '#22181C' }}>cibo pop</strong>: street food, piole storiche, pizze napoletane, porzioni abbondanti e menu fissi a trenta euro. Niente cucine stellate, niente tecnicismi.
+                </p>
+                <p style={{
+                  fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                  fontSize: 14, lineHeight: 1.6, color: '#22181C',
+                  fontStyle: 'italic', fontWeight: 500, marginTop: 12,
+                }}>
+                  «Non sono una critica culinaria, non uso termini complessi: mi limito a dire cosa mi piace.»
                 </p>
               </motion.div>
 
-              {/* Block 3 — conclusion */}
+              {/* Block 3 — origin story with her quote */}
               <motion.div variants={fadeUp}>
                 <p style={{
-                  fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
+                  fontSize: 14, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
                 }}>
-                  Non sono una critica culinaria, non uso termini complessi: mi limito a dire cosa mi piace. Racconto lo <strong style={{ color: '#22181C' }}>street food</strong>, le <strong style={{ color: '#22181C' }}>piole storiche</strong>, i <strong style={{ color: '#22181C' }}>menu fissi a trenta euro</strong>, i posti dove ritrovare le cose semplici. Un'amica che ti dice dove andare stasera.
+                  Ha aperto la pagina Instagram a <strong style={{ color: '#22181C' }}>marzo 2024</strong> insieme al suo ragazzo, un po' per gioco, pubblicando gli stessi consigli che dava agli amici. Due anni dopo è diventata uno dei riferimenti del food italiano sui social.
+                </p>
+                <p style={{
+                  fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                  fontSize: 14, lineHeight: 1.6, color: '#22181C',
+                  fontStyle: 'italic', fontWeight: 500, marginTop: 12,
+                }}>
+                  «Eravamo appassionati di ristorazione, andavamo in giro a provare street food a Torino e ci siamo detti: perché non proviamo a fare una guida?»
                 </p>
               </motion.div>
             </motion.div>
@@ -301,14 +315,14 @@ export default function AboutPage() {
                 borderRadius: 16, padding: '20px 18px',
                 background: '#C4A265',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                   </svg>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>La mia filosofia</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>La filosofia</span>
                 </div>
-                <p style={{ fontSize: 16, lineHeight: 1.8, color: 'rgba(255,255,255,0.95)' }}>
-                  Faccio una cernita. Anche quando una collaborazione è a pagamento, pubblico solo i posti che mi hanno convinta davvero — e se non mi piacciono, dico di no. È così che è nata ChiamamiBi e così vuole rimanere: una guida sincera dei miei posti preferiti.
+                <p style={{ fontSize: 14, lineHeight: 1.75, color: 'rgba(255,255,255,0.95)' }}>
+                  Una cernita rigorosa: Bi pubblica solo i posti che l'hanno convinta davvero, dove tornerebbe ad occhi chiusi. Voce semplice, racconti diretti, niente paroloni — come un'amica che ti dice dove andare stasera.
                 </p>
               </div>
             </motion.div>
@@ -407,7 +421,7 @@ export default function AboutPage() {
             </motion.div>
           </section>
 
-          {/* ── Parlano di Bi — press quote ── */}
+          {/* ── Parlano di Bi — press card ── */}
           <section style={{ padding: '4px 24px 28px', maxWidth: 600, margin: '0 auto' }}>
             <motion.div
               initial="hidden"
@@ -417,7 +431,7 @@ export default function AboutPage() {
             >
               <p style={{
                 fontSize: 10, fontWeight: 600, color: '#C4A265',
-                letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14,
+                letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12,
               }}>
                 Parlano di Bi
               </p>
@@ -429,43 +443,34 @@ export default function AboutPage() {
                   display: 'block', textDecoration: 'none',
                   background: '#fff',
                   border: '1px solid rgba(34,24,28,0.08)',
-                  borderRadius: 16, padding: '22px 20px',
-                  position: 'relative',
+                  borderRadius: 16, padding: '18px 18px',
                 }}
               >
-                <svg
-                  aria-hidden="true"
-                  width="28" height="28" viewBox="0 0 24 24" fill="#C4A265"
-                  style={{ position: 'absolute', top: 14, left: 16, opacity: 0.25 }}
-                >
-                  <path d="M7 7h4v4H7c0 2.5 1.5 4.5 4 5v2c-4 0-6.5-2.5-6.5-6.5V7zm9 0h4v4h-4c0 2.5 1.5 4.5 4 5v2c-4 0-6.5-2.5-6.5-6.5V7z"/>
-                </svg>
-                <p style={{
-                  fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                  fontSize: 16, lineHeight: 1.6, color: '#22181C',
-                  fontWeight: 500, fontStyle: 'italic',
-                  paddingLeft: 32, marginBottom: 14,
-                }}>
-                  Nulla che abbia a che fare con i ristoranti di lusso, le cucine stellate, gli chef blasonati. Qua si parla di cibo pop, di mani che si sporcano di salse, di parlare allo stomaco della gente — e non in senso metaforico.
-                </p>
                 <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  paddingLeft: 32, gap: 10, flexWrap: 'wrap',
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                  gap: 12,
                 }}>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                      fontSize: 17, fontWeight: 700, color: '#22181C',
+                      lineHeight: 1.3, marginBottom: 6,
+                    }}>
                       Vanity Fair Italia
                     </p>
-                    <p style={{ fontSize: 11, color: '#8A8680', fontWeight: 500 }}>
-                      Chiamami Bi, che racconta il cibo popolare sui social
+                    <p style={{
+                      fontSize: 12, lineHeight: 1.6, color: '#8A8680', fontWeight: 500,
+                    }}>
+                      Un ritratto di Bi, la ventenne torinese che racconta il cibo popolare sui social — come una pagina nata per gioco a marzo 2024 è diventata in due anni una delle voci più seguite del food italiano, tra street food, piole e porzioni abbondanti.
                     </p>
                   </div>
                   <span style={{
                     display: 'flex', alignItems: 'center', gap: 4,
-                    fontSize: 12, fontWeight: 600, color: '#E8453C',
+                    fontSize: 11, fontWeight: 600, color: '#E8453C',
+                    flexShrink: 0, marginTop: 4,
                   }}>
                     Leggi
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
                   </span>
                 </div>
               </a>
