@@ -181,6 +181,9 @@ export default function DiscountManager() {
   const [saveError, setSaveError] = useState(null)
   const [filter, setFilter] = useState('all')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
 
   const [form, setForm] = useState(EMPTY_FORM)
 
@@ -293,6 +296,32 @@ export default function DiscountManager() {
     await supabase.from('discounts').delete().eq('id', id)
     setDiscounts((p) => p.filter((d) => d.id !== id))
     setDeleteConfirm(null)
+  }
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredDiscounts.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredDiscounts.map((d) => d.id)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true)
+    const ids = [...selectedIds]
+    await supabase.from('discounts').delete().in('id', ids)
+    setDiscounts((p) => p.filter((d) => !selectedIds.has(d.id)))
+    setSelectedIds(new Set())
+    setBulkDeleteConfirm(false)
+    setBulkDeleting(false)
   }
 
   const handleToggleActive = async (id, currentActive) => {
@@ -441,6 +470,54 @@ export default function DiscountManager() {
           </div>
         )}
 
+        {/* ── Bulk action bar — appears when items are selected ── */}
+        {selectedIds.size > 0 && (
+          <div style={{
+            margin: '0 20px 12px',
+            padding: '10px 16px',
+            background: '#1a1a1f',
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
+              {selectedIds.size} {selectedIds.size === 1 ? 'sconto selezionato' : 'sconti selezionati'}
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                style={{
+                  padding: '7px 14px', borderRadius: 8,
+                  background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#ccc', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                Deseleziona
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulkDeleteConfirm(true)}
+                style={{
+                  padding: '7px 14px', borderRadius: 8,
+                  background: '#dc2626', border: 'none',
+                  color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+                Elimina {selectedIds.size}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Desktop table ── */}
         {!loading && filteredDiscounts.length > 0 && (
           <div className="hidden md:block" style={{ padding: '0 20px 40px' }}>
@@ -448,6 +525,14 @@ export default function DiscountManager() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
+                    <th style={{ ...thStyle, width: 40 }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={filteredDiscounts.length > 0 && selectedIds.size === filteredDiscounts.length}
+                        onChange={toggleSelectAll}
+                        style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#dc2626' }}
+                      />
+                    </th>
                     <th style={thStyle}>Ristorante</th>
                     <th style={thStyle}>Sconto</th>
                     <th style={thStyle}>Tipo</th>
@@ -461,11 +546,22 @@ export default function DiscountManager() {
                   {filteredDiscounts.map((d) => (
                     <tr
                       key={d.id}
-                      style={{ borderBottom: '1px solid #f3f3f3', cursor: 'pointer', transition: 'background 0.1s' }}
+                      style={{
+                        borderBottom: '1px solid #f3f3f3', cursor: 'pointer', transition: 'background 0.1s',
+                        background: selectedIds.has(d.id) ? '#fff8f8' : 'transparent',
+                      }}
                       onClick={() => handleEdit(d)}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      onMouseEnter={(e) => { if (!selectedIds.has(d.id)) e.currentTarget.style.background = '#fafafa' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(d.id) ? '#fff8f8' : 'transparent' }}
                     >
+                      <td style={tdStyle} onClick={(e) => { e.stopPropagation(); toggleSelect(d.id) }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(d.id)}
+                          onChange={() => toggleSelect(d.id)}
+                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#dc2626' }}
+                        />
+                      </td>
                       <td style={tdStyle}>
                         <div style={{ fontWeight: 600, color: '#1a1a1f' }}>
                           {d.restaurant?.name || '—'}
@@ -526,24 +622,36 @@ export default function DiscountManager() {
                 key={d.id}
                 onClick={() => handleEdit(d)}
                 style={{
-                  background: '#fff',
-                  border: '1px solid #eee',
+                  background: selectedIds.has(d.id) ? '#fff8f8' : '#fff',
+                  border: selectedIds.has(d.id) ? '1.5px solid #dc2626' : '1px solid #eee',
                   borderRadius: 12,
                   padding: '14px 16px',
                   cursor: 'pointer',
+                  transition: 'border-color 0.15s, background 0.15s',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                      {d.restaurant?.name || '—'}
-                      {d.is_drop && <DropBadge />}
-                      {d.is_featured && !d.is_drop && <FeaturedBadge />}
+                  <div
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}
+                    onClick={(e) => { e.stopPropagation(); toggleSelect(d.id) }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(d.id)}
+                      onChange={() => toggleSelect(d.id)}
+                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#dc2626', marginTop: 2, flexShrink: 0 }}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                        {d.restaurant?.name || '—'}
+                        {d.is_drop && <DropBadge />}
+                        {d.is_featured && !d.is_drop && <FeaturedBadge />}
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
+                        {d.discount_value}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{d.title}</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
-                      {d.discount_value}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{d.title}</div>
                   </div>
                   <StatusBadge discount={d} />
                 </div>
@@ -820,6 +928,64 @@ export default function DiscountManager() {
                     }}
                   >
                     {saving ? 'Salvataggio...' : editing ? 'Salva modifiche' : 'Crea sconto'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Bulk delete confirm modal ── */}
+        <AnimatePresence>
+          {bulkDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setBulkDeleteConfirm(false)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 110,
+                background: 'rgba(26,26,31,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#fff', borderRadius: 14, border: '1px solid #eee',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.2)', padding: 24, maxWidth: 380, width: '100%',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
+                  Eliminare {selectedIds.size} {selectedIds.size === 1 ? 'sconto' : 'sconti'}?
+                </h3>
+                <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
+                  Questa azione non può essere annullata. Tutti i QR code generati per {selectedIds.size === 1 ? 'questo sconto' : 'questi sconti'} diventeranno non validi.
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBulkDeleteConfirm(false)}
+                    style={{
+                      padding: '9px 16px', borderRadius: 8, background: 'transparent',
+                      border: '1px solid #eee', color: '#666', fontSize: 13, fontWeight: 500,
+                      cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    disabled={bulkDeleting}
+                    style={{
+                      padding: '9px 16px', borderRadius: 8, background: '#dc2626', border: 'none',
+                      color: '#fff', fontSize: 13, fontWeight: 600,
+                      cursor: bulkDeleting ? 'wait' : 'pointer', opacity: bulkDeleting ? 0.7 : 1,
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >
+                    {bulkDeleting ? 'Eliminazione...' : `Elimina ${selectedIds.size}`}
                   </button>
                 </div>
               </motion.div>
