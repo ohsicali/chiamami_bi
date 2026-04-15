@@ -18,6 +18,34 @@ export default function DiscountBanner({ restaurantId }) {
   const [generating, setGenerating] = useState(false)
   const [showQR, setShowQR] = useState(false)
   const [error, setError] = useState(null)
+  const [justRedeemed, setJustRedeemed] = useState(false)
+
+  const isRedeemed = redemption?.status === 'redeemed'
+  const isGenerated = redemption?.status === 'generated'
+
+  // When the restaurant scans the QR, the redemption flips from
+  // 'generated' to 'redeemed' via realtime. Auto-close the QR modal,
+  // vibrate briefly, and flash a confirmation animation on the banner
+  // so the user immediately sees that the validation happened.
+  // IMPORTANT: this effect must be declared BEFORE any conditional
+  // early-return to satisfy React's Rules of Hooks — otherwise the
+  // effect is skipped on the first render (when discount is still
+  // loading), and on subsequent renders the hook order changes and
+  // the realtime flip never triggers the UI update.
+  useEffect(() => {
+    if (!isRedeemed) return
+    if (showQR) setShowQR(false)
+    // Only flash on the transition, not on initial mount of an already-used
+    // discount. We detect this by checking if the redeemed_at timestamp is
+    // very recent (last 5s).
+    const redeemedAt = redemption?.redeemed_at ? new Date(redemption.redeemed_at).getTime() : 0
+    if (redeemedAt && Date.now() - redeemedAt < 5000) {
+      setJustRedeemed(true)
+      try { navigator.vibrate?.([30, 40, 30]) } catch {}
+      const timer = setTimeout(() => setJustRedeemed(false), 1800)
+      return () => clearTimeout(timer)
+    }
+  }, [isRedeemed, redemption?.redeemed_at, showQR])
 
   if (discountLoading || !discount) return null
 
@@ -56,29 +84,6 @@ export default function DiscountBanner({ restaurantId }) {
     month: 'long',
     year: 'numeric',
   })
-
-  const isRedeemed = redemption?.status === 'redeemed'
-  const isGenerated = redemption?.status === 'generated'
-  const [justRedeemed, setJustRedeemed] = useState(false)
-
-  // When the restaurant scans the QR, the redemption flips from
-  // 'generated' to 'redeemed' via realtime. Auto-close the QR modal,
-  // vibrate briefly, and flash a confirmation animation on the banner
-  // so the user immediately sees that the validation happened.
-  useEffect(() => {
-    if (!isRedeemed) return
-    if (showQR) setShowQR(false)
-    // Only flash on the transition, not on initial mount of an already-used
-    // discount. We detect this by checking if the redeemed_at timestamp is
-    // very recent (last 5s).
-    const redeemedAt = redemption?.redeemed_at ? new Date(redemption.redeemed_at).getTime() : 0
-    if (redeemedAt && Date.now() - redeemedAt < 5000) {
-      setJustRedeemed(true)
-      try { navigator.vibrate?.([30, 40, 30]) } catch {}
-      const t = setTimeout(() => setJustRedeemed(false), 1800)
-      return () => clearTimeout(t)
-    }
-  }, [isRedeemed, redemption?.redeemed_at, showQR])
 
   return (
     <>

@@ -1978,9 +1978,14 @@ function SuccessBurst() {
 
 function formatDiscountValue(discount) {
   if (!discount) return ''
-  const v = discount.discount_value
-  if (discount.discount_type === 'percentage') return `${v}%`
-  if (discount.discount_type === 'fixed') return `€${v}`
+  const v = String(discount.discount_value ?? '').trim()
+  if (!v) return ''
+  if (discount.discount_type === 'percentage') {
+    return v.includes('%') ? v : `${v}%`
+  }
+  if (discount.discount_type === 'fixed') {
+    return v.includes('€') ? v : `€${v}`
+  }
   return v
 }
 
@@ -2403,12 +2408,7 @@ function daysUntil(isoDate) {
 }
 
 function ActiveDiscountCard({ discount }) {
-  const value =
-    discount.discount_type === 'percentage'
-      ? `${discount.discount_value}%`
-      : discount.discount_type === 'fixed'
-      ? `€${discount.discount_value}`
-      : discount.discount_value
+  const value = formatDiscountValue(discount)
   const pct =
     discount.max_redemptions && discount.max_redemptions > 0
       ? Math.min(100, ((discount.total_redeemed || 0) / discount.max_redemptions) * 100)
