@@ -77,6 +77,7 @@ const EMPTY_FORM = {
   recommended_for: [],
   instagram_reel: '',
   tiktok_url: '',
+  verify_pin: '',
   published: false,
   photos: [], // { url, caption, sort_order, file? }
 }
@@ -732,6 +733,7 @@ export default function RestaurantForm() {
           recommended_for: r.recommended_for || [],
           instagram_reel: r.instagram_reel || '',
           tiktok_url: r.tiktok_url || '',
+          verify_pin: r.verify_pin || '',
           published: r.is_published !== false,
           photos: Array.isArray(r.photos)
             ? r.photos.map((p, i) =>
@@ -1131,6 +1133,7 @@ export default function RestaurantForm() {
       recommended_for: form.recommended_for,
       instagram_reel: form.instagram_reel.trim() || null,
       tiktok_url: form.tiktok_url.trim() || null,
+      verify_pin: form.verify_pin.trim() || null,
       is_published: form.published,
     }
 
@@ -1755,6 +1758,33 @@ export default function RestaurantForm() {
                   className={inputClass()}
                 />
               </div>
+            </Field>
+          </CollapsibleSection>
+
+          {/* --- Area Ristoratori --- */}
+          <CollapsibleSection
+            title="Area Ristoratori"
+            subtitle="PIN di accesso a /verify per il ristoratore"
+            defaultOpen={false}
+          >
+            <Field label="PIN Verify (4 cifre)">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.verify_pin}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 4)
+                  update('verify_pin', digits)
+                }}
+                maxLength={4}
+                pattern="[0-9]{4}"
+                placeholder="Es. 4821"
+                className={inputClass()}
+                style={{ letterSpacing: 4, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+              />
+              <p className="mt-1.5 text-xs text-secondary">
+                Il ristoratore usa questo PIN per accedere a <span className="font-semibold">/verify</span> e validare gli sconti dei clienti. Dev'essere <strong>univoco</strong> e di 4 cifre.
+              </p>
             </Field>
           </CollapsibleSection>
 
