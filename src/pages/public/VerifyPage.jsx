@@ -435,7 +435,14 @@ export default function VerifyPage() {
       />
     )
   } else {
-    body = <AuthedView restaurant={restaurant} onLogout={handleLogout} deviceToken={getCookie(COOKIE_NAME)} />
+    body = (
+      <AuthedView
+        restaurant={restaurant}
+        onLogout={handleLogout}
+        deviceToken={getCookie(COOKIE_NAME)}
+        onSessionExpired={handleLogout}
+      />
+    )
   }
 
   return (
@@ -459,6 +466,36 @@ export default function VerifyPage() {
           0% { transform: scale(0.6); opacity: 0; }
           70% { transform: scale(1.1); opacity: 1; }
           100% { transform: scale(1); }
+        }
+        .verify-stat-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+        @media (min-width: 768px) {
+          .verify-stat-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+          }
+        }
+        .verify-dashboard-main {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 900px) {
+          .verify-dashboard-main {
+            grid-template-columns: 1.1fr 1fr;
+            gap: 20px;
+            align-items: start;
+          }
+        }
+        .verify-dashboard-col {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
         }
       `}</style>
       {body}
@@ -722,7 +759,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
 /* ------------------------------------------------------------------ */
 /*  AuthedView — header ristorante + tab bar + corpo tab              */
 /* ------------------------------------------------------------------ */
-function AuthedView({ restaurant, onLogout, deviceToken }) {
+function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
   const [tab, setTab] = useState('verify')
 
   return (
@@ -733,7 +770,11 @@ function AuthedView({ restaurant, onLogout, deviceToken }) {
         {tab === 'verify' ? (
           <VerifyTab restaurant={restaurant} />
         ) : (
-          <DashboardTab restaurant={restaurant} deviceToken={deviceToken} />
+          <DashboardTab
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+          />
         )}
       </div>
     </div>
@@ -1484,12 +1525,13 @@ function ResultRow({ label, value, strong }) {
 /* ------------------------------------------------------------------ */
 /*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
 /* ------------------------------------------------------------------ */
-function DashboardTab({ restaurant, deviceToken }) {
+function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   const [stats, setStats] = useState(null)
   const [discount, setDiscount] = useState(null)
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -1530,11 +1572,14 @@ function DashboardTab({ restaurant, deviceToken }) {
 
         if (cancelled) return
 
+        if (statsRes.data?.error === 'unauthorized') {
+          // Token invalid — force re-login
+          onSessionExpired?.()
+          return
+        }
         if (statsRes.error) {
           setError('Impossibile caricare le statistiche')
           console.error('stats error', statsRes.error)
-        } else if (statsRes.data?.error === 'unauthorized') {
-          setError('Sessione non autorizzata — rifai login')
         } else {
           setStats(statsRes.data)
         }
@@ -1553,7 +1598,7 @@ function DashboardTab({ restaurant, deviceToken }) {
     return () => {
       cancelled = true
     }
-  }, [restaurant.id, deviceToken])
+  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired])
 
   if (loading) {
     return (
@@ -1578,17 +1623,40 @@ function DashboardTab({ restaurant, deviceToken }) {
     return (
       <div style={{ padding: '60px 20px', textAlign: 'center' }}>
         <div style={{ fontSize: 14, color: '#E8453C', fontWeight: 600, marginBottom: 6 }}>{error}</div>
-        <div style={{ fontSize: 12, color: '#8A8680' }}>Riprova tra qualche istante.</div>
+        <div style={{ fontSize: 12, color: '#8A8680', marginBottom: 16 }}>
+          Riprova tra qualche istante.
+        </div>
+        <button
+          onClick={() => setReloadKey((k) => k + 1)}
+          style={{
+            padding: '10px 20px',
+            background: '#22181C',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Riprova
+        </button>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '20px 16px 80px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '20px 16px 80px', maxWidth: 1100, margin: '0 auto' }}>
       <StatGrid stats={stats} />
-      {discount && <ActiveDiscountCard discount={discount} />}
-      <FunnelCard stats={stats} />
-      <ActivityList activity={activity} />
+      <div className="verify-dashboard-main">
+        <div className="verify-dashboard-col">
+          {discount && <ActiveDiscountCard discount={discount} />}
+          <FunnelCard stats={stats} />
+        </div>
+        <div className="verify-dashboard-col">
+          <ActivityList activity={activity} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -1626,14 +1694,7 @@ function StatGrid({ stats }) {
     },
   ]
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: 10,
-        marginBottom: 16,
-      }}
-    >
+    <div className="verify-stat-grid">
       {cards.map((c) => (
         <div
           key={c.label}
