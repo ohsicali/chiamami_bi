@@ -464,17 +464,47 @@ export default function ProfilePage() {
 
       {/* ── FOOTER MINIMAL — mobile only ── */}
       <div className="md:hidden" style={{ flex: 1 }} />
-      <div className="md:hidden" style={{ textAlign: 'center', padding: '20px 22px', paddingBottom: TAB_BAR_HEIGHT + 20 }}>
+      <div className="md:hidden" style={{ padding: '8px 22px', paddingBottom: 16 }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            width: '100%', padding: '14px 0', borderRadius: 16,
+            background: 'transparent', border: '1.5px solid var(--color-bordo)',
+            color: 'var(--color-secondary)', fontSize: 14, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Esci dall'account
+        </button>
+      </div>
+      <div className="md:hidden" style={{ textAlign: 'center', padding: '8px 22px', paddingBottom: TAB_BAR_HEIGHT + 16 }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 8 }}>
           <a href="/privacy" style={{ fontSize: 12, color: 'var(--color-secondary)', textDecoration: 'none' }}>Privacy</a>
           <span style={{ fontSize: 12, color: 'var(--color-bordo)' }}>·</span>
           <a href="/terms" style={{ fontSize: 12, color: 'var(--color-secondary)', textDecoration: 'none' }}>Termini</a>
-          <span style={{ fontSize: 12, color: 'var(--color-bordo)' }}>·</span>
-          <button onClick={handleLogout} style={{ fontSize: 12, color: 'var(--color-accent)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
-            Esci
-          </button>
         </div>
         <div style={{ fontSize: 10, color: 'var(--color-bordo)' }}>La Guida di Bi · v1.0</div>
+      </div>
+
+      {/* ── LOGOUT — desktop ── */}
+      <div className="hidden md:flex" style={{ justifyContent: 'center', padding: '8px 40px 24px' }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '12px 32px', borderRadius: 14,
+            background: 'transparent', border: '1.5px solid var(--color-bordo)',
+            color: 'var(--color-secondary)', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Esci dall'account
+        </button>
       </div>
 
       {/* Desktop full footer */}
