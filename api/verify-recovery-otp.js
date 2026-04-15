@@ -36,10 +36,11 @@ export default async function handler(req, res) {
   })
 
   try {
-    // Get profile with OTP
+    // Look up user id from email (profiles doesn't hold OTP anymore — moved
+    // to locked-down auth_recovery_tokens table in hotfix 2026-04-15).
     const { data: profile, error: profileErr } = await adminClient
       .from('profiles')
-      .select('id, recovery_otp, recovery_otp_expires, recovery_otp_action')
+      .select('id')
       .eq('email', email)
       .single()
 
@@ -47,28 +48,38 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Account non trovato' })
     }
 
+    const { data: token, error: tokenErr } = await adminClient
+      .from('auth_recovery_tokens')
+      .select('otp, expires_at, action')
+      .eq('user_id', profile.id)
+      .single()
+
+    if (tokenErr || !token) {
+      return res.status(400).json({ error: 'Codice non valido' })
+    }
+
     // Verify OTP
-    if (!profile.recovery_otp || profile.recovery_otp !== otp.trim()) {
+    if (!token.otp || token.otp !== otp.trim()) {
       return res.status(400).json({ error: 'Codice non valido' })
     }
 
     // Check expiration
-    if (new Date(profile.recovery_otp_expires) < new Date()) {
+    if (new Date(token.expires_at) < new Date()) {
       // Clear expired OTP
       await adminClient
-        .from('profiles')
-        .update({ recovery_otp: null, recovery_otp_expires: null, recovery_otp_action: null })
-        .eq('id', profile.id)
+        .from('auth_recovery_tokens')
+        .delete()
+        .eq('user_id', profile.id)
       return res.status(400).json({ error: 'Codice scaduto. Richiedine uno nuovo.' })
     }
 
-    const action = profile.recovery_otp_action
+    const action = token.action
 
     // Clear OTP (one-time use)
     await adminClient
-      .from('profiles')
-      .update({ recovery_otp: null, recovery_otp_expires: null, recovery_otp_action: null })
-      .eq('id', profile.id)
+      .from('auth_recovery_tokens')
+      .delete()
+      .eq('user_id', profile.id)
 
     if (action === 'reset_password' && new_password) {
       // Reset password via admin API

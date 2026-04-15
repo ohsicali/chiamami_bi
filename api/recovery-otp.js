@@ -58,12 +58,23 @@ export default async function handler(req, res) {
     // Generate a 6-digit OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000))
 
-    // Store OTP in profile metadata (expires in 10 min)
+    // Store OTP in the locked-down `auth_recovery_tokens` table (service-role
+    // only — no public RLS policy). Previously lived in profiles columns but
+    // those were publicly readable via PostgREST (BUG 2 hotfix 2026-04-15).
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
-    await adminClient
-      .from('profiles')
-      .update({ recovery_otp: otp, recovery_otp_expires: expiresAt, recovery_otp_action: action })
-      .eq('id', profile.id)
+    const { error: upsertErr } = await adminClient
+      .from('auth_recovery_tokens')
+      .upsert({
+        user_id: profile.id,
+        otp,
+        expires_at: expiresAt,
+        action,
+      }, { onConflict: 'user_id' })
+
+    if (upsertErr) {
+      console.error('Recovery OTP upsert error:', upsertErr)
+      return res.status(500).json({ error: 'Internal error' })
+    }
 
     // Send OTP via Resend
     if (!resendKey) {
