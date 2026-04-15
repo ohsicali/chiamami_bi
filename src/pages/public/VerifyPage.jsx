@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
+import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+
+const RESTAURANT_COLS = 'id, name, slug, address, city, category, cuisine_type, restaurant_photos(photo_url, thumb_url, sort_order)'
+
+function normalizeRestaurant(r) {
+  if (!r) return null
+  const photos = Array.isArray(r.restaurant_photos)
+    ? [...r.restaurant_photos].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    : []
+  const { restaurant_photos: _photos, ...rest } = r
+  return { ...rest, photos }
+}
 
 /* ------------------------------------------------------------------ */
 /*  Token helper — hoisted per non violare react-hooks/purity         */
@@ -285,12 +297,12 @@ export default function VerifyPage() {
       try {
         const { data } = await supabase
           .from('verified_devices')
-          .select('restaurant_id, restaurants:restaurants(id, name, slug)')
+          .select(`restaurant_id, restaurants:restaurants(${RESTAURANT_COLS})`)
           .eq('device_token', token)
           .maybeSingle()
         if (cancelled) return
         if (data?.restaurants) {
-          setRestaurant(data.restaurants)
+          setRestaurant(normalizeRestaurant(data.restaurants))
           setStatus('authed')
           // Touch last_used_at in background
           supabase
@@ -326,7 +338,7 @@ export default function VerifyPage() {
     try {
       const { data: r, error: rErr } = await supabase
         .from('restaurants')
-        .select('id, name, slug')
+        .select(RESTAURANT_COLS)
         .eq('verify_pin', pinToUse)
         .eq('is_published', true)
         .maybeSingle()
@@ -351,7 +363,7 @@ export default function VerifyPage() {
       }
 
       setCookie(COOKIE_NAME, token, COOKIE_DAYS)
-      setRestaurant(r)
+      setRestaurant(normalizeRestaurant(r))
       setPin('')
       setStatus('authed')
       setSubmitting(false)
@@ -423,8 +435,7 @@ export default function VerifyPage() {
       />
     )
   } else {
-    // status === 'authed' — placeholder per step 2, rimpiazzato in step 3
-    body = <AuthedPlaceholder restaurant={restaurant} onLogout={handleLogout} />
+    body = <AuthedView restaurant={restaurant} onLogout={handleLogout} />
   }
 
   return (
@@ -700,78 +711,318 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Placeholder autenticato (sostituito dallo Step 3)                 */
+/*  AuthedView — header ristorante + tab bar + corpo tab              */
 /* ------------------------------------------------------------------ */
-function AuthedPlaceholder({ restaurant, onLogout }) {
+function AuthedView({ restaurant, onLogout }) {
+  const [tab, setTab] = useState('verify')
+
+  return (
+    <div style={{ minHeight: '100dvh', background: '#FAF7F2' }}>
+      <RestaurantHeader restaurant={restaurant} onLogout={onLogout} />
+      <TabBar tab={tab} onChange={setTab} />
+      <div style={{ padding: 0 }}>
+        {tab === 'verify' ? (
+          <VerifyTabPlaceholder />
+        ) : (
+          <DashboardTabPlaceholder />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Header ristorante (barra scura, mobile + desktop)                 */
+/* ------------------------------------------------------------------ */
+function RestaurantHeader({ restaurant, onLogout }) {
+  const firstPhoto = restaurant?.photos?.[0]
+  const photoUrl = firstPhoto
+    ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url)
+    : null
+
+  const categoryName = (() => {
+    const first = Array.isArray(restaurant?.category) && restaurant.category.length > 0
+      ? restaurant.category[0]
+      : restaurant?.cuisine_type
+    if (!first) return null
+    const info = getCategoryInfo(first)
+    return info?.name || first
+  })()
+
+  const subtitle = [categoryName, restaurant?.address].filter(Boolean).join(' · ')
+
+  return (
+    <>
+      {/* Mobile */}
+      <div
+        className="md:hidden"
+        style={{
+          background: '#22181C',
+          padding: '12px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <RestaurantAvatar photoUrl={photoUrl} size={36} radius={10} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#fff',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {restaurant?.name}
+          </div>
+          {subtitle && (
+            <div
+              style={{
+                fontSize: 9,
+                color: 'rgba(255,255,255,0.3)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                marginTop: 1,
+              }}
+            >
+              {subtitle}
+            </div>
+          )}
+        </div>
+        <GuideBadge compact />
+        <button
+          onClick={onLogout}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255,255,255,0.35)',
+            fontSize: 10,
+            fontWeight: 500,
+            padding: 6,
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          Esci
+        </button>
+      </div>
+
+      {/* Desktop */}
+      <div
+        className="hidden md:flex desktop-nav-offset"
+        style={{
+          background: '#22181C',
+          padding: '16px 32px',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        <RestaurantAvatar photoUrl={photoUrl} size={48} radius={12} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: '#fff',
+              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+            }}
+          >
+            {restaurant?.name}
+          </div>
+          {subtitle && (
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+        <GuideBadge />
+        <button
+          onClick={onLogout}
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.7)',
+            fontSize: 12,
+            fontWeight: 500,
+            padding: '8px 16px',
+            borderRadius: 10,
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          Esci
+        </button>
+      </div>
+    </>
+  )
+}
+
+function RestaurantAvatar({ photoUrl, size, radius }) {
   return (
     <div
-      className="desktop-nav-offset"
       style={{
-        minHeight: '100dvh',
-        background: '#FAF7F2',
+        width: size,
+        height: size,
+        borderRadius: radius,
+        overflow: 'hidden',
+        flexShrink: 0,
+        background: 'rgba(255,255,255,0.06)',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '32px 20px',
+      }}
+    >
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt=""
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : (
+        <span style={{ fontSize: size * 0.42 }}>🍽️</span>
+      )}
+    </div>
+  )
+}
+
+function GuideBadge({ compact }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 5,
+        background: 'rgba(74,222,128,0.12)',
+        color: '#4ADE80',
+        borderRadius: 999,
+        padding: compact ? '3px 8px' : '5px 12px',
+        fontSize: compact ? 8 : 10,
+        fontWeight: 700,
+        letterSpacing: 0.4,
+        textTransform: 'uppercase',
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          width: compact ? 4 : 6,
+          height: compact ? 4 : 6,
+          borderRadius: '50%',
+          background: '#4ADE80',
+        }}
+      />
+      Nella guida
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Tab bar (Verifica QR / Dashboard)                                 */
+/* ------------------------------------------------------------------ */
+const TABS = [
+  { key: 'verify', label: 'Verifica QR' },
+  { key: 'dashboard', label: 'Dashboard' },
+]
+
+function TabBar({ tab, onChange }) {
+  return (
+    <div
+      style={{
+        background: '#22181C',
+        display: 'flex',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      {TABS.map((t) => {
+        const active = tab === t.key
+        return (
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              padding: '14px 8px',
+              color: active ? '#fff' : 'rgba(255,255,255,0.35)',
+              fontSize: 13,
+              fontWeight: active ? 600 : 500,
+              cursor: 'pointer',
+              position: 'relative',
+              fontFamily: 'inherit',
+              transition: 'color 0.15s',
+            }}
+          >
+            {t.label}
+            {active && (
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bottom: 0,
+                  width: 60,
+                  height: 3,
+                  background: '#E8453C',
+                  borderRadius: '3px 3px 0 0',
+                }}
+              />
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Placeholder tab (rimpiazzati in Step 4 e 5)                       */
+/* ------------------------------------------------------------------ */
+function TabPlaceholder({ title, description }) {
+  return (
+    <div
+      style={{
+        padding: '40px 20px',
         textAlign: 'center',
+        color: '#8A8680',
+        maxWidth: 480,
+        margin: '0 auto',
       }}
     >
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
-          background: 'rgba(74,222,128,0.14)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 18,
-        }}
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M5 12l5 5L20 7"
-            stroke="#22C55E"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-      <h1
-        style={{
-          fontFamily: "'TAN Songbird', 'DM Sans', serif",
-          fontSize: 22,
-          fontWeight: 700,
+          fontSize: 13,
+          fontWeight: 600,
           color: '#22181C',
           marginBottom: 6,
         }}
       >
-        Accesso effettuato
-      </h1>
-      <p style={{ fontSize: 13, color: '#8A8680', marginBottom: 4 }}>
-        Ristorante: <strong style={{ color: '#22181C' }}>{restaurant?.name}</strong>
-      </p>
-      <p style={{ fontSize: 11, color: '#B5B0AA', maxWidth: 320, lineHeight: 1.5, marginBottom: 24 }}>
-        Area riservata in allestimento: nei prossimi rilasci troverai qui la verifica QR e la
-        dashboard statistiche.
-      </p>
-      <button
-        onClick={onLogout}
-        style={{
-          background: '#22181C',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 12,
-          padding: '12px 28px',
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: 'pointer',
-        }}
-      >
-        Esci
-      </button>
+        {title}
+      </div>
+      <div style={{ fontSize: 12, lineHeight: 1.5 }}>{description}</div>
     </div>
+  )
+}
+
+function VerifyTabPlaceholder() {
+  return (
+    <TabPlaceholder
+      title="Verifica QR — in costruzione"
+      description="Qui arriverà l'input del codice e lo scanner della fotocamera (Step 4)."
+    />
+  )
+}
+
+function DashboardTabPlaceholder() {
+  return (
+    <TabPlaceholder
+      title="Dashboard — in costruzione"
+      description="Qui arriveranno le statistiche del tuo ristorante: visualizzazioni, salvataggi, sconti utilizzati e attività recente (Step 5)."
+    />
   )
 }
