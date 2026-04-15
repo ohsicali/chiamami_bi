@@ -451,6 +451,15 @@ export default function VerifyPage() {
           75% { transform: translateX(-3px); }
           90% { transform: translateX(3px); }
         }
+        @keyframes verifyFadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes verifyPop {
+          0% { transform: scale(0.6); opacity: 0; }
+          70% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); }
+        }
       `}</style>
       {body}
     </>
@@ -722,7 +731,7 @@ function AuthedView({ restaurant, onLogout }) {
       <TabBar tab={tab} onChange={setTab} />
       <div style={{ padding: 0 }}>
         {tab === 'verify' ? (
-          <VerifyTabPlaceholder />
+          <VerifyTab restaurant={restaurant} />
         ) : (
           <DashboardTabPlaceholder />
         )}
@@ -1009,12 +1018,466 @@ function TabPlaceholder({ title, description }) {
   )
 }
 
-function VerifyTabPlaceholder() {
+/* ------------------------------------------------------------------ */
+/*  Verifica QR tab — input codice + validazione                      */
+/* ------------------------------------------------------------------ */
+function VerifyTab({ restaurant }) {
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null) // { status, data }
+  const inputRef = useRef(null)
+
+  const reset = () => {
+    setCode('')
+    setResult(null)
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.()
+    const trimmed = code.trim()
+    if (!trimmed || loading) return
+    setLoading(true)
+
+    try {
+      // 1) Find redemption by qr_code
+      const { data: redemption, error: rErr } = await supabase
+        .from('discount_redemptions')
+        .select('*, discount:discounts(id, title, discount_value, discount_type, restaurant_id, valid_until)')
+        .eq('qr_code', trimmed)
+        .maybeSingle()
+
+      if (rErr || !redemption) {
+        setResult({ status: 'not_found' })
+        setLoading(false)
+        return
+      }
+
+      // 2) Must belong to THIS restaurant
+      if (redemption.discount?.restaurant_id !== restaurant.id) {
+        setResult({ status: 'wrong_restaurant' })
+        setLoading(false)
+        return
+      }
+
+      // 3) Already redeemed
+      if (redemption.status === 'redeemed') {
+        // Fetch user_name separately (best-effort)
+        const userName = await fetchUserName(redemption.user_id)
+        setResult({
+          status: 'already_redeemed',
+          data: { ...redemption, user_name: userName },
+        })
+        setLoading(false)
+        return
+      }
+
+      // 4) Expired
+      const isExpired =
+        redemption.status === 'expired' ||
+        (redemption.discount?.valid_until &&
+          new Date(redemption.discount.valid_until) < new Date())
+      if (isExpired) {
+        setResult({ status: 'expired', data: redemption })
+        setLoading(false)
+        return
+      }
+
+      // 5) Mark as redeemed
+      const userName = await fetchUserName(redemption.user_id)
+      const { error: uErr } = await supabase
+        .from('discount_redemptions')
+        .update({
+          status: 'redeemed',
+          redeemed_at: new Date().toISOString(),
+          redeemed_by_restaurant: true,
+        })
+        .eq('id', redemption.id)
+
+      if (uErr) {
+        setResult({ status: 'error', data: { message: 'Errore durante la validazione' } })
+        setLoading(false)
+        return
+      }
+
+      // 6) Best-effort: increment total_redeemed
+      const discountId = redemption.discount?.id || redemption.discount_id
+      if (discountId) {
+        await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId }).catch(() => {})
+      }
+
+      setResult({
+        status: 'success',
+        data: { ...redemption, user_name: userName },
+      })
+      setLoading(false)
+    } catch (err) {
+      console.error('verify error:', err)
+      setResult({ status: 'error', data: { message: 'Errore di rete, riprova' } })
+      setLoading(false)
+    }
+  }
+
+  // Focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
   return (
-    <TabPlaceholder
-      title="Verifica QR — in costruzione"
-      description="Qui arriverà l'input del codice e lo scanner della fotocamera (Step 4)."
+    <div style={{ padding: '24px 16px 80px', maxWidth: 520, margin: '0 auto' }}>
+      {!result && (
+        <form onSubmit={handleSubmit}>
+          <div
+            style={{
+              fontSize: 13,
+              color: '#8A8680',
+              marginBottom: 10,
+              textAlign: 'center',
+            }}
+          >
+            Inserisci il codice mostrato dal cliente
+          </div>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="BiSc-XXXXXXXX"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '18px 16px',
+              fontSize: 18,
+              fontWeight: 600,
+              fontFamily: "'SF Mono', 'Menlo', monospace",
+              letterSpacing: 1.5,
+              textAlign: 'center',
+              border: '2px solid #E8E0D4',
+              borderRadius: 14,
+              background: '#fff',
+              color: '#22181C',
+              outline: 'none',
+              transition: 'border-color 0.15s',
+            }}
+            onFocus={(e) => (e.target.style.borderColor = '#E8453C')}
+            onBlur={(e) => (e.target.style.borderColor = '#E8E0D4')}
+          />
+
+          <button
+            type="submit"
+            disabled={!code.trim() || loading}
+            style={{
+              width: '100%',
+              marginTop: 14,
+              padding: '16px',
+              background: code.trim() && !loading ? '#E8453C' : '#E8E0D4',
+              color: code.trim() && !loading ? '#fff' : '#8A8680',
+              border: 'none',
+              borderRadius: 14,
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: code.trim() && !loading ? 'pointer' : 'not-allowed',
+              letterSpacing: 0.3,
+              transition: 'all 0.15s',
+            }}
+          >
+            {loading ? 'Verifica in corso…' : 'Verifica sconto'}
+          </button>
+
+          <p
+            style={{
+              marginTop: 20,
+              fontSize: 11,
+              color: '#8A8680',
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
+            Il codice è nel formato <strong>BiSc-XXXXXXXX</strong> e si trova
+            sotto il QR mostrato dal cliente.
+          </p>
+        </form>
+      )}
+
+      {result && <VerifyResult result={result} onReset={reset} />}
+    </div>
+  )
+}
+
+async function fetchUserName(userId) {
+  if (!userId) return 'Utente'
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .maybeSingle()
+    return data?.full_name || 'Utente'
+  } catch {
+    return 'Utente'
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  VerifyResult — stati successo / errore / già-usato                */
+/* ------------------------------------------------------------------ */
+function VerifyResult({ result, onReset }) {
+  const { status, data } = result
+
+  if (status === 'success') {
+    return (
+      <ResultCard
+        tone="success"
+        icon="✓"
+        title="Sconto validato!"
+        onReset={onReset}
+        resetLabel="Nuova verifica"
+      >
+        <ResultRow label="Sconto" value={data.discount?.title} />
+        <ResultRow label="Valore" value={formatDiscountValue(data.discount)} strong />
+        <ResultRow label="Cliente" value={data.user_name} />
+      </ResultCard>
+    )
+  }
+
+  if (status === 'already_redeemed') {
+    const date = data.redeemed_at
+      ? new Date(data.redeemed_at).toLocaleString('it-IT', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null
+    return (
+      <ResultCard
+        tone="warning"
+        icon="!"
+        title="Codice già utilizzato"
+        onReset={onReset}
+        resetLabel="Nuova verifica"
+      >
+        <ResultRow label="Sconto" value={data.discount?.title} />
+        {date && <ResultRow label="Usato il" value={date} />}
+        {data.user_name && <ResultRow label="Cliente" value={data.user_name} />}
+      </ResultCard>
+    )
+  }
+
+  if (status === 'expired') {
+    return (
+      <ResultCard
+        tone="neutral"
+        icon="⏱"
+        title="Sconto scaduto"
+        description="La data di validità di questo sconto è passata."
+        onReset={onReset}
+        resetLabel="Nuova verifica"
+      />
+    )
+  }
+
+  if (status === 'wrong_restaurant') {
+    return (
+      <ResultCard
+        tone="error"
+        icon="✕"
+        title="Codice non valido per questo ristorante"
+        description="Questo QR appartiene a uno sconto di un altro locale."
+        onReset={onReset}
+        resetLabel="Nuova verifica"
+      />
+    )
+  }
+
+  if (status === 'not_found') {
+    return (
+      <ResultCard
+        tone="error"
+        icon="✕"
+        title="Codice non riconosciuto"
+        description="Controlla che il codice sia scritto correttamente."
+        onReset={onReset}
+        resetLabel="Riprova"
+      />
+    )
+  }
+
+  // generic error
+  return (
+    <ResultCard
+      tone="error"
+      icon="✕"
+      title="Errore"
+      description={data?.message || 'Si è verificato un errore.'}
+      onReset={onReset}
+      resetLabel="Riprova"
     />
+  )
+}
+
+function formatDiscountValue(discount) {
+  if (!discount) return ''
+  const v = discount.discount_value
+  if (discount.discount_type === 'percentage') return `${v}%`
+  if (discount.discount_type === 'fixed') return `€${v}`
+  return v
+}
+
+const TONES = {
+  success: {
+    bg: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+    border: '#86EFAC',
+    iconBg: '#10B981',
+    iconColor: '#fff',
+    titleColor: '#065F46',
+  },
+  warning: {
+    bg: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+    border: '#FCD34D',
+    iconBg: '#F59E0B',
+    iconColor: '#fff',
+    titleColor: '#78350F',
+  },
+  neutral: {
+    bg: '#F5F1EA',
+    border: '#E8E0D4',
+    iconBg: '#8A8680',
+    iconColor: '#fff',
+    titleColor: '#22181C',
+  },
+  error: {
+    bg: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
+    border: '#FCA5A5',
+    iconBg: '#E8453C',
+    iconColor: '#fff',
+    titleColor: '#7F1D1D',
+  },
+}
+
+function ResultCard({ tone, icon, title, description, children, onReset, resetLabel }) {
+  const t = TONES[tone] || TONES.neutral
+  return (
+    <div
+      style={{
+        background: t.bg,
+        border: `1px solid ${t.border}`,
+        borderRadius: 18,
+        padding: 24,
+        animation: 'verifyFadeIn 0.25s ease-out',
+      }}
+    >
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          background: t.iconBg,
+          color: t.iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 28,
+          fontWeight: 700,
+          margin: '0 auto 14px',
+          animation: 'verifyPop 0.35s ease-out',
+        }}
+      >
+        {icon}
+      </div>
+      <h3
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: t.titleColor,
+          textAlign: 'center',
+          margin: '0 0 6px',
+        }}
+      >
+        {title}
+      </h3>
+      {description && (
+        <p
+          style={{
+            fontSize: 13,
+            color: t.titleColor,
+            opacity: 0.8,
+            textAlign: 'center',
+            margin: '0 0 16px',
+            lineHeight: 1.5,
+          }}
+        >
+          {description}
+        </p>
+      )}
+      {children && (
+        <div
+          style={{
+            background: 'rgba(255,255,255,0.55)',
+            borderRadius: 12,
+            padding: '12px 14px',
+            marginTop: 14,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          {children}
+        </div>
+      )}
+      <button
+        onClick={onReset}
+        style={{
+          width: '100%',
+          marginTop: 18,
+          padding: '13px',
+          background: '#22181C',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 12,
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: 'pointer',
+          letterSpacing: 0.2,
+        }}
+      >
+        {resetLabel}
+      </button>
+    </div>
+  )
+}
+
+function ResultRow({ label, value, strong }) {
+  if (!value) return null
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        fontSize: 13,
+        gap: 12,
+      }}
+    >
+      <span style={{ color: '#8A8680', fontWeight: 500, flexShrink: 0 }}>{label}</span>
+      <span
+        style={{
+          color: '#22181C',
+          fontWeight: strong ? 700 : 500,
+          fontSize: strong ? 15 : 13,
+          textAlign: 'right',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {value}
+      </span>
+    </div>
   )
 }
 
