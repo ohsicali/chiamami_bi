@@ -174,12 +174,21 @@ export default function DiscountManager() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const [discounts, setDiscounts] = useState([])
   const [restaurants, setRestaurants] = useState([])
+  const [partnerIds, setPartnerIds] = useState(new Set()) // restaurant_ids that are active partners
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [filter, setFilter] = useState('all')
+  // Restaurant search inside the form
+  const [restSearch, setRestSearch] = useState('')
+  const [showRestDD, setShowRestDD] = useState(false)
+  // "Create partner" flow
+  const [addPartnerOpen, setAddPartnerOpen] = useState(false)
+  const [addPartnerSearch, setAddPartnerSearch] = useState('')
+  const [newPartner, setNewPartner] = useState(null) // { id, name } — restaurant that will be created as partner
+  const [pinPopup, setPinPopup] = useState(null)  // { name, pin } — shown after save
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
@@ -196,8 +205,8 @@ export default function DiscountManager() {
       supabase.from('discounts').select('*, restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
       supabase.from('restaurants').select('id, name').order('name'),
       supabase.from('discount_redemptions').select('discount_id, status'),
-    ]).then(([discRes, restRes, redRes]) => {
-      // Compute real counts per discount
+      supabase.from('restaurant_partners').select('restaurant_id').eq('is_active', true),
+    ]).then(([discRes, restRes, redRes, partRes]) => {
       const genMap = {}
       const usedMap = {}
       ;(redRes.data || []).forEach((r) => {
@@ -213,6 +222,7 @@ export default function DiscountManager() {
       }))
       setDiscounts(enriched)
       setRestaurants(restRes.data || [])
+      setPartnerIds(new Set((partRes.data || []).map((p) => p.restaurant_id)))
       setLoading(false)
     })
   }, [])
@@ -221,6 +231,11 @@ export default function DiscountManager() {
     setForm(EMPTY_FORM)
     setEditing(null)
     setSaveError(null)
+    setRestSearch('')
+    setShowRestDD(false)
+    setNewPartner(null)
+    setAddPartnerOpen(false)
+    setAddPartnerSearch('')
   }
 
   const handleEdit = (d) => {
@@ -246,10 +261,11 @@ export default function DiscountManager() {
   }
 
   const handleSave = async () => {
-    if (!form.restaurant_id || !form.title || !form.discount_value || !form.valid_until) return
+    const restId = form.restaurant_id || newPartner?.id
+    if (!restId || !form.title || !form.discount_value || !form.valid_until) return
     if (!editing) {
       const existing = discounts.find(
-        (d) => d.restaurant_id === form.restaurant_id && d.is_active && new Date(d.valid_until) > new Date()
+        (d) => d.restaurant_id === restId && d.is_active && new Date(d.valid_until) > new Date()
       )
       if (existing) {
         setSaveError(`${existing.restaurant?.name || 'Questo ristorante'} ha già uno sconto attivo. Disattiva o elimina quello esistente prima.`)
@@ -258,8 +274,26 @@ export default function DiscountManager() {
     }
     setSaving(true)
     setSaveError(null)
+
+    // If the user chose a non-partner restaurant, auto-create the partner with a new 6-digit PIN
+    let pendingPin = null
+    if (newPartner && !editing) {
+      const pin = String(Math.floor(100000 + Math.random() * 900000))
+      const { error: pErr } = await supabase.from('restaurant_partners').insert({
+        restaurant_id: newPartner.id,
+        pin_code: pin,
+        is_active: true,
+      })
+      if (!pErr) {
+        setPartnerIds((prev) => new Set([...prev, newPartner.id]))
+        pendingPin = { name: newPartner.name, pin }
+        // Also update restaurants column if it exists
+        await supabase.from('restaurants').update({ verify_pin: pin }).eq('id', newPartner.id).then(() => {})
+      }
+    }
+
     const payload = {
-      restaurant_id: form.restaurant_id,
+      restaurant_id: restId,
       title: form.title,
       description: form.description || null,
       discount_type: form.discount_type,
@@ -288,6 +322,7 @@ export default function DiscountManager() {
       else setDiscounts((p) => [result.data, ...p])
       setShowForm(false)
       resetForm()
+      if (pendingPin) setPinPopup(pendingPin)
     }
     setSaving(false)
   }
@@ -737,16 +772,131 @@ export default function DiscountManager() {
                 {/* Modal body */}
                 <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <FormField label="Ristorante">
-                    <select
-                      value={form.restaurant_id}
-                      onChange={(e) => setForm((f) => ({ ...f, restaurant_id: e.target.value }))}
-                      style={inputStyle}
-                    >
-                      <option value="">Seleziona...</option>
-                      {restaurants.map((r) => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
-                      ))}
-                    </select>
+                    {/* When editing, just show the name — can't change it */}
+                    {editing ? (
+                      <div style={{ ...inputStyle, color: '#1a1a1f', background: '#f9f9f9' }}>
+                        {restaurants.find((r) => r.id === form.restaurant_id)?.name || '—'}
+                      </div>
+                    ) : form.restaurant_id ? (
+                      /* Partner already selected */
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ ...inputStyle, flex: 1, color: '#1a1a1f', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
+                          {restaurants.find((r) => r.id === form.restaurant_id)?.name}
+                        </div>
+                        <button type="button" onClick={() => { setForm((f) => ({ ...f, restaurant_id: '' })); setRestSearch(''); setNewPartner(null) }} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
+                      </div>
+                    ) : newPartner ? (
+                      /* Non-partner selected — will be auto-created */
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ ...inputStyle, flex: 1, color: '#C4A265', display: 'flex', alignItems: 'center', gap: 6, background: '#fffbf0' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                          {newPartner.name}
+                          <span style={{ fontSize: 11, color: '#C4A265', background: '#fef3c7', borderRadius: 6, padding: '1px 7px', marginLeft: 4 }}>verrà aggiunto come partner</span>
+                        </div>
+                        <button type="button" onClick={() => { setNewPartner(null); setAddPartnerOpen(false) }} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
+                      </div>
+                    ) : (
+                      /* Search UI */
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="text"
+                          value={restSearch}
+                          onChange={(e) => { setRestSearch(e.target.value); setShowRestDD(true) }}
+                          onFocus={() => setShowRestDD(true)}
+                          placeholder="Cerca ristorante partner..."
+                          style={{ ...inputStyle, paddingLeft: 36 }}
+                          autoComplete="off"
+                        />
+                        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+
+                        {showRestDD && (
+                          <div style={{
+                            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                            background: '#fff', border: '1px solid #eee', borderRadius: 10,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4,
+                            maxHeight: 220, overflowY: 'auto',
+                          }}>
+                            {(() => {
+                              const q = restSearch.toLowerCase().trim()
+                              const partners = restaurants.filter(
+                                (r) => partnerIds.has(r.id) && (!q || r.name.toLowerCase().includes(q))
+                              )
+                              return partners.length > 0 ? (
+                                partners.map((r) => (
+                                  <div
+                                    key={r.id}
+                                    onClick={() => { setForm((f) => ({ ...f, restaurant_id: r.id })); setRestSearch(''); setShowRestDD(false) }}
+                                    style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#1a1a1f', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f5f5f5' }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                  >
+                                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
+                                    {r.name}
+                                  </div>
+                                ))
+                              ) : (
+                                <div style={{ padding: '12px 14px', color: '#999', fontSize: 13 }}>
+                                  {q ? `Nessun partner trovato per "${restSearch}"` : 'Nessun ristorante partner'}
+                                </div>
+                              )
+                            })()}
+                            <div
+                              onClick={() => { setShowRestDD(false); setAddPartnerOpen(true); setAddPartnerSearch(restSearch) }}
+                              style={{
+                                padding: '11px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                                color: '#C4A265', borderTop: '1px solid #f0f0f0',
+                                display: 'flex', alignItems: 'center', gap: 7,
+                                background: '#fffbf0',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = '#fef3c7')}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = '#fffbf0')}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                              Crea partner (ristorante non ancora partner)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Add-partner sub-panel */}
+                    {addPartnerOpen && !newPartner && (
+                      <div style={{ marginTop: 10, padding: 14, background: '#fffbf0', borderRadius: 10, border: '1px solid #fde68a' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#92400e', marginBottom: 10 }}>
+                          Seleziona il ristorante da aggiungere come partner:
+                        </div>
+                        <div style={{ position: 'relative', marginBottom: 8 }}>
+                          <input
+                            type="text"
+                            value={addPartnerSearch}
+                            onChange={(e) => setAddPartnerSearch(e.target.value)}
+                            placeholder="Cerca tra tutti i ristoranti..."
+                            style={{ ...inputStyle, paddingLeft: 32, fontSize: 13 }}
+                            autoFocus
+                            autoComplete="off"
+                          />
+                          <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        </div>
+                        <div style={{ maxHeight: 180, overflowY: 'auto', background: '#fff', borderRadius: 8, border: '1px solid #eee' }}>
+                          {restaurants
+                            .filter((r) => !partnerIds.has(r.id) && r.name.toLowerCase().includes(addPartnerSearch.toLowerCase().trim()))
+                            .slice(0, 30)
+                            .map((r) => (
+                              <div
+                                key={r.id}
+                                onClick={() => { setNewPartner({ id: r.id, name: r.name }); setAddPartnerOpen(false) }}
+                                style={{ padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: '#1a1a1f', borderBottom: '1px solid #f5f5f5' }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                              >
+                                {r.name}
+                              </div>
+                            ))}
+                        </div>
+                        <button type="button" onClick={() => setAddPartnerOpen(false)} style={{ marginTop: 8, fontSize: 12, color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}>Annulla</button>
+                      </div>
+                    )}
                   </FormField>
 
                   <FormField label="Titolo">
@@ -811,12 +961,13 @@ export default function DiscountManager() {
                     </FormField>
                   </div>
 
-                  <FormField label="Limite utilizzi">
+                  <FormField label="Max persone che possono attivarlo" hint="Lascia vuoto per illimitato">
                     <input
                       type="number"
                       value={form.max_redemptions}
                       onChange={(e) => setForm((f) => ({ ...f, max_redemptions: e.target.value }))}
-                      placeholder="Vuoto = illimitato"
+                      placeholder="Illimitato"
+                      min="1"
                       style={inputStyle}
                     />
                   </FormField>
@@ -930,6 +1081,65 @@ export default function DiscountManager() {
                     {saving ? 'Salvataggio...' : editing ? 'Salva modifiche' : 'Crea sconto'}
                   </button>
                 </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── PIN popup — shown after auto-creating a partner ── */}
+        <AnimatePresence>
+          {pinPopup && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setPinPopup(null)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 200,
+                background: 'rgba(26,26,31,0.6)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#fff', borderRadius: 18, border: '1px solid #eee',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.25)', padding: 28, maxWidth: 360, width: '100%',
+                  fontFamily: "'DM Sans', sans-serif", textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🎉</div>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: '0 0 6px' }}>
+                  Partner creato!
+                </h3>
+                <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
+                  <strong>{pinPopup.name}</strong> è ora un ristorante partner. Questo è il codice PIN per la pagina <strong>/verify</strong>:
+                </p>
+                <div style={{
+                  background: '#f9f9f9', border: '2px dashed #D1D5DB', borderRadius: 12, padding: '16px 20px',
+                  marginBottom: 20,
+                }}>
+                  <div style={{ fontSize: 11, color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>PIN di accesso</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: 8, color: '#1a1a1f', fontVariantNumeric: 'tabular-nums' }}>
+                    {pinPopup.pin}
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: '#999', margin: '0 0 20px', lineHeight: 1.5 }}>
+                  Condividi questo PIN con il ristorante — serve per accedere alla dashboard /verify e validare i QR degli utenti.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard?.writeText(pinPopup.pin).catch(() => {}); setPinPopup(null) }}
+                  style={{
+                    width: '100%', padding: '13px 0', borderRadius: 12,
+                    background: '#1a1a1f', border: 'none', color: '#fff',
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copia PIN e chiudi
+                </button>
               </motion.div>
             </motion.div>
           )}
@@ -1084,12 +1294,13 @@ export default function DiscountManager() {
 /* ------------------------------------------------------------------ */
 /*  Local helpers                                                      */
 /* ------------------------------------------------------------------ */
-function FormField({ label, children }) {
+function FormField({ label, hint, children }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#1a1a1f', marginBottom: 5 }}>
-        {label}
-      </label>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 5 }}>
+        <label style={{ fontSize: 11, fontWeight: 500, color: '#1a1a1f' }}>{label}</label>
+        {hint && <span style={{ fontSize: 10, color: '#999' }}>{hint}</span>}
+      </div>
       {children}
     </div>
   )
