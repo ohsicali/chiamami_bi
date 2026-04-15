@@ -824,20 +824,20 @@ function RestaurantHeader({ restaurant, onLogout }) {
 
   return (
     <>
-      {/* Brand bar — ChiamamiBi logo, shown above restaurant info on mobile.
+      {/* Brand bar — ChiamamiBi logo, taller with centered mark on mobile.
           Desktop already has DesktopNavbar (see App.jsx via desktop-nav-offset). */}
       <div
         className="md:hidden"
         style={{
           background: '#22181C',
-          padding: '10px 16px 0',
+          padding: '20px 16px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        <LogoFull height={18} />
+        <LogoFull height={28} />
       </div>
 
       {/* Mobile */}
@@ -1097,6 +1097,38 @@ function TabPlaceholder({ title, description }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  extractQrCode — normalizza il payload scansionato                  */
+/* ------------------------------------------------------------------ */
+// Il QR generato lato cliente codifica l'URL completo
+// (es. "https://chiamamibi.com/verify?code=BiSc-XXXXXXXX"), non il solo
+// qr_code. Questa funzione estrae il parametro `code` quando presente e
+// ritorna la stringa pulita da usare nella query Supabase.
+// Funziona anche se l'utente incolla direttamente il codice nel form
+// manuale (es. "BiSc-XXXXXXXX").
+function extractQrCode(raw) {
+  if (!raw) return ''
+  const trimmed = String(raw).trim()
+  if (!trimmed) return ''
+
+  // Prova a parsare come URL e leggere il query param ?code=
+  try {
+    const url = new URL(trimmed)
+    const code = url.searchParams.get('code')
+    if (code) return code.trim()
+  } catch {
+    // Not a URL — fall through
+  }
+
+  // Fallback regex: estrae ?code=... anche da stringhe che non sono URL
+  // completi (es. "/verify?code=BiSc-XXXX")
+  const match = trimmed.match(/[?&]code=([^&\s]+)/)
+  if (match) return decodeURIComponent(match[1]).trim()
+
+  // Altrimenti assume che sia già il qr_code nudo (es. inserimento manuale)
+  return trimmed
+}
+
+/* ------------------------------------------------------------------ */
 /*  Verifica QR tab — camera scanner (primary) + manual input fallback */
 /* ------------------------------------------------------------------ */
 function VerifyTab({ restaurant }) {
@@ -1114,7 +1146,7 @@ function VerifyTab({ restaurant }) {
   // Extracted so it can be triggered by both the camera (on scan) and the
   // manual-input submit form.
   const verifyCode = async (rawCode) => {
-    const trimmed = (rawCode || '').trim()
+    const trimmed = extractQrCode(rawCode)
     if (!trimmed || loading) return
     setLoading(true)
     try {
