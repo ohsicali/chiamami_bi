@@ -1220,15 +1220,23 @@ function VerifyTab({ restaurant }) {
         return
       }
 
-      // 5) Mark as redeemed
+      // 5) Mark as redeemed.
+      // Also persist the user's name on the row so the dashboard's activity
+      // feed can display it. Legacy rows created before the user_name column
+      // was populated on insert end up here with user_name IS NULL — we
+      // backfill them opportunistically at validation time.
       const userName = await fetchUserName(redemption.user_id)
+      const updatePayload = {
+        status: 'redeemed',
+        redeemed_at: new Date().toISOString(),
+        redeemed_by_restaurant: true,
+      }
+      if (!redemption.user_name && userName && userName !== 'Utente') {
+        updatePayload.user_name = userName
+      }
       const { error: uErr } = await supabase
         .from('discount_redemptions')
-        .update({
-          status: 'redeemed',
-          redeemed_at: new Date().toISOString(),
-          redeemed_by_restaurant: true,
-        })
+        .update(updatePayload)
         .eq('id', redemption.id)
 
       if (uErr) {
@@ -2811,7 +2819,32 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         }
 
         setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
-        setActivity(activityRes.status === 'fulfilled' ? (activityRes.value?.data || []) : [])
+
+        // Activity feed — enrich legacy rows (user_name NULL) by looking up
+        // the missing names from profiles in a single batch. Rows generated
+        // before the user_name backfill / insert-side capture would otherwise
+        // just show as "Validato sconto" with no customer name.
+        let activityRows = activityRes.status === 'fulfilled' ? (activityRes.value?.data || []) : []
+        const missing = activityRows.filter((r) => r.user_id && !r.user_name).map((r) => r.user_id)
+        const uniqueMissing = Array.from(new Set(missing))
+        if (uniqueMissing.length > 0) {
+          try {
+            const { data: profs } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', uniqueMissing)
+            const byId = new Map((profs || []).map((p) => [p.id, p.full_name]))
+            activityRows = activityRows.map((r) =>
+              r.user_name || !byId.has(r.user_id)
+                ? r
+                : { ...r, user_name: byId.get(r.user_id) }
+            )
+          } catch (e) {
+            // profiles lookup is best-effort; silent failure keeps the list usable
+            console.warn('activity name lookup failed', e)
+          }
+        }
+        if (!cancelled) setActivity(activityRows)
       } catch (e) {
         if (!cancelled) {
           console.error('dashboard load error', e)
