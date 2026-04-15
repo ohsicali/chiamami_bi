@@ -1767,23 +1767,23 @@ export default function RestaurantForm() {
             subtitle="PIN di accesso a /verify per il ristoratore"
             defaultOpen={false}
           >
-            <Field label="PIN Verify (4 cifre)">
+            <Field label="PIN Verify (6 cifre)">
               <input
                 type="text"
                 inputMode="numeric"
                 value={form.verify_pin}
                 onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, '').slice(0, 4)
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 6)
                   update('verify_pin', digits)
                 }}
-                maxLength={4}
-                pattern="[0-9]{4}"
-                placeholder="Es. 4821"
+                maxLength={6}
+                pattern="[0-9]{6}"
+                placeholder="Es. 482103"
                 className={inputClass()}
                 style={{ letterSpacing: 4, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
               />
               <p className="mt-1.5 text-xs text-secondary">
-                Il ristoratore usa questo PIN per accedere a <span className="font-semibold">/verify</span> e validare gli sconti dei clienti. Dev'essere <strong>univoco</strong> e di 4 cifre.
+                Il ristoratore usa questo PIN per accedere a <span className="font-semibold">/verify</span> e validare gli sconti dei clienti. Dev'essere <strong>univoco</strong> e di 6 cifre.
               </p>
             </Field>
           </CollapsibleSection>

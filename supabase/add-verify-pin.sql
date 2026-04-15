@@ -2,7 +2,7 @@
 -- /verify redesign — Step 1
 -- ========================================================================
 -- Aggiunge:
---   • restaurants.verify_pin  → PIN a 4 cifre assegnato dall'admin a ogni
+--   • restaurants.verify_pin  → PIN a 6 cifre assegnato dall'admin a ogni
 --     ristorante; l'unica credenziale necessaria per accedere all'area
 --     ristoratori.
 --   • verified_devices        → dispositivi ricordati via cookie per 365g.
@@ -14,12 +14,12 @@
 ALTER TABLE restaurants
   ADD COLUMN IF NOT EXISTS verify_pin text;
 
--- Vincolo: il PIN, se presente, deve essere esattamente 4 cifre
+-- Vincolo: il PIN, se presente, deve essere esattamente 6 cifre
 ALTER TABLE restaurants
   DROP CONSTRAINT IF EXISTS restaurants_verify_pin_format;
 ALTER TABLE restaurants
   ADD CONSTRAINT restaurants_verify_pin_format
-  CHECK (verify_pin IS NULL OR verify_pin ~ '^[0-9]{4}$');
+  CHECK (verify_pin IS NULL OR verify_pin ~ '^[0-9]{6}$');
 
 -- Indice per il lookup al login (filtrato sui non-null)
 CREATE INDEX IF NOT EXISTS idx_restaurants_verify_pin

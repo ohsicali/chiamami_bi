@@ -51,8 +51,10 @@ function deleteCookie(name) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PIN Input — 4 cifre, auto-focus, shake                            */
+/*  PIN Input — 6 cifre, auto-focus, shake                            */
 /* ------------------------------------------------------------------ */
+const PIN_LENGTH = 6
+
 function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
   const inputsRef = useRef([])
 
@@ -60,10 +62,10 @@ function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
     if (!/^\d?$/.test(c)) return
     const next = value.split('')
     next[i] = c
-    const joined = next.join('').slice(0, 4)
+    const joined = next.join('').slice(0, PIN_LENGTH)
     onChange(joined)
-    if (c && i < 3) inputsRef.current[i + 1]?.focus()
-    if (i === 3 && c && joined.replace(/\s/g, '').length === 4) {
+    if (c && i < PIN_LENGTH - 1) inputsRef.current[i + 1]?.focus()
+    if (i === PIN_LENGTH - 1 && c && joined.replace(/\s/g, '').length === PIN_LENGTH) {
       onComplete?.(joined)
     }
   }
@@ -74,28 +76,28 @@ function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
   }
   const handlePaste = (e) => {
     e.preventDefault()
-    const d = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4)
+    const d = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, PIN_LENGTH)
     onChange(d)
-    if (d.length === 4) {
-      inputsRef.current[3]?.focus()
+    if (d.length === PIN_LENGTH) {
+      inputsRef.current[PIN_LENGTH - 1]?.focus()
       onComplete?.(d)
     }
   }
 
   const box = desktop
-    ? { w: 56, h: 64, fs: 26, radius: 14 }
-    : { w: 52, h: 58, fs: 24, radius: 12 }
+    ? { w: 48, h: 60, fs: 24, radius: 12, gap: 8 }
+    : { w: 42, h: 54, fs: 22, radius: 10, gap: 6 }
 
   return (
     <div
       style={{
         display: 'flex',
-        gap: 8,
+        gap: box.gap,
         justifyContent: 'center',
         animation: shake ? 'verifyShake 0.4s' : 'none',
       }}
     >
-      {[0, 1, 2, 3].map((i) => {
+      {Array.from({ length: PIN_LENGTH }, (_, i) => i).map((i) => {
         const filled = Boolean(value[i])
         return (
           <input
@@ -327,7 +329,7 @@ export default function VerifyPage() {
   /* ---- Submit PIN ---- */
   const handleSubmit = async (overridePin) => {
     const pinToUse = (overridePin ?? pin).trim()
-    if (pinToUse.length !== 4 || submitting) return
+    if (pinToUse.length !== PIN_LENGTH || submitting) return
     if (!isSupabaseConfigured()) {
       setError('Servizio non disponibile')
       return
@@ -567,7 +569,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
 
           <button
             onClick={() => onSubmit()}
-            disabled={pin.length !== 4 || submitting}
+            disabled={pin.length !== PIN_LENGTH || submitting}
             style={{
               width: '100%',
               marginTop: 16,
@@ -702,7 +704,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
 
           <button
             onClick={() => onSubmit()}
-            disabled={pin.length !== 4 || submitting}
+            disabled={pin.length !== PIN_LENGTH || submitting}
             style={{
               width: '100%',
               marginTop: 20,
