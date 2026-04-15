@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { LogoFull } from '../../components/UI/Logo'
 
 const RESTAURANT_COLS = 'id, name, slug, address, city, category, cuisine_type, restaurant_photos(photo_url, thumb_url, sort_order)'
 
@@ -823,6 +824,22 @@ function RestaurantHeader({ restaurant, onLogout }) {
 
   return (
     <>
+      {/* Brand bar — ChiamamiBi logo, shown above restaurant info on mobile.
+          Desktop already has DesktopNavbar (see App.jsx via desktop-nav-offset). */}
+      <div
+        className="md:hidden"
+        style={{
+          background: '#22181C',
+          padding: '10px 16px 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <LogoFull height={18} />
+      </div>
+
       {/* Mobile */}
       <div
         className="md:hidden"
@@ -1080,9 +1097,10 @@ function TabPlaceholder({ title, description }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Verifica QR tab — input codice + validazione                      */
+/*  Verifica QR tab — camera scanner (primary) + manual input fallback */
 /* ------------------------------------------------------------------ */
 function VerifyTab({ restaurant }) {
+  const [mode, setMode] = useState('camera') // 'camera' | 'manual'
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null) // { status, data }
@@ -1091,15 +1109,14 @@ function VerifyTab({ restaurant }) {
   const reset = () => {
     setCode('')
     setResult(null)
-    setTimeout(() => inputRef.current?.focus(), 50)
   }
 
-  const handleSubmit = async (e) => {
-    e?.preventDefault?.()
-    const trimmed = code.trim()
+  // Extracted so it can be triggered by both the camera (on scan) and the
+  // manual-input submit form.
+  const verifyCode = async (rawCode) => {
+    const trimmed = (rawCode || '').trim()
     if (!trimmed || loading) return
     setLoading(true)
-
     try {
       // 1) Find redemption by qr_code
       const { data: redemption, error: rErr } = await supabase
@@ -1110,26 +1127,22 @@ function VerifyTab({ restaurant }) {
 
       if (rErr || !redemption) {
         setResult({ status: 'not_found' })
-        setLoading(false)
         return
       }
 
       // 2) Must belong to THIS restaurant
       if (redemption.discount?.restaurant_id !== restaurant.id) {
         setResult({ status: 'wrong_restaurant' })
-        setLoading(false)
         return
       }
 
       // 3) Already redeemed
       if (redemption.status === 'redeemed') {
-        // Fetch user_name separately (best-effort)
         const userName = await fetchUserName(redemption.user_id)
         setResult({
           status: 'already_redeemed',
           data: { ...redemption, user_name: userName },
         })
-        setLoading(false)
         return
       }
 
@@ -1140,7 +1153,6 @@ function VerifyTab({ restaurant }) {
           new Date(redemption.discount.valid_until) < new Date())
       if (isExpired) {
         setResult({ status: 'expired', data: redemption })
-        setLoading(false)
         return
       }
 
@@ -1157,7 +1169,6 @@ function VerifyTab({ restaurant }) {
 
       if (uErr) {
         setResult({ status: 'error', data: { message: 'Errore durante la validazione' } })
-        setLoading(false)
         return
       }
 
@@ -1171,23 +1182,38 @@ function VerifyTab({ restaurant }) {
         status: 'success',
         data: { ...redemption, user_name: userName },
       })
-      setLoading(false)
     } catch (err) {
       console.error('verify error:', err)
       setResult({ status: 'error', data: { message: 'Errore di rete, riprova' } })
+    } finally {
       setLoading(false)
     }
   }
 
-  // Focus input on mount
+  const handleManualSubmit = (e) => {
+    e?.preventDefault?.()
+    verifyCode(code)
+  }
+
+  // Focus input when switching to manual mode
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    if (mode === 'manual' && !result) {
+      setTimeout(() => inputRef.current?.focus(), 50)
+    }
+  }, [mode, result])
 
   return (
     <div style={{ padding: '24px 16px 80px', maxWidth: 520, margin: '0 auto' }}>
-      {!result && (
-        <form onSubmit={handleSubmit}>
+      {!result && mode === 'camera' && (
+        <QrCameraScanner
+          loading={loading}
+          onScan={(scanned) => verifyCode(scanned)}
+          onSwitchToManual={() => setMode('manual')}
+        />
+      )}
+
+      {!result && mode === 'manual' && (
+        <form onSubmit={handleManualSubmit}>
           <div
             style={{
               fontSize: 13,
@@ -1249,9 +1275,32 @@ function VerifyTab({ restaurant }) {
             {loading ? 'Verifica in corso…' : 'Verifica sconto'}
           </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              setCode('')
+              setMode('camera')
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              marginTop: 14,
+              padding: '10px',
+              background: 'transparent',
+              border: 'none',
+              color: '#22181C',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            ← Usa la fotocamera
+          </button>
+
           <p
             style={{
-              marginTop: 20,
+              marginTop: 16,
               fontSize: 11,
               color: '#8A8680',
               textAlign: 'center',
@@ -1265,6 +1314,315 @@ function VerifyTab({ restaurant }) {
       )}
 
       {result && <VerifyResult result={result} onReset={reset} />}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  QrCameraScanner — camera preview + live QR detection              */
+/* ------------------------------------------------------------------ */
+function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
+  const videoRef = useRef(null)
+  const scannerRef = useRef(null)
+  const lastScanRef = useRef({ code: null, at: 0 })
+  const onScanRef = useRef(onScan)
+  const [status, setStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
+  const [errorMsg, setErrorMsg] = useState(null)
+
+  // Keep the ref pointing at the latest onScan without retriggering setup
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
+
+  // Pause the scanner while the verification request is in-flight to avoid
+  // re-triggering the same code multiple times.
+  useEffect(() => {
+    const s = scannerRef.current
+    if (!s) return
+    if (loading) {
+      try {
+        s.stop()
+      } catch {
+        // ignore
+      }
+    } else if (status === 'running') {
+      s.start().catch(() => {})
+    }
+  }, [loading, status])
+
+  useEffect(() => {
+    let cancelled = false
+    let scanner = null
+
+    async function start() {
+      // Dynamic import keeps the scanner code out of the main bundle
+      let QrScanner
+      try {
+        const mod = await import('qr-scanner')
+        QrScanner = mod.default
+      } catch (e) {
+        console.error('Failed to load qr-scanner', e)
+        if (!cancelled) {
+          setStatus('error')
+          setErrorMsg('Impossibile caricare lo scanner')
+        }
+        return
+      }
+
+      if (cancelled || !videoRef.current) return
+
+      // Ensure a camera exists before asking for permission — nicer UX
+      try {
+        const hasCamera = await QrScanner.hasCamera()
+        if (!hasCamera) {
+          if (!cancelled) setStatus('no-camera')
+          return
+        }
+      } catch {
+        // hasCamera can throw on older browsers — proceed and let the real
+        // start call decide
+      }
+
+      scanner = new QrScanner(
+        videoRef.current,
+        (res) => {
+          const scanned = typeof res === 'string' ? res : res?.data
+          if (!scanned) return
+          // Debounce: ignore rapid-fire duplicates for 2.5s
+          const now = Date.now()
+          if (lastScanRef.current.code === scanned && now - lastScanRef.current.at < 2500) {
+            return
+          }
+          lastScanRef.current = { code: scanned, at: now }
+          onScanRef.current?.(scanned)
+        },
+        {
+          preferredCamera: 'environment',
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          maxScansPerSecond: 5,
+        },
+      )
+      scannerRef.current = scanner
+
+      try {
+        await scanner.start()
+        if (!cancelled) setStatus('running')
+      } catch (e) {
+        console.error('Camera start failed', e)
+        if (cancelled) return
+        const msg = String(e?.message || e?.name || '').toLowerCase()
+        if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
+          setStatus('denied')
+        } else if (msg.includes('notfound') || msg.includes('no camera')) {
+          setStatus('no-camera')
+        } else {
+          setStatus('error')
+          setErrorMsg(e?.message || 'Impossibile avviare la fotocamera')
+        }
+      }
+    }
+
+    start()
+
+    return () => {
+      cancelled = true
+      if (scannerRef.current) {
+        try {
+          scannerRef.current.stop()
+          scannerRef.current.destroy()
+        } catch {
+          // ignore
+        }
+        scannerRef.current = null
+      }
+    }
+    // Run setup only once per mount — onScan is accessed via ref
+  }, [])
+
+  const canShowVideo = status === 'starting' || status === 'running'
+
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 13,
+          color: '#8A8680',
+          marginBottom: 10,
+          textAlign: 'center',
+        }}
+      >
+        Inquadra il QR code mostrato dal cliente
+      </div>
+
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '1 / 1',
+          background: '#22181C',
+          borderRadius: 14,
+          overflow: 'hidden',
+          border: '2px solid #E8E0D4',
+        }}
+      >
+        {canShowVideo && (
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        )}
+
+        {status === 'starting' && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: 12,
+              background: 'rgba(34,24,28,0.85)',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: '3px solid rgba(255,255,255,0.2)',
+                  borderTopColor: '#fff',
+                  borderRadius: '50%',
+                  margin: '0 auto 8px',
+                  animation: 'verifySpin 0.8s linear infinite',
+                }}
+              />
+              Avvio fotocamera…
+            </div>
+          </div>
+        )}
+
+        {status === 'denied' && (
+          <CameraFallbackMessage
+            icon="🚫"
+            title="Fotocamera bloccata"
+            description="Autorizza l'accesso alla fotocamera nelle impostazioni del browser, oppure usa l'inserimento manuale."
+          />
+        )}
+
+        {status === 'no-camera' && (
+          <CameraFallbackMessage
+            icon="📷"
+            title="Nessuna fotocamera rilevata"
+            description="Questo dispositivo non espone una fotocamera utilizzabile. Inserisci il codice manualmente."
+          />
+        )}
+
+        {status === 'error' && (
+          <CameraFallbackMessage
+            icon="⚠️"
+            title="Errore fotocamera"
+            description={errorMsg || 'Impossibile avviare la fotocamera. Usa l\'inserimento manuale.'}
+          />
+        )}
+
+        {loading && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(34,24,28,0.85)',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: '3px solid rgba(255,255,255,0.2)',
+                  borderTopColor: '#fff',
+                  borderRadius: '50%',
+                  margin: '0 auto 8px',
+                  animation: 'verifySpin 0.8s linear infinite',
+                }}
+              />
+              Verifica in corso…
+            </div>
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={onSwitchToManual}
+        style={{
+          display: 'block',
+          width: '100%',
+          marginTop: 16,
+          padding: '14px',
+          background: 'transparent',
+          border: '1px solid #E8E0D4',
+          borderRadius: 14,
+          color: '#22181C',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer',
+        }}
+      >
+        Inserisci il codice manualmente
+      </button>
+
+      <p
+        style={{
+          marginTop: 12,
+          fontSize: 11,
+          color: '#8A8680',
+          textAlign: 'center',
+          lineHeight: 1.5,
+        }}
+      >
+        Il riconoscimento avviene automaticamente. Tieni il QR del cliente
+        inquadrato e a fuoco.
+      </p>
+    </div>
+  )
+}
+
+function CameraFallbackMessage({ icon, title, description }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        color: '#fff',
+        textAlign: 'center',
+        background: 'rgba(34,24,28,0.95)',
+      }}
+    >
+      <div style={{ fontSize: 36, marginBottom: 10 }}>{icon}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{title}</div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+        {description}
+      </div>
     </div>
   )
 }
@@ -1547,17 +1905,17 @@ function ResultRow({ label, value, strong }) {
 /* ------------------------------------------------------------------ */
 function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   const [stats, setStats] = useState(null)
+  const [statsError, setStatsError] = useState(null)
   const [discount, setDiscount] = useState(null)
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       setLoading(true)
-      setError(null)
+      setStatsError(null)
       try {
         // 1) Stats via RPC
         const statsPromise = supabase.rpc('verify_dashboard_stats', {
@@ -1584,7 +1942,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
           .order('generated_at', { ascending: false })
           .limit(10)
 
-        const [statsRes, discountRes, activityRes] = await Promise.all([
+        const [statsRes, discountRes, activityRes] = await Promise.allSettled([
           statsPromise,
           discountPromise,
           activityPromise,
@@ -1592,23 +1950,31 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
 
         if (cancelled) return
 
-        if (statsRes.data?.error === 'unauthorized') {
-          // Token invalid — force re-login
+        // Stats — resilient: if the RPC isn't deployed yet or errors out,
+        // fall back to the subset we can compute client-side (redemptions)
+        // so the dashboard still loads instead of showing a blocking error.
+        const statsValue = statsRes.status === 'fulfilled' ? statsRes.value : null
+        if (statsValue?.data?.error === 'unauthorized') {
           onSessionExpired?.()
           return
         }
-        if (statsRes.error) {
-          setError('Impossibile caricare le statistiche')
-          console.error('stats error', statsRes.error)
+        if (statsRes.status === 'fulfilled' && !statsValue?.error && statsValue?.data) {
+          setStats(statsValue.data)
         } else {
-          setStats(statsRes.data)
+          const reason = statsRes.status === 'rejected' ? statsRes.reason : statsValue?.error
+          console.error('stats error', reason)
+          setStatsError('Alcune statistiche non sono disponibili')
+          // Fallback stats derived from activity + what we know
+          setStats(buildFallbackStats(activityRes.status === 'fulfilled' ? activityRes.value?.data : null))
         }
-        setDiscount(discountRes.data || null)
-        setActivity(activityRes.data || [])
+
+        setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
+        setActivity(activityRes.status === 'fulfilled' ? (activityRes.value?.data || []) : [])
       } catch (e) {
         if (!cancelled) {
           console.error('dashboard load error', e)
-          setError('Errore di rete')
+          setStatsError('Errore di rete')
+          setStats(buildFallbackStats(null))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -1639,34 +2005,42 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
     )
   }
 
-  if (error) {
-    return (
-      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: 14, color: '#E8453C', fontWeight: 600, marginBottom: 6 }}>{error}</div>
-        <div style={{ fontSize: 12, color: '#8A8680', marginBottom: 16 }}>
-          Riprova tra qualche istante.
-        </div>
-        <button
-          onClick={() => setReloadKey((k) => k + 1)}
-          style={{
-            padding: '10px 20px',
-            background: '#22181C',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          Riprova
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div style={{ padding: '20px 16px 80px', maxWidth: 1100, margin: '0 auto' }}>
+      {statsError && (
+        <div
+          style={{
+            background: '#FEF3C7',
+            border: '1px solid #FCD34D',
+            borderRadius: 10,
+            padding: '10px 14px',
+            marginBottom: 16,
+            fontSize: 12,
+            color: '#92400E',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <span>⚠ {statsError}</span>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            style={{
+              background: 'transparent',
+              border: '1px solid #FCD34D',
+              color: '#92400E',
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '4px 10px',
+              borderRadius: 6,
+              cursor: 'pointer',
+            }}
+          >
+            Riprova
+          </button>
+        </div>
+      )}
       <StatGrid stats={stats} />
       <div className="verify-dashboard-main">
         <div className="verify-dashboard-col">
@@ -1679,6 +2053,33 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
       </div>
     </div>
   )
+}
+
+function buildFallbackStats(activityData) {
+  const list = Array.isArray(activityData) ? activityData : []
+  const now = Date.now()
+  const dayMs = 24 * 60 * 60 * 1000
+  const gen30 = list.filter(
+    (r) => r.generated_at && now - new Date(r.generated_at).getTime() <= 30 * dayMs,
+  ).length
+  const used30 = list.filter(
+    (r) =>
+      r.status === 'redeemed' &&
+      r.redeemed_at &&
+      now - new Date(r.redeemed_at).getTime() <= 30 * dayMs,
+  ).length
+  const usedTotal = list.filter((r) => r.status === 'redeemed').length
+  return {
+    views_30d: 0,
+    views_7d: 0,
+    views_today: 0,
+    saves_total: 0,
+    saves_30d: 0,
+    redemptions_total: list.length,
+    redemptions_generated_30d: gen30,
+    redemptions_used_30d: used30,
+    redemptions_used_total: usedTotal,
+  }
 }
 
 function StatGrid({ stats }) {
