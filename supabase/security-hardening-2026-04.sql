@@ -64,34 +64,63 @@ CREATE TRIGGER prevent_self_admin_escalation
 -- Revoca SELECT globale (rimane DEFAULT non elencato → nessun accesso)
 REVOKE SELECT ON public.profiles FROM anon, authenticated;
 
--- Anon può leggere solo l'info pubblica minima (per recensioni, activity feed)
-GRANT SELECT (
-  id,
-  full_name,
-  avatar_url,
-  created_at,
-  updated_at,
-  is_admin
-) ON public.profiles TO anon;
+-- Calcola dinamicamente le colonne realmente presenti in profiles e
+-- costruisci i GRANT solo sulle colonne sicure che esistono. Questo rende
+-- lo script idempotente anche su DB con schema leggermente diverso
+-- (es. senza updated_at).
+DO $$
+DECLARE
+  anon_cols    text[] := ARRAY['id','full_name','avatar_url','created_at','updated_at','is_admin'];
+  auth_cols    text[] := ARRAY['id','full_name','avatar_url','created_at','updated_at','is_admin','email','recovery_email'];
+  insert_cols  text[] := ARRAY['id','full_name','avatar_url','email'];
+  update_cols  text[] := ARRAY['full_name','avatar_url','email','recovery_email'];
+  existing     text;
+BEGIN
+  -- Filtra gli array tenendo solo le colonne che esistono davvero
+  SELECT string_agg(quote_ident(c), ', ')
+    INTO existing
+    FROM unnest(anon_cols) c
+    WHERE EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='profiles' AND column_name=c
+    );
+  IF existing IS NOT NULL THEN
+    EXECUTE format('GRANT SELECT (%s) ON public.profiles TO anon', existing);
+  END IF;
 
--- Authenticated può leggere anche email/recovery_email (ma solo della propria
--- riga grazie alla RLS che filtra per auth.uid()). Comunque recovery_otp*
--- restano invisibili via PostgREST — accessibili solo via service_role
--- (le Vercel functions recovery-otp.js + verify-recovery-otp.js).
-GRANT SELECT (
-  id,
-  full_name,
-  avatar_url,
-  created_at,
-  updated_at,
-  is_admin,
-  email,
-  recovery_email
-) ON public.profiles TO authenticated;
+  SELECT string_agg(quote_ident(c), ', ')
+    INTO existing
+    FROM unnest(auth_cols) c
+    WHERE EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='profiles' AND column_name=c
+    );
+  IF existing IS NOT NULL THEN
+    EXECUTE format('GRANT SELECT (%s) ON public.profiles TO authenticated', existing);
+  END IF;
 
--- INSERT/UPDATE granularità colonne — no su is_admin, no su recovery_otp
-GRANT INSERT (id, full_name, avatar_url, email) ON public.profiles TO authenticated;
-GRANT UPDATE (full_name, avatar_url, email, recovery_email) ON public.profiles TO authenticated;
+  SELECT string_agg(quote_ident(c), ', ')
+    INTO existing
+    FROM unnest(insert_cols) c
+    WHERE EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='profiles' AND column_name=c
+    );
+  IF existing IS NOT NULL THEN
+    EXECUTE format('GRANT INSERT (%s) ON public.profiles TO authenticated', existing);
+  END IF;
+
+  SELECT string_agg(quote_ident(c), ', ')
+    INTO existing
+    FROM unnest(update_cols) c
+    WHERE EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='profiles' AND column_name=c
+    );
+  IF existing IS NOT NULL THEN
+    EXECUTE format('GRANT UPDATE (%s) ON public.profiles TO authenticated', existing);
+  END IF;
+END $$;
 
 -- Admin keeps full column access (granted by ALL on profiles via role membership
 -- if configured); the SECURITY DEFINER is_admin() bypass still works in RPCs.
