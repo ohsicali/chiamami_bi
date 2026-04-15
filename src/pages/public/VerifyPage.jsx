@@ -546,6 +546,10 @@ export default function VerifyPage() {
           flex-direction: column;
           gap: 16px;
         }
+        .verify-cal-grid { flex-direction: column; }
+        @media (min-width: 640px) {
+          .verify-cal-grid { flex-direction: row; }
+        }
       `}</style>
       {body}
     </>
@@ -2142,8 +2146,382 @@ function ResultRow({ label, value, strong }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Range picker — 7g / 30g / 365g / Personalizzato                    */
+/* ------------------------------------------------------------------ */
+function buildPresetRange(kind) {
+  const to = new Date()
+  const from = new Date()
+  if (kind === '7d') {
+    from.setDate(from.getDate() - 7)
+    from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 7 giorni' }
+  }
+  if (kind === '30d') {
+    from.setDate(from.getDate() - 30)
+    from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 30 giorni' }
+  }
+  if (kind === '365d') {
+    from.setDate(from.getDate() - 365)
+    from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 12 mesi' }
+  }
+  return null
+}
+
+function formatShortDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+}
+
+function RangePicker({ range, onChange }) {
+  const [showCalendar, setShowCalendar] = useState(false)
+  const presets = [
+    { kind: '7d', label: '7 gg' },
+    { kind: '30d', label: '30 gg' },
+    { kind: '365d', label: '365 gg' },
+  ]
+  const isCustom = range?.kind === 'custom'
+  const customLabel = isCustom
+    ? `${formatShortDate(range.from)} – ${formatShortDate(range.to)}`
+    : 'Personalizzato'
+
+  return (
+    <>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            padding: 4,
+            background: '#F5F1EA',
+            borderRadius: 12,
+            border: '1px solid #E8E0D4',
+          }}
+        >
+          {presets.map((p) => {
+            const active = range?.kind === p.kind
+            return (
+              <button
+                key={p.kind}
+                onClick={() => onChange(buildPresetRange(p.kind))}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: active ? '#22181C' : 'transparent',
+                  color: active ? '#fff' : '#22181C',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  minWidth: 52,
+                }}
+              >
+                {p.label}
+              </button>
+            )
+          })}
+        </div>
+        <button
+          onClick={() => setShowCalendar(true)}
+          style={{
+            padding: '9px 14px',
+            borderRadius: 10,
+            border: isCustom ? '1px solid #22181C' : '1px solid #E8E0D4',
+            background: isCustom ? '#22181C' : '#fff',
+            color: isCustom ? '#fff' : '#22181C',
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'all 0.18s ease',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+          {customLabel}
+        </button>
+      </div>
+      {showCalendar && (
+        <CalendarRangeModal
+          initialFrom={range?.from}
+          initialTo={range?.to}
+          onClose={() => setShowCalendar(false)}
+          onApply={(from, to) => {
+            const f = new Date(from); f.setHours(0, 0, 0, 0)
+            const t = new Date(to); t.setHours(23, 59, 59, 999)
+            onChange({
+              kind: 'custom',
+              from: f,
+              to: t,
+              label: `${formatShortDate(f)} – ${formatShortDate(t)}`,
+            })
+            setShowCalendar(false)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Calendar modal — two-month range picker                            */
+/* ------------------------------------------------------------------ */
+const WEEKDAYS_IT = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+const MONTHS_IT = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+]
+
+function startOfMonth(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), 1)
+  return x
+}
+function sameDay(a, b) {
+  if (!a || !b) return false
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+function dayTs(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
+  const first = startOfMonth(monthDate)
+  // Monday as first day of week
+  const jsDay = first.getDay() // 0=Sun..6=Sat
+  const lead = jsDay === 0 ? 6 : jsDay - 1
+  const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(new Date(first.getFullYear(), first.getMonth(), d))
+  }
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  const fromTs = from ? dayTs(from) : null
+  const toTs = to ? dayTs(to) : null
+  const hoverTs = hover ? dayTs(hover) : null
+  const rangeEnd = toTs ?? (fromTs && hoverTs && hoverTs > fromTs ? hoverTs : null)
+  const rangeStart = fromTs && rangeEnd ? Math.min(fromTs, rangeEnd) : fromTs
+  const rangeStop = fromTs && rangeEnd ? Math.max(fromTs, rangeEnd) : null
+
+  return (
+    <div style={{ flex: 1 }}>
+      <div
+        style={{
+          textAlign: 'center',
+          fontSize: 13,
+          fontWeight: 700,
+          color: '#22181C',
+          marginBottom: 10,
+        }}
+      >
+        {MONTHS_IT[first.getMonth()]} {first.getFullYear()}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
+        {WEEKDAYS_IT.map((w, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: 10, color: '#8A8680', fontWeight: 600 }}>
+            {w}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {cells.map((c, i) => {
+          if (!c) return <div key={i} />
+          const ts = dayTs(c)
+          const isFrom = fromTs === ts
+          const isTo = toTs === ts
+          const inRange = rangeStart && rangeStop && ts >= rangeStart && ts <= rangeStop
+          const isFuture = ts > dayTs(new Date())
+          const isEdge = isFrom || isTo
+          const bg = isEdge ? '#22181C' : inRange ? '#F5E6E4' : 'transparent'
+          const color = isEdge ? '#fff' : isFuture ? '#D0C8BD' : '#22181C'
+          return (
+            <button
+              key={i}
+              disabled={isFuture}
+              onClick={() => onPick(c)}
+              onMouseEnter={() => onHover(c)}
+              style={{
+                aspectRatio: '1',
+                minHeight: 32,
+                border: 'none',
+                background: bg,
+                color,
+                fontSize: 12,
+                fontWeight: isEdge ? 700 : 500,
+                borderRadius: 8,
+                cursor: isFuture ? 'not-allowed' : 'pointer',
+                opacity: isFuture ? 0.5 : 1,
+                transition: 'background 0.12s ease',
+              }}
+            >
+              {c.getDate()}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
+  const [leftMonth, setLeftMonth] = useState(() => {
+    const base = initialFrom ? new Date(initialFrom) : new Date()
+    base.setDate(1)
+    base.setMonth(base.getMonth() - 1)
+    return base
+  })
+  const [from, setFrom] = useState(initialFrom ? new Date(initialFrom) : null)
+  const [to, setTo] = useState(initialTo ? new Date(initialTo) : null)
+  const [hover, setHover] = useState(null)
+
+  const rightMonth = new Date(leftMonth.getFullYear(), leftMonth.getMonth() + 1, 1)
+
+  function handlePick(d) {
+    if (!from || (from && to)) {
+      setFrom(d)
+      setTo(null)
+      return
+    }
+    if (d < from) {
+      setTo(from)
+      setFrom(d)
+    } else {
+      setTo(d)
+    }
+  }
+
+  const canApply = from && to
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 150,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        animation: 'verifyFadeIn 0.18s ease-out',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#fff',
+          borderRadius: 20,
+          padding: 20,
+          width: '100%',
+          maxWidth: 640,
+          maxHeight: '92vh',
+          overflow: 'auto',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          animation: 'verifyFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#22181C' }}>Seleziona periodo</div>
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#8A8680', padding: 4 }}
+            aria-label="Chiudi"
+          >
+            ×
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <button
+            onClick={() => setLeftMonth(new Date(leftMonth.getFullYear(), leftMonth.getMonth() - 1, 1))}
+            style={{ background: '#F5F1EA', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14, color: '#22181C' }}
+            aria-label="Mese precedente"
+          >
+            ‹
+          </button>
+          <div style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>
+            {from ? formatShortDate(from) : '—'} → {to ? formatShortDate(to) : '—'}
+          </div>
+          <button
+            onClick={() => setLeftMonth(new Date(leftMonth.getFullYear(), leftMonth.getMonth() + 1, 1))}
+            style={{ background: '#F5F1EA', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14, color: '#22181C' }}
+            aria-label="Mese successivo"
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="verify-cal-grid" style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+          <MonthView monthDate={leftMonth} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
+          <MonthView monthDate={rightMonth} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => { setFrom(null); setTo(null); setHover(null) }}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 10,
+              border: '1px solid #E8E0D4',
+              background: '#fff',
+              color: '#22181C',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Azzera
+          </button>
+          <button
+            disabled={!canApply}
+            onClick={() => onApply(from, to)}
+            style={{
+              padding: '9px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: canApply ? '#E8453C' : '#F5F1EA',
+              color: canApply ? '#fff' : '#8A8680',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: canApply ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Applica
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
 /* ------------------------------------------------------------------ */
+function defaultRange() {
+  const to = new Date()
+  const from = new Date()
+  from.setDate(from.getDate() - 30)
+  from.setHours(0, 0, 0, 0)
+  return { kind: '30d', from, to, label: 'Ultimi 30 giorni' }
+}
+
 function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   const [stats, setStats] = useState(null)
   const [statsError, setStatsError] = useState(null)
@@ -2151,6 +2529,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
+  const [range, setRange] = useState(defaultRange)
 
   useEffect(() => {
     let cancelled = false
@@ -2158,10 +2537,12 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
       setLoading(true)
       setStatsError(null)
       try {
-        // 1) Stats via RPC
-        const statsPromise = supabase.rpc('verify_dashboard_stats', {
+        // 1) Stats via ranged RPC
+        const statsPromise = supabase.rpc('verify_dashboard_stats_range', {
           p_restaurant_id: restaurant.id,
           p_device_token: deviceToken,
+          p_from: range.from.toISOString(),
+          p_to: range.to.toISOString(),
         })
 
         // 2) Active discount (public read)
@@ -2212,8 +2593,11 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
               ? `${reason.code}${reason.message ? ' — ' + reason.message : ''}`
               : reason?.message || (typeof reason === 'string' ? reason : 'errore sconosciuto')
           setStatsError(`Statistiche non disponibili: ${detail}`)
-          // Fallback stats derived from activity + what we know
-          setStats(buildFallbackStats(activityRes.status === 'fulfilled' ? activityRes.value?.data : null))
+          // Fallback stats derived from activity within the selected range
+          setStats(buildFallbackStats(
+            activityRes.status === 'fulfilled' ? activityRes.value?.data : null,
+            range,
+          ))
         }
 
         setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
@@ -2222,7 +2606,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         if (!cancelled) {
           console.error('dashboard load error', e)
           setStatsError('Errore di rete')
-          setStats(buildFallbackStats(null))
+          setStats(buildFallbackStats(null, range))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -2232,7 +2616,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
     return () => {
       cancelled = true
     }
-  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired])
+  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired, range])
 
   if (loading) {
     return (
@@ -2289,11 +2673,12 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
           </button>
         </div>
       )}
-      <StatGrid stats={stats} />
+      <RangePicker range={range} onChange={setRange} />
+      <StatGrid stats={stats} range={range} />
       <div className="verify-dashboard-main">
         <div className="verify-dashboard-col">
           {discount && <ActiveDiscountCard discount={discount} />}
-          <FunnelCard stats={stats} />
+          <FunnelCard stats={stats} range={range} />
         </div>
         <div className="verify-dashboard-col">
           <ActivityList activity={activity} />
@@ -2303,60 +2688,58 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   )
 }
 
-function buildFallbackStats(activityData) {
+function buildFallbackStats(activityData, range) {
   const list = Array.isArray(activityData) ? activityData : []
-  const now = Date.now()
-  const dayMs = 24 * 60 * 60 * 1000
-  const gen30 = list.filter(
-    (r) => r.generated_at && now - new Date(r.generated_at).getTime() <= 30 * dayMs,
-  ).length
-  const used30 = list.filter(
-    (r) =>
-      r.status === 'redeemed' &&
-      r.redeemed_at &&
-      now - new Date(r.redeemed_at).getTime() <= 30 * dayMs,
-  ).length
+  const fromTs = range?.from ? new Date(range.from).getTime() : 0
+  const toTs = range?.to ? new Date(range.to).getTime() : Date.now()
+  const inRange = (iso) => {
+    if (!iso) return false
+    const t = new Date(iso).getTime()
+    return t >= fromTs && t <= toTs
+  }
+  const gen = list.filter((r) => inRange(r.generated_at)).length
+  const used = list.filter((r) => r.status === 'redeemed' && inRange(r.redeemed_at)).length
   const usedTotal = list.filter((r) => r.status === 'redeemed').length
   return {
-    views_30d: 0,
-    views_7d: 0,
-    views_today: 0,
+    views: 0,
+    saves: 0,
+    redemptions_generated: gen,
+    redemptions_used: used,
+    views_total: 0,
     saves_total: 0,
-    saves_30d: 0,
     redemptions_total: list.length,
-    redemptions_generated_30d: gen30,
-    redemptions_used_30d: used30,
     redemptions_used_total: usedTotal,
   }
 }
 
-function StatGrid({ stats }) {
+function StatGrid({ stats, range }) {
   if (!stats) return null
+  const rangeLabel = range?.label || 'Periodo selezionato'
   const cards = [
     {
       label: 'Visualizzazioni',
-      value: stats.views_30d || 0,
-      sublabel: `${stats.views_7d || 0} negli ultimi 7 gg`,
+      value: stats.views || 0,
+      sublabel: `${stats.views_total || 0} in totale`,
       icon: '👁',
       color: '#6366F1',
     },
     {
       label: 'Salvati',
-      value: stats.saves_total || 0,
-      sublabel: `+${stats.saves_30d || 0} negli ultimi 30 gg`,
+      value: stats.saves || 0,
+      sublabel: `${stats.saves_total || 0} in totale`,
       icon: '♥',
       color: '#EC4899',
     },
     {
       label: 'Sconti generati',
-      value: stats.redemptions_generated_30d || 0,
-      sublabel: 'Ultimi 30 giorni',
+      value: stats.redemptions_generated || 0,
+      sublabel: rangeLabel,
       icon: '✦',
       color: '#F59E0B',
     },
     {
       label: 'Sconti usati',
-      value: stats.redemptions_used_30d || 0,
+      value: stats.redemptions_used || 0,
       sublabel: `${stats.redemptions_used_total || 0} in totale`,
       icon: '✓',
       color: '#10B981',
@@ -2486,15 +2869,16 @@ function ActiveDiscountCard({ discount }) {
   )
 }
 
-function FunnelCard({ stats }) {
+function FunnelCard({ stats, range }) {
   if (!stats) return null
   const steps = [
-    { label: 'Visualizzazioni', value: stats.views_30d || 0, color: '#6366F1' },
-    { label: 'Salvati', value: stats.saves_30d || 0, color: '#EC4899' },
-    { label: 'Sconti generati', value: stats.redemptions_generated_30d || 0, color: '#F59E0B' },
-    { label: 'Sconti usati', value: stats.redemptions_used_30d || 0, color: '#10B981' },
+    { label: 'Visualizzazioni', value: stats.views || 0, color: '#6366F1' },
+    { label: 'Salvati', value: stats.saves || 0, color: '#EC4899' },
+    { label: 'Sconti generati', value: stats.redemptions_generated || 0, color: '#F59E0B' },
+    { label: 'Sconti usati', value: stats.redemptions_used || 0, color: '#10B981' },
   ]
   const max = Math.max(...steps.map((s) => s.value), 1)
+  const funnelLabel = range?.label ? `Funnel — ${range.label}` : 'Funnel'
 
   return (
     <div
@@ -2516,7 +2900,7 @@ function FunnelCard({ stats }) {
           marginBottom: 12,
         }}
       >
-        Funnel ultimi 30 giorni
+        {funnelLabel}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {steps.map((s) => {
