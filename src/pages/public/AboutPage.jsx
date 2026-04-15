@@ -158,7 +158,7 @@ export default function AboutPage() {
               fontSize: 15, color: 'rgba(255,255,255,0.4)',
               fontWeight: 500, textAlign: 'center', letterSpacing: 0.5,
             }}>
-              La guida che non sapevi di volere
+              La guida food di Torino, raccontata come a un'amica
             </motion.p>
 
             {/* Stats row */}
@@ -225,15 +225,15 @@ export default function AboutPage() {
               <p style={{
                 fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
                 fontSize: 26, fontWeight: 700, color: '#22181C',
-                lineHeight: 1.9, textAlign: 'center',
+                lineHeight: 1.5, textAlign: 'center',
               }}>
-                "Dove mangiamo<br />stasera?"
+                "Mi chiamavano tutti Bea,<br />e io rispondevo sempre:<br />chiamami Bi!"
               </p>
               <p style={{
                 fontSize: 13, color: '#8A8680', textAlign: 'center',
-                marginTop: 10, fontWeight: 500,
+                marginTop: 14, fontWeight: 500,
               }}>
-                La domanda da cui è nato tutto
+                Da qui è nato tutto
               </p>
             </motion.div>
           </section>
@@ -262,7 +262,7 @@ export default function AboutPage() {
                 <p style={{
                   fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8, textAlign: 'justify',
                 }}>
-                  Dietro ogni portone del centro, nelle vie strette del Quadrilatero, tra i palazzi liberty di San Salvario, si nascondono trattorie, osterie e ristoranti che raccontano storie di passione e tradizione.
+                  Panini giganteschi, pizze, pancakes, spaghettate da trattoria, porzioni abbondanti. <strong style={{ color: '#22181C' }}>Cibo pop</strong>: quello che si mangia con le mani, si racconta con il sorriso e parla allo stomaco della gente — non in senso metaforico.
                 </p>
               </motion.div>
 
@@ -274,7 +274,7 @@ export default function AboutPage() {
                 <p style={{
                   fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
                 }}>
-                  Ho iniziato a esplorare la scena gastronomica torinese per pura curiosità, provando un posto nuovo ogni settimana. Dalle <strong style={{ color: '#22181C' }}>piole storiche</strong> dove il vino si beve sfuso ai <strong style={{ color: '#22181C' }}>ramen bar</strong> più autentici, dalla <strong style={{ color: '#22181C' }}>pizza napoletana verace</strong> al <strong style={{ color: '#22181C' }}>fine dining stellato</strong>.
+                  Ho aperto la mia pagina a <strong style={{ color: '#22181C' }}>marzo 2024</strong>, insieme al mio ragazzo, un po' per gioco. Studio giurisprudenza, ho 22 anni, e pubblicavo su Instagram gli stessi consigli che davo agli amici. <strong style={{ color: '#22181C' }}>Ed è ancora così oggi.</strong>
                 </p>
               </motion.div>
 
@@ -283,7 +283,7 @@ export default function AboutPage() {
                 <p style={{
                   fontSize: 15, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
                 }}>
-                  Gli amici hanno iniziato a chiedermi consigli. E così è nata <strong style={{ color: '#22181C' }}>ChiamamiBi</strong> — una guida personale, sincera, fatta di posti che ho provato davvero e dove tornerei ad occhi chiusi.
+                  Non sono una critica culinaria, non uso termini complessi: mi limito a dire cosa mi piace. Racconto lo <strong style={{ color: '#22181C' }}>street food</strong>, le <strong style={{ color: '#22181C' }}>piole storiche</strong>, i <strong style={{ color: '#22181C' }}>menu fissi a trenta euro</strong>, i posti dove ritrovare le cose semplici. Un'amica che ti dice dove andare stasera.
                 </p>
               </motion.div>
             </motion.div>
@@ -308,7 +308,7 @@ export default function AboutPage() {
                   <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>La mia filosofia</span>
                 </div>
                 <p style={{ fontSize: 16, lineHeight: 1.8, color: 'rgba(255,255,255,0.95)' }}>
-                  Consiglio solo posti dove tornerei. Ogni ristorante su ChiamamiBi è un posto dove sono stata almeno due volte. Niente collaborazioni a pagamento, niente recensioni di cortesia — solo consigli genuini, come quelli che daresti alla tua migliore amica.
+                  Faccio una cernita. Anche quando una collaborazione è a pagamento, pubblico solo i posti che mi hanno convinta davvero — e se non mi piacciono, dico di no. È così che è nata ChiamamiBi e così vuole rimanere: una guida sincera dei miei posti preferiti.
                 </p>
               </div>
             </motion.div>
@@ -404,6 +404,71 @@ export default function AboutPage() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
               </motion.a>
+            </motion.div>
+          </section>
+
+          {/* ── Parlano di Bi — press quote ── */}
+          <section style={{ padding: '4px 24px 28px', maxWidth: 600, margin: '0 auto' }}>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-30px' }}
+              variants={fadeUp}
+            >
+              <p style={{
+                fontSize: 10, fontWeight: 600, color: '#C4A265',
+                letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14,
+              }}>
+                Parlano di Bi
+              </p>
+              <a
+                href="https://www.vanityfair.it/article/chiamami-bi-social-influencer-cibo-popolare"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'block', textDecoration: 'none',
+                  background: '#fff',
+                  border: '1px solid rgba(34,24,28,0.08)',
+                  borderRadius: 16, padding: '22px 20px',
+                  position: 'relative',
+                }}
+              >
+                <svg
+                  aria-hidden="true"
+                  width="28" height="28" viewBox="0 0 24 24" fill="#C4A265"
+                  style={{ position: 'absolute', top: 14, left: 16, opacity: 0.25 }}
+                >
+                  <path d="M7 7h4v4H7c0 2.5 1.5 4.5 4 5v2c-4 0-6.5-2.5-6.5-6.5V7zm9 0h4v4h-4c0 2.5 1.5 4.5 4 5v2c-4 0-6.5-2.5-6.5-6.5V7z"/>
+                </svg>
+                <p style={{
+                  fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+                  fontSize: 16, lineHeight: 1.6, color: '#22181C',
+                  fontWeight: 500, fontStyle: 'italic',
+                  paddingLeft: 32, marginBottom: 14,
+                }}>
+                  Nulla che abbia a che fare con i ristoranti di lusso, le cucine stellate, gli chef blasonati. Qua si parla di cibo pop, di mani che si sporcano di salse, di parlare allo stomaco della gente — e non in senso metaforico.
+                </p>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  paddingLeft: 32, gap: 10, flexWrap: 'wrap',
+                }}>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#22181C', marginBottom: 2 }}>
+                      Vanity Fair Italia
+                    </p>
+                    <p style={{ fontSize: 11, color: '#8A8680', fontWeight: 500 }}>
+                      Chiamami Bi, che racconta il cibo popolare sui social
+                    </p>
+                  </div>
+                  <span style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: 12, fontWeight: 600, color: '#E8453C',
+                  }}>
+                    Leggi
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                  </span>
+                </div>
+              </a>
             </motion.div>
           </section>
 
