@@ -2204,7 +2204,14 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         } else {
           const reason = statsRes.status === 'rejected' ? statsRes.reason : statsValue?.error
           console.error('stats error', reason)
-          setStatsError('Alcune statistiche non sono disponibili')
+          // Surface the underlying error detail on-screen so the issue is
+          // diagnosable without opening the browser console (useful on
+          // mobile). Formats: { code, message, details } for postgrest errors.
+          const detail =
+            reason?.code
+              ? `${reason.code}${reason.message ? ' — ' + reason.message : ''}`
+              : reason?.message || (typeof reason === 'string' ? reason : 'errore sconosciuto')
+          setStatsError(`Statistiche non disponibili: ${detail}`)
           // Fallback stats derived from activity + what we know
           setStats(buildFallbackStats(activityRes.status === 'fulfilled' ? activityRes.value?.data : null))
         }
