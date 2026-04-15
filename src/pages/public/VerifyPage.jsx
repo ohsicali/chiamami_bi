@@ -2618,72 +2618,74 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
     }
   }, [restaurant.id, deviceToken, reloadKey, onSessionExpired, range])
 
-  if (loading) {
-    return (
-      <div style={{ padding: '60px 20px', textAlign: 'center', color: '#8A8680' }}>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            border: '3px solid #E8E0D4',
-            borderTopColor: '#E8453C',
-            borderRadius: '50%',
-            margin: '0 auto 12px',
-            animation: 'verifySpin 0.8s linear infinite',
-          }}
-        />
-        <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ padding: '20px 16px 80px', maxWidth: 1100, margin: '0 auto' }}>
-      {statsError && (
-        <div
-          style={{
-            background: '#FEF3C7',
-            border: '1px solid #FCD34D',
-            borderRadius: 10,
-            padding: '10px 14px',
-            marginBottom: 16,
-            fontSize: 12,
-            color: '#92400E',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <span>⚠ {statsError}</span>
-          <button
-            onClick={() => setReloadKey((k) => k + 1)}
-            style={{
-              background: 'transparent',
-              border: '1px solid #FCD34D',
-              color: '#92400E',
-              fontSize: 11,
-              fontWeight: 600,
-              padding: '4px 10px',
-              borderRadius: 6,
-              cursor: 'pointer',
-            }}
-          >
-            Riprova
-          </button>
-        </div>
-      )}
+      {/* Range picker always visible, even while loading */}
       <RangePicker range={range} onChange={setRange} />
-      <StatGrid stats={stats} range={range} />
-      <div className="verify-dashboard-main">
-        <div className="verify-dashboard-col">
-          {discount && <ActiveDiscountCard discount={discount} />}
-          <FunnelCard stats={stats} range={range} />
+
+      {loading ? (
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8A8680' }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              border: '3px solid #E8E0D4',
+              borderTopColor: '#E8453C',
+              borderRadius: '50%',
+              margin: '0 auto 12px',
+              animation: 'verifySpin 0.8s linear infinite',
+            }}
+          />
+          <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
         </div>
-        <div className="verify-dashboard-col">
-          <ActivityList activity={activity} />
-        </div>
-      </div>
+      ) : (
+        <>
+          {statsError && (
+            <div
+              style={{
+                background: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                borderRadius: 10,
+                padding: '10px 14px',
+                marginBottom: 16,
+                fontSize: 12,
+                color: '#92400E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <span>⚠ {statsError}</span>
+              <button
+                onClick={() => setReloadKey((k) => k + 1)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #FCD34D',
+                  color: '#92400E',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                Riprova
+              </button>
+            </div>
+          )}
+          <StatGrid stats={stats} range={range} />
+          <div className="verify-dashboard-main">
+            <div className="verify-dashboard-col">
+              {discount && <ActiveDiscountCard discount={discount} />}
+              <FunnelCard stats={stats} range={range} />
+            </div>
+            <div className="verify-dashboard-col">
+              <ActivityList activity={activity} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
