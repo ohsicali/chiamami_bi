@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
-import { lazy, Suspense, useEffect, Component } from 'react'
+import { lazy, Suspense, useEffect, useRef, Component } from 'react'
 import CookieConsent from 'react-cookie-consent'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
@@ -84,6 +84,18 @@ export default function App() {
     const timer = setTimeout(preloadRestaurantPage, 1000)
     return () => clearTimeout(timer)
   }, [])
+
+  // Scroll to top on route change — but preserve scroll when transitioning
+  // between the map (/) and a restaurant detail (/restaurant/:slug), since
+  // HomePage stays mounted and we don't want to disturb the map state.
+  const prevPath = useRef(location.pathname)
+  useEffect(() => {
+    const isMapFamily = (p) => p === '/' || p.startsWith('/restaurant/')
+    const crossingWithinMap = isMapFamily(prevPath.current) && isMapFamily(location.pathname)
+    prevPath.current = location.pathname
+    if (crossingWithinMap) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [location.pathname])
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isHome = location.pathname === '/' || isRestaurantDetail
