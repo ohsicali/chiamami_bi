@@ -7,20 +7,62 @@ export const config = {
   maxDuration: 10,
 }
 
+// Resolve the Supabase project host from env — we only proxy images from
+// THIS project's storage. Fallback to a strict "*.supabase.co" allowlist if
+// the env variable isn't set.
+function getAllowedHost() {
+  const configured = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  if (configured) {
+    try {
+      return new URL(configured).hostname.toLowerCase()
+    } catch {
+      /* fall through */
+    }
+  }
+  return null
+}
+
 export default async function handler(req, res) {
   const { url } = req.query
 
-  if (!url) {
+  if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'Missing url parameter' })
   }
 
-  // Only allow Supabase storage URLs
-  if (!url.includes('supabase.co/storage/')) {
-    return res.status(403).json({ error: 'Only Supabase storage URLs allowed' })
+  // SSRF guard: parse the URL and allowlist hostname + protocol + path prefix.
+  // A plain substring check on `url` is bypassable with e.g.
+  //   https://evil.com/?r=supabase.co/storage/
+  // or userinfo tricks like https://supabase.co/storage@evil.com
+  let parsed
+  try {
+    parsed = new URL(url)
+  } catch {
+    return res.status(400).json({ error: 'Invalid url' })
+  }
+
+  if (parsed.protocol !== 'https:') {
+    return res.status(403).json({ error: 'Only https allowed' })
+  }
+
+  const allowedHost = getAllowedHost()
+  const host = parsed.hostname.toLowerCase()
+  const hostOk = allowedHost
+    ? host === allowedHost
+    : host.endsWith('.supabase.co') || host.endsWith('.supabase.in')
+
+  if (!hostOk) {
+    return res.status(403).json({ error: 'Host not allowed' })
+  }
+
+  if (!parsed.pathname.startsWith('/storage/v1/object/')) {
+    return res.status(403).json({ error: 'Only storage object paths allowed' })
   }
 
   try {
-    const response = await fetch(url)
+    // Reconstruct from the parsed URL so query-string tricks can't be used
+    // to bypass the allowlist.
+    const safeUrl = `${parsed.origin}${parsed.pathname}${parsed.search}`
+    const response = await fetch(safeUrl)
 
     if (!response.ok) {
       // Cache errors for a short time so we don't hammer Supabase on misses

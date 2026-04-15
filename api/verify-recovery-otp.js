@@ -3,6 +3,7 @@
  * Supports: reset_password (generates magic link), verify_recovery (for email change)
  */
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit, maybeCleanup } from './_rate-limit.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -11,6 +12,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Rate-limit per-IP to prevent brute force of the 6-digit OTP.
+  maybeCleanup()
+  const limited = rateLimit(req, { key: 'verify-recovery-otp', max: 10, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
 
   const { email, otp, new_email, new_password } = req.body || {}
 

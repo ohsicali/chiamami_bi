@@ -129,23 +129,18 @@ export async function submitReview({ restaurantId, userId, comment, photoFiles }
   // Trigger AI moderation via Edge Function (non-blocking).
   // Skip the call entirely if for any reason the comment is empty — avoids
   // sending an empty content block to the Anthropic API.
+  //
+  // SECURITY: status transitions (pending_review → published / rejected)
+  // are performed server-side inside the Edge Function using the service
+  // role key. Client-side RLS forbids users from writing status='published'
+  // (see supabase/security-hardening-2026-04.sql → user_reviews policies).
   try {
     if (!comment || !comment.trim()) {
       throw new Error('empty comment, skip moderation')
     }
-    const { data: modResult } = await supabase.functions.invoke('moderate-review', {
+    await supabase.functions.invoke('moderate-review', {
       body: { review_id: reviewId, comment },
     })
-    // If AI approves, auto-publish
-    if (modResult?.approved) {
-      await supabase.from('user_reviews').update({ status: 'published' }).eq('id', reviewId)
-    } else if (modResult) {
-      // Store AI reason for admin review
-      await supabase.from('user_reviews').update({
-        status: 'pending_review',
-        ai_reason: modResult.reason || null,
-      }).eq('id', reviewId)
-    }
   } catch {
     // Edge Function unavailable — leave as pending_review for manual moderation
   }

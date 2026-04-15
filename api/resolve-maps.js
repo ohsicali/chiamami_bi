@@ -4,6 +4,26 @@
  *
  * Supports: maps.app.goo.gl, goo.gl, share.google, ?cid= URLs, full place URLs
  */
+
+// SSRF guard: only fetch URLs on these Google-owned hosts. The endpoint
+// purposefully does not accept arbitrary destinations — it's intended for
+// Maps link resolution only.
+const ALLOWED_HOSTS = [
+  'maps.google.com',
+  'www.google.com',
+  'google.com',
+  'maps.app.goo.gl',
+  'goo.gl',
+  'share.google',
+  'g.co',
+]
+
+function isHostAllowed(host) {
+  if (!host) return false
+  const h = host.toLowerCase()
+  return ALLOWED_HOSTS.some((allowed) => h === allowed || h.endsWith('.' + allowed))
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -25,6 +45,19 @@ export default async function handler(req, res) {
     } catch (err) {
       return res.status(200).json({ error: `Errore ricerca: ${err.message}` })
     }
+  }
+
+  // Reject non-https and non-allowlisted hosts up front
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+      return res.status(400).json({ error: 'Invalid URL protocol' })
+    }
+    if (!isHostAllowed(u.hostname)) {
+      return res.status(403).json({ error: 'URL non supportato. Usa un link di Google Maps.' })
+    }
+  } catch {
+    return res.status(400).json({ error: 'URL non valido' })
   }
 
   try {
@@ -303,10 +336,18 @@ async function searchByName(query, apiKey, res) {
   })
 }
 
-/** Follow redirects one by one */
+/** Follow redirects one by one. Each hop is re-validated against the
+ *  host allowlist so a redirect can't land on an internal or attacker-
+ *  controlled target. */
 async function followRedirects(url, maxRedirects = 10) {
   let current = url
   for (let i = 0; i < maxRedirects; i++) {
+    try {
+      const u = new URL(current)
+      if (!isHostAllowed(u.hostname)) return current
+    } catch {
+      return current
+    }
     // Use mobile UA for goo.gl (needs mobile UA for HTTP redirect)
     // Send consent cookies only to google.com/maps domains
     const isGoogleMaps = current.includes('google.com/maps')
@@ -320,7 +361,15 @@ async function followRedirects(url, maxRedirects = 10) {
     const res = await fetch(current, { redirect: 'manual', headers })
     const location = res.headers.get('location')
     if (!location) return current
-    current = location.startsWith('http') ? location : new URL(location, current).href
+    const next = location.startsWith('http') ? location : new URL(location, current).href
+    // Re-validate destination host — reject if outside allowlist
+    try {
+      const nextHost = new URL(next).hostname
+      if (!isHostAllowed(nextHost)) return current
+    } catch {
+      return current
+    }
+    current = next
   }
   return current
 }

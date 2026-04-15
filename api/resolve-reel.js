@@ -11,15 +11,28 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { url } = req.body || {}
-  if (!url) return res.status(200).json({ error: 'url is required' })
+  if (!url || typeof url !== 'string') return res.status(200).json({ error: 'url is required' })
 
-  // Validate it's an Instagram URL
-  if (!url.includes('instagram.com')) {
-    return res.status(200).json({ error: 'Not an Instagram URL' })
+  // SSRF guard: parse and allowlist the hostname. A substring check on
+  // `url` is bypassable (https://evil.com/?r=instagram.com).
+  let parsed
+  try {
+    parsed = new URL(url)
+  } catch {
+    return res.status(400).json({ error: 'URL non valido' })
+  }
+  if (parsed.protocol !== 'https:') {
+    return res.status(403).json({ error: 'Only https allowed' })
+  }
+  const host = parsed.hostname.toLowerCase()
+  const instagramOk = host === 'instagram.com' || host.endsWith('.instagram.com')
+  if (!instagramOk) {
+    return res.status(403).json({ error: 'Not an Instagram URL' })
   }
 
   try {
-    const response = await fetch(url, {
+    const safeUrl = `${parsed.origin}${parsed.pathname}${parsed.search}`
+    const response = await fetch(safeUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',

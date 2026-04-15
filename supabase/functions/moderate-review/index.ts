@@ -78,16 +78,26 @@ Respond ONLY with the JSON object.`,
       moderation = { approved: true, reason: '', flags: ['parse_error'] }
     }
 
-    // Auto-update review status if review_id provided
-    if (review_id && !moderation.approved) {
+    // Auto-update review status server-side so the client never needs
+    // UPDATE permission on status='published'. The service-role key
+    // bypasses RLS, and the client-side RLS policy blocks status updates
+    // entirely (see security-hardening-2026-04.sql).
+    if (review_id) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       const supabase = createClient(supabaseUrl, supabaseKey)
 
-      await supabase
-        .from('user_reviews')
-        .update({ status: 'pending_review', ai_reason: moderation.reason || null })
-        .eq('id', review_id)
+      if (moderation.approved) {
+        await supabase
+          .from('user_reviews')
+          .update({ status: 'published', ai_reason: null })
+          .eq('id', review_id)
+      } else {
+        await supabase
+          .from('user_reviews')
+          .update({ status: 'pending_review', ai_reason: moderation.reason || null })
+          .eq('id', review_id)
+      }
     }
 
     return new Response(JSON.stringify(moderation), {

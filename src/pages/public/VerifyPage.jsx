@@ -307,11 +307,10 @@ export default function VerifyPage() {
         if (data?.restaurants) {
           setRestaurant(normalizeRestaurant(data.restaurants))
           setStatus('authed')
-          // Touch last_used_at in background
+          // Touch last_used_at in background via RPC (direct UPDATE on the
+          // table is no longer allowed for anon/auth — see hardening SQL).
           supabase
-            .from('verified_devices')
-            .update({ last_used_at: new Date().toISOString() })
-            .eq('device_token', token)
+            .rpc('verify_touch_device', { p_device_token: token })
             .then(() => {}, () => {})
         } else {
           deleteCookie(COOKIE_NAME)
@@ -339,46 +338,27 @@ export default function VerifyPage() {
     setError(null)
 
     try {
-      // 1) Match su restaurants.verify_pin (fonte primaria)
-      let r = null
-      const primary = await supabase
-        .from('restaurants')
-        .select(RESTAURANT_COLS)
-        .eq('verify_pin', pinToUse)
-        .eq('is_published', true)
-        .limit(1)
-      if (!primary.error && primary.data?.length) {
-        r = primary.data[0]
-      }
+      // Server-side PIN validation + device registration.
+      // Uses the SECURITY DEFINER RPC verify_login which:
+      //   • Validates the PIN against restaurants.verify_pin (and the legacy
+      //     restaurant_partners.pin_code fallback).
+      //   • Generates a device_token server-side and inserts it in
+      //     verified_devices — anon no longer has direct INSERT access.
+      //   • Strips verify_pin from the returned restaurant row.
+      const { data: loginData, error: rpcErr } = await supabase.rpc('verify_login', {
+        p_pin: pinToUse,
+        p_user_agent: (navigator.userAgent || '').slice(0, 500),
+      })
 
-      // 2) Fallback: PIN storico in restaurant_partners.pin_code
-      if (!r) {
-        const { data: partners } = await supabase
-          .from('restaurant_partners')
-          .select(`restaurant_id, restaurants:restaurants(${RESTAURANT_COLS})`)
-          .eq('pin_code', pinToUse)
-          .eq('is_active', true)
-          .limit(1)
-        if (partners?.[0]?.restaurants?.is_published !== false && partners?.[0]?.restaurants) {
-          r = partners[0].restaurants
-        }
-      }
-
-      if (!r) {
+      if (rpcErr || !loginData || loginData.error) {
         triggerError('PIN non valido. Riprova o contattaci.')
         return
       }
 
-      const token = generateDeviceToken()
+      const r = loginData.restaurant
+      const token = loginData.device_token
 
-      const { error: iErr } = await supabase.from('verified_devices').insert({
-        device_token: token,
-        restaurant_id: r.id,
-        user_agent: (navigator.userAgent || '').slice(0, 500),
-      })
-
-      if (iErr) {
-        console.error('verified_devices insert failed', iErr)
+      if (!r || !token) {
         triggerError("Errore durante l'accesso. Riprova.")
         return
       }
@@ -1277,100 +1257,70 @@ function VerifyTab({ restaurant }) {
 
   // Extracted so it can be triggered by both the camera (on scan) and the
   // manual-input submit form.
+  //
+  // SECURITY: All validation + redemption logic runs server-side in the
+  // SECURITY DEFINER RPC `verify_redeem_qr`, which:
+  //   • Authenticates the device via verify_device_token cookie
+  //   • Checks the QR belongs to *this* restaurant
+  //   • Atomically marks redeemed + increments counter
+  // The client only forwards the token and displays the outcome.
   const verifyCode = async (rawCode) => {
     const trimmed = extractQrCode(rawCode)
     if (!trimmed || loading) return
     setLoading(true)
     try {
-      // 1) Find redemption by qr_code
-      const { data: redemption, error: rErr } = await supabase
-        .from('discount_redemptions')
-        .select('*, discount:discounts(id, title, discount_value, discount_type, restaurant_id, valid_until)')
-        .eq('qr_code', trimmed)
-        .maybeSingle()
-
-      if (rErr || !redemption) {
-        setResult({ status: 'not_found' })
-        return
-      }
-
-      // 2) Must belong to THIS restaurant
-      if (redemption.discount?.restaurant_id !== restaurant.id) {
-        setResult({ status: 'wrong_restaurant' })
-        return
-      }
-
-      // 3) Already redeemed
-      if (redemption.status === 'redeemed') {
-        const userName = await fetchUserName(redemption.user_id)
-        setResult({
-          status: 'already_redeemed',
-          data: { ...redemption, user_name: userName },
-        })
-        return
-      }
-
-      // 4) Expired
-      const isExpired =
-        redemption.status === 'expired' ||
-        (redemption.discount?.valid_until &&
-          new Date(redemption.discount.valid_until) < new Date())
-      if (isExpired) {
-        setResult({ status: 'expired', data: redemption })
-        return
-      }
-
-      // 5) Mark as redeemed.
-      // Also persist the user's name on the row so the dashboard's activity
-      // feed can display it. Legacy rows created before the user_name column
-      // was populated on insert end up here with user_name IS NULL — we
-      // backfill them opportunistically at validation time.
-      const userName = await fetchUserName(redemption.user_id)
-      const updatePayload = {
-        status: 'redeemed',
-        redeemed_at: new Date().toISOString(),
-        redeemed_by_restaurant: true,
-      }
-      if (!redemption.user_name && userName && userName !== 'Utente') {
-        updatePayload.user_name = userName
-      }
-      const { error: uErr } = await supabase
-        .from('discount_redemptions')
-        .update(updatePayload)
-        .eq('id', redemption.id)
-
-      if (uErr) {
-        console.error('redemption update failed', uErr)
+      const token = getCookie(COOKIE_NAME)
+      if (!token) {
         setResult({
           status: 'error',
-          data: { message: uErr.message || 'Errore durante la validazione' },
+          data: { message: 'Sessione scaduta, rientra con il PIN.' },
         })
         return
       }
 
-      // ✅ Update succeeded — from this point on, failures in non-critical
-      // steps (counter bump, celebration side-effects) must NOT downgrade
-      // the result to "error". The sconto IS validated in the DB.
-      try {
-        const discountId = redemption.discount?.id || redemption.discount_id
-        if (discountId) {
-          await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
-        }
-      } catch (e) {
-        console.warn('increment_discount_redeemed failed (non-critical)', e)
-      }
-
-      // Haptic feedback on supported devices
-      try {
-        navigator.vibrate?.([40, 60, 40])
-      } catch {
-        /* no-op */
-      }
-
-      setResult({
-        status: 'success',
-        data: { ...redemption, user_name: userName },
+      const { data: resp, error: rpcErr } = await supabase.rpc('verify_redeem_qr', {
+        p_device_token: token,
+        p_qr_code: trimmed,
       })
+
+      if (rpcErr || !resp) {
+        setResult({
+          status: 'error',
+          data: { message: rpcErr?.message || 'Errore di rete, riprova' },
+        })
+        return
+      }
+
+      // Normalize RPC response to the shape VerifyResult expects:
+      //   { status, data: { ..., discount: { title, discount_value, discount_type } } }
+      const payload = resp.data || {}
+      const normalized = {
+        ...payload,
+        discount: {
+          title: payload.discount_title ?? null,
+          discount_value: payload.discount_value ?? null,
+          discount_type: payload.discount_type ?? null,
+        },
+      }
+
+      if (resp.status === 'success') {
+        try {
+          navigator.vibrate?.([40, 60, 40])
+        } catch {
+          /* no-op */
+        }
+      }
+
+      if (resp.status === 'unauthorized') {
+        deleteCookie(COOKIE_NAME)
+        setResult({
+          status: 'error',
+          data: { message: 'Sessione non valida, rientra con il PIN.' },
+        })
+        return
+      }
+
+      setResult({ status: resp.status, data: normalized })
     } catch (err) {
       console.error('verify error:', err)
       setResult({
@@ -2874,13 +2824,15 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
           .limit(1)
           .maybeSingle()
 
-        // 3) Recent activity (discount_redemptions is public-read)
-        const activityPromise = supabase
-          .from('discount_redemptions')
-          .select('id, qr_code, status, generated_at, redeemed_at, user_id, user_name, discount:discounts!inner(id, title, restaurant_id)')
-          .eq('discount.restaurant_id', restaurant.id)
-          .order('generated_at', { ascending: false })
-          .limit(10)
+        // 3) Recent activity via SECURITY DEFINER RPC — after the 2026-04
+        //    security hardening, anon users can no longer SELECT foreign
+        //    redemptions directly. The RPC authenticates the device token
+        //    and returns only rows belonging to this restaurant.
+        const activityPromise = supabase.rpc('verify_activity_list', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_limit: 10,
+        })
 
         const [statsRes, discountRes, activityRes] = await Promise.allSettled([
           statsPromise,
@@ -2912,37 +2864,24 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
               : reason?.message || (typeof reason === 'string' ? reason : 'errore sconosciuto')
           setStatsError(`Statistiche non disponibili: ${detail}`)
           // Fallback stats derived from activity within the selected range
-          setStats(buildFallbackStats(
-            activityRes.status === 'fulfilled' ? activityRes.value?.data : null,
-            range,
-          ))
+          // Fallback stats derived from activity rows within the selected range
+          const actValue = activityRes.status === 'fulfilled' ? activityRes.value?.data : null
+          setStats(buildFallbackStats(actValue?.items || null, range))
         }
 
         setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
 
-        // Activity feed — enrich legacy rows (user_name NULL) by looking up
-        // the missing names from profiles in a single batch. Rows generated
-        // before the user_name backfill / insert-side capture would otherwise
-        // just show as "Validato sconto" with no customer name.
-        let activityRows = activityRes.status === 'fulfilled' ? (activityRes.value?.data || []) : []
-        const missing = activityRows.filter((r) => r.user_id && !r.user_name).map((r) => r.user_id)
-        const uniqueMissing = Array.from(new Set(missing))
-        if (uniqueMissing.length > 0) {
-          try {
-            const { data: profs } = await supabase
-              .from('profiles')
-              .select('id, full_name')
-              .in('id', uniqueMissing)
-            const byId = new Map((profs || []).map((p) => [p.id, p.full_name]))
-            activityRows = activityRows.map((r) =>
-              r.user_name || !byId.has(r.user_id)
-                ? r
-                : { ...r, user_name: byId.get(r.user_id) }
-            )
-          } catch (e) {
-            // profiles lookup is best-effort; silent failure keeps the list usable
-            console.warn('activity name lookup failed', e)
+        // Activity feed — the RPC already joins profiles server-side and
+        // falls back to discount_redemptions.user_name when profiles is
+        // unreadable, so no client-side enrichment is needed.
+        let activityRows = []
+        if (activityRes.status === 'fulfilled') {
+          const val = activityRes.value?.data
+          if (val?.error === 'unauthorized') {
+            onSessionExpired?.()
+            return
           }
+          activityRows = Array.isArray(val?.items) ? val.items : []
         }
         if (!cancelled) setActivity(activityRows)
       } catch (e) {

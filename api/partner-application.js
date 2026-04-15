@@ -3,6 +3,8 @@
  * Saves the application to Supabase and sends a notification email to info@chiamamibi.com
  */
 
+import { rateLimit, maybeCleanup } from './_rate-limit.js'
+
 const NOTIFY_EMAIL = 'info@chiamamibi.com'
 
 export default async function handler(req, res) {
@@ -12,6 +14,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Rate-limit to prevent application-form spam.
+  maybeCleanup()
+  const limited = rateLimit(req, { key: 'partner-application', max: 3, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
 
   const {
     restaurant_name,
@@ -30,13 +37,13 @@ export default async function handler(req, res) {
     })
   }
 
-  // Save to Supabase using service role (bypasses RLS cleanly from the server)
+  // Save to Supabase using the service role (bypasses RLS cleanly from the
+  // server). We intentionally no longer fall back to the anon key: doing so
+  // would require a permissive anon INSERT policy on partner_applications,
+  // which would expose the table to write-spam from the public.
   try {
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      process.env.SUPABASE_ANON_KEY
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (supabaseUrl && supabaseKey) {
       const dbResponse = await fetch(`${supabaseUrl}/rest/v1/partner_applications`, {

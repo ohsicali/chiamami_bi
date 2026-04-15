@@ -1,7 +1,13 @@
+import { rateLimit, maybeCleanup } from './_rate-limit.js'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  maybeCleanup()
+  const limited = rateLimit(req, { key: 'correct-text', max: 20, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
 
   const { text, context } = req.body || {}
 
@@ -9,6 +15,10 @@ export default async function handler(req, res) {
   const trimmedText = typeof text === 'string' ? text.trim() : ''
   if (!trimmedText) {
     return res.status(400).json({ error: 'text required' })
+  }
+  // Defense-in-depth: cap input to prevent costly Anthropic calls
+  if (trimmedText.length > 4000) {
+    return res.status(400).json({ error: 'Testo troppo lungo (max 4000 caratteri)' })
   }
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY

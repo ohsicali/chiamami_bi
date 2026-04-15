@@ -47,10 +47,10 @@ export default async function handler(req, res) {
   // Insert into Supabase via REST (service role preferred)
   try {
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      process.env.SUPABASE_ANON_KEY
+    // Tracking writes use the service role only: this keeps page_views
+    // locked down at the RLS level (no public INSERT policy needed) and
+    // avoids exposing write access to the anon key.
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
       return res.status(500).json({ error: 'Supabase not configured' })
