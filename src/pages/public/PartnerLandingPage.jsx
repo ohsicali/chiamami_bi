@@ -177,9 +177,9 @@ export default function PartnerLandingPage() {
   ]
 
   const steps = [
-    { title: 'Candidati', desc: 'Raccontaci in due minuti chi sei e cosa proponi' },
-    { title: 'Ti conosciamo', desc: 'Bi legge la candidatura e ti risponde entro 48 ore' },
-    { title: 'Sei nella guida', desc: 'Il tuo locale arriva sul sito e sui social di Bi, davanti a migliaia di persone' },
+    { title: 'Invia la candidatura', desc: 'Raccontaci in due minuti chi sei e cosa proponi' },
+    { title: 'Analisi della proposta', desc: 'Bi e il suo team leggono e valutano la tua candidatura entro 7 giorni' },
+    { title: 'Collaborazione', desc: 'Se la proposta viene accettata ti contattiamo per scoprire come promuovere il tuo brand o locale sui canali social e sul sito di Bi' },
   ]
 
   /* ── Success state ── */
@@ -216,7 +216,7 @@ export default function PartnerLandingPage() {
             maxWidth: 320,
             marginBottom: 32,
           }}>
-            Ti scriviamo entro 48 ore per conoscerti meglio e capire come portarti sul sito e sui canali social di Bi, davanti a migliaia di persone a Torino.
+            Bi e il suo team analizzeranno la tua proposta entro 7 giorni. Se verrà accettata ti contatteremo per scoprire come promuovere il tuo brand o locale sui suoi canali social e sul sito di Bi.
           </p>
           <button
             onClick={() => navigate('/')}
@@ -331,7 +331,7 @@ export default function PartnerLandingPage() {
             lineHeight: 2,
             marginBottom: 18,
           }}>
-            Fatti scoprire da migliaia di persone a Torino
+            Promuovi il tuo brand o ristorante con Bi
           </h1>
           <p style={{
             fontSize: 14,
@@ -339,7 +339,7 @@ export default function PartnerLandingPage() {
             lineHeight: 1.7,
             marginBottom: 32,
           }}>
-            Bi è la guida food di Torino <strong style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>e</strong> una community social con oltre <strong style={{ color: 'var(--color-oro)', fontWeight: 600 }}>3 milioni di views al mese</strong>. Il tuo ristorante o brand in evidenza sul sito e sui canali social di Bi, davanti a chi a Torino cerca ogni giorno dove mangiare e cosa provare.
+            Bi è una content creator che racconta ristoranti <strong style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>dal 2024</strong>. I suoi canali superano i <strong style={{ color: 'var(--color-oro)', fontWeight: 600 }}>3 milioni di visualizzazioni al mese</strong>, rendendola una delle food blogger più importanti d'Italia. Porta il tuo brand o locale sui suoi profili social e sul suo sito, davanti a chi cerca ogni giorno dove mangiare e cosa provare.
           </p>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -636,7 +636,7 @@ export default function PartnerLandingPage() {
               textAlign: 'center',
               marginTop: 4,
             }}>
-              Rispondiamo entro 48 ore · Nessun impegno
+              Risposta entro 7 giorni · Nessun impegno
             </p>
           </form>
         </section>
