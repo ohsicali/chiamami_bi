@@ -435,7 +435,7 @@ export default function VerifyPage() {
       />
     )
   } else {
-    body = <AuthedView restaurant={restaurant} onLogout={handleLogout} />
+    body = <AuthedView restaurant={restaurant} onLogout={handleLogout} deviceToken={getCookie(COOKIE_NAME)} />
   }
 
   return (
@@ -722,7 +722,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
 /* ------------------------------------------------------------------ */
 /*  AuthedView — header ristorante + tab bar + corpo tab              */
 /* ------------------------------------------------------------------ */
-function AuthedView({ restaurant, onLogout }) {
+function AuthedView({ restaurant, onLogout, deviceToken }) {
   const [tab, setTab] = useState('verify')
 
   return (
@@ -733,7 +733,7 @@ function AuthedView({ restaurant, onLogout }) {
         {tab === 'verify' ? (
           <VerifyTab restaurant={restaurant} />
         ) : (
-          <DashboardTabPlaceholder />
+          <DashboardTab restaurant={restaurant} deviceToken={deviceToken} />
         )}
       </div>
     </div>
@@ -1481,11 +1481,467 @@ function ResultRow({ label, value, strong }) {
   )
 }
 
-function DashboardTabPlaceholder() {
+/* ------------------------------------------------------------------ */
+/*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
+/* ------------------------------------------------------------------ */
+function DashboardTab({ restaurant, deviceToken }) {
+  const [stats, setStats] = useState(null)
+  const [discount, setDiscount] = useState(null)
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        // 1) Stats via RPC
+        const statsPromise = supabase.rpc('verify_dashboard_stats', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+        })
+
+        // 2) Active discount (public read)
+        const discountPromise = supabase
+          .from('discounts')
+          .select('id, title, description, discount_type, discount_value, valid_until, max_redemptions, total_redeemed, is_active')
+          .eq('restaurant_id', restaurant.id)
+          .eq('is_active', true)
+          .gt('valid_until', new Date().toISOString())
+          .order('valid_until', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        // 3) Recent activity (discount_redemptions is public-read)
+        const activityPromise = supabase
+          .from('discount_redemptions')
+          .select('id, qr_code, status, generated_at, redeemed_at, user_id, discount:discounts!inner(id, title, restaurant_id)')
+          .eq('discount.restaurant_id', restaurant.id)
+          .order('generated_at', { ascending: false })
+          .limit(10)
+
+        const [statsRes, discountRes, activityRes] = await Promise.all([
+          statsPromise,
+          discountPromise,
+          activityPromise,
+        ])
+
+        if (cancelled) return
+
+        if (statsRes.error) {
+          setError('Impossibile caricare le statistiche')
+          console.error('stats error', statsRes.error)
+        } else if (statsRes.data?.error === 'unauthorized') {
+          setError('Sessione non autorizzata — rifai login')
+        } else {
+          setStats(statsRes.data)
+        }
+        setDiscount(discountRes.data || null)
+        setActivity(activityRes.data || [])
+      } catch (e) {
+        if (!cancelled) {
+          console.error('dashboard load error', e)
+          setError('Errore di rete')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [restaurant.id, deviceToken])
+
+  if (loading) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center', color: '#8A8680' }}>
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            border: '3px solid #E8E0D4',
+            borderTopColor: '#E8453C',
+            borderRadius: '50%',
+            margin: '0 auto 12px',
+            animation: 'verifySpin 0.8s linear infinite',
+          }}
+        />
+        <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+        <div style={{ fontSize: 14, color: '#E8453C', fontWeight: 600, marginBottom: 6 }}>{error}</div>
+        <div style={{ fontSize: 12, color: '#8A8680' }}>Riprova tra qualche istante.</div>
+      </div>
+    )
+  }
+
   return (
-    <TabPlaceholder
-      title="Dashboard — in costruzione"
-      description="Qui arriveranno le statistiche del tuo ristorante: visualizzazioni, salvataggi, sconti utilizzati e attività recente (Step 5)."
-    />
+    <div style={{ padding: '20px 16px 80px', maxWidth: 960, margin: '0 auto' }}>
+      <StatGrid stats={stats} />
+      {discount && <ActiveDiscountCard discount={discount} />}
+      <FunnelCard stats={stats} />
+      <ActivityList activity={activity} />
+    </div>
+  )
+}
+
+function StatGrid({ stats }) {
+  if (!stats) return null
+  const cards = [
+    {
+      label: 'Visualizzazioni',
+      value: stats.views_30d || 0,
+      sublabel: `${stats.views_7d || 0} negli ultimi 7 gg`,
+      icon: '👁',
+      color: '#6366F1',
+    },
+    {
+      label: 'Salvati',
+      value: stats.saves_total || 0,
+      sublabel: `+${stats.saves_30d || 0} negli ultimi 30 gg`,
+      icon: '♥',
+      color: '#EC4899',
+    },
+    {
+      label: 'Sconti generati',
+      value: stats.redemptions_generated_30d || 0,
+      sublabel: 'Ultimi 30 giorni',
+      icon: '✦',
+      color: '#F59E0B',
+    },
+    {
+      label: 'Sconti usati',
+      value: stats.redemptions_used_30d || 0,
+      sublabel: `${stats.redemptions_used_total || 0} in totale`,
+      icon: '✓',
+      color: '#10B981',
+    },
+  ]
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 10,
+        marginBottom: 16,
+      }}
+    >
+      {cards.map((c) => (
+        <div
+          key={c.label}
+          style={{
+            background: '#fff',
+            borderRadius: 14,
+            padding: '14px 14px 12px',
+            border: '1px solid #F0EAE0',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              color: c.color,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.3,
+              textTransform: 'uppercase',
+              marginBottom: 4,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>{c.icon}</span>
+            <span>{c.label}</span>
+          </div>
+          <div
+            style={{
+              fontSize: 26,
+              fontWeight: 800,
+              color: '#22181C',
+              lineHeight: 1,
+              letterSpacing: -0.5,
+            }}
+          >
+            {c.value.toLocaleString('it-IT')}
+          </div>
+          <div style={{ fontSize: 10, color: '#8A8680', marginTop: 4 }}>{c.sublabel}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function daysUntil(isoDate) {
+  if (!isoDate) return 0
+  const diffMs = new Date(isoDate).getTime() - new Date().getTime()
+  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+}
+
+function ActiveDiscountCard({ discount }) {
+  const value =
+    discount.discount_type === 'percentage'
+      ? `${discount.discount_value}%`
+      : discount.discount_type === 'fixed'
+      ? `€${discount.discount_value}`
+      : discount.discount_value
+  const pct =
+    discount.max_redemptions && discount.max_redemptions > 0
+      ? Math.min(100, ((discount.total_redeemed || 0) / discount.max_redemptions) * 100)
+      : null
+  const days = daysUntil(discount.valid_until)
+  return (
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #22181C 0%, #3A2A30 100%)',
+        color: '#fff',
+        borderRadius: 18,
+        padding: 18,
+        marginBottom: 16,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: '#E8453C',
+          fontWeight: 700,
+          letterSpacing: 0.8,
+          textTransform: 'uppercase',
+          marginBottom: 6,
+        }}
+      >
+        Sconto attivo
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+        <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
+      </div>
+      {discount.description && (
+        <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 12, lineHeight: 1.4 }}>
+          {discount.description}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 14, fontSize: 11, opacity: 0.85 }}>
+        <span>
+          <strong style={{ color: '#fff' }}>{discount.total_redeemed || 0}</strong> usati
+          {discount.max_redemptions ? ` / ${discount.max_redemptions}` : ''}
+        </span>
+        <span>·</span>
+        <span>
+          Scade in <strong style={{ color: '#fff' }}>{days}</strong> gg
+        </span>
+      </div>
+      {pct != null && (
+        <div
+          style={{
+            marginTop: 10,
+            height: 4,
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${pct}%`,
+              height: '100%',
+              background: '#E8453C',
+              transition: 'width 0.4s',
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FunnelCard({ stats }) {
+  if (!stats) return null
+  const steps = [
+    { label: 'Visualizzazioni', value: stats.views_30d || 0, color: '#6366F1' },
+    { label: 'Salvati', value: stats.saves_30d || 0, color: '#EC4899' },
+    { label: 'Sconti generati', value: stats.redemptions_generated_30d || 0, color: '#F59E0B' },
+    { label: 'Sconti usati', value: stats.redemptions_used_30d || 0, color: '#10B981' },
+  ]
+  const max = Math.max(...steps.map((s) => s.value), 1)
+
+  return (
+    <div
+      style={{
+        background: '#fff',
+        borderRadius: 16,
+        padding: 18,
+        marginBottom: 16,
+        border: '1px solid #F0EAE0',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#8A8680',
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
+          marginBottom: 12,
+        }}
+      >
+        Funnel ultimi 30 giorni
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {steps.map((s) => {
+          const pct = (s.value / max) * 100
+          return (
+            <div key={s.label}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: 12,
+                  marginBottom: 4,
+                }}
+              >
+                <span style={{ color: '#22181C', fontWeight: 500 }}>{s.label}</span>
+                <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
+              </div>
+              <div style={{ height: 8, background: '#F5F1EA', borderRadius: 4, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${Math.max(2, pct)}%`,
+                    height: '100%',
+                    background: s.color,
+                    borderRadius: 4,
+                    transition: 'width 0.4s',
+                  }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ActivityList({ activity }) {
+  if (!activity || activity.length === 0) {
+    return (
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 16,
+          padding: '24px 18px',
+          border: '1px solid #F0EAE0',
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#8A8680',
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}
+        >
+          Attività recente
+        </div>
+        <div style={{ fontSize: 13, color: '#8A8680' }}>
+          Nessuno sconto ancora generato.
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        background: '#fff',
+        borderRadius: 16,
+        border: '1px solid #F0EAE0',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#8A8680',
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
+          padding: '14px 16px 8px',
+        }}
+      >
+        Attività recente
+      </div>
+      {activity.map((a) => (
+        <ActivityRow key={a.id} item={a} />
+      ))}
+    </div>
+  )
+}
+
+function ActivityRow({ item }) {
+  const isRedeemed = item.status === 'redeemed'
+  const date = isRedeemed ? item.redeemed_at : item.generated_at
+  const when = date
+    ? new Date(date).toLocaleString('it-IT', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : ''
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '10px 16px',
+        borderTop: '1px solid #F5F1EA',
+      }}
+    >
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          background: isRedeemed ? '#10B981' : '#F59E0B',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 13,
+          fontWeight: 700,
+          flexShrink: 0,
+        }}
+      >
+        {isRedeemed ? '✓' : '•'}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#22181C',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {isRedeemed ? 'Usato' : 'Generato'} · {item.discount?.title || '—'}
+        </div>
+        <div style={{ fontSize: 11, color: '#8A8680', marginTop: 1 }}>
+          {item.qr_code} · {when}
+        </div>
+      </div>
+    </div>
   )
 }
