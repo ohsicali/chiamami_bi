@@ -70,8 +70,8 @@ export default function DesktopNavbar() {
         right: 0,
         height: 56,
         zIndex: 40,
-        background: '#fff',
-        borderBottom: '1px solid var(--color-bordo, #E8E5DE)',
+        background: '#000',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 24px',
@@ -85,7 +85,7 @@ export default function DesktopNavbar() {
             fontFamily: "'TAN Songbird', 'DM Sans', serif",
             fontSize: 16,
             fontWeight: 700,
-            color: 'var(--color-accent, #E8453C)',
+            color: '#fff',
             letterSpacing: 0.3,
             lineHeight: 1.1,
           }}>
@@ -93,7 +93,7 @@ export default function DesktopNavbar() {
           </div>
           <div style={{
             fontSize: 8,
-            color: 'var(--color-secondary, #8A8680)',
+            color: 'rgba(255,255,255,0.55)',
             letterSpacing: 1,
             fontWeight: 600,
             marginTop: 2,
@@ -107,13 +107,13 @@ export default function DesktopNavbar() {
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          background: 'var(--color-bg, #FAF7F2)',
-          border: '1px solid var(--color-bordo, #E8E5DE)',
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.12)',
           borderRadius: 20,
           padding: '6px 14px',
           fontSize: 12,
           fontWeight: 500,
-          color: 'var(--color-primary, #22181C)',
+          color: '#fff',
           cursor: 'default',
         }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', flexShrink: 0 }} />
@@ -146,8 +146,8 @@ export default function DesktopNavbar() {
                 padding: '8px 16px',
                 borderRadius: 8,
                 border: 'none',
-                background: active ? 'rgba(232,69,60,0.06)' : 'transparent',
-                color: active ? 'var(--color-accent, #E8453C)' : 'var(--color-secondary, #8A8680)',
+                background: active ? 'rgba(232,69,60,0.16)' : 'transparent',
+                color: active ? '#ff6b5e' : 'rgba(255,255,255,0.75)',
                 fontSize: 13,
                 fontWeight: active ? 500 : 400,
                 cursor: 'pointer',
@@ -155,7 +155,7 @@ export default function DesktopNavbar() {
                 position: 'relative',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(0,0,0,0.03)' }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
               onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
               <item.Icon />
@@ -185,16 +185,17 @@ export default function DesktopNavbar() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            background: 'var(--color-bg, #FAF7F2)',
-            border: '1px solid var(--color-bordo, #E8E5DE)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
             borderRadius: 8,
             padding: '8px 14px',
             width: 200,
             cursor: 'pointer',
+            color: 'rgba(255,255,255,0.6)',
           }}
         >
           <SearchIcon />
-          <span style={{ fontSize: 12, color: 'var(--color-secondary, #8A8680)' }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
             Cerca ristoranti...
           </span>
         </div>
@@ -207,8 +208,8 @@ export default function DesktopNavbar() {
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: 'rgba(232,69,60,0.1)',
-              color: 'var(--color-accent, #E8453C)',
+              background: 'rgba(232,69,60,0.2)',
+              color: '#ff6b5e',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
