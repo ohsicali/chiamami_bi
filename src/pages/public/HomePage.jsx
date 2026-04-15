@@ -102,7 +102,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
               {restaurant.tagline}
             </div>
           )}
-          {/* Category + price + distance */}
+          {/* Category + price */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
             {category && (
               <span style={{
@@ -117,13 +117,13 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
               </span>
             )}
             {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
-            {distance != null && (
-              <>
-                <span style={{ fontSize: 9, color: '#B5B0AA' }}>·</span>
-                <span style={{ fontSize: 10, color: '#8A8680' }}>{formatDistance(distance)}</span>
-              </>
-            )}
           </div>
+          {/* Distance below category */}
+          {distance != null && (
+            <div style={{ fontSize: 10, color: '#8A8680', fontWeight: 500 }}>
+              {formatDistance(distance)}
+            </div>
+          )}
         </div>
         {onSave && (
           <div style={{ position: 'absolute', top: 6, right: 6 }}>
