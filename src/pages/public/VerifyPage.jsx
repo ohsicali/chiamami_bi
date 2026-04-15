@@ -338,14 +338,32 @@ export default function VerifyPage() {
     setError(null)
 
     try {
-      const { data: r, error: rErr } = await supabase
+      // 1) Match su restaurants.verify_pin (fonte primaria)
+      let r = null
+      const primary = await supabase
         .from('restaurants')
         .select(RESTAURANT_COLS)
         .eq('verify_pin', pinToUse)
         .eq('is_published', true)
-        .maybeSingle()
+        .limit(1)
+      if (!primary.error && primary.data?.length) {
+        r = primary.data[0]
+      }
 
-      if (rErr || !r) {
+      // 2) Fallback: PIN storico in restaurant_partners.pin_code
+      if (!r) {
+        const { data: partners } = await supabase
+          .from('restaurant_partners')
+          .select(`restaurant_id, restaurants:restaurants(${RESTAURANT_COLS})`)
+          .eq('pin_code', pinToUse)
+          .eq('is_active', true)
+          .limit(1)
+        if (partners?.[0]?.restaurants?.is_published !== false && partners?.[0]?.restaurants) {
+          r = partners[0].restaurants
+        }
+      }
+
+      if (!r) {
         triggerError('PIN non valido. Riprova o contattaci.')
         return
       }
