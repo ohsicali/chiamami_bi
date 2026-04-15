@@ -13,7 +13,9 @@ serve(async (req) => {
   try {
     const { text, context } = await req.json()
 
-    if (!text) {
+    // Block empty/whitespace-only user input before hitting the API
+    const trimmedText = typeof text === 'string' ? text.trim() : ''
+    if (!trimmedText) {
       return new Response(JSON.stringify({ error: 'text required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -34,6 +36,22 @@ serve(async (req) => {
       ? 'This is a restaurant dining tip written in Italian.'
       : 'This is Italian text about a restaurant.'
 
+    // Build messages and filter empty text content blocks (Anthropic rejects
+    // "text content blocks must be non-empty")
+    const messages = [
+      {
+        role: 'user',
+        content: `${contextHint} Correggi SOLO errori grammaticali e ortografici. NON cambiare tono, stile, emoji, espressioni personali. Mantieni tutto il resto identico. Rispondi SOLO con il testo corretto, nient'altro.\n\nTesto originale:\n${trimmedText}`,
+      },
+    ].filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'empty message content' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -44,12 +62,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content: `${contextHint} Correggi SOLO errori grammaticali e ortografici. NON cambiare tono, stile, emoji, espressioni personali. Mantieni tutto il resto identico. Rispondi SOLO con il testo corretto, nient'altro.\n\nTesto originale:\n${text}`,
-          },
-        ],
+        messages,
       }),
     })
 
@@ -58,7 +71,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       corrected: corrected || null,
-      changed: corrected !== text,
+      changed: corrected !== trimmedText,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -5,7 +5,9 @@ export default async function handler(req, res) {
 
   const { text, context } = req.body || {}
 
-  if (!text) {
+  // Block empty/whitespace-only user input before hitting the API
+  const trimmedText = typeof text === 'string' ? text.trim() : ''
+  if (!trimmedText) {
     return res.status(400).json({ error: 'text required' })
   }
 
@@ -20,6 +22,19 @@ export default async function handler(req, res) {
     ? 'This is a restaurant dining tip written in Italian.'
     : 'This is Italian text about a restaurant.'
 
+  // Build messages and filter out any empty text content blocks (Anthropic
+  // rejects requests where a text block is empty: "text content blocks must be non-empty")
+  const messages = [
+    {
+      role: 'user',
+      content: `${contextHint} Correggi SOLO errori grammaticali e ortografici. NON cambiare tono, stile, emoji, espressioni personali. Mantieni tutto il resto identico. Rispondi SOLO con il testo corretto, nient'altro.\n\nTesto originale:\n${trimmedText}`,
+    },
+  ].filter(m => typeof m.content === 'string' && m.content.trim().length > 0)
+
+  if (messages.length === 0) {
+    return res.status(400).json({ error: 'empty message content' })
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -31,12 +46,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content: `${contextHint} Correggi SOLO errori grammaticali e ortografici. NON cambiare tono, stile, emoji, espressioni personali. Mantieni tutto il resto identico. Rispondi SOLO con il testo corretto, nient'altro.\n\nTesto originale:\n${text}`,
-          },
-        ],
+        messages,
       }),
     })
 
@@ -50,7 +60,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       corrected: corrected || null,
-      changed: corrected.trim() !== text.trim(),
+      changed: corrected.trim() !== trimmedText,
     })
   } catch (err) {
     return res.status(500).json({ error: err.message })

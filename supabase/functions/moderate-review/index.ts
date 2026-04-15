@@ -14,7 +14,9 @@ serve(async (req) => {
   try {
     const { review_id, comment } = await req.json()
 
-    if (!comment) {
+    // Block empty/whitespace-only user input before hitting the API
+    const trimmedComment = typeof comment === 'string' ? comment.trim() : ''
+    if (!trimmedComment) {
       return new Response(JSON.stringify({ error: 'comment required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -29,6 +31,29 @@ serve(async (req) => {
       })
     }
 
+    // Build messages and filter empty text content blocks (Anthropic rejects
+    // "text content blocks must be non-empty")
+    const messages = [
+      {
+        role: 'user',
+        content: `You are a content moderator for a restaurant review platform. Analyze this review and respond with a JSON object containing:
+- "approved": boolean (true if the review is appropriate)
+- "reason": string (brief explanation if not approved)
+- "flags": array of strings (any concerns: "spam", "offensive", "irrelevant", "fake", "none")
+
+Review text: "${trimmedComment}"
+
+Respond ONLY with the JSON object.`,
+      },
+    ].filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'empty message content' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -39,19 +64,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 256,
-        messages: [
-          {
-            role: 'user',
-            content: `You are a content moderator for a restaurant review platform. Analyze this review and respond with a JSON object containing:
-- "approved": boolean (true if the review is appropriate)
-- "reason": string (brief explanation if not approved)
-- "flags": array of strings (any concerns: "spam", "offensive", "irrelevant", "fake", "none")
-
-Review text: "${comment}"
-
-Respond ONLY with the JSON object.`,
-          },
-        ],
+        messages,
       }),
     })
 

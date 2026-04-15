@@ -82,6 +82,14 @@ export function useUserReview(restaurantId, userId) {
 export async function submitReview({ restaurantId, userId, comment, photoFiles }) {
   if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
 
+  // Block empty/whitespace-only input so we never send an empty content block
+  // to the moderation API (Anthropic rejects "text content blocks must be non-empty")
+  const trimmedComment = typeof comment === 'string' ? comment.trim() : ''
+  if (!trimmedComment) throw new Error('Comment is empty')
+
+  // Use the trimmed version everywhere downstream
+  comment = trimmedComment
+
   // Check if user already has a review for this restaurant
   const { data: existing } = await supabase
     .from('user_reviews')
@@ -118,8 +126,13 @@ export async function submitReview({ restaurantId, userId, comment, photoFiles }
     reviewId = data.id
   }
 
-  // Trigger AI moderation via Edge Function (non-blocking)
+  // Trigger AI moderation via Edge Function (non-blocking).
+  // Skip the call entirely if for any reason the comment is empty — avoids
+  // sending an empty content block to the Anthropic API.
   try {
+    if (!comment || !comment.trim()) {
+      throw new Error('empty comment, skip moderation')
+    }
     const { data: modResult } = await supabase.functions.invoke('moderate-review', {
       body: { review_id: reviewId, comment },
     })
