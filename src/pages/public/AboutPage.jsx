@@ -225,7 +225,7 @@ export default function AboutPage() {
               <p style={{
                 fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
                 fontSize: 20, fontWeight: 700, color: '#22181C',
-                lineHeight: 1.5, textAlign: 'center',
+                lineHeight: 1.9, textAlign: 'center',
               }}>
                 "Mi chiamavano tutti Bea,<br />e io rispondevo sempre:<br />chiamami Bi!"
               </p>
