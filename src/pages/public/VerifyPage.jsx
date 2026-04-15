@@ -1703,6 +1703,115 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
         Il riconoscimento avviene automaticamente. Tieni il QR del cliente
         inquadrato e a fuoco.
       </p>
+
+      <CameraPermanentAllowHint />
+    </div>
+  )
+}
+
+/* Detect iOS: the hint is only useful on iOS because Chrome/Android already
+ * persist camera permission automatically after first grant. iOS Safari
+ * re-asks on every page load unless the user explicitly sets the site to
+ * "Consenti" in Impostazioni > Safari, or installs it as a PWA. */
+function isIOS() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const platform = navigator.platform || ''
+  // iPhone/iPad/iPod, plus iPadOS that reports as MacIntel with touch.
+  return /iP(hone|ad|od)/.test(platform)
+    || /iP(hone|ad|od)/.test(ua)
+    || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
+
+function CameraPermanentAllowHint() {
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return true
+    try {
+      return localStorage.getItem('verify_camera_hint_dismissed') === '1'
+    } catch { return false }
+  })
+  const [expanded, setExpanded] = useState(false)
+  if (dismissed) return null
+  if (!isIOS()) return null
+
+  const dismiss = () => {
+    setDismissed(true)
+    try { localStorage.setItem('verify_camera_hint_dismissed', '1') } catch {}
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        padding: '10px 12px',
+        background: '#FFF8E6',
+        border: '1px solid #F3DDA1',
+        borderRadius: 10,
+        fontSize: 11.5,
+        color: '#7A5A00',
+        lineHeight: 1.5,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <span style={{ fontSize: 14, lineHeight: 1 }}>💡</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, marginBottom: 2 }}>
+            Evitare di autorizzare la fotocamera ogni volta
+          </div>
+          <div style={{ opacity: 0.9 }}>
+            Su iPhone Safari chiede il permesso ad ogni visita.{' '}
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: '#7A5A00',
+                textDecoration: 'underline',
+                fontSize: 'inherit',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {expanded ? 'Nascondi' : 'Come risolvere?'}
+            </button>
+          </div>
+          {expanded && (
+            <ol style={{ marginTop: 8, marginBottom: 0, paddingLeft: 18 }}>
+              <li>
+                <strong>Più rapido</strong> — tocca l'icona «aA» nella barra
+                URL, poi «Impostazioni sito web» → «Fotocamera» → «Consenti».
+              </li>
+              <li style={{ marginTop: 4 }}>
+                <strong>Permanente</strong> — apri l'app Impostazioni → Safari
+                → Fotocamera → chiamamibi.com → «Consenti».
+              </li>
+              <li style={{ marginTop: 4 }}>
+                <strong>Come app</strong> — in Safari tocca «Condividi» →
+                «Aggiungi alla schermata Home»: il permesso viene ricordato.
+              </li>
+            </ol>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Chiudi"
+          onClick={dismiss}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: 16,
+            color: '#7A5A00',
+            cursor: 'pointer',
+            padding: 0,
+            lineHeight: 1,
+            marginTop: -2,
+          }}
+        >
+          ×
+        </button>
+      </div>
     </div>
   )
 }
@@ -2866,19 +2975,19 @@ function StatGrid({ stats, range }) {
               alignItems: 'center',
               gap: 6,
               color: c.color,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 700,
               letterSpacing: 0.3,
               textTransform: 'uppercase',
               marginBottom: 6,
             }}
           >
-            <span style={{ fontSize: 15 }}>{c.icon}</span>
+            <span style={{ fontSize: 14 }}>{c.icon}</span>
             <span>{c.label}</span>
           </div>
           <div
             style={{
-              fontSize: 30,
+              fontSize: 26,
               fontWeight: 800,
               color: '#22181C',
               lineHeight: 1,
@@ -2887,7 +2996,7 @@ function StatGrid({ stats, range }) {
           >
             {c.value.toLocaleString('it-IT')}
           </div>
-          <div style={{ fontSize: 12, color: '#8A8680', marginTop: 6 }}>{c.sublabel}</div>
+          <div style={{ fontSize: 11, color: '#8A8680', marginTop: 6 }}>{c.sublabel}</div>
         </div>
       ))}
     </div>
@@ -2919,7 +3028,7 @@ function ActiveDiscountCard({ discount }) {
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: 11,
           color: '#E8453C',
           fontWeight: 700,
           letterSpacing: 0.8,
@@ -2930,15 +3039,15 @@ function ActiveDiscountCard({ discount }) {
         Sconto attivo
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-        <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
-        <div style={{ fontSize: 16, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
+        <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
       </div>
       {discount.description && (
-        <div style={{ fontSize: 14, opacity: 0.7, marginBottom: 14, lineHeight: 1.45 }}>
+        <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 14, lineHeight: 1.45 }}>
           {discount.description}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 14, fontSize: 13, opacity: 0.9 }}>
+      <div style={{ display: 'flex', gap: 14, fontSize: 12, opacity: 0.9 }}>
         <span>
           <strong style={{ color: '#fff' }}>{discount.total_redeemed || 0}</strong> usati
           {discount.max_redemptions ? ` / ${discount.max_redemptions}` : ''}
@@ -2995,17 +3104,17 @@ function FunnelCard({ stats, range }) {
     >
       <div
         style={{
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: 700,
           color: '#8A8680',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
-          marginBottom: 14,
+          marginBottom: 12,
         }}
       >
         {funnelLabel}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {steps.map((s) => {
           const pct = (s.value / max) * 100
           return (
@@ -3014,20 +3123,20 @@ function FunnelCard({ stats, range }) {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: 14,
-                  marginBottom: 6,
+                  fontSize: 13,
+                  marginBottom: 5,
                 }}
               >
                 <span style={{ color: '#22181C', fontWeight: 500 }}>{s.label}</span>
                 <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
               </div>
-              <div style={{ height: 10, background: '#F5F1EA', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ height: 8, background: '#F5F1EA', borderRadius: 4, overflow: 'hidden' }}>
                 <div
                   style={{
                     width: `${Math.max(2, pct)}%`,
                     height: '100%',
                     background: s.color,
-                    borderRadius: 5,
+                    borderRadius: 4,
                     transition: 'width 0.4s',
                   }}
                 />
@@ -3054,17 +3163,17 @@ function ActivityList({ activity }) {
       >
         <div
           style={{
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 700,
             color: '#8A8680',
             letterSpacing: 0.5,
             textTransform: 'uppercase',
-            marginBottom: 10,
+            marginBottom: 8,
           }}
         >
           Attività recente
         </div>
-        <div style={{ fontSize: 14, color: '#8A8680' }}>
+        <div style={{ fontSize: 13, color: '#8A8680' }}>
           Nessuno sconto ancora generato.
         </div>
       </div>
@@ -3082,12 +3191,12 @@ function ActivityList({ activity }) {
     >
       <div
         style={{
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: 700,
           color: '#8A8680',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
-          padding: '16px 18px 10px',
+          padding: '14px 16px 8px',
         }}
       >
         Attività recente
@@ -3128,22 +3237,22 @@ function ActivityRow({ item }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        padding: '12px 18px',
+        gap: 11,
+        padding: '10px 16px',
         borderTop: '1px solid #F5F1EA',
       }}
     >
       <div
         style={{
-          width: 34,
-          height: 34,
+          width: 30,
+          height: 30,
           borderRadius: '50%',
           background: isRedeemed ? '#10B981' : '#F59E0B',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: 700,
           flexShrink: 0,
         }}
@@ -3153,7 +3262,7 @@ function ActivityRow({ item }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: 600,
             color: '#22181C',
             whiteSpace: 'nowrap',
@@ -3165,7 +3274,7 @@ function ActivityRow({ item }) {
         </div>
         <div
           style={{
-            fontSize: 13,
+            fontSize: 12,
             color: '#8A8680',
             marginTop: 2,
             whiteSpace: 'nowrap',
