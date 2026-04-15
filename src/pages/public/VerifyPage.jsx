@@ -488,6 +488,34 @@ export default function VerifyPage() {
           70% { transform: scale(1.1); opacity: 1; }
           100% { transform: scale(1); }
         }
+        @keyframes verifySuccessBg {
+          0%   { background: #ECFDF5; }
+          10%  { background: #10B981; }
+          60%  { background: #10B981; }
+          100% { background: #ECFDF5; }
+        }
+        @keyframes verifyCheckDraw {
+          from { stroke-dashoffset: 60; }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes verifyCheckPop {
+          0%   { transform: scale(0); opacity: 0; }
+          35%  { transform: scale(1.25); opacity: 1; }
+          55%  { transform: scale(0.92); }
+          100% { transform: scale(1); }
+        }
+        @keyframes verifyRingPulse {
+          0%   { transform: scale(0.6); opacity: 0.6; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes verifyConfetti {
+          0%   { transform: translate(0,0) rotate(0);   opacity: 1; }
+          100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+        }
+        @keyframes verifySuccessSlide {
+          0%   { opacity: 0; transform: translateY(12px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
         .verify-stat-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -1200,14 +1228,31 @@ function VerifyTab({ restaurant }) {
         .eq('id', redemption.id)
 
       if (uErr) {
-        setResult({ status: 'error', data: { message: 'Errore durante la validazione' } })
+        console.error('redemption update failed', uErr)
+        setResult({
+          status: 'error',
+          data: { message: uErr.message || 'Errore durante la validazione' },
+        })
         return
       }
 
-      // 6) Best-effort: increment total_redeemed
-      const discountId = redemption.discount?.id || redemption.discount_id
-      if (discountId) {
-        await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId }).catch(() => {})
+      // ✅ Update succeeded — from this point on, failures in non-critical
+      // steps (counter bump, celebration side-effects) must NOT downgrade
+      // the result to "error". The sconto IS validated in the DB.
+      try {
+        const discountId = redemption.discount?.id || redemption.discount_id
+        if (discountId) {
+          await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
+        }
+      } catch (e) {
+        console.warn('increment_discount_redeemed failed (non-critical)', e)
+      }
+
+      // Haptic feedback on supported devices
+      try {
+        navigator.vibrate?.([40, 60, 40])
+      } catch {
+        /* no-op */
       }
 
       setResult({
@@ -1216,7 +1261,10 @@ function VerifyTab({ restaurant }) {
       })
     } catch (err) {
       console.error('verify error:', err)
-      setResult({ status: 'error', data: { message: 'Errore di rete, riprova' } })
+      setResult({
+        status: 'error',
+        data: { message: err?.message || 'Errore di rete, riprova' },
+      })
     } finally {
       setLoading(false)
     }
@@ -1680,19 +1728,7 @@ function VerifyResult({ result, onReset }) {
   const { status, data } = result
 
   if (status === 'success') {
-    return (
-      <ResultCard
-        tone="success"
-        icon="✓"
-        title="Sconto validato!"
-        onReset={onReset}
-        resetLabel="Nuova verifica"
-      >
-        <ResultRow label="Sconto" value={data.discount?.title} />
-        <ResultRow label="Valore" value={formatDiscountValue(data.discount)} strong />
-        <ResultRow label="Cliente" value={data.user_name} />
-      </ResultCard>
-    )
+    return <SuccessCelebration data={data} onReset={onReset} />
   }
 
   if (status === 'already_redeemed') {
@@ -1769,6 +1805,174 @@ function VerifyResult({ result, onReset }) {
       onReset={onReset}
       resetLabel="Riprova"
     />
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  SuccessCelebration — full-screen green celebration on QR validation */
+/* ------------------------------------------------------------------ */
+function SuccessCelebration({ data, onReset }) {
+  // Burst phase: full green splash + huge check (~1.6s), then settle to
+  // the detailed summary card. Keep the state local so the component
+  // re-celebrates every time a new code is validated.
+  const [phase, setPhase] = useState('burst')
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase('settled'), 1600)
+    return () => clearTimeout(t)
+  }, [])
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {phase === 'burst' && <SuccessBurst />}
+      {phase === 'settled' && (
+        <div style={{ animation: 'verifySuccessSlide 0.35s ease-out both' }}>
+          <ResultCard
+            tone="success"
+            icon="✓"
+            title="Sconto validato!"
+            onReset={onReset}
+            resetLabel="Nuova verifica"
+          >
+            <ResultRow label="Sconto" value={data.discount?.title} />
+            <ResultRow label="Valore" value={formatDiscountValue(data.discount)} strong />
+            <ResultRow label="Cliente" value={data.user_name} />
+          </ResultCard>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SuccessBurst() {
+  // Confetti-like bits scattering outward
+  const confetti = Array.from({ length: 14 }, (_, i) => {
+    const angle = (i / 14) * Math.PI * 2
+    const dist = 120 + (i % 3) * 30
+    const dx = Math.cos(angle) * dist
+    const dy = Math.sin(angle) * dist
+    const rot = (i * 47) % 360
+    const colors = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#FBBF24', '#F87171']
+    const color = colors[i % colors.length]
+    const delay = (i % 5) * 30
+    return { i, dx, dy, rot, color, delay }
+  })
+
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        padding: '60px 24px',
+        background: '#10B981',
+        animation: 'verifySuccessBg 1.6s ease-out forwards',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 340,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Expanding ring pulses */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: 120,
+          height: 120,
+          marginLeft: -60,
+          marginTop: -60,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.35)',
+          animation: 'verifyRingPulse 1.1s ease-out forwards',
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: 120,
+          height: 120,
+          marginLeft: -60,
+          marginTop: -60,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.25)',
+          animation: 'verifyRingPulse 1.3s 0.2s ease-out forwards',
+        }}
+      />
+
+      {/* Checkmark SVG with stroke-draw animation */}
+      <div
+        style={{
+          position: 'relative',
+          width: 120,
+          height: 120,
+          borderRadius: '50%',
+          background: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'verifyCheckPop 0.55s cubic-bezier(0.22, 1.2, 0.36, 1) both',
+          boxShadow: '0 20px 40px -10px rgba(0,0,0,0.25)',
+          zIndex: 2,
+        }}
+      >
+        <svg width="72" height="72" viewBox="0 0 64 64" fill="none">
+          <path
+            d="M14 33 L27 46 L50 21"
+            stroke="#10B981"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="60"
+            style={{ animation: 'verifyCheckDraw 0.45s 0.35s ease-out forwards' }}
+          />
+        </svg>
+      </div>
+
+      {/* Confetti bits */}
+      {confetti.map((c) => (
+        <span
+          key={c.i}
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: 10,
+            height: 14,
+            marginLeft: -5,
+            marginTop: -7,
+            background: c.color,
+            borderRadius: 2,
+            animation: `verifyConfetti 1.1s ${c.delay}ms ease-out forwards`,
+            '--dx': `${c.dx}px`,
+            '--dy': `${c.dy}px`,
+            '--rot': `${c.rot}deg`,
+            zIndex: 1,
+          }}
+        />
+      ))}
+
+      <div
+        style={{
+          marginTop: 28,
+          fontSize: 20,
+          fontWeight: 800,
+          color: '#fff',
+          letterSpacing: 0.3,
+          animation: 'verifySuccessSlide 0.45s 0.3s ease-out both',
+          textShadow: '0 2px 12px rgba(0,0,0,0.15)',
+        }}
+      >
+        Sconto validato!
+      </div>
+    </div>
   )
 }
 
