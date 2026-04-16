@@ -143,6 +143,7 @@ export default function App() {
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
+          <Route path="/sconti" element={<Navigate to="/deals" replace />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/verify" element={<VerifyPage />} />
