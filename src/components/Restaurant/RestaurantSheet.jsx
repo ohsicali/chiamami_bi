@@ -14,6 +14,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 
 /* ── animation variants ── */
 const contentVariants = {
@@ -258,8 +259,8 @@ export default function RestaurantSheet({
   const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
 
-  // Desktop detection for animation direction
-  const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  // Desktop detection for animation direction (reactive — updates on resize)
+  const isDesktop = useIsDesktop()
 
   // Match Safari toolbar to white bottom bar
   useEffect(() => {
