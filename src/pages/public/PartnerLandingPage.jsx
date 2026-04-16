@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 /* ─── Benefit icons ─── */
 function EyeIcon({ color }) {
@@ -76,6 +77,28 @@ export default function PartnerLandingPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
+
+  // Fallback values are shown immediately (no empty flash).
+  // When site_config rows arrive from DB they silently overwrite.
+  const [siteConfig, setSiteConfig] = useState({
+    partner_founding_year: '2024',
+    partner_monthly_views: '3M+',
+  })
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    supabase
+      .from('site_config')
+      .select('key, value')
+      .in('key', ['partner_founding_year', 'partner_monthly_views'])
+      .then(({ data }) => {
+        if (data?.length) {
+          const map = {}
+          data.forEach(r => { map[r.key] = r.value })
+          setSiteConfig(prev => ({ ...prev, ...map }))
+        }
+      })
+  }, [])
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -157,7 +180,7 @@ export default function PartnerLandingPage() {
       icon: UsersIcon,
       iconColor: 'var(--color-oro)',
       iconBg: 'rgba(196,162,101,0.1)',
-      title: '3M+ views/mese',
+      title: `${siteConfig.partner_monthly_views} views/mese`,
       desc: 'Migliaia di persone ogni giorno tra sito, Instagram e TikTok',
     },
     {
@@ -339,7 +362,7 @@ export default function PartnerLandingPage() {
             lineHeight: 1.7,
             marginBottom: 32,
           }}>
-            Bi è una content creator che racconta ristoranti <strong style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>dal 2024</strong>. I suoi canali superano i <strong style={{ color: 'var(--color-oro)', fontWeight: 600 }}>3 milioni di visualizzazioni al mese</strong>, rendendola una delle food blogger più importanti d'Italia. Porta il tuo brand o locale sui suoi profili social e sul suo sito, davanti a chi cerca ogni giorno dove mangiare e cosa provare.
+            Bi è una content creator che racconta ristoranti <strong style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>dal {siteConfig.partner_founding_year}</strong>. I suoi canali superano i <strong style={{ color: 'var(--color-oro)', fontWeight: 600 }}>{siteConfig.partner_monthly_views} di visualizzazioni al mese</strong>, rendendola una delle food blogger più importanti d'Italia. Porta il tuo brand o locale sui suoi profili social e sul suo sito, davanti a chi cerca ogni giorno dove mangiare e cosa provare.
           </p>
           <motion.button
             whileTap={{ scale: 0.97 }}
