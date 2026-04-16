@@ -43,70 +43,6 @@ function useShare(restaurant, t) {
   return { handleShare, copied }
 }
 
-/* ── Desktop Photo Grid — Airbnb-style: 1 main + up to 2 side stacked, 300px height ── */
-function DesktopPhotoGrid({ photos = [], restaurantName = '' }) {
-  const norm = photos
-    .map(p => (typeof p === 'string' ? p : p?.photo_url || p?.thumb_url))
-    .filter(Boolean)
-  if (norm.length === 0) return null
-
-  const main = norm[0]
-  const side = norm.slice(1, 3)
-  const extra = Math.max(0, norm.length - 3)
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        height: 300,
-        gridTemplateColumns: side.length > 0 ? '2fr 1fr' : '1fr',
-        gap: 4,
-        background: '#f0ebe3',
-        overflow: 'hidden',
-      }}
-    >
-      <img
-        src={proxyImg(main)}
-        alt={`${restaurantName} - 1`}
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        loading="lazy"
-      />
-      {side.length > 0 && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateRows: side.length === 2 ? '1fr 1fr' : '1fr',
-            gap: 4,
-            position: 'relative',
-          }}
-        >
-          {side.map((p, i) => (
-            <img
-              key={i}
-              src={proxyImg(p)}
-              alt={`${restaurantName} - ${i + 2}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              loading="lazy"
-            />
-          ))}
-          {extra > 0 && (
-            <div
-              style={{
-                position: 'absolute', bottom: 8, right: 8,
-                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-                color: '#fff', fontSize: 12, fontWeight: 600,
-                padding: '4px 10px', borderRadius: 12,
-              }}
-            >
-              +{extra}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* ── Video Buttons (Instagram Reel / TikTok) ── */
 
 /* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
@@ -513,11 +449,20 @@ export default function RestaurantSheet({
             marginTop: -24,
             position: 'relative', zIndex: 2,
           }}>
-            {/* Desktop photo grid — renderizzato SOLO su desktop. Prima stava nel
-                DOM anche su mobile (con internal `hidden md:grid`) caricando 2-3
-                <img> inutili. */}
+            {/* Desktop photo carousel — renderizzato SOLO su desktop. Una foto
+                alla volta, con frecce nav + dots, stile Airbnb/Booking. */}
             {isDesktop && (restaurant.photos || []).length > 0 && (
-              <DesktopPhotoGrid photos={restaurant.photos} restaurantName={restaurant.name} />
+              <div style={{ position: 'relative', background: '#f0ebe3', overflow: 'hidden' }}>
+                <PhotoCarousel
+                  photos={restaurant.photos}
+                  height="400px"
+                  restaurantName={restaurant.name}
+                  city={restaurant.city}
+                  dotsPosition="center"
+                  showArrows
+                  showCounter
+                />
+              </div>
             )}
 
             {/* Photo counter — anchored to white card, mobile only */}
