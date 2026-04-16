@@ -13,7 +13,10 @@ ALTER TABLE public.restaurant_suggestions
 -- 2) Aggiorna la policy INSERT:
 --    - utenti loggati: auth.uid() = user_id (invariato)
 --    - utenti anonimi: user_id IS NULL AND email NOT NULL
+-- Idempotente: droppa sia il nome vecchio che quello nuovo prima di ricreare,
+-- così il file può essere rieseguito senza errori "policy already exists".
 DROP POLICY IF EXISTS "Users can insert their own" ON public.restaurant_suggestions;
+DROP POLICY IF EXISTS "Users or anon can insert suggestions" ON public.restaurant_suggestions;
 
 CREATE POLICY "Users or anon can insert suggestions"
   ON public.restaurant_suggestions
