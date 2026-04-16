@@ -103,7 +103,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   return (
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
-      borderRadius: 18, overflow: 'hidden', position: 'relative',
+      borderRadius: 20, overflow: 'hidden', position: 'relative',
       border: alreadyUsed ? '2px solid var(--color-bordo)' : soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
       background: '#fff',
       opacity: alreadyUsed ? 0.55 : soldOut ? 0.6 : 1,
@@ -128,7 +128,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           background: 'var(--color-accent)', padding: '3px 10px', borderRadius: 8,
         }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
-          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>Live</span>
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>In corso</span>
         </div>
 
         {/* Countdown badge */}
@@ -243,7 +243,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   return (
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
-      borderRadius: 18, overflow: 'hidden', background: 'var(--color-primary)',
+      borderRadius: 20, overflow: 'hidden', background: 'var(--color-primary)',
       display: 'flex', flexDirection: 'column', position: 'relative',
     }}>
       {/* Photo 110px dimmed */}
@@ -255,18 +255,17 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
         )}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
 
-        {/* Date badge */}
-        {dropLabel && (
-          <div style={{
-            position: 'absolute', top: 10, left: 10,
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
-            padding: '3px 10px', borderRadius: 8,
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-oro)' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{dropLabel}</span>
-          </div>
-        )}
+        {/* PRESTO badge */}
+        <div style={{
+          position: 'absolute', top: 10, left: 10,
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'rgba(196,162,101,0.18)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          padding: '3px 10px', borderRadius: 8,
+          border: '1px solid rgba(196,162,101,0.35)',
+        }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-oro)', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
+          <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-oro)', letterSpacing: 1, textTransform: 'uppercase' }}>Presto</span>
+        </div>
 
         {/* Discount badge */}
         <div style={{
@@ -307,6 +306,11 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{deal.title}</span>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Solo {max}</span>
         </div>
+        {dropLabel && (
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-oro)', textAlign: 'center', marginBottom: 8, letterSpacing: 0.3 }}>
+            {dropLabel}
+          </div>
+        )}
 
         {/* Ricordamelo — pushed to bottom */}
         <div style={{ marginTop: 'auto' }}>
