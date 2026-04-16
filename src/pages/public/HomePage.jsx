@@ -224,9 +224,8 @@ export default function HomePage() {
     mapRef.current?.flyToCity(lng, lat)
   }, [])
 
-  const featuredRestaurant = viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0]
+  const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
-  const regularRestaurants = viewportRestaurants.filter(r => r.id !== featuredRestaurant?.id)
 
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -352,46 +351,18 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 md:gap-0 pb-8">
-          {/* IN EVIDENZA section */}
-          {featuredRestaurant && (
-            <>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4 }}>
-                In evidenza
-              </p>
-              <RestaurantCard
-                restaurant={featuredRestaurant}
-                index={0}
-                userPosition={position}
-                onClick={handleCardClick}
-                saved={isSaved(featuredRestaurant.id)}
-                onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
-                hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
-                discountTitle={discountTitleMap[featuredRestaurant.id]}
-                variant="hero"
-              />
-            </>
-          )}
-
-          {/* TUTTI I RISTORANTI section */}
-          {regularRestaurants.length > 0 && (
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4, marginTop: 4 }}>
-              Tutti i ristoranti
-              <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', marginLeft: 6 }}>
-                · {viewportRestaurants.length} {viewportRestaurants.length === 1 ? 'ristorante' : 'ristoranti'} in questa zona
-              </span>
-            </p>
-          )}
-          {regularRestaurants.map((restaurant, index) => (
+          {viewportRestaurants.map((restaurant, index) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
-              index={index + 1}
+              index={index}
               userPosition={position}
               onClick={handleCardClick}
               saved={isSaved(restaurant.id)}
               onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
               hasDiscount={discountRestaurantIds.has(restaurant.id)}
               discountTitle={discountTitleMap[restaurant.id]}
+              isFeatured={restaurant.id === featuredRestaurantId}
             />
           ))}
         </div>

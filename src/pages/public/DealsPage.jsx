@@ -336,7 +336,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 }
 
 /* ── CompactDealCard — like RestaurantCard default, with discount focus ── */
-function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
+function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeatured }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -353,6 +353,20 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
       filter: alreadyUsed ? 'grayscale(0.7)' : 'none',
       transition: 'opacity 0.6s ease, filter 0.6s ease',
     }}>
+      {/* Featured star badge — top-right (hidden when already used, which takes that slot) */}
+      {isFeatured && !alreadyUsed && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 3,
+          width: 26, height: 26, borderRadius: '50%',
+          background: '#C4A265',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+      )}
       {alreadyUsed && (
         <div style={{
           position: 'absolute', top: 10, right: 10, zIndex: 3,
@@ -1330,22 +1344,32 @@ export default function DealsPage() {
                   </div>
                 )}
 
-                {/* IN EVIDENZA — hero dark cards */}
-                {featured.length > 0 && (
-                  <div>
-                    <p style={sectionLabel}>In evidenza</p>
-                    <div className="flex flex-col gap-3.5 mt-2.5 md:grid md:grid-cols-2">
-                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }} alreadyUsed={usedDealIds.has(deal.id)} />)}
-                    </div>
-                  </div>
-                )}
-
-                {/* SCONTI DISPONIBILI — compact cards */}
-                {regular.length > 0 && (
+                {/* SCONTI DISPONIBILI — featured (stella oro) + regular in unico feed */}
+                {(featured.length > 0 || regular.length > 0) && (
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
                     <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
-                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} alreadyUsed={usedDealIds.has(deal.id)} />)}
+                      {featured.map(deal => (
+                        <CompactDealCard
+                          key={deal.id}
+                          deal={deal}
+                          onTap={setSelectedDeal}
+                          saved={isSaved(deal.restaurant?.id)}
+                          onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }}
+                          alreadyUsed={usedDealIds.has(deal.id)}
+                          isFeatured
+                        />
+                      ))}
+                      {regular.map(deal => (
+                        <CompactDealCard
+                          key={deal.id}
+                          deal={deal}
+                          onTap={setSelectedDeal}
+                          saved={isSaved(deal.restaurant?.id)}
+                          onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }}
+                          alreadyUsed={usedDealIds.has(deal.id)}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
