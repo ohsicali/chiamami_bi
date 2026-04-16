@@ -103,7 +103,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
   return (
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
-      borderRadius: 18, overflow: 'hidden', position: 'relative',
+      borderRadius: 20, overflow: 'hidden', position: 'relative',
       border: alreadyUsed ? '2px solid var(--color-bordo)' : soldOut ? '2px solid var(--color-bordo)' : '2px solid var(--color-accent)',
       background: '#fff',
       opacity: alreadyUsed ? 0.55 : soldOut ? 0.6 : 1,
@@ -128,7 +128,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
           background: 'var(--color-accent)', padding: '3px 10px', borderRadius: 8,
         }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
-          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>Live</span>
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>In corso</span>
         </div>
 
         {/* Countdown badge */}
@@ -243,7 +243,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
   return (
     <div style={{
       width: 260, minWidth: 260, scrollSnapAlign: 'start',
-      borderRadius: 18, overflow: 'hidden', background: 'var(--color-primary)',
+      borderRadius: 20, overflow: 'hidden', background: 'var(--color-primary)',
       display: 'flex', flexDirection: 'column', position: 'relative',
     }}>
       {/* Photo 110px dimmed */}
@@ -255,18 +255,17 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
         )}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
 
-        {/* Date badge */}
-        {dropLabel && (
-          <div style={{
-            position: 'absolute', top: 10, left: 10,
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
-            padding: '3px 10px', borderRadius: 8,
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-oro)' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{dropLabel}</span>
-          </div>
-        )}
+        {/* PRESTO badge */}
+        <div style={{
+          position: 'absolute', top: 10, left: 10,
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'rgba(196,162,101,0.18)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          padding: '3px 10px', borderRadius: 8,
+          border: '1px solid rgba(196,162,101,0.35)',
+        }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-oro)', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
+          <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-oro)', letterSpacing: 1, textTransform: 'uppercase' }}>Presto</span>
+        </div>
 
         {/* Discount badge */}
         <div style={{
@@ -307,6 +306,11 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{deal.title}</span>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Solo {max}</span>
         </div>
+        {dropLabel && (
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-oro)', textAlign: 'center', marginBottom: 8, letterSpacing: 0.3 }}>
+            {dropLabel}
+          </div>
+        )}
 
         {/* Ricordamelo — pushed to bottom */}
         <div style={{ marginTop: 'auto' }}>
@@ -336,7 +340,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 }
 
 /* ── CompactDealCard — like RestaurantCard default, with discount focus ── */
-function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
+function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeatured }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -353,6 +357,20 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
       filter: alreadyUsed ? 'grayscale(0.7)' : 'none',
       transition: 'opacity 0.6s ease, filter 0.6s ease',
     }}>
+      {/* Featured star badge — top-right (hidden when already used, which takes that slot) */}
+      {isFeatured && !alreadyUsed && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 3,
+          width: 26, height: 26, borderRadius: '50%',
+          background: '#C4A265',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+      )}
       {alreadyUsed && (
         <div style={{
           position: 'absolute', top: 10, right: 10, zIndex: 3,
@@ -1330,22 +1348,32 @@ export default function DealsPage() {
                   </div>
                 )}
 
-                {/* IN EVIDENZA — hero dark cards */}
-                {featured.length > 0 && (
-                  <div>
-                    <p style={sectionLabel}>In evidenza</p>
-                    <div className="flex flex-col gap-3.5 mt-2.5 md:grid md:grid-cols-2">
-                      {featured.map(deal => <FeaturedDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }} alreadyUsed={usedDealIds.has(deal.id)} />)}
-                    </div>
-                  </div>
-                )}
-
-                {/* SCONTI DISPONIBILI — compact cards */}
-                {regular.length > 0 && (
+                {/* SCONTI DISPONIBILI — featured (stella oro) + regular in unico feed */}
+                {(featured.length > 0 || regular.length > 0) && (
                   <div>
                     <p style={sectionLabel}>Sconti disponibili</p>
                     <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
-                      {regular.map(deal => <CompactDealCard key={deal.id} deal={deal} onTap={setSelectedDeal} saved={isSaved(deal.restaurant?.id)} onSaveToggle={() => toggleSave(deal.restaurant?.id)} alreadyUsed={usedDealIds.has(deal.id)} />)}
+                      {featured.map(deal => (
+                        <CompactDealCard
+                          key={deal.id}
+                          deal={deal}
+                          onTap={setSelectedDeal}
+                          saved={isSaved(deal.restaurant?.id)}
+                          onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }}
+                          alreadyUsed={usedDealIds.has(deal.id)}
+                          isFeatured
+                        />
+                      ))}
+                      {regular.map(deal => (
+                        <CompactDealCard
+                          key={deal.id}
+                          deal={deal}
+                          onTap={setSelectedDeal}
+                          saved={isSaved(deal.restaurant?.id)}
+                          onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }}
+                          alreadyUsed={usedDealIds.has(deal.id)}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}

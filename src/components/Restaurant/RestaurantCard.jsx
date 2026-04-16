@@ -28,6 +28,7 @@ export default function RestaurantCard({
   onSaveToggle,
   hasDiscount,
   discountTitle,
+  isFeatured = false,
   variant = 'default', // 'default' | 'hero'
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -216,6 +217,21 @@ export default function RestaurantCard({
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick?.(restaurant)}
     >
+      {/* Featured star badge — top-right corner */}
+      {isFeatured && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 10,
+          width: 26, height: 26, borderRadius: '50%',
+          background: '#C4A265',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+      )}
+
       {/* Green discount strip on top */}
       {hasDiscount && discountTitle && (
         <div className="rcard-discount-strip" style={{

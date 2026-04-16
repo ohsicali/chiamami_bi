@@ -18,6 +18,7 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg } from '../../lib/supabase'
+import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 
 function slugify(name) {
   return name
@@ -224,14 +225,14 @@ export default function HomePage() {
     mapRef.current?.flyToCity(lng, lat)
   }, [])
 
-  const featuredRestaurant = viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0]
+  const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
-  const regularRestaurants = viewportRestaurants.filter(r => r.id !== featuredRestaurant?.id)
 
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
   const sheetY = useMotionValue(windowH)
   const [isSheetActive, setIsSheetActive] = useState(false)
+  const [showSuggest, setShowSuggest] = useState(false)
   const sheetOpacity = useTransform(sheetY, [windowH, windowH * 0.4, 0], [0, 1, 1])
   const hideBottomPanel = isSheetActive
 
@@ -352,48 +353,49 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 md:gap-0 pb-8">
-          {/* IN EVIDENZA section */}
-          {featuredRestaurant && (
-            <>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4 }}>
-                In evidenza
-              </p>
-              <RestaurantCard
-                restaurant={featuredRestaurant}
-                index={0}
-                userPosition={position}
-                onClick={handleCardClick}
-                saved={isSaved(featuredRestaurant.id)}
-                onSaveToggle={user ? () => toggleSave(featuredRestaurant.id) : () => navigate('/login')}
-                hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
-                discountTitle={discountTitleMap[featuredRestaurant.id]}
-                variant="hero"
-              />
-            </>
-          )}
-
-          {/* TUTTI I RISTORANTI section */}
-          {regularRestaurants.length > 0 && (
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', paddingLeft: 4, marginTop: 4 }}>
-              Tutti i ristoranti
-              <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', marginLeft: 6 }}>
-                · {viewportRestaurants.length} {viewportRestaurants.length === 1 ? 'ristorante' : 'ristoranti'} in questa zona
-              </span>
-            </p>
-          )}
-          {regularRestaurants.map((restaurant, index) => (
+          {viewportRestaurants.map((restaurant, index) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
-              index={index + 1}
+              index={index}
               userPosition={position}
               onClick={handleCardClick}
               saved={isSaved(restaurant.id)}
               onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
               hasDiscount={discountRestaurantIds.has(restaurant.id)}
               discountTitle={discountTitleMap[restaurant.id]}
+              isFeatured={restaurant.id === featuredRestaurantId}
             />
           ))}
+
+          {/* CTA: suggerisci un ristorante mancante */}
+          <button
+            onClick={() => setShowSuggest(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+              padding: '16px 4px', textAlign: 'left',
+            }}
+          >
+            <div style={{
+              width: 44, height: 44, borderRadius: 14, flexShrink: 0,
+              background: 'rgba(196,162,101,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                <line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#22181C', margin: 0, lineHeight: 1.4 }}>
+                Manca un ristorante?
+              </p>
+              <p style={{ fontSize: 12, color: '#8A8680', margin: 0, lineHeight: 1.4 }}>
+                Consiglialo in 30 secondi →
+              </p>
+            </div>
+          </button>
         </div>
       )}
     </>
@@ -608,6 +610,14 @@ export default function HomePage() {
           </button>
         </motion.div>
       </div>
+
+      {/* Suggest restaurant sheet — works for logged-in and anonymous users */}
+      {showSuggest && (
+        <SuggestRestaurantSheet
+          userId={user?.id ?? null}
+          onClose={() => setShowSuggest(false)}
+        />
+      )}
     </div>
   )
 }
