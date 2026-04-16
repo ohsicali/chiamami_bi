@@ -18,6 +18,7 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg } from '../../lib/supabase'
+import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 
 function slugify(name) {
   return name
@@ -231,6 +232,7 @@ export default function HomePage() {
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
   const sheetY = useMotionValue(windowH)
   const [isSheetActive, setIsSheetActive] = useState(false)
+  const [showSuggest, setShowSuggest] = useState(false)
   const sheetOpacity = useTransform(sheetY, [windowH, windowH * 0.4, 0], [0, 1, 1])
   const hideBottomPanel = isSheetActive
 
@@ -365,6 +367,35 @@ export default function HomePage() {
               isFeatured={restaurant.id === featuredRestaurantId}
             />
           ))}
+
+          {/* CTA: suggerisci un ristorante mancante */}
+          <button
+            onClick={() => setShowSuggest(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+              padding: '16px 4px', textAlign: 'left',
+            }}
+          >
+            <div style={{
+              width: 44, height: 44, borderRadius: 14, flexShrink: 0,
+              background: 'rgba(196,162,101,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                <line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#22181C', margin: 0, lineHeight: 1.4 }}>
+                Manca un ristorante?
+              </p>
+              <p style={{ fontSize: 12, color: '#8A8680', margin: 0, lineHeight: 1.4 }}>
+                Consiglialo in 30 secondi →
+              </p>
+            </div>
+          </button>
         </div>
       )}
     </>
@@ -579,6 +610,14 @@ export default function HomePage() {
           </button>
         </motion.div>
       </div>
+
+      {/* Suggest restaurant sheet — works for logged-in and anonymous users */}
+      {showSuggest && (
+        <SuggestRestaurantSheet
+          userId={user?.id ?? null}
+          onClose={() => setShowSuggest(false)}
+        />
+      )}
     </div>
   )
 }

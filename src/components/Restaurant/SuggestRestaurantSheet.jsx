@@ -43,11 +43,15 @@ function Stepper({ current }) {
   )
 }
 
-export default function SuggestRestaurantSheet({ userId, onClose }) {
+// userId is optional: when null the form shows an email field so anonymous
+// users can submit without registering. Photo upload requires a userId.
+export default function SuggestRestaurantSheet({ userId = null, onClose }) {
+  const isAnon = !userId
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
   const [mapsUrl, setMapsUrl] = useState('')
+  const [email, setEmail] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
   const [description, setDescription] = useState('')
   const [photo, setPhoto] = useState(null)
@@ -91,7 +95,8 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
     setError('')
     try {
       let photoUrl = null
-      if (photo) {
+      // Photo upload only for authenticated users (storage policies require userId in path)
+      if (photo && !isAnon) {
         const ext = photo.name.split('.').pop()
         const path = `suggestions/${userId}/${Date.now()}.${ext}`
         const { error: uploadErr } = await supabase.storage.from('suggestions').upload(path, photo)
@@ -102,7 +107,8 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
       }
 
       const { error: insertErr } = await supabase.from('restaurant_suggestions').insert({
-        user_id: userId,
+        user_id: isAnon ? null : userId,
+        email: isAnon ? email.trim() : null,
         restaurant_name: name.trim(),
         address: address.trim() || null,
         google_maps_url: mapsUrl.trim() || null,
@@ -119,7 +125,8 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
     setSubmitting(false)
   }
 
-  const nameValid = name.trim().length >= 2 || mapsUrl.trim().length >= 5
+  const emailValid = !isAnon || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const nameValid = (name.trim().length >= 2 || mapsUrl.trim().length >= 5) && emailValid
 
   const inputStyle = {
     display: 'flex', alignItems: 'center', gap: 10,
@@ -231,13 +238,31 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Oppure incolla il link di Google Maps
               </p>
 
-              <div style={{ ...inputStyle, marginBottom: 24 }}>
+              <div style={{ ...inputStyle, marginBottom: isAnon ? 12 : 24 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
                   <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
                   <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
                 </svg>
                 <input value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="Link Google Maps" style={fieldStyle} />
               </div>
+
+              {/* Email field for anonymous users */}
+              {isAnon && (
+                <div style={{ ...inputStyle, marginBottom: 24, borderColor: email && !emailValid ? 'var(--color-accent)' : undefined }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="La tua email (per seguire il consiglio)"
+                    style={fieldStyle}
+                    autoComplete="email"
+                  />
+                </div>
+              )}
 
               <button
                 disabled={!nameValid}
@@ -311,37 +336,51 @@ export default function SuggestRestaurantSheet({ userId, onClose }) {
                 Facoltativo
               </p>
 
-              <input ref={fileRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              {photoPreview ? (
-                <div style={{ position: 'relative', marginBottom: 20 }}>
-                  <img src={photoPreview} alt="" style={{
-                    width: '100%', height: 180, objectFit: 'cover', borderRadius: 16,
-                  }} />
-                  <button onClick={() => { setPhoto(null); setPhotoPreview(null) }} style={{
-                    position: 'absolute', top: 8, right: 8,
-                    width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.5)',
-                    border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
+              {isAnon ? (
+                <div style={{
+                  background: 'var(--color-bordo)', borderRadius: 14,
+                  padding: '14px 16px', marginBottom: 20, textAlign: 'center',
+                }}>
+                  <p style={{ fontSize: 12, color: 'var(--color-secondary)', margin: 0 }}>
+                    La foto è disponibile solo per gli utenti registrati.<br />
+                    Il tuo consiglio sarà comunque prezioso!
+                  </p>
                 </div>
               ) : (
-                <button onClick={() => fileRef.current?.click()} style={{
-                  width: '100%', height: 140,
-                  border: '2px dashed var(--color-bordo)', borderRadius: 16,
-                  background: 'none', cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  marginBottom: 20,
-                }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeLinecap="round">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                  <span style={{ fontSize: 13, color: 'var(--color-secondary)' }}>Tocca per aggiungere</span>
-                </button>
+                <>
+                  <input ref={fileRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                  {photoPreview ? (
+                    <div style={{ position: 'relative', marginBottom: 20 }}>
+                      <img src={photoPreview} alt="" style={{
+                        width: '100%', height: 180, objectFit: 'cover', borderRadius: 16,
+                      }} />
+                      <button onClick={() => { setPhoto(null); setPhotoPreview(null) }} style={{
+                        position: 'absolute', top: 8, right: 8,
+                        width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.5)',
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => fileRef.current?.click()} style={{
+                      width: '100%', height: 140,
+                      border: '2px dashed var(--color-bordo)', borderRadius: 16,
+                      background: 'none', cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      marginBottom: 20,
+                    }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeLinecap="round">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <span style={{ fontSize: 13, color: 'var(--color-secondary)' }}>Tocca per aggiungere</span>
+                    </button>
+                  )}
+                </>
               )}
 
               {error && (
