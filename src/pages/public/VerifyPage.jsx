@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './VerifyPage.css'
 import { Link } from 'react-router-dom'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { LogoFull } from '../../components/UI/Logo'
@@ -454,10 +455,12 @@ export default function VerifyPage() {
 /*  PIN View (mobile + desktop responsive)                            */
 /* ------------------------------------------------------------------ */
 function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
+  const isDesktop = useIsDesktop()
   return (
     <>
       {/* ---- MOBILE (< 768px) ---- */}
-      <div className="md:hidden" style={{ minHeight: '100dvh', background: '#FAF7F2' }}>
+      {!isDesktop && (
+      <div style={{ minHeight: '100dvh', background: '#FAF7F2' }}>
         {/* Brand bar — ChiamamiBi logo + link to main site for people who
             stumbled onto /verify by mistake. Matches RestaurantHeader's
             brand bar style so the experience is consistent once logged in. */}
@@ -629,11 +632,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* ---- DESKTOP (≥ 768px) ---- */}
+      {isDesktop && (
       <div
-        className="hidden md:flex desktop-nav-offset"
+        className="desktop-nav-offset"
         style={{
+          display: 'flex',
           minHeight: '100dvh',
           background: '#FAF7F2',
           flexDirection: 'column',
@@ -799,6 +805,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           </Link>
         </div>
       </div>
+      )}
     </>
   )
 }
@@ -847,13 +854,14 @@ function RestaurantHeader({ restaurant, onLogout }) {
   })()
 
   const subtitle = [categoryName, restaurant?.address].filter(Boolean).join(' · ')
+  const isDesktop = useIsDesktop()
 
   return (
     <>
       {/* Brand bar — ChiamamiBi logo, taller with centered mark on mobile.
           Desktop already has DesktopNavbar (see App.jsx via desktop-nav-offset). */}
+      {!isDesktop && (
       <div
-        className="md:hidden"
         style={{
           background: '#22181C',
           padding: '20px 16px 16px',
@@ -865,10 +873,11 @@ function RestaurantHeader({ restaurant, onLogout }) {
       >
         <LogoFull height={28} />
       </div>
+      )}
 
       {/* Mobile */}
+      {!isDesktop && (
       <div
-        className="md:hidden"
         style={{
           background: '#22181C',
           padding: '12px 16px',
@@ -923,13 +932,16 @@ function RestaurantHeader({ restaurant, onLogout }) {
           Esci
         </button>
       </div>
+      )}
 
       {/* Desktop */}
+      {isDesktop && (
       <div
-        className="hidden md:flex desktop-nav-offset"
+        className="desktop-nav-offset"
         style={{
           background: '#22181C',
           padding: '16px 32px',
+          display: 'flex',
           alignItems: 'center',
           gap: 16,
         }}
@@ -970,6 +982,7 @@ function RestaurantHeader({ restaurant, onLogout }) {
           Esci
         </button>
       </div>
+      )}
     </>
   )
 }

@@ -12,6 +12,7 @@ import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import FilterChips from '../../components/Layout/FilterChips'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 
 function slugify(name) {
   return name.toLowerCase().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
@@ -34,6 +35,7 @@ export default function SavedPage() {
   const [headerH, setHeaderH] = useState(0)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const { city: currentCity } = useCity()
+  const isDesktop = useIsDesktop()
 
   // Measure header height for sticky top offset
   useEffect(() => {
@@ -341,8 +343,11 @@ export default function SavedPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: horizontal RestaurantCard list */}
-            <div className="flex flex-col gap-3 md:hidden">
+            {/* Mobile: horizontal RestaurantCard list — renderizzato SOLO su mobile
+                per evitare duplicazione delle card nel DOM (prima convivevano con
+                la grid desktop, moltiplicando il numero di nodi per 2). */}
+            {!isDesktop && (
+            <div className="flex flex-col gap-3">
               {displayList.map((r, i) => {
                 const discount = activeDiscounts[r.id]
                 return (
@@ -360,9 +365,11 @@ export default function SavedPage() {
                 )
               })}
             </div>
+            )}
 
-            {/* Desktop: vertical photo cards grid (3-col) */}
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5 md:pt-2">
+            {/* Desktop: vertical photo cards grid (3-col) — renderizzato SOLO su desktop */}
+            {isDesktop && (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
               {displayList.map((r) => {
                 const discount = activeDiscounts[r.id]
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -448,6 +455,7 @@ export default function SavedPage() {
                 </div>
               )}
             </div>
+            )}
           </>
         )}
       </div>

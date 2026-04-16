@@ -9,6 +9,7 @@ import Footer from '../../components/Layout/Footer'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -21,7 +22,7 @@ export default function ProfilePage() {
   const [newsletterEnabled, setNewsletterEnabled] = useState(false)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const { city: currentCity } = useCity()
-  const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  const isDesktop = useIsDesktop()
 
   useEffect(() => {
     if (!user?.id) return

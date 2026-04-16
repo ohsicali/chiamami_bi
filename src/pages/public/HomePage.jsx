@@ -15,6 +15,7 @@ import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg } from '../../lib/supabase'
@@ -149,6 +150,7 @@ export default function HomePage() {
 
   const { position, loading: geoLoading, locate } = useGeolocation()
   const { user } = useAuth()
+  const isDesktop = useIsDesktop()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
@@ -427,27 +429,33 @@ export default function HomePage() {
         />
       </div>
 
-      {/* ═══ DESKTOP LIST PANEL (≥768px) ═══ */}
-      <div
-        className="hidden md:block md:w-[360px] lg:w-[420px]"
-        style={{
-          position: 'absolute',
-          top: 56,
-          left: 0,
-          bottom: 0,
-          overflowY: 'auto',
-          borderRight: '1px solid var(--color-bordo, #E8E5DE)',
-          background: '#fff',
-          zIndex: 2,
-        }}
-      >
-        <div className="px-5 pt-4">
-          {listContent}
+      {/* ═══ DESKTOP LIST PANEL (≥768px) — renderizzato SOLO su desktop per evitare
+           duplicazione delle card ristorante nel DOM ═══ */}
+      {isDesktop && (
+        <div
+          className="md:w-[360px] lg:w-[420px]"
+          style={{
+            position: 'absolute',
+            top: 56,
+            left: 0,
+            bottom: 0,
+            overflowY: 'auto',
+            borderRight: '1px solid var(--color-bordo, #E8E5DE)',
+            background: '#fff',
+            zIndex: 2,
+          }}
+        >
+          <div className="px-5 pt-4">
+            {listContent}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ═══ MOBILE-ONLY OVERLAYS ═══ */}
-      <div className="md:hidden">
+      {/* ═══ MOBILE-ONLY OVERLAYS — renderizzati SOLO su mobile per evitare
+           duplicazione delle card ristorante, degli effetti React e della sheet
+           animata ═══ */}
+      {!isDesktop && (
+      <div>
 
         {/* === Floating "Lista" pill === */}
         {!hideBottomPanel && viewportRestaurants.length > 0 && (
@@ -610,6 +618,7 @@ export default function HomePage() {
           </button>
         </motion.div>
       </div>
+      )}
 
       {/* Suggest restaurant sheet — works for logged-in and anonymous users */}
       {showSuggest && (
