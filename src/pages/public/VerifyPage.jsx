@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import './VerifyPage.css'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -446,94 +447,7 @@ export default function VerifyPage() {
     )
   }
 
-  return (
-    <>
-      <style>{`
-        @keyframes verifySpin { to { transform: rotate(360deg); } }
-        @keyframes verifyShake {
-          0%, 100% { transform: translateX(0); }
-          15% { transform: translateX(-8px); }
-          30% { transform: translateX(8px); }
-          45% { transform: translateX(-6px); }
-          60% { transform: translateX(6px); }
-          75% { transform: translateX(-3px); }
-          90% { transform: translateX(3px); }
-        }
-        @keyframes verifyFadeIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes verifyPop {
-          0% { transform: scale(0.6); opacity: 0; }
-          70% { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1); }
-        }
-        @keyframes verifySuccessBg {
-          0%   { background: #ECFDF5; }
-          10%  { background: #10B981; }
-          60%  { background: #10B981; }
-          100% { background: #ECFDF5; }
-        }
-        @keyframes verifyCheckDraw {
-          from { stroke-dashoffset: 60; }
-          to   { stroke-dashoffset: 0; }
-        }
-        @keyframes verifyCheckPop {
-          0%   { transform: scale(0); opacity: 0; }
-          35%  { transform: scale(1.25); opacity: 1; }
-          55%  { transform: scale(0.92); }
-          100% { transform: scale(1); }
-        }
-        @keyframes verifyRingPulse {
-          0%   { transform: scale(0.6); opacity: 0.6; }
-          100% { transform: scale(2.2); opacity: 0; }
-        }
-        @keyframes verifyConfetti {
-          0%   { transform: translate(0,0) rotate(0);   opacity: 1; }
-          100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
-        }
-        @keyframes verifySuccessSlide {
-          0%   { opacity: 0; transform: translateY(12px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .verify-stat-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10px;
-          margin-bottom: 16px;
-        }
-        @media (min-width: 768px) {
-          .verify-stat-grid {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            margin-bottom: 20px;
-          }
-        }
-        .verify-dashboard-main {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 16px;
-        }
-        @media (min-width: 900px) {
-          .verify-dashboard-main {
-            grid-template-columns: 1.1fr 1fr;
-            gap: 20px;
-            align-items: start;
-          }
-        }
-        .verify-dashboard-col {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        .verify-cal-grid { flex-direction: column; }
-        @media (min-width: 640px) {
-          .verify-cal-grid { flex-direction: row; }
-        }
-      `}</style>
-      {body}
-    </>
-  )
+  return body
 }
 
 /* ------------------------------------------------------------------ */
