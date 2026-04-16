@@ -56,8 +56,8 @@ function DesktopPhotoGrid({ photos = [], restaurantName = '' }) {
 
   return (
     <div
-      className="hidden md:grid"
       style={{
+        display: 'grid',
         height: 300,
         gridTemplateColumns: side.length > 0 ? '2fr 1fr' : '1fr',
         gap: 4,
@@ -444,10 +444,15 @@ export default function RestaurantSheet({
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1 }}>
 
           {/* Mobile photo carousel — inside scroll so horizontal swipes hit useDrag
-              and vertical swipes bubble up to the scroll container. Hidden on desktop. */}
-          <div ref={photoRef} className="rs-photo-area md:hidden" style={{ height: '45vh', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
-            <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
-          </div>
+              and vertical swipes bubble up to the scroll container. Renderizzato
+              SOLO su mobile: prima conviveva nel DOM con la DesktopPhotoGrid
+              raddoppiando il numero di <img> + istanziando gesture handler
+              inutilmente quando invisibile. */}
+          {!isDesktop && (
+            <div ref={photoRef} className="rs-photo-area" style={{ height: '45vh', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
+              <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+            </div>
+          )}
 
           {/* Sticky header bar — appears when scrolled past photo */}
           <div className="rs-sticky-header" style={{
@@ -508,14 +513,16 @@ export default function RestaurantSheet({
             marginTop: -24,
             position: 'relative', zIndex: 2,
           }}>
-            {/* Desktop photo grid — hidden on mobile (mobile uses absolute PhotoCarousel) */}
-            {(restaurant.photos || []).length > 0 && (
+            {/* Desktop photo grid — renderizzato SOLO su desktop. Prima stava nel
+                DOM anche su mobile (con internal `hidden md:grid`) caricando 2-3
+                <img> inutili. */}
+            {isDesktop && (restaurant.photos || []).length > 0 && (
               <DesktopPhotoGrid photos={restaurant.photos} restaurantName={restaurant.name} />
             )}
 
             {/* Photo counter — anchored to white card, mobile only */}
-            {photoCount > 1 && (
-              <div className="md:hidden" style={{
+            {!isDesktop && photoCount > 1 && (
+              <div style={{
                 position: 'absolute', top: -36, right: 16, zIndex: 3,
                 background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
                 borderRadius: 14, padding: '4px 10px',
