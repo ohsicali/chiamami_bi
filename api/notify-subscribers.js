@@ -129,7 +129,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(
-          chunk.map((email) => ({ from, to: email, subject, html }))
+          chunk.map((email) => ({ from, to: [email], subject, html }))
         ),
       })
       const respText = await resp.text()
