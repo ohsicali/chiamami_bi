@@ -125,6 +125,11 @@ export default function BackfillPlaces() {
                     <td style={td}>{r.confidence ?? ''}</td>
                     <td style={{ ...td, color: verdictColor(r.verdict) }}>
                       {r.verdict || (r.error ? 'ERROR' : '')}
+                      {r.error && (
+                        <div style={{ fontSize: 11, color: '#b00', marginTop: 4, fontFamily: 'monospace' }}>
+                          {r.error}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
