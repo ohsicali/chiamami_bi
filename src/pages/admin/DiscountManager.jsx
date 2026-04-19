@@ -269,6 +269,9 @@ export default function DiscountManager() {
         return
       }
       if (!res.ok) throw new Error(json.error || 'Errore invio')
+      if (json.errors) {
+        window.alert(`Resend error details:\n\n${JSON.stringify(json.errorDetails, null, 2)}`)
+      }
       window.alert(`Notifica inviata a ${json.sent} iscritti${json.errors ? ` (${json.errors} errori)` : ''}`)
       setNotifyLogs((prev) => ({
         ...prev,
