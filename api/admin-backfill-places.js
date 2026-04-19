@@ -128,6 +128,42 @@ export default async function handler(req, res) {
   const limit = parseInt(req.query.limit, 10) || null
   const action = req.query.action
 
+  // Lista candidati non verificati (ordinati per confidence DESC)
+  if (action === 'list-unverified') {
+    const { data, error: listErr } = await adminClient
+      .from('restaurants')
+      .select('id, name, address, place_id, place_id_confidence, slug')
+      .not('place_id', 'is', null)
+      .is('place_id_verified_at', null)
+      .order('place_id_confidence', { ascending: false, nullsFirst: false })
+    if (listErr) return res.status(500).json({ ok: false, error: listErr.message })
+    return res.status(200).json({ ok: true, action, items: data })
+  }
+
+  // Verifica singolo ristorante (o lista via ids=a,b,c)
+  if (action === 'verify-one') {
+    const ids = (req.query.ids || req.query.id || '').split(',').map(s => s.trim()).filter(Boolean)
+    if (ids.length === 0) return res.status(400).json({ ok: false, error: 'ids required' })
+    const { error: upErr } = await adminClient
+      .from('restaurants')
+      .update({ place_id_verified_at: new Date().toISOString() })
+      .in('id', ids)
+    if (upErr) return res.status(500).json({ ok: false, error: upErr.message })
+    return res.status(200).json({ ok: true, action, verified: ids.length })
+  }
+
+  // Rimuove place_id + confidence (admin cercherà manualmente)
+  if (action === 'clear-one') {
+    const id = req.query.id
+    if (!id) return res.status(400).json({ ok: false, error: 'id required' })
+    const { error: upErr } = await adminClient
+      .from('restaurants')
+      .update({ place_id: null, place_id_confidence: null, place_id_verified_at: null })
+      .eq('id', id)
+    if (upErr) return res.status(500).json({ ok: false, error: upErr.message })
+    return res.status(200).json({ ok: true, action, cleared: id })
+  }
+
   // Azione speciale: auto-verifica tutti i candidati con confidence >= minConf
   if (action === 'verify-high') {
     const minConf = parseFloat(req.query.minConf || '0.9')

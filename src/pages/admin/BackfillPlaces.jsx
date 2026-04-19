@@ -15,18 +15,23 @@ export default function BackfillPlaces() {
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [reviewItems, setReviewItems] = useState(null)
+  const [rowBusy, setRowBusy] = useState({})
 
   if (authLoading) return null
   if (!user || !isAdmin) return <Navigate to="/" replace />
+
+  async function authHeaders() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Sessione scaduta, rifai login')
+    return { Authorization: `Bearer ${session.access_token}` }
+  }
 
   async function run({ dry, limit, force, action, minConf }) {
     setRunning(true)
     setError(null)
     setResult(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Sessione scaduta, rifai login')
-
       const params = new URLSearchParams()
       if (dry) params.set('dry', '1')
       if (limit) params.set('limit', String(limit))
@@ -35,7 +40,7 @@ export default function BackfillPlaces() {
       if (minConf != null) params.set('minConf', String(minConf))
 
       const res = await fetch(`/api/admin-backfill-places?${params}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: await authHeaders(),
       })
       const json = await res.json()
       if (!json.ok) throw new Error(json.error || 'Errore backfill')
@@ -45,6 +50,64 @@ export default function BackfillPlaces() {
     } finally {
       setRunning(false)
     }
+  }
+
+  async function loadReview() {
+    setRunning(true)
+    setError(null)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin-backfill-places?action=list-unverified', {
+        headers: await authHeaders(),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error || 'Errore')
+      setReviewItems(json.items)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  async function verifyRow(id) {
+    setRowBusy(b => ({ ...b, [id]: 'verify' }))
+    try {
+      const res = await fetch(`/api/admin-backfill-places?action=verify-one&ids=${id}`, {
+        headers: await authHeaders(),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error)
+      setReviewItems(items => items.filter(i => i.id !== id))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRowBusy(b => { const n = { ...b }; delete n[id]; return n })
+    }
+  }
+
+  async function clearRow(id) {
+    if (!confirm('Rimuovi il place_id candidato? Dovrai associarlo a mano dal form ristorante.')) return
+    setRowBusy(b => ({ ...b, [id]: 'clear' }))
+    try {
+      const res = await fetch(`/api/admin-backfill-places?action=clear-one&id=${id}`, {
+        headers: await authHeaders(),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error)
+      setReviewItems(items => items.filter(i => i.id !== id))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRowBusy(b => { const n = { ...b }; delete n[id]; return n })
+    }
+  }
+
+  function verdictOf(conf) {
+    if (conf == null) return '—'
+    if (conf >= 0.6) return 'HIGH'
+    if (conf >= 0.35) return 'MID'
+    return 'LOW'
   }
 
   return (
@@ -98,7 +161,73 @@ export default function BackfillPlaces() {
           >
             Auto-verifica HIGH (conf ≥ 0.9)
           </button>
+          <button
+            onClick={loadReview}
+            disabled={running}
+            style={{ ...btnStyle, background: '#6b21a8', color: '#fff' }}
+          >
+            Review candidati non verificati
+          </button>
         </div>
+
+        {reviewItems && (
+          <div style={{ marginTop: 20 }}>
+            <p style={{ fontSize: 14, color: '#555', marginBottom: 10 }}>
+              {reviewItems.length} candidati da verificare. Clicca sul link Google Maps per controllare, poi Verifica o Rimuovi.
+            </p>
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f6f6f6', textAlign: 'left' }}>
+                  <th style={th}>Ristorante</th>
+                  <th style={th}>Conf.</th>
+                  <th style={th}>Verdict</th>
+                  <th style={th}>Check</th>
+                  <th style={th}>Azioni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviewItems.map(i => (
+                  <tr key={i.id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={td}>
+                      <strong>{i.name}</strong>
+                      <div style={{ fontSize: 11, color: '#999' }}>{i.address}</div>
+                    </td>
+                    <td style={td}>{i.place_id_confidence?.toFixed(2) ?? '—'}</td>
+                    <td style={{ ...td, color: verdictColor(verdictOf(i.place_id_confidence)) }}>
+                      {verdictOf(i.place_id_confidence)}
+                    </td>
+                    <td style={td}>
+                      <a
+                        href={`https://www.google.com/maps/place/?q=place_id:${i.place_id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: '#1e40af', textDecoration: 'underline' }}
+                      >
+                        Apri su Maps
+                      </a>
+                    </td>
+                    <td style={td}>
+                      <button
+                        onClick={() => verifyRow(i.id)}
+                        disabled={!!rowBusy[i.id]}
+                        style={{ ...miniBtn, background: '#2e7d57', color: '#fff', marginRight: 6 }}
+                      >
+                        {rowBusy[i.id] === 'verify' ? '...' : '✓ Verifica'}
+                      </button>
+                      <button
+                        onClick={() => clearRow(i.id)}
+                        disabled={!!rowBusy[i.id]}
+                        style={{ ...miniBtn, background: '#b00', color: '#fff' }}
+                      >
+                        {rowBusy[i.id] === 'clear' ? '...' : '✗ Rimuovi'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {running && <p style={{ color: '#666' }}>In esecuzione... (può impiegare 1-2 min per 50 ristoranti)</p>}
         {error && (
@@ -185,6 +314,10 @@ const btnStyle = {
 }
 const th = { padding: 10, fontWeight: 600, fontSize: 12, borderBottom: '1px solid #ddd' }
 const td = { padding: 10, verticalAlign: 'top' }
+const miniBtn = {
+  padding: '6px 10px', fontSize: 12, borderRadius: 6, border: 'none',
+  cursor: 'pointer', fontWeight: 500,
+}
 
 function verdictColor(v) {
   if (v === 'HIGH') return '#2e7d57'
