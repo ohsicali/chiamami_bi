@@ -694,6 +694,9 @@ export default function RestaurantForm() {
   const [aiSuggestion, setAiSuggestion] = useState(null) // { field, original, corrected }
   const [placeSearching, setPlaceSearching] = useState(false)
   const [placeCandidates, setPlaceCandidates] = useState(null) // array or null
+  // Notify subscribers state
+  const [notifying, setNotifying] = useState(false)
+  const [notifyInfo, setNotifyInfo] = useState(null) // { sent_at, sent_count } if already sent
   // Inline discount state
   const [discount, setDiscount] = useState(null)
   const [discountLoading, setDiscountLoading] = useState(false)
@@ -1151,6 +1154,55 @@ export default function RestaurantForm() {
       addToast('Sconto eliminato', 'success')
     } catch (err) {
       addToast(`Errore: ${err.message}`, 'error')
+    }
+  }
+
+  // Load prior notify log for this restaurant (if any)
+  useEffect(() => {
+    if (!isEditing || !id || !isSupabaseConfigured()) return
+    supabase
+      .from('email_notifications_log')
+      .select('sent_at, sent_count')
+      .eq('type', 'restaurant')
+      .eq('item_id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setNotifyInfo(data)
+      })
+  }, [isEditing, id])
+
+  const handleNotifySubscribers = async ({ force = false } = {}) => {
+    if (!id) return
+    if (!form.published) {
+      addToast('Pubblica il ristorante prima di notificare', 'error')
+      return
+    }
+    setNotifying(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Sessione scaduta')
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ type: 'restaurant', id, force }),
+      })
+      const json = await res.json()
+      if (res.status === 409) {
+        const sentWhen = new Date(json.sent_at).toLocaleString('it-IT')
+        const again = window.confirm(`Già inviato il ${sentWhen} a ${json.sent_count} iscritti.\n\nVuoi inviare di nuovo?`)
+        if (again) return handleNotifySubscribers({ force: true })
+        return
+      }
+      if (!res.ok) throw new Error(json.error || 'Errore invio')
+      addToast(`Notifica inviata a ${json.sent} iscritti${json.errors ? ` (${json.errors} errori)` : ''}`, 'success')
+      setNotifyInfo({ sent_at: new Date().toISOString(), sent_count: json.sent })
+    } catch (err) {
+      addToast(`Errore notifica: ${err.message}`, 'error')
+    } finally {
+      setNotifying(false)
     }
   }
 
@@ -2163,6 +2215,43 @@ export default function RestaurantForm() {
               label={form.published ? 'Pubblicato — visibile sulla mappa' : 'Bozza — non visibile'}
             />
           </Section>
+
+          {/* --- Notify subscribers (only when editing an existing, published restaurant) --- */}
+          {isEditing && (
+            <Section title="Notifica iscritti newsletter">
+              <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
+                Invia una email a tutti gli iscritti alla newsletter per annunciare questo ristorante.
+                {notifyInfo && (
+                  <> <br/><strong>Ultima notifica</strong>: {new Date(notifyInfo.sent_at).toLocaleString('it-IT')} — {notifyInfo.sent_count} iscritti.</>
+                )}
+              </p>
+              <button
+                type="button"
+                disabled={notifying || !form.published}
+                onClick={() => handleNotifySubscribers({ force: false })}
+                style={{
+                  alignSelf: 'flex-start',
+                  padding: '10px 18px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: form.published ? '#E8453C' : '#ddd',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: notifying || !form.published ? 'not-allowed' : 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                  opacity: notifying ? 0.6 : 1,
+                }}
+              >
+                {notifying ? 'Invio in corso…' : notifyInfo ? 'Invia di nuovo' : 'Invia notifica agli iscritti'}
+              </button>
+              {!form.published && (
+                <p style={{ fontSize: 12, color: '#b91c1c', margin: 0 }}>
+                  Pubblica il ristorante per abilitare l'invio.
+                </p>
+              )}
+            </Section>
+          )}
 
           {/* --- Mobile-only delete (sticky header hides it on small screens) --- */}
           {isEditing && (

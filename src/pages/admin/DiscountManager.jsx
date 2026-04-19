@@ -193,6 +193,9 @@ export default function DiscountManager() {
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  // Notify subscribers: map of `${type}:${id}` -> { sent_at, sent_count }
+  const [notifyLogs, setNotifyLogs] = useState({})
+  const [notifyingId, setNotifyingId] = useState(null)
 
   const [form, setForm] = useState(EMPTY_FORM)
 
@@ -226,6 +229,57 @@ export default function DiscountManager() {
       setLoading(false)
     })
   }, [])
+
+  // Load notify log rows so we can show "già inviato" state inline.
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    supabase
+      .from('email_notifications_log')
+      .select('type, item_id, sent_at, sent_count')
+      .in('type', ['discount', 'drop'])
+      .then(({ data }) => {
+        const map = {}
+        ;(data || []).forEach((row) => {
+          map[`${row.type}:${row.item_id}`] = { sent_at: row.sent_at, sent_count: row.sent_count }
+        })
+        setNotifyLogs(map)
+      })
+  }, [])
+
+  const handleNotify = async (d, { force = false } = {}) => {
+    if (!d?.id) return
+    const type = d.is_drop ? 'drop' : 'discount'
+    setNotifyingId(d.id)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Sessione scaduta')
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ type, id: d.id, force }),
+      })
+      const json = await res.json()
+      if (res.status === 409) {
+        const sentWhen = new Date(json.sent_at).toLocaleString('it-IT')
+        const again = window.confirm(`Già inviato il ${sentWhen} a ${json.sent_count} iscritti.\n\nVuoi inviare di nuovo?`)
+        if (again) return handleNotify(d, { force: true })
+        return
+      }
+      if (!res.ok) throw new Error(json.error || 'Errore invio')
+      window.alert(`Notifica inviata a ${json.sent} iscritti${json.errors ? ` (${json.errors} errori)` : ''}`)
+      setNotifyLogs((prev) => ({
+        ...prev,
+        [`${type}:${d.id}`]: { sent_at: new Date().toISOString(), sent_count: json.sent },
+      }))
+    } catch (err) {
+      window.alert(`Errore notifica: ${err.message}`)
+    } finally {
+      setNotifyingId(null)
+    }
+  }
 
   const resetForm = () => {
     setForm(EMPTY_FORM)
@@ -620,6 +674,27 @@ export default function DiscountManager() {
                         <StatusBadge discount={d} />
                       </td>
                       <td style={{ ...tdStyle, textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
+                        {(() => {
+                          const key = `${d.is_drop ? 'drop' : 'discount'}:${d.id}`
+                          const sent = notifyLogs[key]
+                          const disabled = notifyingId === d.id || !isActive(d)
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => handleNotify(d)}
+                              disabled={disabled}
+                              title={sent
+                                ? `Già inviato il ${new Date(sent.sent_at).toLocaleDateString('it-IT')} a ${sent.sent_count} iscritti — clicca per inviare di nuovo`
+                                : !isActive(d) ? 'Attiva lo sconto per notificare' : 'Notifica iscritti newsletter'}
+                              style={{ ...iconBtnStyle, color: sent ? '#059669' : '#1a1a1f', opacity: disabled ? 0.4 : 1 }}
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 11l18-8v18L3 13v-2z" />
+                                <path d="M11.6 16.8A3 3 0 0 1 8 20" />
+                              </svg>
+                            </button>
+                          )
+                        })()}
                         <button
                           type="button"
                           onClick={() => handleToggleActive(d.id, d.is_active)}
@@ -708,15 +783,36 @@ export default function DiscountManager() {
                     <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
                     <span> usati{d.max_redemptions ? ` · max ${d.max_redemptions}` : ''} · Scade {formatDate(d.valid_until)}</span>
                   </span>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setDeleteConfirm(d) }}
-                    style={{ background: 'transparent', border: 'none', color: '#dc2626', padding: 4, cursor: 'pointer' }}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    </svg>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {(() => {
+                      const key = `${d.is_drop ? 'drop' : 'discount'}:${d.id}`
+                      const sent = notifyLogs[key]
+                      const disabled = notifyingId === d.id || !isActive(d)
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleNotify(d) }}
+                          disabled={disabled}
+                          title={sent ? `Già inviato a ${sent.sent_count} iscritti` : 'Notifica iscritti'}
+                          style={{ background: 'transparent', border: 'none', color: sent ? '#059669' : '#1a1a1f', padding: 4, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 11l18-8v18L3 13v-2z" />
+                            <path d="M11.6 16.8A3 3 0 0 1 8 20" />
+                          </svg>
+                        </button>
+                      )
+                    })()}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(d) }}
+                      style={{ background: 'transparent', border: 'none', color: '#dc2626', padding: 4, cursor: 'pointer' }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
