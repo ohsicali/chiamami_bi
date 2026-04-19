@@ -5,7 +5,7 @@ import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
-const ACCENT_COLOR = '#E8453C'
+const ACCENT_COLOR = '#EE5C55'
 const GOLD_COLOR = '#C4A265'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
@@ -90,33 +90,35 @@ function hexToRgb(hex) {
 }
 
 function createPinEl(restaurant, isSaved, discountValue) {
-  const primaryType = (restaurant.category && restaurant.category[0]) || restaurant.cuisine_type
-  const { emoji, color } = getCategoryInfo(primaryType)
-  const pinColor = color || ACCENT_COLOR
-  const rgb = hexToRgb(pinColor)
-
   const wrap = document.createElement('div')
   wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
   const inner = document.createElement('div')
   inner.className = 'cb-inner cb-inner--bounce'
+  // v4 teardrop pin: 36x44 drop pointing down with "B" monogram.
+  // Anchor visually at the tip by shifting content up.
   inner.style.cssText = `
-    width:44px;height:44px;border-radius:50%;
-    background:${pinColor};opacity:0.85;
-    display:flex;align-items:center;justify-content:center;
-    font-size:18px;position:relative;user-select:none;
-    box-shadow:0 4px 16px rgba(${rgb},0.4), 0 0 0 3px rgba(${rgb},0.15);
+    width:36px;height:44px;position:relative;user-select:none;
+    filter: drop-shadow(0 4px 10px rgba(34,24,28,0.22));
   `
-  inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
+  inner.innerHTML = `
+    <svg width="36" height="44" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <path d="M18 2 C9.2 2 2 9 2 17.2 C2 27.8 18 42 18 42 C18 42 34 27.8 34 17.2 C34 9 26.8 2 18 2 Z"
+            fill="${ACCENT_COLOR}" />
+      <text x="18" y="21" text-anchor="middle" dominant-baseline="middle"
+            fill="#ffffff" font-family="'TAN Songbird','Satoshi',serif"
+            font-size="16" font-weight="700">B</text>
+    </svg>
+  `
 
   if (isSaved) {
     const heart = document.createElement('span')
     heart.style.cssText = `
-      position:absolute;top:-4px;right:-4px;width:18px;height:18px;
+      position:absolute;top:-2px;right:-2px;width:16px;height:16px;
       background:#fff;border-radius:50%;display:flex;align-items:center;
-      justify-content:center;font-size:10px;line-height:1;
-      box-shadow:0 2px 6px rgba(0,0,0,0.2);
+      justify-content:center;font-size:9px;line-height:1;
+      box-shadow:0 2px 4px rgba(0,0,0,0.15);
       pointer-events:none;
     `
     heart.textContent = '❤️'
@@ -126,11 +128,12 @@ function createPinEl(restaurant, isSaved, discountValue) {
   if (discountValue) {
     const badge = document.createElement('span')
     badge.style.cssText = `
-      position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
-      background:linear-gradient(135deg, #a3e635, #4ade80);color:#000;
-      font-size:8px;font-weight:800;letter-spacing:0.3px;
-      padding:2px 5px;border-radius:6px;white-space:nowrap;
-      box-shadow:0 2px 6px rgba(163,230,53,0.4);
+      position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
+      background:#22181C;color:#fff;
+      font-size:9px;font-weight:700;letter-spacing:0.2px;
+      padding:2px 6px;border-radius:999px;white-space:nowrap;
+      font-family:'Satoshi','DM Sans',sans-serif;
+      box-shadow:0 2px 6px rgba(0,0,0,0.18);
       pointer-events:none;
     `
     const val = String(discountValue)
@@ -147,20 +150,18 @@ function createClusterEl(count) {
   wrap.className = 'cb-marker'
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
-  const size = count >= 10 ? 52 : 46
+  const size = count >= 10 ? 46 : 40
   const inner = document.createElement('div')
   inner.className = 'cb-inner'
   inner.style.cssText = `
     width:${size}px;height:${size}px;border-radius:50%;
-    background:rgba(255,255,255,0.88);
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    border:1.5px solid rgba(0,0,0,0.08);
+    background:${ACCENT_COLOR};
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 2px 12px rgba(0,0,0,0.1);
+    box-shadow:0 4px 14px rgba(238,92,85,0.35);
     user-select:none;
   `
   const label = count > 99 ? '99+' : String(count)
-  inner.innerHTML = `<span style="font-weight:700;font-size:14px;color:#22181C;line-height:1;pointer-events:none">${label}</span>`
+  inner.innerHTML = `<span style="font-family:'Satoshi','DM Sans',sans-serif;font-weight:700;font-size:14px;color:#fff;line-height:1;pointer-events:none">${label}</span>`
 
   wrap.appendChild(inner)
   return wrap
