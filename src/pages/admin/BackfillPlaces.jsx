@@ -4,7 +4,7 @@
  *
  * NOTA: questo file è temporaneo, da rimuovere dopo il backfill iniziale.
  */
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
@@ -17,6 +17,8 @@ export default function BackfillPlaces() {
   const [error, setError] = useState(null)
   const [reviewItems, setReviewItems] = useState(null)
   const [rowBusy, setRowBusy] = useState({})
+  const [editRow, setEditRow] = useState(null)
+  const [editDraft, setEditDraft] = useState({ name: '', address: '' })
 
   if (authLoading) return null
   if (!user || !isAdmin) return <Navigate to="/" replace />
@@ -79,6 +81,52 @@ export default function BackfillPlaces() {
       const json = await res.json()
       if (!json.ok) throw new Error(json.error)
       setReviewItems(items => items.filter(i => i.id !== id))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRowBusy(b => { const n = { ...b }; delete n[id]; return n })
+    }
+  }
+
+  function startEdit(item) {
+    setEditRow(item.id)
+    setEditDraft({ name: item.name || '', address: item.address || '' })
+  }
+
+  async function saveEdit(id) {
+    setRowBusy(b => ({ ...b, [id]: 'update' }))
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin-backfill-places?action=update-and-search&id=${id}`, {
+        method: 'POST',
+        headers: {
+          ...(await authHeaders()),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editDraft),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error)
+      if (json.found) {
+        // Aggiorna la riga in place con i nuovi dati
+        setReviewItems(items => items.map(i =>
+          i.id === id
+            ? {
+                ...i,
+                name: json.match.name,
+                address: json.match.address,
+                place_id: json.match.place_id,
+                place_id_confidence: json.match.place_id_confidence,
+                matched_name: json.match.matched_name,
+                matched_address: json.match.matched_address,
+              }
+            : i
+        ))
+      } else {
+        // Nessun match: rimuovi dalla lista
+        setReviewItems(items => items.filter(i => i.id !== id))
+      }
+      setEditRow(null)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -187,42 +235,95 @@ export default function BackfillPlaces() {
               </thead>
               <tbody>
                 {reviewItems.map(i => (
-                  <tr key={i.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={td}>
-                      <strong>{i.name}</strong>
-                      <div style={{ fontSize: 11, color: '#999' }}>{i.address}</div>
-                    </td>
-                    <td style={td}>{i.place_id_confidence?.toFixed(2) ?? '—'}</td>
-                    <td style={{ ...td, color: verdictColor(verdictOf(i.place_id_confidence)) }}>
-                      {verdictOf(i.place_id_confidence)}
-                    </td>
-                    <td style={td}>
-                      <a
-                        href={`https://www.google.com/maps/place/?q=place_id:${i.place_id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: '#1e40af', textDecoration: 'underline' }}
-                      >
-                        Apri su Maps
-                      </a>
-                    </td>
-                    <td style={td}>
-                      <button
-                        onClick={() => verifyRow(i.id)}
-                        disabled={!!rowBusy[i.id]}
-                        style={{ ...miniBtn, background: '#2e7d57', color: '#fff', marginRight: 6 }}
-                      >
-                        {rowBusy[i.id] === 'verify' ? '...' : '✓ Verifica'}
-                      </button>
-                      <button
-                        onClick={() => clearRow(i.id)}
-                        disabled={!!rowBusy[i.id]}
-                        style={{ ...miniBtn, background: '#b00', color: '#fff' }}
-                      >
-                        {rowBusy[i.id] === 'clear' ? '...' : '✗ Rimuovi'}
-                      </button>
-                    </td>
-                  </tr>
+                  <Fragment key={i.id}>
+                    <tr style={{ borderBottom: editRow === i.id ? 'none' : '1px solid #eee' }}>
+                      <td style={td}>
+                        <strong>{i.name}</strong>
+                        <div style={{ fontSize: 11, color: '#999' }}>{i.address}</div>
+                      </td>
+                      <td style={td}>{i.place_id_confidence?.toFixed(2) ?? '—'}</td>
+                      <td style={{ ...td, color: verdictColor(verdictOf(i.place_id_confidence)) }}>
+                        {verdictOf(i.place_id_confidence)}
+                      </td>
+                      <td style={td}>
+                        <a
+                          href={`https://www.google.com/maps/place/?q=place_id:${i.place_id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: '#1e40af', textDecoration: 'underline' }}
+                        >
+                          Apri su Maps
+                        </a>
+                      </td>
+                      <td style={td}>
+                        <button
+                          onClick={() => verifyRow(i.id)}
+                          disabled={!!rowBusy[i.id]}
+                          style={{ ...miniBtn, background: '#2e7d57', color: '#fff', marginRight: 6 }}
+                        >
+                          {rowBusy[i.id] === 'verify' ? '...' : '✓ Verifica'}
+                        </button>
+                        <button
+                          onClick={() => startEdit(i)}
+                          disabled={!!rowBusy[i.id]}
+                          style={{ ...miniBtn, background: '#d97706', color: '#fff', marginRight: 6 }}
+                        >
+                          ✎ Modifica
+                        </button>
+                        <button
+                          onClick={() => clearRow(i.id)}
+                          disabled={!!rowBusy[i.id]}
+                          style={{ ...miniBtn, background: '#b00', color: '#fff' }}
+                        >
+                          {rowBusy[i.id] === 'clear' ? '...' : '✗ Rimuovi'}
+                        </button>
+                      </td>
+                    </tr>
+                    {editRow === i.id && (
+                      <tr style={{ borderBottom: '1px solid #eee', background: 'rgba(217,119,6,0.08)' }}>
+                        <td colSpan={5} style={{ padding: 14 }}>
+                          <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+                            Correggi nome/indirizzo — salvando rifaccio la ricerca su Google Places con i dati nuovi.
+                          </div>
+                          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                            <label style={{ flex: '1 1 260px' }}>
+                              <span style={lblStyle}>Nome locale</span>
+                              <input
+                                value={editDraft.name}
+                                onChange={e => setEditDraft(d => ({ ...d, name: e.target.value }))}
+                                style={inpStyle}
+                              />
+                            </label>
+                            <label style={{ flex: '2 1 360px' }}>
+                              <span style={lblStyle}>Indirizzo</span>
+                              <input
+                                value={editDraft.address}
+                                onChange={e => setEditDraft(d => ({ ...d, address: e.target.value }))}
+                                style={inpStyle}
+                                placeholder="Via Esempio, 10, 10100 Torino TO"
+                              />
+                            </label>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button
+                                onClick={() => saveEdit(i.id)}
+                                disabled={rowBusy[i.id] === 'update' || !editDraft.name.trim()}
+                                style={{ ...miniBtn, background: '#1e40af', color: '#fff' }}
+                              >
+                                {rowBusy[i.id] === 'update' ? 'Cerco...' : 'Salva e ricerca'}
+                              </button>
+                              <button
+                                onClick={() => setEditRow(null)}
+                                disabled={rowBusy[i.id] === 'update'}
+                                style={{ ...miniBtn, background: '#eee', color: '#333' }}
+                              >
+                                Annulla
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -317,6 +418,11 @@ const td = { padding: 10, verticalAlign: 'top' }
 const miniBtn = {
   padding: '6px 10px', fontSize: 12, borderRadius: 6, border: 'none',
   cursor: 'pointer', fontWeight: 500,
+}
+const lblStyle = { display: 'block', fontSize: 11, color: '#666', marginBottom: 4 }
+const inpStyle = {
+  width: '100%', padding: '8px 10px', fontSize: 13, borderRadius: 6,
+  border: '1px solid #ccc', boxSizing: 'border-box',
 }
 
 function verdictColor(v) {

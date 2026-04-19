@@ -77,11 +77,13 @@ async function searchPlace(apiKey, { name, address }) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
-  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' })
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed' })
+  }
 
   maybeCleanup()
   const limited = rateLimit(req, { key: 'admin-backfill', max: 10, windowMs: 60_000 })
@@ -150,6 +152,62 @@ export default async function handler(req, res) {
       .in('id', ids)
     if (upErr) return res.status(500).json({ ok: false, error: upErr.message })
     return res.status(200).json({ ok: true, action, verified: ids.length })
+  }
+
+  // Aggiorna name/address di un ristorante, poi rifai searchText e salva nuovo candidato
+  if (action === 'update-and-search') {
+    const id = req.query.id
+    if (!id) return res.status(400).json({ ok: false, error: 'id required' })
+    const body = req.body || {}
+    const newName = (body.name || '').trim()
+    const newAddress = (body.address || '').trim()
+    if (!newName) return res.status(400).json({ ok: false, error: 'name required' })
+
+    // Aggiorna ristorante
+    const { error: upErr } = await adminClient
+      .from('restaurants')
+      .update({ name: newName, address: newAddress || null })
+      .eq('id', id)
+    if (upErr) return res.status(500).json({ ok: false, error: upErr.message })
+
+    // Rifai searchText
+    try {
+      const candidates = await searchPlace(apiKey, { name: newName, address: newAddress })
+      if (candidates.length === 0) {
+        // Nessun match: azzera place_id
+        await adminClient
+          .from('restaurants')
+          .update({ place_id: null, place_id_confidence: null, place_id_verified_at: null })
+          .eq('id', id)
+        return res.status(200).json({ ok: true, action, found: false })
+      }
+      const top = candidates[0]
+      const confidence = jaccard(newName, top.displayName?.text || '')
+      await adminClient
+        .from('restaurants')
+        .update({
+          place_id: top.id,
+          place_id_confidence: confidence,
+          place_id_verified_at: null,
+          hours_cache: null,
+          hours_cache_updated_at: null,
+        })
+        .eq('id', id)
+      return res.status(200).json({
+        ok: true, action, found: true,
+        match: {
+          id,
+          name: newName,
+          address: newAddress,
+          place_id: top.id,
+          place_id_confidence: confidence,
+          matched_name: top.displayName?.text || '',
+          matched_address: top.formattedAddress,
+        },
+      })
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message })
+    }
   }
 
   // Rimuove place_id + confidence (admin cercherà manualmente)
