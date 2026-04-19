@@ -130,6 +130,26 @@ export default async function handler(req, res) {
   const limit = parseInt(req.query.limit, 10) || null
   const action = req.query.action
 
+  // Solo ricerca (non scrive su DB): usato da RestaurantForm per cercare candidati
+  if (action === 'search-only') {
+    const body = req.body || {}
+    const name = (body.name || '').trim()
+    const address = (body.address || '').trim()
+    if (!name) return res.status(400).json({ ok: false, error: 'name required' })
+    try {
+      const candidates = await searchPlace(apiKey, { name, address })
+      const enriched = candidates.slice(0, 3).map(c => ({
+        place_id: c.id,
+        display_name: c.displayName?.text || '',
+        address: c.formattedAddress,
+        confidence: Number(jaccard(name, c.displayName?.text || '').toFixed(2)),
+      }))
+      return res.status(200).json({ ok: true, action, candidates: enriched })
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message })
+    }
+  }
+
   // Pulisce hours_cache per tutti (forza re-fetch in italiano)
   if (action === 'clear-hours-cache') {
     const { error: upErr, count } = await adminClient

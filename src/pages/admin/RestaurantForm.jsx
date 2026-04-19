@@ -692,6 +692,8 @@ export default function RestaurantForm() {
   const [nameSearching, setNameSearching] = useState(false)
   const [aiCorrecting, setAiCorrecting] = useState(null) // 'our_review' | 'our_tip' | null
   const [aiSuggestion, setAiSuggestion] = useState(null) // { field, original, corrected }
+  const [placeSearching, setPlaceSearching] = useState(false)
+  const [placeCandidates, setPlaceCandidates] = useState(null) // array or null
   // Inline discount state
   const [discount, setDiscount] = useState(null)
   const [discountLoading, setDiscountLoading] = useState(false)
@@ -820,6 +822,46 @@ export default function RestaurantForm() {
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }))
+  }
+
+  async function searchPlaceCandidates() {
+    if (!form.name.trim()) {
+      addToast('Inserisci prima il nome del locale', 'warning')
+      return
+    }
+    setPlaceSearching(true)
+    setPlaceCandidates(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Sessione scaduta')
+      const res = await fetch('/api/admin-backfill-places?action=search-only', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: form.name, address: form.address }),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error || 'Errore ricerca')
+      setPlaceCandidates(json.candidates || [])
+      if (!json.candidates?.length) addToast('Nessun candidato trovato', 'info')
+    } catch (e) {
+      addToast(`Errore: ${e.message}`, 'error')
+    } finally {
+      setPlaceSearching(false)
+    }
+  }
+
+  function applyCandidate(c) {
+    setForm(prev => ({
+      ...prev,
+      place_id: c.place_id,
+      place_id_confidence: c.confidence,
+      place_id_verified_at: null,
+    }))
+    setPlaceCandidates(null)
+    addToast('Place ID impostato — verifica poi salva', 'success')
   }
 
   const validate = () => {
@@ -1809,13 +1851,58 @@ export default function RestaurantForm() {
                 style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13 }}
               />
               <p className="mt-1.5 text-xs text-secondary">
-                ID univoco del locale su Google Places. Lo trovi cercando il locale su{' '}
+                ID univoco del locale su Google Places. Usa il bottone qui sotto per cercare automaticamente, oppure incollalo manualmente dal{' '}
                 <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="text-accent underline">
                   Places ID Finder
-                </a>{' '}
-                o viene popolato dallo script di backfill.
+                </a>.
               </p>
             </Field>
+
+            <div style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={searchPlaceCandidates}
+                disabled={placeSearching || !form.name.trim()}
+                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1e40af] text-white hover:bg-[#1e3a8a] disabled:opacity-50 transition-colors"
+              >
+                {placeSearching ? 'Cerco...' : 'Cerca candidati Google'}
+              </button>
+            </div>
+
+            {placeCandidates && placeCandidates.length > 0 && (
+              <div style={{
+                marginTop: 10, padding: 12, borderRadius: 10,
+                background: 'rgba(30, 64, 175, 0.06)', border: '1px solid rgba(30, 64, 175, 0.2)',
+              }}>
+                <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 10px' }}>
+                  {placeCandidates.length} candidati trovati — clicca quello giusto:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {placeCandidates.map(c => (
+                    <button
+                      key={c.place_id}
+                      type="button"
+                      onClick={() => applyCandidate(c)}
+                      style={{
+                        textAlign: 'left', padding: 10, borderRadius: 8,
+                        background: '#fff', border: '1px solid #ddd', cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+                        <strong style={{ fontSize: 13 }}>{c.display_name}</strong>
+                        <span style={{
+                          fontSize: 11, fontWeight: 600,
+                          color: c.confidence >= 0.6 ? '#2e7d57' : c.confidence >= 0.35 ? '#b45309' : '#888',
+                        }}>
+                          {(c.confidence * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{c.address}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{
               display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12,
