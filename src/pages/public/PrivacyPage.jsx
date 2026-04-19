@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         </h1>
 
         <div className="prose prose-sm text-secondary leading-relaxed space-y-6">
-          <p><strong>Ultimo aggiornamento:</strong> Marzo 2026</p>
+          <p><strong>Ultimo aggiornamento:</strong> Aprile 2026</p>
 
           <h2 className="text-lg font-semibold text-primary">1. Titolare del trattamento</h2>
           <p>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
             <li><strong>Dati di registrazione:</strong> nome, indirizzo email</li>
             <li><strong>Dati di navigazione:</strong> indirizzo IP, tipo di browser, pagine visitate</li>
             <li><strong>Dati di geolocalizzazione:</strong> posizione GPS (solo con consenso esplicito)</li>
-            <li><strong>Contenuti generati:</strong> recensioni, foto caricate, ristoranti salvati</li>
+            <li><strong>Contenuti generati:</strong> ristoranti salvati</li>
             <li><strong>Dati di utilizzo sconti:</strong> codici QR generati e utilizzati</li>
           </ul>
 

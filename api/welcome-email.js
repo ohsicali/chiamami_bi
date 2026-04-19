@@ -75,7 +75,6 @@ function buildWelcomeHtml(name) {
             <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">🗺️ &nbsp;Esplora i ristoranti sulla mappa interattiva</td></tr>
             <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">❤️ &nbsp;Salva i tuoi preferiti</td></tr>
             <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">🏷️ &nbsp;Riscatta sconti esclusivi con QR code</td></tr>
-            <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">⭐ &nbsp;Lascia recensioni e aiuta la community</td></tr>
           </table>
 
           <!-- CTA Button -->

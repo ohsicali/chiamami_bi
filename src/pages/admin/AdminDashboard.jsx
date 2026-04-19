@@ -69,14 +69,6 @@ function ApplicationIc({ w = 16 }) {
     </svg>
   )
 }
-function ReviewIc({ w = 16 }) {
-  return (
-    <svg {...ic} width={w} height={w}>
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  )
-}
-
 /* ------------------------------------------------------------------ */
 /*  Main Dashboard                                                     */
 /* ------------------------------------------------------------------ */
@@ -94,7 +86,6 @@ export default function AdminDashboard() {
     qrUsedThisWeek: 0,
     pendingSuggestions: 0,
     pendingApplications: 0,
-    pendingReviews: 0,
   })
   const [recentRestaurants, setRecentRestaurants] = useState([])
 
@@ -117,7 +108,6 @@ export default function AdminDashboard() {
           qrUsedWeek,
           pendSugg,
           pendApp,
-          pendRev,
           recentRest,
         ] = await Promise.all([
           supabase.from('restaurants').select('id', { count: 'exact', head: true }),
@@ -146,10 +136,6 @@ export default function AdminDashboard() {
             .select('id', { count: 'exact', head: true })
             .eq('status', 'pending'),
           supabase
-            .from('user_reviews')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'pending_review'),
-          supabase
             .from('restaurants')
             .select('id, name, slug, cuisine_type, category, photos, is_published, created_at')
             .order('created_at', { ascending: false })
@@ -170,7 +156,6 @@ export default function AdminDashboard() {
           qrUsedThisWeek: qrUsedWeek.count || 0,
           pendingSuggestions: pendSugg.count || 0,
           pendingApplications: pendApp.count || 0,
-          pendingReviews: pendRev.count || 0,
         })
         setRecentRestaurants(recentRest.data || [])
       } catch (err) {
@@ -326,15 +311,6 @@ export default function AdminDashboard() {
       bg: 'rgba(196,162,101,0.12)',
       to: '/admin/applications',
       Icon: ApplicationIc,
-    },
-    {
-      count: metrics.pendingReviews,
-      title: metrics.pendingReviews === 1 ? '1 recensione da moderare' : `${metrics.pendingReviews} recensioni da moderare`,
-      subtitle: metrics.pendingReviews > 0 ? 'In attesa' : 'Tutto a posto',
-      color: '#666',
-      bg: '#f5f5f5',
-      to: '/admin/reviews',
-      Icon: ReviewIc,
     },
   ]
 
