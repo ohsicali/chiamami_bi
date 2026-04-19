@@ -6,6 +6,7 @@ import { LoadingSpinner } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
+import MaintenanceGate from './components/MaintenanceGate'
 
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
@@ -108,6 +109,7 @@ export default function App() {
   return (
     <>
     <ErrorBoundary>
+    <MaintenanceGate>
     {/* Desktop Navbar — hidden on mobile, hidden on admin */}
     {showDesktopNav && <DesktopNavbar />}
 
@@ -156,6 +158,7 @@ export default function App() {
         </div>
       )}
     </Suspense>
+    </MaintenanceGate>
     </ErrorBoundary>
 
     {/* Mobile Tab Bar */}
