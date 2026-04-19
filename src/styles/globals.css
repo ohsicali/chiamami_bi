@@ -11,17 +11,24 @@
 @theme {
   --color-primary: #22181C;
   --color-secondary: #8A8680;
-  --color-accent: #E8453C;
-  --color-accent-light: rgba(232, 69, 60, 0.1);
+  /* v4 accent: corallo */
+  --color-accent: #EE5C55;
+  --color-accent-light: rgba(238, 92, 85, 0.12);
+  --color-corallo: #EE5C55;
+  --color-corallo-soft: rgba(238, 92, 85, 0.12);
+  --color-corallo-ink: #C94A43;
+  --color-ink: #22181C;
+  --color-ink-15: rgba(34, 24, 28, 0.15);
+  --color-ink-8: rgba(34, 24, 28, 0.08);
   --color-bg: #FAF7F2;
   --color-card: #FFFFFF;
   --color-success: #4ADE80;
   --color-oro: #C4A265;
   --color-bordo: #E8E5DE;
-  --color-surface-glass: rgba(250, 247, 242, 0.92);
-  --font-display: 'DM Sans', sans-serif;
-  --font-editorial: 'DM Sans', sans-serif;
-  --font-sans: 'DM Sans', sans-serif;
+  --color-surface-glass: rgba(255, 255, 255, 0.66);
+  --font-display: 'Satoshi', 'DM Sans', sans-serif;
+  --font-editorial: 'TAN Songbird', 'Satoshi', serif;
+  --font-sans: 'Satoshi', 'DM Sans', sans-serif;
 }
 
 body {
@@ -130,7 +137,7 @@ body {
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism utility (legacy — kept for backwards-compat) */
 .glass {
   background: rgba(250, 247, 242, 0.92);
   backdrop-filter: blur(20px);
@@ -144,14 +151,32 @@ body {
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Editorial font utility */
+/* v4 glass pill — nav bottom / top, floating pills */
+.glass-pill-v4 {
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(34, 24, 28, 0.08);
+}
+
+/* v4 dark glass pill (map overlays) */
+.glass-pill-v4-dark {
+  background: rgba(34, 24, 28, 0.78);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  color: #ffffff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* Editorial font utility — v4 uses TAN Songbird for big numbers / display */
 .font-editorial {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'TAN Songbird', 'Satoshi', serif;
 }
 
 /* TAN Songbird for restaurant names */
 .font-restaurant {
-  font-family: 'TAN Songbird', 'DM Sans', sans-serif;
+  font-family: 'TAN Songbird', 'Satoshi', serif;
 }
 
 /* Legacy admin scroll class — no longer needed, body scrolls by default */
