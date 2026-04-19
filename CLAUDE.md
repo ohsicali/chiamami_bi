@@ -1,5 +1,10 @@
 # ChiamamiBi — Progetto Recap
 
+## ⚠️ LEGGI PRIMA: stato v4 corrente
+**Prima di iniziare qualsiasi lavoro sui v4 track leggi `docs/v4-status.md`** —
+contiene lo stato esatto di PR, SQL eseguiti, env vars, e prossimi step.
+Aggiornalo quando completi un passaggio.
+
 ## Cos'è
 App web per scoprire ristoranti a Torino (e altre città italiane). Mappa interattiva, schede ristorante, recensioni utenti, sconti con QR code, pannello admin completo.
 **Sito live**: chiamamibi.com | **Deploy**: Vercel | **DB**: Supabase
