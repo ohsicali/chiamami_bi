@@ -1197,9 +1197,6 @@ export default function RestaurantForm() {
         return
       }
       if (!res.ok) throw new Error(json.error || 'Errore invio')
-      if (json.errors) {
-        alert(`Resend error details:\n\n${JSON.stringify(json.errorDetails, null, 2)}`)
-      }
       addToast(`Notifica inviata a ${json.sent} iscritti${json.errors ? ` (${json.errors} errori)` : ''}`, 'success')
       setNotifyInfo({ sent_at: new Date().toISOString(), sent_count: json.sent })
     } catch (err) {
