@@ -50,7 +50,6 @@ const SavedPage = lazy(() => import('./pages/public/SavedPage'))
 const VerifyPage = lazy(() => import('./pages/public/VerifyPage'))
 const DiscountManager = lazy(() => import('./pages/admin/DiscountManager'))
 const PartnerManager = lazy(() => import('./pages/admin/PartnerManager'))
-const ReviewModerator = lazy(() => import('./pages/admin/ReviewModerator'))
 const PartnerLandingPage = lazy(() => import('./pages/public/PartnerLandingPage'))
 const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
@@ -136,7 +135,6 @@ export default function App() {
           <Route path="/admin/categories" element={<CategoryManager />} />
           <Route path="/admin/discounts" element={<DiscountManager />} />
           <Route path="/admin/partners" element={<PartnerManager />} />
-          <Route path="/admin/reviews" element={<ReviewModerator />} />
           <Route path="/admin/newsletter" element={<NewsletterManager />} />
           <Route path="/admin/applications" element={<ApplicationManager />} />
           <Route path="/admin/suggestions" element={<SuggestionsManager />} />

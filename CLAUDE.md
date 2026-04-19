@@ -16,9 +16,9 @@ App web per scoprire ristoranti a Torino (e altre città italiane). Mappa intera
 ```
 src/
   pages/public/    → HomePage (mappa), RestaurantPage, ListView, DealsPage, LoginPage, ProfilePage, ecc.
-  pages/admin/     → AdminDashboard, RestaurantForm, DiscountManager, ReviewModerator, ecc.
-  components/      → Restaurant/, Discount/, Map/, Review/, Layout/, UI/, SEO/, Newsletter/
-  lib/hooks/       → useAuth, useRestaurants, useReviews, useDiscounts, useSavedRestaurants, ecc.
+  pages/admin/     → AdminDashboard, RestaurantForm, DiscountManager, ecc.
+  components/      → Restaurant/, Discount/, Map/, Layout/, UI/, SEO/, Newsletter/
+  lib/hooks/       → useAuth, useRestaurants, useDiscounts, useSavedRestaurants, ecc.
   lib/supabase.js  → Client Supabase
   lib/i18n.js      → Config i18next
 api/

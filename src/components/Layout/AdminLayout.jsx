@@ -73,13 +73,6 @@ function UsersIcon(props) {
     </svg>
   )
 }
-function ReviewIcon(props) {
-  return (
-    <svg {...iconProps} {...props}>
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  )
-}
 function SuggestionIcon(props) {
   return (
     <svg {...iconProps} {...props}>
@@ -164,7 +157,6 @@ const MENU_SECTIONS = [
     label: 'COMMUNITY',
     items: [
       { to: '/admin/users', label: 'Utenti', icon: UsersIcon },
-      { to: '/admin/reviews', label: 'Recensioni', icon: ReviewIcon, dotKey: 'reviews', dotColor: '#b45309' },
       { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, dotKey: 'suggestions', dotColor: '#E8453C' },
     ],
   },
@@ -406,7 +398,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
 export default function AdminLayout({ children, title }) {
   const { user, loading: authLoading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0, reviews: 0 })
+  const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0 })
   const location = useLocation()
 
   // Close mobile menu + scroll to top on route change
@@ -434,7 +426,7 @@ export default function AdminLayout({ children, title }) {
 
     async function fetchCounts() {
       try {
-        const [restRes, suggRes, appRes, revRes] = await Promise.all([
+        const [restRes, suggRes, appRes] = await Promise.all([
           supabase.from('restaurants').select('id', { count: 'exact', head: true }),
           supabase
             .from('restaurant_suggestions')
@@ -444,17 +436,12 @@ export default function AdminLayout({ children, title }) {
             .from('partner_applications')
             .select('id', { count: 'exact', head: true })
             .eq('status', 'pending'),
-          supabase
-            .from('user_reviews')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'pending_review'),
         ])
         if (cancelled) return
         setCounts({
           restaurants: restRes.count || 0,
           suggestions: suggRes.count || 0,
           applications: appRes.count || 0,
-          reviews: revRes.count || 0,
         })
       } catch (err) {
         // Silent fail — some tables may not exist yet

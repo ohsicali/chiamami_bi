@@ -68,14 +68,11 @@ export default function AdminUsers() {
       return
     }
 
-    const [reviewsRes, savedRes, redeemRes] = await Promise.all([
-      supabase.from('user_reviews').select('user_id'),
+    const [savedRes, redeemRes] = await Promise.all([
       supabase.from('saved_restaurants').select('user_id'),
       supabase.from('discount_redemptions').select('user_id'),
     ])
 
-    const reviewCounts = {}
-    ;(reviewsRes.data || []).forEach(r => { reviewCounts[r.user_id] = (reviewCounts[r.user_id] || 0) + 1 })
     const savedCounts = {}
     ;(savedRes.data || []).forEach(s => { savedCounts[s.user_id] = (savedCounts[s.user_id] || 0) + 1 })
     const redeemCounts = {}
@@ -83,7 +80,6 @@ export default function AdminUsers() {
 
     setUsers(profiles.map(p => ({
       ...p,
-      review_count: reviewCounts[p.id] || 0,
       saved_count: savedCounts[p.id] || 0,
       redeem_count: redeemCounts[p.id] || 0,
     })))
@@ -230,7 +226,6 @@ export default function AdminUsers() {
                   <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
                     <th style={thStyle}>Utente</th>
                     <th style={thStyle}>Registrato</th>
-                    <th style={thStyle}>Recensioni</th>
                     <th style={thStyle}>Salvati</th>
                     <th style={thStyle}>QR</th>
                     <th style={{ ...thStyle, textAlign: 'right' }}>Ruolo</th>
@@ -260,7 +255,6 @@ export default function AdminUsers() {
                         </div>
                       </td>
                       <td style={{ ...tdStyle, color: '#666', fontSize: 12 }}>{timeAgo(u.created_at)}</td>
-                      <td style={tdStyle}>{u.review_count}</td>
                       <td style={tdStyle}>{u.saved_count}</td>
                       <td style={tdStyle}>{u.redeem_count}</td>
                       <td style={{ ...tdStyle, textAlign: 'right' }}>
@@ -319,8 +313,6 @@ export default function AdminUsers() {
 
                   {/* Row 2: Activity stats — NO separator */}
                   <div style={{ fontSize: 11, color: '#999', marginTop: 8 }}>
-                    <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.review_count}</span> recensioni
-                    {' · '}
                     <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.saved_count}</span> salvati
                     {' · '}
                     <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.redeem_count}</span> QR

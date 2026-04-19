@@ -16,7 +16,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const { savedIds } = useSavedRestaurants(user?.id)
   const [profile, setProfile] = useState(null)
-  const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, reviewsCount: 0, totalSaved: 0 })
+  const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, totalSaved: 0 })
   const [showSuggest, setShowSuggest] = useState(false)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [newsletterEnabled, setNewsletterEnabled] = useState(false)
@@ -31,23 +31,20 @@ export default function ProfilePage() {
     supabase.from('profiles').select('*').eq('id', user.id).single()
       .then(({ data }) => { if (data) setProfile(data) })
 
-    // Fetch stats in parallel
-    Promise.all([
-      supabase.from('discount_redemptions').select('id, discount:discounts(discount_value)', { count: 'exact' }).eq('user_id', user.id).eq('status', 'redeemed'),
-      supabase.from('user_reviews').select('id', { count: 'exact' }).eq('user_id', user.id),
-    ]).then(([redemptions, reviews]) => {
-      const redeemed = redemptions.data || []
-      const totalSaved = redeemed.reduce((sum, r) => {
-        const val = r.discount?.discount_value
-        return sum + (typeof val === 'number' ? val : 0)
-      }, 0)
-      setStats({
-        savedCount: savedIds.size,
-        redemptionsCount: redemptions.count || 0,
-        reviewsCount: reviews.count || 0,
-        totalSaved,
+    // Fetch stats
+    supabase.from('discount_redemptions').select('id, discount:discounts(discount_value)', { count: 'exact' }).eq('user_id', user.id).eq('status', 'redeemed')
+      .then((redemptions) => {
+        const redeemed = redemptions.data || []
+        const totalSaved = redeemed.reduce((sum, r) => {
+          const val = r.discount?.discount_value
+          return sum + (typeof val === 'number' ? val : 0)
+        }, 0)
+        setStats({
+          savedCount: savedIds.size,
+          redemptionsCount: redemptions.count || 0,
+          totalSaved,
+        })
       })
-    })
   }, [user?.id, savedIds.size])
 
   // Newsletter status
@@ -224,17 +221,16 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ── STATS CARDS — 3 cards row (mobile) / row (desktop) ── */}
+      {/* ── STATS CARDS — 2 cards row (mobile) / row (desktop) ── */}
       <div style={{
         display: isDesktop ? 'grid' : 'flex',
-        gridTemplateColumns: isDesktop ? 'repeat(3, 1fr)' : undefined,
+        gridTemplateColumns: isDesktop ? 'repeat(2, 1fr)' : undefined,
         gap: 10,
         padding: isDesktop ? '0 0 16px' : '18px 22px',
       }}>
         {[
           { value: stats.savedCount, label: 'Salvati', onClick: () => navigate('/saved') },
           { value: stats.redemptionsCount, label: 'Sconti usati', onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
-          { value: stats.reviewsCount, label: 'Recensioni', onClick: () => {} },
         ].map((stat, i) => (
           <button key={i} onClick={stat.onClick} style={{
             flex: isDesktop ? undefined : 1,
