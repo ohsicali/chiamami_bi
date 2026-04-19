@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v4 · Home desktop · La Guida di Bi</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA;
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --page:#FAF7F2; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954; --oro-soft:#F4E7CC;
+
+  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+
+  --maxw:1240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{background:var(--page);color:var(--ink);font-family:var(--ff-ui);font-weight:500;line-height:1.5}
+body{background:radial-gradient(1100px 500px at 50% -10%,rgba(232,69,60,.05),transparent 70%),var(--page);min-height:100vh}
+
+/* ============ Annotation strip ============ */
+.page-head{max-width:var(--maxw);margin:0 auto;padding:28px 40px 12px}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:var(--corallo-soft);color:var(--corallo-ink);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.page-head h1{font-family:var(--ff-ui);font-weight:900;font-size:30px;letter-spacing:-.02em;margin:12px 0 4px;line-height:1.05}
+.page-head p{color:var(--ink-70);font-size:14px;max-width:780px;line-height:1.55}
+
+/* ============ Nav top (glass pill) ============ */
+.nav-wrap{position:sticky;top:16px;z-index:40;padding:16px 40px 0}
+.nav{
+  max-width:var(--maxw);margin:0 auto;height:68px;
+  background:rgba(255,255,255,.66);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+  border:1px solid rgba(255,255,255,.5);border-radius:var(--r-pill);
+  box-shadow:var(--shadow-md);
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;padding:0 10px 0 22px;
+}
+.nav .logo{display:flex;flex-direction:column;line-height:.92;text-decoration:none}
+.nav .logo .l1{font-family:var(--ff-mark);font-size:18px;letter-spacing:.02em;color:var(--corallo)}
+.nav .logo .l2{font-family:var(--ff-ui);font-weight:700;font-size:9px;letter-spacing:.18em;color:var(--ink-40);margin-top:4px;text-transform:uppercase}
+.nav-links{display:flex;gap:2px;justify-self:center}
+.nav-links a{padding:10px 16px;border-radius:999px;font-size:14px;font-weight:700;color:var(--ink-70);text-decoration:none;transition:color .2s,background .2s}
+.nav-links a:hover{color:var(--ink);background:var(--ink-05)}
+.nav-links a.active{color:var(--ink);background:var(--ink-05)}
+.nav-cta{display:flex;gap:8px;align-items:center}
+.nav-search{width:40px;height:40px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;border:0;cursor:pointer}
+.nav-search svg{width:16px;height:16px;stroke:var(--ink);fill:none;stroke-width:2}
+.city-pill{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;background:var(--ink-05);border-radius:999px;font-weight:700;font-size:13px}
+.city-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--corallo)}
+.city-pill svg{width:10px;height:10px}
+.account{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:18px;margin-left:2px}
+
+/* ============ Main container ============ */
+.main{max-width:var(--maxw);margin:0 auto;padding:28px 40px 80px}
+
+/* ============ HERO promo ============ */
+.hero-card{
+  position:relative;background:var(--corallo);border-radius:var(--r-xl);overflow:hidden;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:0;
+  color:#fff;box-shadow:var(--shadow-md);
+  min-height:380px;
+  margin-bottom:44px;
+}
+.hero-body{padding:52px 56px;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.hero-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.08em;width:fit-content}
+.hero-chip .blink{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.3}}
+.hero-title{font-family:var(--ff-ui);font-weight:900;font-size:72px;line-height:.98;letter-spacing:-.03em;color:#fff}
+.hero-rest-line{font-size:15px;font-weight:600;color:rgba(255,255,255,.9);display:flex;align-items:center;gap:10px}
+.hero-rest-line .dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.6)}
+.hero-sub{font-size:15px;color:rgba(255,255,255,.85);line-height:1.5;max-width:340px}
+.hero-ctas{display:flex;gap:10px;margin-top:6px}
+.hero-cta{display:inline-flex;align-items:center;gap:6px;padding:13px 22px;background:var(--ink);color:#fff;border-radius:999px;font-size:14px;font-weight:700;text-decoration:none}
+.hero-cta::after{content:"→"}
+.hero-cta.g{background:rgba(255,255,255,.18);backdrop-filter:blur(8px);color:#fff}
+.hero-cta.g::after{content:""}
+.hero-photo{position:relative;overflow:hidden}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-meta{position:absolute;top:20px;right:20px;display:flex;gap:6px;align-items:center}
+.hero-meta .chip-meta{padding:6px 11px;background:rgba(34,24,28,.6);backdrop-filter:blur(10px);color:#fff;font-size:11px;font-weight:700;border-radius:999px;letter-spacing:.04em}
+.hero-progress{position:absolute;bottom:0;left:0;right:0;padding:16px 20px;background:linear-gradient(0deg,rgba(34,24,28,.7),transparent);color:#fff}
+.hero-progress-bar{height:6px;background:rgba(255,255,255,.2);border-radius:999px;overflow:hidden}
+.hero-progress-bar span{display:block;height:100%;width:68%;background:#fff;border-radius:999px}
+.hero-progress-text{display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-top:8px;letter-spacing:.04em}
+
+/* ============ Categorie bubble ============ */
+.cats{display:flex;gap:22px;padding:0 4px 38px;flex-wrap:wrap;justify-content:flex-start}
+.cat-b{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;color:inherit;cursor:pointer}
+.cat-b .bubble{width:80px;height:80px;border-radius:50%;background:var(--white);border:1px solid var(--ink-05);display:grid;place-items:center;font-size:36px;transition:transform .2s,box-shadow .2s,background .2s,color .2s}
+.cat-b:hover .bubble{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.cat-b.active .bubble{background:var(--corallo);box-shadow:0 10px 24px rgba(232,69,60,.35);color:#fff}
+.cat-b .lbl{font-size:13px;font-weight:700;color:var(--ink)}
+.cat-b.active .lbl{color:var(--corallo-ink)}
+
+/* ============ Section head ============ */
+.sec{margin-bottom:44px}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+.sec-head-l{display:flex;flex-direction:column;gap:4px}
+.sec-kick{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--corallo-ink);text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
+.sec-kick .pulse{width:6px;height:6px;border-radius:50%;background:var(--corallo);animation:blink 1.4s infinite}
+.sec-head h2{font-family:var(--ff-ui);font-weight:900;font-size:32px;letter-spacing:-.02em;line-height:1.05;color:var(--ink)}
+.sec-head .sub{font-size:14px;color:var(--ink-70);margin-top:3px}
+.sec-head .all{padding:10px 16px;background:var(--ink-05);border-radius:999px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap}
+.sec-head .all::after{content:"  →";color:var(--corallo)}
+
+/* ============ Rcard (ristorante) ============ */
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.rcard{background:var(--white);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);text-decoration:none;color:inherit;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.rcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.rcard .ph{position:relative;width:100%;aspect-ratio:16/11;background:#ddd;overflow:hidden}
+.rcard .ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.rcard:hover .ph img{transform:scale(1.03)}
+.rcard .ph .pill-new{position:absolute;top:12px;left:12px;background:var(--ink);color:#fff;font-size:10px;font-weight:700;padding:5px 10px;border-radius:999px;letter-spacing:.04em}
+.rcard .ph .pill-disc{position:absolute;top:12px;left:12px;background:var(--corallo);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;letter-spacing:.02em}
+.rcard .ph .heart{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:15px;border:none;cursor:pointer}
+.rcard .body{padding:12px 16px 16px;flex:1;display:flex;flex-direction:column;gap:4px}
+.rcard .name{font-family:var(--ff-ui);font-weight:800;font-size:18px;line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
+.rcard .meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-70);margin-top:4px;flex-wrap:wrap}
+.rcard .meta .sep{color:var(--ink-40)}
+.rcard .meta .tag{background:var(--corallo-soft);color:var(--corallo-ink);font-weight:700;font-size:10px;padding:3px 8px;border-radius:999px;letter-spacing:.04em}
+.rcard .meta .open{color:#2E7D5B;font-weight:700}
+
+/* ============ Time-based ============ */
+.time-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:10px 16px;border-radius:999px;background:var(--white);border:1px solid var(--ink-05);font-size:14px;font-weight:700;color:var(--ink-70);white-space:nowrap;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s}
+.tab .n{font-size:11px;font-weight:700;color:var(--ink-40);padding:2px 7px;background:var(--ink-05);border-radius:999px}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tab.active .n{color:rgba(255,255,255,.7);background:rgba(255,255,255,.1)}
+.tab:hover:not(.active){background:var(--ink-05)}
+
+/* ============ Sponsor (wide banner) ============ */
+.spon{
+  position:relative;display:grid;grid-template-columns:108px 1fr auto;gap:24px;align-items:center;
+  background:var(--ink);color:#fff;border-radius:var(--r-lg);padding:20px 26px;overflow:hidden;
+  margin-bottom:44px;
+}
+.spon-lbl{position:absolute;top:10px;right:16px;font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase}
+.spon-img{width:108px;height:108px;border-radius:var(--r-md);background-size:cover;background-position:center}
+.spon-kick{font-size:11px;font-weight:700;color:var(--oro);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.spon-title{font-family:var(--ff-ui);font-weight:900;font-size:22px;line-height:1.15;letter-spacing:-.015em;margin-bottom:4px;color:#fff}
+.spon-sub{font-size:13px;color:rgba(255,255,255,.65);line-height:1.45;max-width:520px}
+.spon-cta{padding:12px 20px;background:var(--corallo);color:#fff;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}
+.spon-cta::after{content:"  →"}
+
+/* ============ Consiglio block (oro, 2-col on desktop) ============ */
+.consiglio-wrap{margin-bottom:44px}
+.consiglio{
+  position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#FEF6E4 0%,#F4E7CC 100%);
+  border:1px solid rgba(176,137,84,.35);
+  border-radius:var(--r-xl);
+  padding:40px 48px;
+  display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;
+}
+.consiglio::before{content:"";position:absolute;top:-60px;right:-60px;width:260px;height:260px;background:radial-gradient(circle,rgba(176,137,84,.3) 0%,transparent 70%);border-radius:50%}
+.consiglio-l{position:relative;z-index:1}
+.consiglio .author{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.av-bi{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-mark);font-size:20px}
+.author-name{font-family:var(--ff-ui);font-size:14px;font-weight:700}
+.author-role{font-size:12px;color:var(--ink-70)}
+.consiglio-kicker{font-family:var(--ff-ui);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--oro);text-transform:uppercase;margin-bottom:8px}
+.consiglio-h{font-family:var(--ff-ui);font-weight:900;font-size:34px;letter-spacing:-.02em;line-height:1.05;margin-bottom:8px}
+.consiglio-rest{font-family:var(--ff-ui);font-weight:900;font-size:48px;line-height:1;letter-spacing:-.03em;color:var(--ink);margin-bottom:6px}
+.consiglio-place{font-family:var(--ff-ui);font-style:normal;font-size:13px;font-weight:600;color:var(--ink-70);margin-bottom:20px;display:inline-flex;gap:8px;align-items:center}
+.consiglio-place .sep{color:var(--ink-40)}
+.consiglio-cta{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;padding:11px 18px;background:rgba(255,255,255,.85);border-radius:999px;border:1px solid rgba(176,137,84,.3)}
+.consiglio-cta::after{content:"→";color:var(--corallo)}
+
+.consiglio-r{position:relative;z-index:1}
+.consiglio-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px}
+.consiglio-list li{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;background:rgba(255,255,255,.7);border-radius:var(--r-md);border:1px solid rgba(176,137,84,.25)}
+.consiglio-list .num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--ff-mark);font-size:13px;display:flex;align-items:center;justify-content:center}
+.consiglio-list .txt{flex:1;font-family:var(--ff-hand);font-size:22px;font-weight:600;line-height:1.25;color:var(--ink)}
+
+/* ============ Suggest ============ */
+.suggest{
+  position:relative;overflow:hidden;
+  background:var(--ink);color:#fff;border-radius:var(--r-xl);padding:40px 48px;
+  display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;
+  margin-bottom:44px;
+}
+.suggest::before{content:"";position:absolute;top:-80px;right:-40px;width:320px;height:320px;background:radial-gradient(circle,rgba(232,69,60,.3),transparent 70%);border-radius:50%}
+.suggest-body{position:relative;z-index:1}
+.suggest-title{font-family:var(--ff-ui);font-weight:900;font-size:30px;line-height:1.05;letter-spacing:-.02em;margin-bottom:10px;max-width:500px}
+.suggest-sub{font-size:15px;color:rgba(255,255,255,.72);line-height:1.5;max-width:560px}
+.suggest-cta{padding:14px 24px;background:var(--corallo);color:#fff;border-radius:999px;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;position:relative;z-index:1}
+.suggest-cta::after{content:"  →"}
+
+/* ============ Footer mini ============ */
+.foot{max-width:var(--maxw);margin:0 auto;padding:40px 40px 60px;border-top:1px solid var(--ink-05);display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.foot-l{display:flex;flex-direction:column;gap:4px}
+.foot-l .mark{font-family:var(--ff-mark);font-size:16px;color:var(--corallo)}
+.foot-l .tag{font-size:12px;color:var(--ink-40);letter-spacing:.08em;text-transform:uppercase}
+.foot-r{display:flex;gap:18px;font-size:13px;color:var(--ink-70)}
+.foot-r a{color:inherit;text-decoration:none;font-weight:600}
+.foot-r a:hover{color:var(--corallo-ink)}
+
+/* ============ Annot panel ============ */
+.annot{max-width:var(--maxw);margin:0 auto 40px;padding:0 40px}
+.annot-inner{background:var(--white);border-radius:var(--r-lg);padding:28px 32px;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm);display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.annot-block h3{font-family:var(--ff-ui);font-weight:900;font-size:16px;letter-spacing:-.01em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.annot-block h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--corallo)}
+.annot-block p{font-size:13px;line-height:1.55;color:var(--ink-70)}
+.annot-block strong{color:var(--ink);font-weight:700}
+
+@media (max-width:1100px){
+  .cgrid{grid-template-columns:repeat(2,1fr)}
+  .hero-card{grid-template-columns:1fr;min-height:auto}
+  .hero-photo{min-height:260px}
+  .hero-title{font-size:56px}
+  .consiglio{grid-template-columns:1fr;padding:32px}
+  .suggest{grid-template-columns:1fr;padding:32px}
+  .annot-inner{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <span class="kick">v4 · Home desktop · allineato moodboard</span>
+  <h1>Più Neotaste, meno Michelin.</h1>
+  <p>Titoli di sezione e <strong>nomi ristorante</strong> entrambi in <strong>Satoshi 900</strong> ultra-tight (niente TAN Songbird — come Neotaste). Hero è una <strong>promo card corallo</strong> dove lo sconto è il titolone. <strong>Categorie come bubble rotonde</strong>, non card. <strong>Caveat</strong> solo dentro "cosa prendere". Regola anti-deriva: se non è wordmark / quote / tip editoriale — è Satoshi.</p>
+</div>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <nav class="nav">
+    <a href="#" class="logo">
+      <span class="l1">LA GUIDA DI BI</span>
+      <span class="l2">by Chiamami Bi</span>
+    </a>
+    <div class="nav-links">
+      <a href="#" class="active">Home</a>
+      <a href="#">Esplora</a>
+      <a href="#">Sconti</a>
+      <a href="#">Salvati</a>
+      <a href="#">Su di me</a>
+    </div>
+    <div class="nav-cta">
+      <button class="nav-search" aria-label="cerca">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+      <div class="city-pill">
+        <span class="dot"></span>Torino
+        <svg viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <div class="account">A</div>
+    </div>
+  </nav>
+</div>
+
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero-card">
+    <div class="hero-body">
+      <div class="hero-chip"><span class="blink"></span>DROP LIVE · 2h 14m</div>
+      <h1 class="hero-title">-10%<br>da Orma.</h1>
+      <div class="hero-rest-line">Italiana · Quadrilatero <span class="dot"></span> menù fisso serale</div>
+      <div class="hero-sub">Lunedì–giovedì, fino alle 20:55. Sconto sul conto finale (massimo 2 coperti).</div>
+      <div class="hero-ctas">
+        <a class="hero-cta" href="#">Vai al drop</a>
+        <a class="hero-cta g" href="#">Scopri Orma</a>
+      </div>
+    </div>
+    <div class="hero-photo">
+      <img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=1200&q=80" alt="">
+      <div class="hero-meta">
+        <span class="chip-meta">12 sbloccati oggi</span>
+      </div>
+      <div class="hero-progress">
+        <div class="hero-progress-bar"><span></span></div>
+        <div class="hero-progress-text">
+          <span>34 / 50 sbloccati</span>
+          <span>scade alle 20:55</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIE -->
+  <section class="cats">
+    <a class="cat-b active" href="#"><span class="bubble">🥂</span><span class="lbl">Aperitivo</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🍝</span><span class="lbl">Piemontese</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🍕</span><span class="lbl">Pizza</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🍣</span><span class="lbl">Giapponese</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🐟</span><span class="lbl">Pesce</span></a>
+    <a class="cat-b" href="#"><span class="bubble">☕</span><span class="lbl">Colazione</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🥩</span><span class="lbl">Carne</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🌿</span><span class="lbl">Veg</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🍸</span><span class="lbl">Cocktail</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🍰</span><span class="lbl">Dolci</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🥖</span><span class="lbl">Panetteria</span></a>
+    <a class="cat-b" href="#"><span class="bubble">🇫🇷</span><span class="lbl">Francese</span></a>
+  </section>
+
+  <!-- ULTIMI AGGIUNTI -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-head-l">
+        <span class="sec-kick">Nuovi in guida</span>
+        <h2>Ultimi aggiunti</h2>
+        <div class="sub">Gli ultimi posti che ho provato e inserito in guida.</div>
+      </div>
+      <a href="#" class="all">Vedi tutti</a>
+    </div>
+    <div class="cgrid">
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80" alt="">
+          <span class="pill-new">NEW</span>
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Kintsugi</div>
+          <div class="meta"><span class="tag">GIAPPONESE</span><span>Crocetta</span><span class="sep">·</span><span>€€</span></div>
+        </div>
+      </a>
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80" alt="">
+          <span class="pill-new">NEW</span>
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">La Casa Iberica</div>
+          <div class="meta"><span class="tag">TAPAS</span><span>Vanchiglia</span><span class="sep">·</span><span>€€</span></div>
+        </div>
+      </a>
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80" alt="">
+          <span class="pill-disc">-15%</span>
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Affini Vermuttia</div>
+          <div class="meta"><span class="tag">VERMOUTH</span><span>Vanchiglia</span><span class="sep">·</span><span>€€</span></div>
+        </div>
+      </a>
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80" alt="">
+          <span class="pill-new">NEW</span>
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Mo Sarpi</div>
+          <div class="meta"><span class="tag">ASIATICO</span><span>San Salvario</span><span class="sep">·</span><span>€</span></div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- SPONSOR -->
+  <div class="spon">
+    <span class="spon-lbl">Sponsorizzato</span>
+    <div class="spon-img" style="background-image:linear-gradient(135deg,rgba(217,164,65,.85),rgba(138,90,31,.85)),url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80')"></div>
+    <div>
+      <div class="spon-kick">Partner · Vini Crosetti</div>
+      <div class="spon-title">20% sulle Barbera biologiche</div>
+      <div class="spon-sub">Consegna 24h a Torino. Codice <strong>BI20</strong> valido fino a domenica. Scelta di Bi: la Barbera d'Asti 2022, la sto bevendo a casa in questi giorni.</div>
+    </div>
+    <a class="spon-cta" href="#">Attiva il codice</a>
+  </div>
+
+  <!-- TIME-BASED -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-head-l">
+        <span class="sec-kick"><span class="pulse"></span>Adesso · giovedì 18:34</span>
+        <h2>Aperitivo a Torino</h2>
+        <div class="sub">22 locali aperti adesso. Cambia momento per scoprire altri posti.</div>
+      </div>
+      <a href="#" class="all">Apri mappa</a>
+    </div>
+    <div class="time-tabs">
+      <div class="tab">☕ Colazione <span class="n">8</span></div>
+      <div class="tab">🥪 Pranzo economico <span class="n">14</span></div>
+      <div class="tab active">🥂 Aperitivo <span class="n">22</span></div>
+      <div class="tab">🥩 Cena carne <span class="n">18</span></div>
+      <div class="tab">🐟 Cena pesce <span class="n">9</span></div>
+      <div class="tab">🍸 Dopo cena <span class="n">11</span></div>
+    </div>
+    <div class="cgrid">
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80" alt="">
+          <span class="pill-disc">-10%</span>
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Orma</div>
+          <div class="meta"><span>Quadrilatero</span><span class="sep">·</span><span>€€</span><span class="sep">·</span><span class="open">aperto</span></div>
+        </div>
+      </a>
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=800&q=80" alt="">
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Il Mulo</div>
+          <div class="meta"><span>San Salvario</span><span class="sep">·</span><span>€€</span><span class="sep">·</span><span class="open">aperto</span></div>
+        </div>
+      </a>
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800&q=80" alt="">
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Smile Tree</div>
+          <div class="meta"><span>Centro</span><span class="sep">·</span><span>€€€</span><span class="sep">·</span><span class="open">aperto</span></div>
+        </div>
+      </a>
+      <a class="rcard" href="#">
+        <div class="ph">
+          <img src="https://images.unsplash.com/photo-1544145945-f90425340c7e?w=800&q=80" alt="">
+          <span class="pill-disc">-15%</span>
+          <button class="heart" aria-label="salva">♡</button>
+        </div>
+        <div class="body">
+          <div class="name">Affini</div>
+          <div class="meta"><span>Vanchiglia</span><span class="sep">·</span><span>€€</span><span class="sep">·</span><span class="open">aperto</span></div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- COSA TI CONSIGLIO -->
+  <section class="consiglio-wrap">
+    <div class="consiglio">
+      <div class="consiglio-l">
+        <div class="author">
+          <div class="av-bi">B</div>
+          <div>
+            <div class="author-name">Bi — dalla guida</div>
+            <div class="author-role">Selezione della settimana</div>
+          </div>
+        </div>
+        <div class="consiglio-kicker">Cosa ti consiglio di prendere</div>
+        <h2 class="consiglio-h">Questa settimana vai da</h2>
+        <div class="consiglio-rest">Orma</div>
+        <div class="consiglio-place">Italiana <span class="sep">·</span> Quadrilatero <span class="sep">·</span> chef Federico Gallo</div>
+        <a href="#" class="consiglio-cta">Apri la scheda</a>
+      </div>
+      <div class="consiglio-r">
+        <ul class="consiglio-list">
+          <li><div class="num">1</div><div class="txt">Tagliolino al ragù bianco — il piatto firma. Se non c'è, chiedi a Fede.</div></li>
+          <li><div class="num">2</div><div class="txt">Tartare di fassona con nocciole, tagliata al coltello.</div></li>
+          <li><div class="num">3</div><div class="txt">Bonet, versione con amaretti morbidi. Chiudi così.</div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUGGEST -->
+  <div class="suggest">
+    <div class="suggest-body">
+      <div class="suggest-title">Conosci un posto che dovrebbe esserci?</div>
+      <div class="suggest-sub">Scrivimi nome + zona. Ci vado a mangiare. Se è buono, entra in guida — con foto mie, voce mia, criteri miei. Niente pay-to-play.</div>
+    </div>
+    <a href="#" class="suggest-cta">Suggerisci un locale</a>
+  </div>
+
+</main>
+
+<!-- ANNOT -->
+<div class="annot">
+  <div class="annot-inner">
+    <div class="annot-block">
+      <h3>Cosa è cambiato rispetto alla v3 live</h3>
+      <p>Hero ora è una <strong>promo card corallo</strong> con lo sconto come titolone Satoshi 900 (non più il nome del ristorante come titolo serif). <strong>Drop countdown</strong> + <strong>progress bar</strong> sotto la foto. Categorie come <strong>bubble rotonde</strong> invece che card quadrate. Nav top glass/pill, 68px.</p>
+    </div>
+    <div class="annot-block">
+      <h3>Regola tipografica rispettata</h3>
+      <p><strong>Satoshi 900</strong> per tutti i titoli di sezione E per i nomi dei ristoranti (nelle card e nel blocco consiglio) — ultra-tight, come Neotaste. <strong>Caveat</strong> <em>solo</em> per le 3 righe di tip editoriale. <strong>Alfa Slab</strong> <em>solo</em> wordmark + pin B. <strong>Niente TAN Songbird</strong> da nessuna parte.</p>
+    </div>
+    <div class="annot-block">
+      <h3>Sezioni dal tuo feedback</h3>
+      <p><strong>Keeper applicati:</strong> "Ultimi aggiunti" (ex tre cose questa settimana), slot sponsorizzato nativo ma marcato, strip time-based con tab per momento (colazione/pranzo/aperitivo/cena carne/cena pesce/dopo cena), "Cosa ti consiglio di prendere" promosso a blocco oro importante, "Conosci un posto?". <strong>Cut:</strong> niente "Asparagi", niente "Esplora Torino", niente membership.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="foot">
+  <div class="foot-l">
+    <span class="mark">LA GUIDA DI BI</span>
+    <span class="tag">Torino · by Chiamami Bi</span>
+  </div>
+  <div class="foot-r">
+    <a href="#">Su di me</a>
+    <a href="#">Come scelgo</a>
+    <a href="#">Per i locali</a>
+    <a href="#">Contatti</a>
+    <a href="#">Privacy</a>
+  </div>
+</footer>
+
+</body>
+</html>

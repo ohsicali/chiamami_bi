@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Chiamami Bi — v4 / direzione Neotaste — moodboard</title>
+
+<!-- Satoshi (UI) + TAN Songbird (editorial, invariato v3) + Alfa Slab One (solo wordmark/pin) + Caveat (scritte di Bi) -->
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Fraunces:ital,wght@1,300;1,400&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  @font-face{
+    font-family:'TAN Songbird';
+    src:url('./assets/TANSongbird.otf') format('opentype');
+    font-weight:400;
+    font-style:italic;
+    font-display:swap;
+  }
+</style>
+
+<style>
+  :root{
+    /* ——— palette v4 ——— */
+    --corallo:        #EE5C55;   /* accent brand — dal logo, sostituisce verde Neotaste + rosso v3 */
+    --corallo-ink:    #C7443E;   /* corallo hover/pressed */
+    --corallo-soft:   #FDEBEA;   /* corallo 10% — background tag sconto, chip selezionati */
+
+    --ink:            #14110F;   /* nero caldo — testi principali, sostituisce #22181C */
+    --ink-70:         #3E3A37;   /* testo secondario */
+    --ink-40:         #8A827D;   /* muted, meta */
+    --ink-15:         #E4E0DC;   /* bordi, divider */
+    --ink-05:         #F3F1EE;   /* tile emoji, background sezioni secondarie */
+
+    --page:           #FAF7F2;   /* crema v3 — invariato, sfondo app (Augusto conferma che v3 gli piace) */
+    --cream-deep:     #F1EBE0;   /* crema più carico per isole editoriali ("Le chicche di Bi") */
+    --white:          #FFFFFF;   /* bianco puro — card, modali, drop sheet */
+
+    --dark:           #0F2A26;   /* verde-nero brand dark (per banner referral, onboarding) */
+    --dark-ink:       #1A3D38;
+
+    --oro:            #C4A265;   /* featured, premium badge — invariato da v3 (NO rating: tolte le stelle) */
+
+    /* ——— radius, shadow, blur ——— */
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 20px;           /* card standard v3 */
+    --r-xl: 28px;           /* hero, banner */
+    --r-pill: 999px;
+
+    --sh-1: 0 2px 8px rgba(20,17,15,.04);
+    --sh-2: 0 6px 22px rgba(20,17,15,.08);
+    --sh-3: 0 14px 40px rgba(20,17,15,.14);
+    --sh-glass: 0 10px 30px rgba(20,17,15,.08), 0 2px 6px rgba(20,17,15,.04);
+
+    /* ——— typography stacks ——— */
+    --ff-ui:      'Satoshi', -apple-system, 'Helvetica Neue', sans-serif;          /* 80% del sito: UI, titoli sezione, body, CTA */
+    --ff-edit:    'TAN Songbird', 'Fraunces', 'Times New Roman', serif;            /* Editorial: nomi ristoranti su foto, titoli editoriali — INVARIATO v3 */
+    --ff-mark:    'Alfa Slab One', 'Cooper Black', Georgia, serif;                 /* Brand mark: logotype + monogramma pin — solo lì */
+    --ff-hand:    'Caveat', 'Comic Sans MS', cursive;                              /* Citazioni/tip di Bi — invariato v3 */
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ background:var(--ink-05); color:var(--ink); font-family:var(--ff-ui); -webkit-font-smoothing:antialiased; }
+  body{ padding:40px 20px 120px; }
+
+  /* ——— layout moodboard ——— */
+  .wrap{ max-width:1200px; margin:0 auto; }
+  h1.page{ font-family:var(--ff-mark); font-size:clamp(44px, 7vw, 72px); line-height:1; letter-spacing:-.01em; color:var(--corallo); }
+  .subtitle{ margin-top:14px; font-size:17px; color:var(--ink-70); max-width:680px; line-height:1.5; }
+  .kicker{ font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-40); margin-bottom:8px; }
+
+  .section{ margin-top:64px; background:var(--page); border-radius:var(--r-xl); padding:36px; box-shadow:var(--sh-1); }
+  .section h2{ font-family:var(--ff-ui); font-weight:900; font-size:30px; letter-spacing:-.02em; margin-bottom:8px; }
+  .section .desc{ color:var(--ink-70); max-width:700px; line-height:1.5; margin-bottom:24px; }
+
+  .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .row-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  @media (max-width:800px){ .row-2, .row-3{ grid-template-columns:1fr; } }
+
+  /* ——— palette ——— */
+  .swatch-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:14px; }
+  .swatch{ border-radius:var(--r-md); overflow:hidden; border:1px solid var(--ink-15); }
+  .swatch .color{ height:110px; }
+  .swatch .meta{ padding:12px 14px; background:#fff; }
+  .swatch .name{ font-weight:700; font-size:14px; }
+  .swatch .hex{ font-family:ui-monospace, 'SF Mono', Menlo, monospace; font-size:12px; color:var(--ink-40); margin-top:2px; }
+  .swatch .use{ font-size:11px; color:var(--ink-70); margin-top:6px; line-height:1.35; }
+
+  /* ——— type specimen ——— */
+  .type-card{ padding:28px; border-radius:var(--r-lg); background:#fff; border:1px solid var(--ink-15); }
+  .type-card .label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-40); font-weight:600; margin-bottom:10px; }
+  .type-card .sample-display{ font-family:var(--ff-mark); font-size:56px; line-height:1; letter-spacing:-.01em; color:var(--corallo); }
+  .type-card .sample-edit{ font-family:var(--ff-edit); font-style:italic; font-size:48px; line-height:1.05; color:var(--ink); letter-spacing:-.01em; }
+  .type-card .sample-ui-900{ font-family:var(--ff-ui); font-weight:900; font-size:44px; letter-spacing:-.02em; line-height:1.05; }
+  .type-card .sample-ui-700{ font-family:var(--ff-ui); font-weight:700; font-size:22px; line-height:1.2; margin-top:14px; }
+  .type-card .sample-ui-400{ font-family:var(--ff-ui); font-weight:400; font-size:15px; line-height:1.5; margin-top:14px; color:var(--ink-70); max-width:540px; }
+  .type-card .sample-hand{ font-family:var(--ff-hand); font-weight:500; font-size:28px; color:var(--ink-70); margin-top:12px; }
+
+  /* ——— phone mockup ——— */
+  .phone{ width:380px; height:760px; margin:0 auto; background:var(--page); border-radius:44px; border:10px solid #0c0c0d; box-shadow:var(--sh-3); position:relative; overflow:hidden; }
+  .phone .notch{ position:absolute; top:18px; left:50%; transform:translateX(-50%); width:110px; height:32px; background:#0c0c0d; border-radius:999px; z-index:10; }
+  .phone .screen{ position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:62px 0 120px; }
+
+  /* —— status bar mock —— */
+  .statusbar{ padding:0 22px 12px; display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:var(--ink); }
+
+  /* ——— NAV BAR GLASS — pezzo chiave ——— */
+  .navglass{
+    position:absolute; left:12px; right:12px; bottom:14px;
+    height:72px; padding:8px;
+    border-radius:var(--r-pill);
+    background:rgba(255,255,255,.66);
+    backdrop-filter:saturate(160%) blur(22px);
+    -webkit-backdrop-filter:saturate(160%) blur(22px);
+    border:1px solid rgba(255,255,255,.8);
+    box-shadow:var(--sh-glass);
+    display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
+    z-index:20;
+  }
+  .navglass .tab{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; border-radius:999px;
+    font-size:11px; font-weight:600; color:var(--ink);
+    transition:background .22s ease;
+    cursor:pointer;
+  }
+  .navglass .tab svg{ width:22px; height:22px; }
+  .navglass .tab.active{ background:var(--ink-05); }
+  .navglass .tab .dot{ position:absolute; width:7px; height:7px; background:var(--corallo); border-radius:999px; transform:translate(14px,-14px); }
+
+  /* ——— home mock content (per mostrare il glass con scroll live) ——— */
+  .topbar{ display:flex; align-items:center; gap:10px; padding:4px 16px 10px; }
+  .citypill{ display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:var(--ink-05); border-radius:999px; font-weight:700; font-size:14px; }
+  .citypill::after{ content:""; display:inline-block; width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid var(--ink); margin-left:2px; }
+  .giftpill{ margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:var(--corallo); color:#fff; border-radius:999px; font-weight:700; font-size:13px; }
+  .searchicon{ width:36px; height:36px; display:grid; place-items:center; background:var(--ink-05); border-radius:999px; }
+
+  .hero-promo{ margin:10px 16px 18px; border-radius:var(--r-xl); background:var(--dark); color:#fff; padding:22px; overflow:hidden; position:relative; min-height:160px; }
+  .hero-promo h3{ font-family:var(--ff-ui); font-weight:900; font-size:26px; line-height:1.05; letter-spacing:-.01em; max-width:190px; }
+  .hero-promo p{ margin-top:6px; font-size:13px; color:rgba(255,255,255,.8); max-width:200px; line-height:1.4; }
+  .hero-promo .cta{ margin-top:14px; display:inline-block; padding:12px 18px; background:var(--corallo); color:#fff; border-radius:999px; font-weight:700; font-size:14px; }
+  .hero-promo::before{ content:""; position:absolute; right:-20px; top:0; bottom:0; width:55%; background:linear-gradient(130deg, rgba(255,140,100,.25), rgba(200,60,50,.65)); mix-blend-mode:screen; }
+
+  .cat-row{ display:flex; gap:16px; overflow-x:auto; padding:4px 16px 18px; scrollbar-width:none; }
+  .cat-row::-webkit-scrollbar{ display:none; }
+  .cat{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:6px; width:72px; }
+  .cat .bubble{ width:64px; height:64px; border-radius:999px; background:var(--ink-05); display:grid; place-items:center; font-size:30px; }
+  .cat .label{ font-weight:700; font-size:12px; text-align:center; }
+
+  .sec-title{ padding:6px 16px 10px; display:flex; align-items:center; justify-content:space-between; }
+  .sec-title h4{ font-family:var(--ff-ui); font-weight:900; font-size:22px; letter-spacing:-.01em; }
+  .sec-title .arrow{ width:28px; height:28px; border-radius:999px; background:var(--ink-05); display:grid; place-items:center; }
+
+  .card-row{ display:flex; gap:12px; overflow-x:auto; padding:0 16px 20px; scrollbar-width:none; }
+  .card-row::-webkit-scrollbar{ display:none; }
+  .rcard{ flex:0 0 78%; background:#fff; border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--ink-15); }
+  .rcard .ph{ aspect-ratio:16/10; background:linear-gradient(135deg,#f6d9bf,#e9a079); position:relative; }
+  .rcard .ph.b{ background:linear-gradient(135deg,#fbe4c0,#cf8b5a); }
+  .rcard .ph .new{ position:absolute; top:10px; left:10px; background:var(--ink); color:#fff; font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px; letter-spacing:.02em; }
+  .rcard .body{ padding:12px 14px 16px; }
+  .rcard .title{ font-family:var(--ff-edit); font-style:italic; font-weight:400; font-size:22px; line-height:1.1; letter-spacing:-.005em; }
+  .rcard .meta{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-70); margin-top:4px; }
+  .rcard .meta .star{ color:var(--corallo); font-weight:700; }
+  .rcard .tags{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .tag{ background:var(--corallo-soft); color:var(--corallo-ink); font-weight:700; font-size:12px; padding:5px 10px; border-radius:999px; }
+
+  .banner-ref{ margin:8px 16px 24px; border-radius:var(--r-xl); background:var(--dark); color:#fff; padding:20px; position:relative; overflow:hidden; min-height:130px; display:flex; flex-direction:column; justify-content:space-between; }
+  .banner-ref h5{ font-family:var(--ff-ui); font-weight:900; font-size:20px; max-width:200px; line-height:1.1; }
+  .banner-ref .cta{ display:inline-block; padding:11px 18px; background:var(--corallo); color:#fff; font-weight:700; font-size:14px; border-radius:999px; width:fit-content; }
+
+  /* ——— pin mappa ——— */
+  .pins-stage{ background:#dfe9e2; border-radius:var(--r-lg); padding:24px; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:24px; justify-items:center; }
+  .pin{ position:relative; width:64px; height:76px; filter:drop-shadow(0 4px 6px rgba(20,17,15,.18)); }
+  .pin .drop{
+    position:absolute; inset:0;
+    background:var(--corallo);
+    clip-path:path('M32 0C14.3 0 0 14.3 0 32c0 20 32 44 32 44s32-24 32-44C64 14.3 49.7 0 32 0Z');
+    display:grid; place-items:center;
+  }
+  .pin .letter{ color:#fff; font-family:var(--ff-display); font-size:30px; line-height:1; transform:translateY(-5px); }
+  .pin .badge-new{ position:absolute; top:-6px; left:50%; transform:translate(36px,-4px); background:var(--ink); color:#fff; font-size:10px; font-weight:700; padding:4px 8px; border-radius:999px; letter-spacing:.04em; }
+  .pin.sm{ width:44px; height:52px; }
+  .pin.sm .letter{ font-size:20px; transform:translateY(-3px); }
+
+  /* ——— before/after ——— */
+  .compare{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:800px){ .compare{ grid-template-columns:1fr; } }
+  .ba{ border-radius:var(--r-lg); padding:18px; border:1px solid var(--ink-15); }
+  .ba.old{ background:#FAF7F2; }
+  .ba.new{ background:#fff; }
+  .ba h6{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-40); font-weight:700; margin-bottom:10px; }
+  .ba ul{ list-style:none; }
+  .ba li{ font-size:14px; line-height:1.55; padding:4px 0; color:var(--ink-70); }
+  .ba li b{ color:var(--ink); }
+
+  /* ——— glass scroll demo label ——— */
+  .demo-label{ position:absolute; top:14px; right:-12px; background:var(--corallo); color:#fff; font-size:11px; font-weight:700; padding:6px 12px; border-radius:999px; transform:rotate(8deg); box-shadow:var(--sh-2); z-index:30; }
+
+  .note{ margin-top:18px; padding:14px 18px; background:var(--cream); border-radius:var(--r-md); font-size:14px; color:var(--ink-70); line-height:1.5; border-left:3px solid var(--corallo); }
+  .note b{ color:var(--ink); }
+
+  .logo-mono{
+    width:88px; height:88px; border-radius:var(--r-lg);
+    background:var(--ink); color:var(--corallo);
+    display:grid; place-items:center;
+    font-family:var(--ff-display); font-size:56px; letter-spacing:-.02em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Moodboard — v4 direction</div>
+    <h1 class="page">Chiamami Bi<br/>in versione Neotaste.</h1>
+    <p class="subtitle">Evoluzione del lavoro v3: stesso dataset, stessa identità "Amico di Bi", sfondo crema invariato. Cambia la pelle visiva con tre interventi mirati ispirati a Neotaste — nav bar glass full-width, pin mappa statici con monogramma "B", font Satoshi per l'UI. TAN Songbird resta per i nomi dei ristoranti. Niente blog, niente stelle, niente prenotazioni.</p>
+  </header>
+
+  <!-- ========== 1. PALETTE ========== -->
+  <section class="section">
+    <div class="kicker">01 · Palette</div>
+    <h2>Colori</h2>
+    <p class="desc">Accent unico corallo (dal logo) sostituisce sia il verde mint di Neotaste sia il rosso v3. Sfondo bianco puro al posto del crema v3 — il crema resta come colore secondario per card editoriali e banner soft.</p>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="color" style="background:var(--corallo)"></div><div class="meta"><div class="name">Corallo</div><div class="hex">#EE5C55</div><div class="use">Accent principale · CTA · tag sconti · pin mappa</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--corallo-ink)"></div><div class="meta"><div class="name">Corallo ink</div><div class="hex">#C7443E</div><div class="use">Hover/pressed CTA · testo su corallo soft</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--corallo-soft)"></div><div class="meta"><div class="name">Corallo soft</div><div class="hex">#FDEBEA</div><div class="use">BG tag sconti · chip selezionati</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--ink)"></div><div class="meta"><div class="name">Ink</div><div class="hex">#14110F</div><div class="use">Testi principali · CTA dark · nav tab attivo (icona)</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--ink-40)"></div><div class="meta"><div class="name">Ink-40</div><div class="hex">#8A827D</div><div class="use">Muted · meta · kicker</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--ink-15);border:1px solid var(--ink-15)"></div><div class="meta"><div class="name">Ink-15</div><div class="hex">#E4E0DC</div><div class="use">Bordi · divider</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--ink-05)"></div><div class="meta"><div class="name">Ink-05</div><div class="hex">#F3F1EE</div><div class="use">Tile emoji categorie · bubble · pillole secondarie</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--page);border:1px solid var(--ink-15)"></div><div class="meta"><div class="name">Page</div><div class="hex">#FFFFFF</div><div class="use">Sfondo app · rottura col crema v3</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--cream)"></div><div class="meta"><div class="name">Cream</div><div class="hex">#FAF7F2</div><div class="use">Sezioni editoriali · card "tip di Bi"</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--dark)"></div><div class="meta"><div class="name">Dark</div><div class="hex">#0F2A26</div><div class="use">Banner hero · banner referral · sezione onboarding</div></div></div>
+      <div class="swatch"><div class="color" style="background:var(--oro)"></div><div class="meta"><div class="name">Oro</div><div class="hex">#C4A265</div><div class="use">Featured · premium badge (invariato v3)</div></div></div>
+    </div>
+  </section>
+
+  <!-- ========== 2. TYPOGRAPHY ========== -->
+  <section class="section">
+    <div class="kicker">02 · Tipografia</div>
+    <h2>Quattro font, ruoli separati.</h2>
+    <p class="desc">Dopo feedback di Augusto: <b>TAN Songbird resta</b>. Non lo sostituiamo. Neotaste usa solo un sans ovunque, ma perdere TAN Songbird significherebbe perdere la firma editoriale di Bi. Soluzione: Satoshi prende il motore UI (quello che dà il look Neotaste), TAN Songbird resta dove già vive — nomi ristoranti su foto, titoli editoriali. Il font del logo (Alfa Slab proxy) vive solo nel wordmark e nel monogramma pin.</p>
+
+    <div class="row-2" style="margin-bottom:18px">
+      <div class="type-card">
+        <div class="label">1 · UI (80% del sito) · Satoshi</div>
+        <div class="sample-ui-900">Nuovi su Bi</div>
+        <div class="sample-ui-700">Cosa ti propongo oggi</div>
+        <div class="sample-ui-400">Motore del sito: titoli di sezione bold, body, meta, CTA, tab, filtri, chip, stat tile. Satoshi Bold/Black è quello che dà al sito il "look Neotaste" — sans geometrico rotondo, grati di peso 900 aggressivi. Pesi 300–900, Fontshare gratuito.</div>
+      </div>
+      <div class="type-card">
+        <div class="label">2 · Editorial (invariato v3) · TAN Songbird italic</div>
+        <div class="sample-edit">Scannabue</div>
+        <div class="sample-edit" style="font-size:32px;margin-top:10px">Le chicche di aprile</div>
+        <div class="sample-ui-400" style="margin-top:18px">Firma di Bi. Resta solo sui nomi dei ristoranti stampati sulle foto delle card e sui titoli editoriali grandi ("Le chicche di…", "Bi ci è stata"). Non compare più ovunque come in v3 — vive in nicchie precise dove il carattere serif italic premium serve davvero.</div>
+      </div>
+    </div>
+
+    <div class="row-2" style="margin-bottom:18px">
+      <div class="type-card">
+        <div class="label">3 · Brand mark · Alfa Slab One (proxy del font logo)</div>
+        <div class="sample-display">LA GUIDA DI BI</div>
+        <div class="sample-ui-400" style="margin-top:18px">Solo qui: wordmark "LA GUIDA DI BI" e monogramma "B" dentro il pin mappa. Non appare nell'UI quotidiana. È il brand-mark, non un font di lavoro. In prod useremo il font custom del logo se reperibile; Alfa Slab One è il proxy free più vicino.</div>
+      </div>
+      <div class="type-card">
+        <div class="label">4 · Handwriting (invariato v3) · Caveat</div>
+        <div class="sample-hand">« prendi il tagliere misto, fidati »</div>
+        <div class="sample-ui-400" style="margin-top:12px">Citazioni, tip di Bi, annotazioni. Uso parsimonioso: una o due per pagina max. Crea contrasto con Satoshi e dà voce al "curatore Bi".</div>
+      </div>
+    </div>
+
+    <div class="note"><b>Regola anti-derive:</b> se una cosa non è un nome ristorante, un titolo editoriale, un tip/citazione o il logotype — è Satoshi. Punto. Senza eccezioni. Così il sito legge pulito.</div>
+  </section>
+
+  <!-- ========== 3. NAV BAR GLASS DEMO ========== -->
+  <section class="section" style="background:linear-gradient(180deg, #fff 0%, #f3f1ee 100%);">
+    <div class="kicker">03 · Nav bar glass — il pezzo chiave</div>
+    <h2>Bottom nav glass · full-width · scrollable-aware.</h2>
+    <p class="desc">Pill bianca semi-opaca fissata in basso con <code style="background:var(--ink-05);padding:2px 6px;border-radius:4px;font-size:12px">backdrop-filter: blur(22px) saturate(160%)</code>. A riposo è quasi opaca; quando sotto scorre contenuto colorato/fotografico il blur traspare e si vede il pattern sfumato. Scorri nel phone qui sotto per vederlo.</p>
+
+    <div style="position:relative;max-width:400px;margin:20px auto 0;">
+      <div class="demo-label">↓ SCORRI</div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen" id="demoScreen">
+          <div class="statusbar"><span>14:36</span><span>◉ ◉ ◉</span></div>
+
+          <!-- top bar home -->
+          <div class="topbar">
+            <span class="citypill">Torino</span>
+            <span class="giftpill">🎁 23:58:02</span>
+            <span class="searchicon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </span>
+          </div>
+
+          <!-- hero promo -->
+          <div class="hero-promo">
+            <h3>30 giorni gratis.</h3>
+            <p>Prova tutti gli sconti del mese, offre Bi.</p>
+            <a class="cta">Inizia ora</a>
+          </div>
+
+          <!-- categorie -->
+          <div class="sec-title"><h4>Categorie</h4></div>
+          <div class="cat-row">
+            <div class="cat"><div class="bubble">🍔</div><div class="label">Burger</div></div>
+            <div class="cat"><div class="bubble">☕</div><div class="label">Caffè</div></div>
+            <div class="cat"><div class="bubble">🍕</div><div class="label">Pizza</div></div>
+            <div class="cat"><div class="bubble">🍣</div><div class="label">Sushi</div></div>
+            <div class="cat"><div class="bubble">🍳</div><div class="label">Brunch</div></div>
+            <div class="cat"><div class="bubble">🍷</div><div class="label">Aperitivo</div></div>
+            <div class="cat"><div class="bubble">🍝</div><div class="label">Piemontese</div></div>
+          </div>
+
+          <!-- nuovi su Bi -->
+          <div class="sec-title"><h4>Nuovi su Bi</h4><span class="arrow">→</span></div>
+          <div class="card-row">
+            <div class="rcard">
+              <div class="ph"><span class="new">NEW</span></div>
+              <div class="body">
+                <div class="title">Osteria Da Carmagnola</div>
+                <div class="meta"><span>Piemontese</span><span>·</span><span>San Salvario</span></div>
+                <div class="tags"><span class="tag">-20% sui primi</span><span class="tag">Tagliere omaggio</span></div>
+              </div>
+            </div>
+            <div class="rcard">
+              <div class="ph b"><span class="new">NEW</span></div>
+              <div class="body">
+                <div class="title">Bar Pogo</div>
+                <div class="meta"><span>Caffè · Brunch</span><span>·</span><span>Vanchiglia</span></div>
+                <div class="tags"><span class="tag">Caffè + cornetto €2</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- banner referral -->
+          <div class="banner-ref">
+            <h5>Regala un mese, ricevi un mese</h5>
+            <a class="cta">Invita un amico</a>
+          </div>
+
+          <!-- dummy long content per scroll test -->
+          <div class="sec-title"><h4>I miei preferiti</h4><span class="arrow">→</span></div>
+          <div class="card-row">
+            <div class="rcard"><div class="ph"></div><div class="body"><div class="title">Scannabue</div><div class="meta"><span>Piemontese</span><span>·</span><span>San Salvario</span></div></div></div>
+            <div class="rcard"><div class="ph b"></div><div class="body"><div class="title">Rosso Rubino</div><div class="meta"><span>Osteria</span><span>·</span><span>Centro</span></div></div></div>
+          </div>
+
+          <div style="height:40px"></div>
+        </div>
+
+        <!-- NAV GLASS -->
+        <nav class="navglass">
+          <div class="tab active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+            <span>Home</span>
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2 3 5v17l6-3 6 3 6-3V2l-6 3-6-3Z"/><path d="M9 2v17"/><path d="M15 5v17"/></svg>
+            <span>Esplora</span>
+          </div>
+          <div class="tab" style="position:relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18l-2 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L3 7Z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
+            <span>Sconti</span>
+            <span class="dot"></span>
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+            <span>Profilo</span>
+          </div>
+        </nav>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:28px"><b>Specifiche nav glass:</b> altezza 72px, margine laterale 12px, bottom 14px, radius 999px, <code>rgba(255,255,255,0.66)</code> + <code>backdrop-filter: blur(22px) saturate(160%)</code>, border 1px <code>rgba(255,255,255,0.8)</code>, shadow <code>0 10px 30px rgba(20,17,15,.08)</code>. Tab attivo = pill ink-05 interno. Badge dot corallo quando ci sono sconti non ancora visti.</div>
+  </section>
+
+  <!-- ========== 4. PIN MAPPA ========== -->
+  <section class="section">
+    <div class="kicker">04 · Pin mappa — esplora</div>
+    <h2>Pin a goccia con monogramma "B".</h2>
+    <p class="desc">Al posto della "N" Neotaste, un "B" nel font del logo (qui proxy Alfa Slab One). Pin bianco è l'alternativa su sfondo colorato. Badge "NEW" pill ink accanto ai ristoranti aggiunti di recente (ultimi 14 giorni). <b>I pin sono statici</b>: non oscillano né fanno bounce (fix del problema v3).</p>
+
+    <div class="pins-stage">
+      <div class="pin"><div class="drop"><span class="letter">B</span></div></div>
+      <div class="pin"><div class="drop"><span class="letter">B</span></div><span class="badge-new">NEW</span></div>
+      <div class="pin" style="filter:drop-shadow(0 4px 6px rgba(20,17,15,.18))"><div class="drop" style="background:#fff"><span class="letter" style="color:var(--corallo)">B</span></div></div>
+      <div class="pin sm"><div class="drop"><span class="letter">B</span></div></div>
+      <div class="pin sm"><div class="drop" style="background:var(--ink)"><span class="letter" style="color:var(--corallo)">B</span></div></div>
+    </div>
+    <div class="note"><b>Cluster:</b> oltre zoom 14, cluster pin con numero dentro (es. "8" in cerchio corallo). Sotto zoom 14, pin individuali.</div>
+  </section>
+
+  <!-- ========== 5. MONOGRAMMA / APP ICON ========== -->
+  <section class="section">
+    <div class="kicker">05 · Monogramma · app icon · membership</div>
+    <h2>La "B" come sigillo.</h2>
+    <p class="desc">Lo stesso segno che vive nel pin della mappa diventa: app icon, badge "Amico di Bi" nel profilo, watermark sulle foto, favicon. Un solo simbolo, coerente ovunque.</p>
+
+    <div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap;">
+      <div class="logo-mono">B</div>
+      <div class="logo-mono" style="background:var(--corallo);color:#fff">B</div>
+      <div class="logo-mono" style="background:var(--cream);color:var(--corallo);border:2px solid var(--ink-15)">B</div>
+      <div style="color:var(--ink-70); font-size:14px; max-width:320px; line-height:1.5;">
+        Variante ink (default app icon), variante corallo (stato attivo/selezionato), variante cream (card "sei Amico di Bi dal 2025").
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 6. COMPARE v3 vs v4 ========== -->
+  <section class="section">
+    <div class="kicker">06 · v3 → v4 · cosa cambia</div>
+    <h2>Evoluzione, non sostituzione.</h2>
+    <p class="desc">v3 resta la base: dataset, routing, pagine, logica "Amico di Bi", meccanica drop/sconti. v4 cambia la pelle.</p>
+
+    <div class="compare">
+      <div class="ba old">
+        <h6>v3 — attuale</h6>
+        <ul>
+          <li>Sfondo <b>#FAF7F2 crema</b></li>
+          <li>Accent rosso <b>#E8453C</b></li>
+          <li>Body <b>DM Sans</b>, titoli TAN Songbird ovunque</li>
+          <li>Nav mobile: tab pill stretta in basso</li>
+          <li>Pin mappa oscillanti (da sistemare)</li>
+          <li>Stelle rating visibili sulle card (da togliere)</li>
+          <li>CTA "Prenota" (da togliere: non gestiamo prenotazioni)</li>
+          <li>Contenuti tipo blog / articoli editoriali</li>
+        </ul>
+      </div>
+      <div class="ba new" style="border:2px solid var(--corallo)">
+        <h6>v4 — Neotaste direction</h6>
+        <ul>
+          <li><b>Stesse pagine, stesso dataset, stessa architettura</b> di v3. Cambia solo la pelle.</li>
+          <li>Sfondo <b>#FAF7F2 crema invariato</b></li>
+          <li>Accent unico <b>corallo #EE5C55</b> (dal logo)</li>
+          <li>Motore UI <b>Satoshi</b> (sezioni, body, CTA, filtri)</li>
+          <li>Editorial <b>TAN Songbird invariato</b>: nomi ristoranti + titoli editoriali speciali</li>
+          <li>Brand-mark <b>Alfa Slab</b> solo su wordmark "LA GUIDA DI BI" + monogramma "B" nei pin</li>
+          <li>Nav <b>glass pill full-width</b> (3 interventi Neotaste: nav + pin + font UI)</li>
+          <li>Pin mappa <b>statici</b> con monogramma "B"</li>
+          <li>Niente stelle · niente "Prenota" · niente articoli/blog</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 7. ROAD MAP ========== -->
+  <section class="section">
+    <div class="kicker">07 · Piano · cosa disegno dopo</div>
+    <h2>Road map di esecuzione.</h2>
+    <ol style="margin-left:18px; color:var(--ink-70); line-height:1.8; font-size:15px;">
+      <li><b style="color:var(--ink)">Step 0 (QUI)</b> — design system v4 + nav glass demo ← <i>questo file</i></li>
+      <li><b style="color:var(--ink)">Step 1</b> — Homepage mobile: re-skin 1:1 della home live (stessi elementi, nuovi colori/font/nav). Nessun elemento nuovo, solo la pelle cambia.</li>
+      <li><b style="color:var(--ink)">Step 2</b> — Esplora mobile: mappa MapLibre, pin statici B, chip filtri (Filtri / Ora / Cucina / Ordine), bottom sheet drag con lista</li>
+      <li><b style="color:var(--ink)">Step 3</b> — Profilo mobile: titolo display, avatar + Amico di Bi identity, 4 tile stat, banner referral, lista menu, link "suggerisci ristorante"</li>
+      <li><b style="color:var(--ink)">Step 4</b> — Scheda ristorante: hero gallery, titolo display, recensione di Bi, tip in Caveat, sconti/drop, orari Google, CTA "Apri in Google Maps" (niente prenotazioni)</li>
+      <li><b style="color:var(--ink)">Step 5</b> — Deals, Salvati (restyling veloci — stessi pattern)</li>
+      <li><b style="color:var(--ink)">Step 6</b> — Desktop: gli stessi mockup adattati a 1024px+. La nav glass resta bottom anche su desktop (scelta identitaria) oppure migra a top-bar se su desktop ti sembra strana. Decideremo davanti al mock.</li>
+      <li><b style="color:var(--ink)">Step 7</b> — Handoff v4 → Claude Code (aggiorno <code>design-handoff-v3.md</code> → v4)</li>
+    </ol>
+
+    <div class="note"><b>Prossimo step:</b> ok partire con Step 1 (Homepage mobile)? Se sì, preparo <code>v4-mobile-home.html</code> entro pochi minuti.</div>
+  </section>
+
+</div>
+</body>
+</html>

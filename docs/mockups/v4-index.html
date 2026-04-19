@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>La Guida di Bi · v4 · Indice</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700,800,900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4);
+  --ink-15:rgba(34,24,28,.15); --ink-05:rgba(34,24,28,.06);
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:rgba(232,69,60,.08);
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0;
+  --oro:#B08954; --green-a:#A3E635; --green-b:#4ADE80;
+  --green-grad:linear-gradient(135deg,#A3E635 0%,#4ADE80 100%);
+  --line:#EAE3D7;
+  --ff-ui:'Satoshi','Inter',-apple-system,system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+  --shadow-sm:0 1px 3px rgba(34,24,28,.06);
+  --shadow-md:0 4px 14px rgba(34,24,28,.08);
+  --shadow-lg:0 12px 32px rgba(34,24,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--page);color:var(--ink);font-family:var(--ff-ui);font-weight:500;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+
+.wrap{max-width:1280px;margin:0 auto;padding:48px 40px 80px}
+
+/* ========= HERO ========= */
+.hero{
+  background:linear-gradient(135deg,var(--corallo) 0%,#C6372F 100%);
+  color:#fff;border-radius:28px;
+  padding:52px 56px 48px;position:relative;overflow:hidden;
+}
+.hero::before{content:"";position:absolute;inset:auto -80px -80px auto;width:380px;height:380px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero::after{content:"";position:absolute;top:-40px;left:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.05)}
+.hero > *{position:relative;z-index:1}
+.hero .kick{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.hero h1{font-family:var(--ff-mark);font-size:64px;line-height:1;letter-spacing:-.01em;margin-top:14px}
+.hero .tag{font-size:16.5px;color:rgba(255,255,255,.9);margin-top:14px;max-width:680px;line-height:1.55;font-weight:500}
+.hero .cav{font-family:var(--ff-hand);font-size:28px;color:#fff;margin-top:22px;letter-spacing:.01em}
+
+/* ========= PRINCIPLES ========= */
+.principles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:32px}
+.pr-card{background:#fff;border:1px solid var(--ink-05);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow-sm)}
+.pr-card .tit{font-weight:900;font-size:14px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.pr-card .tit::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--corallo);flex-shrink:0}
+.pr-card .sub{font-size:12.5px;color:var(--ink-70);margin-top:8px;line-height:1.55}
+
+/* ========= SECTION ========= */
+.sec{margin-top:56px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:14px;gap:20px;flex-wrap:wrap}
+.sec-head h2{font-weight:900;font-size:28px;letter-spacing:-.025em}
+.sec-head .count{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-70)}
+
+/* ========= CARD GRID ========= */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{
+  background:#fff;border:1px solid var(--ink-05);border-radius:20px;overflow:hidden;
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+  display:flex;flex-direction:column;color:inherit;
+}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--ink-15)}
+
+/* Mockup area — preview dispositivo in miniatura */
+.card .mockup{
+  height:210px;position:relative;
+  background:linear-gradient(135deg,var(--cream-deep) 0%,var(--cream) 100%);
+  display:grid;place-items:center;overflow:hidden;
+}
+.card .mockup::before{content:"";position:absolute;inset:0;background:radial-gradient(320px 150px at 25% 25%,rgba(255,255,255,.55),transparent 70%)}
+
+/* Phone mockup */
+.phone-mini{
+  width:96px;height:160px;background:#22181C;border-radius:20px;padding:4px;
+  box-shadow:0 10px 28px rgba(34,24,28,.22);position:relative;z-index:1;
+}
+.phone-mini .inner{width:100%;height:100%;background:var(--page);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.phone-mini .hdr{height:18px;background:#fff;border-bottom:1px solid var(--ink-05);display:flex;align-items:center;justify-content:center;font-size:5.5px;color:var(--corallo-ink);font-family:var(--ff-mark);letter-spacing:.08em}
+.phone-mini .bd{flex:1;padding:5px;display:flex;flex-direction:column;gap:3px}
+.phone-mini .ln{height:5px;border-radius:3px;background:var(--ink-05)}
+.phone-mini .ln.short{width:55%}
+.phone-mini .cor{height:14px;border-radius:4px;background:var(--corallo-soft);border:1px solid rgba(232,69,60,.2)}
+.phone-mini .cor.solid{background:var(--corallo);border-color:var(--corallo)}
+.phone-mini .grad{height:8px;border-radius:3px;background:var(--green-grad)}
+.phone-mini .gold{height:12px;border-radius:3px;background:linear-gradient(135deg,#B08954,#8E6B3E)}
+.phone-mini .nav{height:18px;background:#fff;border-top:1px solid var(--ink-05);margin:auto -5px -5px;display:flex;justify-content:space-around;align-items:center;padding:0 6px}
+.phone-mini .nav span{width:5px;height:5px;border-radius:50%;background:var(--ink-15)}
+.phone-mini .nav span.active{background:var(--corallo)}
+
+/* Pin-grid (per verify) */
+.phone-mini .pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px}
+.phone-mini .pin-grid div{height:8px;border-radius:2px;background:var(--ink-05)}
+
+/* Laptop mockup */
+.lap-mini{
+  width:180px;height:120px;background:#22181C;border-radius:10px;padding:3px 3px 14px;
+  box-shadow:0 10px 28px rgba(34,24,28,.22);position:relative;z-index:1;
+}
+.lap-mini::after{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:72px;height:5px;background:#22181C;border-radius:0 0 8px 8px}
+.lap-mini .inner{width:100%;height:100%;background:var(--page);border-radius:7px;overflow:hidden;display:flex;flex-direction:column}
+.lap-mini .hdr{height:14px;background:#fff;border-bottom:1px solid var(--ink-05);display:flex;align-items:center;padding:0 6px;gap:3px}
+.lap-mini .hdr .dot{width:3px;height:3px;border-radius:50%;background:var(--ink-15)}
+.lap-mini .bd{flex:1;display:flex;padding:5px;gap:4px}
+.lap-mini .side{width:32%;display:flex;flex-direction:column;gap:2.5px}
+.lap-mini .side .row{height:3.5px;border-radius:2px;background:var(--ink-05)}
+.lap-mini .side .row.hi{background:var(--corallo-soft)}
+.lap-mini .main{flex:1;background:linear-gradient(135deg,var(--cream-deep),var(--cream));border-radius:3px;display:grid;place-items:center}
+.lap-mini .main.admin{background:linear-gradient(135deg,rgba(232,69,60,.14),#fff)}
+.lap-mini .main.dark{background:linear-gradient(135deg,#22181C,#3D2A30);color:#fff;font-family:var(--ff-mark);font-size:8px;letter-spacing:2.5px;display:grid;place-items:center}
+
+.card .body{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1}
+.card .label{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo-ink)}
+.card .name{font-weight:900;font-size:20px;letter-spacing:-.025em;margin-top:6px;line-height:1.2}
+.card .desc{font-size:13.5px;color:var(--ink-70);margin-top:10px;line-height:1.55;flex:1}
+.card .meta{margin-top:16px;padding-top:14px;border-top:1px solid var(--ink-05);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card .chips{display:flex;gap:5px;flex-wrap:wrap}
+.card .chip{font-size:10px;font-weight:800;color:var(--ink-70);background:var(--ink-05);padding:3px 7px;border-radius:999px;letter-spacing:.02em}
+.card .chip.bi{background:var(--corallo-soft);color:var(--corallo-ink)}
+.card .open{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:800;color:var(--ink);
+  background:var(--cream);border:1px solid var(--ink-05);
+  padding:8px 13px;border-radius:999px;white-space:nowrap;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+.card:hover .open{background:var(--corallo);color:#fff;border-color:var(--corallo)}
+.card .open svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4}
+
+/* ========= FOOTER ========= */
+.foot{margin-top:72px;padding-top:32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:24px;color:var(--ink-70);font-size:12px;line-height:1.6}
+.foot .wmark{font-family:var(--ff-mark);font-size:18px;color:var(--corallo-ink);letter-spacing:-.01em}
+.foot .rt{text-align:right}
+
+@media (max-width:960px){
+  .wrap{padding:28px 20px 60px}
+  .hero{padding:36px 28px 32px}
+  .hero h1{font-size:44px}
+  .principles{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  .principles{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+  .hero h1{font-size:36px}
+  .foot .rt{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ========= HERO ========= -->
+  <section class="hero">
+    <div class="kick">v4 · Neotaste-aligned · 19 · 04 · 2026</div>
+    <h1>La Guida di Bi</h1>
+    <p class="tag">Re-skin completo del prodotto: mobile, desktop, ristoratore e admin. Token canonici dal live, nomi locali in Satoshi heavy, sottrazione del chrome, un'unica voce editoriale firmata Bi.</p>
+    <p class="cav">— tutto quello che ho scelto è qui</p>
+  </section>
+
+  <!-- ========= PRINCIPLES ========= -->
+  <div class="principles">
+    <div class="pr-card">
+      <div class="tit">PIN-only</div>
+      <div class="sub">I ristoratori accedono solo con PIN a 6 cifre assegnato da Bi. Niente email + password, niente self-signup.</div>
+    </div>
+    <div class="pr-card">
+      <div class="tit">Niente stelle, niente voti</div>
+      <div class="sub">La selezione <em>è</em> il prodotto. Tutti i locali sono scelti da Augusto. Nessun rating utente, da nessuna parte.</div>
+    </div>
+    <div class="pr-card">
+      <div class="tit">"Secondo Bi"</div>
+      <div class="sub">Blocco editoriale firmato Bi, Caveat solo nei tip e nella signature. Mai chiamato "recensione".</div>
+    </div>
+    <div class="pr-card">
+      <div class="tit">Token canonici</div>
+      <div class="sub">Ink #22181C · Corallo #E8453C · Page #FAF7F2 · verde sconto 135° lime→green. Estratti dal live, non stimati.</div>
+    </div>
+  </div>
+
+  <!-- ========= MOBILE ========= -->
+  <section class="sec">
+    <header class="sec-head">
+      <h2>Mobile · 390 × 844</h2>
+      <div class="count">5 file · 14 schermi</div>
+    </header>
+    <div class="grid">
+
+      <a class="card" href="v4-mobile-home.html">
+        <div class="mockup">
+          <div class="phone-mini">
+            <div class="inner">
+              <div class="hdr">LA GUIDA DI BI</div>
+              <div class="bd">
+                <div class="cor"></div>
+                <div class="ln short"></div>
+                <div class="ln"></div>
+                <div style="display:flex;gap:3px;margin-top:2px">
+                  <div style="flex:1;height:14px;border-radius:3px;background:var(--ink-05)"></div>
+                  <div style="flex:1;height:14px;border-radius:3px;background:var(--ink-05)"></div>
+                  <div style="flex:1;height:14px;border-radius:3px;background:var(--ink-05)"></div>
+                </div>
+                <div class="ln"></div>
+                <div class="ln short"></div>
+              </div>
+              <div class="nav"><span></span><span class="active"></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Mobile · Home</span>
+          <div class="name">Home</div>
+          <div class="desc">Hero corallo editoriale, categorie con emoji, carousel "I consigli di Bi" e tre tile tematici. Bottom nav glass con icona coupon per gli sconti.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">1 schermo</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="v4-mobile-pagine.html">
+        <div class="mockup">
+          <div class="phone-mini">
+            <div class="inner">
+              <div class="hdr">ESPLORA</div>
+              <div class="bd">
+                <div class="ln short"></div>
+                <div style="height:36px;border-radius:4px;background:linear-gradient(135deg,#E8DFC9,#D8CEB5);position:relative">
+                  <div style="position:absolute;top:8px;left:14px;width:5px;height:5px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 1.5px #fff"></div>
+                  <div style="position:absolute;top:20px;left:30px;width:4px;height:4px;border-radius:50%;background:#F39C54;box-shadow:0 0 0 1.5px #fff"></div>
+                  <div style="position:absolute;bottom:8px;right:14px;width:4px;height:4px;border-radius:50%;background:#6E4B8E;box-shadow:0 0 0 1.5px #fff"></div>
+                </div>
+                <div class="ln"></div>
+                <div class="cor"></div>
+                <div class="ln short"></div>
+              </div>
+              <div class="nav"><span class="active"></span><span></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Mobile · Flussi utente</span>
+          <div class="name">Esplora · Sconti · Salvati · Profilo</div>
+          <div class="desc">Le quattro schermate principali: mappa Esplora con pin emoji per categoria, Sconti con drop carousel, Salvati con liste custom e note Caveat, Profilo pulito senza contatori di risparmio.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">4 schermi</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="v4-mobile-scheda.html">
+        <div class="mockup">
+          <div class="phone-mini">
+            <div class="inner">
+              <div class="hdr">IL MULO</div>
+              <div class="bd">
+                <div style="height:28px;border-radius:4px;background:linear-gradient(135deg,#D4A574,#A07247)"></div>
+                <div class="ln short"></div>
+                <div class="grad"></div>
+                <div class="ln"></div>
+                <div class="gold"></div>
+                <div class="ln short"></div>
+                <div style="height:14px;border-radius:8px;background:var(--green-grad);margin-top:auto;margin-bottom:-1px;display:flex;align-items:center;padding:0 4px"><div style="width:22px;height:5px;border-radius:2px;background:rgba(34,24,28,.6)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Mobile · Scheda</span>
+          <div class="name">Scheda ristorante</div>
+          <div class="desc">Hero full + card overlay centrata con nome in Satoshi 900. Banner sconto verde 135°, Secondo Bi, orari, Cosa prendere in oro, vicini. Sticky pill CTA sconto in fondo.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">2 schermi</span><span class="chip">con / senza sconto</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="v4-mobile-auth.html">
+        <div class="mockup">
+          <div class="phone-mini">
+            <div class="inner">
+              <div class="hdr">ACCEDI</div>
+              <div class="bd">
+                <div class="ln short" style="margin:auto auto 4px;width:40%;height:8px;background:var(--ink)"></div>
+                <div class="ln"></div>
+                <div style="height:12px;border-radius:3px;background:#fff;border:1px solid var(--ink-05)"></div>
+                <div style="height:12px;border-radius:3px;background:#fff;border:1px solid var(--ink-05)"></div>
+                <div class="cor solid"></div>
+                <div class="ln short" style="margin:0 auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Mobile · Account</span>
+          <div class="name">Login · Signup · Suggerisci</div>
+          <div class="desc">Accesso utente con email o social, signup progressivo e form "Suggerisci un locale" per chi vuole proporre un posto a Bi. Niente registrazione per ristoratori — solo PIN.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">3 schermi</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="v4-mobile-admin.html">
+        <div class="mockup">
+          <div class="phone-mini">
+            <div class="inner">
+              <div class="hdr" style="background:var(--ink);color:#fff">ADMIN · BI</div>
+              <div class="bd">
+                <div class="ln"></div>
+                <div class="ln short"></div>
+                <div style="display:flex;gap:3px">
+                  <div style="flex:1;height:12px;border-radius:3px;background:var(--corallo-soft)"></div>
+                  <div style="flex:1;height:12px;border-radius:3px;background:var(--ink-05)"></div>
+                </div>
+                <div class="ln"></div>
+                <div class="ln short"></div>
+                <div class="ln"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Mobile · Admin</span>
+          <div class="name">Admin mobile</div>
+          <div class="desc">Pannello tascabile per Bi: gestione locali, contenuti editoriali, PIN ristoratori da assegnare. Solo per Augusto.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip bi">Solo Bi</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ========= DESKTOP ========= -->
+  <section class="sec">
+    <header class="sec-head">
+      <h2>Desktop · 1440 × 900</h2>
+      <div class="count">3 file · 8 schermi</div>
+    </header>
+    <div class="grid">
+
+      <a class="card" href="v4-desktop-home.html">
+        <div class="mockup">
+          <div class="lap-mini">
+            <div class="inner">
+              <div class="hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <div class="bd">
+                <div class="main">
+                  <div style="width:88%;display:flex;flex-direction:column;gap:3px">
+                    <div style="height:6px;background:var(--corallo);border-radius:2px;width:45%"></div>
+                    <div style="height:3px;background:var(--ink-05);border-radius:2px"></div>
+                    <div style="height:3px;background:var(--ink-05);border-radius:2px;width:75%"></div>
+                    <div style="display:flex;gap:3px;margin-top:3px">
+                      <div style="flex:1;height:18px;background:#fff;border:1px solid var(--ink-05);border-radius:3px"></div>
+                      <div style="flex:1;height:18px;background:#fff;border:1px solid var(--ink-05);border-radius:3px"></div>
+                      <div style="flex:1;height:18px;background:#fff;border:1px solid var(--ink-05);border-radius:3px"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Desktop · Home</span>
+          <div class="name">Home</div>
+          <div class="desc">Nav glass centrata, hero editoriale, carousel a piena larghezza e tre editoriali. La pelle desktop del pattern mobile, stesso ritmo visivo.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">1 schermo</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="v4-desktop-pagine.html">
+        <div class="mockup">
+          <div class="lap-mini">
+            <div class="inner">
+              <div class="hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <div class="bd">
+                <div class="side">
+                  <div class="row hi"></div>
+                  <div class="row"></div>
+                  <div class="row"></div>
+                  <div class="row"></div>
+                  <div class="row"></div>
+                  <div class="row"></div>
+                </div>
+                <div class="main" style="background:linear-gradient(135deg,#E8DFC9,#C4BAA0);position:relative">
+                  <div style="position:absolute;top:18%;left:28%;width:6px;height:6px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 1.5px #fff"></div>
+                  <div style="position:absolute;top:42%;left:54%;width:5px;height:5px;border-radius:50%;background:#F39C54;box-shadow:0 0 0 1.5px #fff"></div>
+                  <div style="position:absolute;top:68%;left:38%;width:5px;height:5px;border-radius:50%;background:#6E4B8E;box-shadow:0 0 0 1.5px #fff"></div>
+                  <div style="position:absolute;top:28%;right:22%;width:5px;height:5px;border-radius:50%;background:#4A90D9;box-shadow:0 0 0 1.5px #fff"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Desktop · Flussi utente</span>
+          <div class="name">Esplora · Sconti · Salvati · Profilo · Scheda</div>
+          <div class="desc">Sei schermate principali in un solo file: Esplora split mappa + card premium, Sconti con drop, Salvati con note Caveat, Profilo pulito, Scheda 2 colonne 1.4/1.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">6 schermi</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="v4-desktop-admin.html">
+        <div class="mockup">
+          <div class="lap-mini">
+            <div class="inner">
+              <div class="hdr" style="background:var(--ink)"><span class="dot" style="background:var(--corallo)"></span><span class="dot" style="background:rgba(255,255,255,.2)"></span><span class="dot" style="background:rgba(255,255,255,.2)"></span></div>
+              <div class="bd">
+                <div class="side" style="background:var(--ink);padding:4px;border-radius:3px;margin:-1px 0 -1px -2px">
+                  <div class="row" style="background:rgba(255,255,255,.1)"></div>
+                  <div class="row" style="background:var(--corallo)"></div>
+                  <div class="row" style="background:rgba(255,255,255,.1)"></div>
+                  <div class="row" style="background:rgba(255,255,255,.1)"></div>
+                  <div class="row" style="background:rgba(255,255,255,.1)"></div>
+                </div>
+                <div class="main admin"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Desktop · Admin</span>
+          <div class="name">Admin di Bi</div>
+          <div class="desc">Cockpit editoriale: catalogo locali, editor "Secondo Bi", convenzioni, PIN ristoratori, utenti. Sidebar ink, IA premium, niente moderazione (non ci sono recensioni).</div>
+          <div class="meta">
+            <div class="chips"><span class="chip bi">Solo Bi</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ========= RISTORATORE ========= -->
+  <section class="sec">
+    <header class="sec-head">
+      <h2>Ristoratore · verify</h2>
+      <div class="count">1 file · mobile + desktop</div>
+    </header>
+    <div class="grid">
+
+      <a class="card" href="v4-verify.html" style="grid-column:span 2">
+        <div class="mockup" style="background:linear-gradient(135deg,#22181C 0%,#3D2A30 100%);color:#fff">
+          <div class="phone-mini" style="margin-right:10px">
+            <div class="inner">
+              <div class="hdr">ACCESSO · PIN</div>
+              <div class="bd" style="align-items:center;padding-top:16px">
+                <div style="font-family:var(--ff-mark);font-size:13px;letter-spacing:4px;color:var(--ink)">● ● ● ○ ○ ○</div>
+                <div class="ln short" style="margin-top:14px"></div>
+                <div class="pin-grid">
+                  <div></div><div></div><div></div>
+                  <div></div><div></div><div></div>
+                  <div></div><div></div><div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="lap-mini" style="margin-left:10px">
+            <div class="inner">
+              <div class="hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <div class="bd">
+                <div class="main dark">● ● ● ● ● ●</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label">Ristoratore · PIN + Dashboard</span>
+          <div class="name">Verify — PIN-only</div>
+          <div class="desc">Accesso ristoratore con solo PIN a 6 cifre (no email, no password). Dashboard con performance, coupon usati, scanner QR. Mobile + desktop nello stesso file.</div>
+          <div class="meta">
+            <div class="chips"><span class="chip">PIN 6 cifre</span><span class="chip">Mobile + Desktop</span><span class="chip">No self-signup</span></div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+      <div class="card" style="pointer-events:none;background:transparent;border:1px dashed var(--ink-15);box-shadow:none">
+        <div class="mockup" style="background:transparent;height:auto;padding:32px 20px"></div>
+        <div class="body" style="padding:24px">
+          <span class="label" style="color:var(--ink-70)">Convenzioni</span>
+          <div class="name" style="font-size:16px;font-weight:800">Il PIN è la sola porta</div>
+          <div class="desc">Augusto genera il PIN dall'admin desktop (rotazione manuale). Il ristoratore lo digita in verify. Niente email, niente password, niente reset automatico — se serve un nuovo PIN, si rigenera dall'admin.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========= FOOTER ========= -->
+  <footer class="foot">
+    <div>
+      <div class="wmark">La Guida di Bi</div>
+      <div style="margin-top:6px">Chiamami Bi · Torino · redesign v4 · 19 aprile 2026</div>
+      <div style="margin-top:4px">Satoshi (UI) · Alfa Slab One (wordmark) · Caveat (editoriale)</div>
+    </div>
+    <div class="rt">
+      <div>9 file · 23 schermi totali</div>
+      <div style="margin-top:4px">Mobile 390 · Desktop 1440 · PIN verify</div>
+      <div style="margin-top:4px">by Augusto · in collaborazione con Bi</div>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>

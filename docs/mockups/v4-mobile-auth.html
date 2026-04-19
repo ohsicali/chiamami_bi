@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v4 · Mobile auth · Login, Signup, Consiglia</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA;
+  --page:#FAF7F2; --cream-deep:#F1EBE0; --beige-cta:#F2EDE1; --white:#FFFFFF;
+  --oro:#B08954; --oro-soft:#F4E7CC;
+  --green:#2E7D5B; --green-soft:#E5F3EA;
+  --green-grad:linear-gradient(135deg,#A3E635,#4ADE80);
+
+  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{background:var(--page);color:var(--ink);font-family:var(--ff-ui);font-weight:500;line-height:1.45}
+body{padding:40px 20px 80px;min-height:100vh;background:radial-gradient(1200px 500px at 50% 0%,rgba(232,69,60,.05),transparent 70%),var(--page)}
+
+/* Page header */
+.page-head{max-width:1300px;margin:0 auto 32px;text-align:center}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:var(--corallo-soft);color:var(--corallo-ink);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.page-head h1{font-weight:900;font-size:32px;letter-spacing:-.02em;margin:14px 0 8px}
+.page-head p{color:var(--ink-70);font-size:14px;max-width:720px;margin:0 auto;line-height:1.55}
+
+.phones{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;max-width:1500px;margin:0 auto}
+.slot{display:flex;flex-direction:column;align-items:center;gap:18px;width:390px}
+.slot-label{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--corallo-ink);text-transform:uppercase;padding:6px 12px;background:var(--corallo-soft);border-radius:999px}
+.slot-title{font-weight:900;font-size:22px;letter-spacing:-.02em;text-align:center}
+.slot-sub{font-size:12px;color:var(--ink-70);text-align:center;max-width:340px;line-height:1.45}
+
+/* Phone frame */
+.phone{width:390px;height:844px;background:#000;border-radius:52px;padding:10px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(0,0,0,.1);position:relative}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:50;pointer-events:none}
+.screen{width:100%;height:100%;background:var(--page);border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;font-size:13px;font-weight:700;position:relative;z-index:20}
+.statusbar .icons{display:inline-flex;gap:6px;align-items:center}
+.statusbar svg{width:16px;height:12px}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:30px}
+.scroll::-webkit-scrollbar{display:none}
+
+/* Top mini bar auth */
+.auth-top{padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+.auth-top .logo{display:flex;flex-direction:column;line-height:.92;text-decoration:none}
+.auth-top .logo .l1{font-family:var(--ff-mark);font-size:15px;letter-spacing:.02em;color:var(--corallo)}
+.auth-top .logo .l2{font-weight:700;font-size:8px;letter-spacing:.18em;color:var(--ink-40);margin-top:3px;text-transform:uppercase}
+.auth-top a{font-size:12.5px;font-weight:800;color:var(--corallo-ink);text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+
+/* Auth body */
+.auth-body{padding:28px 24px 0}
+.auth-kick{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--corallo-soft);color:var(--corallo-ink);border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.auth-h1{font-family:var(--ff-ui);font-weight:900;font-size:38px;letter-spacing:-.03em;line-height:1.04;margin:12px 0 8px;color:var(--ink)}
+.auth-sub{font-size:14px;color:var(--ink-70);line-height:1.5;margin-bottom:22px}
+
+.gbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 16px;background:#fff;border:1px solid var(--ink-15);border-radius:16px;font-weight:800;font-size:14.5px;color:var(--ink);cursor:pointer;box-shadow:var(--shadow-sm);text-decoration:none}
+.gbtn svg{width:18px;height:18px}
+.gbtn.apple{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--ink-40);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--ink-15)}
+
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-70);margin-bottom:6px}
+.field input{width:100%;padding:14px 16px;border:1.5px solid var(--ink-15);border-radius:14px;background:#fff;font-family:inherit;font-size:14.5px;color:var(--ink);outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--corallo)}
+.field input::placeholder{color:var(--ink-40);font-weight:500}
+.field .forgot{display:block;margin-top:8px;font-size:12px;font-weight:700;color:var(--corallo-ink);text-decoration:none;text-align:right}
+
+.cta-large{display:block;width:100%;margin-top:8px;padding:15px;background:var(--corallo);color:#fff;border:0;border-radius:16px;font-weight:800;font-size:15px;cursor:pointer;letter-spacing:-.01em;box-shadow:0 8px 20px rgba(232,69,60,.28);transition:transform .15s}
+.cta-large:hover{transform:translateY(-1px)}
+
+.bottom-link{margin-top:22px;text-align:center;font-size:13px;color:var(--ink-70)}
+.bottom-link a{color:var(--corallo-ink);font-weight:800;text-decoration:none}
+
+.explore-tiles{margin-top:26px}
+.explore-tiles .lbl{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-40);margin-bottom:10px;text-align:center}
+.explore-tiles .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.explore-tiles .t{background:#fff;border:1px solid var(--ink-05);border-radius:14px;padding:14px 16px;text-align:left;cursor:pointer}
+.explore-tiles .t .ic{font-size:22px;margin-bottom:6px}
+.explore-tiles .t .tt{font-weight:800;font-size:13px;letter-spacing:-.01em}
+.explore-tiles .t .ss{font-size:11px;color:var(--ink-70);margin-top:2px;line-height:1.3}
+
+/* Terms tiny */
+.terms-tiny{margin-top:22px;text-align:center;font-size:11px;color:var(--ink-40);line-height:1.5}
+.terms-tiny a{color:var(--ink-70);text-decoration:underline}
+
+/* Benefits row (signup only) */
+.benefits{margin:18px 0 22px;background:var(--cream-deep);border-radius:16px;padding:16px 18px}
+.benefits .bt{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-70);margin-bottom:10px}
+.benefits ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.benefits li{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink);line-height:1.45}
+.benefits li::before{content:"✓";color:var(--corallo);font-weight:900;flex:0 0 auto}
+
+/* ============ Consiglia un ristorante (bottom sheet) ============ */
+.sugg-backdrop{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.55));z-index:10;backdrop-filter:blur(4px)}
+.sugg-sheet{position:absolute;left:0;right:0;bottom:0;background:var(--page);border-top-left-radius:28px;border-top-right-radius:28px;box-shadow:0 -20px 60px rgba(34,24,28,.18);z-index:11;padding:14px 22px 24px;max-height:86%;overflow-y:auto;display:flex;flex-direction:column}
+.sugg-sheet::-webkit-scrollbar{display:none}
+.grabber{width:36px;height:4px;border-radius:99px;background:var(--ink-15);margin:0 auto 16px}
+.sugg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sugg-head .k{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo-ink)}
+.sugg-head .close{width:32px;height:32px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;cursor:pointer}
+.sugg-head .close svg{width:14px;height:14px;stroke:var(--ink);fill:none;stroke-width:2.4}
+
+.sugg-title{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.025em;line-height:1.1;margin-bottom:6px}
+.sugg-intro{font-size:13px;color:var(--ink-70);line-height:1.5;margin-bottom:20px}
+
+/* stepper */
+.stepper{display:flex;align-items:center;gap:6px;margin-bottom:18px}
+.stepper .dot{flex:1;height:4px;border-radius:99px;background:var(--ink-15)}
+.stepper .dot.done{background:var(--corallo)}
+.stepper .dot.cur{background:var(--corallo);box-shadow:0 0 0 2px var(--corallo-soft)}
+.stepper .lbl{font-size:10.5px;font-weight:800;color:var(--ink-70);letter-spacing:.04em;margin-left:6px}
+
+/* step 1 : name + address */
+.step-label{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-70);margin-bottom:6px;margin-top:14px}
+.step-label.first{margin-top:0}
+
+/* step 2 : chip categorie */
+.tag-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tag-chip{display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:999px;background:#fff;border:1.5px solid var(--ink-15);font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer}
+.tag-chip.on{background:var(--corallo);color:#fff;border-color:var(--corallo)}
+
+/* step 3 : upload */
+.upload-tile{margin-top:10px;border:2px dashed var(--ink-15);border-radius:16px;padding:24px 18px;text-align:center;background:#fff;cursor:pointer}
+.upload-tile .ic{font-size:28px}
+.upload-tile .t{font-weight:800;font-size:14px;margin-top:8px}
+.upload-tile .s{font-size:11.5px;color:var(--ink-70);margin-top:4px;line-height:1.4}
+
+.sugg-actions{margin-top:22px;display:flex;gap:10px}
+.sugg-actions .back{flex:0 0 auto;padding:14px 20px;background:#fff;border:1px solid var(--ink-15);border-radius:14px;font-weight:800;font-size:14px;color:var(--ink);cursor:pointer}
+.sugg-actions .next{flex:1;padding:14px;background:var(--corallo);color:#fff;border:0;border-radius:14px;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 6px 16px rgba(232,69,60,.26)}
+.sugg-actions .next.disabled{background:var(--ink-15);color:var(--ink-40);cursor:default;box-shadow:none}
+
+/* Bottom nav glass (shared with altri mockup) */
+.nav-glass{position:absolute;bottom:14px;left:14px;right:14px;height:60px;background:rgba(255,255,255,.72);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.5);border-radius:999px;box-shadow:var(--shadow-md);display:grid;grid-template-columns:repeat(4,1fr);align-items:center;padding:0 6px}
+.nav-glass button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;cursor:pointer;color:var(--ink-70);font-size:9.5px;font-weight:800;letter-spacing:.02em}
+.nav-glass button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2}
+.nav-glass button.active{color:var(--corallo)}
+.nav-glass button.active svg{stroke:var(--corallo);fill:var(--corallo-soft)}
+
+/* ============ Annot ============ */
+.annot{max-width:1300px;margin:56px auto 0;background:#fff;border-radius:20px;padding:28px 32px;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm)}
+.annot h3{font-weight:900;font-size:20px;letter-spacing:-.02em;margin-bottom:14px}
+.annot .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.annot .bl h4{font-weight:900;font-size:14px;letter-spacing:-.01em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.annot .bl h4::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--corallo)}
+.annot .bl p{font-size:13px;line-height:1.55;color:var(--ink-70)}
+.annot code{background:var(--ink-05);padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11.5px}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <span class="kick">v4 · Mobile · auth + consiglia</span>
+  <h1>Login, Signup, Consiglia un ristorante</h1>
+  <p>Le 3 schermate auth/contrib che chiudono il flusso user mobile. Satoshi ovunque, corallo pieno per le CTA, nessuna fake promessa ("GRATIS", "ESCLUSIVO", ecc.) nello stile del live. Consiglia è un <strong>bottom sheet 3-step</strong> che parte dalla tile corallo del profilo.</p>
+</div>
+
+<div class="phones">
+
+  <!-- ============ LOGIN ============ -->
+  <div class="slot">
+    <span class="slot-label">Login</span>
+    <div class="slot-title">Ciao di nuovo!</div>
+    <div class="slot-sub">Google/Apple in alto. Input email+password con bordi ink-15 che virano corallo sul focus. CTA corallo pieno con shadow. 2 tile outline "Chi è Bi" / "Ristoratori" per chi non ha ancora un account.</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="icons">
+            <svg viewBox="0 0 16 12"><path d="M1 8h2v3H1zM5 6h2v5H5zM9 3h2v8H9zM13 0h2v11h-2z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 12"><path d="M8 10c.8 0 1.5.4 2 1l-2 2-2-2c.5-.6 1.2-1 2-1zM4 7c1.1-1.1 2.6-1.5 4-1.5s2.9.4 4 1.5l-1 1c-.9-.9-1.9-1.2-3-1.2s-2.1.3-3 1.2L4 7zM1 4C3 2 5.4 1 8 1s5 1 7 3l-1 1c-1.7-1.7-3.8-2.5-6-2.5S3.7 3.3 2 5L1 4z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 25 12"><rect x="1" y="1" width="21" height="10" rx="2.5" stroke="currentColor" fill="none"/><rect x="2.5" y="2.5" width="18" height="7" rx="1.5" fill="currentColor"/><rect x="22.5" y="4" width="1" height="4" fill="currentColor"/></svg>
+          </span>
+        </div>
+
+        <div class="auth-top">
+          <a class="logo"><span class="l1">LA GUIDA DI BI</span><span class="l2">BY CHIAMAMI BI</span></a>
+          <a href="#">Esplora la mappa →</a>
+        </div>
+
+        <div class="scroll">
+          <div class="auth-body">
+            <span class="auth-kick">Bentornato</span>
+            <h2 class="auth-h1">Ciao di nuovo!</h2>
+            <p class="auth-sub">Entra per accedere ai tuoi sconti, ai drop esclusivi e alle tue liste salvate.</p>
+
+            <a class="gbtn" href="#">
+              <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.6-.2-2.3H12v4.5h5.9c-.3 1.4-1 2.5-2.2 3.3v2.8h3.5c2.1-1.9 3.3-4.8 3.3-8.3z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.6H2.3v2.8C4.1 20.5 7.8 23 12 23z"/><path fill="#FBBC05" d="M5.8 14c-.2-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1V7H2.3C1.5 8.5 1 10.2 1 12s.5 3.5 1.3 5l3.5-3z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.3 1.7l3.2-3.2C17.4 2.1 14.9 1 12 1 7.8 1 4.1 3.5 2.3 7l3.5 2.8c.9-2.7 3.3-4.4 6.2-4.4z"/></svg>
+              Continua con Google
+            </a>
+            <a class="gbtn apple" href="#" style="margin-top:10px">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.53c0-2.72 2.22-4.03 2.32-4.09-1.27-1.86-3.24-2.11-3.94-2.14-1.67-.17-3.27 1-4.12 1-.86 0-2.17-.98-3.57-.95-1.83.03-3.54 1.07-4.49 2.71-1.92 3.33-.49 8.25 1.37 10.96.91 1.33 1.99 2.82 3.41 2.77 1.37-.06 1.89-.89 3.55-.89 1.65 0 2.12.89 3.57.86 1.47-.03 2.41-1.35 3.31-2.69 1.04-1.54 1.47-3.04 1.5-3.12-.03-.01-2.89-1.11-2.91-4.42zM14.28 4.54c.75-.91 1.25-2.18 1.11-3.44-1.08.04-2.38.71-3.15 1.62-.69.8-1.3 2.09-1.13 3.32 1.2.09 2.42-.61 3.17-1.5z"/></svg>
+              Continua con Apple
+            </a>
+
+            <div class="divider">oppure</div>
+
+            <div class="field">
+              <label>Email</label>
+              <input type="email" placeholder="la-tua@email.com" value="cali@pubblismart.com">
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" placeholder="••••••••" value="••••••••••">
+              <a class="forgot" href="#">Password dimenticata?</a>
+            </div>
+
+            <button class="cta-large">Accedi</button>
+
+            <div class="bottom-link">Non hai un account? <a href="#">Registrati</a></div>
+
+            <div class="explore-tiles">
+              <div class="lbl">Scopri Bi</div>
+              <div class="row">
+                <div class="t">
+                  <div class="ic">👋</div>
+                  <div class="tt">Chi è Bi</div>
+                  <div class="ss">La storia della guida</div>
+                </div>
+                <div class="t">
+                  <div class="ic">🏪</div>
+                  <div class="tt">Ristoratori</div>
+                  <div class="ss">Candida il tuo locale</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="terms-tiny">
+              Accedendo accetti i <a>Termini</a> e la <a>Privacy</a> di Chiamami Bi.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SIGNUP ============ -->
+  <div class="slot">
+    <span class="slot-label">Signup</span>
+    <div class="slot-title">Diventa Amico di Bi</div>
+    <div class="slot-sub">Stesso stile del login ma con <strong>benefits strip cream</strong> sopra gli input per spiegare cosa ottieni (sconti, drop, liste). Nome + email + password. Opt-in newsletter come checkbox piccola.</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="icons">
+            <svg viewBox="0 0 16 12"><path d="M1 8h2v3H1zM5 6h2v5H5zM9 3h2v8H9zM13 0h2v11h-2z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 12"><path d="M8 10c.8 0 1.5.4 2 1l-2 2-2-2c.5-.6 1.2-1 2-1zM4 7c1.1-1.1 2.6-1.5 4-1.5s2.9.4 4 1.5l-1 1c-.9-.9-1.9-1.2-3-1.2s-2.1.3-3 1.2L4 7zM1 4C3 2 5.4 1 8 1s5 1 7 3l-1 1c-1.7-1.7-3.8-2.5-6-2.5S3.7 3.3 2 5L1 4z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 25 12"><rect x="1" y="1" width="21" height="10" rx="2.5" stroke="currentColor" fill="none"/><rect x="2.5" y="2.5" width="18" height="7" rx="1.5" fill="currentColor"/><rect x="22.5" y="4" width="1" height="4" fill="currentColor"/></svg>
+          </span>
+        </div>
+
+        <div class="auth-top">
+          <a class="logo"><span class="l1">LA GUIDA DI BI</span><span class="l2">BY CHIAMAMI BI</span></a>
+          <a href="#">Esplora la mappa →</a>
+        </div>
+
+        <div class="scroll">
+          <div class="auth-body">
+            <span class="auth-kick">Nuovo qui</span>
+            <h2 class="auth-h1">Diventa<br>Amico di Bi</h2>
+            <p class="auth-sub">Una guida curata, gli sconti dei miei ristoranti e i drop esclusivi sulla tua città.</p>
+
+            <div class="benefits">
+              <div class="bt">Cosa ottieni</div>
+              <ul>
+                <li>Sconti veri nei 70+ locali che ho provato a Torino</li>
+                <li>Drop settimanali a posti limitati (scadono)</li>
+                <li>Liste salvate con le tue note personali</li>
+              </ul>
+            </div>
+
+            <a class="gbtn" href="#">
+              <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.6-.2-2.3H12v4.5h5.9c-.3 1.4-1 2.5-2.2 3.3v2.8h3.5c2.1-1.9 3.3-4.8 3.3-8.3z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.6H2.3v2.8C4.1 20.5 7.8 23 12 23z"/><path fill="#FBBC05" d="M5.8 14c-.2-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1V7H2.3C1.5 8.5 1 10.2 1 12s.5 3.5 1.3 5l3.5-3z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.3 1.7l3.2-3.2C17.4 2.1 14.9 1 12 1 7.8 1 4.1 3.5 2.3 7l3.5 2.8c.9-2.7 3.3-4.4 6.2-4.4z"/></svg>
+              Continua con Google
+            </a>
+
+            <div class="divider">oppure</div>
+
+            <div class="field">
+              <label>Nome</label>
+              <input type="text" placeholder="Come vuoi che ti chiami">
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input type="email" placeholder="la-tua@email.com">
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" placeholder="Almeno 8 caratteri">
+            </div>
+
+            <label style="display:flex;gap:10px;align-items:flex-start;margin:8px 0 4px;font-size:12px;color:var(--ink-70);line-height:1.45;cursor:pointer">
+              <input type="checkbox" checked style="margin-top:3px;accent-color:var(--corallo);width:16px;height:16px;flex:0 0 auto">
+              <span>Voglio ricevere la newsletter di Bi — una mail al mese con novità, drop e locali nuovi a Torino.</span>
+            </label>
+
+            <button class="cta-large">Crea il mio account</button>
+
+            <div class="bottom-link">Hai già un account? <a href="#">Accedi</a></div>
+
+            <div class="terms-tiny">
+              Creando l'account accetti i <a>Termini</a> e la <a>Privacy</a>. Niente spam, mai.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONSIGLIA UN RISTORANTE (bottom sheet, step 2) ============ -->
+  <div class="slot">
+    <span class="slot-label">Consiglia un locale</span>
+    <div class="slot-title">Bottom sheet 3-step · step 2 (categoria)</div>
+    <div class="slot-sub">Sheet che parte dalla tile corallo del profilo. Stepper corallo in alto. Step 1 nome+indirizzo · <strong>step 2 tag categoria</strong> (chip selezionabili, multi) · step 3 foto opzionale. Sotto: mappa dell'ultima schermata visitata (Esplora) come se fosse il contesto.</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="icons">
+            <svg viewBox="0 0 16 12"><path d="M1 8h2v3H1zM5 6h2v5H5zM9 3h2v8H9zM13 0h2v11h-2z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 12"><path d="M8 10c.8 0 1.5.4 2 1l-2 2-2-2c.5-.6 1.2-1 2-1zM4 7c1.1-1.1 2.6-1.5 4-1.5s2.9.4 4 1.5l-1 1c-.9-.9-1.9-1.2-3-1.2s-2.1.3-3 1.2L4 7zM1 4C3 2 5.4 1 8 1s5 1 7 3l-1 1c-1.7-1.7-3.8-2.5-6-2.5S3.7 3.3 2 5L1 4z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 25 12"><rect x="1" y="1" width="21" height="10" rx="2.5" stroke="currentColor" fill="none"/><rect x="2.5" y="2.5" width="18" height="7" rx="1.5" fill="currentColor"/><rect x="22.5" y="4" width="1" height="4" fill="currentColor"/></svg>
+          </span>
+        </div>
+
+        <!-- BACKGROUND (profilo in sfocato sotto) -->
+        <div style="flex:1;position:relative;background:linear-gradient(180deg,#FAF7F2 0%,#F1EBE0 60%);display:flex;flex-direction:column">
+          <!-- finto hero profile dietro -->
+          <div style="height:190px;margin:16px;border-radius:24px;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);opacity:.85;filter:blur(.5px)"></div>
+          <div style="padding:0 20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;opacity:.5">
+              <div style="height:68px;background:#fff;border-radius:14px"></div>
+              <div style="height:68px;background:#fff;border-radius:14px"></div>
+              <div style="height:68px;background:#fff;border-radius:14px"></div>
+            </div>
+            <div style="height:80px;background:var(--ink);opacity:.5;border-radius:14px;margin-bottom:10px"></div>
+          </div>
+
+          <!-- BACKDROP -->
+          <div class="sugg-backdrop"></div>
+
+          <!-- SHEET -->
+          <div class="sugg-sheet">
+            <div class="grabber"></div>
+            <div class="sugg-head">
+              <span class="k">Consiglia un locale</span>
+              <div class="close"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></div>
+            </div>
+
+            <div class="stepper">
+              <div class="dot done"></div>
+              <div class="dot cur"></div>
+              <div class="dot"></div>
+              <span class="lbl">2/3</span>
+            </div>
+
+            <h3 class="sugg-title">Che tipo<br>di locale è?</h3>
+            <p class="sugg-intro">Scegli una o due categorie. Mi aiuta a capire se è da aggiungere alla guida.</p>
+
+            <div class="step-label first">Categorie</div>
+            <div class="tag-grid">
+              <span class="tag-chip">🍝 Pasta</span>
+              <span class="tag-chip on">🍴 Piemontese</span>
+              <span class="tag-chip">🥂 Aperitivo</span>
+              <span class="tag-chip">🍕 Pizza</span>
+              <span class="tag-chip on">🍷 Vino</span>
+              <span class="tag-chip">🥟 Asian</span>
+              <span class="tag-chip">🍸 Cocktail</span>
+              <span class="tag-chip">☕ Caffè</span>
+              <span class="tag-chip">🍰 Dolci</span>
+              <span class="tag-chip">🥩 Carne</span>
+              <span class="tag-chip">🥗 Healthy</span>
+              <span class="tag-chip">🐟 Pesce</span>
+            </div>
+
+            <div class="step-label">Momento (opzionale)</div>
+            <div class="tag-grid">
+              <span class="tag-chip">🌅 Colazione</span>
+              <span class="tag-chip on">🍽 Pranzo lavoro</span>
+              <span class="tag-chip">🌇 Aperitivo</span>
+              <span class="tag-chip on">🌙 Cena</span>
+              <span class="tag-chip">💕 Appuntamento</span>
+            </div>
+
+            <div class="sugg-actions">
+              <button class="back">← Indietro</button>
+              <button class="next">Avanti</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ANNOT -->
+<div class="annot">
+  <h3>Note v4 · auth + consiglia</h3>
+  <div class="grid">
+    <div class="bl">
+      <h4>Login minimalista</h4>
+      <p>Google + Apple sopra, mai disarticolato. Input con bordi ink-15 che virano corallo sul focus. CTA "Accedi" corallo pieno con shadow mirata <code>0 8px 20px rgba(232,69,60,.28)</code>. Link forgot corallo. Tile "Chi è Bi / Ristoratori" per il cold visitor.</p>
+    </div>
+    <div class="bl">
+      <h4>Signup con benefits cream</h4>
+      <p>Strip cream <code>#F1EBE0</code> con 3 bullet reali (sconti, drop, liste con note). Check corallo per newsletter. "Niente spam, mai" in fondo — promessa reale, non vuota.</p>
+    </div>
+    <div class="bl">
+      <h4>Consiglia come bottom sheet</h4>
+      <p>Non una pagina piena, un bottom sheet che parte dalla tile corallo del profilo. Stepper a 3 puntini corallo <code>0 0 0 2px corallo-soft</code> sul current. Backdrop blur 4px sotto.</p>
+    </div>
+    <div class="bl">
+      <h4>Step 1 — nome + indirizzo</h4>
+      <p>(non visibile in questo mock, mostrato step 2) Due campi: nome del locale + indirizzo con autocomplete Google Places. Bottone "Avanti" abilitato quando entrambi sono pieni.</p>
+    </div>
+    <div class="bl">
+      <h4>Step 2 — categorie</h4>
+      <p>Chip selezionabili multi (attivo = corallo pieno con tick implicito). Momento opzionale sotto (colazione/pranzo/aperitivo/cena/appuntamento). Niente maximum obbligatorio, solo guida.</p>
+    </div>
+    <div class="bl">
+      <h4>Step 3 — foto + success</h4>
+      <p>(non mostrato) Dropzone dashed ink-15 con icona + "Trascina o tocca per caricare · opzionale". Dopo "Invia" → screen success corallo-soft con "Grazie! Bi lo proverà e se vale entra in guida." + link condividi.</p>
+    </div>
+    <div class="bl">
+      <h4>Niente fake urgency</h4>
+      <p>Nessun "REGISTRATI GRATIS", nessun countdown signup, nessun badge "EXCLUSIVE MEMBERSHIP". Il tono del live è già onesto e rilassato: "Amico di Bi" e basta. Resta così.</p>
+    </div>
+    <div class="bl">
+      <h4>Privacy tiny in fondo</h4>
+      <p>Terms/Privacy in 11px ink-40 dopo la CTA, con underline su link. Evita la classica trust strip con 20 loghi che non servono.</p>
+    </div>
+    <div class="bl">
+      <h4>Tokens v4 ovunque</h4>
+      <p>Stessi valori esatti delle altre mobile v4: ink <code>#22181C</code>, corallo <code>#E8453C</code>, verde grad 135° 2-stop, Satoshi 900 sugli H1 auth (38px), Alfa Slab solo sul wordmark del top bar.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

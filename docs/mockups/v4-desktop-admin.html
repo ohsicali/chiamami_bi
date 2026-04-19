@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>v4 · Admin desktop — La Guida di Bi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Satoshi:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22181C; --ink-2:#3d2f36; --muted:#6b6057; --line:#EAE3D7;
+  --page:#FAF7F2; --white:#FFFFFF; --cream:#F5F0E4; --cream-deep:#F1EBE0;
+  --corallo:#E8453C; --corallo-soft:#F4B5B0; --corallo-wash:#FDEDEB;
+  --oro:#B08954; --oro-wash:#F5EDDD;
+  --green-a:#A3E635; --green-b:#4ADE80; --green-wash:#E8F5D8;
+  --danger:#C0392B; --danger-wash:#FCE8E4;
+  --ff-ui:'Satoshi',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--ff-ui);color:var(--ink);background:#0f0f10;-webkit-font-smoothing:antialiased}
+body{padding:60px 32px;display:flex;flex-direction:column;gap:80px;align-items:center;min-height:100vh}
+
+/* Page header */
+.page-head{max-width:1400px;width:100%;color:#fff}
+.page-head h1{font-family:var(--ff-mark);font-size:32px;font-weight:400;letter-spacing:.01em;margin-bottom:6px}
+.page-head p{color:rgba(255,255,255,.6);font-weight:500}
+
+.frame-label{max-width:1440px;width:100%;color:rgba(255,255,255,.5);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:-40px;padding-left:12px}
+
+/* Laptop frame */
+.laptop{width:1440px;height:900px;background:#111;border-radius:18px 18px 6px 6px;padding:22px 16px 16px;box-shadow:0 40px 100px rgba(0,0,0,.5);position:relative;transform-origin:top center}
+.laptop::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:70px;height:6px;background:#222;border-radius:3px}
+.screen{width:100%;height:100%;border-radius:6px;overflow:hidden;background:var(--page);position:relative}
+@media (max-width:1520px){.laptop{transform:scale(.88)}}
+@media (max-width:1360px){.laptop{transform:scale(.78)}}
+@media (max-width:1200px){.laptop{transform:scale(.68)}}
+@media (max-width:1040px){.laptop{transform:scale(.58)}}
+
+/* ============ ADMIN SHELL ============ */
+.admin{display:grid;grid-template-columns:240px 1fr;height:100%;background:var(--page)}
+.adm-side{background:var(--ink);color:#fff;padding:24px 16px;display:flex;flex-direction:column;gap:4px}
+.adm-side .wm{font-family:var(--ff-mark);font-size:15px;letter-spacing:.02em;line-height:1.1;padding:8px 8px 20px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:16px}
+.adm-side .wm small{display:block;font-family:var(--ff-ui);font-weight:700;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.4);margin-top:4px;text-transform:uppercase}
+.nav-group{font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.4);text-transform:uppercase;padding:16px 8px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;font-weight:600;font-size:14px;color:rgba(255,255,255,.78);cursor:pointer;transition:.15s}
+.nav-item .ic{width:20px;font-size:14px;text-align:center}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+.nav-item.active{background:var(--corallo);color:#fff;font-weight:700;box-shadow:0 6px 14px rgba(232,69,60,.35)}
+.nav-item .badge{margin-left:auto;background:rgba(255,255,255,.15);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.nav-item.active .badge{background:rgba(0,0,0,.22)}
+.adm-user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:rgba(255,255,255,.04)}
+.adm-user .av{width:36px;height:36px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;font-family:var(--ff-mark);color:#fff;font-size:16px}
+.adm-user .u{font-size:13px;font-weight:700}
+.adm-user .r{font-size:11px;color:rgba(255,255,255,.5);font-weight:500}
+.adm-user .cog{margin-left:auto;opacity:.5;font-size:14px}
+
+.adm-main{overflow-y:auto;display:flex;flex-direction:column}
+.adm-top{display:flex;align-items:center;gap:16px;padding:14px 28px;background:rgba(255,255,255,.6);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.adm-search{flex:1;max-width:440px;display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-size:13px;color:var(--muted)}
+.adm-search .sic{color:#9a8e84}
+.adm-top .sp{flex:1}
+.adm-top .pill-btn{background:var(--white);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--ink);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.adm-top .pill-btn.primary{background:var(--corallo);color:#fff;border-color:var(--corallo);box-shadow:0 6px 14px rgba(232,69,60,.28)}
+.adm-top .av-sm{width:32px;height:32px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;color:#fff;font-family:var(--ff-mark);font-size:13px}
+
+.adm-content{padding:28px 32px;flex:1}
+.crumb{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.04em}
+.crumb b{color:var(--ink);font-weight:800}
+.page-title{font-family:var(--ff-ui);font-weight:900;font-size:32px;letter-spacing:-.025em;margin-bottom:4px;display:flex;align-items:center;gap:14px}
+.page-title .tag{font-family:var(--ff-ui);font-size:12px;font-weight:800;letter-spacing:.06em;background:var(--cream-deep);color:var(--ink-2);padding:5px 10px;border-radius:999px;text-transform:uppercase}
+.page-sub{color:var(--muted);font-weight:500;margin-bottom:28px;display:flex;gap:12px;align-items:center}
+.page-sub .dot{width:3px;height:3px;border-radius:50%;background:var(--muted)}
+.page-sub .meta{font-size:13px;color:var(--muted)}
+
+/* ============ DASHBOARD ============ */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:18px}
+.kpi .k-lab{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .k-val{font-family:var(--ff-ui);font-weight:900;font-size:34px;letter-spacing:-.03em;margin-top:8px;line-height:1}
+.kpi .k-delta{margin-top:6px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.kpi .k-delta.up{color:#2C7A4A}
+.kpi .k-delta.dn{color:var(--danger)}
+.kpi .k-spark{height:34px;margin-top:10px;display:flex;align-items:flex-end;gap:3px}
+.kpi .k-spark i{flex:1;background:var(--cream-deep);border-radius:2px}
+.kpi .k-spark i.hot{background:var(--corallo)}
+
+.dash-row{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:20px}
+.card .c-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card .c-head h3{font-family:var(--ff-ui);font-weight:900;font-size:17px;letter-spacing:-.01em}
+.card .c-head .c-all{margin-left:auto;font-size:12px;font-weight:700;color:var(--corallo);cursor:pointer}
+.card .c-head .c-meta{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* Activity list */
+.act-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.act-row:last-child{border-bottom:0}
+.act-ic{width:34px;height:34px;border-radius:10px;background:var(--cream);display:grid;place-items:center;font-size:15px;flex:0 0 auto}
+.act-ic.cor{background:var(--corallo-wash)}
+.act-ic.grn{background:var(--green-wash)}
+.act-ic.oro{background:var(--oro-wash)}
+.act-row .a-t b{font-weight:800}
+.act-row .a-time{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+
+/* Top restaurants */
+.top-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.top-row:last-child{border-bottom:0}
+.top-row .ph{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#d8cfc1,#ad9b80);flex:0 0 auto}
+.top-row .n{font-weight:800;font-size:14px}
+.top-row .m{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.top-row .v{margin-left:auto;font-family:var(--ff-ui);font-weight:900;font-size:18px}
+.top-row .tag{font-size:10px;font-weight:700;padding:3px 7px;border-radius:999px;background:var(--cream-deep);color:var(--ink-2)}
+
+/* Drop spotlight */
+.drop-spot{background:linear-gradient(135deg,#FFF1EF,#FCE4E1);border:1px solid var(--corallo-soft);border-radius:20px;padding:20px;display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:24px;position:relative;overflow:hidden}
+.drop-spot::before{content:"🔥";position:absolute;top:14px;right:18px;font-size:24px}
+.drop-spot h3{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;margin-bottom:6px}
+.drop-spot .meta{font-size:13px;color:var(--ink-2);font-weight:600;margin-bottom:14px}
+.drop-spot .pb{height:8px;background:rgba(232,69,60,.18);border-radius:999px;overflow:hidden;margin-bottom:8px}
+.drop-spot .pb i{display:block;height:100%;width:66%;background:var(--corallo);border-radius:999px}
+.drop-spot .pbtx{font-size:12px;font-weight:700;color:var(--ink-2)}
+.drop-spot .count-tile{background:#fff;border-radius:14px;padding:14px;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.drop-spot .count-tile .clk{font-family:var(--ff-ui);font-weight:900;font-size:32px;letter-spacing:-.03em}
+.drop-spot .count-tile .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
+
+/* Inbox tile (candidature preview on dashboard) */
+.inbox-tile{background:var(--cream);border-radius:18px;padding:20px}
+.inbox-tile .hd{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.inbox-tile h3{font-family:var(--ff-ui);font-weight:900;font-size:17px;letter-spacing:-.01em}
+.inbox-tile .pill{margin-left:auto;background:var(--corallo);color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
+.inbox-tile .c-all{font-size:12px;font-weight:700;color:var(--corallo);cursor:pointer}
+.inbox-row{display:flex;gap:12px;padding:12px;background:#fff;border-radius:12px;margin-bottom:8px;font-size:12px;align-items:center}
+.inbox-row .ph{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#d8cfc1,#ad9b80);flex:0 0 auto}
+.inbox-row .n{font-weight:800;font-size:13px}
+.inbox-row .s{color:var(--muted);margin-top:2px;font-size:11px;font-weight:600}
+.inbox-row .act{margin-left:auto;display:flex;gap:6px}
+.inbox-row .act b{padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;background:var(--cream);color:var(--ink);cursor:pointer}
+.inbox-row .act b.pri{background:var(--ink);color:#fff}
+
+/* ============ TABLE (Ristoranti, Utenti) ============ */
+.filters{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.filters .fpill{background:var(--white);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.filters .fpill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.filters .search-sm{margin-left:auto;display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;color:var(--muted);min-width:240px}
+
+.tbl{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:12px 16px;background:var(--cream);border-bottom:1px solid var(--line)}
+tbody td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--cream)}
+.t-cover{width:56px;height:40px;border-radius:8px;flex:0 0 auto}
+.t-name{display:flex;align-items:center;gap:10px;font-weight:800}
+.t-name small{display:block;font-weight:600;color:var(--muted);font-size:11px;margin-top:2px}
+.t-tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--cream-deep);color:var(--ink-2)}
+.t-tag.g{background:var(--green-wash);color:#2C7A4A}
+.t-tag.c{background:var(--corallo-wash);color:var(--corallo)}
+.t-tag.m{background:var(--oro-wash);color:var(--oro)}
+.t-disc{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:900;background:linear-gradient(135deg,var(--green-a),var(--green-b));color:#0f2c12}
+.t-stat{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.t-stat .d{width:8px;height:8px;border-radius:50%;background:#2C7A4A}
+.t-stat.off .d{background:#999}
+.t-stat.off{color:var(--muted)}
+.t-act{display:flex;gap:4px;justify-content:flex-end}
+.t-act b{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--cream);cursor:pointer;font-size:13px;font-weight:700}
+.paging{display:flex;align-items:center;gap:8px;padding:14px 18px;border-top:1px solid var(--line);background:var(--cream);font-size:12px;font-weight:700;color:var(--muted)}
+.paging .p{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);cursor:pointer}
+.paging .p.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ============ EDIT DRAWER ============ */
+.drawer-overlay{position:absolute;inset:0;background:rgba(34,24,28,.45);backdrop-filter:blur(4px);display:flex;justify-content:flex-end;z-index:30}
+.drawer{width:720px;background:var(--page);height:100%;overflow-y:auto;box-shadow:-20px 0 60px rgba(0,0,0,.3);display:flex;flex-direction:column}
+.drawer-head{display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid var(--line);background:#fff}
+.drawer-head .close{width:36px;height:36px;border-radius:10px;background:var(--cream);display:grid;place-items:center;cursor:pointer;font-size:16px}
+.drawer-head .crumb-s{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.drawer-head h2{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em}
+.drawer-head .save-actions{margin-left:auto;display:flex;gap:8px}
+.drawer-head .save-actions .ghost{background:transparent;border:1px solid var(--line);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}
+.drawer-head .save-actions .primary{background:var(--corallo);color:#fff;border:0;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(232,69,60,.28)}
+.drawer-body{padding:22px 24px;flex:1}
+.form-tabs{display:flex;gap:4px;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:20px;width:fit-content}
+.form-tabs .t{padding:8px 16px;border-radius:999px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+.form-tabs .t.on{background:var(--ink);color:#fff}
+.fgroup{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.fgroup h4{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:-.005em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.fgroup h4{text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.fgroup h4 .count{margin-left:auto;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0;text-transform:none}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.f-row.one{grid-template-columns:1fr}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--ff-ui);font-size:13px;font-weight:500;color:var(--ink);background:var(--page)}
+.f input:focus,.f textarea:focus{outline:2px solid var(--corallo-soft);border-color:var(--corallo)}
+.f textarea{resize:vertical;min-height:80px}
+.cover-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.cover-grid .ph{aspect-ratio:4/3;border-radius:10px;background:linear-gradient(135deg,#d8cfc1,#ad9b80);position:relative}
+.cover-grid .ph.main::after{content:"Cover";position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;padding:3px 8px;font-size:10px;font-weight:700;border-radius:999px}
+.cover-grid .ph.add{background:var(--cream);border:2px dashed #c9beb0;display:grid;place-items:center;color:var(--muted);font-size:20px}
+
+.piatto-row{display:grid;grid-template-columns:60px 1fr auto;gap:10px;align-items:center;padding:10px;background:var(--cream);border-radius:12px;margin-bottom:6px}
+.piatto-row .ph{width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#d8cfc1,#9a8671);position:relative}
+.piatto-row .ph::after{content:attr(data-n);position:absolute;top:-6px;left:-6px;width:22px;height:22px;background:var(--oro);color:#fff;border-radius:50%;display:grid;place-items:center;font-family:var(--ff-mark);font-size:11px}
+.piatto-row .t{font-weight:800;font-size:13px}
+.piatto-row .d{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.piatto-row .ed{width:32px;height:32px;border-radius:10px;background:#fff;display:grid;place-items:center;cursor:pointer}
+.piatto-add{display:flex;align-items:center;gap:8px;padding:10px;border:2px dashed #c9beb0;border-radius:12px;color:var(--muted);font-weight:700;font-size:13px;justify-content:center;cursor:pointer}
+
+.sconto-box{background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:14px;padding:16px;color:#0f2c12;margin-top:6px}
+.sconto-box .hd{display:flex;align-items:center;gap:8px;font-weight:900;font-size:16px;letter-spacing:-.01em}
+.sconto-box .hd input{margin-left:auto;width:70px;text-align:center;background:rgba(255,255,255,.8);border:0;border-radius:10px;padding:6px 8px;font-weight:900;color:#0f2c12;font-size:18px;font-family:var(--ff-ui)}
+.sconto-box .sub{font-size:11px;font-weight:700;margin-top:6px;opacity:.75}
+
+/* ============ DROP CREATE ============ */
+.drop-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+.drop-list .drop-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:80px 1fr auto;gap:14px;align-items:center}
+.drop-list .drop-card.hot{border-color:var(--corallo-soft);background:linear-gradient(135deg,#FFF8F7,#FDECEA)}
+.drop-card .ph{width:80px;height:80px;border-radius:14px;background:linear-gradient(135deg,#d8cfc1,#ad9b80);position:relative}
+.drop-card .ph .pc{position:absolute;top:6px;left:6px;background:var(--corallo);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:999px}
+.drop-card .info h4{font-family:var(--ff-ui);font-weight:900;font-size:15px;letter-spacing:-.01em}
+.drop-card .info .meta{font-size:11px;color:var(--muted);font-weight:600;margin-top:3px}
+.drop-card .info .pb{height:6px;background:var(--cream-deep);border-radius:999px;margin-top:8px;overflow:hidden}
+.drop-card .info .pb i{display:block;height:100%;background:var(--corallo);border-radius:999px}
+.drop-card .info .pb-t{font-size:11px;font-weight:700;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between}
+.drop-card .count{text-align:center;background:var(--cream);border-radius:14px;padding:10px 14px;min-width:92px}
+.drop-card .count .k{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.03em}
+.drop-card .count .l{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:2px}
+.drop-card.hot .count{background:#fff}
+
+.drop-form{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;position:sticky;top:0;height:fit-content}
+.drop-form h3{font-family:var(--ff-ui);font-weight:900;font-size:16px;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.drop-form h3 .count{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);text-transform:none;letter-spacing:0}
+.drop-preview{border:2px dashed var(--corallo-soft);border-radius:16px;padding:14px;margin-top:14px;background:var(--corallo-wash)}
+.drop-preview .p-lab{font-size:10px;font-weight:800;color:var(--corallo);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+
+/* ============ CANDIDATURE ============ */
+.cand-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;min-height:540px}
+.cand-inbox{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.cand-search{padding:12px;border-bottom:1px solid var(--line);background:var(--cream)}
+.cand-search input{width:100%;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:12px;font-family:var(--ff-ui);background:#fff}
+.cand-row{padding:14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;gap:10px}
+.cand-row:last-child{border-bottom:0}
+.cand-row.on{background:var(--cream)}
+.cand-row .dot{width:8px;height:8px;border-radius:50%;background:var(--corallo);margin-top:6px;flex:0 0 auto}
+.cand-row.read .dot{background:transparent}
+.cand-row .n{font-weight:800;font-size:13px}
+.cand-row .s{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+.cand-row .t{font-size:10px;color:var(--muted);margin-top:4px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+
+.cand-detail{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column}
+.cand-detail h2{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;margin-bottom:4px}
+.cand-detail .who{color:var(--muted);font-size:13px;font-weight:600;margin-bottom:14px}
+.cand-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--cream);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px}
+.cand-fields .cf-l{color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.cand-fields .cf-v{font-weight:800;color:var(--ink)}
+.cand-msg{flex:1;font-size:14px;line-height:1.6;color:var(--ink-2)}
+.cand-actions{display:flex;gap:8px;padding-top:16px;margin-top:16px;border-top:1px dashed var(--line)}
+.cand-actions .btn-pri{background:var(--corallo);color:#fff;border:0;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(232,69,60,.28)}
+.cand-actions .btn-gh{background:transparent;border:1px solid var(--line);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}
+.cand-actions .btn-rej{background:transparent;border:1px solid var(--line);color:var(--danger);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;margin-left:auto}
+
+/* ============ ANALYTICS ============ */
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.an-chart{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}
+.an-chart h3{font-family:var(--ff-ui);font-weight:900;font-size:15px;margin-bottom:4px}
+.an-chart .sub{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:14px}
+.an-chart .big{font-family:var(--ff-ui);font-weight:900;font-size:30px;letter-spacing:-.03em;display:flex;align-items:baseline;gap:8px}
+.an-chart .big .d{font-size:12px;font-weight:800;color:#2C7A4A}
+.an-line{height:120px;position:relative;margin-top:8px}
+.an-line svg{width:100%;height:100%}
+
+/* annotations */
+.note{max-width:1400px;width:100%;color:rgba(255,255,255,.75);font-size:13px;line-height:1.6;background:rgba(255,255,255,.04);border-left:3px solid var(--corallo);padding:14px 18px;border-radius:0 12px 12px 0}
+.note b{color:#fff}
+.note .lab{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--corallo);text-transform:uppercase;margin-bottom:4px;display:block}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Admin panel — La Guida di Bi</h1>
+  <p>Pannello di gestione per Augusto. 6 schermi chiave. Premium, semplice, zero decorazione superflua.</p>
+</div>
+
+<div class="note">
+  <span class="lab">PRINCIPI ADMIN V4</span>
+  <b>Sottrazione.</b> La sidebar è ink, il corpo è page caldo — è il back-of-house della guida. Una sola famiglia (Satoshi), grigi pacati per le label (uppercase 10–11px), corallo solo per l'azione primaria e i KPI caldi. Niente font handwriting, niente stelle, niente recensioni utente: l'admin riflette la curatela del prodotto. IA: Catalogo · Curatela · Numeri · Sistema.
+</div>
+
+<!-- =================== FRAME 1: DASHBOARD =================== -->
+<div class="frame-label">01 · Dashboard</div>
+<div class="laptop"><div class="screen">
+  <div class="admin">
+
+    <aside class="adm-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Admin</small></div>
+      <div class="nav-group">Catalogo</div>
+      <div class="nav-item active"><span class="ic">◈</span>Dashboard</div>
+      <div class="nav-item"><span class="ic">🍽</span>Ristoranti<span class="badge">142</span></div>
+      <div class="nav-item"><span class="ic">🔥</span>Sconti & Drop<span class="badge">47</span></div>
+      <div class="nav-item"><span class="ic">⊞</span>Categorie</div>
+      <div class="nav-group">Curatela</div>
+      <div class="nav-item"><span class="ic">📥</span>Candidature<span class="badge">8</span></div>
+      <div class="nav-item"><span class="ic">✉</span>Suggerimenti<span class="badge">4</span></div>
+      <div class="nav-item"><span class="ic">📰</span>Articoli di Bi</div>
+      <div class="nav-item"><span class="ic">⚑</span>Segnalazioni<span class="badge">3</span></div>
+      <div class="nav-group">Crescita</div>
+      <div class="nav-item"><span class="ic">👥</span>Utenti</div>
+      <div class="nav-item"><span class="ic">🤝</span>Partner</div>
+      <div class="nav-item"><span class="ic">✉</span>Newsletter</div>
+      <div class="nav-group">Numeri</div>
+      <div class="nav-item"><span class="ic">📈</span>Analytics</div>
+      <div class="nav-item"><span class="ic">◷</span>Log attività</div>
+      <div class="adm-user">
+        <div class="av">B</div>
+        <div><div class="u">Bi</div><div class="r">Super admin</div></div>
+        <div class="cog">⚙</div>
+      </div>
+    </aside>
+
+    <main class="adm-main">
+      <div class="adm-top">
+        <div class="adm-search"><span class="sic">🔍</span>Cerca ovunque — ristoranti, utenti, sconti…</div>
+        <div class="sp"></div>
+        <div class="pill-btn">📅 Ultimi 30 giorni ▾</div>
+        <div class="pill-btn primary">+ Nuovo</div>
+        <div class="av-sm">B</div>
+      </div>
+
+      <div class="adm-content">
+        <div class="crumb"><b>Dashboard</b> · panoramica</div>
+        <h1 class="page-title">Ciao Bi 👋</h1>
+        <div class="page-sub">Domenica 19 aprile <span class="dot">·</span> <span class="meta">8 candidature nuove, 4 drop attivi, 3 segnalazioni</span></div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="k-lab">Ristoranti pubblicati</div>
+            <div class="k-val">128</div>
+            <div class="k-delta up">▲ +4 · 30gg</div>
+            <div class="k-spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:45%"></i><i style="height:60%"></i><i style="height:52%"></i><i style="height:70%"></i><i style="height:68%"></i><i style="height:80%" class="hot"></i></div>
+          </div>
+          <div class="kpi">
+            <div class="k-lab">Utenti registrati</div>
+            <div class="k-val">4.218</div>
+            <div class="k-delta up">▲ +12.4% · 30gg</div>
+            <div class="k-spark"><i style="height:30%"></i><i style="height:42%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:68%"></i><i style="height:72%"></i><i style="height:85%"></i><i style="height:92%" class="hot"></i></div>
+          </div>
+          <div class="kpi">
+            <div class="k-lab">Sconti attivi</div>
+            <div class="k-val">86</div>
+            <div class="k-delta up">▲ +2</div>
+            <div class="k-spark"><i style="height:60%"></i><i style="height:64%"></i><i style="height:70%"></i><i style="height:65%"></i><i style="height:72%"></i><i style="height:75%"></i><i style="height:78%" class="hot"></i><i style="height:80%" class="hot"></i></div>
+          </div>
+          <div class="kpi">
+            <div class="k-lab">Redenzioni QR (30gg)</div>
+            <div class="k-val">1.340</div>
+            <div class="k-delta up">▲ +24% vs mese prec.</div>
+            <div class="k-spark"><i style="height:55%"></i><i style="height:60%"></i><i style="height:72%"></i><i style="height:68%"></i><i style="height:80%"></i><i style="height:85%"></i><i style="height:90%" class="hot"></i><i style="height:94%" class="hot"></i></div>
+          </div>
+        </div>
+
+        <div class="drop-spot">
+          <div>
+            <div style="color:var(--corallo);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px">🔥 Drop in corso</div>
+            <h3>Scaldapiatti · -20% aperitivo fino domenica</h3>
+            <div class="meta">Partita giovedì sera · target: 200 redenzioni</div>
+            <div class="pb"><i></i></div>
+            <div class="pbtx">132 su 200 redenzioni · 68 posti rimasti</div>
+          </div>
+          <div class="count-tile">
+            <div class="clk">2g 14h</div>
+            <div class="lab">Al termine</div>
+          </div>
+        </div>
+
+        <div class="dash-row">
+          <div class="card">
+            <div class="c-head">
+              <h3>Attività recente</h3>
+              <span class="c-meta">cosa è successo oggi</span>
+              <div class="c-all">Vedi tutto →</div>
+            </div>
+            <div class="act-row">
+              <div class="act-ic grn">✓</div>
+              <div><div class="a-t"><b>Marco R.</b> ha riscattato -15% da Consorzio</div></div>
+              <div class="a-time">8 min fa</div>
+            </div>
+            <div class="act-row">
+              <div class="act-ic cor">🔥</div>
+              <div><div class="a-t">Drop schedulato · <b>Consolato</b> · ven 21 apr</div></div>
+              <div class="a-time">22 min fa</div>
+            </div>
+            <div class="act-row">
+              <div class="act-ic oro">+</div>
+              <div><div class="a-t"><b>Laura M.</b> si è registrata dal drop</div></div>
+              <div class="a-time">34 min fa</div>
+            </div>
+            <div class="act-row">
+              <div class="act-ic">📥</div>
+              <div><div class="a-t">Candidatura da <b>Osteria del Mercato</b> — San Salvario</div></div>
+              <div class="a-time">1h fa</div>
+            </div>
+            <div class="act-row">
+              <div class="act-ic grn">✓</div>
+              <div><div class="a-t"><b>Sara P.</b> ha riscattato -20% da Banco Vini</div></div>
+              <div class="a-time">2h fa</div>
+            </div>
+            <div class="act-row">
+              <div class="act-ic">🔑</div>
+              <div><div class="a-t">PIN rigenerato · <b>Banco Vini</b></div></div>
+              <div class="a-time">3h fa</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="c-head">
+              <h3>Top ristoranti · settimana</h3>
+              <div class="c-all">Vedi tutto →</div>
+            </div>
+            <div class="top-row">
+              <div class="ph"></div>
+              <div><div class="n">Consorzio</div><div class="m">San Salvario · Piemontese</div></div>
+              <span class="tag">+48%</span>
+              <div class="v">312</div>
+            </div>
+            <div class="top-row">
+              <div class="ph"></div>
+              <div><div class="n">Scaldapiatti</div><div class="m">Quadrilatero · Aperitivo</div></div>
+              <span class="tag">+32%</span>
+              <div class="v">287</div>
+            </div>
+            <div class="top-row">
+              <div class="ph"></div>
+              <div><div class="n">Banco Vini</div><div class="m">Vanchiglia · Enoteca</div></div>
+              <span class="tag">+18%</span>
+              <div class="v">204</div>
+            </div>
+            <div class="top-row">
+              <div class="ph"></div>
+              <div><div class="n">Tre Galli</div><div class="m">Quadrilatero · Piemontese</div></div>
+              <span class="tag">+12%</span>
+              <div class="v">198</div>
+            </div>
+            <div class="top-row">
+              <div class="ph"></div>
+              <div><div class="n">Contesto Alimentare</div><div class="m">Cit Turin · Moderno</div></div>
+              <span class="tag">+6%</span>
+              <div class="v">176</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="inbox-tile">
+          <div class="hd">
+            <h3>Candidature da aprire</h3>
+            <span style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">rispondi entro 3gg</span>
+            <div class="pill">8</div>
+            <div class="c-all" style="margin-left:auto">Vedi tutte →</div>
+          </div>
+          <div class="inbox-row">
+            <div class="ph"></div>
+            <div><div class="n">Osteria del Mercato <span style="font-weight:600;color:var(--muted);font-size:11px">· San Salvario</span></div><div class="s">«Vorremmo far parte della guida — siamo una piccola trattoria in Via Nizza, cucina tutta piemontese…»</div></div>
+            <div class="act"><b>Archivia</b><b class="pri">→ Apri</b></div>
+          </div>
+          <div class="inbox-row">
+            <div class="ph" style="background:linear-gradient(135deg,#f0d9b4,#c89d5a)"></div>
+            <div><div class="n">Magazzino 52 <span style="font-weight:600;color:var(--muted);font-size:11px">· Aurora</span></div><div class="s">«Abbiamo aperto da sei mesi, pizzeria fermentazione lunga, amici di Perino…»</div></div>
+            <div class="act"><b>Archivia</b><b class="pri">→ Apri</b></div>
+          </div>
+          <div class="inbox-row">
+            <div class="ph" style="background:linear-gradient(135deg,#c5a386,#7a5438)"></div>
+            <div><div class="n">Caffè Luna <span style="font-weight:600;color:var(--muted);font-size:11px">· Vanchiglia</span></div><div class="s">«Piccolo bar di caffè di specialità, vorremmo offrire -10% sul filtro ai lettori…»</div></div>
+            <div class="act"><b>Archivia</b><b class="pri">→ Apri</b></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<!-- =================== FRAME 2: GESTIONE RISTORANTI (LIST) =================== -->
+<div class="frame-label">02 · Gestione ristoranti · lista</div>
+<div class="laptop"><div class="screen">
+  <div class="admin">
+    <aside class="adm-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Admin</small></div>
+      <div class="nav-group">Catalogo</div>
+      <div class="nav-item"><span class="ic">◈</span>Dashboard</div>
+      <div class="nav-item active"><span class="ic">🍽</span>Ristoranti<span class="badge">142</span></div>
+      <div class="nav-item"><span class="ic">🔥</span>Sconti & Drop<span class="badge">47</span></div>
+      <div class="nav-item"><span class="ic">⊞</span>Categorie</div>
+      <div class="nav-group">Curatela</div>
+      <div class="nav-item"><span class="ic">📥</span>Candidature<span class="badge">8</span></div>
+      <div class="nav-item"><span class="ic">✉</span>Suggerimenti<span class="badge">4</span></div>
+      <div class="nav-item"><span class="ic">📰</span>Articoli di Bi</div>
+      <div class="nav-item"><span class="ic">⚑</span>Segnalazioni<span class="badge">3</span></div>
+      <div class="nav-group">Crescita</div>
+      <div class="nav-item"><span class="ic">👥</span>Utenti</div>
+      <div class="nav-item"><span class="ic">🤝</span>Partner</div>
+      <div class="nav-item"><span class="ic">✉</span>Newsletter</div>
+      <div class="nav-group">Numeri</div>
+      <div class="nav-item"><span class="ic">📈</span>Analytics</div>
+      <div class="nav-item"><span class="ic">◷</span>Log attività</div>
+      <div class="adm-user"><div class="av">B</div><div><div class="u">Bi</div><div class="r">Super admin</div></div><div class="cog">⚙</div></div>
+    </aside>
+
+    <main class="adm-main">
+      <div class="adm-top">
+        <div class="adm-search"><span class="sic">🔍</span>Cerca ovunque — ristoranti, utenti, sconti…</div>
+        <div class="sp"></div>
+        <div class="pill-btn">⇩ Esporta CSV</div>
+        <div class="pill-btn primary">+ Aggiungi ristorante</div>
+        <div class="av-sm">B</div>
+      </div>
+
+      <div class="adm-content">
+        <div class="crumb">Catalogo › <b>Ristoranti</b></div>
+        <h1 class="page-title">Ristoranti <span class="tag">142 totali · 136 pubblicati</span></h1>
+        <div class="page-sub">Filtra, edita, archivia <span class="dot">·</span> <span class="meta">la pagina che apro più spesso</span></div>
+
+        <div class="filters">
+          <div class="fpill on">Tutti · 128</div>
+          <div class="fpill">Pubblicati · 122</div>
+          <div class="fpill">Bozza · 4</div>
+          <div class="fpill">Archiviati · 2</div>
+          <div class="fpill">Categoria ▾</div>
+          <div class="fpill">Zona ▾</div>
+          <div class="fpill">Sconto ▾</div>
+          <div class="fpill">Ordina: recenti ▾</div>
+          <div class="search-sm"><span>🔍</span>Cerca per nome…</div>
+        </div>
+
+        <div class="tbl">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px"><input type="checkbox"></th>
+                <th>Ristorante</th>
+                <th>Categoria</th>
+                <th>Zona</th>
+                <th>Sconto</th>
+                <th>Aggiunto</th>
+                <th>Views 30gg</th>
+                <th>Status</th>
+                <th style="text-align:right">Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#d8cfc1,#ad9b80)"></div><div>Consorzio<small>consorzio-torino.it</small></div></div></td>
+                <td><span class="t-tag">Piemontese</span></td>
+                <td>San Salvario</td>
+                <td><span class="t-disc">-15%</span></td>
+                <td>12 gen '26</td>
+                <td><b>1.248</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#f0d9b4,#c89d5a)"></div><div>Scaldapiatti<small>+ drop attivo 🔥</small></div></div></td>
+                <td><span class="t-tag c">Aperitivo</span></td>
+                <td>Quadrilatero</td>
+                <td><span class="t-disc">-20%</span></td>
+                <td>28 feb '26</td>
+                <td><b>987</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#b8a594,#7d5e45)"></div><div>Banco Vini<small>enoteca con cucina</small></div></div></td>
+                <td><span class="t-tag m">Enoteca</span></td>
+                <td>Vanchiglia</td>
+                <td><span class="t-disc">-10%</span></td>
+                <td>02 mar '26</td>
+                <td><b>724</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#e8c8a8,#a67d4a)"></div><div>Tre Galli<small>storica piola</small></div></div></td>
+                <td><span class="t-tag">Piemontese</span></td>
+                <td>Quadrilatero</td>
+                <td><span class="t-disc">-15%</span></td>
+                <td>15 mar '26</td>
+                <td><b>612</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#d0a880,#8a5e2a)"></div><div>Contesto Alimentare<small>cucina moderna</small></div></div></td>
+                <td><span class="t-tag g">Moderno</span></td>
+                <td>Cit Turin</td>
+                <td><span class="t-disc">-20%</span></td>
+                <td>22 mar '26</td>
+                <td><b>541</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#a89280,#604536)"></div><div>Magazzino 52<small>+ in bozza</small></div></div></td>
+                <td><span class="t-tag c">Pizzeria</span></td>
+                <td>Aurora</td>
+                <td>—</td>
+                <td>05 apr '26</td>
+                <td><b>—</b></td>
+                <td><span class="t-stat off"><span class="d"></span>Bozza</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#c5a386,#7a5438)"></div><div>Perino Vesco<small>lievito madre</small></div></div></td>
+                <td><span class="t-tag m">Bakery</span></td>
+                <td>San Salvario</td>
+                <td><span class="t-disc">-10%</span></td>
+                <td>09 apr '26</td>
+                <td><b>198</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="t-name"><div class="t-cover" style="background:linear-gradient(135deg,#b89376,#6a4a34)"></div><div>Gaudenzio<small>enoteca + piccolo menu</small></div></div></td>
+                <td><span class="t-tag m">Enoteca</span></td>
+                <td>San Salvario</td>
+                <td><span class="t-disc">-15%</span></td>
+                <td>11 apr '26</td>
+                <td><b>142</b></td>
+                <td><span class="t-stat"><span class="d"></span>Pubblicato</span></td>
+                <td><div class="t-act"><b>✎</b><b>⤴</b><b>⋯</b></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="paging">
+            <span>128 risultati · pagina 1 di 13</span>
+            <div class="sp" style="flex:1"></div>
+            <div class="p">‹</div>
+            <div class="p on">1</div><div class="p">2</div><div class="p">3</div><div class="p">…</div><div class="p">13</div>
+            <div class="p">›</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<!-- =================== FRAME 3: EDIT DRAWER =================== -->
+<div class="frame-label">03 · Edita ristorante · drawer lateralE</div>
+<div class="laptop"><div class="screen">
+  <div class="admin">
+    <aside class="adm-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Admin</small></div>
+      <div class="nav-group">Catalogo</div>
+      <div class="nav-item"><span class="ic">◈</span>Dashboard</div>
+      <div class="nav-item active"><span class="ic">🍽</span>Ristoranti<span class="badge">142</span></div>
+      <div class="nav-item"><span class="ic">🔥</span>Sconti & Drop</div>
+      <div class="nav-item"><span class="ic">⊞</span>Categorie</div>
+      <div class="nav-group">Curatela</div>
+      <div class="nav-item"><span class="ic">📥</span>Candidature</div>
+      <div class="nav-item"><span class="ic">✉</span>Suggerimenti</div>
+      <div class="nav-item"><span class="ic">📰</span>Articoli di Bi</div>
+      <div class="nav-item"><span class="ic">⚑</span>Segnalazioni</div>
+      <div class="nav-group">Crescita</div>
+      <div class="nav-item"><span class="ic">👥</span>Utenti</div>
+      <div class="nav-item"><span class="ic">🤝</span>Partner</div>
+      <div class="nav-item"><span class="ic">✉</span>Newsletter</div>
+      <div class="nav-group">Numeri</div>
+      <div class="nav-item"><span class="ic">📈</span>Analytics</div>
+      <div class="nav-item"><span class="ic">◷</span>Log attività</div>
+      <div class="adm-user"><div class="av">B</div><div><div class="u">Bi</div><div class="r">Super admin</div></div><div class="cog">⚙</div></div>
+    </aside>
+
+    <main class="adm-main">
+      <div class="adm-top">
+        <div class="adm-search"><span class="sic">🔍</span>Cerca ovunque — ristoranti, utenti, sconti…</div>
+        <div class="sp"></div>
+        <div class="av-sm">B</div>
+      </div>
+      <div class="adm-content">
+        <div class="crumb">Catalogo › Ristoranti › <b>Consorzio</b></div>
+        <h1 class="page-title">Consorzio</h1>
+        <div class="page-sub" style="opacity:.4">Drawer aperto →</div>
+      </div>
+
+      <div class="drawer-overlay">
+        <div class="drawer">
+          <div class="drawer-head">
+            <div class="close">✕</div>
+            <div>
+              <div class="crumb-s">Edita ristorante</div>
+              <h2>Consorzio</h2>
+            </div>
+            <div class="save-actions">
+              <div class="ghost">Anteprima</div>
+              <div class="primary">Salva · pubblica</div>
+            </div>
+          </div>
+
+          <div class="drawer-body">
+            <div class="form-tabs">
+              <div class="t on">Dettagli</div>
+              <div class="t">Foto & galleria</div>
+              <div class="t">Cosa ti consiglio</div>
+              <div class="t">Sconto</div>
+              <div class="t">Credenziali</div>
+              <div class="t">SEO</div>
+            </div>
+
+            <div class="fgroup" style="background:linear-gradient(135deg,#FFF1EF,#FCE4E1);border-color:var(--corallo-soft)">
+              <h4>Credenziali PIN · area ristoratore <span class="count">6 cifre · assegnate da Bi</span></h4>
+              <div class="f-row" style="align-items:end">
+                <div class="f">
+                  <label>PIN attivo · 6 cifre</label>
+                  <input value="482 193" style="font-family:var(--ff-mark);font-size:20px;letter-spacing:.12em;background:#fff;border-color:var(--corallo-soft);font-weight:400" readonly>
+                </div>
+                <div class="f">
+                  <label>Assegnato a</label>
+                  <input value="Daniele · proprietario" readonly style="background:#fff">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+                <button style="background:var(--corallo);color:#fff;border:0;padding:10px 16px;border-radius:999px;font-family:var(--ff-ui);font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 6px 14px rgba(232,69,60,.28)">↻ Ri-genera PIN</button>
+                <button style="background:#fff;border:1px solid var(--line);color:var(--ink);padding:10px 16px;border-radius:999px;font-family:var(--ff-ui);font-weight:800;font-size:12px;cursor:pointer">📋 Copia</button>
+                <button style="background:#fff;border:1px solid var(--line);color:var(--ink);padding:10px 16px;border-radius:999px;font-family:var(--ff-ui);font-weight:800;font-size:12px;cursor:pointer">✉ Invia al locale</button>
+                <button style="background:transparent;border:0;color:var(--danger);padding:10px 16px;font-family:var(--ff-ui);font-weight:800;font-size:12px;cursor:pointer;margin-left:auto">Blocca accesso</button>
+              </div>
+              <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:10px;line-height:1.5;padding-top:10px;border-top:1px dashed rgba(232,69,60,.25)">
+                <b style="color:var(--ink)">Ultima rotazione:</b> 12 feb 2026 · <b style="color:var(--ink)">Ultimo accesso:</b> oggi 14:22 · <b style="color:var(--ink)">Dispositivi attivi:</b> 2 (iPad bancone · iPhone proprietario)<br>
+                Il PIN è l'unico modo per accedere alla verify. Niente email, niente password. Se il locale lo perde, rigenerane uno e comunicaglielo tu.
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <h4>Anagrafica <span class="count">il minimo necessario</span></h4>
+              <div class="cover-grid">
+                <div class="ph main"></div>
+                <div class="ph"></div>
+                <div class="ph add">+</div>
+              </div>
+              <div class="f-row">
+                <div class="f"><label>Nome ristorante</label><input value="Consorzio"></div>
+                <div class="f"><label>Slug</label><input value="consorzio"></div>
+              </div>
+              <div class="f-row">
+                <div class="f"><label>Categoria</label><select><option>Piemontese</option></select></div>
+                <div class="f"><label>Zona</label><select><option>San Salvario</option></select></div>
+              </div>
+              <div class="f-row">
+                <div class="f"><label>Indirizzo</label><input value="Via Monte di Pietà 23, Torino"></div>
+                <div class="f"><label>Fascia prezzo</label><select><option>€€€ · 30–50€</option></select></div>
+              </div>
+              <div class="f-row">
+                <div class="f"><label>Telefono</label><input value="+39 011 276 7661"></div>
+                <div class="f"><label>Website</label><input value="consorzio-torino.it"></div>
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <h4>La voce di Bi <span class="count">il cuore della scheda</span></h4>
+              <div class="f-row one">
+                <div class="f"><label>Occhiello (una riga)</label><input value="La piola che prende tutto sul serio, tranne se stessa."></div>
+              </div>
+              <div class="f-row one">
+                <div class="f"><label>Racconto completo</label><textarea>Consorzio è una di quelle tavole che ogni volta mi sorprende. La carta cambia, ma la mano sulla tradizione non cambia mai — c'è un rispetto vero per la materia prima piemontese che oggi è difficile trovare. Ti consiglio di andarci senza fretta, di farti consigliare il vino da Daniele, e di non saltare il dolce. Soprattutto se ci sono le pere cotte.</textarea></div>
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <h4>Cosa ordinare <span class="count">3 piatti · i miei preferiti</span></h4>
+              <div class="piatto-row">
+                <div class="ph" data-n="1"></div>
+                <div><div class="t">Tajarin al ragù di salsiccia</div><div class="d">La prima cosa che ho assaggiato qui. Da prendere.</div></div>
+                <div class="ed">✎</div>
+              </div>
+              <div class="piatto-row">
+                <div class="ph" data-n="2"></div>
+                <div><div class="t">Vitello tonnato all'antica</div><div class="d">Versione non riconciliata, con la maionese.</div></div>
+                <div class="ed">✎</div>
+              </div>
+              <div class="piatto-row">
+                <div class="ph" data-n="3"></div>
+                <div><div class="t">Pere cotte al Barolo</div><div class="d">Il dolce che mi fa sempre tornare.</div></div>
+                <div class="ed">✎</div>
+              </div>
+              <div class="piatto-add">+ Aggiungi piatto</div>
+            </div>
+
+            <div class="fgroup">
+              <h4>Sconto per i lettori di Bi</h4>
+              <div class="sconto-box">
+                <div class="hd">Sconto attivo <input value="15" style="text-align:center">%</div>
+                <div class="sub">Valido tutti i giorni tranne venerdì e sabato sera · un utilizzo per utente</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<!-- =================== FRAME 4: SCONTI & DROP =================== -->
+<div class="frame-label">04 · Sconti & Drop · creazione</div>
+<div class="laptop"><div class="screen">
+  <div class="admin">
+    <aside class="adm-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Admin</small></div>
+      <div class="nav-group">Catalogo</div>
+      <div class="nav-item"><span class="ic">◈</span>Dashboard</div>
+      <div class="nav-item"><span class="ic">🍽</span>Ristoranti<span class="badge">142</span></div>
+      <div class="nav-item active"><span class="ic">🔥</span>Sconti & Drop<span class="badge">47</span></div>
+      <div class="nav-item"><span class="ic">⊞</span>Categorie</div>
+      <div class="nav-group">Curatela</div>
+      <div class="nav-item"><span class="ic">📥</span>Candidature<span class="badge">8</span></div>
+      <div class="nav-item"><span class="ic">✉</span>Suggerimenti<span class="badge">4</span></div>
+      <div class="nav-item"><span class="ic">📰</span>Articoli di Bi</div>
+      <div class="nav-item"><span class="ic">⚑</span>Segnalazioni<span class="badge">3</span></div>
+      <div class="nav-group">Crescita</div>
+      <div class="nav-item"><span class="ic">👥</span>Utenti</div>
+      <div class="nav-item"><span class="ic">🤝</span>Partner</div>
+      <div class="nav-item"><span class="ic">✉</span>Newsletter</div>
+      <div class="nav-group">Numeri</div>
+      <div class="nav-item"><span class="ic">📈</span>Analytics</div>
+      <div class="nav-item"><span class="ic">◷</span>Log attività</div>
+      <div class="adm-user"><div class="av">B</div><div><div class="u">Bi</div><div class="r">Super admin</div></div><div class="cog">⚙</div></div>
+    </aside>
+
+    <main class="adm-main">
+      <div class="adm-top">
+        <div class="adm-search"><span class="sic">🔍</span>Cerca ovunque…</div>
+        <div class="sp"></div>
+        <div class="pill-btn">Tutti gli sconti →</div>
+        <div class="pill-btn primary">+ Nuovo drop</div>
+        <div class="av-sm">B</div>
+      </div>
+
+      <div class="adm-content">
+        <div class="crumb">Catalogo › <b>Sconti & Drop</b></div>
+        <h1 class="page-title">Sconti & Drop</h1>
+        <div class="page-sub">40 sconti sempre attivi <span class="dot">·</span> 7 drop in corso <span class="dot">·</span> <span class="meta">i drop tirano il 3× degli sconti statici</span></div>
+
+        <div class="filters">
+          <div class="fpill on">Drop attivi · 7</div>
+          <div class="fpill">Programmati · 3</div>
+          <div class="fpill">Archiviati · 24</div>
+          <div class="fpill">Sconti sempre attivi · 86</div>
+        </div>
+
+        <div class="drop-wrap">
+          <div class="drop-list">
+            <div class="drop-card hot">
+              <div class="ph"><div class="pc">🔥 HOT</div></div>
+              <div class="info">
+                <h4>Scaldapiatti · Aperitivo -20%</h4>
+                <div class="meta">Giovedì 16 → Domenica 20 apr · San Salvario</div>
+                <div class="pb"><i style="width:66%"></i></div>
+                <div class="pb-t"><span>132 / 200 riscattati</span><span>66%</span></div>
+              </div>
+              <div class="count"><div class="k">2g 14h</div><div class="l">Al termine</div></div>
+            </div>
+            <div class="drop-card">
+              <div class="ph"><div class="pc">NUOVO</div></div>
+              <div class="info">
+                <h4>Banco Vini · Calice + tagliere -10€</h4>
+                <div class="meta">Venerdì 17 → Mercoledì 22 apr · Vanchiglia</div>
+                <div class="pb"><i style="width:24%"></i></div>
+                <div class="pb-t"><span>36 / 150 riscattati</span><span>24%</span></div>
+              </div>
+              <div class="count"><div class="k">4g 22h</div><div class="l">Al termine</div></div>
+            </div>
+            <div class="drop-card">
+              <div class="ph"><div class="pc">DROP</div></div>
+              <div class="info">
+                <h4>Perino Vesco · Pane della domenica</h4>
+                <div class="meta">Domenica 19 apr · solo mattina · Aurora</div>
+                <div class="pb"><i style="width:82%"></i></div>
+                <div class="pb-t"><span>82 / 100 riscattati</span><span>82%</span></div>
+              </div>
+              <div class="count"><div class="k">1g 4h</div><div class="l">Al termine</div></div>
+            </div>
+            <div class="drop-card">
+              <div class="ph"><div class="pc">DROP</div></div>
+              <div class="info">
+                <h4>Tre Galli · Bagna caôda + mezzo Dolcetto</h4>
+                <div class="meta">Sabato 18 apr · tutto il giorno · Quadrilatero</div>
+                <div class="pb"><i style="width:45%"></i></div>
+                <div class="pb-t"><span>27 / 60 riscattati</span><span>45%</span></div>
+              </div>
+              <div class="count"><div class="k">19h</div><div class="l">Al termine</div></div>
+            </div>
+          </div>
+
+          <aside class="drop-form">
+            <h3>Crea nuovo drop <span class="count">pubblicato in 60 sec</span></h3>
+            <div class="f-row one"><div class="f"><label>Ristorante</label><select><option>Consorzio · San Salvario</option></select></div></div>
+            <div class="f-row">
+              <div class="f"><label>Tipo</label><select><option>Sconto %</option><option>Coperto + piatto</option><option>Prezzo fisso</option></select></div>
+              <div class="f"><label>Valore</label><input value="-25%"></div>
+            </div>
+            <div class="f-row">
+              <div class="f"><label>Inizio</label><input type="text" value="17/04/26 · 19:00"></div>
+              <div class="f"><label>Fine</label><input type="text" value="20/04/26 · 23:00"></div>
+            </div>
+            <div class="f-row">
+              <div class="f"><label>Posti totali</label><input value="150"></div>
+              <div class="f"><label>Per utente</label><input value="1"></div>
+            </div>
+            <div class="f-row one"><div class="f"><label>Copy del drop (Bi)</label><textarea>Un'occasione per andare a provare i nuovi tajarin al limone che Daniele sta provando in questi giorni — ve li consiglio in bianco, con burro.</textarea></div></div>
+
+            <div class="drop-preview">
+              <div class="p-lab">🔥 Anteprima scheda drop</div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#d8cfc1,#ad9b80)"></div>
+                <div>
+                  <div style="font-weight:900;font-size:14px">Consorzio · Tajarin in bianco -25%</div>
+                  <div style="font-size:11px;color:var(--muted);font-weight:600">3 giorni · 0/150 riscattati</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:18px">
+              <div class="pill-btn" style="flex:1;justify-content:center">Salva bozza</div>
+              <div class="pill-btn primary" style="flex:1;justify-content:center">Pubblica drop</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<!-- =================== FRAME 5: CANDIDATURE =================== -->
+<div class="frame-label">05 · Candidature ristoratori · inbox</div>
+<div class="laptop"><div class="screen">
+  <div class="admin">
+    <aside class="adm-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Admin</small></div>
+      <div class="nav-group">Catalogo</div>
+      <div class="nav-item"><span class="ic">◈</span>Dashboard</div>
+      <div class="nav-item"><span class="ic">🍽</span>Ristoranti</div>
+      <div class="nav-item"><span class="ic">🔥</span>Sconti & Drop</div>
+      <div class="nav-item"><span class="ic">⊞</span>Categorie</div>
+      <div class="nav-group">Curatela</div>
+      <div class="nav-item active"><span class="ic">📥</span>Candidature<span class="badge">8</span></div>
+      <div class="nav-item"><span class="ic">✉</span>Suggerimenti<span class="badge">4</span></div>
+      <div class="nav-item"><span class="ic">📰</span>Articoli di Bi</div>
+      <div class="nav-item"><span class="ic">⚑</span>Segnalazioni<span class="badge">3</span></div>
+      <div class="nav-group">Crescita</div>
+      <div class="nav-item"><span class="ic">👥</span>Utenti</div>
+      <div class="nav-item"><span class="ic">🤝</span>Partner</div>
+      <div class="nav-item"><span class="ic">✉</span>Newsletter</div>
+      <div class="nav-group">Numeri</div>
+      <div class="nav-item"><span class="ic">📈</span>Analytics</div>
+      <div class="nav-item"><span class="ic">◷</span>Log attività</div>
+      <div class="adm-user"><div class="av">B</div><div><div class="u">Bi</div><div class="r">Super admin</div></div><div class="cog">⚙</div></div>
+    </aside>
+
+    <main class="adm-main">
+      <div class="adm-top">
+        <div class="adm-search"><span class="sic">🔍</span>Cerca candidature…</div>
+        <div class="sp"></div>
+        <div class="av-sm">B</div>
+      </div>
+      <div class="adm-content">
+        <div class="crumb">Curatela › <b>Candidature ristoratori</b></div>
+        <h1 class="page-title">Candidature <span class="tag">8 non lette</span></h1>
+        <div class="page-sub">Ristoratori che vogliono entrare nella guida <span class="dot">·</span> <span class="meta">target di risposta: entro 3 giorni</span></div>
+
+        <div class="cand-layout">
+          <aside class="cand-inbox">
+            <div class="cand-search"><input placeholder="Cerca per nome ristorante…"></div>
+            <div class="cand-row on">
+              <div class="dot"></div>
+              <div><div class="n">Osteria del Mercato</div><div class="s">Ciao Bi, vorremmo far parte della guida…</div><div class="t">1h fa · San Salvario</div></div>
+            </div>
+            <div class="cand-row">
+              <div class="dot"></div>
+              <div><div class="n">Caffè Luna</div><div class="s">Buongiorno, siamo un piccolo bar in Vanchiglia…</div><div class="t">4h fa · Vanchiglia</div></div>
+            </div>
+            <div class="cand-row">
+              <div class="dot"></div>
+              <div><div class="n">Trattoria Valentino</div><div class="s">Gentile redazione, mi chiamo Valentino…</div><div class="t">Ieri · Cenisia</div></div>
+            </div>
+            <div class="cand-row read">
+              <div class="dot"></div>
+              <div><div class="n">Pizzeria Sorbillo TO</div><div class="s">Abbiamo appena aperto in zona Lingotto e siamo…</div><div class="t">15 apr · Lingotto</div></div>
+            </div>
+            <div class="cand-row read">
+              <div class="dot"></div>
+              <div><div class="n">Bar Otium</div><div class="s">Salve Bi, sono Chiara e gestisco un piccolo bar…</div><div class="t">13 apr · Cit Turin</div></div>
+            </div>
+            <div class="cand-row read">
+              <div class="dot"></div>
+              <div><div class="n">Magazzino 52</div><div class="s">Ciao, abbiamo aperto da sei mesi in Aurora…</div><div class="t">10 apr · Aurora</div></div>
+            </div>
+          </aside>
+
+          <section class="cand-detail">
+            <h2>Osteria del Mercato</h2>
+            <div class="who">Da <b>Giorgio Fassino</b> · giorgio@osteriadelmercato.it · 17 apr alle 13:02</div>
+
+            <div class="cand-fields">
+              <div>
+                <div class="cf-l">Indirizzo</div>
+                <div class="cf-v">Via Nizza 14, San Salvario</div>
+              </div>
+              <div>
+                <div class="cf-l">Telefono</div>
+                <div class="cf-v">+39 346 772 1089</div>
+              </div>
+              <div>
+                <div class="cf-l">Categoria dichiarata</div>
+                <div class="cf-v">Piemontese · Trattoria</div>
+              </div>
+              <div>
+                <div class="cf-l">Fascia prezzo</div>
+                <div class="cf-v">€€ · 20–30€</div>
+              </div>
+              <div>
+                <div class="cf-l">Sconto proposto</div>
+                <div class="cf-v">-15% dal martedì al giovedì</div>
+              </div>
+              <div>
+                <div class="cf-l">Instagram</div>
+                <div class="cf-v">@osteria.delmercato.to</div>
+              </div>
+            </div>
+
+            <div class="cand-msg">
+              Ciao Bi,<br><br>
+              ti scrivo perché leggo la tua guida da un anno e ormai è la prima cosa che consulto quando esco a cena. Vorremmo far parte anche noi — siamo una piccola trattoria in San Salvario, quattro tavoli dentro e sei fuori in estate, cucina tutta piemontese fatta con i fornitori del mercato di Porta Palazzo. Carta dei vini piccola ma curata.<br><br>
+              Saremmo felici di offrire ai tuoi lettori il -15% dal martedì al giovedì, con il QR code come da tue indicazioni. Ti allego qualche foto del locale e del menu, se vuoi passare ti offro io una cena così giudichi dal vivo.<br><br>
+              A presto,<br>
+              <i>Giorgio</i>
+            </div>
+
+            <div class="cand-actions">
+              <div class="btn-pri">→ Apri pre-compilata</div>
+              <div class="btn-gh">Rispondi via email</div>
+              <div class="btn-gh">Prendo appuntamento</div>
+              <div class="btn-rej">Archivia (non interessa)</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<!-- =================== FRAME 6: ANALYTICS =================== -->
+<div class="frame-label">06 · Analytics</div>
+<div class="laptop"><div class="screen">
+  <div class="admin">
+    <aside class="adm-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Admin</small></div>
+      <div class="nav-group">Catalogo</div>
+      <div class="nav-item"><span class="ic">◈</span>Dashboard</div>
+      <div class="nav-item"><span class="ic">🍽</span>Ristoranti</div>
+      <div class="nav-item"><span class="ic">🔥</span>Sconti & Drop</div>
+      <div class="nav-item"><span class="ic">⊞</span>Categorie</div>
+      <div class="nav-group">Curatela</div>
+      <div class="nav-item"><span class="ic">📥</span>Candidature</div>
+      <div class="nav-item"><span class="ic">✉</span>Suggerimenti</div>
+      <div class="nav-item"><span class="ic">📰</span>Articoli di Bi</div>
+      <div class="nav-item"><span class="ic">⚑</span>Segnalazioni</div>
+      <div class="nav-group">Crescita</div>
+      <div class="nav-item"><span class="ic">👥</span>Utenti</div>
+      <div class="nav-item"><span class="ic">🤝</span>Partner</div>
+      <div class="nav-item"><span class="ic">✉</span>Newsletter</div>
+      <div class="nav-group">Numeri</div>
+      <div class="nav-item active"><span class="ic">📈</span>Analytics</div>
+      <div class="nav-item"><span class="ic">◷</span>Log attività</div>
+      <div class="adm-user"><div class="av">B</div><div><div class="u">Bi</div><div class="r">Super admin</div></div><div class="cog">⚙</div></div>
+    </aside>
+
+    <main class="adm-main">
+      <div class="adm-top">
+        <div class="adm-search"><span class="sic">🔍</span>Cerca…</div>
+        <div class="sp"></div>
+        <div class="pill-btn">📅 Ultimi 30 giorni ▾</div>
+        <div class="pill-btn">⇩ Esporta</div>
+        <div class="av-sm">B</div>
+      </div>
+
+      <div class="adm-content">
+        <div class="crumb">Numeri › <b>Analytics</b></div>
+        <h1 class="page-title">Analytics <span class="tag">ultimi 30 giorni</span></h1>
+        <div class="page-sub">Traffico, utenti, redenzioni <span class="dot">·</span> <span class="meta">i numeri fattuali, non rating</span></div>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-lab">Sessioni</div><div class="k-val">28.4k</div><div class="k-delta up">▲ +18%</div></div>
+          <div class="kpi"><div class="k-lab">Utenti unici</div><div class="k-val">14.2k</div><div class="k-delta up">▲ +22%</div></div>
+          <div class="kpi"><div class="k-lab">Signup</div><div class="k-val">520</div><div class="k-delta up">▲ +34%</div></div>
+          <div class="kpi"><div class="k-lab">Tasso redenzione</div><div class="k-val">31%</div><div class="k-delta up">▲ +4pt</div></div>
+        </div>
+
+        <div class="an-grid">
+          <div class="an-chart">
+            <h3>Sessioni / giorno</h3>
+            <div class="sub">Ultimi 30 gg · trend in crescita</div>
+            <div class="big">28.412 <span class="d">▲ 18%</span></div>
+            <div class="an-line">
+              <svg viewBox="0 0 400 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0" stop-color="#E8453C" stop-opacity=".3"/>
+                    <stop offset="1" stop-color="#E8453C" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,90 C40,85 60,70 90,72 C130,76 150,50 180,45 C220,38 240,55 270,48 C310,38 330,28 360,22 L400,18 L400,120 L0,120 Z" fill="url(#g1)"/>
+                <path d="M0,90 C40,85 60,70 90,72 C130,76 150,50 180,45 C220,38 240,55 270,48 C310,38 330,28 360,22 L400,18" stroke="#E8453C" stroke-width="2.5" fill="none"/>
+              </svg>
+            </div>
+          </div>
+          <div class="an-chart">
+            <h3>Redenzioni QR / giorno</h3>
+            <div class="sub">Sconti riscattati da ristoratore</div>
+            <div class="big">1.340 <span class="d">▲ 24%</span></div>
+            <div class="an-line">
+              <svg viewBox="0 0 400 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="g2" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0" stop-color="#4ADE80" stop-opacity=".35"/>
+                    <stop offset="1" stop-color="#4ADE80" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,95 L40,88 L80,92 L120,75 L160,80 L200,55 L240,62 L280,45 L320,32 L360,35 L400,20 L400,120 L0,120 Z" fill="url(#g2)"/>
+                <path d="M0,95 L40,88 L80,92 L120,75 L160,80 L200,55 L240,62 L280,45 L320,32 L360,35 L400,20" stroke="#4ADE80" stroke-width="2.5" fill="none"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="an-grid">
+          <div class="an-chart">
+            <h3>Top ristoranti per view</h3>
+            <div class="sub">Ultimi 30 giorni</div>
+            <div style="margin-top:14px">
+              <div class="top-row"><div class="ph"></div><div><div class="n">Consorzio</div><div class="m">San Salvario</div></div><div class="v">3.212</div></div>
+              <div class="top-row"><div class="ph"></div><div><div class="n">Scaldapiatti</div><div class="m">Quadrilatero · drop attivo</div></div><div class="v">2.876</div></div>
+              <div class="top-row"><div class="ph"></div><div><div class="n">Banco Vini</div><div class="m">Vanchiglia</div></div><div class="v">2.041</div></div>
+              <div class="top-row"><div class="ph"></div><div><div class="n">Tre Galli</div><div class="m">Quadrilatero</div></div><div class="v">1.982</div></div>
+            </div>
+          </div>
+          <div class="an-chart">
+            <h3>Redenzioni per zona</h3>
+            <div class="sub">Quali zone tirano</div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:4px"><span>San Salvario</span><span>412</span></div><div style="height:10px;background:var(--cream-deep);border-radius:999px;overflow:hidden"><i style="display:block;width:85%;height:100%;background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:999px"></i></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:4px"><span>Quadrilatero</span><span>318</span></div><div style="height:10px;background:var(--cream-deep);border-radius:999px;overflow:hidden"><i style="display:block;width:66%;height:100%;background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:999px"></i></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:4px"><span>Vanchiglia</span><span>224</span></div><div style="height:10px;background:var(--cream-deep);border-radius:999px;overflow:hidden"><i style="display:block;width:46%;height:100%;background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:999px"></i></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:4px"><span>Cit Turin</span><span>168</span></div><div style="height:10px;background:var(--cream-deep);border-radius:999px;overflow:hidden"><i style="display:block;width:35%;height:100%;background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:999px"></i></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:4px"><span>Aurora</span><span>112</span></div><div style="height:10px;background:var(--cream-deep);border-radius:999px;overflow:hidden"><i style="display:block;width:23%;height:100%;background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:999px"></i></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<div class="note">
+  <span class="lab">NOTE FINALI ADMIN</span>
+  <b>Tokens</b>: stessi del user-facing (ink, corallo, cream, oro, green-gradient) più <code>--line:#EAE3D7</code> per bordi tabelle. Una sola famiglia UI: Satoshi. Zero handwriting, zero italic decorativo.<br>
+  <b>Pattern ricorrenti</b>: KPI card (label + val + delta + spark), activity row (ic + text + time), top row (foto + nome + zona + view), table row (cover + nome + tag + disc + status + actions), drawer lateralE con save-actions in header, inbox-tile per candidature in dashboard.<br>
+  <b>Label tecniche</b>: uppercase 10–11px, letter-spacing .14em, muted. Il modo in cui il back-of-house "parla" a Bi.<br>
+  <b>Azioni primarie</b>: sempre corallo con shadow <code>0 6px 14px rgba(232,69,60,.28)</code> — l'unica cosa brand-bright nel pannello. Tutto il resto è ink/cream/muted.<br>
+  <b>Niente recensioni, niente stelle, niente moderazione</b>: la guida è curata, l'admin lo riflette. Al posto di "Moderazione" c'è "Segnalazioni" (errori fattuali: orari, chiusura, telefono) in Curatela.<br>
+  <b>IA</b>: Catalogo (cosa c'è in guida) · Curatela (cosa entra/esce) · Crescita (chi usa Bi) · Numeri (come sta andando).
+</div>
+
+</body>
+</html>

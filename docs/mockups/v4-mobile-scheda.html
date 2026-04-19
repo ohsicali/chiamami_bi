@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v4 · Scheda ristorante · mobile</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Token ESATTI dal live */
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA;
+  --page:#FAF7F2; --cream-deep:#F1EBE0; --beige-cta:#F2EDE1; --beige-cta-hover:#EADFCB; --white:#FFFFFF;
+  --oro:#B08954; --oro-deep:#8E6B3E; --oro-soft:#F4E7CC;
+  /* Verde sconto: 2-stop 135deg esatti dal live */
+  --green-a:#A3E635; --green-b:#4ADE80;
+  --green-grad:linear-gradient(135deg,#A3E635,#4ADE80);
+
+  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+  /* Niente più TAN Songbird: i nomi dei locali usano il body font (Satoshi) heavy. */
+
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{background:var(--page);color:var(--ink);font-family:var(--ff-ui);font-weight:500;line-height:1.45}
+body{
+  padding:40px 20px 80px;min-height:100vh;
+  background:radial-gradient(1200px 500px at 50% 0%,rgba(232,69,60,.05),transparent 70%),var(--page);
+}
+
+/* Header */
+.page-head{max-width:1400px;margin:0 auto 32px;text-align:center}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:var(--corallo-soft);color:var(--corallo-ink);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.page-head h1{font-weight:900;font-size:32px;letter-spacing:-.02em;margin:14px 0 8px}
+.page-head p{color:var(--ink-70);font-size:14px;max-width:760px;margin:0 auto;line-height:1.55}
+
+.phones{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;max-width:1400px;margin:0 auto}
+.slot{display:flex;flex-direction:column;align-items:center;gap:18px;width:390px}
+.slot-label{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--corallo-ink);text-transform:uppercase;padding:6px 12px;background:var(--corallo-soft);border-radius:999px}
+.slot-title{font-weight:900;font-size:22px;letter-spacing:-.02em;text-align:center}
+.slot-sub{font-size:12px;color:var(--ink-70);text-align:center;max-width:340px;line-height:1.45}
+
+/* Phone frame */
+.phone{width:390px;height:844px;background:#000;border-radius:52px;padding:10px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(0,0,0,.1);position:relative}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:50;pointer-events:none}
+.screen{width:100%;height:100%;background:var(--page);border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;font-size:13px;font-weight:700;position:relative;z-index:20}
+.statusbar .icons{display:inline-flex;gap:6px;align-items:center}
+.statusbar svg{width:16px;height:12px}
+.statusbar.on-hero{color:#fff}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:30px;background:var(--page)}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ============ Hero (pattern live: foto full + card overlay rounded-top) ============ */
+.hero-wrap{position:relative;height:320px;width:100%;overflow:hidden;margin-top:-44px}
+.hero-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-wrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,transparent 22%,transparent 65%,rgba(0,0,0,.12) 100%)}
+.hero-topbar{position:absolute;top:44px;left:0;right:0;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:10}
+.hero-topbar .ico{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);display:grid;place-items:center;border:0;cursor:pointer}
+.hero-topbar .ico svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:2}
+.hero-topbar .spacer{flex:1}
+.hero-topbar .ico.on{background:var(--corallo);color:#fff}
+.hero-topbar .ico.on svg{stroke:#fff;fill:#fff}
+
+/* Overlay card: sormonta l'hero con bordo superiore arrotondato, stile live */
+.card-overlay{
+  position:relative;margin-top:-28px;z-index:5;background:var(--page);
+  border-top-left-radius:24px;border-top-right-radius:24px;
+  padding:22px 22px 4px;text-align:center;
+}
+.card-overlay .grabber{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:99px;background:var(--ink-15)}
+
+/* Nome scheda: Satoshi 900 ~28px, centrato. (Niente più TAN Songbird.) */
+.tb-name{
+  font-family:var(--ff-ui);font-weight:900;
+  font-size:28px;line-height:1.05;letter-spacing:-.025em;color:var(--ink);
+  margin-top:6px;
+}
+.tb-addr{
+  margin-top:10px;font-size:12.5px;color:var(--ink-70);line-height:1.4;
+  display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;
+}
+.tb-addr svg{width:13px;height:13px;stroke:var(--ink-70);fill:none;stroke-width:2;flex-shrink:0}
+
+.tb-chips{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.tb-chips .chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:-.01em}
+.tb-chips .chip.cat{border:1.5px solid var(--corallo);color:var(--corallo-ink);background:#fff}
+.tb-chips .chip.price{background:var(--ink-05);color:var(--ink)}
+.tb-chips .chip.moment{background:var(--oro-soft);color:var(--oro-deep)}
+.tb-chips .chip.open{background:#E5F3EA;color:#2E7D5B}
+.tb-chips .chip.open .dot{width:6px;height:6px;border-radius:50%;background:#2E7D5B}
+
+/* CTA Indicazioni beige + heart ghost */
+.tb-ctas{margin-top:16px;padding:0 4px 4px;display:flex;gap:8px;align-items:center;justify-content:center}
+.tb-ctas .cta-main{flex:1;max-width:280px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--beige-cta);color:var(--ink);padding:13px 18px;border-radius:999px;font-weight:800;font-size:14px;text-decoration:none;border:0;cursor:pointer;letter-spacing:-.01em}
+.tb-ctas .cta-main:hover{background:var(--beige-cta-hover)}
+.tb-ctas .cta-main svg{width:17px;height:17px;stroke:var(--ink);fill:none;stroke-width:2}
+.tb-ctas .cta-ghost{width:46px;height:46px;border-radius:50%;background:var(--white);border:1px solid var(--ink-05);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.tb-ctas .cta-ghost svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:2}
+.tb-ctas .cta-ghost.on{background:var(--corallo);border-color:var(--corallo)}
+.tb-ctas .cta-ghost.on svg{stroke:#fff;fill:#fff}
+
+/* ============ Sconto banner (2-stop 135deg verde, esatto dal live) ============ */
+.sconto-link{margin:18px 16px 0;border-radius:var(--r-md);overflow:hidden;background:var(--white);border:1px solid var(--ink-05);box-shadow:var(--shadow-sm);display:block;text-decoration:none;color:inherit}
+.sconto-link .sl-banner{
+  height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  background:var(--green-grad);
+  color:var(--ink);font-weight:800;font-size:16px;letter-spacing:-.01em;
+}
+.sconto-link .sl-banner .sl-period{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.55);color:var(--ink);padding:3px 8px;border-radius:999px}
+.sconto-link .sl-body{padding:11px 16px 13px;display:flex;align-items:center;gap:10px}
+.sconto-link .sl-t{flex:1;font-weight:700;font-size:13px;letter-spacing:-.01em;color:var(--ink)}
+.sconto-link .sl-s{display:block;font-size:11px;color:var(--ink-70);margin-top:2px;font-weight:500}
+.sconto-link .sl-go{font-size:14px;font-weight:800;color:var(--ink);display:inline-flex;align-items:center;gap:4px}
+
+/* ============ Sticky CTA sconto (bottom pill, come il live) ============ */
+.scr-has-sticky .scroll{padding-bottom:86px}
+.sticky-disc{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom,14px));
+  background:rgba(250,247,242,.92);backdrop-filter:saturate(120%) blur(10px);-webkit-backdrop-filter:saturate(120%) blur(10px);
+  border-top:1px solid var(--ink-05);
+  z-index:12;
+}
+.sticky-disc .pill{
+  display:flex;align-items:center;gap:10px;
+  height:52px;padding:0 6px 0 14px;
+  background:var(--green-grad);color:var(--ink);
+  border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.08);
+}
+.sticky-disc .pill .sd-lead{display:flex;flex-direction:column;line-height:1.1;flex:1;min-width:0}
+.sticky-disc .pill .sd-t{font-weight:900;font-size:14.5px;letter-spacing:-.01em}
+.sticky-disc .pill .sd-s{font-size:10.5px;font-weight:700;letter-spacing:.02em;color:rgba(34,24,28,.72);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticky-disc .pill .sd-go{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
+  height:40px;padding:0 16px;background:var(--ink);color:#fff;
+  border-radius:999px;font-weight:800;font-size:13px;letter-spacing:-.01em;
+}
+.sticky-disc .pill .sd-go svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.4}
+
+/* Section header */
+.sec{padding:22px 22px 4px}
+.sec .sec-lbl{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--corallo-ink);text-transform:uppercase;margin-bottom:8px}
+.sec .sec-t{font-weight:900;font-size:19px;letter-spacing:-.02em;color:var(--ink);line-height:1.2}
+
+/* Secondo Bi */
+.bi-review{padding:0 22px;margin-top:10px}
+.bi-review p{font-size:14.5px;line-height:1.6;color:var(--ink);font-weight:500}
+.bi-review p + p{margin-top:10px}
+.bi-review .sig{margin-top:12px;font-family:var(--ff-hand);font-size:22px;color:var(--corallo-ink);line-height:1}
+
+/* Orari — aggiunta v4 (non c'è nel live) */
+.orari{margin:14px 16px 0;background:var(--white);border:1px solid var(--ink-05);border-radius:var(--r-md);padding:12px 14px}
+.orari-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.orari-head .oh-l{display:flex;align-items:center;gap:8px}
+.orari-head .oh-l svg{width:16px;height:16px;stroke:var(--ink);fill:none;stroke-width:2}
+.orari-head .oh-l .ot{font-weight:800;font-size:13px;letter-spacing:-.01em}
+.orari-head .oh-r .open{color:#2E7D5B;font-weight:800;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+.orari-head .oh-r .open .dot{width:6px;height:6px;border-radius:50%;background:#2E7D5B}
+.orari-sub{font-size:11.5px;color:var(--ink-70);margin-bottom:10px}
+.orari-days{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:12px}
+.orari-days .row{display:contents}
+.orari-days .od{color:var(--ink-70);font-weight:600}
+.orari-days .oh{color:var(--ink);font-weight:700;text-align:right}
+.orari-days .row.today .od,.orari-days .row.today .oh{color:var(--corallo-ink);font-weight:800}
+.orari-days .oh.closed{color:var(--ink-40);font-weight:600}
+
+/* Cosa prendere oro (come live) */
+.cosa-card{margin:18px 16px 0;background:linear-gradient(135deg,#B08954 0%,#8E6B3E 100%);color:#fff;border-radius:var(--r-md);padding:16px 18px;box-shadow:var(--shadow-sm);display:flex;gap:14px;align-items:flex-start}
+.cosa-card .fork{font-size:26px;line-height:1;flex-shrink:0;margin-top:2px}
+.cosa-card .cc-t{font-weight:900;font-size:16px;letter-spacing:-.01em;margin-bottom:4px;color:#fff}
+.cosa-card .cc-s{font-size:14px;line-height:1.5;color:rgba(255,255,255,.92);font-weight:500}
+
+/* Ciao sono Bi */
+.ciao-bi{margin:22px 16px 0;background:var(--cream-deep);border-radius:var(--r-lg);padding:20px;display:flex;gap:14px;align-items:flex-start;border:1px solid rgba(176,137,84,.2)}
+.ciao-bi .bi-avatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#F4E7CC,#E8453C);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;flex-shrink:0;border:2px solid #fff;box-shadow:var(--shadow-sm)}
+.ciao-bi .bi-t{font-weight:900;font-size:15px;letter-spacing:-.01em;color:var(--ink)}
+.ciao-bi .bi-s{font-size:11.5px;color:var(--ink-70);margin-top:2px;margin-bottom:8px}
+.ciao-bi .bi-bio{font-size:12.5px;line-height:1.5;color:var(--ink);margin-bottom:10px}
+.ciao-bi .bi-socials{display:flex;gap:6px;flex-wrap:wrap}
+.ciao-bi .bi-socials a{padding:6px 10px;background:var(--white);border:1px solid var(--ink-05);border-radius:999px;font-size:11px;font-weight:700;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.ciao-bi .bi-more{display:inline-block;margin-top:8px;font-size:12px;font-weight:800;color:var(--corallo-ink);text-decoration:none}
+
+/* Ristoranti vicini */
+.vicini{padding:4px 0 30px 0}
+.vicini-head{padding:0 22px 10px;display:flex;align-items:end;justify-content:space-between}
+.vicini-head h3{font-weight:900;font-size:18px;letter-spacing:-.02em;line-height:1.1}
+.vicini-head .sub{font-size:11px;color:var(--ink-70);margin-top:2px}
+.vicini-row{display:flex;gap:10px;overflow-x:auto;padding:0 16px;-webkit-overflow-scrolling:touch}
+.vicini-row::-webkit-scrollbar{display:none}
+.vcard{flex:0 0 220px;background:var(--white);border:1px solid var(--ink-05);border-radius:var(--r-md);overflow:hidden;text-decoration:none;color:inherit;box-shadow:var(--shadow-sm)}
+.vcard .vph{position:relative;width:100%;aspect-ratio:16/10;background:#ddd;overflow:hidden}
+.vcard .vph img{width:100%;height:100%;object-fit:cover}
+.vcard .vph .vdisc{position:absolute;top:8px;left:8px;background:var(--green-grad);color:var(--ink);font-weight:800;font-size:10px;padding:3px 7px;border-radius:999px;letter-spacing:-.01em}
+.vcard .vbody{padding:10px 12px 12px}
+/* Nome vicini: Satoshi 800 */
+.vcard .vname{font-family:var(--ff-ui);font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.15;color:var(--ink)}
+.vcard .vmeta{font-size:11px;color:var(--ink-70);margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.vcard .vmeta .vt{background:var(--ink-05);color:var(--ink);font-weight:700;font-size:10px;padding:2px 6px;border-radius:999px}
+
+/* Footer */
+.foot{margin-top:24px;padding:18px 20px 10px;border-top:1px solid var(--ink-05);color:var(--ink-70);font-size:10.5px;text-align:center;line-height:1.55}
+.foot .wmark{font-weight:900;color:var(--corallo-ink);font-size:12px;letter-spacing:-.02em;margin-bottom:6px}
+.foot a{color:var(--ink-70);text-decoration:none}
+
+/* Annot */
+.annot{max-width:1400px;margin:56px auto 0;background:var(--white);border-radius:var(--r-lg);padding:28px 32px;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm)}
+.annot h3{font-weight:900;font-size:20px;letter-spacing:-.02em;margin-bottom:14px}
+.annot .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.annot .bl h4{font-weight:900;font-size:14px;letter-spacing:-.01em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.annot .bl h4::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--corallo)}
+.annot .bl p{font-size:13px;line-height:1.55;color:var(--ink-70)}
+.annot .bl strong{color:var(--ink);font-weight:700}
+@media (max-width:1100px){.annot .grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:700px){.annot .grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <span class="kick">v4 · Scheda ristorante · mobile · 17/04 · live-aligned</span>
+  <h1>Scheda ristorante</h1>
+  <p>Pattern live: <strong>hero foto fullscreen</strong> + <strong>card overlay rounded-top</strong> con tutto centrato. Nome in <strong>Satoshi 900 ultra-tight</strong> (come Neotaste, feedback 17/04), indirizzo Places, chip categoria con bordo corallo, CTA "Indicazioni" <strong>beige</strong>. Se c'è uno sconto, banner col <strong>gradient verde 135deg esatto del live</strong> (lime-400 → green-400) + pill sticky floating bottom. Aggiunta v4: <strong>orari apertura</strong> (non c'erano nel live). Ciao sono Bi, Cosa prendere oro, carosello vicini: tutti conformi al live.</p>
+</div>
+
+<div class="phones">
+
+  <!-- ============================================ SCHEDA CON SCONTO -->
+  <div class="slot">
+    <span class="slot-label">Con sconto attivo</span>
+    <div class="slot-title">Il Mulo · San Salvario</div>
+    <div class="slot-sub">Stato pieno: hero + card overlay centrata, banner verde 2-stop 135°, Secondo Bi, orari, Cosa prendere, Ciao sono Bi, vicini. In basso <strong>sticky CTA pill</strong> con lo sconto (come il live), backdrop blur + ink-pill "Usa".</div>
+    <div class="phone">
+      <div class="screen scr-has-sticky">
+        <div class="statusbar on-hero">
+          <span>9:41</span>
+          <span class="icons">
+            <svg viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".5"/><rect x="5" y="5" width="3" height="7" rx=".5"/><rect x="10" y="2" width="3" height="10" rx=".5"/><rect x="15" y="0" width="3" height="12" rx=".5"/></svg>
+            <svg viewBox="0 0 18 12" fill="currentColor"><path d="M9 2C5.5 2 2.5 3 0 5l1.5 1.5C3.5 5 6 4 9 4s5.5 1 7.5 2.5L18 5c-2.5-2-5.5-3-9-3z"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x=".5" y=".5" width="21" height="11" rx="2.5"/><rect x="2" y="2" width="15" height="8" rx="1" fill="currentColor" stroke="none"/></svg>
+          </span>
+        </div>
+
+        <div class="scroll">
+          <!-- HERO -->
+          <div class="hero-wrap">
+            <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=900&q=85" alt="Il Mulo">
+            <div class="hero-topbar">
+              <button class="ico" aria-label="indietro"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <div class="spacer"></div>
+              <button class="ico" aria-label="condividi"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg></button>
+              <button class="ico on" aria-label="salva"><svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
+            </div>
+          </div>
+
+          <!-- CARD OVERLAY (stile live: rounded-top, tutto centrato) -->
+          <div class="card-overlay">
+            <span class="grabber"></span>
+            <h1 class="tb-name">Il Mulo</h1>
+            <div class="tb-addr">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Via San Anselmo 28, 10125 Torino · San Salvario
+            </div>
+            <div class="tb-chips">
+              <span class="chip cat">🍝 Piemontese</span>
+              <span class="chip price">€€</span>
+              <span class="chip moment">Cena</span>
+              <span class="chip open"><span class="dot"></span>Aperto · chiude 23:30</span>
+            </div>
+
+            <div class="tb-ctas">
+              <button class="cta-main">
+                <svg viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12z"/><path d="M9 15V9h6"/></svg>
+                Indicazioni
+              </button>
+              <button class="cta-ghost" aria-label="chiama"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.57 2.8.7A2 2 0 0 1 22 16.92z"/></svg></button>
+              <button class="cta-ghost" aria-label="sito"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Sconto attivo (banner verde 135deg 2-stop) -->
+          <a class="sconto-link">
+            <div class="sl-banner">
+              -12% a pranzo
+              <span class="sl-period">lun–ven 12–15</span>
+            </div>
+            <div class="sl-body">
+              <div>
+                <div class="sl-t">Sconto pranzo infrasettimanale</div>
+                <span class="sl-s">Convenzione sempre attiva · senza limite</span>
+              </div>
+              <span style="flex:1"></span>
+              <span class="sl-go">Usa →</span>
+            </div>
+          </a>
+
+          <!-- Secondo Bi -->
+          <div class="sec">
+            <div class="sec-lbl">Secondo Bi</div>
+            <div class="sec-t">Uno dei piemontesi dove torno senza pensarci</div>
+          </div>
+          <div class="bi-review">
+            <p>Il Mulo fa quella cosa rara: una cucina piemontese che non è né museale né "rivisitata" a forza. Vitello tonnato con la salsa giusta, agnolotti del plin di quelli dove il ripieno conta, e una carta dei vini dove trovi cose buone anche senza spendere una follia.</p>
+            <p>Ci vado quando voglio offrirmi una cena che mi ricordi che abito a Torino, e non mi delude mai.</p>
+            <div class="sig">— Bi</div>
+          </div>
+
+          <!-- Orari (aggiunta v4) -->
+          <div class="orari">
+            <div class="orari-head">
+              <div class="oh-l"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="ot">Orari di apertura</span></div>
+              <div class="oh-r"><span class="open"><span class="dot"></span>Aperto ora</span></div>
+            </div>
+            <div class="orari-sub">Chiude alle 23:30 · cucina fino alle 22:30</div>
+            <div class="orari-days">
+              <div class="row"><span class="od">Lun</span><span class="oh closed">Chiuso</span></div>
+              <div class="row"><span class="od">Mar–Gio</span><span class="oh">12:00–15:00 · 19:00–23:00</span></div>
+              <div class="row today"><span class="od">Ven (oggi)</span><span class="oh">12:00–15:00 · 19:00–23:30</span></div>
+              <div class="row"><span class="od">Sab</span><span class="oh">19:00–23:30</span></div>
+              <div class="row"><span class="od">Dom</span><span class="oh">12:00–15:00</span></div>
+            </div>
+          </div>
+
+          <!-- Cosa prendere (oro come live) -->
+          <div class="cosa-card">
+            <span class="fork">🍴</span>
+            <div>
+              <div class="cc-t">Cosa prendere</div>
+              <div class="cc-s">Agnolotti del plin al sugo d'arrosto, vitello tonnato con salsa classica, e se c'è il bonet non andate via senza.</div>
+            </div>
+          </div>
+
+          <!-- Ciao sono Bi -->
+          <div class="ciao-bi">
+            <div class="bi-avatar">B</div>
+            <div>
+              <div class="bi-t">Ciao, sono Bi</div>
+              <div class="bi-s">La tua guida a Torino</div>
+              <div class="bi-bio">Consiglio solo posti dove tornerei. Niente liste infinite, niente sushi mediocri: 70+ indirizzi che ho scelto io.</div>
+              <div class="bi-socials">
+                <a>📸 Instagram</a>
+                <a>🎵 TikTok</a>
+              </div>
+              <a class="bi-more">Scopri di più →</a>
+            </div>
+          </div>
+
+          <!-- Vicini -->
+          <section class="vicini">
+            <div class="vicini-head">
+              <div>
+                <h3>Ristoranti vicini</h3>
+                <div class="sub">Altri consigli a San Salvario</div>
+              </div>
+            </div>
+            <div class="vicini-row">
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" alt=""><span class="vdisc">-15%</span></div>
+                <div class="vbody">
+                  <div class="vname">Affini</div>
+                  <div class="vmeta"><span class="vt">🥂 Aperitivo</span>€€</div>
+                </div>
+              </a>
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80" alt=""></div>
+                <div class="vbody">
+                  <div class="vname">Kintsugi</div>
+                  <div class="vmeta"><span class="vt">🍵 Matcha</span>€€</div>
+                </div>
+              </a>
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&q=80" alt=""><span class="vdisc">-10%</span></div>
+                <div class="vbody">
+                  <div class="vname">Orma</div>
+                  <div class="vmeta"><span class="vt">🍝 Italiana</span>€€</div>
+                </div>
+              </a>
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=500&q=80" alt=""></div>
+                <div class="vbody">
+                  <div class="vname">Smile Tree</div>
+                  <div class="vmeta"><span class="vt">🍸 Bar</span>€€€</div>
+                </div>
+              </a>
+            </div>
+          </section>
+
+          <!-- Footer -->
+          <div class="foot">
+            <div class="wmark">LA GUIDA DI BI</div>
+            <div><a>Chi è Bi</a> · <a>Sconti</a> · <a>Per i ristoratori</a></div>
+            <div style="margin-top:8px">© 2026 · Torino</div>
+          </div>
+        </div>
+
+        <!-- Sticky CTA sconto (bottom, come live) -->
+        <div class="sticky-disc">
+          <div class="pill">
+            <div class="sd-lead">
+              <span class="sd-t">-12% a pranzo</span>
+              <span class="sd-s">Lun–ven 12–15 · sempre attivo</span>
+            </div>
+            <a class="sd-go">
+              Usa sconto
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ SCHEDA SENZA SCONTO -->
+  <div class="slot">
+    <span class="slot-label">Senza sconto</span>
+    <div class="slot-title">Smile Tree · Centro</div>
+    <div class="slot-sub">Variante senza banner verde: prima del contenuto parte direttamente il blocco "Secondo Bi". Stessa overlay card centrata.</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar on-hero">
+          <span>9:41</span>
+          <span class="icons">
+            <svg viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".5"/><rect x="5" y="5" width="3" height="7" rx=".5"/><rect x="10" y="2" width="3" height="10" rx=".5"/><rect x="15" y="0" width="3" height="12" rx=".5"/></svg>
+            <svg viewBox="0 0 18 12" fill="currentColor"><path d="M9 2C5.5 2 2.5 3 0 5l1.5 1.5C3.5 5 6 4 9 4s5.5 1 7.5 2.5L18 5c-2.5-2-5.5-3-9-3z"/></svg>
+            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x=".5" y=".5" width="21" height="11" rx="2.5"/><rect x="2" y="2" width="15" height="8" rx="1" fill="currentColor" stroke="none"/></svg>
+          </span>
+        </div>
+
+        <div class="scroll">
+          <div class="hero-wrap">
+            <img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=900&q=85" alt="Smile Tree">
+            <div class="hero-topbar">
+              <button class="ico" aria-label="indietro"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <div class="spacer"></div>
+              <button class="ico" aria-label="condividi"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg></button>
+              <button class="ico" aria-label="salva"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="card-overlay">
+            <span class="grabber"></span>
+            <h1 class="tb-name">Smile Tree</h1>
+            <div class="tb-addr">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Piazza della Consolata 9, 10122 Torino · Quadrilatero
+            </div>
+            <div class="tb-chips">
+              <span class="chip cat">🍸 Cocktail bar</span>
+              <span class="chip price">€€€</span>
+              <span class="chip moment">Dopo cena</span>
+              <span class="chip open"><span class="dot"></span>Aperto · chiude 02:00</span>
+            </div>
+
+            <div class="tb-ctas">
+              <button class="cta-main">
+                <svg viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12z"/><path d="M9 15V9h6"/></svg>
+                Indicazioni
+              </button>
+              <button class="cta-ghost" aria-label="chiama"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.57 2.8.7A2 2 0 0 1 22 16.92z"/></svg></button>
+              <button class="cta-ghost" aria-label="sito"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Direttamente "Secondo Bi", niente banner verde -->
+          <div class="sec">
+            <div class="sec-lbl">Secondo Bi</div>
+            <div class="sec-t">Il cocktail bar più serio di Torino, senza fare gli snob</div>
+          </div>
+          <div class="bi-review">
+            <p>Smile Tree è uno di quei posti dove il bartender ti chiede l'umore e ti porta qualcosa che probabilmente non avresti ordinato. Lista corta, nessuna pagina su Campari-Soda con 12 variazioni, ma ogni drink è pensato.</p>
+            <p>Andateci dopo cena, mettetevi al bancone se c'è posto, fatevi consigliare. Non è economico ma vale ogni euro.</p>
+            <div class="sig">— Bi</div>
+          </div>
+
+          <div class="orari">
+            <div class="orari-head">
+              <div class="oh-l"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="ot">Orari di apertura</span></div>
+              <div class="oh-r"><span class="open"><span class="dot"></span>Aperto ora</span></div>
+            </div>
+            <div class="orari-sub">Chiude alle 02:00 · cucina chiusa, solo cocktail</div>
+            <div class="orari-days">
+              <div class="row"><span class="od">Lun–Mer</span><span class="oh closed">Chiuso</span></div>
+              <div class="row"><span class="od">Gio</span><span class="oh">19:00–01:00</span></div>
+              <div class="row today"><span class="od">Ven (oggi)</span><span class="oh">19:00–02:00</span></div>
+              <div class="row"><span class="od">Sab</span><span class="oh">19:00–02:00</span></div>
+              <div class="row"><span class="od">Dom</span><span class="oh">19:00–00:30</span></div>
+            </div>
+          </div>
+
+          <div class="cosa-card">
+            <span class="fork">🍴</span>
+            <div>
+              <div class="cc-t">Cosa prendere</div>
+              <div class="cc-s">Fatevi consigliare al banco. Se c'è il "Torino Smoke" con vermouth e scorza bruciata, ordinatelo.</div>
+            </div>
+          </div>
+
+          <div class="ciao-bi">
+            <div class="bi-avatar">B</div>
+            <div>
+              <div class="bi-t">Ciao, sono Bi</div>
+              <div class="bi-s">La tua guida a Torino</div>
+              <div class="bi-bio">Consiglio solo posti dove tornerei. 70+ indirizzi scelti uno a uno.</div>
+              <div class="bi-socials">
+                <a>📸 Instagram</a>
+                <a>🎵 TikTok</a>
+              </div>
+              <a class="bi-more">Scopri di più →</a>
+            </div>
+          </div>
+
+          <section class="vicini">
+            <div class="vicini-head">
+              <div>
+                <h3>Ristoranti vicini</h3>
+                <div class="sub">Altri consigli nel Quadrilatero</div>
+              </div>
+            </div>
+            <div class="vicini-row">
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=500&q=80" alt=""><span class="vdisc">-10%</span></div>
+                <div class="vbody">
+                  <div class="vname">Orma</div>
+                  <div class="vmeta"><span class="vt">🍝 Italiana</span>€€</div>
+                </div>
+              </a>
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80" alt=""></div>
+                <div class="vbody">
+                  <div class="vname">Perino Vesco</div>
+                  <div class="vmeta"><span class="vt">🥐 Panificio</span>€</div>
+                </div>
+              </a>
+              <a class="vcard">
+                <div class="vph"><img src="https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&q=80" alt=""></div>
+                <div class="vbody">
+                  <div class="vname">Consorzio</div>
+                  <div class="vmeta"><span class="vt">🥩 Piemontese</span>€€</div>
+                </div>
+              </a>
+            </div>
+          </section>
+
+          <div class="foot">
+            <div class="wmark">LA GUIDA DI BI</div>
+            <div><a>Chi è Bi</a> · <a>Sconti</a> · <a>Per i ristoratori</a></div>
+            <div style="margin-top:8px">© 2026 · Torino</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ANNOT -->
+<div class="annot">
+  <h3>Scheda v4 — live-aligned · cosa è cambiato dalla versione bocciata</h3>
+  <div class="grid">
+    <div class="bl">
+      <h4>Nome in Satoshi 900</h4>
+      <p>Augusto 17/04: "non usare TAN Songbird, usa o il font del logo o quello del body". Scelto il <strong>body (Satoshi)</strong> heavy — Alfa Slab è troppo chunky per i nomi locali, resta solo per il wordmark. Ora: <code>font-family:Satoshi; font-weight:900; font-size:28px; letter-spacing:-.025em</code>, centrato nella card overlay. Niente TAN Songbird né italic né normal.</p>
+    </div>
+    <div class="bl">
+      <h4>Card overlay centrata</h4>
+      <p>Pattern live: hero full + card che sormonta l'hero con <strong>border-top-radius 24px</strong> e <strong>tutto centrato dentro</strong> (nome, indirizzo, chip). Handle "grabber" in alto come nei bottom-sheet.</p>
+    </div>
+    <div class="bl">
+      <h4>CTA "Indicazioni" beige</h4>
+      <p>Nel live la CTA primaria è <strong>beige crema</strong> (<code>#F2EDE1</code>), non corallo né nera. Affiancata da 2 bottoni tondi ghost (chiamata, sito). Heart e share sono sulla topbar dell'hero.</p>
+    </div>
+    <div class="bl">
+      <h4>Banner sconto 135° 2-stop</h4>
+      <p>Gradient esatto dal live: <code>linear-gradient(135deg, #A3E635, #4ADE80)</code> — Tailwind lime-400 → green-400, diagonale, 2 stop. Bocciata la versione lens-like 3-stop.</p>
+    </div>
+    <div class="bl">
+      <h4>Chip categoria con bordo corallo</h4>
+      <p>Chip categoria principale con <strong>bordo corallo + testo corallo</strong> su bianco (come il live). Prezzo su grigio, momento su oro soft, aperto su verde soft.</p>
+    </div>
+    <div class="bl">
+      <h4>Aggiunta v4: orari apertura</h4>
+      <p>Nel live non ci sono gli orari. In v4 aggiunti da <strong>Google Places</strong>. Card bianca sotto il blocco "Secondo Bi", con stato live + giorni. Aggiunta utile, non cambia il carattere della scheda.</p>
+    </div>
+    <div class="bl">
+      <h4>Sticky CTA sconto (come live)</h4>
+      <p>Sulla scheda con sconto resta una <strong>pill fissa in basso</strong> sopra il contenuto: banner verde 135° 2-stop con "-12% a pranzo" + fascia oraria, più pulsante ink scuro "Usa sconto →". Backdrop blur + bordo superiore. Sempre visibile durante lo scroll, come nel live che piace ad Augusto.</p>
+    </div>
+    <div class="bl">
+      <h4>Token esatti dal live</h4>
+      <p>Ink <code>#22181C</code> (rgb 34,24,28), corallo <code>#E8453C</code> (rgb 232,69,60), verde gradient 135° lime→green. Estratti via <code>getComputedStyle</code>, non stimati.</p>
+    </div>
+    <div class="bl">
+      <h4>Cosa prendere + Ciao sono Bi</h4>
+      <p>Invariati rispetto al live. Card oro gradient con emoji fork + testo bianco. Ciao sono Bi cream con avatar, bio, socials e link "Scopri di più" corallo.</p>
+    </div>
+    <div class="bl">
+      <h4>Carosello vicini Satoshi 800</h4>
+      <p>Nomi dei vicini sempre in <strong>Satoshi weight 800</strong>, 17px, letter-spacing <code>-.02em</code>. Stessa regola della home: una sola famiglia per il testo (body), niente serif editoriale. Alfa Slab resta solo su wordmark e pin B.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
