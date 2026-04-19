@@ -6,6 +6,7 @@ import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
 import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
+import OrariLocale from './OrariLocale'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -631,6 +632,11 @@ export default function RestaurantSheet({
                     Sito
                   </a>
                 )}
+              </motion.div>
+
+              {/* ── Orari Google Places ── */}
+              <motion.div variants={itemVariants} style={{ marginBottom: 20, padding: '0 18px' }}>
+                <OrariLocale restaurant={restaurant} />
               </motion.div>
 
               {/* ── Secondo Bi — plain text ── */}

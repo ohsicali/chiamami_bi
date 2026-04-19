@@ -70,6 +70,9 @@ const EMPTY_FORM = {
   phone: '',
   google_maps_url: '',
   website: '',
+  place_id: '',
+  place_id_confidence: null,
+  place_id_verified_at: null,
   categories: [],
   price_range: 0,
   our_review: '',
@@ -726,6 +729,9 @@ export default function RestaurantForm() {
           phone: r.phone || '',
           google_maps_url: r.google_maps_url || '',
           website: r.website || '',
+          place_id: r.place_id || '',
+          place_id_confidence: r.place_id_confidence ?? null,
+          place_id_verified_at: r.place_id_verified_at || null,
           categories: r.cuisine_type ? [r.cuisine_type] : (r.categories || []),
           price_range: r.price_range || 0,
           our_review: r.our_review || r.description || '',
@@ -1125,6 +1131,9 @@ export default function RestaurantForm() {
       phone: form.phone.trim(),
       google_maps_url: form.google_maps_url.trim(),
       website: form.website.trim(),
+      place_id: form.place_id.trim() || null,
+      place_id_confidence: form.place_id_confidence,
+      place_id_verified_at: form.place_id_verified_at,
       cuisine_type: form.categories[0] || null,
       category: form.categories,
       price_range: form.price_range,
@@ -1786,6 +1795,85 @@ export default function RestaurantForm() {
                 Il ristoratore usa questo PIN per accedere a <span className="font-semibold">/verify</span> e validare gli sconti dei clienti. Dev'essere <strong>univoco</strong> e di 6 cifre.
               </p>
             </Field>
+          </CollapsibleSection>
+
+          {/* --- Google Places (orari automatici) --- */}
+          <CollapsibleSection title="Google Places" subtitle="Associa Place ID per orari automatici" defaultOpen={false}>
+            <Field label="Place ID">
+              <input
+                type="text"
+                value={form.place_id}
+                onChange={(e) => update('place_id', e.target.value)}
+                placeholder="Es. ChIJN1t_tDeuEmsRUsoyG83frY4"
+                className={inputClass()}
+                style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13 }}
+              />
+              <p className="mt-1.5 text-xs text-secondary">
+                ID univoco del locale su Google Places. Lo trovi cercando il locale su{' '}
+                <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="text-accent underline">
+                  Places ID Finder
+                </a>{' '}
+                o viene popolato dallo script di backfill.
+              </p>
+            </Field>
+
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12,
+              padding: 12, borderRadius: 10, background: '#f9f7f2', border: '1px solid #eee',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>Stato:</span>
+                {!form.place_id.trim() ? (
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, background: '#f3f3f3',
+                    color: '#666', fontSize: 11, fontWeight: 600,
+                  }}>Non associato</span>
+                ) : form.place_id_verified_at ? (
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, background: 'rgba(46, 125, 87, 0.12)',
+                    color: '#2e7d57', fontSize: 11, fontWeight: 600,
+                  }}>
+                    Verificato il {new Date(form.place_id_verified_at).toLocaleDateString('it-IT')}
+                  </span>
+                ) : (
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, background: 'rgba(180, 83, 9, 0.12)',
+                    color: '#b45309', fontSize: 11, fontWeight: 600,
+                  }}>Candidato non verificato</span>
+                )}
+                {form.place_id_confidence != null && (
+                  <span style={{ fontSize: 11, color: '#888' }}>
+                    · confidence {(form.place_id_confidence * 100).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {form.place_id.trim() && !form.place_id_verified_at && (
+                  <button
+                    type="button"
+                    onClick={() => update('place_id_verified_at', new Date().toISOString())}
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1f] text-white hover:bg-[#2a2a2f] transition-colors"
+                  >
+                    Verifica come corretto
+                  </button>
+                )}
+                {form.place_id_verified_at && (
+                  <button
+                    type="button"
+                    onClick={() => update('place_id_verified_at', null)}
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-[#1a1a1f] border border-[#e5e5e5] hover:bg-[#f5f5f5] transition-colors"
+                  >
+                    Rimuovi verifica
+                  </button>
+                )}
+              </div>
+
+              <p style={{ fontSize: 11, color: '#888', lineHeight: 1.5, margin: 0 }}>
+                Solo i locali verificati mostrano gli orari automatici sulla scheda pubblica.
+                Senza verifica, il pubblico vede il bottone "Chiama" come fallback.
+              </p>
+            </div>
           </CollapsibleSection>
 
           {/* --- Recensione Bi --- */}
