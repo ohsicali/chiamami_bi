@@ -56,7 +56,6 @@ const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const SuggestionsManager = lazy(() => import('./pages/admin/SuggestionsManager'))
-const BackfillPlaces = lazy(() => import('./pages/admin/BackfillPlaces'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
@@ -142,7 +141,6 @@ export default function App() {
           <Route path="/admin/applications" element={<ApplicationManager />} />
           <Route path="/admin/suggestions" element={<SuggestionsManager />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/backfill-places" element={<BackfillPlaces />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/sconti" element={<Navigate to="/deals" replace />} />
