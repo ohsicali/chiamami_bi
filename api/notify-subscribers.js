@@ -132,16 +132,19 @@ export default async function handler(req, res) {
           chunk.map((email) => ({ from, to: email, subject, html }))
         ),
       })
+      const respText = await resp.text()
       if (!resp.ok) {
-        const errBody = await resp.text()
         errors += chunk.length
-        errorDetails.push({ status: resp.status, body: errBody.slice(0, 300) })
+        errorDetails.push({ status: resp.status, body: respText.slice(0, 500) })
+        console.error('[notify-subscribers] Resend error', resp.status, respText)
       } else {
         sent += chunk.length
+        console.log('[notify-subscribers] Resend OK', resp.status, respText.slice(0, 500))
       }
     } catch (err) {
       errors += chunk.length
       errorDetails.push({ message: err.message })
+      console.error('[notify-subscribers] Resend fetch threw', err.message)
     }
   }
 
