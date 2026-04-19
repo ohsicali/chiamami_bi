@@ -11,8 +11,8 @@ dove siamo. Aggiorna a ogni step importante.
 |-------|----|----|----|
 | A — Disable user reviews | #64 | ✅ Merged (02a1f99) | SQL eseguito, code live |
 | C1 — Google Places hours | #65 | ✅ Merged (bf538f8) | Env + SQL + backfill fatti in sessioni precedenti |
-| C2 — Email notifications | #66 | 🟡 Rebased, ready to merge | Env + SQL + test consegna email fatti |
-| B — Reskin | — | ⏳ Not started | Next |
+| C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
+| B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
 | C3 — (TBD) | — | ⏳ Not started | |
 
 ## Env vars Vercel — già configurate
