@@ -126,6 +126,38 @@ export default async function handler(req, res) {
   const dry = req.query.dry === '1' || req.query.dry === 'true'
   const force = req.query.force === '1' || req.query.force === 'true'
   const limit = parseInt(req.query.limit, 10) || null
+  const action = req.query.action
+
+  // Azione speciale: auto-verifica tutti i candidati con confidence >= minConf
+  if (action === 'verify-high') {
+    const minConf = parseFloat(req.query.minConf || '0.9')
+    const { data: toVerify, error: selErr } = await adminClient
+      .from('restaurants')
+      .select('id, name, place_id_confidence')
+      .not('place_id', 'is', null)
+      .is('place_id_verified_at', null)
+      .gte('place_id_confidence', minConf)
+    if (selErr) return res.status(500).json({ ok: false, error: selErr.message })
+
+    if (toVerify.length === 0) {
+      return res.status(200).json({ ok: true, action, verified: 0, items: [] })
+    }
+
+    const ids = toVerify.map(r => r.id)
+    const { error: upErr } = await adminClient
+      .from('restaurants')
+      .update({ place_id_verified_at: new Date().toISOString() })
+      .in('id', ids)
+    if (upErr) return res.status(500).json({ ok: false, error: upErr.message })
+
+    return res.status(200).json({
+      ok: true,
+      action,
+      minConf,
+      verified: toVerify.length,
+      items: toVerify.map(r => ({ id: r.id, name: r.name, confidence: r.place_id_confidence })),
+    })
+  }
 
   let query = adminClient
     .from('restaurants')

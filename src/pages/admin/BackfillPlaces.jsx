@@ -19,7 +19,7 @@ export default function BackfillPlaces() {
   if (authLoading) return null
   if (!user || !isAdmin) return <Navigate to="/" replace />
 
-  async function run({ dry, limit, force }) {
+  async function run({ dry, limit, force, action, minConf }) {
     setRunning(true)
     setError(null)
     setResult(null)
@@ -31,6 +31,8 @@ export default function BackfillPlaces() {
       if (dry) params.set('dry', '1')
       if (limit) params.set('limit', String(limit))
       if (force) params.set('force', '1')
+      if (action) params.set('action', action)
+      if (minConf != null) params.set('minConf', String(minConf))
 
       const res = await fetch(`/api/admin-backfill-places?${params}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -85,6 +87,17 @@ export default function BackfillPlaces() {
           >
             LIVE · force (riprocessa non verificati)
           </button>
+          <button
+            onClick={() => {
+              if (confirm('Verifico tutti i candidati con confidence ≥ 0.9? Questa azione imposta place_id_verified_at=now() e rende gli orari visibili al pubblico.')) {
+                run({ action: 'verify-high', minConf: 0.9 })
+              }
+            }}
+            disabled={running}
+            style={{ ...btnStyle, background: '#1e40af', color: '#fff' }}
+          >
+            Auto-verifica HIGH (conf ≥ 0.9)
+          </button>
         </div>
 
         {running && <p style={{ color: '#666' }}>In esecuzione... (può impiegare 1-2 min per 50 ristoranti)</p>}
@@ -94,7 +107,26 @@ export default function BackfillPlaces() {
           </div>
         )}
 
-        {result && (
+        {result && result.action === 'verify-high' && (
+          <div>
+            <div style={{ padding: 12, background: '#e7f3ee', borderRadius: 8, marginBottom: 16 }}>
+              <strong>✓ Auto-verifica completata</strong>
+              <p style={{ margin: '8px 0 0', fontSize: 14 }}>
+                {result.verified} ristoranti verificati (confidence ≥ {result.minConf}).
+                Gli orari sono ora visibili in pubblico.
+              </p>
+            </div>
+            {result.items?.length > 0 && (
+              <ul style={{ fontSize: 13, columns: 2 }}>
+                {result.items.map(i => (
+                  <li key={i.id}>{i.name} <span style={{ color: '#888' }}>({i.confidence})</span></li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {result && result.summary && (
           <div>
             <div style={{ padding: 12, background: '#f0f4ff', borderRadius: 8, marginBottom: 16 }}>
               <strong>{result.dry ? '[DRY-RUN] ' : ''}Summary</strong>
