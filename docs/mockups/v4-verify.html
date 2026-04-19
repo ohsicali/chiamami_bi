@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>v4 · Verify ristoratore — La Guida di Bi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Satoshi:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22181C; --ink-2:#3d2f36; --muted:#6b6057; --line:#EAE3D7;
+  --page:#FAF7F2; --white:#FFFFFF; --cream:#F5F0E4; --cream-deep:#F1EBE0;
+  --corallo:#E8453C; --corallo-soft:#F4B5B0; --corallo-wash:#FDEDEB;
+  --oro:#B08954; --oro-wash:#F5EDDD;
+  --green-a:#A3E635; --green-b:#4ADE80; --green-wash:#E8F5D8; --green-ink:#0F2C12;
+  --danger:#C0392B;
+  --ff-ui:'Satoshi',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--ff-ui);color:var(--ink);background:#0f0f10;-webkit-font-smoothing:antialiased}
+body{padding:60px 24px;display:flex;flex-direction:column;gap:60px;align-items:center;min-height:100vh}
+
+.page-head{max-width:1300px;width:100%;color:#fff}
+.page-head h1{font-family:var(--ff-mark);font-size:32px;font-weight:400;letter-spacing:.01em;margin-bottom:6px}
+.page-head p{color:rgba(255,255,255,.6);font-weight:500}
+.section-head{max-width:1300px;width:100%;color:rgba(255,255,255,.9);font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;margin-top:20px;padding-left:12px}
+.section-head small{display:block;font-weight:500;font-size:13px;color:rgba(255,255,255,.5);margin-top:4px;letter-spacing:0}
+.note{max-width:1300px;width:100%;color:rgba(255,255,255,.75);font-size:13px;line-height:1.6;background:rgba(255,255,255,.04);border-left:3px solid var(--corallo);padding:14px 18px;border-radius:0 12px 12px 0}
+.note b{color:#fff}
+.note .lab{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--corallo);text-transform:uppercase;margin-bottom:4px;display:block}
+
+.row-phones{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;padding:20px 0}
+.phone-label{color:rgba(255,255,255,.55);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-top:14px}
+
+.phone{width:360px;height:760px;background:#111;border-radius:44px;padding:10px;box-shadow:0 30px 80px rgba(0,0,0,.4);position:relative}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:100px;height:26px;background:#000;border-radius:20px;z-index:10}
+.ph-screen{width:100%;height:100%;border-radius:34px;overflow:hidden;background:var(--page);position:relative;display:flex;flex-direction:column}
+.status-bar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex:0 0 auto;padding-top:8px}
+.status-bar b{font-size:14px;font-weight:700}
+.status-bar .icons{display:flex;gap:5px;font-size:11px}
+
+/* common */
+.verify-top{display:flex;align-items:center;gap:12px;padding:8px 18px 14px;background:var(--page)}
+.verify-top .vt-logo{font-family:var(--ff-mark);font-size:13px;line-height:1;letter-spacing:.01em}
+.verify-top .vt-logo small{display:block;font-family:var(--ff-ui);font-weight:700;font-size:9px;letter-spacing:.14em;color:var(--muted);margin-top:3px;text-transform:uppercase}
+.verify-top .vt-av{margin-left:auto;width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:14px}
+
+.tabs{display:flex;gap:4px;background:var(--cream);padding:4px;border-radius:999px;margin:0 18px 14px;flex:0 0 auto}
+.tabs .t{flex:1;padding:10px;text-align:center;border-radius:999px;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer}
+.tabs .t.on{background:var(--ink);color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.15)}
+.v-content{flex:1;overflow-y:auto;padding:0 18px 24px}
+
+/* ========== PIN LOCK (primario) ========== */
+.pin-wrap{height:100%;background:linear-gradient(180deg,var(--page) 0%,var(--cream) 100%);padding:24px 28px 24px;display:flex;flex-direction:column}
+.pin-wrap .pin-logo{font-family:var(--ff-mark);font-size:18px;letter-spacing:.02em;line-height:1;text-align:center;margin-top:16px}
+.pin-wrap .pin-logo small{display:block;font-family:var(--ff-ui);font-weight:700;font-size:10px;letter-spacing:.14em;color:var(--corallo);margin-top:4px;text-transform:uppercase}
+
+.pin-av{width:76px;height:76px;border-radius:22px;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:30px;margin:30px auto 14px;box-shadow:0 14px 32px rgba(34,24,28,.2)}
+.pin-biz{text-align:center;margin-bottom:4px}
+.pin-biz .n{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em}
+.pin-biz .z{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px}
+.pin-sub{text-align:center;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin:14px 0 18px}
+
+.pin-dots{display:flex;justify-content:center;gap:11px;margin:10px 0 18px}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);background:transparent;transition:.15s}
+.pin-dot.on{background:var(--ink);border-color:var(--ink)}
+.pin-dot.wrong{background:var(--corallo);border-color:var(--corallo);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:auto}
+.pk{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center;font-family:var(--ff-ui);font-weight:800;font-size:26px;letter-spacing:-.02em;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.02);position:relative}
+.pk .sub{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin-top:2px;text-transform:uppercase}
+.pk.spc{background:transparent;border:0;box-shadow:none;cursor:default}
+.pk.ico{font-size:20px;background:transparent;border:0;box-shadow:none;font-weight:700;color:var(--muted)}
+
+.pin-foot{text-align:center;margin-top:14px;font-size:12px;color:var(--muted);font-weight:600}
+.pin-foot a{color:var(--ink);font-weight:800;text-decoration:underline}
+
+/* ========== LOGIN (primo accesso) ========== */
+.login-wrap{padding:20px 28px;height:100%;display:flex;flex-direction:column}
+.login-wrap .lg-logo{font-family:var(--ff-mark);font-size:24px;letter-spacing:.02em;line-height:1;text-align:center;margin-top:20px}
+.login-wrap .lg-sub{text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo);font-weight:800;margin-top:6px}
+.login-wrap .lg-crown{margin:28px auto 8px;width:56px;height:56px;background:var(--ink);color:#fff;border-radius:18px;display:grid;place-items:center;font-size:24px}
+.login-wrap h1{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.025em;text-align:center;line-height:1.1;margin:14px 0 6px}
+.login-wrap .lg-body{text-align:center;font-size:13px;color:var(--muted);font-weight:500;margin-bottom:22px;line-height:1.4}
+.inp{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;font-family:var(--ff-ui);font-size:15px;font-weight:500;color:var(--ink);width:100%;margin-bottom:10px}
+.inp:focus{outline:3px solid var(--corallo-soft);border-color:var(--corallo)}
+.btn-cta{background:var(--corallo);color:#fff;border:0;border-radius:14px;padding:15px;font-family:var(--ff-ui);font-weight:800;font-size:15px;width:100%;box-shadow:0 8px 20px rgba(232,69,60,.28);cursor:pointer;letter-spacing:-.01em}
+.forgot{text-align:center;margin-top:12px;font-size:12px;color:var(--muted);font-weight:600}
+.forgot b{color:var(--corallo);font-weight:800}
+.lg-foot{text-align:center;margin-top:auto;padding-top:16px;font-size:11px;color:var(--muted);font-weight:500;line-height:1.5}
+.lg-foot a{color:var(--ink);font-weight:800;text-decoration:underline}
+
+/* ========== DASHBOARD ========== */
+.sconto-hero{background:linear-gradient(135deg,var(--green-a),var(--green-b));border-radius:20px;padding:16px;color:var(--green-ink);margin-bottom:12px;position:relative;overflow:hidden}
+.sconto-hero::before{content:"";position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.2)}
+.sconto-hero .lab{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;opacity:.75;position:relative}
+.sconto-hero .val{font-family:var(--ff-ui);font-weight:900;font-size:42px;letter-spacing:-.04em;line-height:1;margin-top:6px;position:relative}
+.sconto-hero .cond{font-size:12px;font-weight:700;opacity:.78;margin-top:4px;position:relative;line-height:1.4}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat .lab{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .val{font-family:var(--ff-ui);font-weight:900;font-size:24px;letter-spacing:-.03em;margin-top:4px;line-height:1}
+.stat .sub{font-size:11px;font-weight:700;color:var(--muted);margin-top:2px}
+.stat .sub.up{color:#2C7A4A}
+.stat.featured{background:var(--ink);color:#fff;border-color:var(--ink)}
+.stat.featured .lab{color:rgba(255,255,255,.55)}
+.stat.featured .sub{color:rgba(255,255,255,.6)}
+
+/* PERFORMANCE CARD (quanto ti cercano — niente rating stelle) */
+.rate-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+
+.section-lbl{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 8px;display:flex;align-items:center;gap:8px}
+.section-lbl .all{margin-left:auto;font-size:11px;font-weight:800;color:var(--corallo);text-transform:none;letter-spacing:0}
+
+/* log */
+.log{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.log-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.log-row:last-child{border-bottom:0}
+.log-ic{width:32px;height:32px;border-radius:10px;background:var(--green-wash);display:grid;place-items:center;font-size:14px;color:#2C7A4A;font-weight:900;flex:0 0 auto}
+.log-ic.fail{background:var(--corallo-wash);color:var(--corallo)}
+.log-row .n{font-weight:800;font-size:12.5px}
+.log-row .m{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:1px}
+.log-row .t{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:700;text-align:right;line-height:1.3}
+
+.scan-cta{position:absolute;bottom:22px;left:18px;right:18px;background:var(--corallo);color:#fff;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 28px rgba(232,69,60,.45);cursor:pointer;z-index:20}
+.scan-cta .ic{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:22px}
+.scan-cta .t{font-family:var(--ff-ui);font-weight:900;font-size:16px;letter-spacing:-.01em}
+.scan-cta .s{font-size:11px;font-weight:600;opacity:.82;margin-top:2px}
+.scan-cta .arr{margin-left:auto;font-size:22px;opacity:.9}
+
+/* ========== SCAN ========== */
+.scan-screen{background:#000;color:#fff;height:100%;display:flex;flex-direction:column;position:relative}
+.scan-cam{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,#2d2420 0%,#0f0906 70%,#000 100%)}
+.scan-cam::before{content:"";position:absolute;top:20%;left:35%;width:30%;height:40%;background:radial-gradient(circle,rgba(232,69,60,.15),transparent 70%);filter:blur(30px)}
+.scan-top{position:absolute;top:56px;left:0;right:0;padding:0 22px;display:flex;align-items:center;z-index:5}
+.scan-back{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(12px);display:grid;place-items:center;font-size:18px;cursor:pointer}
+.scan-title{margin-left:auto;margin-right:auto;font-family:var(--ff-ui);font-weight:900;font-size:17px;letter-spacing:-.01em}
+.scan-light{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(12px);display:grid;place-items:center;font-size:16px;cursor:pointer}
+
+.scan-window{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:240px}
+.scan-window::before{content:"";position:absolute;inset:0;box-shadow:0 0 0 2000px rgba(0,0,0,.62);border-radius:26px}
+.sw-corner{position:absolute;width:34px;height:34px;border:3px solid #fff}
+.sw-corner.tl{top:0;left:0;border-right:0;border-bottom:0;border-top-left-radius:16px}
+.sw-corner.tr{top:0;right:0;border-left:0;border-bottom:0;border-top-right-radius:16px}
+.sw-corner.bl{bottom:0;left:0;border-right:0;border-top:0;border-bottom-left-radius:16px}
+.sw-corner.br{bottom:0;right:0;border-left:0;border-top:0;border-bottom-right-radius:16px}
+.sw-line{position:absolute;top:50%;left:8px;right:8px;height:2px;background:linear-gradient(90deg,transparent,var(--corallo),transparent);box-shadow:0 0 12px var(--corallo)}
+.scan-hint{position:absolute;top:calc(50% + 150px);left:0;right:0;text-align:center;z-index:5}
+.scan-hint .h1{font-family:var(--ff-ui);font-weight:900;font-size:18px;letter-spacing:-.02em}
+.scan-hint .h2{font-size:13px;font-weight:600;color:rgba(255,255,255,.7);margin-top:6px;line-height:1.4;padding:0 40px}
+.scan-bottom{position:absolute;bottom:26px;left:18px;right:18px;display:flex;gap:10px;z-index:5}
+.sb-btn{flex:1;background:rgba(255,255,255,.14);backdrop-filter:blur(14px);color:#fff;border:0;border-radius:14px;padding:14px;font-family:var(--ff-ui);font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:-.01em}
+
+/* ========== RESULT OK ========== */
+.res-ok{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#A3E635 0%,#4ADE80 100%);color:var(--green-ink);padding:54px 28px 32px;position:relative;overflow:hidden}
+.res-ok::before{content:"";position:absolute;top:-60px;left:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.25)}
+.res-ok::after{content:"";position:absolute;bottom:-100px;right:-80px;width:320px;height:320px;border-radius:50%;background:rgba(15,44,18,.08)}
+.res-ok .r-check{width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.85);display:grid;place-items:center;font-size:58px;color:#2C7A4A;font-weight:900;margin:14px auto 0;position:relative;box-shadow:0 20px 40px rgba(15,44,18,.18)}
+.res-ok h1{font-family:var(--ff-ui);font-weight:900;font-size:34px;letter-spacing:-.03em;text-align:center;margin-top:22px;line-height:1;position:relative}
+.res-ok .sub{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-top:8px;opacity:.78;position:relative}
+.res-ok .card-deet{background:rgba(255,255,255,.85);border-radius:20px;padding:16px;margin-top:24px;position:relative}
+.res-ok .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(15,44,18,.2);font-size:13px}
+.res-ok .row:last-child{border-bottom:0}
+.res-ok .row .l{font-weight:700;opacity:.65}
+.res-ok .row .v{font-weight:900}
+.res-ok .row .v-big{font-family:var(--ff-ui);font-weight:900;font-size:20px;letter-spacing:-.02em}
+.res-ok .btn-done{background:var(--ink);color:#fff;border:0;border-radius:16px;padding:16px;font-family:var(--ff-ui);font-weight:800;font-size:15px;margin-top:auto;cursor:pointer;letter-spacing:-.01em;box-shadow:0 10px 24px rgba(34,24,28,.3);position:relative}
+
+/* ========== RESULT FAIL ========== */
+.res-fail{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#E8453C 0%,#C0392B 100%);color:#fff;padding:54px 28px 32px;position:relative;overflow:hidden}
+.res-fail::before{content:"";position:absolute;top:-60px;left:-60px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.14)}
+.res-fail .r-x{width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;font-size:52px;color:var(--corallo);font-weight:900;margin:14px auto 0;position:relative;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.res-fail h1{font-family:var(--ff-ui);font-weight:900;font-size:30px;letter-spacing:-.03em;text-align:center;margin-top:22px;line-height:1.05;position:relative}
+.res-fail .why{font-size:13px;font-weight:600;text-align:center;margin-top:10px;opacity:.9;position:relative;line-height:1.45;padding:0 8px}
+.res-fail .details{background:rgba(0,0,0,.22);border-radius:16px;padding:14px 16px;margin-top:20px;position:relative}
+.res-fail .details .lab{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-bottom:6px}
+.res-fail .details .body{font-size:13px;font-weight:700;line-height:1.5}
+.res-fail .btn-row{display:flex;gap:10px;margin-top:auto;position:relative}
+.res-fail .btn-row .b{flex:1;padding:16px;border-radius:14px;font-family:var(--ff-ui);font-weight:800;font-size:14px;cursor:pointer;letter-spacing:-.01em;text-align:center}
+.res-fail .btn-row .b.pri{background:#fff;color:var(--corallo);box-shadow:0 8px 20px rgba(0,0,0,.2)}
+.res-fail .btn-row .b.gh{background:rgba(0,0,0,.22);color:#fff}
+
+/* ========== DESKTOP ========== */
+.laptop{width:1300px;height:820px;background:#111;border-radius:16px 16px 6px 6px;padding:20px 14px 14px;box-shadow:0 40px 100px rgba(0,0,0,.5);position:relative;transform-origin:top center;margin-top:30px}
+.laptop::before{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);width:64px;height:5px;background:#222;border-radius:3px}
+.lscreen{width:100%;height:100%;border-radius:6px;overflow:hidden;background:var(--page);position:relative}
+@media (max-width:1400px){.laptop{transform:scale(.85)}}
+@media (max-width:1200px){.laptop{transform:scale(.72)}}
+@media (max-width:1000px){.laptop{transform:scale(.58)}}
+.dsk-shell{display:grid;grid-template-columns:250px 1fr;height:100%}
+.dsk-side{background:var(--ink);color:#fff;padding:26px 18px;display:flex;flex-direction:column;gap:4px}
+.dsk-side .wm{font-family:var(--ff-mark);font-size:14px;line-height:1.1;padding:8px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:18px}
+.dsk-side .wm small{display:block;font-family:var(--ff-ui);font-weight:700;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.45);margin-top:4px;text-transform:uppercase}
+.dsk-side .ni{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:700;color:rgba(255,255,255,.78);cursor:pointer}
+.dsk-side .ni .ic{width:20px;font-size:14px;text-align:center}
+.dsk-side .ni.on{background:var(--corallo);color:#fff;box-shadow:0 6px 14px rgba(232,69,60,.3)}
+.dsk-side .dsk-user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:rgba(255,255,255,.04)}
+.dsk-side .dsk-user .av{width:34px;height:34px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;color:#fff;font-family:var(--ff-mark);font-size:14px}
+.dsk-side .dsk-user .u{font-size:13px;font-weight:800}
+.dsk-side .dsk-user .r{font-size:10px;color:rgba(255,255,255,.5);font-weight:600}
+.dsk-main{overflow-y:auto;padding:26px 32px}
+.dsk-crumb{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.dsk-title{font-family:var(--ff-ui);font-weight:900;font-size:32px;letter-spacing:-.025em}
+.dsk-sub{color:var(--muted);font-weight:500;margin:4px 0 22px;display:flex;align-items:center;gap:10px}
+.dsk-sub .dot{width:3px;height:3px;border-radius:50%;background:var(--muted)}
+.dsk-sub .meta{font-size:13px;color:var(--muted)}
+.dsk-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+.dsk-hero{background:linear-gradient(135deg,var(--green-a),var(--green-b));color:var(--green-ink);border-radius:22px;padding:26px;position:relative;overflow:hidden}
+.dsk-hero::before{content:"";position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.22)}
+.dsk-hero .lab{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;opacity:.75;position:relative}
+.dsk-hero .val{font-family:var(--ff-ui);font-weight:900;font-size:68px;letter-spacing:-.045em;line-height:1;margin-top:8px;position:relative}
+.dsk-hero .cond{font-size:13px;font-weight:700;opacity:.78;margin-top:10px;position:relative;max-width:340px;line-height:1.5}
+.dsk-scan-tile{background:var(--corallo);color:#fff;border-radius:22px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.dsk-scan-tile::before{content:"⌑";position:absolute;top:-30px;right:-30px;font-size:220px;opacity:.1}
+.dsk-scan-tile .l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.dsk-scan-tile h3{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.02em;margin-top:10px;line-height:1.1}
+.dsk-scan-tile .p{font-size:13px;font-weight:600;opacity:.88;margin-top:10px;line-height:1.4;max-width:280px}
+.dsk-scan-tile .btn{margin-top:16px;align-self:flex-start;background:#fff;color:var(--corallo);padding:12px 22px;border-radius:12px;font-weight:900;font-size:14px;letter-spacing:-.01em}
+
+.dsk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
+.dsk-stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
+.dsk-stat .lab{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dsk-stat .val{font-family:var(--ff-ui);font-weight:900;font-size:34px;letter-spacing:-.03em;line-height:1;margin-top:6px}
+.dsk-stat .sub{font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
+.dsk-stat .sub.up{color:#2C7A4A}
+
+.dsk-row{display:grid;grid-template-columns:1fr 1.2fr;gap:18px}
+.dsk-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}
+.dsk-card h4{font-family:var(--ff-ui);font-weight:900;font-size:16px;letter-spacing:-.01em;margin-bottom:12px;display:flex;align-items:center}
+.dsk-card h4 .c-all{margin-left:auto;font-size:11px;font-weight:800;color:var(--corallo)}
+
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Verify — area ristoratore</h1>
+  <p>Mobile primario (POS al tavolo) + desktop back-office. Accesso solo con PIN 6 cifre. Zero recensioni, zero stelle: la curatela è il prodotto, qui il ristoratore vede i numeri fattuali della sua scheda.</p>
+</div>
+
+<div class="note">
+  <span class="lab">AUTENTICAZIONE · solo PIN</span>
+  <b>Niente email, niente password.</b> Augusto assegna personalmente un <b>PIN di 6 cifre</b> a ogni locale quando entra nella guida (stessa relazione curata che definisce il prodotto). Tutti gli accessi — aprire l'app al bancone, 10 volte al giorno, passare l'iPad a uno staff — si sbloccano con quelle 6 cifre. Se il PIN si perde o si vuole ruotarlo, il ristoratore chiama Bi e Augusto ne genera uno nuovo dall'admin.
+</div>
+
+<!-- ===== MOBILE ROW 1 — ACCESS ===== -->
+<div class="section-head">Mobile · accesso<small>PIN lock · 6 cifre · unica schermata di login</small></div>
+
+<div class="row-phones">
+
+  <!-- 1 · PIN LOCK -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+      <div class="pin-wrap">
+        <div class="pin-logo">LA GUIDA DI BI<small>Area ristoratori</small></div>
+        <div class="pin-av">C</div>
+        <div class="pin-biz">
+          <div class="n">Consorzio</div>
+          <div class="z">San Salvario · Daniele</div>
+        </div>
+        <div class="pin-sub">inserisci le 6 cifre</div>
+
+        <div class="pin-dots">
+          <div class="pin-dot on"></div>
+          <div class="pin-dot on"></div>
+          <div class="pin-dot on"></div>
+          <div class="pin-dot on"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+        </div>
+
+        <div class="pin-pad">
+          <div class="pk">1</div>
+          <div class="pk">2</div>
+          <div class="pk">3</div>
+          <div class="pk">4</div>
+          <div class="pk">5</div>
+          <div class="pk">6</div>
+          <div class="pk">7</div>
+          <div class="pk">8</div>
+          <div class="pk">9</div>
+          <div class="pk spc"></div>
+          <div class="pk">0</div>
+          <div class="pk ico">⌫</div>
+        </div>
+
+        <div class="pin-foot">PIN dimenticato? <a href="#">Chiama Bi</a></div>
+      </div>
+    </div></div>
+    <div class="phone-label">01 · PIN lock · unica schermata di login</div>
+  </div>
+
+  <!-- 2 · PIN WRONG -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+      <div class="pin-wrap" style="background:linear-gradient(180deg,var(--corallo-wash) 0%,var(--page) 100%)">
+        <div class="pin-logo">LA GUIDA DI BI<small>Area ristoratori</small></div>
+        <div class="pin-av">C</div>
+        <div class="pin-biz">
+          <div class="n">Consorzio</div>
+          <div class="z">San Salvario · Daniele</div>
+        </div>
+        <div class="pin-sub" style="color:var(--corallo)">PIN errato · riprova</div>
+
+        <div class="pin-dots">
+          <div class="pin-dot wrong"></div>
+          <div class="pin-dot wrong"></div>
+          <div class="pin-dot wrong"></div>
+          <div class="pin-dot wrong"></div>
+          <div class="pin-dot wrong"></div>
+          <div class="pin-dot wrong"></div>
+        </div>
+
+        <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:14px">2 tentativi rimasti prima del blocco temporaneo</div>
+
+        <div class="pin-pad">
+          <div class="pk">1</div>
+          <div class="pk">2</div>
+          <div class="pk">3</div>
+          <div class="pk">4</div>
+          <div class="pk">5</div>
+          <div class="pk">6</div>
+          <div class="pk">7</div>
+          <div class="pk">8</div>
+          <div class="pk">9</div>
+          <div class="pk spc"></div>
+          <div class="pk">0</div>
+          <div class="pk ico">⌫</div>
+        </div>
+
+        <div class="pin-foot">PIN dimenticato? <a href="#">Chiama Bi</a></div>
+      </div>
+    </div></div>
+    <div class="phone-label">02 · PIN errato</div>
+  </div>
+
+  <!-- 3 · PIN BLOCCATO -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+      <div class="pin-wrap" style="background:linear-gradient(180deg,var(--corallo-wash) 0%,var(--page) 60%);justify-content:flex-start">
+        <div class="pin-logo">LA GUIDA DI BI<small>Area ristoratori</small></div>
+        <div style="margin:40px auto 18px;width:84px;height:84px;border-radius:26px;background:var(--corallo);color:#fff;display:grid;place-items:center;font-size:34px;box-shadow:0 14px 32px rgba(232,69,60,.32)">🔒</div>
+        <div class="pin-biz">
+          <div class="n">Accesso bloccato</div>
+          <div class="z">Consorzio · San Salvario</div>
+        </div>
+        <div style="text-align:center;font-size:13px;color:var(--ink-2);font-weight:600;line-height:1.5;margin:18px 12px 0">
+          Troppi PIN sbagliati.<br>
+          L'accesso è bloccato per <b>15 minuti</b>,<br>
+          oppure chiama Bi per ri-generare un PIN nuovo.
+        </div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin:22px 0 0;display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--corallo);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:15px;flex:0 0 auto">B</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:13px">Bi · Augusto</div>
+            <div style="font-size:11px;color:var(--muted);font-weight:600">+39 011 xxx xxxx · info@chiamamibi.com</div>
+          </div>
+          <div style="background:var(--green-wash);color:#2C7A4A;border-radius:12px;padding:8px 10px;font-size:16px">☎</div>
+        </div>
+        <div class="pin-foot" style="margin-top:auto;padding-top:20px">Sblocco automatico in <b style="color:var(--ink)">14:32</b></div>
+      </div>
+    </div></div>
+    <div class="phone-label">03 · PIN bloccato · 3 tentativi esauriti</div>
+  </div>
+
+</div>
+
+<!-- ===== MOBILE ROW 2 — DASHBOARD & PERFORMANCE ===== -->
+<div class="section-head">Mobile · dashboard<small>Sconto attivo, verifiche, "quanto ti cercano" — numeri fattuali, nessun rating</small></div>
+
+<div class="row-phones">
+
+  <!-- 4 · DASHBOARD -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+
+      <div class="verify-top">
+        <div class="vt-logo">LA GUIDA DI BI<small>Consorzio · Daniele</small></div>
+        <div class="vt-av">C</div>
+      </div>
+
+      <div class="tabs">
+        <div class="t on">Dashboard</div>
+        <div class="t">Storico</div>
+        <div class="t">Impostazioni</div>
+      </div>
+
+      <div class="v-content">
+
+        <div class="sconto-hero">
+          <div class="lab">● SCONTO ATTIVO</div>
+          <div class="val">-15%</div>
+          <div class="cond">Tutti i giorni tranne ven/sab sera · un utilizzo per utente</div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat featured">
+            <div class="lab">Oggi</div>
+            <div class="val">12</div>
+            <div class="sub">verifiche OK</div>
+          </div>
+          <div class="stat">
+            <div class="lab">Settimana</div>
+            <div class="val">58</div>
+            <div class="sub up">▲ +18%</div>
+          </div>
+        </div>
+
+        <!-- SCHEDA PERFORMANCE (al posto delle recensioni) -->
+        <div class="rate-card">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px">
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:15px;letter-spacing:-.01em">Quanto ti cercano</div>
+              <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px">Attività sulla tua scheda · ultimi 30 giorni</div>
+            </div>
+            <div style="background:var(--green-wash);color:#2C7A4A;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px">▲ +24%</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:var(--cream);border-radius:12px;padding:10px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.03em;line-height:1">880</div>
+              <div style="font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px">visite scheda</div>
+            </div>
+            <div style="background:var(--cream);border-radius:12px;padding:10px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.03em;line-height:1">142</div>
+              <div style="font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px">salvataggi</div>
+            </div>
+            <div style="background:var(--cream);border-radius:12px;padding:10px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.03em;line-height:1">48</div>
+              <div style="font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px">chiama</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-lbl">Ultime verifiche<span class="all">Storico →</span></div>
+        <div class="log">
+          <div class="log-row">
+            <div class="log-ic">✓</div>
+            <div><div class="n">Marco R. · -15%</div><div class="m">Iscritto da 4 mesi</div></div>
+            <div class="t">14:22<br><span style="color:#9a8e84">1 min fa</span></div>
+          </div>
+          <div class="log-row">
+            <div class="log-ic">✓</div>
+            <div><div class="n">Laura M. · -15%</div><div class="m">Iscritta da 2 mesi</div></div>
+            <div class="t">13:58<br><span style="color:#9a8e84">25 min fa</span></div>
+          </div>
+          <div class="log-row">
+            <div class="log-ic fail">✕</div>
+            <div><div class="n">QR non valido</div><div class="m">Già riscattato oggi</div></div>
+            <div class="t">13:45<br><span style="color:#9a8e84">38 min fa</span></div>
+          </div>
+        </div>
+
+        <div style="height:90px"></div>
+      </div>
+
+      <div class="scan-cta">
+        <div class="ic">⌑</div>
+        <div>
+          <div class="t">Scansiona QR</div>
+          <div class="s">Verifica lo sconto del cliente</div>
+        </div>
+        <div class="arr">›</div>
+      </div>
+
+    </div></div>
+    <div class="phone-label">04 · Dashboard · metriche scheda</div>
+  </div>
+
+  <!-- 5 · STORICO TAB -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+
+      <div class="verify-top">
+        <div class="vt-logo">LA GUIDA DI BI<small>Consorzio · Daniele</small></div>
+        <div class="vt-av">C</div>
+      </div>
+
+      <div class="tabs">
+        <div class="t">Dashboard</div>
+        <div class="t on">Storico</div>
+        <div class="t">Impostazioni</div>
+      </div>
+
+      <div class="v-content">
+
+        <div class="rate-card" style="padding:18px">
+          <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+            <div style="flex:1">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:28px;letter-spacing:-.03em;line-height:1">248</div>
+              <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px">verifiche · ultimi 30 gg</div>
+            </div>
+            <div style="background:var(--green-wash);color:#2C7A4A;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px">▲ +32%</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <div style="background:var(--cream);border-radius:10px;padding:8px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:17px;letter-spacing:-.02em">234</div>
+              <div style="font-size:9px;font-weight:700;color:var(--muted);margin-top:2px">OK</div>
+            </div>
+            <div style="background:var(--cream);border-radius:10px;padding:8px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:17px;letter-spacing:-.02em;color:var(--corallo)">11</div>
+              <div style="font-size:9px;font-weight:700;color:var(--muted);margin-top:2px">doppi</div>
+            </div>
+            <div style="background:var(--cream);border-radius:10px;padding:8px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:17px;letter-spacing:-.02em">3</div>
+              <div style="font-size:9px;font-weight:700;color:var(--muted);margin-top:2px">scaduti</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin:14px 0 10px;overflow-x:auto;padding-bottom:2px">
+          <span style="background:var(--ink);color:#fff;border:0;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap">Tutti</span>
+          <span style="background:#fff;border:1px solid var(--line);color:var(--ink);padding:7px 12px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap">Oggi</span>
+          <span style="background:#fff;border:1px solid var(--line);color:var(--ink);padding:7px 12px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap">7 giorni</span>
+          <span style="background:#fff;border:1px solid var(--line);color:var(--ink);padding:7px 12px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap">Problemi</span>
+        </div>
+
+        <div class="section-lbl">19 aprile · oggi</div>
+        <div class="log">
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Marco R. · -15%</div><div class="m">2ª visita · da 4 mesi</div></div><div class="t">14:22<br><span style="color:#9a8e84">1 min fa</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Laura M. · -15%</div><div class="m">1ª visita · da 2 mesi</div></div><div class="t">13:58<br><span style="color:#9a8e84">25 min fa</span></div></div>
+          <div class="log-row"><div class="log-ic fail">✕</div><div><div class="n">QR già riscattato</div><div class="m">Sara P. · stesso QR oggi</div></div><div class="t">13:45<br><span style="color:#9a8e84">38 min fa</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Sara P. · -15%</div><div class="m">12ª visita · da 1 anno</div></div><div class="t">13:02<br><span style="color:#9a8e84">1h fa</span></div></div>
+        </div>
+
+        <div class="section-lbl" style="margin-top:16px">18 aprile · ieri</div>
+        <div class="log">
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Andrea T. · -15%</div><div class="m">1ª visita</div></div><div class="t">21:14<br><span style="color:#9a8e84">ieri</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Giulia B. · -15%</div><div class="m">3ª visita · da 8 mesi</div></div><div class="t">20:42<br><span style="color:#9a8e84">ieri</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Lorenzo F. · -15%</div><div class="m">1ª visita · nuovo iscritto</div></div><div class="t">13:05<br><span style="color:#9a8e84">ieri</span></div></div>
+        </div>
+
+        <div style="height:30px"></div>
+      </div>
+    </div></div>
+    <div class="phone-label">05 · Storico · tutte le verifiche</div>
+  </div>
+
+  <!-- 6 · SCAN -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar" style="color:#fff;position:relative;z-index:6"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+      <div class="scan-screen">
+        <div class="scan-cam"></div>
+        <div class="scan-top">
+          <div class="scan-back">✕</div>
+          <div class="scan-title">Scansiona QR</div>
+          <div class="scan-light">⚡</div>
+        </div>
+        <div class="scan-window">
+          <div class="sw-corner tl"></div>
+          <div class="sw-corner tr"></div>
+          <div class="sw-corner bl"></div>
+          <div class="sw-corner br"></div>
+          <div class="sw-line"></div>
+        </div>
+        <div class="scan-hint">
+          <div class="h1">Inquadra il QR del cliente</div>
+          <div class="h2">Il codice è nella sua app, dentro la scheda del tuo ristorante</div>
+        </div>
+        <div class="scan-bottom">
+          <button class="sb-btn">📥 Inserisci codice</button>
+          <button class="sb-btn">❓ Aiuto</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="phone-label">06 · Scanner QR</div>
+  </div>
+
+</div>
+
+<!-- ===== MOBILE ROW 3 — RESULTS ===== -->
+<div class="section-head">Mobile · risultati scan</div>
+
+<div class="row-phones">
+
+  <!-- 7 · RESULT OK -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar" style="color:var(--green-ink)"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+      <div class="res-ok">
+        <div class="r-check">✓</div>
+        <h1>Sconto verificato</h1>
+        <div class="sub">tutto in regola</div>
+        <div class="card-deet">
+          <div class="row"><span class="l">Cliente</span><span class="v">Marco R.</span></div>
+          <div class="row"><span class="l">Iscritto dal</span><span class="v">Dic '25 · 4 mesi</span></div>
+          <div class="row"><span class="l">Sconto applicato</span><span class="v v-big">-15%</span></div>
+          <div class="row"><span class="l">Riscattato alle</span><span class="v">14:22 · 19 apr</span></div>
+        </div>
+        <button class="btn-done">Fatto · torna alla dashboard</button>
+      </div>
+    </div></div>
+    <div class="phone-label">07 · Risultato OK</div>
+  </div>
+
+  <!-- 8 · RESULT FAIL -->
+  <div>
+    <div class="phone"><div class="ph-screen">
+      <div class="status-bar" style="color:#fff"><b>9:41</b><div class="icons">📶 📡 🔋</div></div>
+      <div class="res-fail">
+        <div class="r-x">✕</div>
+        <h1>QR già<br>riscattato oggi</h1>
+        <div class="why">Questo cliente ha già usato lo sconto in giornata. Lo sconto è valido una volta al giorno per utente.</div>
+        <div class="details">
+          <div class="lab">Dettaglio</div>
+          <div class="body">Riscattato alle <b>13:45</b> da <b>Sara P.</b><br>Iscritta da 1 anno · 12 visite totali</div>
+        </div>
+        <div class="btn-row">
+          <div class="b gh">Chiedi aiuto</div>
+          <div class="b pri">Riprova scan</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="phone-label">08 · Risultato FAIL</div>
+  </div>
+
+</div>
+
+<!-- ===== DESKTOP ===== -->
+<div class="section-head">Desktop · back-office<small>Stessi numeri, tutto più ampio — sidebar ink, stat tile in cream, zero decorazione</small></div>
+
+<div class="laptop"><div class="lscreen">
+  <div class="dsk-shell">
+    <aside class="dsk-side">
+      <div class="wm">LA GUIDA<br>DI BI<small>Area ristoratori</small></div>
+      <div class="ni on"><span class="ic">◈</span>Dashboard</div>
+      <div class="ni"><span class="ic">⌑</span>Scansiona QR</div>
+      <div class="ni"><span class="ic">📋</span>Storico verifiche<span style="margin-left:auto;background:rgba(255,255,255,.15);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">247</span></div>
+      <div class="ni"><span class="ic">🏷</span>Il mio sconto</div>
+      <div class="ni"><span class="ic">📈</span>Statistiche scheda</div>
+      <div class="ni"><span class="ic">🏢</span>Dati locale</div>
+      <div class="ni"><span class="ic">🔑</span>Credenziali PIN</div>
+      <div class="ni"><span class="ic">⚙</span>Impostazioni</div>
+      <div class="dsk-user">
+        <div class="av">C</div>
+        <div><div class="u">Consorzio</div><div class="r">Daniele Cecchini</div></div>
+      </div>
+    </aside>
+
+    <main class="dsk-main">
+      <div class="dsk-crumb"><b>Consorzio</b> · San Salvario</div>
+      <h1 class="dsk-title">Ciao Daniele 👋</h1>
+      <div class="dsk-sub">Domenica 19 aprile · 14:22 <span class="dot"></span> <span class="meta">12 verifiche OK oggi · ▲ +34% vs media giornaliera</span></div>
+
+      <div class="dsk-grid">
+        <div class="dsk-hero">
+          <div class="lab">● SCONTO ATTIVO</div>
+          <div class="val">-15%</div>
+          <div class="cond">Tutti i giorni tranne ven/sab sera · un utilizzo per utente · valido fino a revoca da parte di Bi</div>
+        </div>
+        <div class="dsk-scan-tile">
+          <div class="l">Azione principale</div>
+          <h3>Scansiona QR</h3>
+          <div class="p">Il cliente apre la nostra scheda, mostra il QR, tu scansioni dal tuo telefono.</div>
+          <div class="btn">Apri scanner →</div>
+        </div>
+      </div>
+
+      <div class="dsk-stats">
+        <div class="dsk-stat"><div class="lab">Oggi</div><div class="val">12</div><div class="sub">verifiche OK</div></div>
+        <div class="dsk-stat"><div class="lab">Settimana</div><div class="val">58</div><div class="sub up">▲ +18%</div></div>
+        <div class="dsk-stat"><div class="lab">30 giorni</div><div class="val">247</div><div class="sub up">▲ +24%</div></div>
+        <div class="dsk-stat"><div class="lab">Salvataggi</div><div class="val">142</div><div class="sub up">▲ +24%</div></div>
+      </div>
+
+      <div class="dsk-row">
+        <div class="dsk-card">
+          <h4>Quanto ti cercano <span class="c-all">Dettaglio →</span></h4>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px">
+            <div style="background:var(--cream);border-radius:12px;padding:14px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:28px;letter-spacing:-.03em;line-height:1">880</div>
+              <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px">Visite scheda</div>
+            </div>
+            <div style="background:var(--cream);border-radius:12px;padding:14px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:28px;letter-spacing:-.03em;line-height:1">142</div>
+              <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px">Salvataggi</div>
+            </div>
+            <div style="background:var(--cream);border-radius:12px;padding:14px;text-align:center">
+              <div style="font-family:var(--ff-ui);font-weight:900;font-size:28px;letter-spacing:-.03em;line-height:1">48</div>
+              <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px">Hanno chiamato</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);font-weight:600;line-height:1.5">
+            Dati ultimi 30 giorni · aggiornati ogni notte. Nella Guida di Bi <b style="color:var(--ink)">non ci sono recensioni utente</b>: sei qui perché ti ha scelto Augusto, non perché voti una media.
+          </div>
+        </div>
+        <div class="dsk-card">
+          <h4>Ultime verifiche <span class="c-all">Storico completo →</span></h4>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Marco R. · -15%</div><div class="m">Iscritto da 4 mesi · 2ª visita</div></div><div class="t">14:22<br><span style="color:#9a8e84">1 min fa</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Laura M. · -15%</div><div class="m">Iscritta da 2 mesi · 1ª visita</div></div><div class="t">13:58<br><span style="color:#9a8e84">25 min fa</span></div></div>
+          <div class="log-row"><div class="log-ic fail">✕</div><div><div class="n">QR già riscattato</div><div class="m">Sara P. · 13:45</div></div><div class="t">13:45<br><span style="color:#9a8e84">38 min fa</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Sara P. · -15%</div><div class="m">Iscritta da 1 anno · 12ª visita</div></div><div class="t">13:02<br><span style="color:#9a8e84">1h fa</span></div></div>
+          <div class="log-row"><div class="log-ic">✓</div><div><div class="n">Andrea T. · -15%</div><div class="m">Iscritto da 6 mesi</div></div><div class="t">12:48<br><span style="color:#9a8e84">1h 34m fa</span></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div></div>
+
+<div class="note">
+  <span class="lab">PRINCIPI VERIFY · v4 aggiornato</span>
+  <b>Solo PIN · 6 cifre.</b> Niente email, niente password, niente self-signup. Augusto assegna lui il codice quando il locale entra in guida (coerente con la curatela del prodotto). Il ristoratore apre l'app, digita 6 cifre, scansiona. Il PIN si ri-genera chiamando Bi.<br>
+  <b>Zero recensioni, zero stelle.</b> Il locale non ha un rating medio da difendere — è in guida perché lo ha scelto Augusto. Al posto del breakdown stellare, il ristoratore vede <b>numeri fattuali della sua scheda</b>: visite, salvataggi, chiamate, andamento drop, serie storica verifiche. Il feedback per migliorare sono le segnalazioni ricevute e gli stessi ritorni in sala.<br>
+  <b>Tipografia sottratta.</b> Una sola famiglia UI (Satoshi), zero handwriting, zero italic decorativo. Alfa Slab One solo per la firma del prodotto e per le 6 cifre del PIN (wordmark).<br>
+  <b>Semantica colore</b>: verde = sconto riscattato OK, corallo = problema. PIN errato usa corallo-wash come background per segnalare urgenza senza urlare; PIN bloccato chiude tutto e spinge al contatto umano con Bi.
+</div>
+
+</body>
+</html>
