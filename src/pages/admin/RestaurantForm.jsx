@@ -70,6 +70,9 @@ const EMPTY_FORM = {
   phone: '',
   google_maps_url: '',
   website: '',
+  place_id: '',
+  place_id_confidence: null,
+  place_id_verified_at: null,
   categories: [],
   price_range: 0,
   our_review: '',
@@ -689,6 +692,8 @@ export default function RestaurantForm() {
   const [nameSearching, setNameSearching] = useState(false)
   const [aiCorrecting, setAiCorrecting] = useState(null) // 'our_review' | 'our_tip' | null
   const [aiSuggestion, setAiSuggestion] = useState(null) // { field, original, corrected }
+  const [placeSearching, setPlaceSearching] = useState(false)
+  const [placeCandidates, setPlaceCandidates] = useState(null) // array or null
   // Inline discount state
   const [discount, setDiscount] = useState(null)
   const [discountLoading, setDiscountLoading] = useState(false)
@@ -726,6 +731,9 @@ export default function RestaurantForm() {
           phone: r.phone || '',
           google_maps_url: r.google_maps_url || '',
           website: r.website || '',
+          place_id: r.place_id || '',
+          place_id_confidence: r.place_id_confidence ?? null,
+          place_id_verified_at: r.place_id_verified_at || null,
           categories: r.cuisine_type ? [r.cuisine_type] : (r.categories || []),
           price_range: r.price_range || 0,
           our_review: r.our_review || r.description || '',
@@ -814,6 +822,46 @@ export default function RestaurantForm() {
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }))
+  }
+
+  async function searchPlaceCandidates() {
+    if (!form.name.trim()) {
+      addToast('Inserisci prima il nome del locale', 'warning')
+      return
+    }
+    setPlaceSearching(true)
+    setPlaceCandidates(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Sessione scaduta')
+      const res = await fetch('/api/admin-backfill-places?action=search-only', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: form.name, address: form.address }),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error || 'Errore ricerca')
+      setPlaceCandidates(json.candidates || [])
+      if (!json.candidates?.length) addToast('Nessun candidato trovato', 'info')
+    } catch (e) {
+      addToast(`Errore: ${e.message}`, 'error')
+    } finally {
+      setPlaceSearching(false)
+    }
+  }
+
+  function applyCandidate(c) {
+    setForm(prev => ({
+      ...prev,
+      place_id: c.place_id,
+      place_id_confidence: c.confidence,
+      place_id_verified_at: null,
+    }))
+    setPlaceCandidates(null)
+    addToast('Place ID impostato — verifica poi salva', 'success')
   }
 
   const validate = () => {
@@ -1125,6 +1173,9 @@ export default function RestaurantForm() {
       phone: form.phone.trim(),
       google_maps_url: form.google_maps_url.trim(),
       website: form.website.trim(),
+      place_id: form.place_id.trim() || null,
+      place_id_confidence: form.place_id_confidence,
+      place_id_verified_at: form.place_id_verified_at,
       cuisine_type: form.categories[0] || null,
       category: form.categories,
       price_range: form.price_range,
@@ -1786,6 +1837,130 @@ export default function RestaurantForm() {
                 Il ristoratore usa questo PIN per accedere a <span className="font-semibold">/verify</span> e validare gli sconti dei clienti. Dev'essere <strong>univoco</strong> e di 6 cifre.
               </p>
             </Field>
+          </CollapsibleSection>
+
+          {/* --- Google Places (orari automatici) --- */}
+          <CollapsibleSection title="Google Places" subtitle="Associa Place ID per orari automatici" defaultOpen={false}>
+            <Field label="Place ID">
+              <input
+                type="text"
+                value={form.place_id}
+                onChange={(e) => update('place_id', e.target.value)}
+                placeholder="Es. ChIJN1t_tDeuEmsRUsoyG83frY4"
+                className={inputClass()}
+                style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13 }}
+              />
+              <p className="mt-1.5 text-xs text-secondary">
+                ID univoco del locale su Google Places. Usa il bottone qui sotto per cercare automaticamente, oppure incollalo manualmente dal{' '}
+                <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="text-accent underline">
+                  Places ID Finder
+                </a>.
+              </p>
+            </Field>
+
+            <div style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={searchPlaceCandidates}
+                disabled={placeSearching || !form.name.trim()}
+                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1e40af] text-white hover:bg-[#1e3a8a] disabled:opacity-50 transition-colors"
+              >
+                {placeSearching ? 'Cerco...' : 'Cerca candidati Google'}
+              </button>
+            </div>
+
+            {placeCandidates && placeCandidates.length > 0 && (
+              <div style={{
+                marginTop: 10, padding: 12, borderRadius: 10,
+                background: 'rgba(30, 64, 175, 0.06)', border: '1px solid rgba(30, 64, 175, 0.2)',
+              }}>
+                <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 10px' }}>
+                  {placeCandidates.length} candidati trovati — clicca quello giusto:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {placeCandidates.map(c => (
+                    <button
+                      key={c.place_id}
+                      type="button"
+                      onClick={() => applyCandidate(c)}
+                      style={{
+                        textAlign: 'left', padding: 10, borderRadius: 8,
+                        background: '#fff', border: '1px solid #ddd', cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+                        <strong style={{ fontSize: 13 }}>{c.display_name}</strong>
+                        <span style={{
+                          fontSize: 11, fontWeight: 600,
+                          color: c.confidence >= 0.6 ? '#2e7d57' : c.confidence >= 0.35 ? '#b45309' : '#888',
+                        }}>
+                          {(c.confidence * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{c.address}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12,
+              padding: 12, borderRadius: 10, background: '#f9f7f2', border: '1px solid #eee',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>Stato:</span>
+                {!form.place_id.trim() ? (
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, background: '#f3f3f3',
+                    color: '#666', fontSize: 11, fontWeight: 600,
+                  }}>Non associato</span>
+                ) : form.place_id_verified_at ? (
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, background: 'rgba(46, 125, 87, 0.12)',
+                    color: '#2e7d57', fontSize: 11, fontWeight: 600,
+                  }}>
+                    Verificato il {new Date(form.place_id_verified_at).toLocaleDateString('it-IT')}
+                  </span>
+                ) : (
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, background: 'rgba(180, 83, 9, 0.12)',
+                    color: '#b45309', fontSize: 11, fontWeight: 600,
+                  }}>Candidato non verificato</span>
+                )}
+                {form.place_id_confidence != null && (
+                  <span style={{ fontSize: 11, color: '#888' }}>
+                    · confidence {(form.place_id_confidence * 100).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {form.place_id.trim() && !form.place_id_verified_at && (
+                  <button
+                    type="button"
+                    onClick={() => update('place_id_verified_at', new Date().toISOString())}
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1f] text-white hover:bg-[#2a2a2f] transition-colors"
+                  >
+                    Verifica come corretto
+                  </button>
+                )}
+                {form.place_id_verified_at && (
+                  <button
+                    type="button"
+                    onClick={() => update('place_id_verified_at', null)}
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-[#1a1a1f] border border-[#e5e5e5] hover:bg-[#f5f5f5] transition-colors"
+                  >
+                    Rimuovi verifica
+                  </button>
+                )}
+              </div>
+
+              <p style={{ fontSize: 11, color: '#888', lineHeight: 1.5, margin: 0 }}>
+                Solo i locali verificati mostrano gli orari automatici sulla scheda pubblica.
+                Senza verifica, il pubblico vede il bottone "Chiama" come fallback.
+              </p>
+            </div>
           </CollapsibleSection>
 
           {/* --- Recensione Bi --- */}
