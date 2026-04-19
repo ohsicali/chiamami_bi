@@ -50,7 +50,7 @@ function ensureStyles() {
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
-      box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(232,69,60,0.5);
+      box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(238, 92, 85,0.5);
     }
     .cb-inner {
       transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -68,8 +68,8 @@ function ensureStyles() {
       animation: cb-bounce 0.5s ease-out;
     }
     @keyframes cb-breathe {
-      0%, 100% { box-shadow: 0 4px 20px rgba(232,69,60,0.4), 0 0 0 3px rgba(232,69,60,0.15); }
-      50% { box-shadow: 0 4px 28px rgba(232,69,60,0.6), 0 0 0 8px rgba(232,69,60,0.08); }
+      0%, 100% { box-shadow: 0 4px 20px rgba(238, 92, 85,0.4), 0 0 0 3px rgba(238, 92, 85,0.15); }
+      50% { box-shadow: 0 4px 28px rgba(238, 92, 85,0.6), 0 0 0 8px rgba(238, 92, 85,0.08); }
     }
     @keyframes cb-pulse {
       0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }

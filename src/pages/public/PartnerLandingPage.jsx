@@ -172,7 +172,7 @@ export default function PartnerLandingPage() {
     {
       icon: EyeIcon,
       iconColor: 'var(--color-accent)',
-      iconBg: 'rgba(232,69,60,0.1)',
+      iconBg: 'rgba(238, 92, 85,0.1)',
       title: 'Visibilità',
       desc: 'Primo piano sulla mappa, nella guida e sui social di Bi',
     },
@@ -193,7 +193,7 @@ export default function PartnerLandingPage() {
     {
       icon: CameraIcon,
       iconColor: 'var(--color-accent)',
-      iconBg: 'rgba(232,69,60,0.1)',
+      iconBg: 'rgba(238, 92, 85,0.1)',
       title: 'Racconto',
       desc: 'Foto, video e contenuti curati da Bi per i canali social',
     },
@@ -324,7 +324,7 @@ export default function PartnerLandingPage() {
         {/* Subtle radial glow */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(232,69,60,0.15), transparent 60%)',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(238, 92, 85,0.15), transparent 60%)',
           pointerEvents: 'none',
         }} />
 
@@ -381,7 +381,7 @@ export default function PartnerLandingPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(232,69,60,0.3)',
+              boxShadow: '0 8px 24px rgba(238, 92, 85,0.3)',
             }}
           >
             Candidati ora
@@ -623,7 +623,7 @@ export default function PartnerLandingPage() {
                   fontWeight: 500,
                   textAlign: 'center',
                   padding: '8px 12px',
-                  background: 'rgba(232,69,60,0.08)',
+                  background: 'rgba(238, 92, 85,0.08)',
                   borderRadius: 10,
                 }}
               >

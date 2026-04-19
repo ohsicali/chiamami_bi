@@ -111,7 +111,7 @@ export default function AboutPage() {
           {/* Background gradients */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at 50% 0%, rgba(232,69,60,0.18), transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(196,162,101,0.08), transparent 50%)',
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(238, 92, 85,0.18), transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(196,162,101,0.08), transparent 50%)',
             pointerEvents: 'none',
           }} />
 
@@ -129,7 +129,7 @@ export default function AboutPage() {
             <motion.div variants={fadeUp} style={{ marginBottom: 28, position: 'relative' }}>
               <div style={{
                 position: 'absolute', inset: -20,
-                background: 'radial-gradient(circle, rgba(232,69,60,0.2), transparent 70%)',
+                background: 'radial-gradient(circle, rgba(238, 92, 85,0.2), transparent 70%)',
                 borderRadius: '50%', filter: 'blur(20px)', pointerEvents: 'none',
               }} />
               <img
@@ -352,7 +352,7 @@ export default function AboutPage() {
               >
                 <div style={{
                   position: 'absolute', top: -20, right: -20, width: 80, height: 80,
-                  background: 'radial-gradient(circle, rgba(232,69,60,0.15), transparent 70%)',
+                  background: 'radial-gradient(circle, rgba(238, 92, 85,0.15), transparent 70%)',
                   pointerEvents: 'none',
                 }} />
                 <div style={{
@@ -372,10 +372,10 @@ export default function AboutPage() {
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 12, fontWeight: 600, color: '#E8453C',
+                  fontSize: 12, fontWeight: 600, color: '#EE5C55',
                 }}>
                   Seguimi
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#EE5C55" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
               </motion.a>
 
@@ -412,10 +412,10 @@ export default function AboutPage() {
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 12, fontWeight: 600, color: '#E8453C',
+                  fontSize: 12, fontWeight: 600, color: '#EE5C55',
                 }}>
                   Seguimi
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#EE5C55" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
               </motion.a>
             </motion.div>
@@ -466,11 +466,11 @@ export default function AboutPage() {
                   </div>
                   <span style={{
                     display: 'flex', alignItems: 'center', gap: 4,
-                    fontSize: 11, fontWeight: 600, color: '#E8453C',
+                    fontSize: 11, fontWeight: 600, color: '#EE5C55',
                     flexShrink: 0, marginTop: 4,
                   }}>
                     Leggi
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#EE5C55" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
                   </span>
                 </div>
               </a>

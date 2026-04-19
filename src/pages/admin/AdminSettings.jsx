@@ -30,7 +30,7 @@ const btnPrimary = {
   padding: '10px 18px',
   borderRadius: 10,
   border: 'none',
-  background: '#E8453C',
+  background: '#EE5C55',
   color: '#fff',
   fontSize: 13,
   fontWeight: 600,
@@ -349,7 +349,7 @@ function ChangeEmail({ currentEmail, user }) {
       {step === 'done' && (
         <button
           onClick={handleReset}
-          style={{ background: 'none', border: 'none', fontSize: 12, color: '#E8453C', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}
+          style={{ background: 'none', border: 'none', fontSize: 12, color: '#EE5C55', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}
         >
           Cambia di nuovo
         </button>
@@ -599,7 +599,7 @@ function AdminList({ currentUserId }) {
               ) : (
                 <div style={{
                   width: 34, height: 34, borderRadius: '50%',
-                  background: 'rgba(232,69,60,0.1)', color: '#E8453C',
+                  background: 'rgba(238, 92, 85,0.1)', color: '#EE5C55',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 12, fontWeight: 700, flexShrink: 0,
                 }}>
@@ -776,7 +776,7 @@ export default function AdminSettings() {
               background: 'transparent',
               border: '1px solid #eee',
               borderRadius: 10,
-              color: '#E8453C',
+              color: '#EE5C55',
               cursor: 'pointer',
               fontFamily: 'inherit',
               display: 'flex',

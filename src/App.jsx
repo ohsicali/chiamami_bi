@@ -180,7 +180,7 @@ export default function App() {
         borderTop: '1px solid rgba(255,255,255,0.1)',
       }}
       buttonStyle={{
-        background: '#E8453C',
+        background: '#EE5C55',
         color: '#fff',
         fontSize: '13px',
         borderRadius: '10px',
@@ -202,7 +202,7 @@ export default function App() {
       expires={365}
     >
       Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
-      <Link to="/privacy" style={{ color: '#E8453C', textDecoration: 'underline' }}>Privacy Policy</Link>
+      <Link to="/privacy" style={{ color: '#EE5C55', textDecoration: 'underline' }}>Privacy Policy</Link>
     </CookieConsent>
     </>
   )

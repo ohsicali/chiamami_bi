@@ -32,7 +32,7 @@ export default function Footer() {
               fontFamily: "'TAN Songbird', 'DM Sans', serif",
               fontSize: 18,
               fontWeight: 700,
-              color: 'var(--color-accent, #E8453C)',
+              color: 'var(--color-accent, #EE5C55)',
               letterSpacing: 0.3,
               lineHeight: 1.1,
             }}>

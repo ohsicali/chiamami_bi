@@ -204,7 +204,7 @@ export default function PartnerManager() {
                 padding: '10px 22px',
                 borderRadius: 10,
                 border: 'none',
-                background: '#E8453C',
+                background: '#EE5C55',
                 color: '#fff',
                 fontSize: 13,
                 fontWeight: 600,

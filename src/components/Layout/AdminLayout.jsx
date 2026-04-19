@@ -157,7 +157,7 @@ const MENU_SECTIONS = [
     label: 'COMMUNITY',
     items: [
       { to: '/admin/users', label: 'Utenti', icon: UsersIcon },
-      { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, dotKey: 'suggestions', dotColor: '#E8453C' },
+      { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, dotKey: 'suggestions', dotColor: '#EE5C55' },
     ],
   },
   {
@@ -227,7 +227,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
               fontFamily: "'TAN Songbird', 'DM Sans', serif",
               fontSize: 13,
               fontWeight: 700,
-              color: '#E8453C',
+              color: '#EE5C55',
               letterSpacing: 0.3,
             }}
           >
@@ -289,8 +289,8 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
                     textDecoration: 'none',
                     fontSize: 13,
                     fontWeight: active ? 500 : 400,
-                    color: active ? '#E8453C' : 'rgba(255,255,255,0.6)',
-                    background: active ? 'rgba(232,69,60,0.1)' : 'transparent',
+                    color: active ? '#EE5C55' : 'rgba(255,255,255,0.6)',
+                    background: active ? 'rgba(238, 92, 85,0.1)' : 'transparent',
                     marginBottom: 1,
                     transition: 'background 0.15s, color 0.15s',
                   }}
@@ -299,7 +299,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
                     width={16}
                     height={16}
                     style={{
-                      color: active ? '#E8453C' : 'rgba(255,255,255,0.4)',
+                      color: active ? '#EE5C55' : 'rgba(255,255,255,0.4)',
                       flexShrink: 0,
                     }}
                   />
@@ -350,8 +350,8 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
             width: 28,
             height: 28,
             borderRadius: '50%',
-            background: 'rgba(232,69,60,0.15)',
-            color: '#E8453C',
+            background: 'rgba(238, 92, 85,0.15)',
+            color: '#EE5C55',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -470,7 +470,7 @@ export default function AdminLayout({ children, title }) {
           style={{
             width: 32,
             height: 32,
-            border: '3px solid #E8453C',
+            border: '3px solid #EE5C55',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
@@ -547,7 +547,7 @@ export default function AdminLayout({ children, title }) {
           style={{
             fontSize: 12,
             fontWeight: 700,
-            color: '#E8453C',
+            color: '#EE5C55',
             letterSpacing: 1,
           }}
         >
@@ -558,8 +558,8 @@ export default function AdminLayout({ children, title }) {
             width: 28,
             height: 28,
             borderRadius: '50%',
-            background: 'rgba(232,69,60,0.15)',
-            color: '#E8453C',
+            background: 'rgba(238, 92, 85,0.15)',
+            color: '#EE5C55',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

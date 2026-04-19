@@ -214,7 +214,7 @@ export default function SuggestionsManager() {
                       rel="noopener noreferrer"
                       style={{
                         fontSize: 12,
-                        color: '#E8453C',
+                        color: '#EE5C55',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 4,

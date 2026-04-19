@@ -264,11 +264,11 @@ export default function LoginPage() {
               width: 64,
               height: 64,
               borderRadius: 20,
-              background: 'linear-gradient(135deg, #E8453C 0%, #f07068 100%)',
+              background: 'linear-gradient(135deg, #EE5C55 0%, #f07068 100%)',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 18px',
-              boxShadow: '0 8px 24px rgba(232,69,60,0.25)',
+              boxShadow: '0 8px 24px rgba(238, 92, 85,0.25)',
             }}
           >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
