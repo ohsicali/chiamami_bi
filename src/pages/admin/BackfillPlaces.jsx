@@ -16,6 +16,8 @@ export default function BackfillPlaces() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [reviewItems, setReviewItems] = useState(null)
+  const [allItems, setAllItems] = useState(null)
+  const [allSummary, setAllSummary] = useState(null)
   const [rowBusy, setRowBusy] = useState({})
   const [editRow, setEditRow] = useState(null)
   const [editDraft, setEditDraft] = useState({ name: '', address: '' })
@@ -58,6 +60,7 @@ export default function BackfillPlaces() {
     setRunning(true)
     setError(null)
     setResult(null)
+    setAllItems(null)
     try {
       const res = await fetch('/api/admin-backfill-places?action=list-unverified', {
         headers: await authHeaders(),
@@ -65,6 +68,44 @@ export default function BackfillPlaces() {
       const json = await res.json()
       if (!json.ok) throw new Error(json.error || 'Errore')
       setReviewItems(json.items)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  async function loadAll() {
+    setRunning(true)
+    setError(null)
+    setResult(null)
+    setReviewItems(null)
+    try {
+      const res = await fetch('/api/admin-backfill-places?action=list-all', {
+        headers: await authHeaders(),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error || 'Errore')
+      setAllItems(json.items)
+      setAllSummary(json.summary)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  async function clearHoursCache() {
+    if (!confirm('Pulisco la cache orari per tutti i ristoranti? La prossima apertura di ogni scheda rifà fetch da Google in italiano.')) return
+    setRunning(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin-backfill-places?action=clear-hours-cache', {
+        headers: await authHeaders(),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error)
+      alert(`Cache orari pulita per ${json.cleared} ristoranti.`)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -216,7 +257,76 @@ export default function BackfillPlaces() {
           >
             Review candidati non verificati
           </button>
+          <button
+            onClick={loadAll}
+            disabled={running}
+            style={{ ...btnStyle, background: '#0f766e', color: '#fff' }}
+          >
+            Check completo (tutti)
+          </button>
+          <button
+            onClick={clearHoursCache}
+            disabled={running}
+            style={btnStyle}
+          >
+            Pulisci cache orari (refresh lingua)
+          </button>
         </div>
+
+        {allItems && allSummary && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ padding: 12, background: '#e7f3ee', borderRadius: 8, marginBottom: 16 }}>
+              <strong>Check completo</strong>
+              <ul style={{ margin: '8px 0 0 20px', fontSize: 14 }}>
+                <li><strong>{allSummary.verified}</strong> verificati (orari visibili in pubblico)</li>
+                <li><strong>{allSummary.unverified}</strong> con candidato ma non verificati</li>
+                <li><strong>{allSummary.noPlaceId}</strong> senza place_id (niente orari Google)</li>
+                <li>Totale: {allSummary.total}</li>
+              </ul>
+            </div>
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f6f6f6', textAlign: 'left' }}>
+                  <th style={th}>Ristorante</th>
+                  <th style={th}>Place ID</th>
+                  <th style={th}>Conf.</th>
+                  <th style={th}>Stato</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allItems.map(i => {
+                  const state = i.place_id_verified_at
+                    ? { label: '✓ Verificato', color: '#2e7d57' }
+                    : i.place_id
+                      ? { label: '· Non verificato', color: '#d97706' }
+                      : { label: '✗ Nessun place_id', color: '#b00' }
+                  return (
+                    <tr key={i.id} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={td}>
+                        <strong>{i.name}</strong>
+                        <div style={{ fontSize: 11, color: '#999' }}>{i.address}</div>
+                      </td>
+                      <td style={{ ...td, fontFamily: 'monospace', fontSize: 11 }}>
+                        {i.place_id ? (
+                          <a
+                            href={`https://www.google.com/maps/place/?q=place_id:${i.place_id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: '#1e40af' }}
+                          >
+                            {i.place_id.slice(0, 20)}…
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td style={td}>{i.place_id_confidence?.toFixed(2) ?? '—'}</td>
+                      <td style={{ ...td, color: state.color, fontWeight: 600 }}>{state.label}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {reviewItems && (
           <div style={{ marginTop: 20 }}>

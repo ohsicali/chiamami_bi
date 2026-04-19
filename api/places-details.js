@@ -97,7 +97,7 @@ export default async function handler(req, res) {
   let placesData
   try {
     const placesRes = await fetch(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=it&regionCode=IT`,
       {
         headers: {
           'X-Goog-Api-Key': apiKey,

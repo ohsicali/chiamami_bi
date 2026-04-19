@@ -130,6 +130,33 @@ export default async function handler(req, res) {
   const limit = parseInt(req.query.limit, 10) || null
   const action = req.query.action
 
+  // Pulisce hours_cache per tutti (forza re-fetch in italiano)
+  if (action === 'clear-hours-cache') {
+    const { error: upErr, count } = await adminClient
+      .from('restaurants')
+      .update({ hours_cache: null, hours_cache_updated_at: null }, { count: 'exact' })
+      .not('hours_cache', 'is', null)
+    if (upErr) return res.status(500).json({ ok: false, error: upErr.message })
+    return res.status(200).json({ ok: true, action, cleared: count ?? 0 })
+  }
+
+  // Status completo: tutti i ristoranti con place_id + verified status
+  if (action === 'list-all') {
+    const { data, error: listErr } = await adminClient
+      .from('restaurants')
+      .select('id, name, address, place_id, place_id_confidence, place_id_verified_at')
+      .order('name', { ascending: true })
+    if (listErr) return res.status(500).json({ ok: false, error: listErr.message })
+    const verified = data.filter(r => r.place_id_verified_at).length
+    const unverified = data.filter(r => r.place_id && !r.place_id_verified_at).length
+    const noPlaceId = data.filter(r => !r.place_id).length
+    return res.status(200).json({
+      ok: true, action,
+      summary: { total: data.length, verified, unverified, noPlaceId },
+      items: data,
+    })
+  }
+
   // Lista candidati non verificati (ordinati per confidence DESC)
   if (action === 'list-unverified') {
     const { data, error: listErr } = await adminClient
