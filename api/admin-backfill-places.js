@@ -50,7 +50,7 @@ async function searchPlace(apiKey, { name, address }) {
     languageCode: 'it',
     regionCode: 'IT',
   }
-  const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+  const doFetch = () => fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -59,6 +59,14 @@ async function searchPlace(apiKey, { name, address }) {
     },
     body: JSON.stringify(body),
   })
+
+  let res = await doFetch()
+  // Retry 2x su 403 per gestire propagazione uneven delle restriction changes
+  for (let i = 0; i < 2 && res.status === 403; i++) {
+    await new Promise(r => setTimeout(r, 1500))
+    res = await doFetch()
+  }
+
   if (!res.ok) {
     const txt = await res.text().catch(() => '')
     throw new Error(`Places ${res.status}: ${txt.slice(0, 200)}`)
