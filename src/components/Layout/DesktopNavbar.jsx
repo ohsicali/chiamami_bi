@@ -75,17 +75,17 @@ export default function DesktopNavbar() {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 24px',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Satoshi', 'DM Sans', sans-serif",
       }}
     >
       {/* ─── LEFT: Logo + City ─── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
         <Link to="/" style={{ textDecoration: 'none', lineHeight: 1 }}>
           <div style={{
-            fontFamily: "'TAN Songbird', 'DM Sans', serif",
+            fontFamily: "'TAN Songbird', 'Satoshi', serif",
             fontSize: 16,
             fontWeight: 700,
-            color: 'var(--color-accent, #E8453C)',
+            color: 'var(--color-accent, #EE5C55)',
             letterSpacing: 0.3,
             lineHeight: 1.1,
           }}>
@@ -116,7 +116,7 @@ export default function DesktopNavbar() {
           color: 'var(--color-primary, #22181C)',
           cursor: 'default',
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', flexShrink: 0 }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EE5C55', flexShrink: 0 }} />
           Torino
           <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
@@ -146,8 +146,8 @@ export default function DesktopNavbar() {
                 padding: '8px 16px',
                 borderRadius: 8,
                 border: 'none',
-                background: active ? 'rgba(232,69,60,0.06)' : 'transparent',
-                color: active ? 'var(--color-accent, #E8453C)' : 'var(--color-secondary, #8A8680)',
+                background: active ? 'rgba(238,92,85,0.1)' : 'transparent',
+                color: active ? 'var(--color-accent, #EE5C55)' : 'var(--color-secondary, #8A8680)',
                 fontSize: 13,
                 fontWeight: active ? 500 : 400,
                 cursor: 'pointer',
@@ -165,7 +165,7 @@ export default function DesktopNavbar() {
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  background: '#E8453C',
+                  background: '#EE5C55',
                   position: 'absolute',
                   top: 6,
                   right: 8,
@@ -207,8 +207,8 @@ export default function DesktopNavbar() {
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: 'rgba(232,69,60,0.1)',
-              color: 'var(--color-accent, #E8453C)',
+              background: 'rgba(238,92,85,0.1)',
+              color: 'var(--color-accent, #EE5C55)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -226,7 +226,7 @@ export default function DesktopNavbar() {
             style={{
               padding: '7px 16px',
               borderRadius: 8,
-              background: 'var(--color-accent, #E8453C)',
+              background: 'var(--color-accent, #EE5C55)',
               color: '#fff',
               fontSize: 12,
               fontWeight: 600,

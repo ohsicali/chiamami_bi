@@ -6,27 +6,27 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 const TAB_BAR_HEIGHT = 60
 
 const ExploreIcon = ({ active }) => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} />
-    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill={active ? '#E8453C' : 'none'} />
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#EE5C55' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" fill={active ? 'rgba(238,92,85,0.12)' : 'none'} />
+    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill={active ? '#EE5C55' : 'none'} />
   </svg>
 )
 
 const DealsIcon = ({ active }) => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
-    <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} />
-    <circle cx="7" cy="7" r="1" fill={active ? '#E8453C' : '#B5B0A8'} />
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#EE5C55' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" fill={active ? 'rgba(238,92,85,0.12)' : 'none'} />
+    <circle cx="7" cy="7" r="1" fill={active ? '#EE5C55' : '#B5B0A8'} />
   </svg>
 )
 
 const HeartIcon = ({ active }) => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill={active ? 'rgba(232,69,60,0.12)' : 'none'} stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill={active ? 'rgba(238,92,85,0.12)' : 'none'} stroke={active ? '#EE5C55' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
   </svg>
 )
 
 const UserIcon = ({ active }) => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#E8453C' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={active ? '#EE5C55' : '#B5B0A8'} strokeWidth="1.8" strokeLinecap="round">
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
@@ -82,41 +82,30 @@ export default function MobileTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 md:hidden"
+      className="fixed md:hidden glass-pill-v4"
       style={{
+        left: 12,
+        right: 12,
+        bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
         height: TAB_BAR_HEIGHT,
         zIndex: 50,
-        background: '#FAF7F2',
-        borderTop: '1px solid rgba(0,0,0,0.06)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        borderRadius: 999,
       }}
     >
-      <div className="flex items-start justify-around pt-1.5 px-3 max-w-md mx-auto">
+      <div className="flex items-center justify-around h-full px-3 max-w-md mx-auto">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={tab.onClick}
-            className="flex flex-col items-center gap-1 flex-1 relative"
+            className="flex flex-col items-center gap-0.5 flex-1 relative py-1.5"
             style={{
               WebkitTapHighlightColor: 'transparent',
               touchAction: 'manipulation',
+              borderRadius: 999,
+              background: tab.active ? 'rgba(238,92,85,0.12)' : 'transparent',
+              transition: 'background 0.2s',
             }}
           >
-            {tab.active && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: -6,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 20,
-                  height: 3,
-                  borderRadius: '0 0 3px 3px',
-                  background: '#E8453C',
-                }}
-              />
-            )}
-
             <div className="relative">
               <tab.icon active={tab.active} />
               {tab.badge > 0 && (
@@ -128,14 +117,14 @@ export default function MobileTabBar() {
                     width: 16,
                     height: 16,
                     borderRadius: '50%',
-                    background: '#E8453C',
+                    background: '#EE5C55',
                     color: '#fff',
                     fontSize: 9,
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 2px 6px rgba(232,69,60,0.4)',
+                    boxShadow: '0 2px 6px rgba(238,92,85,0.4)',
                   }}
                 >
                   {tab.badge > 9 ? '9+' : tab.badge}
@@ -146,7 +135,7 @@ export default function MobileTabBar() {
               style={{
                 fontSize: 11,
                 fontWeight: tab.active ? 700 : 500,
-                color: tab.active ? '#E8453C' : '#B5B0A8',
+                color: tab.active ? '#EE5C55' : '#B5B0A8',
                 letterSpacing: 0.3,
               }}
             >
