@@ -2363,8 +2363,8 @@ function RangePicker({ range, onChange }) {
             padding: '0 14px',
             minWidth: 52,
             borderRadius: 12,
-            border: isCustom ? '1px solid #22181C' : '1px solid var(--color-line)',
-            background: isCustom ? 'var(--color-ink)' : '#fff',
+            border: isCustom ? '1px solid var(--color-ink)' : '1px solid var(--color-line)',
+            background: isCustom ? 'var(--color-ink)' : 'var(--color-card)',
             color: isCustom ? '#fff' : 'var(--color-ink)',
             cursor: 'pointer',
             fontSize: 14,
@@ -3015,9 +3015,9 @@ function ActiveDiscountCard({ discount }) {
   return (
     <div
       style={{
-        background: 'linear-gradient(135deg, #22181C 0%, #3A2A30 100%)',
+        background: 'linear-gradient(135deg, var(--color-ink) 0%, #3A2A30 100%)',
         color: '#fff',
-        borderRadius: 18,
+        borderRadius: 'var(--radius-lg)',
         padding: 18,
         marginBottom: 16,
       }}
