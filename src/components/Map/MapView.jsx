@@ -21,25 +21,39 @@ function ensureStyles() {
   s.id = STYLE_ID
   s.textContent = `
     .cb-marker {
-      /* Only opacity here — Mapbox owns the transform (position). */
       will-change: opacity;
     }
-    /* Hidden = invisible but keep Mapbox's transform intact */
-    .cb-marker--hidden { opacity: 0; }
-    /* Crossfade: transition ONLY opacity so Mapbox pan/zoom doesn't animate */
-    .cb-marker--fade {
-      transition: opacity ${CROSSFADE_MS}ms ease;
+    /* New markers: start invisible, full size */
+    .cb-marker--hidden {
+      opacity: 0;
+      transform: scale(0.85);
     }
-    .cb-marker--exit { opacity: 0; pointer-events: none; }
-    .cb-marker--show, .cb-marker--visible { opacity: 1; }
-
-    /* Scale / hover effects live on the inner element, never on .cb-marker. */
-    .cb-inner {
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    /* Crossfade transition (applied to both old and new) */
+    .cb-marker--fade {
+      transition: opacity ${CROSSFADE_MS}ms ease, transform ${CROSSFADE_MS}ms ease;
+    }
+    /* Exit: fade to invisible */
+    .cb-marker--exit {
+      opacity: 0;
+      transform: scale(0.85);
+      pointer-events: none;
+    }
+    /* Enter: fade to visible */
+    .cb-marker--show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    /* Instant (no animation) */
+    .cb-marker--visible {
+      opacity: 1;
+      transform: scale(1);
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
       box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(238, 92, 85,0.5);
+    }
+    .cb-inner {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .cb-marker:hover .cb-inner { transform: scale(1.15); }
     .cb-marker:active .cb-inner { transform: scale(0.92); }
@@ -86,15 +100,13 @@ function createPinEl(restaurant, isSaved, discountValue) {
   wrap.style.cssText = 'cursor:pointer;pointer-events:auto;'
 
   const inner = document.createElement('div')
-  // No bounce animation — pins stay static.
-  inner.className = 'cb-inner'
+  inner.className = 'cb-inner cb-inner--bounce'
   inner.style.cssText = `
     width:44px;height:44px;border-radius:50%;
-    background:${pinColor};
+    background:${pinColor};opacity:0.85;
     display:flex;align-items:center;justify-content:center;
     font-size:18px;position:relative;user-select:none;
-    border:2px solid #fff;
-    box-shadow:0 2px 4px rgba(0,0,0,0.2);
+    box-shadow:0 4px 16px rgba(${rgb},0.4), 0 0 0 3px rgba(${rgb},0.15);
   `
   inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 
