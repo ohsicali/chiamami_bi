@@ -54,7 +54,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
                 Sei sicuro?
               </h3>
               <p style={{ fontSize: 13, color: 'var(--color-ink-55)', marginTop: 8, lineHeight: 1.5 }}>
-                Tutti i tuoi dati verranno eliminati permanentemente: profilo, salvati, sconti e recensioni.
+                Tutti i tuoi dati verranno eliminati permanentemente: profilo, salvati e sconti.
               </p>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
