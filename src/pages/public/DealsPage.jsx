@@ -340,6 +340,95 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 }
 
 /* ── CompactDealCard — like RestaurantCard default, with discount focus ── */
+/* ── ScHero — featured drop card full-width corallo (mockup §sc-hero) ── */
+function ScHero({ deal, onClaim, claiming, myRedemption, onShowQR }) {
+  const r = deal.restaurant
+  const claimed = deal.claimed_count || deal.total_redeemed || 0
+  const max = deal.max_quantity || deal.max_redemptions || 10
+  const remaining = Math.max(0, max - claimed)
+  const pct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
+  const soldOut = remaining <= 0
+  const alreadyUsed = myRedemption?.status === 'redeemed'
+  const isActive = myRedemption && myRedemption.status !== 'redeemed'
+
+  // Extract big discount label from title (e.g. "-30%" from "Sconto -30% su tutto")
+  const discMatch = (deal.title || '').match(/(-?\d+\s*%)/)
+  const discountBig = discMatch ? discMatch[1].replace(/\s+/g, '') : (deal.title || '').slice(0, 6)
+
+  const cta = alreadyUsed ? 'Già usato'
+    : isActive ? 'Mostra QR'
+    : soldOut ? 'Esaurito'
+    : 'Sblocca sconto'
+  const onCta = () => {
+    if (alreadyUsed || soldOut) return
+    if (isActive) onShowQR(myRedemption)
+    else onClaim(deal)
+  }
+
+  return (
+    <div style={{
+      background: 'var(--color-corallo)', color: '#fff',
+      borderRadius: 28, padding: '18px 18px 16px',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', top: -40, right: -40, width: 160, height: 160,
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,.2), transparent 70%)',
+      }} />
+      <div style={{ position: 'relative' }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '4px 10px', background: 'rgba(255,255,255,.22)',
+          borderRadius: 999, fontSize: 10, fontWeight: 700, letterSpacing: '.1em',
+          marginBottom: 12,
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'cityPulse 1.4s infinite' }} />
+          LIVE · DROP ORA
+        </span>
+        <div style={{
+          fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 56,
+          lineHeight: .95, letterSpacing: '-.03em', marginBottom: 2,
+        }}>{discountBig}</div>
+        <div style={{
+          fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 20,
+          letterSpacing: '-.02em', marginBottom: 6,
+        }}>{r?.name || deal.title}</div>
+        {(r?.neighborhood || r?.address) && (
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)', marginBottom: 14 }}>
+            {r?.neighborhood || r?.address}
+          </div>
+        )}
+        <div style={{
+          background: 'rgba(255,255,255,.2)', height: 6, borderRadius: 999,
+          overflow: 'hidden', marginBottom: 6,
+        }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: '#fff', borderRadius: 999 }} />
+        </div>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: 10, fontWeight: 700, letterSpacing: '.04em', marginBottom: 14,
+        }}>
+          <span>{claimed} SU {max} SBLOCCATI</span>
+          <span>{remaining} rimasti</span>
+        </div>
+        <button
+          onClick={onCta}
+          disabled={claiming || soldOut || alreadyUsed}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '12px 18px', background: 'var(--color-ink)', color: '#fff',
+            borderRadius: 999, fontWeight: 800, fontSize: 14,
+            border: 0, cursor: claiming || soldOut || alreadyUsed ? 'default' : 'pointer',
+            opacity: alreadyUsed || soldOut ? 0.7 : 1,
+          }}
+        >
+          {claiming ? 'Attivazione…' : cta} <span>→</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeatured }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
@@ -383,15 +472,27 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
           Già usato
         </div>
       )}
-      {/* Discount title strip — centered */}
+      {/* cv-banner: green-grad 135deg lime→green (mockup §274-277) */}
       <div style={{
-        background: 'var(--color-corallo)',
-        color: '#fff',
-        fontSize: 11, fontWeight: 800,
-        padding: '5px 14px',
-        textAlign: 'center',
+        height: 46, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 14px',
+        background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
+        color: 'var(--color-ink)',
+        fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em',
       }}>
-        {deal.title}
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {deal.title}
+        </span>
+        {deal.valid_until && (
+          <span style={{
+            flexShrink: 0, marginLeft: 8,
+            fontSize: 10, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase',
+            color: 'var(--color-ink)', background: 'rgba(255,255,255,.55)',
+            padding: '3px 8px', borderRadius: 999,
+          }}>
+            entro {new Date(deal.valid_until).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+          </span>
+        )}
       </div>
 
       <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
@@ -409,11 +510,12 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
 
         {/* Body */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          {/* Name */}
+          {/* Name — Satoshi 800 (v4 §rcard/conv-main) */}
           <h3 style={{
-            fontFamily: "var(--font-sans)", fontWeight: 800,
-            fontSize: 14, fontWeight: 600, color: '#22181C',
-            lineHeight: 1.5, marginBottom: 3,
+            fontFamily: 'var(--font-sans)', fontWeight: 800,
+            fontSize: 16, letterSpacing: '-0.015em',
+            color: 'var(--color-ink)',
+            lineHeight: 1.2, marginBottom: 3,
           }}>{r?.name}</h3>
 
           {/* Tagline */}
@@ -545,8 +647,9 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
       {/* Content — bottom */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
         <h3 style={{
-          fontFamily: "var(--font-sans)", fontWeight: 800,
-          fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.4, marginBottom: 4,
+          fontFamily: 'var(--font-sans)', fontWeight: 800,
+          fontSize: 20, letterSpacing: '-0.02em',
+          color: '#fff', lineHeight: 1.2, marginBottom: 4,
         }}>{r?.name}</h3>
         {r?.tagline && (
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 500, marginBottom: 6 }}>{r.tagline}</p>
@@ -1260,8 +1363,13 @@ export default function DealsPage() {
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>Sconti</div>
-            <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2 }}>{activeDrops.length + regular.length} disponibili</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', color: 'var(--color-ink)', lineHeight: 1 }}>Sconti</div>
+            <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 4 }}>
+              {activeDrops.length > 0 && <>{activeDrops.length} {activeDrops.length === 1 ? 'drop live' : 'drops live'}</>}
+              {activeDrops.length > 0 && (featured.length + regular.length) > 0 && ' · '}
+              {(featured.length + regular.length) > 0 && <>{featured.length + regular.length} convenzion{(featured.length + regular.length) === 1 ? 'e' : 'i'}</>}
+              {activeDrops.length === 0 && (featured.length + regular.length) === 0 && 'Nessuno sconto disponibile'}
+            </div>
           </div>
           <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
             fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
@@ -1340,33 +1448,52 @@ export default function DealsPage() {
 
             {!loading && (
               <>
-                {/* DROP — carosello orizzontale */}
-                {(activeDrops.length > 0 || upcomingDrops.length > 0) && (
-                  <div>
-                    <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
-                      <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
-                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-accent)' }} />
-                        <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-accent)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
-                      </span>
-                      <p style={sectionLabel}>Drop</p>
-                    </div>
-                    <div className="drop-carousel" style={{
-                      display: 'flex', gap: 12, overflowX: 'auto',
-                      scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
-                      paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 18, paddingRight: 18,
-                    }}>
-                      {activeDrops.map(deal => {
-                        const myRedemption = myActive.find(r => r.discount_id === deal.id)
-                          || justClaimed.find(r => r.discount_id === deal.id)
-                          || allMyUsed.find(r => r.discount_id === deal.id)
-                        return <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myRedemption} onShowQR={showMyQR} />
-                      })}
-                      {upcomingDrops.map(deal => (
-                        <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
-                      ))}
-                    </div>
-                  </div>
+                {/* sc-hero: big corallo featured per il PRIMO drop live (mockup §sc-hero) */}
+                {activeDrops.length > 0 && user && (
+                  <ScHero
+                    deal={activeDrops[0]}
+                    onClaim={claimDeal}
+                    claiming={claiming === activeDrops[0].id}
+                    myRedemption={
+                      myActive.find(r => r.discount_id === activeDrops[0].id)
+                        || justClaimed.find(r => r.discount_id === activeDrops[0].id)
+                        || allMyUsed.find(r => r.discount_id === activeDrops[0].id)
+                    }
+                    onShowQR={showMyQR}
+                  />
                 )}
+
+                {/* DROP — carosello orizzontale (esclude il primo se già in sc-hero) */}
+                {(() => {
+                  const carouselDrops = user && activeDrops.length > 0 ? activeDrops.slice(1) : activeDrops
+                  if (carouselDrops.length === 0 && upcomingDrops.length === 0) return null
+                  return (
+                    <div>
+                      <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
+                        <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
+                          <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-accent)' }} />
+                          <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-accent)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
+                        </span>
+                        <p style={sectionLabel}>{user && activeDrops.length > 1 ? 'Altri drop' : 'Drop'}</p>
+                      </div>
+                      <div className="drop-carousel" style={{
+                        display: 'flex', gap: 12, overflowX: 'auto',
+                        scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
+                        paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 18, paddingRight: 18,
+                      }}>
+                        {carouselDrops.map(deal => {
+                          const myRedemption = myActive.find(r => r.discount_id === deal.id)
+                            || justClaimed.find(r => r.discount_id === deal.id)
+                            || allMyUsed.find(r => r.discount_id === deal.id)
+                          return <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myRedemption} onShowQR={showMyQR} />
+                        })}
+                        {upcomingDrops.map(deal => (
+                          <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* SCONTI DISPONIBILI — featured (stella oro) + regular in unico feed */}
                 {(featured.length > 0 || regular.length > 0) && (

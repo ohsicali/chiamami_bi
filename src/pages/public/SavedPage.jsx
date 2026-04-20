@@ -8,7 +8,6 @@ import { supabase, proxyImg } from '../../lib/supabase'
 import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
-import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import FilterChips from '../../components/Layout/FilterChips'
@@ -167,29 +166,36 @@ export default function SavedPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* Sticky Header — logo + border only (mobile only) */}
+      {/* Sticky Header — v4 mobile topbar (mobile only) */}
       <div ref={headerRef} className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
-        padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
+        padding: 'calc(env(safe-area-inset-top, 0px) + 10px) 20px 14px',
         background: 'var(--color-page)',
       }}>
-        <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, color: 'var(--color-ink)', letterSpacing: '-0.02em' }}>
-            Salvati
-          </span>
-          <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
-            fontSize: 12, color: 'var(--color-ink-70)', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
-            background: 'var(--color-ink-05)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
-          }}>
-            <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
-              <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
-              <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-success)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
-            </span>
-            {currentCity.name}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5 }}><path d="M6 9l6 6 6-6"/></svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, color: 'var(--color-ink)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              Salvati
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 4 }}>
+              {cityRestaurants.length} {cityRestaurants.length === 1 ? 'locale' : 'locali'}
+              {dealsCount > 0 && ` · ${dealsCount} con sconto`}
+            </div>
+          </div>
+          <button
+            onClick={() => setCityPickerOpen(true)}
+            aria-label="Cambia città"
+            style={{
+              marginLeft: 'auto', width: 40, height: 40, borderRadius: '50%',
+              background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
+              border: 0, cursor: 'pointer',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
           </button>
         </div>
-        <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
       </div>
 
 
@@ -342,25 +348,73 @@ export default function SavedPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: horizontal RestaurantCard list — renderizzato SOLO su mobile
-                per evitare duplicazione delle card nel DOM (prima convivevano con
-                la grid desktop, moltiplicando il numero di nodi per 2). */}
+            {/* Mobile: sv-grid 2-col (mockup §sv-grid) — renderizzato SOLO su mobile
+                per evitare duplicazione delle card nel DOM. */}
             {!isDesktop && (
-            <div className="flex flex-col gap-3">
-              {displayList.map((r, i) => {
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {displayList.map((r) => {
                 const discount = activeDiscounts[r.id]
+                const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
+                const category = categories[0]
+                const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
+                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
+                const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
                 return (
-                  <RestaurantCard
+                  <div
                     key={r.id}
-                    restaurant={r}
-                    index={i}
-                    userPosition={userLocation}
-                    onClick={handleClick}
-                    saved={isSaved(r.id)}
-                    onSaveToggle={() => handleSave(r.id)}
-                    hasDiscount={!!discount}
-                    discountTitle={discount?.title || discount?.discount_value}
-                  />
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleClick(r)}
+                    style={{
+                      background: '#fff', borderRadius: 14, overflow: 'hidden',
+                      border: '1px solid var(--color-ink-05)', position: 'relative',
+                      cursor: 'pointer', textDecoration: 'none', color: 'inherit',
+                    }}
+                  >
+                    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#ddd', overflow: 'hidden' }}>
+                      {photoUrl ? (
+                        <img src={photoUrl} alt={r.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'var(--color-cream-deep)', opacity: 0.6 }}>
+                          {category?.emoji || '🍽️'}
+                        </div>
+                      )}
+                      {discount && (
+                        <span style={{
+                          position: 'absolute', top: 8, left: 8,
+                          background: 'var(--color-corallo)', color: '#fff',
+                          fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
+                          borderRadius: 999, letterSpacing: '-0.01em',
+                        }}>{discount.title || (discount.discount_value ? `-${discount.discount_value}%` : 'SCONTO')}</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleSave(r.id) }}
+                        aria-label="Rimuovi dai salvati"
+                        style={{
+                          position: 'absolute', top: 8, right: 8,
+                          width: 26, height: 26, borderRadius: '50%',
+                          background: 'var(--color-corallo)', color: '#fff',
+                          display: 'grid', placeItems: 'center', fontSize: 12,
+                          border: 0, cursor: 'pointer',
+                        }}
+                      >♥</button>
+                    </div>
+                    <div style={{ padding: '8px 10px 10px' }}>
+                      <div style={{
+                        fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
+                        letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{r.name}</div>
+                      <div style={{
+                        fontSize: 10.5, color: 'var(--color-ink-70)', marginTop: 3,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {r.neighborhood || r.city}
+                        {priceStr && <> · {priceStr}</>}
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
             </div>

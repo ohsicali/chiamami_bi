@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, cloneElement } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -84,9 +84,206 @@ export default function ProfilePage() {
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   const email = user?.email || ''
-  const initial = displayName.charAt(0).toUpperCase()
+  const initial = (displayName || '?').charAt(0).toUpperCase()
   const createdAt = profile?.created_at ? new Date(profile.created_at) : (user?.created_at ? new Date(user.created_at) : new Date())
   const memberSince = createdAt.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
+
+  // ── Mobile v4 layout — match docs/mockups/v4-mobile-pagine.html §Profilo ──
+  if (!isDesktop) {
+    return (
+      <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}>
+        {/* ── Top bar: titolo "Profilo" + ico-btn impostazioni ── */}
+        <div style={{
+          padding: 'calc(env(safe-area-inset-top, 0px) + 10px) 20px 14px',
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'var(--color-page)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22,
+            letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--color-ink)',
+          }}>
+            Profilo
+          </div>
+          <button
+            onClick={() => navigate('/settings')}
+            aria-label="Impostazioni"
+            style={{
+              marginLeft: 'auto', width: 40, height: 40, borderRadius: '50%',
+              background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
+              border: 0, cursor: 'pointer',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* ── pf-head: avatar gradient + nome + città + Modifica profilo ── */}
+        <div style={{
+          textAlign: 'center', padding: '16px 20px 12px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+        }}>
+          <div style={{
+            width: 88, height: 88, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #F4E7CC, #E8453C)',
+            display: 'grid', placeItems: 'center', color: '#fff',
+            fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 32,
+            letterSpacing: '-0.02em', lineHeight: 1,
+            boxShadow: '0 8px 24px rgba(34,24,28,.08)',
+            border: '3px solid #fff', marginBottom: 6,
+          }}>{initial}</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>
+            {displayName || 'Profilo'}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--color-ink-70)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-corallo)' }} />
+            {currentCity.name}
+          </div>
+          <button
+            onClick={() => navigate('/settings')}
+            style={{
+              marginTop: 6, padding: '7px 14px', background: 'var(--color-ink-05)',
+              borderRadius: 999, fontSize: 12, fontWeight: 700, color: 'var(--color-ink)',
+              border: 0, cursor: 'pointer',
+            }}
+          >Modifica profilo</button>
+        </div>
+
+        {/* ── pf-stats: 3-col Salvati / Sconti usati / Visitati ── */}
+        <div style={{ margin: '14px 16px 0', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {[
+            { num: stats.savedCount, lbl: 'Salvati', onClick: () => navigate('/saved') },
+            { num: stats.redemptionsCount, lbl: 'Sconti usati', accent: true, onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
+            { num: stats.redemptionsCount, lbl: 'Visitati', onClick: null },
+          ].map((s, i) => (
+            <button
+              key={i}
+              onClick={s.onClick || undefined}
+              disabled={!s.onClick}
+              style={{
+                background: '#fff', border: '1px solid var(--color-ink-05)',
+                borderRadius: 14, padding: '14px 10px', textAlign: 'center',
+                cursor: s.onClick ? 'pointer' : 'default',
+              }}
+            >
+              <div style={{
+                fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24,
+                letterSpacing: '-0.02em', lineHeight: 1,
+                color: s.accent ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
+              }}>{s.num}</div>
+              <div style={{
+                fontSize: 10.5, color: 'var(--color-ink-70)', marginTop: 5,
+                fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase',
+              }}>{s.lbl}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* ── pf-quote: editorial Caveat (bio Bi) ── */}
+        <div style={{
+          margin: '16px 16px 0', padding: '16px 18px',
+          background: 'var(--color-oro-soft, #F4E7CC)',
+          border: '1px solid rgba(176,137,84,.3)', borderRadius: 14,
+        }}>
+          <div style={{ fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 19, lineHeight: 1.25, color: 'var(--color-ink)' }}>
+            "Bi sceglie i posti come li sceglierei io: per come si mangia, non per quante stelle hanno."
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 6, fontWeight: 700 }}>
+            — dalla bio di Bi
+          </div>
+        </div>
+
+        {/* ── SEC: Il mio account ── */}
+        <PfSec>Il mio account</PfSec>
+        <PfList>
+          <PfItem
+            onClick={() => navigate('/settings')}
+            icon={<svg viewBox="0 0 24 24"><path d="M12 2l3 6 6.5 1-5 4.5 1.5 6.5L12 17l-6 3 1.5-6.5L2.5 9 9 8z"/></svg>}
+            label="Preferenze"
+            sub="Cucina, momenti, fascia prezzo"
+          />
+          <PfItem
+            onClick={() => navigate('/settings')}
+            icon={<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>}
+            label="Notifiche"
+            sub="Nuovi drop, aggiunte in zona"
+          />
+          <PfItem
+            onClick={() => setCityPickerOpen(true)}
+            icon={<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>}
+            label="Città"
+            sub={`${currentCity.name} · Bi è qui`}
+          />
+        </PfList>
+
+        {/* ── SEC: Contribuisci ── */}
+        <PfSec>Contribuisci</PfSec>
+        <PfList>
+          <PfItem
+            onClick={() => setShowSuggest(true)}
+            icVariant="cor"
+            icon={<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>}
+            label="Suggerisci un locale"
+            sub="Bi ci va a mangiare. Se è buono, entra."
+          />
+          <PfItem
+            onClick={() => navigate('/partner')}
+            icVariant="oro"
+            icon={<svg viewBox="0 0 24 24"><path d="M3 9h18M3 15h18M8 3v18M16 3v18"/></svg>}
+            label="Per i locali"
+            sub="Vuoi lanciare un drop?"
+          />
+          <PfItem
+            onClick={handleShare}
+            icon={<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>}
+            label="Invita un amico"
+            sub="Condividi La Guida di Bi"
+          />
+        </PfList>
+
+        {/* ── SEC: Altro ── */}
+        <PfSec>Altro</PfSec>
+        <PfList>
+          <PfItem
+            onClick={() => navigate('/about')}
+            icon={<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>}
+            label="Come scelgo i locali"
+          />
+          <PfItem
+            onClick={() => { window.location.href = 'mailto:hello@chiamamibi.com' }}
+            icon={<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8"/></svg>}
+            label="Contatti"
+          />
+          <PfItem
+            onClick={() => navigate('/privacy')}
+            icon={<svg viewBox="0 0 24 24"><path d="M12 1l9 4v6c0 5-3.5 9.5-9 11-5.5-1.5-9-6-9-11V5z"/></svg>}
+            label="Privacy"
+          />
+          <PfItem
+            onClick={handleLogout}
+            danger
+            icon={<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
+            label="Esci"
+          />
+        </PfList>
+
+        {/* ── Versione ── */}
+        <div style={{
+          textAlign: 'center', padding: `18px 18px ${TAB_BAR_HEIGHT + 16}px`,
+          fontSize: 10, color: 'rgba(34,24,28,.4)', letterSpacing: '.06em',
+        }}>
+          v4.0 · La Guida di Bi
+        </div>
+
+        {showSuggest && (
+          <SuggestRestaurantSheet userId={user?.id} onClose={() => setShowSuggest(false)} />
+        )}
+        <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}>
@@ -537,5 +734,67 @@ export default function ProfilePage() {
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
     </div>
+  )
+}
+
+// ── pf-list helpers (mobile v4) ──
+function PfSec({ children }) {
+  return (
+    <div style={{
+      padding: '18px 20px 6px', fontSize: 10, fontWeight: 800,
+      letterSpacing: '.12em', color: 'rgba(34,24,28,.4)', textTransform: 'uppercase',
+    }}>{children}</div>
+  )
+}
+
+function PfList({ children }) {
+  return (
+    <div style={{
+      margin: '0 16px', background: '#fff',
+      border: '1px solid var(--color-ink-05)', borderRadius: 14, overflow: 'hidden',
+    }}>{children}</div>
+  )
+}
+
+function PfItem({ icon, label, sub, onClick, icVariant, danger }) {
+  const icBg = icVariant === 'cor' ? 'var(--color-corallo-soft)'
+    : icVariant === 'oro' ? 'var(--color-oro-soft, #F4E7CC)'
+    : 'var(--color-ink-05)'
+  const icColor = icVariant === 'cor' ? 'var(--color-corallo-ink)'
+    : icVariant === 'oro' ? 'var(--color-oro)'
+    : 'var(--color-ink)'
+  // icon is a <svg viewBox="0 0 24 24"> with path children — clone with sizing + stroke attrs
+  const sizedIcon = icon ? cloneElement(icon, {
+    width: 14, height: 14, fill: 'none', stroke: 'currentColor',
+    strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round',
+  }) : null
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+        padding: '14px 16px', background: 'transparent', border: 0,
+        borderBottom: '1px solid var(--color-ink-05)', cursor: 'pointer',
+        textAlign: 'left', fontFamily: 'inherit',
+      }}
+    >
+      <span style={{
+        width: 32, height: 32, borderRadius: 10, background: icBg,
+        display: 'grid', placeItems: 'center', color: icColor, flexShrink: 0,
+      }}>{sizedIcon}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          display: 'block', fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em',
+          color: danger ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
+        }}>{label}</span>
+        {sub && (
+          <span style={{ display: 'block', fontSize: 11, color: 'var(--color-ink-70)', marginTop: 1, fontWeight: 500 }}>
+            {sub}
+          </span>
+        )}
+      </span>
+      {!danger && <span style={{ color: 'rgba(34,24,28,.4)', fontSize: 14 }}>›</span>}
+    </button>
   )
 }
