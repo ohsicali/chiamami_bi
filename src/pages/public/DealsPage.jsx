@@ -152,8 +152,8 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
       <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div className="flex items-center gap-2 justify-center" style={{ marginBottom: 8 }}>
           <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
-            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#fff',
+            background: 'var(--color-corallo)',
             borderRadius: 7, padding: '2px 8px', flexShrink: 0,
           }}>{deal.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
@@ -357,18 +357,16 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
       filter: alreadyUsed ? 'grayscale(0.7)' : 'none',
       transition: 'opacity 0.6s ease, filter 0.6s ease',
     }}>
-      {/* Featured star badge — top-right (hidden when already used, which takes that slot) */}
+      {/* Featured badge — top-right (hidden when already used, which takes that slot) */}
       {isFeatured && !alreadyUsed && (
         <div style={{
           position: 'absolute', top: 10, right: 10, zIndex: 3,
-          width: 26, height: 26, borderRadius: '50%',
-          background: '#B08954',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--color-oro)', color: '#fff',
+          fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+          padding: '4px 9px', borderRadius: 999,
           boxShadow: '0 2px 6px rgba(176,137,84,0.4)',
         }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
-          </svg>
+          Top
         </div>
       )}
       {alreadyUsed && (
@@ -387,8 +385,8 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
       )}
       {/* Discount title strip — centered */}
       <div style={{
-        background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
-        color: '#1a2e05',
+        background: 'var(--color-corallo)',
+        color: '#fff',
         fontSize: 11, fontWeight: 800,
         padding: '5px 14px',
         textAlign: 'center',
@@ -500,18 +498,18 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
           </div>
         ) : (
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#B08954', color: '#fff',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'var(--color-oro)', color: '#fff',
             fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
             padding: '5px 12px', borderRadius: 10,
           }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />
             In evidenza
           </div>
         )}
         <div style={{
-          background: alreadyUsed ? '#9ca3af' : 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
-          color: alreadyUsed ? '#fff' : '#000',
+          background: alreadyUsed ? '#9ca3af' : 'var(--color-corallo)',
+          color: '#fff',
           fontSize: 11, fontWeight: 700,
           padding: '5px 12px', borderRadius: 10,
           textDecoration: alreadyUsed ? 'line-through' : 'none',
@@ -610,8 +608,8 @@ function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
         }}>{r?.name}</h4>
         <div className="flex items-center gap-2">
           <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
-            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
+            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#fff',
+            background: 'var(--color-corallo)',
             borderRadius: 8, padding: '2px 8px', flexShrink: 0,
           }}>{deal?.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
@@ -852,8 +850,8 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           {/* Discount tag + title */}
           <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
             <span style={{
-              display: 'inline-block', fontSize: 13, fontWeight: 800, color: '#1a2e05',
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
+              display: 'inline-block', fontSize: 13, fontWeight: 800, color: '#fff',
+              background: 'var(--color-corallo)',
               borderRadius: 8, padding: '3px 12px',
             }}>{deal?.discount_value}</span>
             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title}</span>
@@ -941,7 +939,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           ) : !soldOut && myRedemption ? (
             <motion.button whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} onClick={() => onShowQR(myRedemption)} style={{
               width: '100%', padding: '16px 0', borderRadius: 16,
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#1a2e05',
+              background: 'var(--color-corallo)', color: '#fff',
               fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>

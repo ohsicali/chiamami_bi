@@ -202,6 +202,30 @@ PR: #69 (draft). Branch: `v4/track-b-reskin`.
 - (opzionale) Route rename `/deals`→`/sconti`, `/saved`→`/salvati`, ecc. —
   SEO-risky, rimandato
 
+### ✅ Completato — sessione pomeriggio 2026-04-20 (continuazione)
+
+Commit range: `67160e4…7987496`
+
+- **PIN digits** ora in Alfa Slab One (handoff §3 rule 1: SOLO wordmark
+  + 6 PIN). Font fallback: Georgia, serif.
+- **Secondo Bi**: rimosso sottotitolo hardcoded "La mia opinione".
+  Ora è solo eyebrow corallo-ink + paragrafo + firma Caveat.
+- **Service Worker offline base** (`public/sw.js`): precache shell,
+  network-first navigation con fallback cache, cache-first `/assets/`,
+  SWR immagini/font. Bypass `/api/` e cross-origin. Push notifications
+  invariate.
+- **DiscountManager**: rimosso char ★ da badge "Evidenza" e
+  "In evidenza" (hard rule §5.2).
+- **RestaurantSheet**: 2 star SVG icons in "Sconto esclusivo da Bi"
+  sostituiti con dot verde + glow.
+- **LoginPage "Scopri Bi"**: ricostruito grid 2-col con emoji + title
+  + subtitle secondo `v4-mobile-auth.html` lines 225-238.
+- **AdminDashboard**: `#1a1a1f` → `var(--color-ink)`; `rgba(196,162,101,*)`
+  → `rgba(176,137,84,*)`.
+- **Bulk sweep** `rgba(196,162,101,*)` → `rgba(176,137,84,*)` su
+  globals.css (keyframes hero-pulse), RestaurantCard, AdminRestaurants,
+  AboutPage, DealsPage, HomePage, PartnerLandingPage.
+
 ### ✅ Completato — sessione mattutina 2026-04-20
 
 Commit range: `72a556f…e2114bb…` (PR #69)

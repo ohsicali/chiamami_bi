@@ -873,7 +873,7 @@ export default function RestaurantSheet({
                           disabled={inlineGenerating || inlineRedemptionLoading}
                           style={{
                             width: '100%', padding: '14px 20px', borderRadius: 12,
-                            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
+                            background: 'var(--color-corallo)', color: '#fff', border: 'none',
                             fontSize: 15, fontWeight: 700, cursor: 'pointer',
                             opacity: inlineGenerating ? 0.5 : 1,
                           }}
@@ -1118,7 +1118,7 @@ export default function RestaurantSheet({
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
                           width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
+                          background: 'var(--color-corallo)', color: '#fff', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
                           position: 'relative', zIndex: 2,
                         }}
