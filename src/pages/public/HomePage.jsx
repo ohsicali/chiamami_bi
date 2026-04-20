@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
@@ -10,7 +10,7 @@ import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import Navbar from '../../components/Layout/Navbar'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
-import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -36,6 +36,7 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
+/* esp-caro-card: grid 96px 1fr auto, photo 96×88, Satoshi 800 name, category pill, → arrow */
 function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
@@ -57,83 +58,73 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       onClick={() => onClick?.(restaurant)}
       className="flex-shrink-0"
       style={{
-        width: 260,
-        scrollSnapAlign: 'start',
-        borderRadius: 14,
-        background: '#FAF7F2',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        flex: '0 0 82%',
+        scrollSnapAlign: 'center',
+        borderRadius: 16,
+        background: '#fff',
+        boxShadow: '0 4px 16px rgba(34,24,28,.14)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        position: 'relative',
+        display: 'grid',
+        gridTemplateColumns: '96px 1fr auto',
+        gap: 12,
+        padding: 10,
+        alignItems: 'center',
       }}
     >
-      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
-        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-          {photoUrl ? (
-            <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-              {category?.emoji || '🍽️'}
-            </div>
-          )}
-          {discountTitle && (
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: 'var(--color-corallo)', color: '#fff',
-              fontSize: 8, fontWeight: 700, textAlign: 'center',
-              padding: '2px 0',
-            }}>
-              {discountTitle}
-            </div>
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
-          <div style={{
-            fontFamily: 'var(--font-sans)', fontWeight: 800,
-            fontSize: 15, letterSpacing: '-0.015em',
-            color: 'var(--color-ink)',
-            lineHeight: 1.15, marginBottom: 3,
-            whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-            overflow: 'hidden',
-          }}>
-            {restaurant.name}
-          </div>
-          {restaurant.tagline && (
-            <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-              {restaurant.tagline}
-            </div>
-          )}
-          {/* Category + price */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-            {category && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 2,
-                backgroundColor: `${category.color}20`,
-                color: category.color,
-                fontSize: 9, fontWeight: 600,
-                padding: '1px 6px', borderRadius: 12,
-                whiteSpace: 'nowrap',
-              }}>
-                {category.emoji} {category.name}
-              </span>
-            )}
-            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
-          </div>
-          {/* Distance below category */}
-          {distance != null && (
-            <div style={{ fontSize: 10, color: '#8A8680', fontWeight: 500 }}>
-              {formatDistance(distance)}
-            </div>
-          )}
-        </div>
-        {onSave && (
-          <div style={{ position: 'absolute', top: 6, right: 6 }}>
-            <SaveButton saved={saved} onClick={onSave} size="xs" />
+      {/* Photo 96×88 */}
+      <div style={{ width: 96, height: 88, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+        {photoUrl ? (
+          <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
+            {category?.emoji || '🍽️'}
           </div>
         )}
+        {distance != null && (
+          <div style={{
+            position: 'absolute', bottom: 5, left: 5,
+            background: 'rgba(34,24,28,.8)', color: '#fff',
+            fontSize: 9, fontWeight: 700, padding: '3px 6px', borderRadius: 6, letterSpacing: '0.04em',
+          }}>{formatDistance(distance)}</div>
+        )}
+        {discountTitle && (
+          <div style={{
+            position: 'absolute', top: 5, left: 5,
+            background: 'linear-gradient(135deg,#A3E635,#4ADE80)', color: '#22181C',
+            fontSize: 9.5, fontWeight: 800, padding: '2.5px 6px', borderRadius: 999, letterSpacing: '-0.01em',
+          }}>{discountTitle}</div>
+        )}
       </div>
+
+      {/* Body */}
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontFamily: 'var(--font-sans)', fontWeight: 800,
+          fontSize: 16, letterSpacing: '-0.015em',
+          color: '#22181C', lineHeight: 1.15,
+          whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+        }}>{restaurant.name}</div>
+        <div style={{ fontSize: 11, color: 'rgba(34,24,28,.7)', marginTop: 3, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
+          {category && (
+            <span style={{
+              background: 'rgba(34,24,28,.05)', color: '#22181C',
+              fontWeight: 700, fontSize: 9.5, padding: '2px 6px', borderRadius: 999,
+            }}>{category.emoji} {category.name}</span>
+          )}
+          {priceStr && <span>{priceStr}</span>}
+          {restaurant.neighborhood && <span>{restaurant.neighborhood}</span>}
+        </div>
+      </div>
+
+      {/* Arrow circle */}
+      <div style={{
+        width: 30, height: 30, borderRadius: '50%',
+        background: 'rgba(34,24,28,.05)', color: '#22181C',
+        display: 'grid', placeItems: 'center',
+        fontSize: 14, fontWeight: 800, flexShrink: 0,
+      }}>→</div>
     </div>
   )
 }
@@ -177,6 +168,7 @@ export default function HomePage() {
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [sheetFiltersSticky, setSheetFiltersSticky] = useState(false)
   const sheetFiltersRef = useRef(null)
+  const [activeCatFilter, setActiveCatFilter] = useState(null)
   const displayedRestaurants = showDealsOnly
     ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
     : restaurants
@@ -230,6 +222,24 @@ export default function HomePage() {
 
   const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
+
+  // Count per category from all restaurants (for filter chip counts)
+  const catCounts = useMemo(() => {
+    const counts = {}
+    allRestaurants.forEach(r => {
+      const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+      cats.forEach(c => { counts[c] = (counts[c] || 0) + 1 })
+    })
+    return counts
+  }, [allRestaurants])
+
+  // Top 6 categories by count
+  const topCats = useMemo(() => {
+    return Object.entries(catCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, count]) => ({ ...getCategoryInfo(name), name, count }))
+  }, [catCounts])
 
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -458,93 +468,134 @@ export default function HomePage() {
       {!isDesktop && (
       <div>
 
-        {/* === Floating "Lista" pill === */}
-        {!hideBottomPanel && viewportRestaurants.length > 0 && (
-          <button
-            onClick={openSheet}
-            className="glass-pill-v4-dark"
-            style={{
-              position: 'absolute', bottom: TAB_BAR_HEIGHT + 120, left: '50%',
-              transform: 'translateX(-50%)', zIndex: 10,
-              borderRadius: 999,
-              padding: '10px 20px', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 7,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Lista</span>
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>·</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{viewportRestaurants.length}</span>
-          </button>
-        )}
-
-        {/* === Mini cards carousel on map === */}
-        {!hideBottomPanel && carouselRestaurants.length > 0 && (
-          <div
-            style={{
-              position: 'absolute', bottom: TAB_BAR_HEIGHT + 16, left: 0, right: 0,
-              zIndex: 5, pointerEvents: 'auto',
-            }}
-          >
-            <div
-              className="flex items-end gap-2.5 overflow-x-auto carousel-scroll"
+        {/* === Floating category filter chips (esp-filters) === */}
+        {!hideBottomPanel && (
+          <div style={{
+            position: 'absolute',
+            top: 'calc(env(safe-area-inset-top, 0px) + 68px)',
+            left: 0, right: 0,
+            zIndex: 25,
+            display: 'flex', gap: 6, overflowX: 'auto',
+            padding: '0 12px',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+          }}>
+            <style>{`.esp-filters-row::-webkit-scrollbar{display:none}`}</style>
+            {/* Tutti chip */}
+            <button
+              onClick={() => { setActiveCatFilter(null); setFilters(f => ({ ...f, category: null })) }}
               style={{
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none', msOverflowStyle: 'none',
-                paddingBottom: 4,
+                flex: '0 0 auto',
+                background: activeCatFilter === null ? '#22181C' : 'rgba(255,255,255,.94)',
+                backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                borderRadius: 999, padding: '7px 12px',
+                fontSize: 12, fontWeight: 700,
+                color: activeCatFilter === null ? '#fff' : '#22181C',
+                boxShadow: '0 2px 8px rgba(34,24,28,.12)',
+                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                display: 'inline-flex', alignItems: 'center', gap: 5,
               }}
             >
-              <style>{`.carousel-scroll::-webkit-scrollbar{display:none}`}</style>
-              {carouselRestaurants.map((r, i) => (
-                <div key={r.id} className="flex-shrink-0" style={i === 0 ? { marginLeft: 16 } : undefined}>
-                  <MiniCard
-                    restaurant={r}
-                    userPosition={position}
-                    discountTitle={discountLabelMap[r.id]}
-                    saved={isSaved(r.id)}
-                    onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
-                    onClick={handleCardClick}
-                  />
-                </div>
-              ))}
-              {viewportRestaurants.length > CAROUSEL_MAX && (
+              Tutti
+              <span style={{
+                fontSize: 9.5, fontWeight: 800,
+                background: activeCatFilter === null ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
+                color: activeCatFilter === null ? '#fff' : '#22181C',
+                padding: '1.5px 5px', borderRadius: 999,
+              }}>{allRestaurants.length}</span>
+            </button>
+            {topCats.map(cat => (
+              <button
+                key={cat.name}
+                onClick={() => {
+                  const next = activeCatFilter === cat.name ? null : cat.name
+                  setActiveCatFilter(next)
+                  setFilters(f => ({ ...f, category: next }))
+                }}
+                style={{
+                  flex: '0 0 auto',
+                  background: activeCatFilter === cat.name ? '#22181C' : 'rgba(255,255,255,.94)',
+                  backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                  borderRadius: 999, padding: '7px 12px',
+                  fontSize: 12, fontWeight: 700,
+                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
+                  boxShadow: '0 2px 8px rgba(34,24,28,.12)',
+                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                }}
+              >
+                {cat.emoji} {cat.name}
+                <span style={{
+                  fontSize: 9.5, fontWeight: 800,
+                  background: activeCatFilter === cat.name ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
+                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
+                  padding: '1.5px 5px', borderRadius: 999,
+                }}>{cat.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* === esp-bottom: Lista pill + carousel === */}
+        {!hideBottomPanel && (viewportRestaurants.length > 0 || carouselRestaurants.length > 0) && (
+          <div
+            style={{
+              position: 'absolute', left: 0, right: 0,
+              bottom: TAB_BAR_HEIGHT + 8,
+              zIndex: 35, pointerEvents: 'none',
+            }}
+          >
+            {/* Lista pill */}
+            {viewportRestaurants.length > 0 && (
+              <button
+                onClick={openSheet}
+                style={{
+                  display: 'flex', margin: '0 auto 10px', pointerEvents: 'auto',
+                  background: '#22181C', color: '#fff',
+                  fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em',
+                  padding: '10px 18px', borderRadius: 999, border: 0,
+                  cursor: 'pointer', boxShadow: '0 4px 16px rgba(34,24,28,.28)',
+                  alignItems: 'center', gap: 8,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                Lista
+                <span style={{
+                  fontSize: 11, fontWeight: 700,
+                  background: 'rgba(255,255,255,.18)',
+                  padding: '2px 7px', borderRadius: 999, letterSpacing: '0.02em',
+                }}>{viewportRestaurants.length}</span>
+              </button>
+            )}
+
+            {/* Carousel */}
+            {carouselRestaurants.length > 0 && (
+              <div style={{ pointerEvents: 'auto' }}>
                 <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={openSheet}
-                  className="flex-shrink-0 flex flex-col items-center justify-center"
                   style={{
-                    width: 72, height: 88, scrollSnapAlign: 'start', borderRadius: 14,
-                    marginRight: 16,
-                    background: 'rgba(0,0,0,0.45)',
-                    backdropFilter: 'blur(20px) saturate(1.6)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    cursor: 'pointer',
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.1)',
-                    gap: 6,
+                    display: 'flex', gap: 10, overflowX: 'auto',
+                    padding: '0 14px 6px',
+                    WebkitOverflowScrolling: 'touch',
+                    scrollSnapType: 'x mandatory',
+                    scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
-                  <span style={{
-                    width: 30, height: 30, borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>
-                    {viewportRestaurants.length} locali
-                  </span>
+                  <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}`}</style>
+                  {carouselRestaurants.map((r) => (
+                    <MiniCard
+                      key={r.id}
+                      restaurant={r}
+                      userPosition={position}
+                      discountTitle={discountLabelMap[r.id]}
+                      onClick={handleCardClick}
+                    />
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
