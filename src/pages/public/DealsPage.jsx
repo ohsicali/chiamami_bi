@@ -89,6 +89,75 @@ function getPhoto(restaurant) {
   return proxyImg(p?.thumb_url || p?.photo_url || null)
 }
 
+/* ── DropMini — drop-mini compatto orizzontale (mockup §drops-row + .drop-mini) */
+function DropMini({ deal, onTap, kind = 'live' }) {
+  const r = deal.restaurant
+  const photo = getPhoto(r)
+  const time = useCountdown(deal.drop_ends_at || deal.drop_starts_at || deal.valid_until)
+  const endsAt = deal.drop_ends_at || deal.valid_until
+  const startsAt = deal.drop_starts_at || deal.drop_time
+  const timer = (() => {
+    if (kind === 'upcoming' && startsAt) {
+      const d = new Date(startsAt)
+      const now = new Date()
+      const isToday = d.toDateString() === now.toDateString()
+      const tt = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+      return isToday ? `oggi alle ${tt}` : `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} ${tt}`
+    }
+    if (endsAt) {
+      const tt = new Date(endsAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+      return `entro le ${tt}`
+    }
+    if (time) return `${time.h}h ${pad(time.m)}m`
+    return null
+  })()
+  const cuisine = r?.category?.[0] || r?.cuisine_type || null
+  return (
+    <div onClick={() => onTap && onTap(deal)} style={{
+      flex: '0 0 68%', minWidth: 0,
+      background: '#fff', border: '1px solid var(--color-ink-05, rgba(34,24,28,.05))',
+      borderRadius: 14, padding: 12,
+      display: 'flex', gap: 10, alignItems: 'center',
+      boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
+      cursor: 'pointer', scrollSnapAlign: 'start',
+    }}>
+      <div style={{ width: 54, height: 54, flex: '0 0 54px', borderRadius: 10, overflow: 'hidden', background: '#ddd' }}>
+        {photo ? (
+          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: 'var(--color-cream-deep, #F1EBE0)', fontSize: 22 }}>🍽️</div>
+        )}
+      </div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <span style={{
+            background: 'var(--color-corallo-soft, rgba(232,69,60,.08))',
+            color: 'var(--color-corallo-ink, #C6372F)',
+            fontWeight: 800, fontSize: 11, padding: '3px 7px',
+            borderRadius: 999, letterSpacing: '-0.01em',
+          }}>{deal.discount_value}</span>
+          {timer && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-ink-40, rgba(34,24,28,.4))', letterSpacing: '.04em' }}>
+              {timer}
+            </span>
+          )}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 14,
+          letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{r?.name}</div>
+        <div style={{
+          fontSize: 11, color: 'var(--color-ink-70, rgba(34,24,28,.7))', marginTop: 1,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {r?.neighborhood || r?.city}{cuisine ? ` · ${cuisine}` : ''}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── LiveDropCard — carousel 260px, bordo accent ── */
 function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
@@ -432,132 +501,96 @@ function ScHero({ deal, onClaim, claiming, myRedemption, onShowQR }) {
   )
 }
 
-function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeatured }) {
+function CompactDealCard({ deal, onTap, alreadyUsed }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const categories = (r?.category || (r?.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
   const category = categories[0]
+  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
 
   return (
     <div onClick={() => onTap(deal)} style={{
-      borderRadius: 18, overflow: 'hidden',
+      borderRadius: 14, overflow: 'hidden',
       background: '#fff',
-      border: '1px solid rgba(0,0,0,0.08)',
-      boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+      border: '1px solid var(--color-ink-05, rgba(34,24,28,.05))',
+      boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
       cursor: 'pointer', position: 'relative',
       opacity: alreadyUsed ? 0.55 : 1,
-      filter: alreadyUsed ? 'grayscale(0.7)' : 'none',
-      transition: 'opacity 0.6s ease, filter 0.6s ease',
+      transition: 'opacity 0.6s ease',
     }}>
-      {/* Featured badge — top-right (hidden when already used, which takes that slot) */}
-      {isFeatured && !alreadyUsed && (
-        <div style={{
-          position: 'absolute', top: 10, right: 10, zIndex: 3,
-          background: 'var(--color-oro)', color: '#fff',
-          fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-          padding: '4px 9px', borderRadius: 999,
-          boxShadow: '0 2px 6px rgba(176,137,84,0.4)',
-        }}>
-          Top
-        </div>
-      )}
-      {alreadyUsed && (
-        <div style={{
-          position: 'absolute', top: 10, right: 10, zIndex: 3,
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          background: 'rgba(34,24,28,0.88)', color: '#fff',
-          fontSize: 10, fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase',
-          padding: '4px 9px', borderRadius: 999,
-          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
-          animation: 'usedBadgeIn 0.5s ease',
-        }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          Già usato
-        </div>
-      )}
-      {/* cv-banner: green-grad 135deg lime→green (mockup §274-277) */}
+      {/* cv-banner: green-grad 135° lime→green (mockup §.cv-banner) */}
       <div style={{
         height: 46, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 14px',
-        background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
+        background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
         color: 'var(--color-ink)',
         fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em',
+        position: 'relative',
       }}>
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
           {deal.title}
         </span>
-        {deal.valid_until && (
+        {!alreadyUsed && (
           <span style={{
             flexShrink: 0, marginLeft: 8,
             fontSize: 10, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase',
             color: 'var(--color-ink)', background: 'rgba(255,255,255,.55)',
             padding: '3px 8px', borderRadius: 999,
           }}>
-            entro {new Date(deal.valid_until).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+            {deal.valid_until ? `fino al ${new Date(deal.valid_until).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}` : 'sempre'}
           </span>
+        )}
+        {alreadyUsed && (
+          <span style={{
+            flexShrink: 0, marginLeft: 8,
+            fontSize: 9, fontWeight: 800, letterSpacing: '.06em',
+            color: '#fff', background: 'rgba(34,24,28,.8)',
+            padding: '4px 8px', borderRadius: 999,
+          }}>✓ GIÀ USATO</span>
         )}
       </div>
 
-      <div className="flex w-full items-center gap-3.5" style={{ padding: 14 }}>
-        {/* Photo */}
-        <div style={{ width: 100, height: 100, borderRadius: 14, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }} />
+      {/* conv-main: 54px thumb + body + ink "Usa" pill */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: '54px 1fr auto', gap: 12,
+        alignItems: 'center', padding: '12px 14px',
+      }}>
+        <div style={{ width: 54, height: 54, borderRadius: 10, overflow: 'hidden', background: '#ddd' }}>
           {photo ? (
-            <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, opacity: 0.6 }}>
+            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: 'var(--color-cream-deep, #F1EBE0)', fontSize: 22 }}>
               {category?.emoji || '🍽️'}
             </div>
           )}
         </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          {/* Name — Satoshi 800 (v4 §rcard/conv-main) */}
-          <h3 style={{
-            fontFamily: 'var(--font-sans)', fontWeight: 800,
-            fontSize: 16, letterSpacing: '-0.015em',
-            color: 'var(--color-ink)',
-            lineHeight: 1.2, marginBottom: 3,
-          }}>{r?.name}</h3>
-
-          {/* Tagline */}
-          {r?.tagline && (
-            <p style={{ fontSize: 12, color: '#8A8680', fontWeight: 500, marginBottom: 4 }}>{r.tagline}</p>
-          )}
-
-          {/* Category badge */}
-          {category && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 16,
+            letterSpacing: '-0.015em', lineHeight: 1.2, color: 'var(--color-ink)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>{r?.name}</div>
+          <div style={{
+            fontSize: 11, color: 'var(--color-ink-70, rgba(34,24,28,.7))', marginTop: 2,
+            display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+          }}>
+            {category && (
               <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 3,
-                backgroundColor: `${category.color}20`, color: category.color,
-                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
-              }}>
-                {category.emoji} {category.name}
-              </span>
-            </div>
-          )}
-
-          {/* Recommended + Price row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8A8680', fontWeight: 500 }}>
-            {r?.recommended_for?.length > 0 && (
-              <>
-                <span>{r.recommended_for[0]}</span>
-                {r?.price_range && <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', display: 'inline-block' }} />}
-              </>
+                background: 'var(--color-ink-05, rgba(34,24,28,.05))', color: 'var(--color-ink)',
+                fontWeight: 700, fontSize: 10, padding: '2px 6px', borderRadius: 999,
+              }}>{category.emoji} {category.name}</span>
             )}
-            {r?.price_range && <span style={{ fontWeight: 600 }}>{'€'.repeat(r.price_range)}</span>}
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {r?.neighborhood || r?.city}{priceStr ? ` · ${priceStr}` : ''}
+            </span>
           </div>
         </div>
+        <span style={{
+          fontSize: 12, fontWeight: 800, color: '#fff',
+          background: 'var(--color-ink, #22181C)',
+          padding: '9px 14px', borderRadius: 999, whiteSpace: 'nowrap',
+        }}>{alreadyUsed ? 'Vedi' : 'Usa'}</span>
       </div>
-
-      {/* Heart bottom-right */}
-      {onSaveToggle && (
-        <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
-          <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
-        </div>
-      )}
     </div>
   )
 }
@@ -686,104 +719,119 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
   )
 }
 
-/* ── MyActiveCard — green border, tappable for QR ── */
+/* ── MyActiveCard — mockup .mycard con QR 46x46 checkerboard ── */
 function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
   const deal = redemption.discount
   const r = deal?.restaurant
-  const photo = getPhoto(r)
   return (
-    <div onClick={() => onOpenDeal && onOpenDeal(deal)} className="flex items-center" style={{
-      borderRadius: 16, padding: '14px 12px', gap: 12,
-      background: '#fff', border: '1px solid var(--color-bordo)',
-      cursor: 'pointer',
-    }}>
-      {/* Photo */}
-      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
-        )}
+    <div
+      onClick={e => { e.stopPropagation(); onShowQR(redemption) }}
+      style={{
+        background: '#fff',
+        border: '1px solid var(--color-ink-05, rgba(34,24,28,0.05))',
+        borderRadius: 14,
+        padding: 12,
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        gap: 12,
+        alignItems: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      {/* QR preview — 46x46 repeating-conic-gradient checkerboard */}
+      <div style={{
+        width: 46, height: 46, borderRadius: 10,
+        background: 'repeating-conic-gradient(#22181C 0 25%, #fff 0 50%) 50%/12px 12px',
+        border: '1px solid var(--color-ink-15, rgba(34,24,28,0.15))',
+      }} />
+
+      {/* Body: name + meta + disc pill */}
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 14,
+          letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{r?.name}</div>
+        <div style={{
+          fontSize: 11, color: 'var(--color-ink-70, rgba(34,24,28,0.7))',
+          marginTop: 2,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{deal?.title}</div>
+        <span style={{
+          display: 'inline-block', marginTop: 4,
+          background: 'var(--color-corallo-soft, #FCE0DE)',
+          color: 'var(--color-corallo-ink, #8E2620)',
+          fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
+          borderRadius: 999, letterSpacing: '-0.01em',
+        }}>{deal?.discount_value}</span>
       </div>
 
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <h4 style={{
-          fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 13,
-          color: 'var(--color-primary)', lineHeight: 1.8,
-        }}>{r?.name}</h4>
-        <div className="flex items-center gap-2">
-          <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#fff',
-            background: 'var(--color-corallo)',
-            borderRadius: 8, padding: '2px 8px', flexShrink: 0,
-          }}>{deal?.discount_value}</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
-        </div>
-        {deal?.conditions && (
-          <p style={{ fontSize: 11, color: 'var(--color-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.conditions.split('\n')[0]}</p>
-        )}
-      </div>
-
-      {/* Utilizza button */}
-      <div onClick={e => { e.stopPropagation(); onShowQR(redemption); }} className="flex items-center gap-1" style={{
-        flexShrink: 0,
-        background: 'var(--color-accent)', borderRadius: 10, padding: '6px 10px',
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Utilizza</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
+      {/* State label */}
+      <div style={{
+        fontSize: 10, fontWeight: 800,
+        color: 'var(--color-corallo-ink, #8E2620)',
+        letterSpacing: '0.06em', textTransform: 'uppercase',
+      }}>Attivo</div>
     </div>
   )
 }
 
-/* ── MyUsedCard — faded, strikethrough, not tappable ── */
+/* ── MyUsedCard — mockup .mycard.used ── */
 function MyUsedCard({ redemption, onGoTo }) {
   const deal = redemption.discount
   const r = deal?.restaurant
-  const photo = getPhoto(r)
   const usedDate = redemption.redeemed_at
     ? new Date(redemption.redeemed_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
     : null
 
   return (
-    <div className="flex items-center" style={{
-      borderRadius: 16, padding: '14px 12px', gap: 12,
-      background: '#fff', border: '1px solid var(--color-bordo)',
-      opacity: 0.45,
-    }}>
-      {/* Photo */}
-      <div onClick={() => onGoTo(r)} style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.6)' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: '#F0EBE3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🍽️</div>
-        )}
+    <div
+      onClick={() => onGoTo && onGoTo(r)}
+      style={{
+        background: '#fff',
+        border: '1px solid var(--color-ink-05, rgba(34,24,28,0.05))',
+        borderRadius: 14,
+        padding: 12,
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        gap: 12,
+        alignItems: 'center',
+        opacity: 0.55,
+        cursor: 'pointer',
+      }}
+    >
+      {/* QR preview (faded) */}
+      <div style={{
+        width: 46, height: 46, borderRadius: 10,
+        background: 'repeating-conic-gradient(#22181C 0 25%, #fff 0 50%) 50%/12px 12px',
+        border: '1px solid var(--color-ink-15, rgba(34,24,28,0.15))',
+      }} />
+
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 14,
+          letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{r?.name}</div>
+        <div style={{
+          fontSize: 11, color: 'var(--color-ink-70, rgba(34,24,28,0.7))',
+          marginTop: 2,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{usedDate ? `Usato il ${usedDate}` : deal?.title}</div>
+        <span style={{
+          display: 'inline-block', marginTop: 4,
+          background: 'var(--color-corallo-soft, #FCE0DE)',
+          color: 'var(--color-corallo-ink, #8E2620)',
+          fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
+          borderRadius: 999, letterSpacing: '-0.01em',
+        }}>{deal?.discount_value}</span>
       </div>
 
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <h4 onClick={() => onGoTo(r)} style={{
-          fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 13,
-          color: 'var(--color-secondary)', cursor: 'pointer', lineHeight: 1.2,
-          textDecoration: 'line-through',
-        }}>{r?.name}</h4>
-        <div className="flex items-center gap-2">
-          <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#999',
-            background: '#e5e5e5',
-            borderRadius: 8, padding: '2px 8px', flexShrink: 0,
-            textDecoration: 'line-through',
-          }}>{deal?.discount_value}</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-secondary)', textDecoration: 'line-through', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
-        </div>
-        {usedDate && (
-          <div className="flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-            <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 600 }}>Utilizzato il {usedDate}</span>
-          </div>
-        )}
-      </div>
+      <div style={{
+        fontSize: 10, fontWeight: 800,
+        color: 'var(--color-ink-40, rgba(34,24,28,0.4))',
+        letterSpacing: '0.06em', textTransform: 'uppercase',
+      }}>Usato</div>
     </div>
   )
 }
@@ -1237,7 +1285,7 @@ export default function DealsPage() {
           }
         }
       `}</style>
-      <div className="flex deals-tab-switcher" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
+      <div className="flex deals-tab-switcher" style={{ gap: 6 }}>
         {[
           { key: 'available', label: 'Disponibili', count: activeDrops.length + featured.length + regular.length },
           { key: 'mine', label: 'I miei', count: myActive.length + myUsed.length },
@@ -1249,6 +1297,7 @@ export default function DealsPage() {
             color: tab === t.key ? '#fff' : 'var(--color-ink-70)',
             border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            fontFamily: 'inherit',
           }}>
             {t.label}
             {t.count > 0 && (
@@ -1257,7 +1306,7 @@ export default function DealsPage() {
                 minWidth: 20, height: 20, padding: '0 6px',
                 borderRadius: 999, fontSize: 10.5, fontWeight: 800,
                 background: tab === t.key ? 'rgba(255,255,255,.22)' : 'var(--color-ink, #22181C)',
-                color: tab === t.key ? '#fff' : '#fff',
+                color: '#fff',
               }}>{t.count}</span>
             )}
           </button>
@@ -1498,25 +1547,20 @@ export default function DealsPage() {
                         </div>
                         {carouselDrops.length > 0 && (
                           <span style={{
-                            width: 26, height: 26, borderRadius: '50%',
-                            background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
-                            fontSize: 12, fontWeight: 800, color: 'var(--color-ink)',
+                            fontSize: 11, fontWeight: 700, color: 'var(--color-ink-40, rgba(34,24,28,.4))',
                           }}>{carouselDrops.length}</span>
                         )}
                       </div>
                       <div className="drop-carousel" style={{
-                        display: 'flex', gap: 12, overflowX: 'auto',
+                        display: 'flex', gap: 10, overflowX: 'auto',
                         scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch',
-                        paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 18, paddingRight: 18,
+                        paddingBottom: 4, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16,
                       }}>
-                        {carouselDrops.map(deal => {
-                          const myRedemption = myActive.find(r => r.discount_id === deal.id)
-                            || justClaimed.find(r => r.discount_id === deal.id)
-                            || allMyUsed.find(r => r.discount_id === deal.id)
-                          return <LiveDropCard key={deal.id} deal={deal} onClaim={claimDeal} locked={!user} onLogin={() => navigate('/login')} claiming={claiming === deal.id} myRedemption={myRedemption} onShowQR={showMyQR} />
-                        })}
+                        {carouselDrops.map(deal => (
+                          <DropMini key={deal.id} deal={deal} kind="live" onTap={setSelectedDeal} />
+                        ))}
                         {upcomingDrops.map(deal => (
-                          <UpcomingDropCard key={deal.id} deal={deal} reminded={reminders.includes(deal.id)} onRemind={() => toggleReminder(deal)} locked={!user} onLogin={() => navigate('/login')} />
+                          <DropMini key={deal.id} deal={deal} kind="upcoming" onTap={setSelectedDeal} />
                         ))}
                       </div>
                     </div>
@@ -1532,21 +1576,16 @@ export default function DealsPage() {
                         <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, fontWeight: 500 }}>Senza limite utenti · valide per un periodo</div>
                       </div>
                       <span style={{
-                        width: 26, height: 26, borderRadius: '50%',
-                        background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
-                        fontSize: 12, fontWeight: 800, color: 'var(--color-ink)',
+                        fontSize: 11, fontWeight: 700, color: 'var(--color-ink-40, rgba(34,24,28,.4))',
                       }}>{featured.length + regular.length}</span>
                     </div>
-                    <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
+                    <div className="flex flex-col gap-3 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
                       {featured.map(deal => (
                         <CompactDealCard
                           key={deal.id}
                           deal={deal}
                           onTap={setSelectedDeal}
-                          saved={isSaved(deal.restaurant?.id)}
-                          onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }}
                           alreadyUsed={usedDealIds.has(deal.id)}
-                          isFeatured
                         />
                       ))}
                       {regular.map(deal => (
@@ -1554,8 +1593,6 @@ export default function DealsPage() {
                           key={deal.id}
                           deal={deal}
                           onTap={setSelectedDeal}
-                          saved={isSaved(deal.restaurant?.id)}
-                          onSaveToggle={() => { if (!user) { navigate('/login'); return; } toggleSave(deal.restaurant?.id); }}
                           alreadyUsed={usedDealIds.has(deal.id)}
                         />
                       ))}

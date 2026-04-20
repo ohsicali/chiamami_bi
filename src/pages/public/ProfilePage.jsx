@@ -16,7 +16,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const { savedIds } = useSavedRestaurants(user?.id)
   const [profile, setProfile] = useState(null)
-  const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, totalSaved: 0 })
+  const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, totalSaved: 0, visitedCount: 0 })
   const [showSuggest, setShowSuggest] = useState(false)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [newsletterEnabled, setNewsletterEnabled] = useState(false)
@@ -32,17 +32,19 @@ export default function ProfilePage() {
       .then(({ data }) => { if (data) setProfile(data) })
 
     // Fetch stats
-    supabase.from('discount_redemptions').select('id, discount:discounts(discount_value)', { count: 'exact' }).eq('user_id', user.id).eq('status', 'redeemed')
+    supabase.from('discount_redemptions').select('id, discount:discounts(discount_value, restaurant_id)', { count: 'exact' }).eq('user_id', user.id).eq('status', 'redeemed')
       .then((redemptions) => {
         const redeemed = redemptions.data || []
         const totalSaved = redeemed.reduce((sum, r) => {
           const val = r.discount?.discount_value
           return sum + (typeof val === 'number' ? val : 0)
         }, 0)
+        const distinctRestaurants = new Set(redeemed.map(r => r.discount?.restaurant_id).filter(Boolean))
         setStats({
           savedCount: savedIds.size,
           redemptionsCount: redemptions.count || 0,
           totalSaved,
+          visitedCount: distinctRestaurants.size,
         })
       })
   }, [user?.id, savedIds.size])
@@ -156,7 +158,7 @@ export default function ProfilePage() {
           {[
             { num: stats.savedCount, lbl: 'Salvati', onClick: () => navigate('/saved') },
             { num: stats.redemptionsCount, lbl: 'Sconti usati', accent: true, onClick: () => navigate('/deals', { state: { tab: 'mine' } }) },
-            { num: stats.redemptionsCount, lbl: 'Visitati', onClick: null },
+            { num: stats.visitedCount, lbl: 'Visitati', onClick: null },
           ].map((s, i) => (
             <button
               key={i}
@@ -169,7 +171,7 @@ export default function ProfilePage() {
               }}
             >
               <div style={{
-                fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24,
+                fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22,
                 letterSpacing: '-0.02em', lineHeight: 1,
                 color: s.accent ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
               }}>{s.num}</div>
@@ -234,12 +236,6 @@ export default function ProfilePage() {
             icon={<svg viewBox="0 0 24 24"><path d="M3 9h18M3 15h18M8 3v18M16 3v18"/></svg>}
             label="Per i locali"
             sub="Vuoi lanciare un drop?"
-          />
-          <PfItem
-            onClick={handleShare}
-            icon={<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>}
-            label="Invita un amico"
-            sub="Condividi La Guida di Bi"
           />
         </PfList>
 

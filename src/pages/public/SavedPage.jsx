@@ -33,6 +33,8 @@ export default function SavedPage() {
   const headerRef = useRef(null)
   const [headerH, setHeaderH] = useState(0)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
+  const [sortMode, setSortMode] = useState('recent')
+  const [activeList, setActiveList] = useState('all')
   const { city: currentCity } = useCity()
   const isDesktop = useIsDesktop()
 
@@ -166,7 +168,7 @@ export default function SavedPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* Sticky Header — v4 mobile topbar (mobile only) */}
+      {/* Sticky Header — v4 mobile topbar con dual ico-btn (mobile only) */}
       <div ref={headerRef} className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 10px) 20px 14px',
@@ -182,19 +184,33 @@ export default function SavedPage() {
               {dealsCount > 0 && ` · ${dealsCount} con sconto`}
             </div>
           </div>
-          <button
-            onClick={() => setCityPickerOpen(true)}
-            aria-label="Cambia città"
-            style={{
-              marginLeft: 'auto', width: 40, height: 40, borderRadius: '50%',
-              background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
-              border: 0, cursor: 'pointer',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-            </svg>
-          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setCityPickerOpen(true)}
+              aria-label="Cerca"
+              style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
+                border: 0, cursor: 'pointer',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+            </button>
+            <button
+              aria-label="Opzioni"
+              style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
+                border: 0, cursor: 'pointer',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--color-ink)" stroke="none">
+                <circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -348,12 +364,11 @@ export default function SavedPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: sv-grid 2-col (mockup §sv-grid) — renderizzato SOLO su mobile
-                per evitare duplicazione delle card nel DOM. */}
-            {!isDesktop && (
-            <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {displayList.map((r, idx) => {
+            {/* Mobile: sv-lists chips + sv-head + sv-grid split by sv-note */}
+            {!isDesktop && (() => {
+              const firstChunk = displayList.slice(0, 4)
+              const restChunk = displayList.slice(4)
+              const renderSvCard = (r) => {
                 const discount = activeDiscounts[r.id]
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
                 const category = categories[0]
@@ -417,26 +432,128 @@ export default function SavedPage() {
                     </div>
                   </div>
                 )
-              })}
-            </div>
-            {displayList.length > 0 && (
-              <div style={{
-                margin: '14px 0 0',
-                padding: 14,
-                background: 'var(--color-oro-soft, #F4E7CC)',
-                border: '1px solid rgba(176,137,84,.3)',
-                borderRadius: 14,
-                fontFamily: "'Caveat', cursive",
-                fontSize: 17,
-                lineHeight: 1.25,
-                color: 'var(--color-ink)',
-              }}>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, letterSpacing: '.04em', color: 'var(--color-oro, #B08954)' }}>{'✏︎  '}</span>
-                aggiungi una nota personale ai tuoi salvati per ricordarti perché li hai scelti
-              </div>
-            )}
-            </>
-            )}
+              }
+              const sortLabel = sortMode === 'recent' ? 'Recente' : sortMode === 'name' ? 'Nome' : 'Vicino'
+              const sortSub = sortMode === 'recent' ? 'Ordinati per ultimo aggiunto' : sortMode === 'name' ? 'Ordine alfabetico' : 'Più vicini a te'
+              return (
+                <>
+                  {/* sv-lists chips */}
+                  <div style={{
+                    display: 'flex', gap: 8, overflowX: 'auto',
+                    margin: '0 -16px 10px', padding: '0 16px 4px',
+                    WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none',
+                  }}>
+                    {[
+                      { key: 'all', label: 'Tutti', count: `${cityRestaurants.length} LOCALI` },
+                      { key: 'deals', label: 'Con sconto', count: dealsCount > 0 ? `${dealsCount} ATTIVI` : null },
+                    ].map(l => (
+                      <div
+                        key={l.key}
+                        onClick={() => {
+                          setActiveList(l.key)
+                          if (l.key === 'deals') { setShowDealsOnly(true) }
+                          else { setShowDealsOnly(false) }
+                        }}
+                        style={{
+                          flex: '0 0 auto', padding: '10px 14px',
+                          borderRadius: 14, minWidth: 130,
+                          background: activeList === l.key ? 'var(--color-ink)' : '#fff',
+                          border: '1px solid var(--color-ink-05)',
+                          display: 'flex', flexDirection: 'column', gap: 3, cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{
+                          fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
+                          letterSpacing: '-0.01em',
+                          color: activeList === l.key ? '#fff' : 'var(--color-ink)',
+                        }}>{l.label}</div>
+                        {l.count && (
+                          <div style={{
+                            fontSize: 10, fontWeight: 700, letterSpacing: '.04em',
+                            color: activeList === l.key ? 'rgba(255,255,255,.55)' : 'var(--color-ink-40)',
+                          }}>{l.count}</div>
+                        )}
+                      </div>
+                    ))}
+                    <div
+                      style={{
+                        flex: '0 0 auto', padding: '10px 14px',
+                        borderRadius: 14, minWidth: 100,
+                        background: 'transparent',
+                        border: '1px dashed var(--color-ink-15)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <div style={{
+                        fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
+                        color: 'var(--color-ink)',
+                      }}>+ Nuova lista</div>
+                    </div>
+                  </div>
+
+                  {/* sv-head: title + subtitle + sort */}
+                  <div style={{
+                    padding: '4px 4px 10px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <div>
+                      <h3 style={{
+                        fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18,
+                        letterSpacing: '-0.02em', color: 'var(--color-ink)',
+                      }}>{displayList.length} locali salvati</h3>
+                      <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2 }}>{sortSub}</div>
+                    </div>
+                    <div
+                      onClick={() => {
+                        const next = sortMode === 'recent' ? 'name' : sortMode === 'name' ? 'distance' : 'recent'
+                        setSortMode(next)
+                        if (next === 'distance') handleNearbyClick()
+                        else setFilters(f => ({ ...f, sortBy: null }))
+                      }}
+                      style={{
+                        fontSize: 12, fontWeight: 700, color: 'var(--color-ink)',
+                        display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer',
+                      }}
+                    >
+                      {sortLabel}
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* First grid chunk */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {firstChunk.map(renderSvCard)}
+                  </div>
+
+                  {/* sv-note tra le due griglie */}
+                  {displayList.length > 0 && (
+                    <div style={{
+                      margin: '14px 0 0',
+                      padding: 14,
+                      background: 'var(--color-oro-soft, #F4E7CC)',
+                      border: '1px solid rgba(176,137,84,.3)',
+                      borderRadius: 14,
+                      fontFamily: "'Caveat', cursive",
+                      fontSize: 17,
+                      lineHeight: 1.25,
+                      color: 'var(--color-ink)',
+                    }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, letterSpacing: '.04em', color: 'var(--color-oro, #B08954)' }}>{'✏︎  '}</span>
+                      ricordati: aggiungi una nota ai tuoi salvati per non dimenticare perché li hai scelti, come il piatto preferito o il motivo giusto.
+                    </div>
+                  )}
+
+                  {/* Second grid chunk (if any) */}
+                  {restChunk.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+                      {restChunk.map(renderSvCard)}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
 
             {/* Desktop: vertical photo cards grid (3-col) — renderizzato SOLO su desktop */}
             {isDesktop && (
