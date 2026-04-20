@@ -42,6 +42,16 @@ dove siamo. Aggiorna a ogni step importante.
 - **Backfill Places**: cleanup post-finish rimuovere `api/admin-backfill-places.js`,
   `src/pages/admin/BackfillPlaces.jsx`, rotta in `App.jsx`
 
+## Deviazioni dal brief v4 originale (scelte Augusto)
+
+- **Pin mappa**: `docs/v4-sitemap-reskin.md` §0 dice "pin goccia corallo + B".
+  **Augusto ha scelto**: mantenere i pin v3 (cerchio colorato per cucina + emoji),
+  senza animazione bounce iniziale e con fix transform-transition (stanno fermi sulla mappa).
+  → NON reintrodurre teardrop+B nei prossimi refactor.
+
+- **Gate pagina**: invece della landing "Torniamo presto" (prima bozza),
+  mostra form login inline. Admin-only via `VITE_MAINTENANCE_MODE=true`.
+
 ## Prossimi step
 
 1. Merge PR #66 (C2) dopo CI verde post-rebase
