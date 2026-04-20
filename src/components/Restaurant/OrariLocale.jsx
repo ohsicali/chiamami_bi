@@ -53,29 +53,55 @@ function humanRange(period) {
 }
 
 function computeStatus(data) {
-  const current = data?.currentOpeningHours || data?.regularOpeningHours
-  if (!current) return null
-  const openNow = current.openNow === true
-  const periods = current.periods || []
-  const now = new Date()
-  const todayDow = now.getDay()
-  const nowHM = now.getHours() * 60 + now.getMinutes()
+  // Calcolo sempre in locale (non fidarti di openNow: può essere stale
+  // fino a 24h per via della cache server-side).
+  const source = data?.currentOpeningHours || data?.regularOpeningHours
+  if (!source) return null
+  const periods = source.periods || []
+  if (!periods.length) return null
 
-  let closesAt = null
-  if (openNow) {
-    const todayPeriods = periods.filter(p => p.open?.day === todayDow)
-    for (const p of todayPeriods) {
-      if (!p.close) continue
-      const closeMin = p.close.hour * 60 + (p.close.minute || 0)
-      const openMin = p.open.hour * 60 + (p.open.minute || 0)
-      if (nowHM >= openMin && nowHM < closeMin) {
-        closesAt = formatTime(p.close.hour, p.close.minute)
-        break
+  // Tempo nel fuso del locale via utcOffsetMinutes (se disponibile).
+  const utcOffset = typeof data.utcOffsetMinutes === 'number' ? data.utcOffsetMinutes : null
+  const nowReal = new Date()
+  const local = utcOffset !== null
+    ? new Date(nowReal.getTime() + nowReal.getTimezoneOffset() * 60_000 + utcOffset * 60_000)
+    : nowReal
+  const todayDow = local.getDay()
+  const nowHM = local.getHours() * 60 + local.getMinutes()
+
+  for (const p of periods) {
+    const openDay = p.open?.day
+    if (openDay == null) continue
+    const openMin = (p.open.hour || 0) * 60 + (p.open.minute || 0)
+
+    // 24/7: open senza close
+    if (!p.close) {
+      return { openNow: true, closesAt: null }
+    }
+
+    const closeDay = p.close.day
+    const closeMin = (p.close.hour || 0) * 60 + (p.close.minute || 0)
+    const closeStr = formatTime(p.close.hour, p.close.minute)
+
+    // Periodo nello stesso giorno
+    if (openDay === closeDay) {
+      if (todayDow === openDay && nowHM >= openMin && nowHM < closeMin) {
+        return { openNow: true, closesAt: closeStr }
       }
+      continue
+    }
+    // Periodo che attraversa la mezzanotte (close.day != open.day, es. 22→02)
+    // Siamo aperti se: oggi == openDay && ora >= openMin  OPPURE
+    //                  oggi == closeDay && ora < closeMin
+    if (todayDow === openDay && nowHM >= openMin) {
+      return { openNow: true, closesAt: closeStr }
+    }
+    if (todayDow === closeDay && nowHM < closeMin) {
+      return { openNow: true, closesAt: closeStr }
     }
   }
 
-  return { openNow, closesAt }
+  return { openNow: false, closesAt: null }
 }
 
 export default function OrariLocale({ restaurant }) {
