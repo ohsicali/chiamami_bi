@@ -34,6 +34,7 @@ class ErrorBoundary extends Component {
 
 // Lazy load pages
 const HomePage = lazy(() => import('./pages/public/HomePage'))
+const HomeFeedV4 = lazy(() => import('./pages/public/HomeFeedV4'))
 const RestaurantPage = lazy(() => import('./pages/public/RestaurantPage'))
 const ListView = lazy(() => import('./pages/public/ListView'))
 const AboutPage = lazy(() => import('./pages/public/AboutPage'))
@@ -123,6 +124,7 @@ export default function App() {
       {!isHome && (
         <div className={!isAdmin ? 'desktop-nav-offset' : undefined}>
         <Routes location={location} key={location.pathname}>
+          <Route path="/v4" element={<HomeFeedV4 />} />
           <Route path="/list" element={<ListView />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
