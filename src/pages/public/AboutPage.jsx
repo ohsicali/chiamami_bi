@@ -111,7 +111,7 @@ export default function AboutPage() {
           {/* Background gradients */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at 50% 0%, rgba(232, 69, 60,0.18), transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(196,162,101,0.08), transparent 50%)',
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(232, 69, 60,0.18), transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(176,137,84,0.08), transparent 50%)',
             pointerEvents: 'none',
           }} />
 
@@ -394,7 +394,7 @@ export default function AboutPage() {
               >
                 <div style={{
                   position: 'absolute', top: -20, right: -20, width: 80, height: 80,
-                  background: 'radial-gradient(circle, rgba(196,162,101,0.12), transparent 70%)',
+                  background: 'radial-gradient(circle, rgba(176,137,84,0.12), transparent 70%)',
                   pointerEvents: 'none',
                 }} />
                 <div style={{

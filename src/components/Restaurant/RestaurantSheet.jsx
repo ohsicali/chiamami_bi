@@ -815,7 +815,7 @@ export default function RestaurantSheet({
                           display: 'inline-flex', alignItems: 'center', gap: 6,
                           background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
                         }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635', boxShadow: '0 0 8px rgba(163,230,53,0.8)' }} />
                           <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
                             Sconto esclusivo da Bi
                           </span>
@@ -993,7 +993,7 @@ export default function RestaurantSheet({
                           display: 'inline-flex', alignItems: 'center', gap: 6,
                           background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
                         }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635', boxShadow: '0 0 8px rgba(163,230,53,0.8)' }} />
                           <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
                             Sconto esclusivo da Bi
                           </span>

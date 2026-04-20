@@ -82,7 +82,7 @@ export default function RestaurantCard({
             background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)',
           }} />
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)',
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(176,137,84,0.1), transparent 50%)',
           }} />
           {/* Shimmer — single light sweep */}
           {imageLoaded && (
@@ -224,7 +224,7 @@ export default function RestaurantCard({
           width: 26, height: 26, borderRadius: '50%',
           background: '#B08954',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
+          boxShadow: '0 2px 6px rgba(176,137,84,0.4)',
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>

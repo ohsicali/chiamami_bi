@@ -103,8 +103,8 @@ body {
 
 /* Hero card soft pulse — breathing shadow */
 @keyframes hero-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(196,162,101,0.15); }
-  50% { box-shadow: 0 8px 32px rgba(196,162,101,0.3); }
+  0%, 100% { box-shadow: 0 4px 20px rgba(176,137,84,0.15); }
+  50% { box-shadow: 0 8px 32px rgba(176,137,84,0.3); }
 }
 
 /* Drop card border pulse */

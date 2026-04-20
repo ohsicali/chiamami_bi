@@ -381,7 +381,7 @@ export default function HomePage() {
           >
             <div style={{
               width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-              background: 'rgba(196,162,101,0.12)',
+              background: 'rgba(176,137,84,0.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B08954" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

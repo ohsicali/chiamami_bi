@@ -259,9 +259,9 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
         <div style={{
           position: 'absolute', top: 10, left: 10,
           display: 'flex', alignItems: 'center', gap: 5,
-          background: 'rgba(196,162,101,0.18)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          background: 'rgba(176,137,84,0.18)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
           padding: '3px 10px', borderRadius: 8,
-          border: '1px solid rgba(196,162,101,0.35)',
+          border: '1px solid rgba(176,137,84,0.35)',
         }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-oro)', animation: 'cityPulse 1.5s ease-in-out infinite' }} />
           <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-oro)', letterSpacing: 1, textTransform: 'uppercase' }}>Presto</span>
@@ -291,7 +291,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
               <div key={i} className="flex items-center" style={{ gap: 4 }}>
                 <div style={{
                   width: 36, padding: '4px 0', textAlign: 'center',
-                  background: 'rgba(196,162,101,0.15)', borderRadius: 8,
+                  background: 'rgba(176,137,84,0.15)', borderRadius: 8,
                 }}>
                   <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', fontFamily: "var(--font-sans)", fontVariantNumeric: 'tabular-nums' }}>{seg.v}</span>
                   <p style={{ fontSize: 7, fontWeight: 600, color: 'var(--color-oro)', marginTop: 1, textTransform: 'uppercase', letterSpacing: 1 }}>{seg.l}</p>
@@ -316,8 +316,8 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
         <div style={{ marginTop: 'auto' }}>
           <button onClick={() => locked ? onLogin() : onRemind()} style={{
             width: '100%', padding: '10px 0', borderRadius: 12,
-            background: locked ? 'rgba(255,255,255,0.08)' : reminded ? 'rgba(196,162,101,0.25)' : 'rgba(196,162,101,0.12)',
-            border: locked ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(196,162,101,0.2)',
+            background: locked ? 'rgba(255,255,255,0.08)' : reminded ? 'rgba(176,137,84,0.25)' : 'rgba(176,137,84,0.12)',
+            border: locked ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(176,137,84,0.2)',
             color: locked ? 'rgba(255,255,255,0.7)' : 'var(--color-oro)',
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -364,7 +364,7 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
           width: 26, height: 26, borderRadius: '50%',
           background: '#B08954',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
+          boxShadow: '0 2px 6px rgba(176,137,84,0.4)',
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
@@ -481,7 +481,7 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
           <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(176,137,84,0.1), transparent 50%)' }} />
       </div>
 
       {/* Top badges: In evidenza / Già usato + Discount */}
@@ -985,7 +985,7 @@ function HowItWorks() {
       <div style={{ background: '#fff', borderRadius: 20, padding: 18, border: '1px solid var(--color-bordo)' }}>
         {[
           { icon: '📱', bg: 'rgba(232, 69, 60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-          { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
+          { icon: '✅', bg: 'rgba(176,137,84,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
           { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
         ].map((step, i) => (
           <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
@@ -1312,7 +1312,7 @@ export default function DealsPage() {
                 }} />
                 <div style={{
                   position: 'absolute', bottom: -30, right: 40, width: 80, height: 80,
-                  borderRadius: '50%', background: 'rgba(196,162,101,0.1)',
+                  borderRadius: '50%', background: 'rgba(176,137,84,0.1)',
                 }} />
               </div>
             )}
