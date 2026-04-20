@@ -99,14 +99,12 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           left: '50%', transform: 'translateX(-50%)',
           width: 'calc(100% - 24px)', maxWidth: 640,
           zIndex: 30,
-          background: 'rgba(250,247,242,.9)',
-          backdropFilter: 'saturate(140%) blur(14px)',
-          WebkitBackdropFilter: 'saturate(140%) blur(14px)',
-          border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
           borderRadius: 999,
-          padding: '8px 10px 8px 22px',
-          display: 'flex', alignItems: 'center', gap: 14,
-          boxShadow: '0 10px 40px rgba(34,24,28,.14), 0 2px 8px rgba(34,24,28,.06)',
+          height: 52,
+          padding: '0 6px 0 18px',
+          display: 'flex', alignItems: 'center', gap: 10,
+          boxShadow: '0 10px 28px rgba(34,24,28,.14), 0 2px 8px rgba(34,24,28,.06)',
         }}
       >
         {/* Close button */}
@@ -127,31 +125,20 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           </svg>
         </button>
 
-        {/* Green gradient dot with glow */}
-        <span
-          aria-hidden
-          style={{
-            flex: '0 0 auto',
-            width: 9, height: 9, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
-            boxShadow: '0 0 0 3px rgba(163,230,53,.18)',
-          }}
-        />
-
-        <div style={{ flex: 1, minWidth: 0, lineHeight: 1.2 }}>
+        <div style={{ flex: 1, minWidth: 0, lineHeight: 1.1 }}>
           <div style={{
-            fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
-            color: 'var(--color-ink-55, rgba(34,24,28,.55))',
-            textTransform: 'uppercase', letterSpacing: '0.1em',
-          }}>
-            Sconto attivo
-          </div>
-          <div style={{
-            fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 800,
+            fontFamily: 'var(--font-sans)', fontSize: 14.5, fontWeight: 900,
             letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {displayTitle}
+          </div>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 700,
+            color: 'rgba(34,24,28,.72)', letterSpacing: '0.02em',
+            marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            Sconto attivo
           </div>
         </div>
 
