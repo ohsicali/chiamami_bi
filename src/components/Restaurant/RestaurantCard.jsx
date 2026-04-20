@@ -102,7 +102,7 @@ export default function RestaurantCard({
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#C4A265', color: '#fff',
+            background: '#B08954', color: '#fff',
             fontSize: 11, fontWeight: 700, letterSpacing: 1,
             textTransform: 'uppercase',
             padding: '5px 12px', borderRadius: 10,
@@ -222,7 +222,7 @@ export default function RestaurantCard({
         <div style={{
           position: 'absolute', top: 10, right: 10, zIndex: 10,
           width: 26, height: 26, borderRadius: '50%',
-          background: '#C4A265',
+          background: '#B08954',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
         }}>

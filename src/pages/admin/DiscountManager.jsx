@@ -92,7 +92,7 @@ function DropBadge() {
         fontWeight: 700,
         padding: '3px 9px',
         borderRadius: 999,
-        background: '#C4A265',
+        background: '#B08954',
         color: '#fff',
         letterSpacing: 0.5,
         marginLeft: 6,
@@ -114,7 +114,7 @@ function FeaturedBadge() {
         padding: '3px 9px',
         borderRadius: 999,
         background: '#fef3c7',
-        color: '#C4A265',
+        color: '#B08954',
         marginLeft: 6,
         fontFamily: "var(--font-sans)",
       }}
@@ -510,7 +510,7 @@ export default function DiscountManager() {
         >
           <StatCard label="Totali" value={stats.total} />
           <StatCard label="Attivi" value={stats.active} accent="#059669" />
-          <StatCard label="Drop attivi" value={stats.drops} accent="#C4A265" />
+          <StatCard label="Drop attivi" value={stats.drops} accent="#B08954" />
           <StatCard label="QR utilizzati" value={stats.redemptions} accent="#E8453C" />
         </div>
 
@@ -885,10 +885,10 @@ export default function DiscountManager() {
                     ) : newPartner ? (
                       /* Non-partner selected — will be auto-created */
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ ...inputStyle, flex: 1, color: '#C4A265', display: 'flex', alignItems: 'center', gap: 6, background: '#fffbf0' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                        <div style={{ ...inputStyle, flex: 1, color: '#B08954', display: 'flex', alignItems: 'center', gap: 6, background: '#fffbf0' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B08954" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
                           {newPartner.name}
-                          <span style={{ fontSize: 11, color: '#C4A265', background: '#fef3c7', borderRadius: 6, padding: '1px 7px', marginLeft: 4 }}>verrà aggiunto come partner</span>
+                          <span style={{ fontSize: 11, color: '#B08954', background: '#fef3c7', borderRadius: 6, padding: '1px 7px', marginLeft: 4 }}>verrà aggiunto come partner</span>
                         </div>
                         <button type="button" onClick={() => { setNewPartner(null); setAddPartnerOpen(false) }} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
                       </div>
@@ -941,7 +941,7 @@ export default function DiscountManager() {
                               onClick={() => { setShowRestDD(false); setAddPartnerOpen(true); setAddPartnerSearch(restSearch) }}
                               style={{
                                 padding: '11px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                                color: '#C4A265', borderTop: '1px solid #f0f0f0',
+                                color: '#B08954', borderTop: '1px solid #f0f0f0',
                                 display: 'flex', alignItems: 'center', gap: 7,
                                 background: '#fffbf0',
                               }}
@@ -1074,13 +1074,13 @@ export default function DiscountManager() {
                       type="checkbox"
                       checked={form.is_drop}
                       onChange={(e) => setForm((f) => ({ ...f, is_drop: e.target.checked, is_featured: e.target.checked ? false : f.is_featured }))}
-                      style={{ accentColor: '#C4A265', width: 16, height: 16 }}
+                      style={{ accentColor: '#B08954', width: 16, height: 16 }}
                     />
                     <span style={{ fontSize: 13, color: '#1a1a1f', fontWeight: 500 }}>È un drop? (tempo limitato)</span>
                   </label>
 
                   {form.is_drop && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingLeft: 12, borderLeft: '2px solid #C4A265' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingLeft: 12, borderLeft: '2px solid #B08954' }}>
                       <FormField label="Inizio drop">
                         <input
                           type="datetime-local"
@@ -1115,7 +1115,7 @@ export default function DiscountManager() {
                         type="checkbox"
                         checked={form.is_featured}
                         onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))}
-                        style={{ accentColor: '#C4A265', width: 16, height: 16 }}
+                        style={{ accentColor: '#B08954', width: 16, height: 16 }}
                       />
                       <span style={{ fontSize: 13, color: '#1a1a1f' }}>★ In evidenza</span>
                     </label>

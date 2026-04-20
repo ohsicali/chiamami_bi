@@ -258,7 +258,7 @@ export default function ProfilePage() {
           borderRadius: '50%', background: 'rgba(232, 69, 60,0.15)',
         }} />
         <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#C4A265', letterSpacing: 2, marginBottom: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#B08954', letterSpacing: 2, marginBottom: 6 }}>
             INVITA UN AMICO
           </div>
           <div style={{ fontFamily: 'var(--font-sans)', fontSize: isDesktop ? 16 : 15, fontWeight: 900, color: '#fff', marginBottom: 2, letterSpacing: '-0.02em' }}>

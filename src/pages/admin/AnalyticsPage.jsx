@@ -599,7 +599,7 @@ export default function AnalyticsPage() {
                   <span style={{ color: '#666' }}>Visite</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#C4A265' }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#B08954' }} />
                   <span style={{ color: '#666' }}>Nuovi utenti</span>
                 </span>
               </div>
@@ -635,7 +635,7 @@ export default function AnalyticsPage() {
                   <Line
                     type="monotone"
                     dataKey="utenti"
-                    stroke="#C4A265"
+                    stroke="#B08954"
                     strokeWidth={1.5}
                     strokeDasharray="4 2"
                     dot={false}
@@ -834,7 +834,7 @@ export default function AnalyticsPage() {
                             <div
                               style={{
                                 fontSize: 9,
-                                color: '#C4A265',
+                                color: '#B08954',
                                 fontWeight: 600,
                                 marginTop: 1,
                                 letterSpacing: 0.5,
@@ -870,7 +870,7 @@ export default function AnalyticsPage() {
                         }}
                       >
                         <div style={{ width: `${usedPct}%`, background: '#4ADE80' }} />
-                        <div style={{ width: `${takenPct}%`, background: '#C4A265' }} />
+                        <div style={{ width: `${takenPct}%`, background: '#B08954' }} />
                       </div>
                     </div>
                   )

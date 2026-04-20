@@ -282,7 +282,7 @@ export default function AdminDashboard() {
       label: 'Sconti attivi',
       value: metrics.discountsActive,
       sub: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
-      subColor: '#C4A265',
+      subColor: '#B08954',
     },
     {
       label: 'QR usati',
@@ -307,7 +307,7 @@ export default function AdminDashboard() {
       count: metrics.pendingApplications,
       title: metrics.pendingApplications === 1 ? '1 candidatura partner' : `${metrics.pendingApplications} candidature partner`,
       subtitle: metrics.pendingApplications > 0 ? 'Da contattare' : 'Nessuna nuova',
-      color: '#C4A265',
+      color: '#B08954',
       bg: 'rgba(196,162,101,0.12)',
       to: '/admin/applications',
       Icon: ApplicationIc,

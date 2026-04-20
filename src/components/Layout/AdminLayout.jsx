@@ -163,7 +163,7 @@ const MENU_SECTIONS = [
   {
     label: 'BUSINESS',
     items: [
-      { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, dotKey: 'applications', dotColor: '#C4A265' },
+      { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, dotKey: 'applications', dotColor: '#B08954' },
       { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
       { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
     ],
