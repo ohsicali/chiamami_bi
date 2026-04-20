@@ -646,8 +646,8 @@ function CosaConsiglio({ restaurants }) {
   const featured = (restaurants || []).find((r) => r.featured) || (restaurants || [])[0]
   if (!featured) return null
 
-  const tips = featured.recommended_for
-    ? featured.recommended_for.split('\n').filter(Boolean).slice(0, 3)
+  const tips = Array.isArray(featured.recommended_for) && featured.recommended_for.length > 0
+    ? featured.recommended_for.slice(0, 3)
     : null
   const cat = getCategoryInfo(featured.cuisine_type || (featured.category && featured.category[0]))
 
