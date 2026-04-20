@@ -57,11 +57,11 @@ function TopBar() {
         gap: 10,
       }}
     >
-      <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.9, textDecoration: 'none' }}>
+      <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.92, textDecoration: 'none' }}>
         <span
           style={{
             fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            fontSize: 22,
+            fontSize: 15,
             letterSpacing: '0.02em',
             color: 'var(--color-corallo)',
           }}
@@ -72,10 +72,10 @@ function TopBar() {
           style={{
             fontFamily: 'var(--font-sans)',
             fontWeight: 700,
-            fontSize: 9,
-            letterSpacing: '0.16em',
+            fontSize: 8,
+            letterSpacing: '0.15em',
             color: 'var(--color-ink-40, rgba(34,24,28,.4))',
-            marginTop: 5,
+            marginTop: 3,
             textTransform: 'uppercase',
           }}
         >
