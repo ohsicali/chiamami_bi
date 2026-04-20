@@ -224,25 +224,26 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
         >
           <div
             style={{
-              fontFamily: "var(--font-sans)", fontWeight: 800,
-              fontSize: 13,
-              fontWeight: 700,
-              color: '#E8453C',
-              letterSpacing: 0.3,
+              fontFamily: "var(--font-mark)",
+              fontSize: 15,
+              color: '#fff',
+              letterSpacing: '0.02em',
+              lineHeight: 1.1,
             }}
           >
-            LA GUIDA DI BI
+            LA GUIDA<br />DI BI
           </div>
           <div
             style={{
-              fontSize: 9,
-              color: 'rgba(255,255,255,0.25)',
-              letterSpacing: 1.5,
-              marginTop: 4,
-              fontWeight: 600,
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '0.14em',
+              marginTop: 6,
+              fontWeight: 700,
+              textTransform: 'uppercase',
             }}
           >
-            ADMIN PANEL
+            Admin
           </div>
         </Link>
       </div>
