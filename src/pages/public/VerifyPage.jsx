@@ -57,6 +57,31 @@ function deleteCookie(name) {
 /*  PIN Input — 6 cifre, auto-focus, shake                            */
 /* ------------------------------------------------------------------ */
 const PIN_LENGTH = 6
+const LOCKOUT_KEY = 'cb_ristoratori_lockout'
+const MAX_ATTEMPTS = 5
+const LOCKOUT_MS = 10 * 60 * 1000
+
+function readLockout() {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_KEY)
+    if (!raw) return { attempts: 0, lockedUntil: 0 }
+    const parsed = JSON.parse(raw)
+    return {
+      attempts: Number(parsed.attempts) || 0,
+      lockedUntil: Number(parsed.lockedUntil) || 0,
+    }
+  } catch {
+    return { attempts: 0, lockedUntil: 0 }
+  }
+}
+
+function writeLockout(data) {
+  try { localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data)) } catch {}
+}
+
+function clearLockout() {
+  try { localStorage.removeItem(LOCKOUT_KEY) } catch {}
+}
 
 function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
   const inputsRef = useRef([])
@@ -120,7 +145,8 @@ function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
               height: box.h,
               textAlign: 'center',
               fontSize: box.fs,
-              fontWeight: 700,
+              fontFamily: 'var(--font-mark, "Alfa Slab One", Georgia, serif)',
+              fontWeight: 400,
               fontVariantNumeric: 'tabular-nums',
               color: 'var(--color-ink)',
               border: `2px solid ${filled ? 'var(--color-ink)' : 'var(--color-line)'}`,
@@ -285,6 +311,17 @@ export default function VerifyPage() {
   const [error, setError] = useState(null)
   const [shake, setShake] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [lockedUntil, setLockedUntil] = useState(() => readLockout().lockedUntil)
+  const [nowTs, setNowTs] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!lockedUntil || lockedUntil <= Date.now()) return
+    const id = setInterval(() => setNowTs(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [lockedUntil])
+
+  const isLocked = lockedUntil > nowTs
+  const lockoutRemainingSec = isLocked ? Math.ceil((lockedUntil - nowTs) / 1000) : 0
 
   /* ---- Init: controlla cookie ---- */
   useEffect(() => {
@@ -332,6 +369,12 @@ export default function VerifyPage() {
   const handleSubmit = async (overridePin) => {
     const pinToUse = (overridePin ?? pin).trim()
     if (pinToUse.length !== PIN_LENGTH || submitting) return
+    const current = readLockout()
+    if (current.lockedUntil > Date.now()) {
+      setLockedUntil(current.lockedUntil)
+      setError(`Troppi tentativi. Riprova fra ${Math.ceil((current.lockedUntil - Date.now()) / 60000)} minuti.`)
+      return
+    }
     if (!isSupabaseConfigured()) {
       setError('Servizio non disponibile')
       return
@@ -365,6 +408,8 @@ export default function VerifyPage() {
         return
       }
 
+      clearLockout()
+      setLockedUntil(0)
       setCookie(COOKIE_NAME, token, COOKIE_DAYS)
       setRestaurant(normalizeRestaurant(r))
       setPin('')
@@ -377,7 +422,18 @@ export default function VerifyPage() {
   }
 
   const triggerError = (msg) => {
-    setError(msg)
+    const state = readLockout()
+    const nextAttempts = state.attempts + 1
+    if (nextAttempts >= MAX_ATTEMPTS) {
+      const until = Date.now() + LOCKOUT_MS
+      writeLockout({ attempts: nextAttempts, lockedUntil: until })
+      setLockedUntil(until)
+      setError(`Troppi tentativi. Riprova fra ${Math.ceil(LOCKOUT_MS / 60000)} minuti.`)
+    } else {
+      writeLockout({ attempts: nextAttempts, lockedUntil: 0 })
+      const remaining = MAX_ATTEMPTS - nextAttempts
+      setError(`${msg} (${remaining} ${remaining === 1 ? 'tentativo' : 'tentativi'} rimasti)`)
+    }
     setShake(true)
     setPin('')
     setSubmitting(false)
@@ -435,6 +491,8 @@ export default function VerifyPage() {
         shake={shake}
         submitting={submitting}
         onSubmit={handleSubmit}
+        isLocked={isLocked}
+        lockoutRemainingSec={lockoutRemainingSec}
       />
     )
   } else {
@@ -454,7 +512,7 @@ export default function VerifyPage() {
 /* ------------------------------------------------------------------ */
 /*  PIN View (mobile + desktop responsive)                            */
 /* ------------------------------------------------------------------ */
-function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
+function PinView({ pin, setPin, error, shake, submitting, onSubmit, isLocked = false, lockoutRemainingSec = 0 }) {
   const isDesktop = useIsDesktop()
   return (
     <>
@@ -552,14 +610,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             value={pin}
             onChange={setPin}
             onComplete={(v) => onSubmit(v)}
-            disabled={submitting}
+            disabled={submitting || isLocked}
             shake={shake}
             desktop={false}
           />
 
           <button
             onClick={() => onSubmit()}
-            disabled={pin.length !== PIN_LENGTH || submitting}
+            disabled={pin.length !== PIN_LENGTH || submitting || isLocked}
             style={{
               width: '100%',
               marginTop: 16,
@@ -570,12 +628,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               padding: '14px',
               fontSize: 14,
               fontWeight: 600,
-              cursor: pin.length === 4 && !submitting ? 'pointer' : 'default',
-              opacity: pin.length === 4 && !submitting ? 1 : 0.5,
+              cursor: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 'pointer' : 'default',
+              opacity: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 1 : 0.5,
               transition: 'opacity 0.15s',
             }}
           >
-            {submitting ? 'Verifica…' : 'Accedi'}
+            {isLocked
+              ? `Bloccato · ${Math.floor(lockoutRemainingSec / 60)}:${String(lockoutRemainingSec % 60).padStart(2, '0')}`
+              : submitting ? 'Verifica…' : 'Accedi'}
           </button>
 
           {error && (
@@ -739,14 +799,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             value={pin}
             onChange={setPin}
             onComplete={(v) => onSubmit(v)}
-            disabled={submitting}
+            disabled={submitting || isLocked}
             shake={shake}
             desktop
           />
 
           <button
             onClick={() => onSubmit()}
-            disabled={pin.length !== PIN_LENGTH || submitting}
+            disabled={pin.length !== PIN_LENGTH || submitting || isLocked}
             style={{
               width: '100%',
               marginTop: 20,
@@ -757,12 +817,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               padding: '16px',
               fontSize: 15,
               fontWeight: 600,
-              cursor: pin.length === 4 && !submitting ? 'pointer' : 'default',
-              opacity: pin.length === 4 && !submitting ? 1 : 0.5,
+              cursor: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 'pointer' : 'default',
+              opacity: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 1 : 0.5,
               transition: 'opacity 0.15s',
             }}
           >
-            {submitting ? 'Verifica…' : 'Accedi'}
+            {isLocked
+              ? `Bloccato · ${Math.floor(lockoutRemainingSec / 60)}:${String(lockoutRemainingSec % 60).padStart(2, '0')}`
+              : submitting ? 'Verifica…' : 'Accedi'}
           </button>
 
           {error && (

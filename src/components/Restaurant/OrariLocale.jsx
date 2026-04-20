@@ -189,9 +189,9 @@ export default function OrariLocale({ restaurant }) {
             </ul>
           )}
           <p style={{
-            margin: '10px 0 0', fontSize: 11, color: 'var(--color-secondary, #888)',
+            margin: '10px 0 0', fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,.55))',
           }}>
-            Orari da Google. Potrebbero non essere aggiornati in tempo reale.
+            Fonte: Google Places
           </p>
         </div>
       )}

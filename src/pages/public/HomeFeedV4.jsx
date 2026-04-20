@@ -245,7 +245,7 @@ function CategoryBubbles({ activeKey, onSelect }) {
     <div
       style={{
         display: 'flex',
-        gap: 10,
+        gap: 14,
         overflowX: 'auto',
         padding: '6px 20px 20px',
         WebkitOverflowScrolling: 'touch',
@@ -274,14 +274,14 @@ function CategoryBubbles({ activeKey, onSelect }) {
           >
             <span
               style={{
-                width: 64,
-                height: 64,
+                width: 54,
+                height: 54,
                 borderRadius: '50%',
                 background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
                 boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
                 display: 'grid',
                 placeItems: 'center',
-                fontSize: 28,
+                fontSize: 24,
               }}
             >
               {c.emoji}
@@ -361,7 +361,7 @@ function Rcard({ restaurant, discount, onClick }) {
         fontFamily: 'inherit',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/11', background: '#ddd', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#ddd', overflow: 'hidden' }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
         ) : (
@@ -628,7 +628,8 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
           gap: 12,
           overflowX: 'auto',
           padding: '0 20px 12px',
-          scrollSnapType: 'x mandatory',
+          scrollSnapType: 'x proximity',
+          scrollPaddingLeft: 20,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
         }}
@@ -646,8 +647,8 @@ function CosaConsiglio({ restaurants }) {
   const featured = (restaurants || []).find((r) => r.featured) || (restaurants || [])[0]
   if (!featured) return null
 
-  const tips = featured.recommended_for
-    ? featured.recommended_for.split('\n').filter(Boolean).slice(0, 3)
+  const tips = Array.isArray(featured.recommended_for) && featured.recommended_for.length > 0
+    ? featured.recommended_for.slice(0, 3)
     : null
   const cat = getCategoryInfo(featured.cuisine_type || (featured.category && featured.category[0]))
 
@@ -980,7 +981,8 @@ export default function HomeFeedV4() {
               gap: 12,
               overflowX: 'auto',
               padding: '0 20px 12px',
-              scrollSnapType: 'x mandatory',
+              scrollSnapType: 'x proximity',
+              scrollPaddingLeft: 20,
               WebkitOverflowScrolling: 'touch',
               scrollbarWidth: 'none',
             }}

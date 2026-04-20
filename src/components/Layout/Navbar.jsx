@@ -136,11 +136,11 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
               <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
                 <span style={{
                   position: 'absolute', inset: 0,
-                  borderRadius: '50%', background: '#4ade80',
+                  borderRadius: '50%', background: 'var(--color-corallo)',
                 }} />
                 <span style={{
                   position: 'absolute', inset: -2,
-                  borderRadius: '50%', background: '#4ade80',
+                  borderRadius: '50%', background: 'var(--color-corallo)',
                   opacity: 0.4,
                   animation: 'cityPulse 2s ease-in-out infinite',
                 }} />
@@ -250,7 +250,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                   }}>
                     <div className="flex items-center gap-3">
                       <span style={{ position: 'relative', width: 8, height: 8 }}>
-                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80' }} />
+                        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-corallo)' }} />
                       </span>
                       <span style={{ fontSize: 15, fontWeight: 600, color: '#FAF7F2' }}>{selectedCity}</span>
                     </div>

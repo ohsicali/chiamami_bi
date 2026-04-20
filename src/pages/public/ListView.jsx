@@ -26,13 +26,6 @@ function slugify(name) {
     .replace(/(^-|-$)/g, '')
 }
 
-/* ── Star SVG ── */
-const StarIcon = ({ size = 11 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#C4A265" stroke="none">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
-  </svg>
-)
-
 /* ── Heart SVG ── */
 const HeartIcon = ({ filled, size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24"
@@ -155,14 +148,13 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
         {restaurant.our_rating >= 4.5 && (
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#C4A265', color: '#fff',
+            display: 'inline-flex', alignItems: 'center',
+            background: 'var(--color-corallo)', color: '#fff',
             fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
             textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 6, marginBottom: 10,
+            padding: '4px 10px', borderRadius: 999, marginBottom: 10,
           }}>
-            <StarIcon size={10} />
-            Consigliato da Bi
+            Top di Bi
           </div>
         )}
         <div style={{
@@ -176,15 +168,6 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           display: 'flex', alignItems: 'center', gap: 10,
           fontSize: 12, color: 'rgba(255,255,255,0.7)',
         }}>
-          {restaurant.our_rating && (
-            <>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#C4A265', fontWeight: 700 }}>
-                <StarIcon size={12} />
-                {restaurant.our_rating}
-              </span>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
-            </>
-          )}
           {category && (
             <>
               <span>{category.name}</span>
@@ -301,16 +284,6 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {restaurant.our_rating && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 3,
-              background: '#FBF9F4', padding: '3px 8px', borderRadius: 8,
-              fontSize: 12, fontWeight: 700, color: '#22181C',
-            }}>
-              <StarIcon />
-              {restaurant.our_rating}
-            </div>
-          )}
           {dist && (
             <div style={{
               fontSize: 11, color: '#8A8680', fontWeight: 500,

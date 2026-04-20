@@ -179,7 +179,7 @@ export default function PartnerLandingPage() {
     {
       icon: UsersIcon,
       iconColor: 'var(--color-oro)',
-      iconBg: 'rgba(196,162,101,0.1)',
+      iconBg: 'rgba(176,137,84,0.1)',
       title: `${siteConfig.partner_monthly_views} views/mese`,
       desc: 'Migliaia di persone ogni giorno tra sito, Instagram e TikTok',
     },

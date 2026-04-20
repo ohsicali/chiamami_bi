@@ -82,7 +82,7 @@ export default function RestaurantCard({
             background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)',
           }} />
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)',
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(176,137,84,0.1), transparent 50%)',
           }} />
           {/* Shimmer — single light sweep */}
           {imageLoaded && (
@@ -101,18 +101,18 @@ export default function RestaurantCard({
         {/* Top left badges: In evidenza + Discount */}
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: '#C4A265', color: '#fff',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'var(--color-oro)', color: '#fff',
             fontSize: 11, fontWeight: 700, letterSpacing: 1,
             textTransform: 'uppercase',
             padding: '5px 12px', borderRadius: 10,
           }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />
             In evidenza
           </div>
           {hasDiscount && discountTitle && (
             <div style={{
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000',
+              background: 'var(--color-corallo)', color: '#fff',
               fontSize: 11, fontWeight: 700,
               padding: '5px 12px', borderRadius: 10,
             }}>
@@ -151,7 +151,7 @@ export default function RestaurantCard({
           {/* Name */}
           <h3 style={{
             fontFamily: "var(--font-sans)", fontWeight: 800,
-            fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.5,
+            fontSize: 18, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.015em',
             marginBottom: restaurant.tagline ? 4 : 8,
           }}>
             {restaurant.name}
@@ -217,25 +217,28 @@ export default function RestaurantCard({
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick?.(restaurant)}
     >
-      {/* Featured star badge — top-right corner */}
+      {/* Featured badge — top-right corner (no stars per §5.2) */}
       {isFeatured && (
         <div style={{
           position: 'absolute', top: 10, right: 10, zIndex: 10,
-          width: 26, height: 26, borderRadius: '50%',
-          background: '#C4A265',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 6px rgba(196,162,101,0.4)',
+          background: 'var(--color-oro)',
+          color: '#fff',
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          padding: '4px 9px',
+          borderRadius: 999,
+          boxShadow: '0 2px 6px rgba(176,137,84,0.4)',
         }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
-          </svg>
+          Top
         </div>
       )}
 
       {/* Discount strip on top (v4: coral-soft → corallo gradient) */}
       {hasDiscount && discountTitle && (
         <div className="rcard-discount-strip" style={{
-          background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
+          background: 'var(--color-corallo)',
           color: '#22181C',
           fontSize: 10, fontWeight: 700,
           padding: '5px 10px',

@@ -282,7 +282,7 @@ export default function AdminDashboard() {
       label: 'Sconti attivi',
       value: metrics.discountsActive,
       sub: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
-      subColor: '#C4A265',
+      subColor: '#B08954',
     },
     {
       label: 'QR usati',
@@ -307,8 +307,8 @@ export default function AdminDashboard() {
       count: metrics.pendingApplications,
       title: metrics.pendingApplications === 1 ? '1 candidatura partner' : `${metrics.pendingApplications} candidature partner`,
       subtitle: metrics.pendingApplications > 0 ? 'Da contattare' : 'Nessuna nuova',
-      color: '#C4A265',
-      bg: 'rgba(196,162,101,0.12)',
+      color: '#B08954',
+      bg: 'rgba(176,137,84,0.12)',
       to: '/admin/applications',
       Icon: ApplicationIc,
     },
@@ -335,12 +335,12 @@ export default function AdminDashboard() {
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Desktop title */}
             <div className="hidden md:block">
-              <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Dashboard</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Dashboard</h1>
               <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>Panoramica della guida</p>
             </div>
             {/* Mobile title */}
             <div className="md:hidden">
-              <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
                 Ciao, {userName}
               </h1>
               <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
               alignItems: 'center',
               gap: 6,
               background: '#fff',
-              color: '#1a1a1f',
+              color: 'var(--color-ink)',
               border: '1px solid #eee',
               padding: '10px 14px',
               borderRadius: 10,
@@ -451,7 +451,7 @@ export default function AdminDashboard() {
               <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 {s.label}
               </div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', marginTop: 4, lineHeight: 1.1 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', marginTop: 4, lineHeight: 1.1 }}>
                 {s.value}
               </div>
               {s.sub && (
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: '#1a1a1f',
+              color: 'var(--color-ink)',
               margin: '0 0 10px',
               textTransform: 'uppercase',
               letterSpacing: 0.5,
@@ -584,7 +584,7 @@ export default function AdminDashboard() {
               style={{
                 fontSize: 13,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 margin: 0,
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -662,7 +662,7 @@ export default function AdminDashboard() {
                       style={{
                         fontSize: 13,
                         fontWeight: 500,
-                        color: '#1a1a1f',
+                        color: 'var(--color-ink)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 margin: '0 0 12px',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -758,7 +758,7 @@ export default function AdminDashboard() {
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 margin: '0 0 12px',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,

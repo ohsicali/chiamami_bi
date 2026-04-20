@@ -198,8 +198,51 @@ PR: #69 (draft). Branch: `v4/track-b-reskin`.
 
 ### Cosa resta (per Augusto)
 
-- **Sticky pill sconto** (floating CTA quando la scheda ha uno sconto attivo)
-- **Desktop split view** con `.lcard` 118×118 (Esplora desktop)
-- **City pill** dot verde → dot corallo
 - **Verifica visiva** su device reale (iPhone, desktop Chrome)
 - Deploy su Vercel e test live
+- **SW offline base** (attualmente sw.js gestisce solo push — no fetch cache)
+- **Lighthouse ≥ 90** (Performance/A11y/BestPractices/SEO) — da misurare live
+- (opzionale) Route rename `/deals`→`/sconti`, `/saved`→`/salvati`, ecc. —
+  SEO-risky, rimandato
+
+### ✅ Completato — sessione pomeriggio 2026-04-20 (continuazione)
+
+Commit range: `67160e4…7987496`
+
+- **PIN digits** ora in Alfa Slab One (handoff §3 rule 1: SOLO wordmark
+  + 6 PIN). Font fallback: Georgia, serif.
+- **Secondo Bi**: rimosso sottotitolo hardcoded "La mia opinione".
+  Ora è solo eyebrow corallo-ink + paragrafo + firma Caveat.
+- **Service Worker offline base** (`public/sw.js`): precache shell,
+  network-first navigation con fallback cache, cache-first `/assets/`,
+  SWR immagini/font. Bypass `/api/` e cross-origin. Push notifications
+  invariate.
+- **DiscountManager**: rimosso char ★ da badge "Evidenza" e
+  "In evidenza" (hard rule §5.2).
+- **RestaurantSheet**: 2 star SVG icons in "Sconto esclusivo da Bi"
+  sostituiti con dot verde + glow.
+- **LoginPage "Scopri Bi"**: ricostruito grid 2-col con emoji + title
+  + subtitle secondo `v4-mobile-auth.html` lines 225-238.
+- **AdminDashboard**: `#1a1a1f` → `var(--color-ink)`; `rgba(196,162,101,*)`
+  → `rgba(176,137,84,*)`.
+- **Bulk sweep** `rgba(196,162,101,*)` → `rgba(176,137,84,*)` su
+  globals.css (keyframes hero-pulse), RestaurantCard, AdminRestaurants,
+  AboutPage, DealsPage, HomePage, PartnerLandingPage.
+
+### ✅ Completato — sessione mattutina 2026-04-20
+
+Commit range: `72a556f…e2114bb…` (PR #69)
+
+- **Sticky pill sconto** riscritto per §4.3: cream glass pill, punto verde
+  gradient 135° con glow, CTA ink 42px 800, centered bottom safe-area
+- **RestaurantSheet scroll** padding-bottom 120px + safe-area (no copertura)
+- **`.lcard` desktop** (≥768px): 118×118 foto, radius 16, border ink-05,
+  hover translate + shadow, active corallo ring (§4.4)
+- **Stelle/rating rimosse** da ListView (§5.2): StarIcon eliminato,
+  "Consigliato da Bi" → "Top di Bi" chip corallo, our_rating non renderizzato
+- **OrariLocale footer** → "Fonte: Google Places" (§5.7)
+- **City pill dot** #4ade80 → var(--color-corallo) su Navbar
+- **Color normalization**: `#C4A265` (vecchio oro) → `#B08954` (--oro canonico)
+  su tutti i file pubblici e admin (§2). MaintenanceGate `#E8604C` → `#E8453C`
+- **PIN lockout** 5 tentativi / 10 min (§5.1): localStorage-backed, timer
+  countdown visibile su button, reset a successo, sia mobile che desktop

@@ -684,61 +684,40 @@ export default function LoginPage() {
               <span style={{ fontSize: 10.5, color: 'var(--color-ink-55)', letterSpacing: '0.14em', fontWeight: 800, textTransform: 'uppercase' }}>Scopri Bi</span>
               <div style={{ flex: 1, height: 1, background: 'var(--color-ink-15)' }} />
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => navigate('/partner')}
-                style={{
-                  flex: 1,
-                  background: 'var(--color-card)',
-                  border: '1px solid var(--color-ink-05)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '14px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: 'var(--color-ink)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                  <path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-                Ristoratori
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <button
                 type="button"
                 onClick={() => navigate('/about')}
                 style={{
-                  flex: 1,
                   background: 'var(--color-card)',
                   border: '1px solid var(--color-ink-05)',
-                  borderRadius: 'var(--radius-md)',
+                  borderRadius: 14,
                   padding: '14px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: 'var(--color-ink)',
+                  textAlign: 'left',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans)',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="16" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12.01" y2="8" />
-                </svg>
-                Chi è Bi
+                <div style={{ fontSize: 22, marginBottom: 6, lineHeight: 1 }}>👋</div>
+                <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>Chi è Bi</div>
+                <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, lineHeight: 1.3 }}>La storia della guida</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/partner')}
+                style={{
+                  background: 'var(--color-card)',
+                  border: '1px solid var(--color-ink-05)',
+                  borderRadius: 14,
+                  padding: '14px 16px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
+                <div style={{ fontSize: 22, marginBottom: 6, lineHeight: 1 }}>🏪</div>
+                <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>Ristoratori</div>
+                <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, lineHeight: 1.3 }}>Candida il tuo locale</div>
               </button>
             </div>
           </motion.div>

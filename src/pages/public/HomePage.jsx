@@ -81,7 +81,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
           {discountTitle && (
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000',
+              background: 'var(--color-corallo)', color: '#fff',
               fontSize: 8, fontWeight: 700, textAlign: 'center',
               padding: '2px 0',
             }}>
@@ -381,10 +381,10 @@ export default function HomePage() {
           >
             <div style={{
               width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-              background: 'rgba(196,162,101,0.12)',
+              background: 'rgba(176,137,84,0.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B08954" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
                 <line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
               </svg>

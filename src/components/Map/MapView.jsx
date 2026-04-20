@@ -6,7 +6,7 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
 const ACCENT_COLOR = '#E8453C'
-const GOLD_COLOR = '#C4A265'
+const GOLD_COLOR = '#B08954'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
 const CROSSFADE_MS = 200
@@ -130,7 +130,7 @@ function createPinEl(restaurant, isSaved, discountValue) {
     const badge = document.createElement('span')
     badge.style.cssText = `
       position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
-      background:linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%);color:#000;
+      background:var(--color-corallo);color:#fff;
       font-size:8px;font-weight:800;letter-spacing:0.3px;
       padding:2px 5px;border-radius:6px;white-space:nowrap;
       box-shadow:0 2px 6px rgba(163,230,53,0.4);

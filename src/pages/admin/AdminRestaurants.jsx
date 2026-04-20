@@ -518,8 +518,8 @@ export default function AdminRestaurants() {
                               style={{
                                 fontSize: 9,
                                 padding: '2px 6px',
-                                background: 'rgba(196,162,101,0.15)',
-                                color: '#C4A265',
+                                background: 'rgba(176,137,84,0.15)',
+                                color: '#B08954',
                                 borderRadius: 4,
                                 fontWeight: 600,
                                 letterSpacing: 0.3,
@@ -687,8 +687,8 @@ export default function AdminRestaurants() {
                           style={{
                             fontSize: 9,
                             padding: '1px 5px',
-                            background: 'rgba(196,162,101,0.15)',
-                            color: '#C4A265',
+                            background: 'rgba(176,137,84,0.15)',
+                            color: '#B08954',
                             borderRadius: 4,
                             fontWeight: 600,
                             letterSpacing: 0.3,

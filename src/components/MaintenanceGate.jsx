@@ -65,7 +65,7 @@ function GateLogin({ user, signIn, signOut }) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontFamily: 'var(--font-sans)',
       }}
     >
       <div
@@ -82,7 +82,7 @@ function GateLogin({ user, signIn, signOut }) {
           <div
             style={{
               display: 'inline-block',
-              background: '#E8604C',
+              background: '#E8453C',
               color: '#ffffff',
               padding: '10px 22px',
               borderRadius: 999,
@@ -168,7 +168,7 @@ function GateLogin({ user, signIn, signOut }) {
                 width: '100%',
                 marginTop: 24,
                 padding: '13px',
-                background: '#E8604C',
+                background: '#E8453C',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: 12,

@@ -45,25 +45,23 @@ function useShare(restaurant, t) {
 
 /* ── Video Buttons (Instagram Reel / TikTok) ── */
 
-/* ── Floating Discount Bar (v4 sticky pill) ── */
-/* Mobile: cream page-glass outer + green-grad inner pill + ink CTA (v4-mobile-scheda §sticky-disc) */
-/* Desktop: single cream-glass pill + green dot + ink CTA (v4-desktop-pagine §dsk-sticky-disc) */
+/* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
 function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const isDesktop = useIsDesktop()
   const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
   const discount = discountFromParent || fetchedDiscount
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
   const [generating, setGenerating] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
 
   if (!discount && discountLoading) return null
   if (!discount) return null
   const isExpired = new Date(discount.valid_until) < new Date()
   const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
-  if (isExpired || isMaxed) return null
+  if (isExpired || isMaxed || dismissed) return null
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
@@ -85,128 +83,113 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   }
 
   const displayTitle = discount.title || discount.discount_value
-  const ctaLabel = isRedeemed
-    ? t('discount.alreadyUsed')
-    : isGenerated
-      ? 'Mostra QR'
-      : (generating ? '…' : 'Usa sconto')
-  const ctaAction = isGenerated ? () => setShowQR(true) : handleUnlock
-  const ctaDisabled = isRedeemed || generating || redemptionLoading
-
-  const Chevron = (
-    <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 6l6 6-6 6" />
-    </svg>
-  )
 
   return (
     <>
-      {isDesktop ? (
-        /* Desktop — single cream-glass pill, centered floating */
-        <motion.div
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 40, opacity: 0 }}
-          transition={{ delay: 0.6, type: 'spring', stiffness: 260, damping: 24 }}
+      <motion.div
+        initial={{ y: 80, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 80, opacity: 0, scale: 0.95 }}
+        transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
+        style={{
+          position: 'absolute',
+          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+          left: '50%', transform: 'translateX(-50%)',
+          width: 'calc(100% - 24px)', maxWidth: 640,
+          zIndex: 30,
+          background: 'rgba(250,247,242,.9)',
+          backdropFilter: 'saturate(140%) blur(14px)',
+          WebkitBackdropFilter: 'saturate(140%) blur(14px)',
+          border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+          borderRadius: 999,
+          padding: '8px 10px 8px 22px',
+          display: 'flex', alignItems: 'center', gap: 14,
+          boxShadow: '0 10px 40px rgba(34,24,28,.14), 0 2px 8px rgba(34,24,28,.06)',
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setDismissed(true)}
+          aria-label="Chiudi"
           style={{
-            position: 'absolute',
-            left: '50%',
-            bottom: 'calc(22px + env(safe-area-inset-bottom, 0px))',
-            transform: 'translateX(-50%)',
-            zIndex: 30,
-            minWidth: 460,
-            maxWidth: 640,
-            background: 'rgba(250,247,242,0.9)',
-            backdropFilter: 'saturate(140%) blur(14px)',
-            WebkitBackdropFilter: 'saturate(140%) blur(14px)',
-            border: '1px solid var(--color-ink-05, rgba(34,24,28,0.05))',
-            borderRadius: 999,
-            padding: '8px 10px 8px 22px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 18,
-            boxShadow: '0 10px 40px rgba(34,24,28,0.14), 0 2px 8px rgba(34,24,28,0.06)',
+            position: 'absolute', top: -8, right: -8, zIndex: 1,
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'var(--color-ink, #22181C)', border: '2px solid #fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 2px 6px rgba(34,24,28,.2)',
+            padding: 0,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.01em', color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                width: 9, height: 9, borderRadius: '50%',
-                background: 'linear-gradient(135deg,#A3E635,#4ADE80)',
-                boxShadow: '0 0 0 3px rgba(163,230,53,0.18)',
-                flexShrink: 0,
-              }} />
-              {displayTitle}
-            </div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-ink-70, rgba(34,24,28,0.7))', marginTop: 4, letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Sconto esclusivo da Bi
-            </div>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+
+        {/* Green gradient dot with glow */}
+        <span
+          aria-hidden
+          style={{
+            flex: '0 0 auto',
+            width: 9, height: 9, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+            boxShadow: '0 0 0 3px rgba(163,230,53,.18)',
+          }}
+        />
+
+        <div style={{ flex: 1, minWidth: 0, lineHeight: 1.2 }}>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
+            color: 'var(--color-ink-55, rgba(34,24,28,.55))',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+          }}>
+            Sconto attivo
           </div>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 800,
+            letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {displayTitle}
+          </div>
+        </div>
+
+        {isRedeemed ? (
+          <span style={{
+            flex: '0 0 auto', fontSize: 12, fontWeight: 700,
+            color: 'var(--color-ink-55, rgba(34,24,28,.55))', padding: '0 14px',
+          }}>
+            {t('discount.alreadyUsed')}
+          </span>
+        ) : isGenerated ? (
           <button
-            onClick={ctaAction}
-            disabled={ctaDisabled}
+            onClick={() => setShowQR(true)}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'var(--color-ink)', color: '#fff',
-              height: 42, padding: '0 20px', border: 'none',
-              borderRadius: 999, fontWeight: 800, fontSize: 13.5, letterSpacing: '-0.01em',
-              cursor: ctaDisabled ? 'default' : 'pointer',
-              opacity: ctaDisabled ? 0.5 : 1,
-              whiteSpace: 'nowrap',
+              flex: '0 0 auto',
+              background: 'var(--color-ink, #22181C)', color: '#fff',
+              border: 'none', height: 42, padding: '0 20px', borderRadius: 999,
+              fontSize: 13, fontWeight: 800, letterSpacing: '0.01em',
+              fontFamily: 'var(--font-sans)', cursor: 'pointer',
             }}
           >
-            {ctaLabel}
-            {!isRedeemed && Chevron}
+            Mostra QR
           </button>
-        </motion.div>
-      ) : (
-        /* Mobile — cream outer + green inner pill */
-        <motion.div
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
-          transition={{ delay: 0.8, type: 'spring', stiffness: 260, damping: 22 }}
-          style={{
-            position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30,
-            padding: '10px 14px calc(10px + env(safe-area-inset-bottom, 14px))',
-            background: 'rgba(250,247,242,0.92)',
-            backdropFilter: 'saturate(120%) blur(10px)',
-            WebkitBackdropFilter: 'saturate(120%) blur(10px)',
-            borderTop: '1px solid var(--color-ink-05, rgba(34,24,28,0.05))',
-          }}
-        >
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            height: 52, padding: '0 6px 0 14px',
-            background: 'linear-gradient(135deg,#A3E635,#4ADE80)',
-            color: 'var(--color-ink)',
-            borderRadius: 999,
-            boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 900, fontSize: 14.5, letterSpacing: '-0.01em' }}>{displayTitle}</div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.02em', color: 'rgba(34,24,28,0.72)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                Sconto esclusivo da Bi
-              </div>
-            </div>
-            <button
-              onClick={ctaAction}
-              disabled={ctaDisabled}
-              style={{
-                flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 40, padding: '0 16px', border: 'none',
-                background: 'var(--color-ink)', color: '#fff',
-                borderRadius: 999, fontWeight: 800, fontSize: 13, letterSpacing: '-0.01em',
-                cursor: ctaDisabled ? 'default' : 'pointer',
-                opacity: ctaDisabled ? 0.5 : 1,
-              }}
-            >
-              {ctaLabel}
-              {!isRedeemed && Chevron}
-            </button>
-          </div>
-        </motion.div>
-      )}
+        ) : (
+          <button
+            onClick={handleUnlock}
+            disabled={generating || redemptionLoading}
+            style={{
+              flex: '0 0 auto',
+              background: 'var(--color-ink, #22181C)', color: '#fff',
+              border: 'none', height: 42, padding: '0 20px', borderRadius: 999,
+              fontSize: 13, fontWeight: 800, letterSpacing: '0.01em',
+              fontFamily: 'var(--font-sans)', cursor: 'pointer',
+              opacity: generating ? 0.5 : 1,
+            }}
+          >
+            {generating ? '...' : 'Usa sconto'}
+          </button>
+        )}
+      </motion.div>
 
       <AnimatePresence>
         {showQR && redemption && (
@@ -438,7 +421,7 @@ export default function RestaurantSheet({
         </div>
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1 }}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
 
           {/* Mobile photo carousel — inside scroll so horizontal swipes hit useDrag
               and vertical swipes bubble up to the scroll container. Renderizzato
@@ -718,13 +701,8 @@ export default function RestaurantSheet({
               {/* ── Secondo Bi ── */}
               {reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                  <div style={{ padding: '0 0 4px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 8 }}>
-                      Secondo Bi
-                    </div>
-                    <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--color-ink)', lineHeight: 1.2, marginBottom: 10 }}>
-                      La mia opinione
-                    </div>
+                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 10 }}>
+                    Secondo Bi
                   </div>
                   <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--color-ink)', fontWeight: 500 }}>
                     {reviewText}
@@ -837,7 +815,7 @@ export default function RestaurantSheet({
                           display: 'inline-flex', alignItems: 'center', gap: 6,
                           background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
                         }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635', boxShadow: '0 0 8px rgba(163,230,53,0.8)' }} />
                           <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
                             Sconto esclusivo da Bi
                           </span>
@@ -895,7 +873,7 @@ export default function RestaurantSheet({
                           disabled={inlineGenerating || inlineRedemptionLoading}
                           style={{
                             width: '100%', padding: '14px 20px', borderRadius: 12,
-                            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
+                            background: 'var(--color-corallo)', color: '#fff', border: 'none',
                             fontSize: 15, fontWeight: 700, cursor: 'pointer',
                             opacity: inlineGenerating ? 0.5 : 1,
                           }}
@@ -1015,7 +993,7 @@ export default function RestaurantSheet({
                           display: 'inline-flex', alignItems: 'center', gap: 6,
                           background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
                         }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#a3e635"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635', boxShadow: '0 0 8px rgba(163,230,53,0.8)' }} />
                           <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
                             Sconto esclusivo da Bi
                           </span>
@@ -1140,7 +1118,7 @@ export default function RestaurantSheet({
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
                           width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
+                          background: 'var(--color-corallo)', color: '#fff', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
                           position: 'relative', zIndex: 2,
                         }}
