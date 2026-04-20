@@ -28,9 +28,12 @@ function ensureStyles() {
       opacity: 0;
       transform: scale(0.85);
     }
-    /* Crossfade transition (applied to both old and new) */
+    /* Crossfade transition — ONLY opacity. Never transform, because
+       Mapbox owns .cb-marker's transform for positioning; any transition
+       on transform animates pan/zoom position updates and makes pins
+       visibly drift instead of staying anchored to the map. */
     .cb-marker--fade {
-      transition: opacity ${CROSSFADE_MS}ms ease, transform ${CROSSFADE_MS}ms ease;
+      transition: opacity ${CROSSFADE_MS}ms ease;
     }
     /* Exit: fade to invisible */
     .cb-marker--exit {
