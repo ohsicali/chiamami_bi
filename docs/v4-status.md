@@ -194,7 +194,7 @@ PR: #69 (draft). Branch: `v4/track-b-reskin`.
 8. [x] Login/Signup (LoginPage)
 9. [x] About, Privacy, Terms, Settings, Reset, Partner (token reskin)
 10. [x] Verify ristoratori (VerifyPage) — token reskin
-11. [x] Admin pages — font migrated, token parziale
+11. [x] Admin pages — ink token normalizzato (`#1a1a1f` → `var(--color-ink)`, 14 file), sidebar wordmark Alfa Slab One (+ "Admin" subtitle) allineato a mockup v4-desktop-admin.html §295
 
 ### Cosa resta (per Augusto)
 
