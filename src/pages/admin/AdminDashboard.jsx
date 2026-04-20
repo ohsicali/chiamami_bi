@@ -264,31 +264,39 @@ export default function AdminDashboard() {
 
   const publishedCount = restaurants.filter(r => r.is_published !== false).length
 
-  // Stat cards data
+  // Stat cards data — v4 KPI (k-lab/k-val/k-delta/k-spark) §77-86
+  const miniSpark = (seed = 1) => {
+    const base = [40, 55, 45, 60, 52, 70, 68, 82]
+    return base.map((h) => Math.max(20, Math.min(100, Math.round(h * (0.85 + (seed % 13) / 42)))))
+  }
   const statCards = [
     {
       label: 'Ristoranti',
       value: metrics.restaurantsTotal,
-      sub: publishedCount > 0 ? `${publishedCount} pubblicati` : null,
-      subColor: '#059669',
+      delta: publishedCount > 0 ? `${publishedCount} pubblicati` : null,
+      deltaDir: 'up',
+      spark: miniSpark(metrics.restaurantsTotal),
     },
     {
-      label: 'Utenti',
+      label: 'Utenti registrati',
       value: metrics.usersTotal,
-      sub: metrics.usersThisWeek > 0 ? `+${metrics.usersThisWeek} questa settimana` : null,
-      subColor: '#059669',
+      delta: metrics.usersThisWeek > 0 ? `+${metrics.usersThisWeek} · 7gg` : null,
+      deltaDir: 'up',
+      spark: miniSpark(metrics.usersTotal),
     },
     {
       label: 'Sconti attivi',
       value: metrics.discountsActive,
-      sub: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
-      subColor: '#B08954',
+      delta: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
+      deltaDir: 'up',
+      spark: miniSpark(metrics.discountsActive + 3),
     },
     {
-      label: 'QR usati',
+      label: 'Redenzioni QR',
       value: metrics.qrUsed,
-      sub: metrics.qrUsedThisWeek > 0 ? `+${metrics.qrUsedThisWeek} questa settimana` : null,
-      subColor: '#059669',
+      delta: metrics.qrUsedThisWeek > 0 ? `+${metrics.qrUsedThisWeek} · 7gg` : null,
+      deltaDir: 'up',
+      spark: miniSpark(metrics.qrUsed + 7),
     },
   ]
 
@@ -443,22 +451,47 @@ export default function AdminDashboard() {
               transition={{ delay: i * 0.04, duration: 0.25 }}
               style={{
                 background: '#fff',
-                border: '1px solid #eee',
-                borderRadius: 10,
-                padding: '12px 14px',
+                border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+                borderRadius: 18,
+                padding: 18,
               }}
             >
-              <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
+                textTransform: 'uppercase', color: 'var(--color-ink-55, #7a6e68)',
+              }}>
                 {s.label}
               </div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', marginTop: 4, lineHeight: 1.1 }}>
-                {s.value}
+              <div style={{
+                fontFamily: 'var(--font-sans)', fontWeight: 900,
+                fontSize: 34, letterSpacing: '-0.03em',
+                lineHeight: 1, marginTop: 8,
+                color: 'var(--color-ink)',
+              }}>
+                {typeof s.value === 'number' ? s.value.toLocaleString('it-IT') : s.value}
               </div>
-              {s.sub && (
-                <div style={{ fontSize: 11, color: s.subColor, fontWeight: 500, marginTop: 4 }}>
-                  {s.sub}
+              {s.delta && (
+                <div style={{
+                  marginTop: 6, fontSize: 12, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  color: s.deltaDir === 'dn' ? 'var(--color-corallo, #E8453C)' : '#2C7A4A',
+                }}>
+                  {s.deltaDir === 'dn' ? '▼' : '▲'} {s.delta}
                 </div>
               )}
+              <div style={{
+                height: 34, marginTop: 10,
+                display: 'flex', alignItems: 'flex-end', gap: 3,
+              }}>
+                {s.spark.map((h, idx) => (
+                  <span key={idx} style={{
+                    flex: 1, height: `${h}%`, borderRadius: 2,
+                    background: idx >= s.spark.length - 2
+                      ? 'var(--color-corallo, #E8453C)'
+                      : 'var(--color-cream-deep, #F1EBE0)',
+                  }} />
+                ))}
+              </div>
             </motion.div>
           ))}
         </div>
