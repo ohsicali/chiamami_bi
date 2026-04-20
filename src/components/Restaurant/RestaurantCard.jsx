@@ -112,7 +112,7 @@ export default function RestaurantCard({
           </div>
           {hasDiscount && discountTitle && (
             <div style={{
-              background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+              background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)', color: '#000',
               fontSize: 11, fontWeight: 700,
               padding: '5px 12px', borderRadius: 10,
             }}>
@@ -232,12 +232,13 @@ export default function RestaurantCard({
         </div>
       )}
 
-      {/* Green discount strip on top */}
+      {/* Discount strip on top (v4: coral-soft → corallo gradient) */}
       {hasDiscount && discountTitle && (
         <div className="rcard-discount-strip" style={{
-          background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+          background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)',
+          color: '#22181C',
           fontSize: 10, fontWeight: 700,
-          padding: '4px 10px',
+          padding: '5px 10px',
           textAlign: 'center',
           letterSpacing: 0.5,
         }}>
@@ -265,13 +266,13 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Desktop-only discount badge on photo */}
+        {/* Desktop-only discount badge on photo (v4: corallo pill) */}
         {hasDiscount && discountTitle && (
           <div className="rcard-photo-badge hidden md:block" style={{
             position: 'absolute', top: 6, left: 6,
-            background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+            background: '#EE5C55', color: '#fff',
             fontSize: 9, fontWeight: 700,
-            padding: '2px 7px', borderRadius: 6,
+            padding: '3px 8px', borderRadius: 999,
             letterSpacing: 0.3,
           }}>
             {discountTitle}

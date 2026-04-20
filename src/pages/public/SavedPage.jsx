@@ -401,7 +401,7 @@ export default function SavedPage() {
                     {discount && (
                       <div style={{
                         position: 'absolute', top: 10, left: 10, zIndex: 2,
-                        background: 'linear-gradient(135deg, #a3e635, #4ade80)', color: '#000',
+                        background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)', color: '#000',
                         fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 8,
                       }}>
                         {discount.title || discount.discount_value}
