@@ -119,7 +119,7 @@ function FeaturedBadge() {
         fontFamily: "var(--font-sans)",
       }}
     >
-      ★ Evidenza
+      Evidenza
     </span>
   )
 }
@@ -1117,7 +1117,7 @@ export default function DiscountManager() {
                         onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))}
                         style={{ accentColor: '#B08954', width: 16, height: 16 }}
                       />
-                      <span style={{ fontSize: 13, color: '#1a1a1f' }}>★ In evidenza</span>
+                      <span style={{ fontSize: 13, color: '#1a1a1f' }}>In evidenza</span>
                     </label>
                   )}
 
