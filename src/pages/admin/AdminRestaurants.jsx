@@ -216,7 +216,7 @@ export default function AdminRestaurants() {
       >
         <div style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Ristoranti</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Ristoranti</h1>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
               {restaurants.length} ristoranti · {published} pubblicati · {drafts} bozze
             </p>
@@ -286,7 +286,7 @@ export default function AdminRestaurants() {
           >
             <BackIcon w={18} />
           </button>
-          <h1 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, flex: 1 }}>Ristoranti</h1>
+          <h1 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0, flex: 1 }}>Ristoranti</h1>
           <Link
             to="/admin/restaurant/new"
             style={{
@@ -346,7 +346,7 @@ export default function AdminRestaurants() {
                 padding: '6px 12px',
                 borderRadius: 16,
                 border: filter === f.key ? 'none' : '1px solid #eee',
-                background: filter === f.key ? '#1a1a1f' : '#fff',
+                background: filter === f.key ? 'var(--color-ink)' : '#fff',
                 color: filter === f.key ? '#fff' : '#999',
                 fontSize: 12,
                 fontWeight: 500,
@@ -377,7 +377,7 @@ export default function AdminRestaurants() {
               padding: '6px 14px',
               borderRadius: 16,
               border: filter === f.key ? 'none' : '1px solid #eee',
-              background: filter === f.key ? '#1a1a1f' : '#fff',
+              background: filter === f.key ? 'var(--color-ink)' : '#fff',
               color: filter === f.key ? '#fff' : '#666',
               fontSize: 12,
               fontWeight: 500,
@@ -479,7 +479,7 @@ export default function AdminRestaurants() {
                             style={{
                               fontSize: 13,
                               fontWeight: 600,
-                              color: '#1a1a1f',
+                              color: 'var(--color-ink)',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
@@ -633,7 +633,7 @@ export default function AdminRestaurants() {
                     style={{
                       fontSize: 14,
                       fontWeight: 600,
-                      color: '#1a1a1f',
+                      color: 'var(--color-ink)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -752,7 +752,7 @@ export default function AdminRestaurants() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
                 Conferma eliminazione
               </h3>
               <p style={{ fontSize: 13, color: '#666', margin: '8px 0 20px', lineHeight: 1.5 }}>

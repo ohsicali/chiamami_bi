@@ -45,7 +45,7 @@ function StatCard({ label, value, sub, subColor }) {
       <div style={{ fontSize: 10, color: '#999', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', marginTop: 4, lineHeight: 1.1 }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', marginTop: 4, lineHeight: 1.1 }}>
         {value}
       </div>
       {sub && (
@@ -72,7 +72,7 @@ function GeoCard({ title, rows, emptyLabel }) {
   const isCountry = title === 'Top paesi'
   return (
     <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
-      <h3 style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1f', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <h3 style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {title}
       </h3>
       <div style={{ fontSize: 10, color: '#bbb', marginBottom: 14, fontStyle: 'italic' }}>
@@ -452,7 +452,7 @@ export default function AnalyticsPage() {
       <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Analytics</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Analytics</h1>
             <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>
               Performance e metriche in tempo reale
             </p>
@@ -479,7 +479,7 @@ export default function AnalyticsPage() {
                   border: 'none',
                   borderRadius: 4,
                   cursor: 'pointer',
-                  background: period === p.key ? '#1a1a1f' : 'transparent',
+                  background: period === p.key ? 'var(--color-ink)' : 'transparent',
                   color: period === p.key ? '#fff' : '#666',
                   transition: 'background 0.15s',
                 }}
@@ -499,7 +499,7 @@ export default function AnalyticsPage() {
         {/* ─── LIVE BANNER ─── */}
         <div
           style={{
-            background: '#1a1a1f',
+            background: 'var(--color-ink)',
             borderRadius: 10,
             padding: '14px 18px',
             display: 'flex',
@@ -585,7 +585,7 @@ export default function AnalyticsPage() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: '#1a1a1f',
+                  color: 'var(--color-ink)',
                   margin: 0,
                   textTransform: 'uppercase',
                   letterSpacing: 0.5,
@@ -672,7 +672,7 @@ export default function AnalyticsPage() {
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 margin: '0 0 4px',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -766,7 +766,7 @@ export default function AnalyticsPage() {
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 margin: '0 0 12px',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -822,7 +822,7 @@ export default function AnalyticsPage() {
                             style={{
                               fontSize: 13,
                               fontWeight: 500,
-                              color: '#1a1a1f',
+                              color: 'var(--color-ink)',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
@@ -846,11 +846,11 @@ export default function AnalyticsPage() {
                         </div>
                         <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f' }}>{gen}</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>{gen}</div>
                             <div style={{ fontSize: 9, color: '#999' }}>Presi</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f' }}>{used}</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>{used}</div>
                             <div style={{ fontSize: 9, color: '#999' }}>Usati</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
@@ -892,7 +892,7 @@ export default function AnalyticsPage() {
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 margin: '0 0 12px',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -954,7 +954,7 @@ export default function AnalyticsPage() {
                           style={{
                             fontSize: 13,
                             fontWeight: 500,
-                            color: '#1a1a1f',
+                            color: 'var(--color-ink)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -974,7 +974,7 @@ export default function AnalyticsPage() {
                         }}
                       >
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontWeight: 600, color: '#1a1a1f' }}>{r.savedCount}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{r.savedCount}</div>
                           <div style={{ fontSize: 9, color: '#999' }}>Salvati</div>
                         </div>
                       </div>

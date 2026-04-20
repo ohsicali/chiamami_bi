@@ -1473,7 +1473,7 @@ export default function RestaurantForm() {
               style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -1596,7 +1596,7 @@ export default function RestaurantForm() {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleGoogleFill}
                 disabled={googleFilling || !form.google_maps_url.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1a1a1f] text-white hover:bg-[#2a2a2f] transition-colors disabled:opacity-40 disabled:cursor-not-allowed self-start"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-ink)] text-white hover:bg-[#2a2a2f] transition-colors disabled:opacity-40 disabled:cursor-not-allowed self-start"
               >
                 {googleFilling ? (
                   <>
@@ -1992,7 +1992,7 @@ export default function RestaurantForm() {
                   <button
                     type="button"
                     onClick={() => update('place_id_verified_at', new Date().toISOString())}
-                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1f] text-white hover:bg-[#2a2a2f] transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-ink)] text-white hover:bg-[#2a2a2f] transition-colors"
                   >
                     Verifica come corretto
                   </button>
@@ -2001,7 +2001,7 @@ export default function RestaurantForm() {
                   <button
                     type="button"
                     onClick={() => update('place_id_verified_at', null)}
-                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-[#1a1a1f] border border-[#e5e5e5] hover:bg-[#f5f5f5] transition-colors"
+                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-[var(--color-ink)] border border-[#e5e5e5] hover:bg-[#f5f5f5] transition-colors"
                   >
                     Rimuovi verifica
                   </button>
@@ -2039,7 +2039,7 @@ export default function RestaurantForm() {
               {aiSuggestion?.field === 'our_review' && (
                 <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
                   <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
-                  <p className="text-sm text-[#1a1a1f] whitespace-pre-wrap">{aiSuggestion.corrected}</p>
+                  <p className="text-sm text-[var(--color-ink)] whitespace-pre-wrap">{aiSuggestion.corrected}</p>
                   <div className="flex gap-2 mt-3">
                     <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
                     <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-[#666]">Rifiuta</button>
@@ -2069,7 +2069,7 @@ export default function RestaurantForm() {
               {aiSuggestion?.field === 'our_tip' && (
                 <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50/50 p-4">
                   <p className="text-xs font-semibold text-purple-700 mb-2">Testo corretto:</p>
-                  <p className="text-sm text-[#1a1a1f] whitespace-pre-wrap">{aiSuggestion.corrected}</p>
+                  <p className="text-sm text-[var(--color-ink)] whitespace-pre-wrap">{aiSuggestion.corrected}</p>
                   <div className="flex gap-2 mt-3">
                     <button type="button" onClick={handleAcceptAi} className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white">Accetta</button>
                     <button type="button" onClick={handleRejectAi} className="rounded-lg bg-gray-200 px-3 py-1.5 text-xs font-medium text-[#666]">Rifiuta</button>
@@ -2311,11 +2311,11 @@ export default function RestaurantForm() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0, marginBottom: 8 }}>
                 Conferma eliminazione
               </h3>
               <p style={{ fontSize: 13, color: '#666', marginBottom: 20, lineHeight: 1.5 }}>
-                Sei sicuro di voler eliminare <strong style={{ color: '#1a1a1f' }}>{form.name}</strong>? Questa azione non può essere annullata.
+                Sei sicuro di voler eliminare <strong style={{ color: 'var(--color-ink)' }}>{form.name}</strong>? Questa azione non può essere annullata.
               </p>
               <div className="flex gap-2 justify-end">
                 <button
@@ -2380,7 +2380,7 @@ function Section({ title, children }) {
         style={{
           fontSize: 14,
           fontWeight: 600,
-          color: '#1a1a1f',
+          color: 'var(--color-ink)',
           margin: 0,
           marginBottom: 16,
           letterSpacing: '-0.1px',
@@ -2426,7 +2426,7 @@ function CollapsibleSection({ title, subtitle, defaultOpen = true, children }) {
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: '#1a1a1f',
+              color: 'var(--color-ink)',
               margin: 0,
               letterSpacing: '-0.1px',
             }}
@@ -2496,7 +2496,7 @@ function Field({ label, children, error }) {
           display: 'block',
           fontSize: 12,
           fontWeight: 500,
-          color: '#1a1a1f',
+          color: 'var(--color-ink)',
           marginBottom: 6,
         }}
       >
@@ -2508,7 +2508,7 @@ function Field({ label, children, error }) {
 }
 
 function inputClass(hasError) {
-  return `w-full px-3.5 py-2.5 rounded-lg border text-sm text-[#1a1a1f] placeholder:text-[#aaa] focus:outline-none focus:ring-2 transition-all duration-150 ${
+  return `w-full px-3.5 py-2.5 rounded-lg border text-sm text-[var(--color-ink)] placeholder:text-[#aaa] focus:outline-none focus:ring-2 transition-all duration-150 ${
     hasError
       ? 'border-red-300 focus:ring-red-300/30 focus:border-red-400 bg-red-50/30'
       : 'border-[#eee] focus:ring-[#E8453C]/15 focus:border-[#E8453C]/50 bg-white'

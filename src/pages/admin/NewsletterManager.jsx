@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
-function StatCard({ label, value, color = '#1a1a1f' }) {
+function StatCard({ label, value, color = 'var(--color-ink)' }) {
   return (
     <div style={{
       background: '#fff',
@@ -108,7 +108,7 @@ export default function NewsletterManager() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Newsletter</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>Newsletter</h1>
             <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
               Iscritti alla newsletter di ChiamamiBi
             </p>
@@ -120,7 +120,7 @@ export default function NewsletterManager() {
               padding: '10px 18px',
               borderRadius: 10,
               border: 'none',
-              background: '#1a1a1f',
+              background: 'var(--color-ink)',
               color: '#fff',
               fontSize: 13,
               fontWeight: 600,
@@ -163,7 +163,7 @@ export default function NewsletterManager() {
               background: '#fff',
               fontSize: 13,
               fontFamily: 'inherit',
-              color: '#1a1a1f',
+              color: 'var(--color-ink)',
               outline: 'none',
             }}
           />
@@ -182,7 +182,7 @@ export default function NewsletterManager() {
             padding: 60,
             textAlign: 'center',
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
               {subscribers.length === 0 ? 'Nessun iscritto' : 'Nessun risultato'}
             </p>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -226,7 +226,7 @@ export default function NewsletterManager() {
                     </svg>
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {s.email}
                     </div>
                     <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
@@ -281,7 +281,7 @@ export default function NewsletterManager() {
                   fontFamily: "var(--font-sans)",
                 }}
               >
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>
                   Eliminare iscritto?
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '8px 0 20px' }}>
@@ -292,7 +292,7 @@ export default function NewsletterManager() {
                     onClick={() => setDeleteConfirm(null)}
                     style={{
                       padding: '10px 18px', borderRadius: 10, border: '1px solid #e5e5e5',
-                      background: '#fff', color: '#1a1a1f', fontSize: 13, fontWeight: 600,
+                      background: '#fff', color: 'var(--color-ink)', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >

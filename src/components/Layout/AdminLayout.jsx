@@ -187,7 +187,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: '#1a1a1f',
+        background: 'var(--color-ink)',
         fontFamily: "var(--font-sans)",
       }}
     >
@@ -521,7 +521,7 @@ export default function AdminLayout({ children, title }) {
           left: 0,
           right: 0,
           height: 48,
-          background: '#1a1a1f',
+          background: 'var(--color-ink)',
           zIndex: 20,
           alignItems: 'center',
           justifyContent: 'space-between',

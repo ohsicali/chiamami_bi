@@ -512,7 +512,7 @@ export default function AdminDashboard() {
                       style={{
                         fontSize: 12,
                         fontWeight: 500,
-                        color: isZero ? '#999' : '#1a1a1f',
+                        color: isZero ? '#999' : 'var(--color-ink)',
                         lineHeight: 1.4,
                       }}
                     >

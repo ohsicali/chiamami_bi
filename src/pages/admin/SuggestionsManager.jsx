@@ -12,7 +12,7 @@ const STATUS_CONFIG = {
   rejected: { label: 'Rifiutato', bg: '#fef2f2', color: '#dc2626' },
 }
 
-function StatCard({ label, value, color = '#1a1a1f' }) {
+function StatCard({ label, value, color = 'var(--color-ink)' }) {
   return (
     <div style={{
       background: '#fff',
@@ -90,7 +90,7 @@ export default function SuggestionsManager() {
       <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Suggerimenti</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>Suggerimenti</h1>
           <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
             Nuovi ristoranti proposti dagli utenti
           </p>
@@ -119,9 +119,9 @@ export default function SuggestionsManager() {
                 padding: '9px 14px',
                 borderRadius: 10,
                 border: '1px solid',
-                borderColor: filter === f.key ? '#1a1a1f' : '#e5e5e5',
-                background: filter === f.key ? '#1a1a1f' : '#fff',
-                color: filter === f.key ? '#fff' : '#1a1a1f',
+                borderColor: filter === f.key ? 'var(--color-ink)' : '#e5e5e5',
+                background: filter === f.key ? 'var(--color-ink)' : '#fff',
+                color: filter === f.key ? '#fff' : 'var(--color-ink)',
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -158,7 +158,7 @@ export default function SuggestionsManager() {
             padding: 60,
             textAlign: 'center',
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
               Nessun suggerimento
             </p>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -184,7 +184,7 @@ export default function SuggestionsManager() {
                   {/* Header: name + status */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1f' }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)' }}>
                         {s.restaurant_name}
                       </div>
                       {s.address && (
@@ -253,7 +253,7 @@ export default function SuggestionsManager() {
                   {s.description && (
                     <p style={{
                       fontSize: 13,
-                      color: '#1a1a1f',
+                      color: 'var(--color-ink)',
                       lineHeight: 1.55,
                       margin: '0 0 12px',
                       fontStyle: 'italic',

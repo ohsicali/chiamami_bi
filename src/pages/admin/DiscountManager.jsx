@@ -43,7 +43,7 @@ const EMPTY_FORM = {
 /* ------------------------------------------------------------------ */
 /*  Stat card                                                          */
 /* ------------------------------------------------------------------ */
-function StatCard({ label, value, accent = '#1a1a1f' }) {
+function StatCard({ label, value, accent = 'var(--color-ink)' }) {
   return (
     <div
       style={{
@@ -135,8 +135,8 @@ function FilterChip({ label, count, active, onClick }) {
       style={{
         padding: '7px 14px',
         borderRadius: 999,
-        border: active ? '1px solid #1a1a1f' : '1px solid #eee',
-        background: active ? '#1a1a1f' : '#fff',
+        border: active ? '1px solid var(--color-ink)' : '1px solid #eee',
+        background: active ? 'var(--color-ink)' : '#fff',
         color: active ? '#fff' : '#666',
         fontSize: 12,
         fontWeight: 500,
@@ -464,7 +464,7 @@ export default function DiscountManager() {
           }}
         >
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0, letterSpacing: '-0.3px' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0, letterSpacing: '-0.3px' }}>
               Sconti & Drop
             </h1>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -550,7 +550,7 @@ export default function DiscountManager() {
             }}
           >
             <div style={{ fontSize: 32, marginBottom: 10 }}>🏷️</div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
               {filter === 'all' ? 'Nessuno sconto creato' : 'Nessuno sconto in questa categoria'}
             </p>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -564,7 +564,7 @@ export default function DiscountManager() {
           <div style={{
             margin: '0 20px 12px',
             padding: '10px 16px',
-            background: '#1a1a1f',
+            background: 'var(--color-ink)',
             borderRadius: 10,
             display: 'flex',
             alignItems: 'center',
@@ -652,7 +652,7 @@ export default function DiscountManager() {
                         />
                       </td>
                       <td style={tdStyle}>
-                        <div style={{ fontWeight: 600, color: '#1a1a1f' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
                           {d.restaurant?.name || '—'}
                           {d.is_drop && <DropBadge />}
                           {d.is_featured && !d.is_drop && <FeaturedBadge />}
@@ -665,7 +665,7 @@ export default function DiscountManager() {
                       <td style={{ ...tdStyle, color: '#666' }}>{TYPE_LABELS[d.discount_type] || d.discount_type}</td>
                       <td style={{ ...tdStyle, color: '#666' }}>{formatDate(d.valid_until)}</td>
                       <td style={{ ...tdStyle, color: '#666' }}>
-                        <span style={{ color: '#1a1a1f', fontWeight: 600 }}>{d.generated_count || 0}</span>
+                        <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{d.generated_count || 0}</span>
                         <span style={{ color: '#999' }}> / </span>
                         <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
                         {d.max_redemptions ? <span style={{ color: '#999' }}> · max {d.max_redemptions}</span> : null}
@@ -686,7 +686,7 @@ export default function DiscountManager() {
                               title={sent
                                 ? `Già inviato il ${new Date(sent.sent_at).toLocaleDateString('it-IT')} a ${sent.sent_count} iscritti — clicca per inviare di nuovo`
                                 : !isActive(d) ? 'Attiva lo sconto per notificare' : 'Notifica iscritti newsletter'}
-                              style={{ ...iconBtnStyle, color: sent ? '#059669' : '#1a1a1f', opacity: disabled ? 0.4 : 1 }}
+                              style={{ ...iconBtnStyle, color: sent ? '#059669' : 'var(--color-ink)', opacity: disabled ? 0.4 : 1 }}
                             >
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M3 11l18-8v18L3 13v-2z" />
@@ -752,7 +752,7 @@ export default function DiscountManager() {
                       style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#dc2626', marginTop: 2, flexShrink: 0 }}
                     />
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                         {d.restaurant?.name || '—'}
                         {d.is_drop && <DropBadge />}
                         {d.is_featured && !d.is_drop && <FeaturedBadge />}
@@ -778,7 +778,7 @@ export default function DiscountManager() {
                   }}
                 >
                   <span>
-                    <span style={{ color: '#1a1a1f', fontWeight: 600 }}>{d.generated_count || 0}</span>
+                    <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{d.generated_count || 0}</span>
                     <span> presi · </span>
                     <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
                     <span> usati{d.max_redemptions ? ` · max ${d.max_redemptions}` : ''} · Scade {formatDate(d.valid_until)}</span>
@@ -794,7 +794,7 @@ export default function DiscountManager() {
                           onClick={(e) => { e.stopPropagation(); handleNotify(d) }}
                           disabled={disabled}
                           title={sent ? `Già inviato a ${sent.sent_count} iscritti` : 'Notifica iscritti'}
-                          style={{ background: 'transparent', border: 'none', color: sent ? '#059669' : '#1a1a1f', padding: 4, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
+                          style={{ background: 'transparent', border: 'none', color: sent ? '#059669' : 'var(--color-ink)', padding: 4, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 11l18-8v18L3 13v-2z" />
@@ -860,7 +860,7 @@ export default function DiscountManager() {
               >
                 {/* Modal header */}
                 <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid #f3f3f3' }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+                  <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
                     {editing ? 'Modifica sconto' : 'Nuovo sconto'}
                   </h2>
                 </div>
@@ -870,13 +870,13 @@ export default function DiscountManager() {
                   <FormField label="Ristorante">
                     {/* When editing, just show the name — can't change it */}
                     {editing ? (
-                      <div style={{ ...inputStyle, color: '#1a1a1f', background: '#f9f9f9' }}>
+                      <div style={{ ...inputStyle, color: 'var(--color-ink)', background: '#f9f9f9' }}>
                         {restaurants.find((r) => r.id === form.restaurant_id)?.name || '—'}
                       </div>
                     ) : form.restaurant_id ? (
                       /* Partner already selected */
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ ...inputStyle, flex: 1, color: '#1a1a1f', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ ...inputStyle, flex: 1, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
                           {restaurants.find((r) => r.id === form.restaurant_id)?.name}
                         </div>
@@ -923,7 +923,7 @@ export default function DiscountManager() {
                                   <div
                                     key={r.id}
                                     onClick={() => { setForm((f) => ({ ...f, restaurant_id: r.id })); setRestSearch(''); setShowRestDD(false) }}
-                                    style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#1a1a1f', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f5f5f5' }}
+                                    style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #f5f5f5' }}
                                     onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
                                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                                   >
@@ -982,7 +982,7 @@ export default function DiscountManager() {
                               <div
                                 key={r.id}
                                 onClick={() => { setNewPartner({ id: r.id, name: r.name }); setAddPartnerOpen(false) }}
-                                style={{ padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: '#1a1a1f', borderBottom: '1px solid #f5f5f5' }}
+                                style={{ padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: 'var(--color-ink)', borderBottom: '1px solid #f5f5f5' }}
                                 onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
                                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                               >
@@ -1076,7 +1076,7 @@ export default function DiscountManager() {
                       onChange={(e) => setForm((f) => ({ ...f, is_drop: e.target.checked, is_featured: e.target.checked ? false : f.is_featured }))}
                       style={{ accentColor: '#B08954', width: 16, height: 16 }}
                     />
-                    <span style={{ fontSize: 13, color: '#1a1a1f', fontWeight: 500 }}>È un drop? (tempo limitato)</span>
+                    <span style={{ fontSize: 13, color: 'var(--color-ink)', fontWeight: 500 }}>È un drop? (tempo limitato)</span>
                   </label>
 
                   {form.is_drop && (
@@ -1117,7 +1117,7 @@ export default function DiscountManager() {
                         onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))}
                         style={{ accentColor: '#B08954', width: 16, height: 16 }}
                       />
-                      <span style={{ fontSize: 13, color: '#1a1a1f' }}>In evidenza</span>
+                      <span style={{ fontSize: 13, color: 'var(--color-ink)' }}>In evidenza</span>
                     </label>
                   )}
 
@@ -1128,7 +1128,7 @@ export default function DiscountManager() {
                       onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
                       style={{ accentColor: '#E8453C', width: 16, height: 16 }}
                     />
-                    <span style={{ fontSize: 13, color: '#1a1a1f' }}>Attivo</span>
+                    <span style={{ fontSize: 13, color: 'var(--color-ink)' }}>Attivo</span>
                   </label>
 
                   {saveError && (
@@ -1204,7 +1204,7 @@ export default function DiscountManager() {
                 }}
               >
                 <div style={{ fontSize: 36, marginBottom: 12 }}>🎉</div>
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: '0 0 6px' }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)', margin: '0 0 6px' }}>
                   Partner creato!
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
@@ -1215,7 +1215,7 @@ export default function DiscountManager() {
                   marginBottom: 20,
                 }}>
                   <div style={{ fontSize: 11, color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>PIN di accesso</div>
-                  <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: 8, color: '#1a1a1f', fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: 8, color: 'var(--color-ink)', fontVariantNumeric: 'tabular-nums' }}>
                     {pinPopup.pin}
                   </div>
                 </div>
@@ -1227,7 +1227,7 @@ export default function DiscountManager() {
                   onClick={() => { navigator.clipboard?.writeText(pinPopup.pin).catch(() => {}); setPinPopup(null) }}
                   style={{
                     width: '100%', padding: '13px 0', borderRadius: 12,
-                    background: '#1a1a1f', border: 'none', color: '#fff',
+                    background: 'var(--color-ink)', border: 'none', color: '#fff',
                     fontSize: 14, fontWeight: 600, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     fontFamily: "var(--font-sans)",
@@ -1262,7 +1262,7 @@ export default function DiscountManager() {
                   fontFamily: "var(--font-sans)",
                 }}
               >
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0, marginBottom: 8 }}>
                   Eliminare {selectedIds.size} {selectedIds.size === 1 ? 'sconto' : 'sconti'}?
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
@@ -1336,11 +1336,11 @@ export default function DiscountManager() {
                   fontFamily: "var(--font-sans)",
                 }}
               >
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0, marginBottom: 8 }}>
                   Eliminare lo sconto?
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
-                  Sconto di <strong style={{ color: '#1a1a1f' }}>{deleteConfirm.restaurant?.name || 'ristorante'}</strong>: questa azione non può essere annullata.
+                  Sconto di <strong style={{ color: 'var(--color-ink)' }}>{deleteConfirm.restaurant?.name || 'ristorante'}</strong>: questa azione non può essere annullata.
                 </p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   <button
@@ -1394,7 +1394,7 @@ function FormField({ label, hint, children }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 5 }}>
-        <label style={{ fontSize: 11, fontWeight: 500, color: '#1a1a1f' }}>{label}</label>
+        <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-ink)' }}>{label}</label>
         {hint && <span style={{ fontSize: 10, color: '#999' }}>{hint}</span>}
       </div>
       {children}
@@ -1409,7 +1409,7 @@ const inputStyle = {
   border: '1px solid #eee',
   background: '#fff',
   fontSize: 13,
-  color: '#1a1a1f',
+  color: 'var(--color-ink)',
   outline: 'none',
   fontFamily: "var(--font-sans)",
 }
@@ -1426,7 +1426,7 @@ const thStyle = {
 
 const tdStyle = {
   padding: '14px 16px',
-  color: '#1a1a1f',
+  color: 'var(--color-ink)',
   verticalAlign: 'top',
 }
 

@@ -163,7 +163,7 @@ export default function OrariLocale({ restaurant }) {
       {open && (
         <div style={{
           marginTop: 6, padding: '12px 14px', borderRadius: 10,
-          background: 'rgba(0,0,0,0.02)', fontSize: 13, color: 'var(--color-primary, #1a1a1f)',
+          background: 'rgba(0,0,0,0.02)', fontSize: 13, color: 'var(--color-primary, var(--color-ink))',
         }}>
           {weekdayLines.length > 0 ? (
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>

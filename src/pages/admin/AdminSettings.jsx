@@ -22,7 +22,7 @@ const inputStyle = {
   background: '#fff',
   fontSize: 13,
   fontFamily: 'inherit',
-  color: '#1a1a1f',
+  color: 'var(--color-ink)',
   outline: 'none',
 }
 
@@ -41,7 +41,7 @@ const btnPrimary = {
 
 const btnDark = {
   ...btnPrimary,
-  background: '#1a1a1f',
+  background: 'var(--color-ink)',
 }
 
 const sectionLabel = {
@@ -141,7 +141,7 @@ function ThumbnailTool() {
         </svg>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f' }}>Rigenera thumbnail</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)' }}>Rigenera thumbnail</div>
         <p style={{ fontSize: 12, color: '#666', margin: '4px 0 12px', lineHeight: 1.5 }}>
           Genera thumbnail (400px WebP) per tutte le foto che non ne hanno ancora una.
           Utile dopo il primo setup o se cambi le impostazioni di compressione.
@@ -259,7 +259,7 @@ function ChangeEmail({ currentEmail, user }) {
 
   return (
     <div style={cardStyle}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', marginBottom: 4 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 4 }}>
         {isGoogleUser ? 'Email di contatto' : 'Cambia email'}
       </div>
       {isGoogleUser ? (
@@ -268,7 +268,7 @@ function ChangeEmail({ currentEmail, user }) {
         </p>
       ) : (
         <p style={{ fontSize: 12, color: '#666', margin: '0 0 12px' }}>
-          Email attuale: <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{currentEmail}</span>
+          Email attuale: <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{currentEmail}</span>
         </p>
       )}
 
@@ -421,7 +421,7 @@ function ChangePassword({ userEmail }) {
 
   return (
     <div style={cardStyle}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', marginBottom: 12 }}>Cambia password</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 12 }}>Cambia password</div>
 
       {!unlocked ? (
         <div>
@@ -580,7 +580,7 @@ function AdminList({ currentUserId }) {
 
   return (
     <div style={cardStyle}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', marginBottom: 14 }}>Amministratori</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 14 }}>Amministratori</div>
 
       {loading ? (
         <div style={{ height: 40, background: '#f3f3f3', borderRadius: 10 }} />
@@ -607,7 +607,7 @@ function AdminList({ currentUserId }) {
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {admin.full_name || 'Admin'}
                 </div>
                 {admin.email && (
@@ -724,7 +724,7 @@ export default function AdminSettings() {
       <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Impostazioni</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Impostazioni</h1>
             <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>
               Strumenti di manutenzione e configurazione
             </p>

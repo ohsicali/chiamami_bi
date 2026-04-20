@@ -12,7 +12,7 @@ const STATUS_CONFIG = {
   rejected: { label: 'Rifiutato', bg: '#fef2f2', color: '#dc2626' },
 }
 
-function StatCard({ label, value, color = '#1a1a1f' }) {
+function StatCard({ label, value, color = 'var(--color-ink)' }) {
   return (
     <div style={{
       background: '#fff',
@@ -108,7 +108,7 @@ export default function ApplicationManager() {
       <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Candidature Partner</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>Candidature Partner</h1>
           <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
             Ristoranti che hanno fatto richiesta di partnership
           </p>
@@ -138,9 +138,9 @@ export default function ApplicationManager() {
                 padding: '9px 14px',
                 borderRadius: 10,
                 border: '1px solid',
-                borderColor: filter === f.key ? '#1a1a1f' : '#e5e5e5',
-                background: filter === f.key ? '#1a1a1f' : '#fff',
-                color: filter === f.key ? '#fff' : '#1a1a1f',
+                borderColor: filter === f.key ? 'var(--color-ink)' : '#e5e5e5',
+                background: filter === f.key ? 'var(--color-ink)' : '#fff',
+                color: filter === f.key ? '#fff' : 'var(--color-ink)',
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -177,7 +177,7 @@ export default function ApplicationManager() {
             padding: 60,
             textAlign: 'center',
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
               Nessuna candidatura
             </p>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -202,7 +202,7 @@ export default function ApplicationManager() {
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1f' }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)' }}>
                         {a.restaurant_name}
                       </div>
                       <div style={{ fontSize: 12, color: '#666', marginTop: 3 }}>
@@ -235,7 +235,7 @@ export default function ApplicationManager() {
                   }}>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <span style={{ color: '#999', minWidth: 70 }}>Referente:</span>
-                      <span style={{ color: '#1a1a1f', fontWeight: 600 }}>{a.contact_name || '—'}</span>
+                      <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{a.contact_name || '—'}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <span style={{ color: '#999', minWidth: 70 }}>Email:</span>
@@ -245,7 +245,7 @@ export default function ApplicationManager() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <span style={{ color: '#999', minWidth: 70 }}>Telefono:</span>
-                      <a href={`tel:${a.phone}`} style={{ color: '#1a1a1f', textDecoration: 'none', fontWeight: 500 }}>
+                      <a href={`tel:${a.phone}`} style={{ color: 'var(--color-ink)', textDecoration: 'none', fontWeight: 500 }}>
                         {a.phone || '—'}
                       </a>
                     </div>
@@ -255,7 +255,7 @@ export default function ApplicationManager() {
                   {a.message && (
                     <p style={{
                       fontSize: 13,
-                      color: '#1a1a1f',
+                      color: 'var(--color-ink)',
                       lineHeight: 1.55,
                       margin: '0 0 12px',
                       fontStyle: 'italic',
@@ -287,7 +287,7 @@ export default function ApplicationManager() {
                         background: '#fff',
                         fontSize: 12,
                         fontWeight: 600,
-                        color: '#1a1a1f',
+                        color: 'var(--color-ink)',
                         cursor: 'pointer',
                         fontFamily: 'inherit',
                       }}
@@ -345,7 +345,7 @@ export default function ApplicationManager() {
                   fontFamily: "var(--font-sans)",
                 }}
               >
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>
                   Eliminare candidatura?
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '8px 0 20px' }}>
@@ -356,7 +356,7 @@ export default function ApplicationManager() {
                     onClick={() => setDeleteConfirm(null)}
                     style={{
                       padding: '10px 18px', borderRadius: 10, border: '1px solid #e5e5e5',
-                      background: '#fff', color: '#1a1a1f', fontSize: 13, fontWeight: 600,
+                      background: '#fff', color: 'var(--color-ink)', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >

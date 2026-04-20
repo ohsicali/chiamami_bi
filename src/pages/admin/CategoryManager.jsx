@@ -111,7 +111,7 @@ export default function CategoryManager() {
     border: '1px solid #eee',
     borderRadius: 8,
     background: '#fafafa',
-    color: '#1a1a1f',
+    color: 'var(--color-ink)',
     outline: 'none',
     fontFamily: 'inherit',
   }
@@ -122,7 +122,7 @@ export default function CategoryManager() {
       <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Categorie</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Categorie</h1>
             <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>{categories.length} categorie totali</p>
           </div>
           <button
@@ -152,7 +152,7 @@ export default function CategoryManager() {
         {/* ─── ADD FORM ─── */}
         {showAdd && (
           <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', margin: '0 0 12px' }}>Nuova categoria</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', margin: '0 0 12px' }}>Nuova categoria</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px', gap: 8 }}>
                 <input
@@ -187,7 +187,7 @@ export default function CategoryManager() {
                         height: 24,
                         borderRadius: '50%',
                         background: c,
-                        border: addForm.color === c ? '2px solid #1a1a1f' : '2px solid transparent',
+                        border: addForm.color === c ? '2px solid var(--color-ink)' : '2px solid transparent',
                         cursor: 'pointer',
                         padding: 0,
                         transform: addForm.color === c ? 'scale(1.15)' : 'none',
@@ -269,7 +269,7 @@ export default function CategoryManager() {
                               height: 20,
                               borderRadius: '50%',
                               background: c,
-                              border: editForm.color === c ? '2px solid #1a1a1f' : '2px solid transparent',
+                              border: editForm.color === c ? '2px solid var(--color-ink)' : '2px solid transparent',
                               cursor: 'pointer',
                               padding: 0,
                             }}
@@ -334,7 +334,7 @@ export default function CategoryManager() {
 
                   {/* Name + count */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {cat.name}
                     </div>
                     <div style={{ fontSize: 11, color: '#999', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -398,7 +398,7 @@ export default function CategoryManager() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: '0 0 8px' }}>Elimina categoria</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: '0 0 8px' }}>Elimina categoria</h3>
             <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
               Sei sicuro di voler eliminare questa categoria? I ristoranti associati manterranno il riferimento attuale.
             </p>

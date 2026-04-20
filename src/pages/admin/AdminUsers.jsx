@@ -7,7 +7,7 @@ import AdminLayout from '../../components/Layout/AdminLayout'
 /* ------------------------------------------------------------------ */
 /*  StatCard                                                           */
 /* ------------------------------------------------------------------ */
-function StatCard({ label, value, color = '#1a1a1f' }) {
+function StatCard({ label, value, color = 'var(--color-ink)' }) {
   return (
     <div style={{
       background: '#fff',
@@ -122,7 +122,7 @@ export default function AdminUsers() {
     <AdminLayout title="Utenti">
       {/* ─── HEADER ─── */}
       <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
-        <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Utenti</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Utenti</h1>
         <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>{users.length} utenti registrati</p>
       </div>
 
@@ -155,7 +155,7 @@ export default function AdminUsers() {
               background: '#fff',
               fontSize: 13,
               fontFamily: 'inherit',
-              color: '#1a1a1f',
+              color: 'var(--color-ink)',
               outline: 'none',
               boxSizing: 'border-box',
             }}
@@ -176,9 +176,9 @@ export default function AdminUsers() {
                 padding: '7px 12px',
                 borderRadius: 8,
                 border: '1px solid',
-                borderColor: filter === f.key ? '#1a1a1f' : '#eee',
-                background: filter === f.key ? '#1a1a1f' : '#fff',
-                color: filter === f.key ? '#fff' : '#1a1a1f',
+                borderColor: filter === f.key ? 'var(--color-ink)' : '#eee',
+                background: filter === f.key ? 'var(--color-ink)' : '#fff',
+                color: filter === f.key ? '#fff' : 'var(--color-ink)',
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -212,7 +212,7 @@ export default function AdminUsers() {
             background: '#fff', border: '1px solid #eee', borderRadius: 12,
             padding: 60, textAlign: 'center',
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>Nessun utente trovato</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Nessun utente trovato</p>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>Prova a modificare i filtri</p>
           </div>
         ) : (
@@ -245,7 +245,7 @@ export default function AdminUsers() {
                             {(u.full_name || u.email || '?')[0]?.toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {u.full_name || '—'}
                             </div>
                             <div style={{ fontSize: 11, color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
@@ -294,7 +294,7 @@ export default function AdminUsers() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {u.full_name || '—'}
                         </span>
                         {u.is_admin && (
@@ -313,9 +313,9 @@ export default function AdminUsers() {
 
                   {/* Row 2: Activity stats — NO separator */}
                   <div style={{ fontSize: 11, color: '#999', marginTop: 8 }}>
-                    <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.saved_count}</span> salvati
+                    <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{u.saved_count}</span> salvati
                     {' · '}
-                    <span style={{ fontWeight: 600, color: '#1a1a1f' }}>{u.redeem_count}</span> QR
+                    <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{u.redeem_count}</span> QR
                   </div>
 
                   {/* Row 3: Relative time */}
@@ -344,5 +344,5 @@ const thStyle = {
 
 const tdStyle = {
   padding: '10px 14px',
-  color: '#1a1a1f',
+  color: 'var(--color-ink)',
 }

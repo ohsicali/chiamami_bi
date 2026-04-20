@@ -9,7 +9,7 @@ function generatePin() {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
 
-function StatCard({ label, value, color = '#1a1a1f' }) {
+function StatCard({ label, value, color = 'var(--color-ink)' }) {
   return (
     <div style={{
       background: '#fff',
@@ -151,7 +151,7 @@ export default function PartnerManager() {
       <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Ristoranti Partner</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>Ristoranti Partner</h1>
           <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
             Gestisci i PIN per la verifica QR dei ristoranti
           </p>
@@ -172,7 +172,7 @@ export default function PartnerManager() {
           padding: 18,
           marginBottom: 20,
         }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1f', margin: '0 0 12px' }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', margin: '0 0 12px' }}>
             Aggiungi nuovo partner
           </h3>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -186,7 +186,7 @@ export default function PartnerManager() {
                 border: '1px solid #e5e5e5',
                 background: '#fff',
                 fontSize: 13,
-                color: '#1a1a1f',
+                color: 'var(--color-ink)',
                 fontFamily: 'inherit',
                 cursor: 'pointer',
                 outline: 'none',
@@ -239,7 +239,7 @@ export default function PartnerManager() {
             padding: 60,
             textAlign: 'center',
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1f', margin: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
               Nessun partner
             </p>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
@@ -262,7 +262,7 @@ export default function PartnerManager() {
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1f' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)' }}>
                       {p.restaurant?.name || 'Ristorante'}
                     </div>
                     <div style={{ fontSize: 11, color: '#999', marginTop: 3 }}>
@@ -302,7 +302,7 @@ export default function PartnerManager() {
                       fontFamily: 'monospace',
                       fontSize: 22,
                       fontWeight: 700,
-                      color: '#1a1a1f',
+                      color: 'var(--color-ink)',
                       letterSpacing: 4,
                     }}>
                       {p.pin_code}
@@ -315,7 +315,7 @@ export default function PartnerManager() {
                       borderRadius: 8,
                       border: '1px solid #e5e5e5',
                       background: '#fff',
-                      color: '#1a1a1f',
+                      color: 'var(--color-ink)',
                       fontSize: 11,
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -414,7 +414,7 @@ export default function PartnerManager() {
                   fontFamily: "var(--font-sans)",
                 }}
               >
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>
                   Eliminare partner?
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '8px 0 20px' }}>
@@ -425,7 +425,7 @@ export default function PartnerManager() {
                     onClick={() => setDeleteConfirm(null)}
                     style={{
                       padding: '10px 18px', borderRadius: 10, border: '1px solid #e5e5e5',
-                      background: '#fff', color: '#1a1a1f', fontSize: 13, fontWeight: 600,
+                      background: '#fff', color: 'var(--color-ink)', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
