@@ -338,10 +338,13 @@ export default function RestaurantSheet({
           onClick={handleClose}
           style={{
             position: 'absolute', top: 'calc(14px + env(safe-area-inset-top, 0px))', left: 14, zIndex: 20,
-            width: 36, height: 36, borderRadius: '50%',
-            background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'saturate(180%) blur(10px)',
+            WebkitBackdropFilter: 'saturate(180%) blur(10px)',
+            boxShadow: '0 4px 14px rgba(34, 24, 28, 0.12)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: 'none', cursor: 'pointer', color: '#22181C',
+            border: '1px solid rgba(34, 24, 28, 0.08)', cursor: 'pointer', color: '#22181C',
             opacity: showStickyHeader ? 0 : 1,
             pointerEvents: showStickyHeader ? 'none' : 'auto',
             transition: 'opacity 0.2s ease',
@@ -363,10 +366,13 @@ export default function RestaurantSheet({
           <button
             onClick={handleShare}
             style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.92)',
+              backdropFilter: 'saturate(180%) blur(10px)',
+              WebkitBackdropFilter: 'saturate(180%) blur(10px)',
+              boxShadow: '0 4px 14px rgba(34, 24, 28, 0.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: 'none', cursor: 'pointer', color: '#22181C',
+              border: '1px solid rgba(34, 24, 28, 0.08)', cursor: 'pointer', color: '#22181C',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
