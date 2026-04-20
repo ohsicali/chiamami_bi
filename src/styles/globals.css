@@ -68,7 +68,10 @@ body {
   color: var(--color-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100dvh;
+  min-height: 100vh;
+  /* lvh = large viewport (assumes bars hidden) — makes page technically
+     scrollable on iOS Safari so the address bar can auto-collapse */
+  min-height: 100lvh;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -76,12 +79,8 @@ body {
   min-height: 100dvh;
 }
 
-/* Map page: lock scroll and fill full screen including iOS Safari chrome */
+/* Map page: dark body bg so any gap behind fixed map blends with tiles */
 .map-fixed {
-  overflow: hidden;
-  height: 100%;
-  margin: 0;
-  padding: 0;
   background: #1a1a2e;
 }
 

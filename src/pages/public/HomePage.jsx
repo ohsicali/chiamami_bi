@@ -143,12 +143,15 @@ export default function HomePage() {
   const location = useLocation()
 
   useEffect(() => {
-    // iOS Safari: briefly scroll to dismiss the browser chrome, then lock
-    const prev = window.scrollY
-    window.scrollTo(0, 1)
-    document.body.classList.add('map-fixed')
-    window.scrollTo(0, prev)
-    return () => document.body.classList.remove('map-fixed')
+    // Dark bg prevents cream flash behind fixed container
+    document.body.style.background = '#1a1a2e'
+    // Delayed 1px scroll so iOS Safari treats this as a scrollable context
+    // and auto-hides its address bar (bars only hide on scrollable pages)
+    const t = setTimeout(() => window.scrollTo(0, 1), 100)
+    return () => {
+      clearTimeout(t)
+      document.body.style.background = ''
+    }
   }, [])
 
   const { position, loading: geoLoading, locate } = useGeolocation()
