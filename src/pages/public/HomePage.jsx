@@ -428,7 +428,15 @@ export default function HomePage() {
   )
 
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: '#1e1e2a' }}>
+    <div style={{
+      position: 'fixed',
+      top: 'calc(-1 * env(safe-area-inset-top, 0px))',
+      bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
+      left: 0,
+      right: 0,
+      overflow: 'hidden',
+      background: '#1e1e2a',
+    }}>
       {/* Mobile Navbar (hidden on desktop) */}
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
