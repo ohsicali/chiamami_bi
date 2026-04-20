@@ -37,6 +37,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const [newsletterOptIn, setNewsletterOptIn] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -277,6 +278,33 @@ export default function LoginPage() {
             </svg>
           </motion.div>
 
+          {/* Kick pill — mobile only */}
+          {(mode === 'login' || mode === 'register') && (
+            <motion.div
+              variants={itemVariants}
+              className="md:hidden"
+              style={{ textAlign: 'center', marginBottom: 12 }}
+            >
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 10px',
+                  background: 'var(--color-corallo-soft)',
+                  color: 'var(--color-corallo-ink)',
+                  borderRadius: 999,
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  letterSpacing: '.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {mode === 'login' ? 'Bentornato' : 'Nuovo qui'}
+              </span>
+            </motion.div>
+          )}
+
           {/* Title */}
           <motion.h1
             variants={itemVariants}
@@ -308,6 +336,45 @@ export default function LoginPage() {
           >
             {subtitleText}
           </motion.p>
+
+          {/* Benefits strip — register only, mobile only */}
+          {mode === 'register' && (
+            <motion.div
+              variants={itemVariants}
+              className="md:hidden"
+              style={{
+                background: 'var(--color-cream-deep)',
+                borderRadius: 16,
+                padding: '16px 18px',
+                margin: '18px 0 22px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '.14em',
+                  textTransform: 'uppercase',
+                  color: 'var(--color-ink-70)',
+                  marginBottom: 10,
+                }}
+              >
+                Cosa ottieni
+              </div>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0, margin: 0 }}>
+                {[
+                  'Sconti veri nei 70+ locali che ho provato a Torino',
+                  'Drop settimanali a posti limitati (scadono)',
+                  'Liste salvate con le tue note personali',
+                ].map((t) => (
+                  <li key={t} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.45 }}>
+                    <span style={{ color: 'var(--color-corallo)', fontWeight: 900, flex: '0 0 auto' }}>✓</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
 
           {/* Google OAuth — hidden in forgot/recovery modes */}
           {(mode === 'login' || mode === 'register') && (
@@ -534,9 +601,20 @@ export default function LoginPage() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  style={{ marginBottom: 14 }}
+                  style={{ marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 8 }}
                 >
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={newsletterOptIn}
+                      onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                      style={{ marginTop: 3, accentColor: 'var(--color-corallo)', width: 16, height: 16, flex: '0 0 auto' }}
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--color-ink-70)', lineHeight: 1.45 }}>
+                      Voglio ricevere la newsletter di Bi — una mail al mese con novità, drop e locali nuovi a Torino.
+                    </span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={acceptTerms}
@@ -602,7 +680,7 @@ export default function LoginPage() {
                 background: submitting ? 'var(--color-ink-15)' : 'var(--color-corallo)',
                 color: submitting ? 'var(--color-ink-55)' : '#fff',
                 border: 'none',
-                borderRadius: 999,
+                borderRadius: 16,
                 padding: '15px 16px',
                 fontSize: 15,
                 fontWeight: 800,
