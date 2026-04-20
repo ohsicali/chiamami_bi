@@ -238,7 +238,7 @@ export default function AdminUsers() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{
                             width: 32, height: 32, borderRadius: '50%',
-                            background: 'rgba(238, 92, 85,0.15)', color: '#EE5C55',
+                            background: 'rgba(232, 69, 60,0.15)', color: '#E8453C',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 12, fontWeight: 600, flexShrink: 0,
                           }}>
@@ -260,7 +260,7 @@ export default function AdminUsers() {
                       <td style={{ ...tdStyle, textAlign: 'right' }}>
                         {u.is_admin ? (
                           <span style={{
-                            background: 'rgba(238, 92, 85,0.1)', color: '#EE5C55',
+                            background: 'rgba(232, 69, 60,0.1)', color: '#E8453C',
                             padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
                           }}>Admin</span>
                         ) : (
@@ -286,7 +286,7 @@ export default function AdminUsers() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{
                       width: 36, height: 36, borderRadius: '50%',
-                      background: 'rgba(238, 92, 85,0.15)', color: '#EE5C55',
+                      background: 'rgba(232, 69, 60,0.15)', color: '#E8453C',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 14, fontWeight: 600, flexShrink: 0,
                     }}>
@@ -299,7 +299,7 @@ export default function AdminUsers() {
                         </span>
                         {u.is_admin && (
                           <span style={{
-                            background: 'rgba(238, 92, 85,0.1)', color: '#EE5C55',
+                            background: 'rgba(232, 69, 60,0.1)', color: '#E8453C',
                             fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
                             flexShrink: 0,
                           }}>Admin</span>

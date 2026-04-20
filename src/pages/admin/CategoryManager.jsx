@@ -96,7 +96,7 @@ export default function CategoryManager() {
   if (authLoading || catsLoading) {
     return (
       <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #EE5C55', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 32, height: 32, border: '3px solid #E8453C', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
@@ -131,7 +131,7 @@ export default function CategoryManager() {
               padding: '8px 16px',
               fontSize: 13,
               fontWeight: 600,
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               border: 'none',
               borderRadius: 8,
@@ -215,7 +215,7 @@ export default function CategoryManager() {
                 <button
                   onClick={handleAdd}
                   disabled={!addForm.name.trim() || saving}
-                  style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, background: '#EE5C55', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: (!addForm.name.trim() || saving) ? 0.5 : 1 }}
+                  style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, background: '#E8453C', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: (!addForm.name.trim() || saving) ? 0.5 : 1 }}
                 >
                   {saving ? '...' : 'Aggiungi'}
                 </button>
@@ -240,7 +240,7 @@ export default function CategoryManager() {
 
               if (isEditing) {
                 return (
-                  <div key={cat.id} style={{ background: '#fff', border: '1px solid #EE5C55', borderRadius: 10, padding: 14 }}>
+                  <div key={cat.id} style={{ background: '#fff', border: '1px solid #E8453C', borderRadius: 10, padding: 14 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: 8 }}>
                         <input
@@ -349,7 +349,7 @@ export default function CategoryManager() {
                       onClick={() => startEdit(cat)}
                       style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', borderRadius: 6, cursor: 'pointer', color: '#999' }}
                       title="Modifica"
-                      onMouseEnter={(e) => { e.currentTarget.style.background = '#f5f5f5'; e.currentTarget.style.color = '#EE5C55' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#f5f5f5'; e.currentTarget.style.color = '#E8453C' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#999' }}
                     >
                       <PencilIcon />

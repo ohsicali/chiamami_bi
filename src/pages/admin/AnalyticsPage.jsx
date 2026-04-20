@@ -98,7 +98,7 @@ function GeoCard({ title, rows, emptyLabel }) {
                   <span style={{ fontSize: 11, color: '#999' }}>{r.count}</span>
                 </div>
                 <div style={{ height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: `${r.pct}%`, height: '100%', background: `rgba(238, 92, 85,${Math.max(opacity, 0.25)})`, borderRadius: 4 }} />
+                  <div style={{ width: `${r.pct}%`, height: '100%', background: `rgba(232, 69, 60,${Math.max(opacity, 0.25)})`, borderRadius: 4 }} />
                 </div>
               </div>
             )
@@ -429,7 +429,7 @@ export default function AnalyticsPage() {
           style={{
             width: 32,
             height: 32,
-            border: '3px solid #EE5C55',
+            border: '3px solid #E8453C',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
@@ -552,7 +552,7 @@ export default function AnalyticsPage() {
           <StatCard label="Visitatori unici" value={metrics.uniqueSessions} sub={metrics.totalVisits > 0 ? `${metrics.totalVisits} pagine viste` : 'sessioni distinte'} />
           <StatCard label="Utenti registrati" value={metrics.usersTotal} sub={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod} nel periodo` : null} subColor="#059669" />
           <StatCard label="QR presi" value={metrics.qrGenerated} sub="sconti attivati" />
-          <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="#EE5C55" />
+          <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="#E8453C" />
         </div>
 
         {/* ─── VISITS CHART + PAGE BREAKDOWN ─── */}
@@ -595,7 +595,7 @@ export default function AnalyticsPage() {
               </h3>
               <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#EE5C55' }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#E8453C' }} />
                   <span style={{ color: '#666' }}>Visite</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -609,8 +609,8 @@ export default function AnalyticsPage() {
                 <AreaChart data={visitsChartData}>
                   <defs>
                     <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#EE5C55" stopOpacity={0.18} />
-                      <stop offset="100%" stopColor="#EE5C55" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#E8453C" stopOpacity={0.18} />
+                      <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke="#f5f5f5" strokeWidth={0.5} />
@@ -627,7 +627,7 @@ export default function AnalyticsPage() {
                   <Area
                     type="monotone"
                     dataKey="visite"
-                    stroke="#EE5C55"
+                    stroke="#E8453C"
                     strokeWidth={2}
                     fill="url(#grad1)"
                     name="Visite"
@@ -715,7 +715,7 @@ export default function AnalyticsPage() {
                           style={{
                             width: `${p.pct}%`,
                             height: '100%',
-                            background: `rgba(238, 92, 85,${Math.max(opacity, 0.25)})`,
+                            background: `rgba(232, 69, 60,${Math.max(opacity, 0.25)})`,
                             borderRadius: 4,
                           }}
                         />
@@ -854,7 +854,7 @@ export default function AnalyticsPage() {
                             <div style={{ fontSize: 9, color: '#999' }}>Usati</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#EE5C55' }}>{convRate}%</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: '#E8453C' }}>{convRate}%</div>
                             <div style={{ fontSize: 9, color: '#999' }}>Conv.</div>
                           </div>
                         </div>
@@ -932,7 +932,7 @@ export default function AnalyticsPage() {
                         style={{
                           fontSize: 16,
                           fontWeight: 700,
-                          color: i === 0 ? '#EE5C55' : '#bbb',
+                          color: i === 0 ? '#E8453C' : '#bbb',
                           width: 20,
                           textAlign: 'center',
                           flexShrink: 0,

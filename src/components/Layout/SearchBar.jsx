@@ -27,16 +27,16 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
       className="flex items-center gap-3"
       style={{
         background: '#fff',
-        border: `1.5px solid ${focused ? '#EE5C55' : '#E8E5DE'}`,
+        border: `1.5px solid ${focused ? '#E8453C' : '#E8E5DE'}`,
         borderRadius: 16,
         padding: '13px 18px',
-        boxShadow: focused ? '0 2px 20px rgba(238, 92, 85,0.08)' : '0 2px 12px rgba(0,0,0,0.04)',
+        boxShadow: focused ? '0 2px 20px rgba(232, 69, 60,0.08)' : '0 2px 12px rgba(0,0,0,0.04)',
         transition: 'border-color 0.2s, box-shadow 0.2s',
       }}
     >
       <svg
         width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke={focused ? '#EE5C55' : '#C0BBB3'}
+        stroke={focused ? '#E8453C' : '#C0BBB3'}
         strokeWidth="2.2" strokeLinecap="round"
         style={{ flexShrink: 0, transition: 'stroke 0.2s' }}
       >

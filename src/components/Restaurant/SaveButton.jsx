@@ -41,10 +41,10 @@ export default function SaveButton({
       className={`flex items-center justify-center rounded-full backdrop-blur-sm transition-colors ${btnSize} ${className}`}
       style={{
         backgroundColor: saved
-          ? 'rgba(238, 92, 85, 0.16)'
+          ? 'rgba(232, 69, 60, 0.16)'
           : 'rgba(255, 255, 255, 0.92)',
         border: saved
-          ? '1px solid rgba(238, 92, 85, 0.3)'
+          ? '1px solid rgba(232, 69, 60, 0.3)'
           : '1px solid rgba(34, 24, 28, 0.08)',
         boxShadow: '0 4px 14px rgba(34, 24, 28, 0.12)',
       }}
@@ -55,8 +55,8 @@ export default function SaveButton({
         width={iconSize}
         height={iconSize}
         viewBox="0 0 24 24"
-        fill={saved ? '#EE5C55' : 'none'}
-        stroke={saved ? '#EE5C55' : '#22181C'}
+        fill={saved ? '#E8453C' : 'none'}
+        stroke={saved ? '#E8453C' : '#22181C'}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

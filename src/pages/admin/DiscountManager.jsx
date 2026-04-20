@@ -477,7 +477,7 @@ export default function DiscountManager() {
             style={{
               padding: '10px 18px',
               borderRadius: 10,
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               border: 'none',
               fontSize: 13,
@@ -511,7 +511,7 @@ export default function DiscountManager() {
           <StatCard label="Totali" value={stats.total} />
           <StatCard label="Attivi" value={stats.active} accent="#059669" />
           <StatCard label="Drop attivi" value={stats.drops} accent="#C4A265" />
-          <StatCard label="QR utilizzati" value={stats.redemptions} accent="#EE5C55" />
+          <StatCard label="QR utilizzati" value={stats.redemptions} accent="#E8453C" />
         </div>
 
         {/* ── Filter chips ── */}
@@ -659,7 +659,7 @@ export default function DiscountManager() {
                         </div>
                       </td>
                       <td style={tdStyle}>
-                        <div style={{ color: '#EE5C55', fontWeight: 700 }}>{d.discount_value}</div>
+                        <div style={{ color: '#E8453C', fontWeight: 700 }}>{d.discount_value}</div>
                         <div style={{ color: '#999', fontSize: 11, marginTop: 2 }}>{d.title}</div>
                       </td>
                       <td style={{ ...tdStyle, color: '#666' }}>{TYPE_LABELS[d.discount_type] || d.discount_type}</td>
@@ -757,7 +757,7 @@ export default function DiscountManager() {
                         {d.is_drop && <DropBadge />}
                         {d.is_featured && !d.is_drop && <FeaturedBadge />}
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#EE5C55', marginTop: 4 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
                         {d.discount_value}
                       </div>
                       <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{d.title}</div>
@@ -1126,7 +1126,7 @@ export default function DiscountManager() {
                       type="checkbox"
                       checked={form.is_active}
                       onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                      style={{ accentColor: '#EE5C55', width: 16, height: 16 }}
+                      style={{ accentColor: '#E8453C', width: 16, height: 16 }}
                     />
                     <span style={{ fontSize: 13, color: '#1a1a1f' }}>Attivo</span>
                   </label>
@@ -1164,7 +1164,7 @@ export default function DiscountManager() {
                     style={{
                       padding: '9px 18px',
                       borderRadius: 8,
-                      background: '#EE5C55',
+                      background: '#E8453C',
                       border: 'none',
                       color: '#fff',
                       fontSize: 13,

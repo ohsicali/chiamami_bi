@@ -36,8 +36,8 @@ const StarIcon = ({ size = 11 }) => (
 /* ── Heart SVG ── */
 const HeartIcon = ({ filled, size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24"
-    fill={filled ? '#EE5C55' : 'none'}
-    stroke={filled ? '#EE5C55' : 'currentColor'}
+    fill={filled ? '#E8453C' : 'none'}
+    stroke={filled ? '#E8453C' : 'currentColor'}
     strokeWidth="2"
   >
     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -128,10 +128,10 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       {discountValue && (
         <div style={{
           position: 'absolute', top: 16, left: 16, zIndex: 3,
-          background: '#EE5C55', color: '#fff',
+          background: '#E8453C', color: '#fff',
           fontSize: 11, fontWeight: 700,
           padding: '5px 12px', borderRadius: 10,
-          boxShadow: '0 2px 10px rgba(238, 92, 85,0.4)',
+          boxShadow: '0 2px 10px rgba(232, 69, 60,0.4)',
         }}>
           -{discountValue}%
         </div>
@@ -265,10 +265,10 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
         {discountValue && (
           <div style={{
             position: 'absolute', top: 6, left: 6,
-            background: '#EE5C55', color: '#fff',
+            background: '#E8453C', color: '#fff',
             fontSize: 9, fontWeight: 700,
             padding: '2px 7px', borderRadius: 6,
-            boxShadow: '0 2px 6px rgba(238, 92, 85,0.3)',
+            boxShadow: '0 2px 6px rgba(232, 69, 60,0.3)',
           }}>
             -{discountValue}%
           </div>
@@ -329,7 +329,7 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
         onClick={(e) => { e.stopPropagation(); onSave?.() }}
         style={{
           position: 'absolute', right: 14, top: 14,
-          color: saved ? '#EE5C55' : '#D1CDC6',
+          color: saved ? '#E8453C' : '#D1CDC6',
           cursor: 'pointer', padding: 4,
         }}
       >

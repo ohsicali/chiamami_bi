@@ -195,7 +195,7 @@ export default function AdminRestaurants() {
           style={{
             width: 32,
             height: 32,
-            border: '3px solid #EE5C55',
+            border: '3px solid #E8453C',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
@@ -251,7 +251,7 @@ export default function AdminRestaurants() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                background: '#EE5C55',
+                background: '#E8453C',
                 color: '#fff',
                 padding: '8px 16px',
                 borderRadius: 8,
@@ -290,7 +290,7 @@ export default function AdminRestaurants() {
           <Link
             to="/admin/restaurant/new"
             style={{
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               width: 32,
               height: 32,
@@ -510,7 +510,7 @@ export default function AdminRestaurants() {
                     <td style={cellStyle}>
                       {discount ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ color: '#EE5C55', fontWeight: 600, fontSize: 13 }}>
+                          <span style={{ color: '#E8453C', fontWeight: 600, fontSize: 13 }}>
                             {discount.discount_value}
                           </span>
                           {isDrop && (
@@ -681,7 +681,7 @@ export default function AdminRestaurants() {
                 >
                   {discount && (
                     <>
-                      <span style={{ color: '#EE5C55', fontWeight: 600 }}>{discount.discount_value}</span>
+                      <span style={{ color: '#E8453C', fontWeight: 600 }}>{discount.discount_value}</span>
                       {isDrop && (
                         <span
                           style={{

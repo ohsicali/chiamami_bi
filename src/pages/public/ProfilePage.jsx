@@ -255,7 +255,7 @@ export default function ProfilePage() {
       }}>
         <div style={{
           position: 'absolute', top: -15, right: -15, width: 80, height: 80,
-          borderRadius: '50%', background: 'rgba(238, 92, 85,0.15)',
+          borderRadius: '50%', background: 'rgba(232, 69, 60,0.15)',
         }} />
         <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#C4A265', letterSpacing: 2, marginBottom: 6 }}>

@@ -247,7 +247,7 @@ export default function AdminDashboard() {
           style={{
             width: 32,
             height: 32,
-            border: '3px solid #EE5C55',
+            border: '3px solid #E8453C',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
@@ -298,8 +298,8 @@ export default function AdminDashboard() {
       count: metrics.pendingSuggestions,
       title: metrics.pendingSuggestions === 1 ? '1 suggerimento utente' : `${metrics.pendingSuggestions} suggerimenti utenti`,
       subtitle: metrics.pendingSuggestions > 0 ? 'Nuovi da rivedere' : 'Nessun nuovo',
-      color: '#EE5C55',
-      bg: 'rgba(238, 92, 85,0.08)',
+      color: '#E8453C',
+      bg: 'rgba(232, 69, 60,0.08)',
       to: '/admin/suggestions',
       Icon: SuggestionIc,
     },
@@ -356,7 +356,7 @@ export default function AdminDashboard() {
             style={{
               alignItems: 'center',
               gap: 6,
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               padding: '8px 16px',
               borderRadius: 8,
@@ -388,7 +388,7 @@ export default function AdminDashboard() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               padding: '10px 14px',
               borderRadius: 10,
@@ -596,7 +596,7 @@ export default function AdminDashboard() {
               to="/admin/restaurants"
               style={{
                 fontSize: 12,
-                color: '#EE5C55',
+                color: '#E8453C',
                 fontWeight: 500,
                 textDecoration: 'none',
               }}
@@ -725,8 +725,8 @@ export default function AdminDashboard() {
               <AreaChart data={registrationData}>
                 <defs>
                   <linearGradient id="reggrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#EE5C55" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#EE5C55" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#E8453C" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
@@ -740,7 +740,7 @@ export default function AdminDashboard() {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                   }}
                 />
-                <Area type="monotone" dataKey="count" stroke="#EE5C55" strokeWidth={2} fill="url(#reggrad)" name="Utenti" />
+                <Area type="monotone" dataKey="count" stroke="#E8453C" strokeWidth={2} fill="url(#reggrad)" name="Utenti" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -785,7 +785,7 @@ export default function AdminDashboard() {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                   }}
                 />
-                <Bar dataKey="count" fill="#EE5C55" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" fill="#E8453C" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -1513,7 +1513,7 @@ export default function RestaurantForm() {
             style={{
               padding: '8px 18px',
               borderRadius: 8,
-              background: '#EE5C55',
+              background: '#E8453C',
               border: 'none',
               color: '#fff',
               fontSize: 12,
@@ -1786,7 +1786,7 @@ export default function RestaurantForm() {
               whileTap={{ scale: 0.97 }}
               onClick={handleGeocode}
               disabled={geocoding}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#EE5C55] text-[#EE5C55] hover:bg-[#EE5C55]/5 transition-colors disabled:opacity-50 self-start"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E8453C] text-[#E8453C] hover:bg-[#E8453C]/5 transition-colors disabled:opacity-50 self-start"
             >
               {geocoding ? (
                 <>
@@ -2234,7 +2234,7 @@ export default function RestaurantForm() {
                   padding: '10px 18px',
                   borderRadius: 10,
                   border: 'none',
-                  background: form.published ? '#EE5C55' : '#ddd',
+                  background: form.published ? '#E8453C' : '#ddd',
                   color: '#fff',
                   fontSize: 13,
                   fontWeight: 600,
@@ -2511,6 +2511,6 @@ function inputClass(hasError) {
   return `w-full px-3.5 py-2.5 rounded-lg border text-sm text-[#1a1a1f] placeholder:text-[#aaa] focus:outline-none focus:ring-2 transition-all duration-150 ${
     hasError
       ? 'border-red-300 focus:ring-red-300/30 focus:border-red-400 bg-red-50/30'
-      : 'border-[#eee] focus:ring-[#EE5C55]/15 focus:border-[#EE5C55]/50 bg-white'
+      : 'border-[#eee] focus:ring-[#E8453C]/15 focus:border-[#E8453C]/50 bg-white'
   }`
 }

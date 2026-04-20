@@ -153,7 +153,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
         <div className="flex items-center gap-2 justify-center" style={{ marginBottom: 8 }}>
           <span style={{
             display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
-            background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)',
+            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
             borderRadius: 7, padding: '2px 8px', flexShrink: 0,
           }}>{deal.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
@@ -387,7 +387,7 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
       )}
       {/* Discount title strip — centered */}
       <div style={{
-        background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)',
+        background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
         color: '#1a2e05',
         fontSize: 11, fontWeight: 800,
         padding: '5px 14px',
@@ -481,7 +481,7 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
           <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(238, 92, 85,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(196,162,101,0.1), transparent 50%)' }} />
       </div>
 
       {/* Top badges: In evidenza / Già usato + Discount */}
@@ -510,7 +510,7 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
           </div>
         )}
         <div style={{
-          background: alreadyUsed ? '#9ca3af' : 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)',
+          background: alreadyUsed ? '#9ca3af' : 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
           color: alreadyUsed ? '#fff' : '#000',
           fontSize: 11, fontWeight: 700,
           padding: '5px 12px', borderRadius: 10,
@@ -534,8 +534,8 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
             border: '1.5px solid rgba(255,255,255,0.25)', cursor: 'pointer',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24"
-              fill={saved ? '#EE5C55' : 'none'}
-              stroke={saved ? '#EE5C55' : '#fff'}
+              fill={saved ? '#E8453C' : 'none'}
+              stroke={saved ? '#E8453C' : '#fff'}
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             >
               <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -611,7 +611,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
         <div className="flex items-center gap-2">
           <span style={{
             display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#1a2e05',
-            background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)',
+            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
             borderRadius: 8, padding: '2px 8px', flexShrink: 0,
           }}>{deal?.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal?.title}</span>
@@ -802,7 +802,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
                     cursor: 'pointer',
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#EE5C55' : 'none'} stroke={saved ? '#EE5C55' : 'white'} strokeWidth="2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#E8453C' : 'none'} stroke={saved ? '#E8453C' : 'white'} strokeWidth="2">
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                   </svg>
                 </button>
@@ -853,7 +853,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
             <span style={{
               display: 'inline-block', fontSize: 13, fontWeight: 800, color: '#1a2e05',
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)',
+              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)',
               borderRadius: 8, padding: '3px 12px',
             }}>{deal?.discount_value}</span>
             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title}</span>
@@ -941,7 +941,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           ) : !soldOut && myRedemption ? (
             <motion.button whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} onClick={() => onShowQR(myRedemption)} style={{
               width: '100%', padding: '16px 0', borderRadius: 16,
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)', color: '#1a2e05',
+              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#1a2e05',
               fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
@@ -984,7 +984,7 @@ function HowItWorks() {
       <p style={{ ...sectionLabel, marginBottom: 10 }}>Come funziona</p>
       <div style={{ background: '#fff', borderRadius: 20, padding: 18, border: '1px solid var(--color-bordo)' }}>
         {[
-          { icon: '📱', bg: 'rgba(238, 92, 85,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
+          { icon: '📱', bg: 'rgba(232, 69, 60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
           { icon: '✅', bg: 'rgba(196,162,101,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
           { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
         ].map((step, i) => (
@@ -1308,7 +1308,7 @@ export default function DealsPage() {
                 </div>
                 <div style={{
                   position: 'absolute', top: -20, right: -20, width: 120, height: 120,
-                  borderRadius: '50%', background: 'rgba(238, 92, 85,0.12)',
+                  borderRadius: '50%', background: 'rgba(232, 69, 60,0.12)',
                 }} />
                 <div style={{
                   position: 'absolute', bottom: -30, right: 40, width: 80, height: 80,
@@ -1408,7 +1408,7 @@ export default function DealsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
             {!user ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(238, 92, 85,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, marginBottom: 16 }}>🔐</div>
+                <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(232, 69, 60,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, marginBottom: 16 }}>🔐</div>
                 <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-primary)' }}>Accedi per vedere i tuoi sconti</p>
                 <Link to="/login" style={{ marginTop: 20, borderRadius: 14, background: 'var(--color-accent)', color: '#fff', padding: '12px 24px', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Accedi</Link>
               </div>

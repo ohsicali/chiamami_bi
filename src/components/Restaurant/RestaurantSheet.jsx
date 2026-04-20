@@ -131,7 +131,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           <button
             onClick={() => setShowQR(true)}
             style={{
-              background: '#EE5C55', color: '#fff', border: 'none',
+              background: '#E8453C', color: '#fff', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', flexShrink: 0,
             }}
@@ -143,7 +143,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)', color: '#000', border: 'none',
+              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
               padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
             }}
@@ -811,7 +811,7 @@ export default function RestaurantSheet({
                           disabled={inlineGenerating || inlineRedemptionLoading}
                           style={{
                             width: '100%', padding: '14px 20px', borderRadius: 12,
-                            background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)', color: '#000', border: 'none',
+                            background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
                             fontSize: 15, fontWeight: 700, cursor: 'pointer',
                             opacity: inlineGenerating ? 0.5 : 1,
                           }}
@@ -1056,7 +1056,7 @@ export default function RestaurantSheet({
                         onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
                         style={{
                           width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: 'linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%)', color: '#000', border: 'none',
+                          background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
                           fontSize: 15, fontWeight: 700, cursor: 'pointer',
                           position: 'relative', zIndex: 2,
                         }}
@@ -1095,7 +1095,7 @@ export default function RestaurantSheet({
                       style={{
                         width: 52, height: 52, borderRadius: '50%',
                         objectFit: 'cover', flexShrink: 0,
-                        border: '2px solid rgba(238, 92, 85,0.2)',
+                        border: '2px solid rgba(232, 69, 60,0.2)',
                       }}
                     />
                     <div>
@@ -1139,11 +1139,11 @@ export default function RestaurantSheet({
                       style={{
                         display: 'flex', alignItems: 'center', gap: 4,
                         background: 'none', border: 'none', cursor: 'pointer',
-                        color: '#EE5C55', fontSize: 13, fontWeight: 700, padding: '8px 0',
+                        color: '#E8453C', fontSize: 13, fontWeight: 700, padding: '8px 0',
                       }}
                     >
                       Scopri di più
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EE5C55" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 18l6-6-6-6"/>
                       </svg>
                     </button>
@@ -1189,7 +1189,7 @@ export default function RestaurantSheet({
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                 flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
                 fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                background: '#EE5C55', color: '#fff', border: 'none',
+                background: '#E8453C', color: '#fff', border: 'none',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

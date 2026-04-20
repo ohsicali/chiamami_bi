@@ -185,10 +185,10 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
               fontSize: 12, fontWeight: 600,
               whiteSpace: 'nowrap',
               display: 'flex', alignItems: 'center', gap: 6,
-              border: `1.5px solid ${showDealsOnly ? '#EE5C55' : '#E8E5DE'}`,
-              background: showDealsOnly ? '#EE5C55' : '#fff',
+              border: `1.5px solid ${showDealsOnly ? '#E8453C' : '#E8E5DE'}`,
+              background: showDealsOnly ? '#E8453C' : '#fff',
               color: showDealsOnly ? '#fff' : '#5A564F',
-              boxShadow: showDealsOnly ? '0 2px 12px rgba(238, 92, 85,0.3)' : 'none',
+              boxShadow: showDealsOnly ? '0 2px 12px rgba(232, 69, 60,0.3)' : 'none',
               cursor: 'pointer',
             }}
           >
@@ -196,8 +196,8 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
             {dealsCount > 0 && (
               <span style={{
                 fontSize: 10, fontWeight: 700,
-                background: showDealsOnly ? 'rgba(255,255,255,0.25)' : 'rgba(238, 92, 85,0.1)',
-                color: showDealsOnly ? '#fff' : '#EE5C55',
+                background: showDealsOnly ? 'rgba(255,255,255,0.25)' : 'rgba(232, 69, 60,0.1)',
+                color: showDealsOnly ? '#fff' : '#E8453C',
                 padding: '1px 6px', borderRadius: 8,
               }}>
                 {dealsCount}
@@ -278,10 +278,10 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                         width: 56, height: 56, borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 22,
-                        background: !selected.length ? 'rgba(238, 92, 85,0.1)' : 'rgba(0,0,0,0.04)',
-                        boxShadow: !selected.length ? '0 0 0 2.5px #EE5C55' : 'none',
+                        background: !selected.length ? 'rgba(232, 69, 60,0.1)' : 'rgba(0,0,0,0.04)',
+                        boxShadow: !selected.length ? '0 0 0 2.5px #E8453C' : 'none',
                       }}>🍽️</div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: !selected.length ? '#EE5C55' : '#22181C' }}>Tutti</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: !selected.length ? '#E8453C' : '#22181C' }}>Tutti</span>
                     </button>
 
                     {CUISINE_CATEGORIES.map((cat) => {
@@ -337,10 +337,10 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                     onClick={() => setModalOpen(false)}
                     style={{
                       width: '100%', padding: '14px', borderRadius: 14,
-                      background: '#EE5C55', color: '#fff',
+                      background: '#E8453C', color: '#fff',
                       fontSize: 14, fontWeight: 700,
                       border: 'none', cursor: 'pointer',
-                      boxShadow: '0 4px 16px rgba(238, 92, 85,0.3)',
+                      boxShadow: '0 4px 16px rgba(232, 69, 60,0.3)',
                     }}
                   >
                     {selected.length > 0 || filters.priceRange

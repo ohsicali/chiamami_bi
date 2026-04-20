@@ -5,7 +5,7 @@ import Supercluster from 'supercluster'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 
 const TORINO_CENTER = [7.6869, 45.0703]
-const ACCENT_COLOR = '#EE5C55'
+const ACCENT_COLOR = '#E8453C'
 const GOLD_COLOR = '#C4A265'
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12'
 const DEBOUNCE_MS = 120
@@ -53,7 +53,7 @@ function ensureStyles() {
     }
     .cb-marker--selected .cb-inner {
       transform: scale(1.2);
-      box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(238, 92, 85,0.5);
+      box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(232, 69, 60,0.5);
     }
     .cb-inner {
       transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -71,8 +71,8 @@ function ensureStyles() {
       animation: cb-bounce 0.5s ease-out;
     }
     @keyframes cb-breathe {
-      0%, 100% { box-shadow: 0 4px 20px rgba(238, 92, 85,0.4), 0 0 0 3px rgba(238, 92, 85,0.15); }
-      50% { box-shadow: 0 4px 28px rgba(238, 92, 85,0.6), 0 0 0 8px rgba(238, 92, 85,0.08); }
+      0%, 100% { box-shadow: 0 4px 20px rgba(232, 69, 60,0.4), 0 0 0 3px rgba(232, 69, 60,0.15); }
+      50% { box-shadow: 0 4px 28px rgba(232, 69, 60,0.6), 0 0 0 8px rgba(232, 69, 60,0.08); }
     }
     @keyframes cb-pulse {
       0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.3); }
@@ -130,7 +130,7 @@ function createPinEl(restaurant, isSaved, discountValue) {
     const badge = document.createElement('span')
     badge.style.cssText = `
       position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
-      background:linear-gradient(135deg, #FFE5E3 0%, #EE5C55 100%);color:#000;
+      background:linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%);color:#000;
       font-size:8px;font-weight:800;letter-spacing:0.3px;
       padding:2px 5px;border-radius:6px;white-space:nowrap;
       box-shadow:0 2px 6px rgba(163,230,53,0.4);

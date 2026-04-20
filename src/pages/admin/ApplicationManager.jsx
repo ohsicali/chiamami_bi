@@ -239,7 +239,7 @@ export default function ApplicationManager() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <span style={{ color: '#999', minWidth: 70 }}>Email:</span>
-                      <a href={`mailto:${a.email}`} style={{ color: '#EE5C55', textDecoration: 'none', fontWeight: 500 }}>
+                      <a href={`mailto:${a.email}`} style={{ color: '#E8453C', textDecoration: 'none', fontWeight: 500 }}>
                         {a.email || '—'}
                       </a>
                     </div>
@@ -261,7 +261,7 @@ export default function ApplicationManager() {
                       fontStyle: 'italic',
                       padding: '10px 12px',
                       background: '#fafafa',
-                      borderLeft: '3px solid #EE5C55',
+                      borderLeft: '3px solid #E8453C',
                       borderRadius: '0 8px 8px 0',
                     }}>
                       "{a.message}"

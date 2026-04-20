@@ -128,9 +128,9 @@ function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
               background: filled ? '#fafafa' : '#fff',
               outline: 'none',
               transition: 'border-color 0.15s, background 0.15s',
-              caretColor: '#EE5C55',
+              caretColor: '#E8453C',
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = '#EE5C55')}
+            onFocus={(e) => (e.currentTarget.style.borderColor = '#E8453C')}
             onBlur={(e) =>
               (e.currentTarget.style.borderColor = filled ? '#22181C' : '#E8E5DE')
             }
@@ -191,7 +191,7 @@ function InstructionsBlock({ desktop }) {
                 height: 20,
                 borderRadius: 6,
                 background: '#FAF7F2',
-                color: '#EE5C55',
+                color: '#E8453C',
                 fontSize: 10,
                 fontWeight: 700,
                 display: 'flex',
@@ -238,14 +238,14 @@ function ContactBox({ desktop }) {
         href="https://instagram.com/chiamamibi"
         target="_blank"
         rel="noopener noreferrer"
-        style={{ color: '#EE5C55', fontWeight: 600, textDecoration: 'none' }}
+        style={{ color: '#E8453C', fontWeight: 600, textDecoration: 'none' }}
       >
         @chiamamibi
       </a>{' '}
       o a{' '}
       <a
         href="mailto:info@chiamamibi.com"
-        style={{ color: '#EE5C55', fontWeight: 600, textDecoration: 'none' }}
+        style={{ color: '#E8453C', fontWeight: 600, textDecoration: 'none' }}
       >
         info@chiamamibi.com
       </a>
@@ -257,7 +257,7 @@ function ContactBox({ desktop }) {
 /* ------------------------------------------------------------------ */
 /*  Icone                                                             */
 /* ------------------------------------------------------------------ */
-function LockIcon({ size = 22, color = '#EE5C55' }) {
+function LockIcon({ size = 22, color = '#E8453C' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect x="4" y="10" width="16" height="11" rx="2.5" stroke={color} strokeWidth="1.8" />
@@ -420,7 +420,7 @@ export default function VerifyPage() {
             height: 32,
             borderRadius: '50%',
             border: '3px solid #E8E5DE',
-            borderTopColor: '#EE5C55',
+            borderTopColor: '#E8453C',
             animation: 'verifySpin 0.8s linear infinite',
           }}
         />
@@ -514,14 +514,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               width: 48,
               height: 48,
               borderRadius: 14,
-              background: 'rgba(238, 92, 85,0.12)',
+              background: 'rgba(232, 69, 60,0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 12px',
             }}
           >
-            <LockIcon size={22} color="#EE5C55" />
+            <LockIcon size={22} color="#E8453C" />
           </div>
           <h1
             style={{
@@ -564,7 +564,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               width: '100%',
               marginTop: 16,
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               border: 'none',
               borderRadius: 12,
@@ -584,7 +584,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               style={{
                 marginTop: 10,
                 fontSize: 11,
-                color: '#EE5C55',
+                color: '#E8453C',
                 textAlign: 'center',
                 fontWeight: 500,
               }}
@@ -704,14 +704,14 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
                 width: 52,
                 height: 52,
                 borderRadius: 16,
-                background: 'rgba(238, 92, 85,0.10)',
+                background: 'rgba(232, 69, 60,0.10)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 14,
               }}
             >
-              <LockIcon size={24} color="#EE5C55" />
+              <LockIcon size={24} color="#E8453C" />
             </div>
             <h1
               style={{
@@ -752,7 +752,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               width: '100%',
               marginTop: 20,
-              background: '#EE5C55',
+              background: '#E8453C',
               color: '#fff',
               border: 'none',
               borderRadius: 14,
@@ -772,7 +772,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               style={{
                 marginTop: 12,
                 fontSize: 12,
-                color: '#EE5C55',
+                color: '#E8453C',
                 textAlign: 'center',
                 fontWeight: 500,
               }}
@@ -1094,7 +1094,7 @@ function TabBar({ tab, onChange }) {
                   bottom: 0,
                   width: 60,
                   height: 3,
-                  background: '#EE5C55',
+                  background: '#E8453C',
                   borderRadius: '3px 3px 0 0',
                 }}
               />
@@ -1319,7 +1319,7 @@ function VerifyTab({ restaurant }) {
               outline: 'none',
               transition: 'border-color 0.15s',
             }}
-            onFocus={(e) => (e.target.style.borderColor = '#EE5C55')}
+            onFocus={(e) => (e.target.style.borderColor = '#E8453C')}
             onBlur={(e) => (e.target.style.borderColor = '#E8E0D4')}
           />
 
@@ -1330,7 +1330,7 @@ function VerifyTab({ restaurant }) {
               width: '100%',
               marginTop: 14,
               padding: '16px',
-              background: code.trim() && !loading ? '#EE5C55' : '#E8E0D4',
+              background: code.trim() && !loading ? '#E8453C' : '#E8E0D4',
               color: code.trim() && !loading ? '#fff' : '#8A8680',
               border: 'none',
               borderRadius: 14,
@@ -2133,7 +2133,7 @@ const TONES = {
   error: {
     bg: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
     border: '#FCA5A5',
-    iconBg: '#EE5C55',
+    iconBg: '#E8453C',
     iconColor: '#fff',
     titleColor: '#7F1D1D',
   },
@@ -2690,7 +2690,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
               padding: '13px 20px',
               borderRadius: 12,
               border: 'none',
-              background: canApply ? '#EE5C55' : '#F5F1EA',
+              background: canApply ? '#E8453C' : '#F5F1EA',
               color: canApply ? '#fff' : '#8A8680',
               fontSize: 15,
               fontWeight: 700,
@@ -2839,7 +2839,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
               width: 28,
               height: 28,
               border: '3px solid #E8E0D4',
-              borderTopColor: '#EE5C55',
+              borderTopColor: '#E8453C',
               borderRadius: '50%',
               margin: '0 auto 12px',
               animation: 'verifySpin 0.8s linear infinite',
@@ -3028,7 +3028,7 @@ function ActiveDiscountCard({ discount }) {
       <div
         style={{
           fontSize: 11,
-          color: '#EE5C55',
+          color: '#E8453C',
           fontWeight: 700,
           letterSpacing: 0.8,
           textTransform: 'uppercase',
@@ -3070,7 +3070,7 @@ function ActiveDiscountCard({ discount }) {
             style={{
               width: `${pct}%`,
               height: '100%',
-              background: '#EE5C55',
+              background: '#E8453C',
               transition: 'width 0.4s',
             }}
           />
