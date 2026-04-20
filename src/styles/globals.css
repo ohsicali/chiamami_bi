@@ -71,10 +71,13 @@ body {
   min-height: 100dvh;
 }
 
-/* Map page needs fixed viewport to prevent scroll behind BottomSheet */
+/* Map page: lock scroll and fill full screen including iOS Safari chrome */
 .map-fixed {
   overflow: hidden;
+  /* dvh adjusts with iOS Safari bar show/hide */
   height: 100dvh;
+  /* iOS fallback: fill-available covers behind Safari bar */
+  height: -webkit-fill-available;
 }
 
 /* Mapbox overrides */

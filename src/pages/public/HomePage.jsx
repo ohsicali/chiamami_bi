@@ -143,7 +143,11 @@ export default function HomePage() {
   const location = useLocation()
 
   useEffect(() => {
+    // iOS Safari: briefly scroll to dismiss the browser chrome, then lock
+    const prev = window.scrollY
+    window.scrollTo(0, 1)
     document.body.classList.add('map-fixed')
+    window.scrollTo(0, prev)
     return () => document.body.classList.remove('map-fixed')
   }, [])
 
@@ -422,7 +426,7 @@ export default function HomePage() {
   )
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', overflow: 'hidden' }}>
       {/* Mobile Navbar (hidden on desktop) */}
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
