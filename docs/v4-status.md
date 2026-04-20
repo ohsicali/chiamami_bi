@@ -145,4 +145,6 @@ PR: #69 (draft). Branch: `v4/track-b-reskin`.
 - `1d1e566` primo pass (poi revertito su gradient sconto)
 - `56afa59` design tokens full + Alfa Slab + Caveat
 - `67e7551` **allineamento canonico v4-handoff.md** — corallo #E8453C + verde gradient sconto
-- 🚧 [in corso] Home mobile vera seguendo mockup
+- `f25a264` docs: progress tracker
+- `367e995` **HomeFeedV4 primo pass** — preview su /v4 (topbar + hero promo + bolle + Ultimi aggiunti + Suggest)
+- 🚧 [next] aggiungere sponsor banner, time-based section, "Cosa ti consiglio" oro block al HomeFeedV4
