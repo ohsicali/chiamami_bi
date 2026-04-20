@@ -88,6 +88,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   return (
     <>
       <motion.div
+        className="rs-sticky-disc"
         initial={{ y: 80, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 80, opacity: 0, scale: 0.95 }}
@@ -260,8 +261,8 @@ export default function RestaurantSheet({
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        // Sticky header threshold: 45vh-60 on mobile, 300px on desktop (after photo grid)
-        const photoH = isDesktop ? 300 : el.clientHeight * 0.45 - 60
+        // Sticky header threshold: 45vh-60 on mobile, 480px on desktop (after hero 520)
+        const photoH = isDesktop ? 480 : el.clientHeight * 0.45 - 60
         setShowStickyHeader(el.scrollTop > photoH)
         ticking = false
       })
@@ -272,7 +273,7 @@ export default function RestaurantSheet({
 
   const handleClose = useCallback(async () => {
     const exitAnim = isDesktop
-      ? animateSheet(sheetScope.current, { x: '-100%' }, { duration: 0.3, ease: [0.4, 0, 0.7, 0.2] })
+      ? animateSheet(sheetScope.current, { opacity: 0, y: 8 }, { duration: 0.2, ease: [0.4, 0, 0.7, 0.2] })
       : Promise.all([
           animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' }),
           animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, { duration: 0.28, ease: [0.4, 0, 0.7, 0.2] }),
@@ -301,53 +302,120 @@ export default function RestaurantSheet({
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
         @media (min-width: 768px) {
-          /* Root: pass-through clicks to map behind */
+          /* Full-page scheda: v4-desktop-pagine.html §1115-1290
+             Hero 520px full-width + 2-col grid (1.4/1) + sticky sconto pill */
           .restaurant-sheet-root {
             top: 56px !important;
-            pointer-events: none !important;
+            background: var(--color-page, #FAF7F2) !important;
           }
           .restaurant-sheet-root .rs-backdrop { display: none !important; }
           .restaurant-sheet-root .rs-sheet {
-            /* Side panel — animation handled by framer-motion (x direction) */
             pointer-events: auto !important;
-            width: 520px !important;
-            max-width: 520px !important;
+            width: 100% !important;
+            max-width: none !important;
             height: 100% !important;
             overflow: hidden !important;
-            border-right: 1px solid #E8E5DE;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.06);
+            background: var(--color-page, #FAF7F2) !important;
           }
-          /* Hide mobile photo carousel — replaced by inline grid */
+          /* Mobile photo carousel hidden — desktop uses dedicated hero */
           .restaurant-sheet-root .rs-photo-area { display: none !important; }
-          /* back/actions buttons hidden on desktop — see sticky header rules below */
-          /* Scroll: fill sheet height, enable vertical scroll */
           .restaurant-sheet-root .rs-scroll {
             flex: 1 1 0% !important;
             min-height: 0 !important;
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 110px !important;
+          }
+          /* Desktop hero 520px — photo con rounded corners (mockup §375-386) */
+          .restaurant-sheet-root .rs-desktop-hero-wrap {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 40px 28px;
+          }
+          .restaurant-sheet-root .rs-desktop-hero {
+            display: block !important;
+            position: relative;
+            height: 520px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+          }
+          .restaurant-sheet-root .rs-desktop-hero::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, transparent 30%, transparent 70%, rgba(0,0,0,.55) 100%);
+            pointer-events: none;
+            z-index: 2;
           }
           .restaurant-sheet-root .rs-content-card {
             margin-top: 0 !important;
             border-radius: 0 !important;
-            padding-top: 56px !important;
+            background: transparent !important;
+            padding-top: 0 !important;
           }
-          /* Sticky header: constrained to panel, z-index below navbar (40) */
-          .restaurant-sheet-root .rs-sticky-header {
-            top: 56px !important;
-            width: 520px !important;
-            right: auto !important;
-            z-index: 39 !important;
+          .restaurant-sheet-root .rs-motion-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 40px 40px !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            display: grid !important;
+            grid-template-columns: 1.4fr 1fr;
+            column-gap: 40px;
+            row-gap: 0;
           }
-          /* Hide floating buttons on desktop — sticky header provides back/share/save */
+          /* Section placement on desktop grid */
+          .restaurant-sheet-root .sec-name,
+          .restaurant-sheet-root .sec-addr,
+          .restaurant-sheet-root .sec-chips,
+          .restaurant-sheet-root .sec-cta,
+          .restaurant-sheet-root .sec-sconto,
+          .restaurant-sheet-root .sec-secondobi,
+          .restaurant-sheet-root .sec-oro,
+          .restaurant-sheet-root .sec-video { grid-column: 1; }
+          .restaurant-sheet-root .sec-orari,
+          .restaurant-sheet-root .sec-ciao,
+          .restaurant-sheet-root .sec-nearby { grid-column: 2; }
+          .restaurant-sheet-root .sec-footer { grid-column: 1 / -1; }
+          /* Desktop typography: left-aligned name 52px */
+          .restaurant-sheet-root .sec-name {
+            text-align: left !important;
+            font-size: 52px !important;
+            line-height: 1 !important;
+            letter-spacing: -0.03em !important;
+            margin-top: 0 !important;
+            margin-bottom: 10px !important;
+          }
+          .restaurant-sheet-root .sec-addr {
+            justify-content: flex-start !important;
+            text-align: left !important;
+            font-size: 14px !important;
+            margin-bottom: 18px !important;
+          }
+          .restaurant-sheet-root .sec-chips {
+            justify-content: flex-start !important;
+            margin-bottom: 22px !important;
+          }
+          .restaurant-sheet-root .sec-divider { display: none !important; }
+          .restaurant-sheet-root .sec-cta { justify-content: flex-start !important; margin-bottom: 22px !important; }
+          /* Hide floating buttons on desktop — sticky header handles back/share/save */
           .restaurant-sheet-root .rs-back-btn { display: none !important; }
           .restaurant-sheet-root .rs-top-actions { display: none !important; }
-          /* Hide side map — main map visible behind panel */
           .restaurant-sheet-root .rs-side-map { display: none !important; }
-        }
-        @media (min-width: 1024px) {
-          .restaurant-sheet-root .rs-sheet { width: 560px !important; max-width: 560px !important; }
-          .restaurant-sheet-root .rs-sticky-header { width: 560px !important; }
+          /* Sticky header: full width on desktop */
+          .restaurant-sheet-root .rs-sticky-header {
+            top: 56px !important;
+            z-index: 39 !important;
+          }
+          /* Sticky sconto pill: min-width 460 on desktop (mockup §413-439) */
+          .restaurant-sheet-root .rs-sticky-disc {
+            min-width: 460px !important;
+            bottom: 22px !important;
+          }
+          /* Show desktop hero wrap that is display:none inline */
+          .restaurant-sheet-root .rs-desktop-hero-wrap {
+            display: block !important;
+          }
         }
       `}</style>
 
@@ -365,10 +433,10 @@ export default function RestaurantSheet({
       <motion.div
         ref={sheetScope}
         className="relative flex flex-1 flex-col overflow-hidden bg-white rs-sheet"
-        initial={isDesktop ? { x: '-100%' } : { y: '100%', opacity: 0 }}
-        animate={isDesktop ? { x: 0 } : { y: 0, opacity: 1 }}
+        initial={isDesktop ? { opacity: 0, y: 12 } : { y: '100%', opacity: 0 }}
+        animate={isDesktop ? { opacity: 1, y: 0 } : { y: 0, opacity: 1 }}
         transition={isDesktop
-          ? { type: 'spring', damping: 30, stiffness: 280, mass: 0.9 }
+          ? { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }
           : { type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }
         }
       >
@@ -488,20 +556,13 @@ export default function RestaurantSheet({
             </div>
           </div>
 
-          {/* White content card — scrolls up over photo */}
-          <div className="rs-content-card" style={{
-            background: '#fff',
-            borderRadius: '20px 20px 0 0',
-            marginTop: -24,
-            position: 'relative', zIndex: 2,
-          }}>
-            {/* Desktop photo carousel — renderizzato SOLO su desktop. Una foto
-                alla volta, con frecce nav + dots, stile Airbnb/Booking. */}
-            {isDesktop && (restaurant.photos || []).length > 0 && (
-              <div style={{ position: 'relative', background: '#f0ebe3', overflow: 'hidden' }}>
+          {/* Desktop hero — full-width 520px photo with corallo radius (mockup §1138-1151) */}
+          {isDesktop && (restaurant.photos || []).length > 0 && (
+            <div className="rs-desktop-hero-wrap" style={{ display: 'none' }}>
+              <div className="rs-desktop-hero">
                 <PhotoCarousel
                   photos={restaurant.photos}
-                  height="400px"
+                  height="520px"
                   restaurantName={restaurant.name}
                   city={restaurant.city}
                   dotsPosition="center"
@@ -509,7 +570,16 @@ export default function RestaurantSheet({
                   showCounter
                 />
               </div>
-            )}
+            </div>
+          )}
+
+          {/* White content card — scrolls up over photo */}
+          <div className="rs-content-card" style={{
+            background: '#fff',
+            borderRadius: '20px 20px 0 0',
+            marginTop: -24,
+            position: 'relative', zIndex: 2,
+          }}>
 
             {/* Photo counter — anchored to white card, mobile only */}
             {!isDesktop && photoCount > 1 && (
@@ -524,7 +594,7 @@ export default function RestaurantSheet({
             )}
 
             <motion.div
-              className="flex flex-col"
+              className="flex flex-col rs-motion-content"
               variants={contentVariants}
               initial="hidden"
               animate="visible"
@@ -535,7 +605,7 @@ export default function RestaurantSheet({
               }}
             >
               {/* Restaurant name — centered, Satoshi 900 */}
-              <motion.h1 variants={itemVariants} style={{
+              <motion.h1 className="sec-name" variants={itemVariants} style={{
                 fontFamily: "var(--font-sans, 'Satoshi', sans-serif)",
                 fontWeight: 900,
                 fontSize: 28,
@@ -550,7 +620,7 @@ export default function RestaurantSheet({
               </motion.h1>
 
               {/* Address */}
-              <motion.div variants={itemVariants} style={{
+              <motion.div className="sec-addr" variants={itemVariants} style={{
                 fontSize: 12.5, color: 'var(--color-ink-70, rgba(34,24,28,.7))',
                 textAlign: 'center', lineHeight: 1.4,
                 fontWeight: 500, marginBottom: 12,
@@ -564,7 +634,7 @@ export default function RestaurantSheet({
               </motion.div>
 
               {/* Categories + price — pills */}
-              <motion.div variants={itemVariants} style={{
+              <motion.div className="sec-chips" variants={itemVariants} style={{
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                 gap: 6, flexWrap: 'wrap', marginBottom: 20,
               }}>
@@ -621,10 +691,10 @@ export default function RestaurantSheet({
               </motion.div>
 
               {/* Divider */}
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
+              <div className="sec-divider" style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
               {/* CTA row — beige main + heart ghost */}
-              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20, justifyContent: 'center', alignItems: 'center' }}>
+              <motion.div className="sec-cta" variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20, justifyContent: 'center', alignItems: 'center' }}>
                 {mapsUrl && (
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                     flex: 1, maxWidth: 280, padding: '13px 18px', borderRadius: 999,
@@ -671,6 +741,7 @@ export default function RestaurantSheet({
               {/* ── Sconto banner (mockup §289-302 `.sconto-link`) ── */}
               {discount && (
                 <motion.button
+                  className="sec-sconto"
                   variants={itemVariants}
                   onClick={async () => {
                     if (!user) {
@@ -745,7 +816,7 @@ export default function RestaurantSheet({
 
               {/* ── Secondo Bi ── */}
               {reviewText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div className="sec-secondobi" variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 10 }}>
                     Secondo Bi
                   </div>
@@ -764,13 +835,13 @@ export default function RestaurantSheet({
               )}
 
               {/* ── Orari Google Places (dopo Secondo Bi come nel mockup) ── */}
-              <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+              <motion.div className="sec-orari" variants={itemVariants} style={{ marginBottom: 20 }}>
                 <OrariLocale restaurant={restaurant} />
               </motion.div>
 
               {/* ── Cosa prendere — oro gradient card ── */}
               {tipText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div className="sec-oro" variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 14, padding: '16px 18px',
                     background: 'linear-gradient(135deg, var(--color-oro, #B08954) 0%, var(--color-oro-deep, #8E6B3E) 100%)',
@@ -793,7 +864,7 @@ export default function RestaurantSheet({
 
               {/* Video links — "Ho fatto un video" */}
               {(restaurant.instagram_reel || restaurant.tiktok_url) && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div className="sec-video" variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
                     borderRadius: 16, padding: '16px 18px',
                     background: '#fff',
@@ -849,7 +920,7 @@ export default function RestaurantSheet({
 
 
               {/* Ciao sono Bi */}
-              <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+              <motion.div className="sec-ciao" variants={itemVariants} style={{ marginBottom: 20 }}>
                 <div style={{
                   background: 'var(--color-cream-deep, #F1EBE0)',
                   borderRadius: 20, padding: '20px',
@@ -905,7 +976,7 @@ export default function RestaurantSheet({
               </motion.div>
 
               {/* Nearby restaurants */}
-              <motion.div variants={itemVariants}>
+              <motion.div className="sec-nearby" variants={itemVariants}>
                 <NearbySection
                   currentRestaurant={restaurant}
                   allRestaurants={allRestaurants}
@@ -914,7 +985,7 @@ export default function RestaurantSheet({
               </motion.div>
 
               {/* Footer */}
-              <motion.div variants={itemVariants} style={{ marginTop: 8 }}>
+              <motion.div className="sec-footer" variants={itemVariants} style={{ marginTop: 8 }}>
                 <Footer />
               </motion.div>
             </motion.div>
