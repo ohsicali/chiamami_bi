@@ -25,13 +25,13 @@ export default function PrivacyPage() {
         <div className="prose prose-sm text-secondary leading-relaxed space-y-6">
           <p><strong>Ultimo aggiornamento:</strong> Aprile 2026</p>
 
-          <h2 className="text-lg font-semibold text-primary">1. Titolare del trattamento</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>1. Titolare del trattamento</h2>
           <p>
             Il titolare del trattamento dei dati è ChiamamiBi, contattabile all'indirizzo email:
             <a href="mailto:info@chiamamibi.com" className="text-accent"> info@chiamamibi.com</a>
           </p>
 
-          <h2 className="text-lg font-semibold text-primary">2. Dati raccolti</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>2. Dati raccolti</h2>
           <p>Raccogliamo i seguenti dati personali:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Dati di registrazione:</strong> nome, indirizzo email</li>
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
             <li><strong>Dati di utilizzo sconti:</strong> codici QR generati e utilizzati</li>
           </ul>
 
-          <h2 className="text-lg font-semibold text-primary">3. Finalità del trattamento</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>3. Finalità del trattamento</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li>Erogazione del servizio di scoperta ristoranti</li>
             <li>Gestione dell'account utente e delle preferenze</li>
@@ -50,13 +50,13 @@ export default function PrivacyPage() {
             <li>Miglioramento del servizio e analisi aggregate</li>
           </ul>
 
-          <h2 className="text-lg font-semibold text-primary">4. Base giuridica</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>4. Base giuridica</h2>
           <p>
             Il trattamento si basa su: consenso dell'interessato (Art. 6(1)(a) GDPR),
             esecuzione di un contratto (Art. 6(1)(b) GDPR), legittimo interesse (Art. 6(1)(f) GDPR).
           </p>
 
-          <h2 className="text-lg font-semibold text-primary">5. Sub-processori</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>5. Sub-processori</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Supabase</strong> (database, autenticazione) — UE</li>
             <li><strong>Vercel</strong> (hosting) — Global CDN</li>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
             <li><strong>Anthropic</strong> (traduzione AI contenuti) — USA</li>
           </ul>
 
-          <h2 className="text-lg font-semibold text-primary">6. Diritti dell'interessato</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>6. Diritti dell'interessato</h2>
           <p>Ai sensi degli articoli 15-22 del GDPR, hai diritto a:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Accesso:</strong> ottenere conferma e copia dei tuoi dati</li>
@@ -80,24 +80,24 @@ export default function PrivacyPage() {
             o scrivere a <a href="mailto:info@chiamamibi.com" className="text-accent">info@chiamamibi.com</a>.
           </p>
 
-          <h2 className="text-lg font-semibold text-primary">7. Conservazione dei dati</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>7. Conservazione dei dati</h2>
           <p>
             I dati personali vengono conservati per il tempo necessario alle finalità per cui sono stati raccolti.
             Alla cancellazione dell'account, tutti i dati vengono rimossi entro 30 giorni.
           </p>
 
-          <h2 className="text-lg font-semibold text-primary">8. Cookie</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>8. Cookie</h2>
           <p>
             Utilizziamo solo cookie tecnici necessari al funzionamento del servizio e cookie
             analitici anonimi. Nessun cookie di profilazione viene installato senza il tuo consenso.
           </p>
 
-          <h2 className="text-lg font-semibold text-primary">9. Età minima</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>9. Età minima</h2>
           <p>
             Il servizio è rivolto a persone di età pari o superiore a 16 anni.
           </p>
 
-          <h2 className="text-lg font-semibold text-primary">10. Contatti</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>10. Contatti</h2>
           <p>
             Per domande sulla privacy: <a href="mailto:info@chiamamibi.com" className="text-accent">info@chiamamibi.com</a>
           </p>

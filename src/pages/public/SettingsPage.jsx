@@ -86,7 +86,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
               autoFocus
               style={{
                 ...inputStyle, textAlign: 'center', letterSpacing: 3,
-                fontWeight: 700, marginBottom: 16, border: '2px solid var(--color-bordo)',
+                fontWeight: 700, marginBottom: 16, border: '2px solid var(--color-line)',
               }}
             />
             <div style={{ display: 'flex', gap: 10 }}>
