@@ -343,6 +343,9 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 /* ── ScHero — featured drop card full-width corallo (mockup §sc-hero) ── */
 function ScHero({ deal, onClaim, claiming, myRedemption, onShowQR }) {
   const r = deal.restaurant
+  const countdown = useCountdown(deal.drop_ends_at || deal.valid_until)
+  const endsAt = deal.drop_ends_at || deal.valid_until
+  const endsTimeStr = endsAt ? new Date(endsAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : null
   const claimed = deal.claimed_count || deal.total_redeemed || 0
   const max = deal.max_quantity || deal.max_redemptions || 10
   const remaining = Math.max(0, max - claimed)
@@ -383,7 +386,7 @@ function ScHero({ deal, onClaim, claiming, myRedemption, onShowQR }) {
           marginBottom: 12,
         }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'cityPulse 1.4s infinite' }} />
-          LIVE · DROP ORA
+          {countdown ? `DROP LIVE · ${countdown.h}h ${pad(countdown.m)}m` : 'LIVE · DROP ORA'}
         </span>
         <div style={{
           fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 56,
@@ -408,8 +411,8 @@ function ScHero({ deal, onClaim, claiming, myRedemption, onShowQR }) {
           display: 'flex', justifyContent: 'space-between',
           fontSize: 10, fontWeight: 700, letterSpacing: '.04em', marginBottom: 14,
         }}>
-          <span>{claimed} SU {max} SBLOCCATI</span>
-          <span>{remaining} rimasti</span>
+          <span>{claimed} / {max} sbloccati</span>
+          <span>{endsTimeStr ? `scade alle ${endsTimeStr}` : `${remaining} rimasti`}</span>
         </div>
         <button
           onClick={onCta}
@@ -1235,18 +1238,33 @@ export default function DealsPage() {
         }
       `}</style>
       <div className="flex deals-tab-switcher" style={{ background: '#fff', borderRadius: 12, padding: 4, border: '1.5px solid var(--color-bordo)' }}>
-        {[{ key: 'available', label: 'Disponibili' }, { key: 'mine', label: 'I miei' }].map(t => (
+        {[
+          { key: 'available', label: 'Disponibili', count: activeDrops.length + featured.length + regular.length },
+          { key: 'mine', label: 'I miei', count: myActive.length + myUsed.length },
+        ].map(t => (
           <button key={t.key} className={tab === t.key ? 'deals-tab-active' : ''} onClick={() => { setTab(t.key); window.scrollTo({ top: 0 }) }} style={{
-            flex: 1, textAlign: 'center', padding: 10, borderRadius: 10,
-            fontSize: 13, fontWeight: tab === t.key ? 700 : 600,
-            background: tab === t.key ? 'var(--color-primary)' : 'transparent',
-            color: tab === t.key ? 'var(--color-bg)' : 'var(--color-secondary)',
+            flex: 1, textAlign: 'center', padding: '11px 12px', borderRadius: 999,
+            fontSize: 13, fontWeight: 700,
+            background: tab === t.key ? 'var(--color-ink, #22181C)' : 'var(--color-ink-05, rgba(34,24,28,.05))',
+            color: tab === t.key ? '#fff' : 'var(--color-ink-70)',
             border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
-          }}>{t.label}</button>
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}>
+            {t.label}
+            {t.count > 0 && (
+              <span style={{
+                display: 'inline-grid', placeItems: 'center',
+                minWidth: 20, height: 20, padding: '0 6px',
+                borderRadius: 999, fontSize: 10.5, fontWeight: 800,
+                background: tab === t.key ? 'rgba(255,255,255,.22)' : 'var(--color-ink, #22181C)',
+                color: tab === t.key ? '#fff' : '#fff',
+              }}>{t.count}</span>
+            )}
+          </button>
         ))}
       </div>
     </>
-  ), [tab])
+  ), [tab, activeDrops.length, featured.length, regular.length, myActive.length, myUsed.length])
 
   // Shared sub-tabs JSX for "I miei"
   const subTabsJSX = useMemo(() => (
@@ -1469,12 +1487,22 @@ export default function DealsPage() {
                   if (carouselDrops.length === 0 && upcomingDrops.length === 0) return null
                   return (
                     <div>
-                      <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
-                        <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
-                          <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-accent)' }} />
-                          <span style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'var(--color-accent)', opacity: 0.4, animation: 'cityPulse 2s ease-in-out infinite' }} />
-                        </span>
-                        <p style={sectionLabel}>{user && activeDrops.length > 1 ? 'Altri drop' : 'Drop'}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <div>
+                          <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 17, letterSpacing: '-0.01em', margin: 0 }}>
+                            {user && activeDrops.length > 1 ? 'Altri drops oggi' : 'Drops'}
+                          </h3>
+                          <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, fontWeight: 500 }}>
+                            {new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                          </div>
+                        </div>
+                        {carouselDrops.length > 0 && (
+                          <span style={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
+                            fontSize: 12, fontWeight: 800, color: 'var(--color-ink)',
+                          }}>{carouselDrops.length}</span>
+                        )}
                       </div>
                       <div className="drop-carousel" style={{
                         display: 'flex', gap: 12, overflowX: 'auto',
@@ -1498,7 +1526,17 @@ export default function DealsPage() {
                 {/* SCONTI DISPONIBILI — featured (stella oro) + regular in unico feed */}
                 {(featured.length > 0 || regular.length > 0) && (
                   <div>
-                    <p style={sectionLabel}>Sconti disponibili</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <div>
+                        <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 17, letterSpacing: '-0.01em', margin: 0 }}>Convenzioni sempre attive</h3>
+                        <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, fontWeight: 500 }}>Senza limite utenti · valide per un periodo</div>
+                      </div>
+                      <span style={{
+                        width: 26, height: 26, borderRadius: '50%',
+                        background: 'var(--color-ink-05)', display: 'grid', placeItems: 'center',
+                        fontSize: 12, fontWeight: 800, color: 'var(--color-ink)',
+                      }}>{featured.length + regular.length}</span>
+                    </div>
                     <div className="flex flex-col gap-2.5 mt-2.5 md:grid md:grid-cols-2 lg:grid-cols-3">
                       {featured.map(deal => (
                         <CompactDealCard

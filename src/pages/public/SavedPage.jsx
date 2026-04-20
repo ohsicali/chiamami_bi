@@ -351,8 +351,9 @@ export default function SavedPage() {
             {/* Mobile: sv-grid 2-col (mockup §sv-grid) — renderizzato SOLO su mobile
                 per evitare duplicazione delle card nel DOM. */}
             {!isDesktop && (
+            <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {displayList.map((r) => {
+              {displayList.map((r, idx) => {
                 const discount = activeDiscounts[r.id]
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
                 const category = categories[0]
@@ -418,6 +419,23 @@ export default function SavedPage() {
                 )
               })}
             </div>
+            {displayList.length > 0 && (
+              <div style={{
+                margin: '14px 0 0',
+                padding: 14,
+                background: 'var(--color-oro-soft, #F4E7CC)',
+                border: '1px solid rgba(176,137,84,.3)',
+                borderRadius: 14,
+                fontFamily: "'Caveat', cursive",
+                fontSize: 17,
+                lineHeight: 1.25,
+                color: 'var(--color-ink)',
+              }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, letterSpacing: '.04em', color: 'var(--color-oro, #B08954)' }}>{'✏︎  '}</span>
+                aggiungi una nota personale ai tuoi salvati per ricordarti perché li hai scelti
+              </div>
+            )}
+            </>
             )}
 
             {/* Desktop: vertical photo cards grid (3-col) — renderizzato SOLO su desktop */}
