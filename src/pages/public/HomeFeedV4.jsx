@@ -57,11 +57,11 @@ function TopBar() {
         gap: 10,
       }}
     >
-      <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.92, textDecoration: 'none' }}>
+      <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.9, textDecoration: 'none' }}>
         <span
           style={{
             fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            fontSize: 15,
+            fontSize: 22,
             letterSpacing: '0.02em',
             color: 'var(--color-corallo)',
           }}
@@ -72,10 +72,10 @@ function TopBar() {
           style={{
             fontFamily: 'var(--font-sans)',
             fontWeight: 700,
-            fontSize: 8,
-            letterSpacing: '0.15em',
+            fontSize: 9,
+            letterSpacing: '0.16em',
             color: 'var(--color-ink-40, rgba(34,24,28,.4))',
-            marginTop: 3,
+            marginTop: 5,
             textTransform: 'uppercase',
           }}
         >
@@ -245,9 +245,9 @@ function CategoryBubbles({ activeKey, onSelect }) {
     <div
       style={{
         display: 'flex',
-        gap: 10,
+        gap: 14,
         overflowX: 'auto',
-        padding: '6px 20px 20px',
+        padding: '6px 24px 20px',
         WebkitOverflowScrolling: 'touch',
         scrollSnapType: 'x proximity',
         scrollbarWidth: 'none',
@@ -274,14 +274,14 @@ function CategoryBubbles({ activeKey, onSelect }) {
           >
             <span
               style={{
-                width: 64,
-                height: 64,
+                width: 54,
+                height: 54,
                 borderRadius: '50%',
                 background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
                 boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
                 display: 'grid',
                 placeItems: 'center',
-                fontSize: 28,
+                fontSize: 24,
               }}
             >
               {c.emoji}
@@ -361,7 +361,7 @@ function Rcard({ restaurant, discount, onClick }) {
         fontFamily: 'inherit',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/11', background: '#ddd', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#ddd', overflow: 'hidden' }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
         ) : (
@@ -589,7 +589,7 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
           display: 'flex',
           gap: 8,
           overflowX: 'auto',
-          padding: '14px 20px 12px',
+          padding: '14px 24px 12px',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
         }}
@@ -627,7 +627,7 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
           display: 'flex',
           gap: 12,
           overflowX: 'auto',
-          padding: '0 20px 12px',
+          padding: '0 24px 12px',
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
@@ -979,7 +979,7 @@ export default function HomeFeedV4() {
               display: 'flex',
               gap: 12,
               overflowX: 'auto',
-              padding: '0 20px 12px',
+              padding: '0 24px 12px',
               scrollSnapType: 'x mandatory',
               WebkitOverflowScrolling: 'touch',
               scrollbarWidth: 'none',
