@@ -1,0 +1,119 @@
+/**
+ * useOrariStatus — fetcha gli orari Places del locale e calcola
+ * stato aperto/chiuso localmente (indipendente da openNow cachato).
+ *
+ * Condiviso da OrariLocale (accordion giorni) e dal chip "Aperto · chiude"
+ * nella scheda ristorante.
+ *
+ * Dedup: tieniamo un cache in-memory per id → promise, così componenti multipli
+ * che chiedono lo stesso restaurant fanno 1 sola fetch.
+ */
+import { useEffect, useState } from 'react'
+
+const cache = new Map() // restaurantId → { data, ts }
+const inflight = new Map() // restaurantId → Promise<data>
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 min client-side
+
+function formatTime(hour, minute) {
+  const h = String(hour ?? 0).padStart(2, '0')
+  const m = String(minute ?? 0).padStart(2, '0')
+  return `${h}:${m}`
+}
+
+export function computeStatus(data) {
+  const source = data?.currentOpeningHours || data?.regularOpeningHours
+  if (!source) return null
+  const periods = source.periods || []
+  if (!periods.length) return null
+
+  const utcOffset = typeof data.utcOffsetMinutes === 'number' ? data.utcOffsetMinutes : null
+  const nowReal = new Date()
+  const local = utcOffset !== null
+    ? new Date(nowReal.getTime() + nowReal.getTimezoneOffset() * 60_000 + utcOffset * 60_000)
+    : nowReal
+  const todayDow = local.getDay()
+  const nowHM = local.getHours() * 60 + local.getMinutes()
+
+  for (const p of periods) {
+    const openDay = p.open?.day
+    if (openDay == null) continue
+    const openMin = (p.open.hour || 0) * 60 + (p.open.minute || 0)
+
+    if (!p.close) {
+      return { openNow: true, closesAt: null }
+    }
+
+    const closeDay = p.close.day
+    const closeMin = (p.close.hour || 0) * 60 + (p.close.minute || 0)
+    const closeStr = formatTime(p.close.hour, p.close.minute)
+
+    if (openDay === closeDay) {
+      if (todayDow === openDay && nowHM >= openMin && nowHM < closeMin) {
+        return { openNow: true, closesAt: closeStr }
+      }
+      continue
+    }
+    if (todayDow === openDay && nowHM >= openMin) {
+      return { openNow: true, closesAt: closeStr }
+    }
+    if (todayDow === closeDay && nowHM < closeMin) {
+      return { openNow: true, closesAt: closeStr }
+    }
+  }
+
+  return { openNow: false, closesAt: null }
+}
+
+export function useOrariStatus(restaurant) {
+  const id = restaurant?.id
+  const hasVerified = !!restaurant?.place_id && !!restaurant?.place_id_verified_at
+  const [data, setData] = useState(() => {
+    const c = id && cache.get(id)
+    return c && Date.now() - c.ts < CACHE_TTL_MS ? c.data : null
+  })
+  const [loading, setLoading] = useState(!data && hasVerified)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (!id || !hasVerified) {
+      setLoading(false)
+      return
+    }
+    const cached = cache.get(id)
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      setData(cached.data)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    const existing = inflight.get(id)
+    const promise = existing || (async () => {
+      try {
+        const r = await fetch(`/api/places-details?restaurantId=${id}`)
+        const json = await r.json()
+        if (json.ok && json.data) {
+          cache.set(id, { data: json.data, ts: Date.now() })
+          return json.data
+        }
+        return null
+      } finally {
+        inflight.delete(id)
+      }
+    })()
+    if (!existing) inflight.set(id, promise)
+
+    promise
+      .then((d) => {
+        if (cancelled) return
+        if (d) setData(d)
+        else setFailed(true)
+      })
+      .catch(() => { if (!cancelled) setFailed(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+
+    return () => { cancelled = true }
+  }, [id, hasVerified])
+
+  const status = data ? computeStatus(data) : null
+  return { data, status, loading, failed, hasVerified }
+}

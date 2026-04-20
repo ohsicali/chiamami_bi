@@ -7,6 +7,7 @@ import NearbySection from './NearbySection'
 import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
 import OrariLocale from './OrariLocale'
+import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -232,6 +233,7 @@ export default function RestaurantSheet({
   const [newsletterStatus, setNewsletterStatus] = useState(null)
   const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
+  const { status: orariStatus } = useOrariStatus(restaurant)
 
   // Desktop detection for animation direction (reactive — updates on resize)
   const isDesktop = useIsDesktop()
@@ -521,54 +523,15 @@ export default function RestaurantSheet({
               </div>
             )}
 
-            {/* Discount strip — lime glow bar */}
-            {discountTitle && (
-              <div style={{
-                position: 'relative',
-                borderRadius: '20px 20px 0 0',
-              }}>
-                {/* Glow — subtle, close to strip */}
-                <div style={{
-                  position: 'absolute', top: -30, left: 0, right: 0, height: 30,
-                  background: 'rgba(163,230,53,0.25)',
-                  filter: 'blur(16px)',
-                  pointerEvents: 'none', zIndex: 0,
-                }} />
-
-                {/* Content */}
-                <div style={{
-                  position: 'relative', zIndex: 1,
-                  padding: '12px 18px',
-                  borderRadius: '20px 20px 0 0',
-                  background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                }}>
-                  <span style={{
-                    fontSize: 15, fontWeight: 700, color: '#000',
-                    letterSpacing: 0.3,
-                  }}>
-                    {discountTitle}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Green background behind rounded corners */}
-            {discountTitle && (
-              <div style={{ background: 'linear-gradient(135deg, #a3e635 0%, #4ade80 100%)' }}>
-                <div style={{ height: 16, borderRadius: '16px 16px 0 0', background: '#fff' }} />
-              </div>
-            )}
-
             <motion.div
               className="flex flex-col"
               variants={contentVariants}
               initial="hidden"
               animate="visible"
               style={{
-                padding: `${discountTitle ? 12 : 28}px 24px 0px`,
+                padding: '28px 24px 0px',
                 background: '#fff',
-                ...(!discountTitle && { borderRadius: '20px 20px 0 0' }),
+                borderRadius: '20px 20px 0 0',
               }}
             >
               {/* Restaurant name — centered, Satoshi 900 */}
@@ -628,22 +591,34 @@ export default function RestaurantSheet({
                     {priceLabel}
                   </span>
                 )}
+                {restaurant.recommended_for?.map((tag) => (
+                  <span key={tag} style={{
+                    fontSize: 12, fontWeight: 700,
+                    color: 'var(--color-oro-deep, #8E6B3E)',
+                    background: 'var(--color-oro-soft, #F4E7CC)',
+                    padding: '6px 12px', borderRadius: 999,
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+                {orariStatus && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em',
+                    color: orariStatus.openNow ? '#2E7D5B' : 'var(--color-ink-55)',
+                    background: orariStatus.openNow ? '#E5F3EA' : 'var(--color-ink-05)',
+                    padding: '6px 12px', borderRadius: 999,
+                  }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: orariStatus.openNow ? '#2E7D5B' : '#9a8e84',
+                    }} />
+                    {orariStatus.openNow
+                      ? (orariStatus.closesAt ? `Aperto · chiude ${orariStatus.closesAt}` : 'Aperto ora')
+                      : 'Chiuso ora'}
+                  </span>
+                )}
               </motion.div>
-
-              {/* Recommended for */}
-              {restaurant.recommended_for?.length > 0 && (
-                <motion.div variants={itemVariants} style={{
-                  display: 'flex', justifyContent: 'center', alignItems: 'center',
-                  gap: 6, flexWrap: 'wrap', marginBottom: 10, marginTop: -10,
-                }}>
-                  {restaurant.recommended_for.map((tag, i) => (
-                    <Fragment key={tag}>
-                      {i > 0 && <span style={{ fontSize: 12, color: '#ccc' }}>-</span>}
-                      <span style={{ fontSize: 12, color: '#999' }}>{tag}</span>
-                    </Fragment>
-                  ))}
-                </motion.div>
-              )}
 
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
@@ -693,10 +668,80 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* ── Orari Google Places ── */}
-              <motion.div variants={itemVariants} style={{ marginBottom: 20, padding: '0 18px' }}>
-                <OrariLocale restaurant={restaurant} />
-              </motion.div>
+              {/* ── Sconto banner (mockup §289-302 `.sconto-link`) ── */}
+              {discount && (
+                <motion.button
+                  variants={itemVariants}
+                  onClick={async () => {
+                    if (!user) {
+                      navigate('/login', { state: { from: window.location.pathname, discount: true } })
+                      return
+                    }
+                    if (inlineRedemption?.status === 'redeemed') return
+                    if (inlineRedemption?.status === 'generated') {
+                      setInlineShowQR(true)
+                      return
+                    }
+                    setInlineGenerating(true)
+                    try {
+                      const result = await inlineGenerateRedemption()
+                      if (result) setInlineShowQR(true)
+                    } finally {
+                      setInlineGenerating(false)
+                    }
+                  }}
+                  style={{
+                    display: 'block', width: '100%',
+                    border: '1px solid var(--color-ink-05)', background: '#fff',
+                    borderRadius: 14, overflow: 'hidden',
+                    boxShadow: 'var(--shadow-sm)', cursor: 'pointer',
+                    textAlign: 'left', padding: 0, marginBottom: 20,
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  {/* Banner verde 135° 2-stop */}
+                  <div style={{
+                    height: 48, padding: '0 16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+                    color: 'var(--color-ink)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.01em',
+                  }}>
+                    <span>{discount.title || discount.discount_value}</span>
+                    {discount.valid_days_label && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                        background: 'rgba(255,255,255,0.55)', color: 'var(--color-ink)',
+                        padding: '3px 8px', borderRadius: 999,
+                      }}>
+                        {discount.valid_days_label}
+                      </span>
+                    )}
+                  </div>
+                  {/* Body */}
+                  <div style={{ padding: '11px 16px 13px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-ink)', letterSpacing: '-0.01em' }}>
+                        {discount.description || 'Sconto attivo'}
+                      </div>
+                      {inlineRedemption?.status === 'redeemed' && (
+                        <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, fontWeight: 500 }}>
+                          Già utilizzato
+                        </div>
+                      )}
+                    </div>
+                    <span style={{
+                      fontSize: 14, fontWeight: 800, color: 'var(--color-ink)',
+                      display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+                    }}>
+                      {inlineRedemption?.status === 'redeemed'
+                        ? '✓'
+                        : inlineRedemption?.status === 'generated'
+                          ? 'Mostra →'
+                          : 'Usa →'}
+                    </span>
+                  </div>
+                </motion.button>
+              )}
 
               {/* ── Secondo Bi ── */}
               {reviewText && (
@@ -717,6 +762,11 @@ export default function RestaurantSheet({
                   )}
                 </motion.div>
               )}
+
+              {/* ── Orari Google Places (dopo Secondo Bi come nel mockup) ── */}
+              <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                <OrariLocale restaurant={restaurant} />
+              </motion.div>
 
               {/* ── Cosa prendere — oro gradient card ── */}
               {tipText && (
@@ -797,352 +847,6 @@ export default function RestaurantSheet({
                 </motion.div>
               )}
 
-              {/* ── Discount Section ── */}
-              {discount && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                  {user ? (
-                    /* ── Logged-in user: unlock / show QR ── */
-                    <div style={{
-                      background: 'linear-gradient(145deg, #22181C 0%, #2a2025 100%)',
-                      borderRadius: 16, padding: '24px 20px',
-                      position: 'relative', overflow: 'hidden',
-                    }}>
-                      {/* Badge */}
-                      <div style={{
-                        display: 'flex', justifyContent: 'center', marginBottom: 14,
-                      }}>
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 6,
-                          background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
-                        }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635', boxShadow: '0 0 8px rgba(163,230,53,0.8)' }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                            Sconto esclusivo da Bi
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Discount title */}
-                      <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, textAlign: 'center' }}>
-                        {discount.title || discount.discount_value}
-                      </h3>
-                      {discount.description && (
-                        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 16, textAlign: 'center' }}>
-                          {discount.description}
-                        </p>
-                      )}
-
-                      {inlineRedemption?.status === 'redeemed' ? (
-                        /* Already used */
-                        <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                          <div style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 8,
-                            background: 'rgba(255,255,255,0.08)', padding: '10px 20px', borderRadius: 12,
-                          }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Sconto già utilizzato</span>
-                          </div>
-                        </div>
-                      ) : inlineRedemption?.status === 'generated' ? (
-                        /* QR ready — show it */
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-                          <div style={{
-                            background: '#fff', borderRadius: 12, padding: 16,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
-                            <img
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(inlineRedemption.qr_code)}`}
-                              alt="QR Code"
-                              style={{ width: 160, height: 160 }}
-                            />
-                          </div>
-                          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                            Mostra questo QR in cassa per ottenere lo sconto
-                          </p>
-                        </div>
-                      ) : (
-                        /* Not yet unlocked — unlock button */
-                        <button
-                          onClick={async () => {
-                            setInlineGenerating(true)
-                            try { await inlineGenerateRedemption() } catch (e) { console.error(e) }
-                            finally { setInlineGenerating(false) }
-                          }}
-                          disabled={inlineGenerating || inlineRedemptionLoading}
-                          style={{
-                            width: '100%', padding: '14px 20px', borderRadius: 12,
-                            background: 'var(--color-corallo)', color: '#fff', border: 'none',
-                            fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                            opacity: inlineGenerating ? 0.5 : 1,
-                          }}
-                        >
-                          {inlineGenerating ? 'Sblocco in corso...' : 'Sblocca il tuo sconto'}
-                        </button>
-                      )}
-
-                      {/* Newsletter CTA */}
-                      <AnimatePresence mode="wait">
-                        {newsletterStatus === 'success' || newsletterStatus === 'exists' ? (
-                          <motion.div
-                            key="subscribed"
-                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                            style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                              marginTop: 14, padding: '10px 0',
-                            }}
-                          >
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ delay: 0.1, type: 'spring', stiffness: 500, damping: 15 }}
-                              style={{
-                                width: 24, height: 24, borderRadius: '50%',
-                                background: 'rgba(163,230,53,0.2)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              }}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12"/>
-                              </svg>
-                            </motion.div>
-                            <span style={{ fontSize: 13, color: '#a3e635', fontWeight: 600 }}>
-                              {newsletterStatus === 'exists' ? 'Sei già iscritto!' : 'Newsletter attivata!'}
-                            </span>
-                          </motion.div>
-                        ) : (
-                          <motion.button
-                            key="subscribe"
-                            exit={{ opacity: 0 }}
-                            onClick={async () => {
-                              if (!user?.email) return
-                              setNewsletterStatus('loading')
-                              if (!isSupabaseConfigured()) {
-                                setTimeout(() => setNewsletterStatus('success'), 500)
-                                return
-                              }
-                              const { error } = await supabase
-                                .from('newsletter_subscribers')
-                                .insert({ email: user.email.trim().toLowerCase() })
-                              if (error?.code === '23505') {
-                                setNewsletterStatus('exists')
-                              } else if (error) {
-                                setNewsletterStatus(null)
-                              } else {
-                                setNewsletterStatus('success')
-                              }
-                            }}
-                            disabled={newsletterStatus === 'loading'}
-                            style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                              background: 'none', border: 'none', cursor: 'pointer',
-                              fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600,
-                              marginTop: 14, width: '100%', padding: 0,
-                              opacity: newsletterStatus === 'loading' ? 0.5 : 1,
-                            }}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-                            </svg>
-                            {newsletterStatus === 'loading' ? 'Iscrizione...' : 'Resta aggiornato sui nuovi sconti'}
-                          </motion.button>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  ) : (
-                    /* ── Not logged in: FOMO design ── */
-                    <motion.div
-                      animate={{ boxShadow: ['0 0 0 0 rgba(163,230,53,0)', '0 0 24px 4px rgba(163,230,53,0.12)', '0 0 0 0 rgba(163,230,53,0)'] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                      style={{
-                        background: 'linear-gradient(145deg, #22181C 0%, #2a2025 100%)',
-                        borderRadius: 16, padding: '24px 20px',
-                        position: 'relative', overflow: 'hidden',
-                      }}
-                    >
-                      {/* Animated shimmer */}
-                      <motion.div
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
-                        style={{
-                          position: 'absolute', top: 0, left: 0,
-                          width: '50%', height: '100%',
-                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent)',
-                          pointerEvents: 'none', zIndex: 1,
-                        }}
-                      />
-
-                      {/* Decorative glow */}
-                      <div style={{
-                        position: 'absolute', top: -40, right: -40,
-                        width: 140, height: 140,
-                        background: 'radial-gradient(circle, rgba(163,230,53,0.12) 0%, transparent 70%)',
-                        borderRadius: '50%', pointerEvents: 'none',
-                      }} />
-
-                      {/* Badge */}
-                      <div style={{
-                        display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2,
-                        marginBottom: 14,
-                      }}>
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 6,
-                          background: 'rgba(163,230,53,0.12)', padding: '5px 12px', borderRadius: 20,
-                        }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635', boxShadow: '0 0 8px rgba(163,230,53,0.8)' }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                            Sconto esclusivo da Bi
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Discount title */}
-                      <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                        {discount.title || discount.discount_value}
-                      </h3>
-                      {discount.description && (
-                        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 4, position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                          {discount.description}
-                        </p>
-                      )}
-
-                      {/* Blurred QR + Lock */}
-                      <div
-                        onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
-                        style={{
-                          position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center',
-                          margin: '20px 0 8px', cursor: 'pointer', zIndex: 2,
-                        }}
-                      >
-                        <div style={{
-                          width: 140, height: 140, position: 'relative',
-                          filter: 'blur(8px)', opacity: 0.35,
-                        }}>
-                          <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
-                            {[0,1,2,3,4,5,6].map(row =>
-                              [0,1,2,3,4,5,6].map(col => {
-                                const on = (row + col) % 3 !== 0 || (row < 3 && col < 3) || (row < 3 && col > 3) || (row > 3 && col < 3)
-                                return on ? (
-                                  <rect key={`${row}-${col}`} x={col * 20} y={row * 20} width="16" height="16" rx="2" fill="#fff" />
-                                ) : null
-                              })
-                            )}
-                            <rect x="0" y="0" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
-                            <rect x="88" y="0" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
-                            <rect x="0" y="88" width="52" height="52" rx="4" stroke="#fff" strokeWidth="4" fill="none" />
-                            <rect x="12" y="12" width="28" height="28" rx="2" fill="#fff" />
-                            <rect x="100" y="12" width="28" height="28" rx="2" fill="#fff" />
-                            <rect x="12" y="100" width="28" height="28" rx="2" fill="#fff" />
-                          </svg>
-                        </div>
-
-                        {/* Lock icon overlay */}
-                        <div style={{
-                          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          pointerEvents: 'none',
-                        }}>
-                          <motion.div
-                            animate={{ scale: [1, 1.08, 1] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                            style={{
-                              width: 52, height: 52, borderRadius: '50%',
-                              background: 'rgba(163,230,53,0.15)',
-                              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              border: '1px solid rgba(163,230,53,0.25)',
-                            }}
-                          >
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0110 0v4" />
-                            </svg>
-                          </motion.div>
-                        </div>
-                      </div>
-
-                      {/* How it works — 3 steps */}
-                      <div style={{
-                        display: 'flex', gap: 12, margin: '16px 0 20px',
-                        position: 'relative', zIndex: 2,
-                      }}>
-                        {[
-                          { icon: (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                            </svg>
-                          ), text: 'Iscriviti gratis' },
-                          { icon: (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-                            </svg>
-                          ), text: 'Sblocca il QR' },
-                          { icon: (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                            </svg>
-                          ), text: 'Mostralo in cassa' },
-                        ].map((step, i, arr) => (
-                          <Fragment key={i}>
-                            <div style={{
-                              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                            }}>
-                              <div style={{
-                                width: 40, height: 40, borderRadius: '50%',
-                                background: 'rgba(163,230,53,0.1)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              }}>
-                                {step.icon}
-                              </div>
-                              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textAlign: 'center' }}>
-                                {step.text}
-                              </span>
-                            </div>
-                            {i < arr.length - 1 && (
-                              <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 20 }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                              </div>
-                            )}
-                          </Fragment>
-                        ))}
-                      </div>
-
-                      {/* CTA */}
-                      <button
-                        onClick={() => navigate('/login', { state: { from: window.location.pathname, discount: true } })}
-                        style={{
-                          width: '100%', padding: '14px 20px', borderRadius: 12,
-                          background: 'var(--color-corallo)', color: '#fff', border: 'none',
-                          fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                          position: 'relative', zIndex: 2,
-                        }}
-                      >
-                        Iscriviti gratis per sbloccare
-                      </button>
-
-                      {/* Social proof */}
-                      {discount.total_redeemed > 0 && (
-                        <p style={{
-                          fontSize: 12, color: 'rgba(255,255,255,0.25)',
-                          textAlign: 'center', marginTop: 10,
-                          position: 'relative', zIndex: 2,
-                        }}>
-                          {discount.total_redeemed} {discount.total_redeemed === 1 ? 'persona ha' : 'persone hanno'} già sbloccato
-                        </p>
-                      )}
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* Divider */}
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
               {/* Ciao sono Bi */}
               <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
@@ -1265,6 +969,18 @@ export default function RestaurantSheet({
 
         {/* Floating discount bar — Airbnb style white bottom bar */}
         <FloatingDiscountBar discount={discount} restaurantId={restaurant.id} />
+
+        {/* Inline QR modal — triggered by in-page sconto banner click */}
+        <AnimatePresence>
+          {inlineShowQR && inlineRedemption && inlineDiscount && (
+            <QRCodeDisplay
+              qrCode={inlineRedemption.qr_code}
+              discountTitle={inlineDiscount.title}
+              discountValue={inlineDiscount.discount_value}
+              onClose={() => setInlineShowQR(false)}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   )
