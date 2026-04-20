@@ -701,13 +701,8 @@ export default function RestaurantSheet({
               {/* ── Secondo Bi ── */}
               {reviewText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
-                  <div style={{ padding: '0 0 4px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 8 }}>
-                      Secondo Bi
-                    </div>
-                    <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--color-ink)', lineHeight: 1.2, marginBottom: 10 }}>
-                      La mia opinione
-                    </div>
+                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 10 }}>
+                    Secondo Bi
                   </div>
                   <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--color-ink)', fontWeight: 500 }}>
                     {reviewText}
