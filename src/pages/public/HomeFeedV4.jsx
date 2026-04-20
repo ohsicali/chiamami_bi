@@ -50,6 +50,7 @@ function getTimeLabel(slot) {
 function TopBar() {
   return (
     <div
+      className="hfv4-topbar"
       style={{
         padding: '10px 20px 16px',
         display: 'flex',
@@ -130,8 +131,9 @@ function HeroPromo({ featured }) {
   const navigate = useNavigate()
   if (!featured) return null
   return (
-    <div style={{ padding: '4px 16px 22px' }}>
+    <div className="hfv4-hero-wrap" style={{ padding: '4px 16px 22px' }}>
       <div
+        className="hfv4-hero-card"
         style={{
           position: 'relative',
           background: 'var(--color-corallo)',
@@ -145,7 +147,7 @@ function HeroPromo({ featured }) {
           boxShadow: '0 8px 24px rgba(34,24,28,.08)',
         }}
       >
-        <div>
+        <div className="hfv4-hero-body">
           <span
             style={{
               display: 'inline-flex',
@@ -174,6 +176,7 @@ function HeroPromo({ featured }) {
             DROP LIVE
           </span>
           <div
+            className="hfv4-hero-title"
             style={{
               fontFamily: 'var(--font-sans)',
               fontWeight: 900,
@@ -182,12 +185,14 @@ function HeroPromo({ featured }) {
               letterSpacing: '-0.02em',
               color: '#fff',
               marginBottom: 8,
+              whiteSpace: 'pre-line',
             }}
           >
             {featured.title}
           </div>
           {featured.subtitle && (
             <div
+              className="hfv4-hero-sub"
               style={{
                 fontSize: 13,
                 color: 'rgba(255,255,255,.85)',
@@ -220,6 +225,7 @@ function HeroPromo({ featured }) {
         </div>
         {featured.photo && (
           <div
+            className="hfv4-hero-photo"
             style={{
               borderRadius: 20,
               overflow: 'hidden',
@@ -242,93 +248,123 @@ function HeroPromo({ featured }) {
 
 function CategoryBubbles({ activeKey, onSelect }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 14,
-        overflowX: 'auto',
-        padding: '6px 20px 20px',
-        WebkitOverflowScrolling: 'touch',
-        scrollSnapType: 'x proximity',
-        scrollbarWidth: 'none',
-      }}
-    >
-      {CATEGORIES.map((c) => {
-        const active = c.key === activeKey
-        return (
-          <button
-            key={c.key}
-            onClick={() => onSelect?.(c.key)}
-            style={{
-              flex: '0 0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-              background: 'transparent',
-              border: 'none',
-              scrollSnapAlign: 'start',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-          >
-            <span
+    <div className="hfv4-cats-wrap">
+      <div
+        className="hfv4-cats-row"
+        style={{
+          display: 'flex',
+          gap: 14,
+          overflowX: 'auto',
+          padding: '6px 20px 20px',
+          WebkitOverflowScrolling: 'touch',
+          scrollSnapType: 'x proximity',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {CATEGORIES.map((c) => {
+          const active = c.key === activeKey
+          return (
+            <button
+              key={c.key}
+              onClick={() => onSelect?.(c.key)}
               style={{
-                width: 54,
-                height: 54,
-                borderRadius: '50%',
-                background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
-                boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
-                display: 'grid',
-                placeItems: 'center',
-                fontSize: 24,
+                flex: '0 0 auto',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                background: 'transparent',
+                border: 'none',
+                scrollSnapAlign: 'start',
+                cursor: 'pointer',
+                padding: 0,
               }}
             >
-              {c.emoji}
-            </span>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: active ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
-                maxWidth: 72,
-                textAlign: 'center',
-                lineHeight: 1.15,
-              }}
-            >
-              {c.label}
-            </span>
-          </button>
-        )
-      })}
+              <span
+                className="hfv4-cat-bubble"
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: '50%',
+                  background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
+                  boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 24,
+                }}
+              >
+                {c.emoji}
+              </span>
+              <span
+                className="hfv4-cat-label"
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: active ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
+                  maxWidth: 72,
+                  textAlign: 'center',
+                  lineHeight: 1.15,
+                }}
+              >
+                {c.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function SectionHead({ title, trailing }) {
+function SectionHead({ title, kicker, subtitle, trailing }) {
   return (
     <div
+      className="hfv4-sec-head"
       style={{
         padding: '0 20px 12px',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         justifyContent: 'space-between',
         gap: 12,
       }}
     >
-      <h2
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontWeight: 900,
-          fontSize: 22,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.1,
-          color: 'var(--color-ink)',
-          margin: 0,
-        }}
-      >
-        {title}
-      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {kicker && (
+          <span className="hfv4-sec-head-kicker" style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            color: 'var(--color-corallo-ink)',
+            textTransform: 'uppercase',
+            display: 'none',
+          }}>
+            {kicker}
+          </span>
+        )}
+        <h2
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 22,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1,
+            color: 'var(--color-ink)',
+            margin: 0,
+          }}
+        >
+          {title}
+        </h2>
+        {subtitle && (
+          <div className="hfv4-sec-head-sub" style={{
+            fontSize: 12,
+            color: 'var(--color-ink-70)',
+            marginTop: 2,
+            display: 'none',
+          }}>
+            {subtitle}
+          </div>
+        )}
+      </div>
       {trailing}
     </div>
   )
@@ -345,6 +381,7 @@ function Rcard({ restaurant, discount, onClick }) {
 
   return (
     <button
+      className="hfv4-rcard"
       onClick={() => onClick?.(restaurant)}
       style={{
         flex: '0 0 70%',
@@ -438,8 +475,9 @@ function Rcard({ restaurant, discount, onClick }) {
 
 function SponsorBanner() {
   return (
-    <div style={{ padding: '14px 16px 0' }}>
+    <div className="hfv4-spon-wrap" style={{ padding: '14px 16px 0' }}>
       <div
+        className="hfv4-spon-banner"
         style={{
           position: 'relative',
           display: 'grid',
@@ -469,6 +507,7 @@ function SponsorBanner() {
         </span>
 
         <div
+          className="spon-img"
           style={{
             width: 72,
             height: 72,
@@ -491,6 +530,7 @@ function SponsorBanner() {
             Partner · Vini Crosetti
           </div>
           <div
+            className="spon-title"
             style={{
               fontFamily: 'var(--font-sans)',
               fontWeight: 900,
@@ -503,7 +543,7 @@ function SponsorBanner() {
           >
             20% sulle Barbera biologiche
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', lineHeight: 1.3 }}>
+          <div className="spon-sub" style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', lineHeight: 1.3 }}>
             Consegna 24h · codice BI20
           </div>
         </div>
@@ -540,8 +580,8 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
   }, [restaurants])
 
   return (
-    <section style={{ paddingTop: 22 }}>
-      <div style={{ padding: '0 20px 10px' }}>
+    <section className="hfv4-section" style={{ paddingTop: 22 }}>
+      <div className="hfv4-sec-head" style={{ padding: '0 20px 10px' }}>
         <div
           style={{
             fontSize: 10,
@@ -585,6 +625,7 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
       </div>
 
       <div
+        className="hfv4-time-tabs"
         style={{
           display: 'flex',
           gap: 8,
@@ -599,6 +640,7 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
           return (
             <button
               key={t.key}
+              className="hfv4-time-tab"
               onClick={() => setActiveTab(t.key)}
               style={{
                 flex: '0 0 auto',
@@ -623,6 +665,7 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
       </div>
 
       <div
+        className="hfv4-cards-row"
         style={{
           display: 'flex',
           gap: 12,
@@ -653,8 +696,9 @@ function CosaConsiglio({ restaurants }) {
   const cat = getCategoryInfo(featured.cuisine_type || (featured.category && featured.category[0]))
 
   return (
-    <div style={{ padding: '24px 16px 4px' }}>
+    <div className="hfv4-consiglio-wrap" style={{ padding: '24px 16px 4px' }}>
       <div
+        className="hfv4-consiglio"
         style={{
           position: 'relative',
           overflow: 'hidden',
@@ -677,6 +721,7 @@ function CosaConsiglio({ restaurants }) {
           }}
         />
 
+        <div className="hfv4-consiglio-l" style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, position: 'relative' }}>
           <div
             style={{
@@ -762,8 +807,10 @@ function CosaConsiglio({ restaurants }) {
           </span>
         </div>
 
+        </div> {/* end consiglio-l */}
+        <div className="hfv4-consiglio-r" style={{ position: 'relative', zIndex: 1 }}>
         {tips && tips.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 9, position: 'relative' }}>
+          <ul className="hfv4-consiglio-list" style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 9, position: 'relative' }}>
             {tips.map((tip, i) => (
               <li
                 key={i}
@@ -849,6 +896,7 @@ function CosaConsiglio({ restaurants }) {
         >
           Apri la scheda <span style={{ color: 'var(--color-corallo)' }}>→</span>
         </button>
+        </div> {/* end consiglio-r */}
       </div>
     </div>
   )
@@ -857,8 +905,9 @@ function CosaConsiglio({ restaurants }) {
 function SuggestCard() {
   const navigate = useNavigate()
   return (
-    <div style={{ padding: '24px 16px 36px' }}>
+    <div className="hfv4-suggest-wrap" style={{ padding: '24px 16px 36px' }}>
       <div
+        className="hfv4-suggest"
         style={{
           position: 'relative',
           overflow: 'hidden',
@@ -885,15 +934,16 @@ function SuggestCard() {
           }}
         />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, lineHeight: 1.15, letterSpacing: '-0.01em', marginBottom: 6, maxWidth: 200 }}>
+          <div className="hfv4-suggest-title" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, lineHeight: 1.15, letterSpacing: '-0.01em', marginBottom: 6, maxWidth: 200 }}>
             Conosci un posto che manca?
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.35, maxWidth: 220 }}>
+          <div className="hfv4-suggest-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.35, maxWidth: 220 }}>
             Scrivici nome + zona. Bi ci va a mangiare. Se è buono, entra.
           </div>
         </div>
         <button
           onClick={() => navigate('/profile')}
+          className="hfv4-suggest-cta"
           style={{
             padding: '11px 14px',
             background: 'var(--color-corallo)',
@@ -949,17 +999,119 @@ export default function HomeFeedV4() {
   const onCardClick = (r) => navigate(`/restaurant/${r.slug}`)
 
   return (
-    <div style={{ background: 'var(--color-page)', minHeight: '100dvh', paddingBottom: 100 }}>
+    <div className="hfv4-root" style={{ background: 'var(--color-page)', minHeight: '100dvh', paddingBottom: 100 }}>
+      <style>{`
+        /* v4 Home desktop (mockup v4-desktop-home.html) — kick in ≥1024px */
+        @media (min-width: 1024px) {
+          .hfv4-root { padding-bottom: 40px; }
+          .hfv4-topbar { display: none !important; }
+          .hfv4-section,
+          .hfv4-hero-wrap,
+          .hfv4-cats-wrap,
+          .hfv4-spon-wrap,
+          .hfv4-consiglio-wrap,
+          .hfv4-suggest-wrap {
+            max-width: 1240px;
+            margin-left: auto; margin-right: auto;
+            padding-left: 40px !important; padding-right: 40px !important;
+          }
+          /* Hero desktop: 2-col 1.05/.95, min-height 380 */
+          .hfv4-hero-card {
+            grid-template-columns: 1.05fr .95fr !important;
+            gap: 0 !important;
+            min-height: 380px;
+            padding: 0 !important;
+            border-radius: 28px !important;
+          }
+          .hfv4-hero-body { padding: 52px 56px !important; gap: 18px !important; }
+          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; }
+          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
+          .hfv4-hero-photo { min-height: auto !important; border-radius: 0 !important; }
+          /* Category bubbles: 80px wrap grid, no scroll */
+          .hfv4-cats-row {
+            overflow-x: visible !important;
+            flex-wrap: wrap !important;
+            gap: 22px !important;
+            padding: 6px 0 38px !important;
+          }
+          .hfv4-cat-bubble {
+            width: 80px !important; height: 80px !important;
+            font-size: 36px !important;
+            background: #fff !important;
+            border: 1px solid var(--color-ink-05) !important;
+          }
+          .hfv4-cat-label { font-size: 13px !important; }
+          /* Card grids — 4 columns, no horizontal scroll */
+          .hfv4-cards-row {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 18px !important;
+            overflow: visible !important;
+            padding-left: 0 !important; padding-right: 0 !important;
+          }
+          .hfv4-rcard { flex: 1 1 auto !important; }
+          /* Section heads desktop: bigger + subtitle */
+          .hfv4-sec-head { padding-left: 0 !important; padding-right: 0 !important; margin-bottom: 22px; }
+          .hfv4-sec-head h2 { font-size: 32px !important; letter-spacing: -.02em !important; }
+          .hfv4-sec-head-kicker {
+            font-size: 11px !important; letter-spacing: .12em !important;
+            display: inline-flex !important; align-items: center; gap: 6px;
+          }
+          .hfv4-sec-head-sub { font-size: 14px !important; display: block !important; }
+          /* Sponsor banner wide */
+          .hfv4-spon-banner {
+            grid-template-columns: 108px 1fr auto !important;
+            gap: 24px !important;
+            padding: 20px 26px !important;
+          }
+          .hfv4-spon-banner .spon-img { width: 108px !important; height: 108px !important; }
+          .hfv4-spon-banner .spon-title { font-size: 22px !important; }
+          .hfv4-spon-banner .spon-sub { font-size: 13px !important; max-width: 520px; }
+          /* Time tabs wrap, bigger */
+          .hfv4-time-tabs {
+            overflow: visible !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            padding: 14px 0 20px !important;
+          }
+          .hfv4-time-tab { padding: 10px 16px !important; font-size: 14px !important; }
+          /* Consiglio: 2-col 1.1/.9 */
+          .hfv4-consiglio {
+            grid-template-columns: 1.1fr .9fr !important;
+            gap: 48px !important;
+            padding: 40px 48px !important;
+            display: grid !important;
+            align-items: center;
+          }
+          .hfv4-consiglio-title { font-size: 34px !important; }
+          .hfv4-consiglio-rest { font-size: 48px !important; margin-bottom: 6px; }
+          .hfv4-consiglio-list { gap: 12px !important; }
+          .hfv4-consiglio-tip { font-size: 22px !important; }
+          /* Suggest desktop */
+          .hfv4-suggest {
+            grid-template-columns: 1fr auto !important;
+            gap: 32px !important;
+            padding: 40px 48px !important;
+            border-radius: 28px !important;
+          }
+          .hfv4-suggest-title { font-size: 30px !important; max-width: 500px !important; }
+          .hfv4-suggest-sub { font-size: 15px !important; max-width: 560px !important; }
+          .hfv4-suggest-cta { padding: 14px 24px !important; font-size: 14px !important; }
+        }
+      `}</style>
       <TopBar />
       <HeroPromo featured={featuredDrop} />
       <CategoryBubbles onSelect={(k) => navigate(`/list?cat=${encodeURIComponent(k)}`)} />
 
-      <section style={{ padding: '8px 0 4px' }}>
+      <section className="hfv4-section" style={{ padding: '8px 0 4px' }}>
         <SectionHead
+          kicker="Nuovi in guida"
           title="Ultimi aggiunti"
+          subtitle="Gli ultimi posti che ho provato e inserito in guida."
           trailing={
             <Link
               to="/list"
+              className="hfv4-sec-head-all"
               style={{
                 width: 32, height: 32, borderRadius: '50%',
                 background: 'var(--color-ink-05)',
@@ -976,6 +1128,7 @@ export default function HomeFeedV4() {
           <div style={{ padding: '0 20px', color: 'var(--color-ink-70)' }}>Caricamento...</div>
         ) : (
           <div
+            className="hfv4-cards-row"
             style={{
               display: 'flex',
               gap: 12,

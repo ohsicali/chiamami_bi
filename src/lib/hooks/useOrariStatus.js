@@ -21,18 +21,28 @@ function formatTime(hour, minute) {
 }
 
 export function computeStatus(data) {
-  const source = data?.currentOpeningHours || data?.regularOpeningHours
+  // Usiamo regularOpeningHours per coerenza con la griglia settimanale
+  // mostrata da OrariLocale. currentOpeningHours può divergere (festività,
+  // aperture speciali) generando il mismatch "hours dicono aperto / chip chiuso".
+  const source = data?.regularOpeningHours || data?.currentOpeningHours
   if (!source) return null
   const periods = source.periods || []
   if (!periods.length) return null
 
+  // Tempo nel fuso del locale via utcOffsetMinutes. Spostiamo i ms UTC in
+  // avanti di utcOffset minuti e leggiamo con .getUTC* — risultato: orario
+  // del locale indipendente dal fuso del browser.
   const utcOffset = typeof data.utcOffsetMinutes === 'number' ? data.utcOffsetMinutes : null
   const nowReal = new Date()
-  const local = utcOffset !== null
-    ? new Date(nowReal.getTime() + nowReal.getTimezoneOffset() * 60_000 + utcOffset * 60_000)
-    : nowReal
-  const todayDow = local.getDay()
-  const nowHM = local.getHours() * 60 + local.getMinutes()
+  let todayDow, nowHM
+  if (utcOffset !== null) {
+    const shifted = new Date(nowReal.getTime() + utcOffset * 60_000)
+    todayDow = shifted.getUTCDay()
+    nowHM = shifted.getUTCHours() * 60 + shifted.getUTCMinutes()
+  } else {
+    todayDow = nowReal.getDay()
+    nowHM = nowReal.getHours() * 60 + nowReal.getMinutes()
+  }
 
   for (const p of periods) {
     const openDay = p.open?.day
@@ -48,7 +58,12 @@ export function computeStatus(data) {
     const closeStr = formatTime(p.close.hour, p.close.minute)
 
     if (openDay === closeDay) {
-      if (todayDow === openDay && nowHM >= openMin && nowHM < closeMin) {
+      // Edge case: Google rappresenta la chiusura a mezzanotte come
+      // close.hour = 0, minute = 0 talvolta con close.day = open.day
+      // (periodo "da 19:00 a fine giornata"). Se closeMin <= openMin,
+      // consideriamo la chiusura come 24:00 dello stesso giorno.
+      const effectiveClose = closeMin <= openMin ? 24 * 60 : closeMin
+      if (todayDow === openDay && nowHM >= openMin && nowHM < effectiveClose) {
         return { openNow: true, closesAt: closeStr }
       }
       continue
