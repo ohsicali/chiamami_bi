@@ -9,26 +9,55 @@
 }
 
 @theme {
+  /* v4 palette (canonical — from docs/mockups moodboard + index) */
   --color-primary: #22181C;
-  --color-secondary: #8A8680;
-  /* v4 accent: corallo */
+  --color-secondary: rgba(34, 24, 28, 0.7);
+
   --color-accent: #EE5C55;
-  --color-accent-light: rgba(238, 92, 85, 0.12);
+  --color-accent-light: #FDEBEA;
+
   --color-corallo: #EE5C55;
-  --color-corallo-soft: rgba(238, 92, 85, 0.12);
-  --color-corallo-ink: #C94A43;
+  --color-corallo-ink: #C7443E;
+  --color-corallo-soft: #FDEBEA;
+
   --color-ink: #22181C;
+  --color-ink-70: rgba(34, 24, 28, 0.7);
+  --color-ink-40: rgba(34, 24, 28, 0.4);
   --color-ink-15: rgba(34, 24, 28, 0.15);
-  --color-ink-8: rgba(34, 24, 28, 0.08);
+  --color-ink-05: rgba(34, 24, 28, 0.05);
+
   --color-bg: #FAF7F2;
+  --color-page: #FAF7F2;
+  --color-cream: #F5F0E4;
+  --color-cream-deep: #F1EBE0;
+  --color-line: #EAE3D7;
   --color-card: #FFFFFF;
-  --color-success: #4ADE80;
-  --color-oro: #C4A265;
-  --color-bordo: #E8E5DE;
   --color-surface-glass: rgba(255, 255, 255, 0.66);
-  --font-display: 'Satoshi', 'DM Sans', sans-serif;
+
+  --color-oro: #B08954;
+  --color-oro-soft: #F4E7CC;
+  --color-bordo: #EAE3D7;
+  --color-success: #4ADE80;
+
+  /* Font stacks — UI body (Satoshi), wordmark (Alfa Slab One),
+     handwriting (Caveat). TAN Songbird kept for legacy utility classes. */
+  --font-sans: 'Satoshi', 'Inter', -apple-system, system-ui, sans-serif;
+  --font-display: 'Satoshi', 'Inter', sans-serif;
+  --font-mark: 'Alfa Slab One', Georgia, serif;
+  --font-hand: 'Caveat', cursive;
   --font-editorial: 'TAN Songbird', 'Satoshi', serif;
-  --font-sans: 'Satoshi', 'DM Sans', sans-serif;
+
+  /* Radius scale */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Shadow scale */
+  --shadow-sm: 0 1px 3px rgba(34, 24, 28, 0.06);
+  --shadow-md: 0 4px 14px rgba(34, 24, 28, 0.08);
+  --shadow-lg: 0 12px 32px rgba(34, 24, 28, 0.12);
 }
 
 body {
@@ -169,12 +198,27 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
 }
 
-/* Editorial font utility — v4 uses TAN Songbird for big numbers / display */
-.font-editorial {
-  font-family: 'TAN Songbird', 'Satoshi', serif;
+/* v4 utility: wordmark logo "CHIAMAMI BI" / map pin mark */
+.font-mark {
+  font-family: 'Alfa Slab One', Georgia, serif;
+  letter-spacing: 0.01em;
 }
 
-/* TAN Songbird for restaurant names */
+/* v4 utility: Bi's handwritten notes / flourishes */
+.font-hand {
+  font-family: 'Caveat', cursive;
+}
+
+/* v4 display — Satoshi weight 900 for big headings with tight tracking */
+.font-display,
+.font-editorial {
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+/* Legacy: TAN Songbird for restaurant names (kept for backwards-compat
+   until individual components are migrated to Satoshi 800/900) */
 .font-restaurant {
   font-family: 'TAN Songbird', 'Satoshi', serif;
 }

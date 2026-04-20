@@ -42,6 +42,38 @@ dove siamo. Aggiorna a ogni step importante.
 - **Backfill Places**: cleanup post-finish rimuovere `api/admin-backfill-places.js`,
   `src/pages/admin/BackfillPlaces.jsx`, rotta in `App.jsx`
 
+## ⚠️ LEZIONE — sessione 2026-04-20
+
+Il primo pass di reskin (commit 2f1eae1…1d1e566) ha fatto solo un
+**color swap cosmetico** (Satoshi + corallo + glass pill + accent globale).
+Augusto ha giustamente segnalato che è distante dai mockup.
+
+**Fonts corrette da mockup**:
+- UI body: **Satoshi** (400-900)
+- Wordmark: **Alfa Slab One** (logo "CHIAMAMI BI", pin mark)
+- Handwriting: **Caveat** (flourish di Bi)
+- Display/headings: **Satoshi 900** con `letter-spacing:-0.02em` (NON TAN Songbird)
+
+**Palette corretta da mockup**:
+- `--corallo: #EE5C55` (da moodboard — il sitemap dice #E8453C ma la direzione è corallo)
+- `--corallo-ink: #C7443E`
+- `--corallo-soft: #FDEBEA`
+- `--ink-05: rgba(34,24,28,.05)` (non .08)
+- `--oro: #B08954` (non #C4A265)
+- `--cream-deep: #F1EBE0`, `--line: #EAE3D7`
+
+**Layout che mancano completamente nel codice e servono**:
+- Hero promo card corallo full-width in home (con foto + CTA ink)
+- Categorie a bolle circolari (emoji + label sotto)
+- Card ristorante verticali scroll-snap (70% width, aspect 16:11, heart top-right glass)
+- Sponsor banner ink con immagine + CTA corallo
+- Blocco "Cosa ti consiglio" oro gradient con voce Bi
+- Section heads Satoshi 900 22px
+
+**Approccio corretto**: leggere ogni mockup prima di toccare il componente
+corrispondente. NON fare color swap globali. Ogni componente va ricostruito
+sulle spec del mockup specifico.
+
 ## Deviazioni dal brief v4 originale (scelte Augusto)
 
 - **Pin mappa**: `docs/v4-sitemap-reskin.md` §0 dice "pin goccia corallo + B".
