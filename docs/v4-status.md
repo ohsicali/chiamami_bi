@@ -84,9 +84,65 @@ sulle spec del mockup specifico.
 - **Gate pagina**: invece della landing "Torniamo presto" (prima bozza),
   mostra form login inline. Admin-only via `VITE_MAINTENANCE_MODE=true`.
 
-## Prossimi step
+## Track B — progressione componenti
 
-1. Merge PR #66 (C2) dopo CI verde post-rebase
-2. Iniziare Track B (reskin) — vedere `docs/v4-sitemap-reskin.md`,
-   `docs/v4-email-manifesto.md`, `docs/mockups/`
-3. Definire scope Track C3
+PR: #69 (draft). Branch: `v4/track-b-reskin`.
+
+**Documenti di riferimento (in ordine di priorità)**:
+1. `docs/v4-handoff.md` — spec canonica (tokens, patterns, regole hard)
+2. `docs/mockups/v4-mobile-*.html` / `v4-desktop-*.html` — visuali esatte
+3. `docs/v4-sitemap-reskin.md` — mappatura route → file
+
+### Componenti shared da costruire / raffinare
+
+- [ ] **Nav pill glass** mobile (bottom) + desktop (top) con logo + tab
+- [ ] **Wordmark logo** Alfa Slab One + subtitle
+- [ ] **City pill** con dot corallo
+- [ ] **Pin mappa** categoria (cerchio + emoji) + cluster bianco
+- [ ] **Card locale `.lcard`** (desktop lista): 118×118 + heart glass top-right
+- [ ] **Card locale mobile** scroll-snap 70% width aspect 16/11
+- [ ] **Hero promo corallo** (home)
+- [ ] **Categorie bubble** (home)
+- [ ] **Sponsor banner ink** (home)
+- [ ] **Sticky pill sconto** glass (scheda)
+- [ ] **Blocco editoriale "Secondo Bi"** (Caveat tip + sig)
+- [ ] **Blocco oro "Cosa prendere"**
+- [ ] **Banner sconto verde 135°**
+- [ ] **Chip/tag system** (Satoshi 700 uppercase)
+
+### Pagine da rifare (in questo ordine)
+
+1. [ ] Home mobile (`v4-mobile-home.html`) — priorità massima, più visibile
+2. [ ] Home desktop (`v4-desktop-home.html`)
+3. [ ] Scheda locale mobile (`v4-mobile-scheda.html`) incluso sticky sconto
+4. [ ] Scheda locale desktop (`v4-desktop-pagine.html` screen scheda)
+5. [ ] Sconti mobile + desktop
+6. [ ] Salvati mobile + desktop
+7. [ ] Profilo mobile + desktop
+8. [ ] Login/Signup/Suggerisci (`v4-mobile-auth.html`)
+9. [ ] Verify ristoratori (`v4-verify.html`)
+10. [ ] Admin mobile + desktop (`v4-mobile-admin.html`, `v4-desktop-admin.html`)
+
+### Regole hard (da v4-handoff §3)
+
+- Alfa Slab One SOLO per wordmark "CHIAMAMI BI" + 6 cifre PIN
+- Caveat SOLO in editoriale (tip, signature, quote dentro "Secondo Bi")
+- TAN Songbird RIMOSSO completamente (se lo vedo è un bug)
+- Nomi locali Satoshi 800/900 ultra-tight
+- Verde gradient 135° solo per sconti
+- Oro solo per "Cosa prendere"
+- Corallo = CTA + hero + drop. Mai diffuso
+
+### Progresso (commit → cosa)
+
+- `2f1eae1` design system tokens (primo pass, poi corretto)
+- `105f088` MobileTabBar glass pill + DesktopNavbar corallo
+- `1231056` revert pin teardrop → cerchio + emoji originale
+- `a1f375b` **fix pin anchor bug** (transform transition toglie scivolamento)
+- `2dd4bb0` docs: decisioni (pin v3, gate login)
+- `46c868e` HomePage pills glass (Lista·N, Vedi la mappa)
+- `2f1cc2a` RestaurantSheet top buttons + SaveButton heart
+- `1d1e566` primo pass (poi revertito su gradient sconto)
+- `56afa59` design tokens full + Alfa Slab + Caveat
+- `67e7551` **allineamento canonico v4-handoff.md** — corallo #E8453C + verde gradient sconto
+- 🚧 [in corso] Home mobile vera seguendo mockup
