@@ -144,7 +144,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
 
         {/* Name on photo */}
         <div style={{ position: 'absolute', bottom: 8, left: 12, right: 12 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
+          <h3 style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 15, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
         </div>
       </div>
 
@@ -278,7 +278,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
 
         {/* Name on photo */}
         <div style={{ position: 'absolute', bottom: 8, left: 12, right: 12 }}>
-          <h3 style={{ fontFamily: "'TAN Songbird', sans-serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
+          <h3 style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 15, color: '#fff', lineHeight: 1.2, textAlign: 'center' }}>{r?.name}</h3>
         </div>
       </div>
 
@@ -293,7 +293,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
                   width: 36, padding: '4px 0', textAlign: 'center',
                   background: 'rgba(196,162,101,0.15)', borderRadius: 8,
                 }}>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', fontFamily: "'DM Sans', sans-serif", fontVariantNumeric: 'tabular-nums' }}>{seg.v}</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', fontFamily: "var(--font-sans)", fontVariantNumeric: 'tabular-nums' }}>{seg.v}</span>
                   <p style={{ fontSize: 7, fontWeight: 600, color: 'var(--color-oro)', marginTop: 1, textTransform: 'uppercase', letterSpacing: 1 }}>{seg.l}</p>
                 </div>
                 {i < 2 && <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>:</span>}
@@ -413,7 +413,7 @@ function CompactDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed, isFeat
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {/* Name */}
           <h3 style={{
-            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+            fontFamily: "var(--font-sans)", fontWeight: 800,
             fontSize: 14, fontWeight: 600, color: '#22181C',
             lineHeight: 1.5, marginBottom: 3,
           }}>{r?.name}</h3>
@@ -547,7 +547,7 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
       {/* Content — bottom */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
         <h3 style={{
-          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)", fontWeight: 800,
           fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.4, marginBottom: 4,
         }}>{r?.name}</h3>
         {r?.tagline && (
@@ -605,7 +605,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <h4 style={{
-          fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+          fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 13,
           color: 'var(--color-primary)', lineHeight: 1.8,
         }}>{r?.name}</h4>
         <div className="flex items-center gap-2">
@@ -660,7 +660,7 @@ function MyUsedCard({ redemption, onGoTo }) {
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <h4 onClick={() => onGoTo(r)} style={{
-          fontFamily: "'TAN Songbird', sans-serif", fontSize: 13, fontWeight: 600,
+          fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 13,
           color: 'var(--color-secondary)', cursor: 'pointer', lineHeight: 1.2,
           textDecoration: 'line-through',
         }}>{r?.name}</h4>
@@ -815,7 +815,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
 
           {/* Restaurant name — tappable */}
           <h3 onClick={() => { onClose(); onGoTo(r); }} style={{
-            fontFamily: "'TAN Songbird', sans-serif", fontSize: 22, fontWeight: 600,
+            fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 22,
             color: 'var(--color-primary)', lineHeight: 1.5, cursor: 'pointer', marginBottom: 8,
           }}>{r?.name}</h3>
 
@@ -1232,17 +1232,17 @@ export default function DealsPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
-      {/* ── Sticky Header — logo + border only (mobile only) ── */}
+      {/* ── Sticky Header — topbar (mobile only) ── */}
       <div ref={headerRef} className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: '#FAF7F2',
+        background: 'var(--color-page, #FAF7F2)',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
-          <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
-            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
-          </Link>
+          <div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>Sconti</div>
+            <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2 }}>{activeDrops.length + regular.length} disponibili</div>
+          </div>
           <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
             fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
             background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)', cursor: 'pointer',

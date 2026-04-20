@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
         <div className="text-center">
           <h1
             className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "'TAN Songbird', serif" }}
+            style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}
           >
             Nuova password
           </h1>

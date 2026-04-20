@@ -105,7 +105,7 @@ export default function ApplicationManager() {
 
   return (
     <AdminLayout title="Candidature">
-      <div style={{ padding: '20px 28px', fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Candidature Partner</h1>
@@ -342,7 +342,7 @@ export default function ApplicationManager() {
                 style={{
                   background: '#fff', borderRadius: 14, padding: 24,
                   maxWidth: 400, width: '100%', border: '1px solid #eee',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>

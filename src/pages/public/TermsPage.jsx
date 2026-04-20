@@ -17,7 +17,7 @@ export default function TermsPage() {
       <div className="flex-1 max-w-screen-md mx-auto px-5 py-8">
         <h1
           className="text-2xl font-bold text-primary mb-6"
-          style={{ fontFamily: "'TAN Songbird', serif" }}
+          style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}
         >
           Termini di Servizio
         </h1>

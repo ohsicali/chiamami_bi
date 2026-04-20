@@ -188,7 +188,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
         flexDirection: 'column',
         height: '100%',
         background: '#1a1a1f',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       {/* Close button mobile */}
@@ -224,7 +224,7 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
         >
           <div
             style={{
-              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+              fontFamily: "var(--font-sans)", fontWeight: 800,
               fontSize: 13,
               fontWeight: 700,
               color: '#E8453C',
@@ -491,7 +491,7 @@ export default function AdminLayout({ children, title }) {
         minHeight: '100vh',
         background: '#fafafa',
         display: 'flex',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
         WebkitOverflowScrolling: 'touch',
       }}
     >

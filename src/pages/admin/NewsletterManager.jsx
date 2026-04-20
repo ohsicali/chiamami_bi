@@ -104,7 +104,7 @@ export default function NewsletterManager() {
 
   return (
     <AdminLayout title="Newsletter">
-      <div style={{ padding: '20px 28px', fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <div>
@@ -278,7 +278,7 @@ export default function NewsletterManager() {
                 style={{
                   background: '#fff', borderRadius: 14, padding: 24,
                   maxWidth: 400, width: '100%', border: '1px solid #eee',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>

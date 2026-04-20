@@ -7,21 +7,21 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 
 const inputStyle = {
-  width: '100%', background: 'var(--color-bg)', borderRadius: 14,
+  width: '100%', background: 'var(--color-page)', borderRadius: 'var(--radius-md)',
   padding: '14px 16px', border: 'none', fontSize: 14,
-  color: 'var(--color-primary)', outline: 'none',
-  fontFamily: 'inherit', boxSizing: 'border-box',
+  color: 'var(--color-ink)', outline: 'none',
+  fontFamily: 'var(--font-sans)', boxSizing: 'border-box',
 }
 
 const btnAccent = {
-  background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+  background: 'var(--color-corallo)', color: '#fff', borderRadius: 'var(--radius-md)',
   padding: '13px 20px', fontSize: 13, fontWeight: 600,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 }
 
 const cardStyle = {
-  background: '#fff', borderRadius: 16, padding: 20,
-  border: '1px solid var(--color-bordo)',
+  background: 'var(--color-card)', borderRadius: 'var(--radius-lg)', padding: 20,
+  border: '1px solid var(--color-line)',
 }
 
 /* ── Delete Account Modal ── */
@@ -39,7 +39,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
       onClick={onClose}
     >
       <motion.div
-        style={{ margin: '0 20px', width: '100%', maxWidth: 360, borderRadius: 24, background: '#fff', padding: 24 }}
+        style={{ margin: '0 20px', width: '100%', maxWidth: 360, borderRadius: 'var(--radius-xl)', background: 'var(--color-card)', padding: 24 }}
         initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.85, opacity: 0 }}
@@ -50,20 +50,20 @@ function DeleteAccountModal({ onConfirm, onClose }) {
           <>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <span style={{ fontSize: 36 }}>⚠️</span>
-              <h3 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, fontWeight: 700, color: 'var(--color-primary)', marginTop: 12 }}>
+              <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em', fontSize: 18, color: 'var(--color-ink)', marginTop: 12 }}>
                 Sei sicuro?
               </h3>
-              <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 13, color: 'var(--color-ink-55)', marginTop: 8, lineHeight: 1.5 }}>
                 Tutti i tuoi dati verranno eliminati permanentemente: profilo, salvati, sconti e recensioni.
               </p>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={onClose} style={{
-                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-bg)',
-                border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-secondary)', cursor: 'pointer',
+                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-page)',
+                border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)', cursor: 'pointer',
               }}>Annulla</button>
               <button onClick={() => setStep(2)} style={{
-                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-accent)',
+                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-corallo)',
                 border: 'none', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer',
               }}>Continua</button>
             </div>
@@ -71,11 +71,11 @@ function DeleteAccountModal({ onConfirm, onClose }) {
         ) : (
           <>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <h3 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, fontWeight: 700, color: 'var(--color-accent)' }}>
+              <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em', fontSize: 18, color: 'var(--color-corallo)' }}>
                 Conferma cancellazione
               </h3>
-              <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8 }}>
-                Digita <strong style={{ color: 'var(--color-accent)' }}>ELIMINA</strong> per confermare.
+              <p style={{ fontSize: 13, color: 'var(--color-ink-55)', marginTop: 8 }}>
+                Digita <strong style={{ color: 'var(--color-corallo)' }}>ELIMINA</strong> per confermare.
               </p>
             </div>
             <input
@@ -91,8 +91,8 @@ function DeleteAccountModal({ onConfirm, onClose }) {
             />
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={onClose} style={{
-                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-bg)',
-                border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-secondary)', cursor: 'pointer',
+                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-page)',
+                border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)', cursor: 'pointer',
               }}>Annulla</button>
               <button onClick={onConfirm} disabled={confirmText !== 'ELIMINA'} style={{
                 flex: 1, padding: '12px 0', borderRadius: 14, background: '#DC2626',
@@ -114,7 +114,7 @@ function StatusMsg({ msg }) {
   return (
     <p style={{
       fontSize: 12, marginTop: 8, fontWeight: 500,
-      color: msg.type === 'error' ? 'var(--color-accent)' : 'var(--color-success)',
+      color: msg.type === 'error' ? 'var(--color-corallo)' : 'var(--color-success)',
     }}>{msg.text}</p>
   )
 }
@@ -364,18 +364,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
+    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-page)' }}>
       {/* ── STICKY HEADER (mobile only) ── */}
       <div className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: '#FAF7F2',
+        background: 'var(--color-page)',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <button onClick={() => navigate(-1)} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 14, fontWeight: 600, color: 'var(--color-primary)',
+            fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--color-ink)',
           }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M15 18l-6-6 6-6" />
@@ -383,7 +383,7 @@ export default function SettingsPage() {
             Impostazioni
           </button>
         </div>
-        <div style={{ height: 1, background: 'var(--color-bordo)', margin: '0 -22px' }} />
+        <div style={{ height: 1, background: 'var(--color-line)', margin: '0 -22px' }} />
       </div>
 
       {/* ── CONTENT ── */}
@@ -391,7 +391,7 @@ export default function SettingsPage() {
 
         {/* ── NOME ── */}
         <div style={cardStyle}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 12 }}>Nome</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 12 }}>Nome</h3>
           <div style={{ display: 'flex', gap: 10 }}>
             <input value={fullName} onChange={e => setFullName(e.target.value)} style={inputStyle} placeholder="Il tuo nome" />
             <button onClick={handleSaveName} disabled={saving || !fullName.trim()} style={{ ...btnAccent, opacity: saving || !fullName.trim() ? 0.5 : 1 }}>
@@ -402,19 +402,19 @@ export default function SettingsPage() {
 
         {/* ── EMAIL ── */}
         <div style={cardStyle}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 4 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 4 }}>
             {isGoogleUser ? 'Email di contatto' : 'Email'}
           </h3>
           {isGoogleUser ? (
-            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-ink-55)', marginBottom: 12, lineHeight: 1.5 }}>
               Accedi con Google ({user?.email}). Qui puoi impostare un'email di contatto diversa.
               {profile?.email && profile.email !== user?.email && (
-                <><br />Email di contatto: <strong style={{ color: 'var(--color-primary)' }}>{profile.email}</strong></>
+                <><br />Email di contatto: <strong style={{ color: 'var(--color-ink)' }}>{profile.email}</strong></>
               )}
             </p>
           ) : (
-            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 12 }}>
-              Email attuale: <strong style={{ color: 'var(--color-primary)' }}>{user?.email}</strong>
+            <p style={{ fontSize: 12, color: 'var(--color-ink-55)', marginBottom: 12 }}>
+              Email attuale: <strong style={{ color: 'var(--color-ink)' }}>{user?.email}</strong>
             </p>
           )}
 
@@ -437,7 +437,7 @@ export default function SettingsPage() {
                   {emailLoading ? '...' : 'Cambia'}
                 </button>
               </div>
-              <button onClick={handleRecoveryOtp} disabled={emailLoading || !newEmail.trim()} style={{ fontSize: 12, color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+              <button onClick={handleRecoveryOtp} disabled={emailLoading || !newEmail.trim()} style={{ fontSize: 12, color: 'var(--color-ink-55)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
                 Non ho accesso all'email attuale
               </button>
             </div>
@@ -446,34 +446,34 @@ export default function SettingsPage() {
           {/* OTP verification */}
           {emailStep === 'otp' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, color: 'var(--color-secondary)' }}>Inserisci il codice ricevuto su <strong>{user?.email}</strong></p>
+              <p style={{ fontSize: 12, color: 'var(--color-ink-55)' }}>Inserisci il codice ricevuto su <strong>{user?.email}</strong></p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <input type="text" value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="Codice di verifica" inputMode="numeric" autoComplete="one-time-code" style={{ ...inputStyle, textAlign: 'center', letterSpacing: 3, fontFamily: 'monospace' }} />
                 <button onClick={handleVerifyAndChangeEmail} disabled={emailLoading || otpCode.length < 6} style={{ ...btnAccent, opacity: emailLoading || otpCode.length < 6 ? 0.5 : 1 }}>
                   {emailLoading ? '...' : 'Conferma'}
                 </button>
               </div>
-              <button onClick={handleEmailReset} style={{ fontSize: 12, color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Annulla</button>
+              <button onClick={handleEmailReset} style={{ fontSize: 12, color: 'var(--color-ink-55)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Annulla</button>
             </div>
           )}
 
           {/* Recovery OTP */}
           {emailStep === 'recovery_otp' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, color: 'var(--color-secondary)' }}>Inserisci il codice inviato alla tua <strong>email di recupero</strong></p>
+              <p style={{ fontSize: 12, color: 'var(--color-ink-55)' }}>Inserisci il codice inviato alla tua <strong>email di recupero</strong></p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <input type="text" value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Codice di recupero" inputMode="numeric" autoComplete="one-time-code" style={{ ...inputStyle, textAlign: 'center', letterSpacing: 3, fontFamily: 'monospace' }} />
                 <button onClick={handleVerifyRecoveryAndChangeEmail} disabled={emailLoading || otpCode.length < 6} style={{ ...btnAccent, opacity: emailLoading || otpCode.length < 6 ? 0.5 : 1 }}>
                   {emailLoading ? '...' : 'Conferma'}
                 </button>
               </div>
-              <button onClick={handleEmailReset} style={{ fontSize: 12, color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Annulla</button>
+              <button onClick={handleEmailReset} style={{ fontSize: 12, color: 'var(--color-ink-55)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Annulla</button>
             </div>
           )}
 
           {/* Done */}
           {emailStep === 'done' && (
-            <button onClick={handleEmailReset} style={{ fontSize: 12, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Cambia di nuovo</button>
+            <button onClick={handleEmailReset} style={{ fontSize: 12, color: 'var(--color-corallo)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Cambia di nuovo</button>
           )}
 
           <StatusMsg msg={emailStatus} />
@@ -481,8 +481,8 @@ export default function SettingsPage() {
 
         {/* ── RECOVERY EMAIL ── */}
         <div style={cardStyle}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 4 }}>Email di recupero</h3>
-          <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 12 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 4 }}>Email di recupero</h3>
+          <p style={{ fontSize: 12, color: 'var(--color-ink-55)', marginBottom: 12 }}>
             Usata per recuperare l'accesso se perdi l'email principale
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
@@ -496,8 +496,8 @@ export default function SettingsPage() {
         {/* ── GOOGLE: ADD EMAIL+PASSWORD LOGIN ── */}
         {isGoogleUser && (
           <div style={cardStyle}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 4 }}>Aggiungi accesso con email e password</h3>
-            <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 4 }}>Aggiungi accesso con email e password</h3>
+            <p style={{ fontSize: 12, color: 'var(--color-ink-55)', marginBottom: 12, lineHeight: 1.5 }}>
               Attualmente accedi solo con Google. Aggiungi un accesso con email e password come alternativa.
             </p>
 
@@ -509,14 +509,14 @@ export default function SettingsPage() {
 
             {loginStep === 'otp' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ fontSize: 12, color: 'var(--color-secondary)' }}>Inserisci il codice ricevuto su <strong>{user?.email}</strong></p>
+                <p style={{ fontSize: 12, color: 'var(--color-ink-55)' }}>Inserisci il codice ricevuto su <strong>{user?.email}</strong></p>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <input type="text" value={loginOtp} onChange={e => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="Codice di verifica" inputMode="numeric" autoComplete="one-time-code" style={{ ...inputStyle, textAlign: 'center', letterSpacing: 3, fontFamily: 'monospace' }} />
                   <button onClick={handleLoginVerifyOtp} disabled={loginLoading || loginOtp.length < 6} style={{ ...btnAccent, opacity: loginLoading || loginOtp.length < 6 ? 0.5 : 1 }}>
                     {loginLoading ? '...' : 'Conferma'}
                   </button>
                 </div>
-                <button onClick={handleLoginReset} style={{ fontSize: 12, color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Annulla</button>
+                <button onClick={handleLoginReset} style={{ fontSize: 12, color: 'var(--color-ink-55)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Annulla</button>
               </div>
             )}
 
@@ -530,13 +530,13 @@ export default function SettingsPage() {
                   <button onClick={handleAddEmailLogin} disabled={loginLoading || !loginEmail.trim() || !loginPassword.new} style={{ ...btnAccent, flex: 1, textAlign: 'center', opacity: loginLoading || !loginEmail.trim() || !loginPassword.new ? 0.5 : 1 }}>
                     {loginLoading ? 'Salvataggio...' : 'Attiva accesso con email'}
                   </button>
-                  <button onClick={handleLoginReset} style={{ flex: 0, padding: '13px 16px', borderRadius: 14, background: 'var(--color-bg)', border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-secondary)', cursor: 'pointer' }}>Annulla</button>
+                  <button onClick={handleLoginReset} style={{ flex: 0, padding: '13px 16px', borderRadius: 14, background: 'var(--color-page)', border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)', cursor: 'pointer' }}>Annulla</button>
                 </div>
               </div>
             )}
 
             {loginStep === 'done' && (
-              <button onClick={handleLoginReset} style={{ fontSize: 12, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Modifica di nuovo</button>
+              <button onClick={handleLoginReset} style={{ fontSize: 12, color: 'var(--color-corallo)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Modifica di nuovo</button>
             )}
 
             <StatusMsg msg={loginMsg} />
@@ -546,13 +546,13 @@ export default function SettingsPage() {
         {/* ── PASSWORD (non-Google) ── */}
         {!isGoogleUser && (
           <div style={cardStyle}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 12 }}>Cambia password</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)', marginBottom: 12 }}>Cambia password</h3>
             {!pwdUnlocked ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ fontSize: 12, color: 'var(--color-secondary)' }}>Inserisci la password attuale per procedere</p>
+                <p style={{ fontSize: 12, color: 'var(--color-ink-55)' }}>Inserisci la password attuale per procedere</p>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <input type="password" value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} style={inputStyle} placeholder="Password attuale" />
-                  <button onClick={handleVerifyCurrentPwd} disabled={pwdVerifying || !currentPwd} style={{ ...btnAccent, background: 'var(--color-primary)', opacity: pwdVerifying || !currentPwd ? 0.5 : 1 }}>
+                  <button onClick={handleVerifyCurrentPwd} disabled={pwdVerifying || !currentPwd} style={{ ...btnAccent, background: 'var(--color-ink)', opacity: pwdVerifying || !currentPwd ? 0.5 : 1 }}>
                     {pwdVerifying ? '...' : 'Verifica'}
                   </button>
                 </div>
@@ -565,7 +565,7 @@ export default function SettingsPage() {
                   <button onClick={handleChangePassword} disabled={!passwordForm.new || !passwordForm.confirm} style={{ ...btnAccent, flex: 1, textAlign: 'center', opacity: !passwordForm.new || !passwordForm.confirm ? 0.5 : 1 }}>
                     Aggiorna password
                   </button>
-                  <button onClick={() => { setPwdUnlocked(false); setCurrentPwd(''); setPasswordForm({ new: '', confirm: '' }); setPasswordMsg(null) }} style={{ flex: 0, padding: '13px 16px', borderRadius: 14, background: 'var(--color-bg)', border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-secondary)', cursor: 'pointer' }}>
+                  <button onClick={() => { setPwdUnlocked(false); setCurrentPwd(''); setPasswordForm({ new: '', confirm: '' }); setPasswordMsg(null) }} style={{ flex: 0, padding: '13px 16px', borderRadius: 14, background: 'var(--color-page)', border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)', cursor: 'pointer' }}>
                     Annulla
                   </button>
                 </div>
@@ -579,12 +579,12 @@ export default function SettingsPage() {
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</h3>
-              <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</p>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)' }}>Newsletter</h3>
+              <p style={{ fontSize: 12, color: 'var(--color-ink-55)', marginTop: 2 }}>Ricevi novità e offerte esclusive</p>
             </div>
             <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
               position: 'relative', width: 48, height: 28, borderRadius: 14,
-              background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
+              background: newsletterEnabled ? 'var(--color-corallo)' : 'var(--color-ink-15)',
               border: 'none', cursor: 'pointer', transition: 'background 0.2s',
               flexShrink: 0,
             }}>
@@ -607,7 +607,7 @@ export default function SettingsPage() {
           cursor: 'pointer', textAlign: 'left',
         }}>
           <span style={{ fontSize: 18 }}>🗑️</span>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-accent)' }}>Cancella il mio account</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-corallo)' }}>Cancella il mio account</span>
         </button>
       </div>
 

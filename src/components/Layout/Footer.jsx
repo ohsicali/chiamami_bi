@@ -25,28 +25,26 @@ export default function Footer() {
       >
         {/* Top section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
-          {/* Mobile: image logo; Desktop: red text logo */}
-          <div className="md:hidden"><LogoFull height={28} /></div>
-          <Link to="/" className="hidden md:block" style={{ textDecoration: 'none', lineHeight: 1 }}>
-            <div style={{
-              fontFamily: "'TAN Songbird', 'DM Sans', serif",
-              fontSize: 18,
-              fontWeight: 700,
-              color: 'var(--color-accent, #E8453C)',
-              letterSpacing: 0.3,
-              lineHeight: 1.1,
+          <Link to="/" style={{ textDecoration: 'none', lineHeight: 0.92, display: 'flex', flexDirection: 'column' }}>
+            <span style={{
+              fontFamily: "var(--font-mark, 'Alfa Slab One', serif)",
+              fontSize: 15,
+              letterSpacing: '0.02em',
+              color: 'var(--color-corallo, #E8453C)',
             }}>
               LA GUIDA DI BI
-            </div>
-            <div style={{
-              fontSize: 9,
-              color: 'var(--color-secondary, #8A8680)',
-              letterSpacing: 1,
-              fontWeight: 600,
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
+              fontSize: 8,
+              letterSpacing: '0.15em',
+              color: 'rgba(34,24,28,.4)',
               marginTop: 3,
+              textTransform: 'uppercase',
             }}>
-              BY CHIAMAMI BI
-            </div>
+              by Chiamami Bi
+            </span>
           </Link>
           <div className="flex items-center gap-4">
             {/* TikTok */}

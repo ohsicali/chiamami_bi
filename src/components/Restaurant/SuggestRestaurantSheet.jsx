@@ -203,7 +203,7 @@ export default function SuggestRestaurantSheet({ userId = null, onClose }) {
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               </div>
-              <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 22, marginBottom: 8 }}>
                 Grazie!
               </div>
               <p style={{ fontSize: 13, color: 'var(--color-secondary)', lineHeight: 1.5, margin: '0 auto 20px', maxWidth: 280 }}>
@@ -213,7 +213,7 @@ export default function SuggestRestaurantSheet({ userId = null, onClose }) {
             </div>
           ) : step === 1 ? (
             <div>
-              <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 20, marginBottom: 6 }}>
                 Consiglia un ristorante
               </div>
               <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20, marginTop: 0 }}>
@@ -279,7 +279,7 @@ export default function SuggestRestaurantSheet({ userId = null, onClose }) {
             </div>
           ) : step === 2 ? (
             <div>
-              <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 20, marginBottom: 6 }}>
                 Perché ti piace?
               </div>
               <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20, marginTop: 0 }}>
@@ -329,7 +329,7 @@ export default function SuggestRestaurantSheet({ userId = null, onClose }) {
             </div>
           ) : (
             <div>
-              <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 20, marginBottom: 6 }}>
                 Una foto?
               </div>
               <p style={{ fontSize: 12, color: 'var(--color-secondary)', marginBottom: 20, marginTop: 0 }}>

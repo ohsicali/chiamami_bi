@@ -172,7 +172,7 @@ export default function CityPickerSheet({ open, onClose, onCityChange, restauran
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Cerca città, paese o comune..."
-              style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 15, fontWeight: 500, color: '#22181C', fontFamily: "'DM Sans', sans-serif" }}
+              style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 15, fontWeight: 500, color: '#22181C', fontFamily: "var(--font-sans)" }}
             />
             {query && (
               <button onClick={() => { setQuery(''); setSuggestions([]) }} style={{ padding: 2, background: 'none', border: 'none', cursor: 'pointer' }}>

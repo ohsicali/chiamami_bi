@@ -143,26 +143,26 @@ export default function PartnerLandingPage() {
     display: 'block',
     fontSize: 12,
     fontWeight: 500,
-    color: 'var(--color-primary)',
+    color: 'var(--color-ink)',
     marginBottom: 6,
   }
   const inputStyle = {
     width: '100%',
-    background: '#fff',
-    border: '1px solid var(--color-bordo)',
-    borderRadius: 12,
+    background: 'var(--color-card)',
+    border: '1px solid var(--color-line)',
+    borderRadius: 'var(--radius-sm)',
     padding: '14px 16px',
     fontSize: 14,
-    color: 'var(--color-primary)',
+    color: 'var(--color-ink)',
     outline: 'none',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: 'var(--font-sans)',
     boxSizing: 'border-box',
   }
   const labelPillStyle = {
     display: 'inline-block',
     fontSize: 10,
     fontWeight: 600,
-    color: 'var(--color-secondary)',
+    color: 'var(--color-ink-55)',
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 14,
@@ -171,7 +171,7 @@ export default function PartnerLandingPage() {
   const benefits = [
     {
       icon: EyeIcon,
-      iconColor: 'var(--color-accent)',
+      iconColor: 'var(--color-corallo)',
       iconBg: 'rgba(232, 69, 60,0.1)',
       title: 'Visibilità',
       desc: 'Primo piano sulla mappa, nella guida e sui social di Bi',
@@ -192,7 +192,7 @@ export default function PartnerLandingPage() {
     },
     {
       icon: CameraIcon,
-      iconColor: 'var(--color-accent)',
+      iconColor: 'var(--color-corallo)',
       iconBg: 'rgba(232, 69, 60,0.1)',
       title: 'Racconto',
       desc: 'Foto, video e contenuti curati da Bi per i canali social',
@@ -208,7 +208,7 @@ export default function PartnerLandingPage() {
   /* ── Success state ── */
   if (submitted) {
     return (
-      <div style={{ minHeight: '100dvh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minHeight: '100dvh', background: 'var(--color-page)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 22px', textAlign: 'center' }}>
           <motion.div
             initial={{ scale: 0.6, opacity: 0 }}
@@ -225,8 +225,8 @@ export default function PartnerLandingPage() {
             <CheckIcon />
           </motion.div>
           <h2 style={{
-            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-            fontSize: 24, fontWeight: 700, color: 'var(--color-primary)',
+            fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
+            fontSize: 24, color: 'var(--color-ink)',
             marginBottom: 12,
             lineHeight: 1.2,
           }}>
@@ -234,7 +234,7 @@ export default function PartnerLandingPage() {
           </h2>
           <p style={{
             fontSize: 13,
-            color: 'var(--color-secondary)',
+            color: 'var(--color-ink-55)',
             lineHeight: 1.6,
             maxWidth: 320,
             marginBottom: 32,
@@ -245,13 +245,13 @@ export default function PartnerLandingPage() {
             onClick={() => navigate('/')}
             style={{
               background: '#fff',
-              color: 'var(--color-primary)',
+              color: 'var(--color-ink)',
               border: '1px solid var(--color-bordo)',
               borderRadius: 14,
               padding: '14px 28px',
               fontSize: 14, fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
             }}
           >
             Torna alla mappa
@@ -263,7 +263,7 @@ export default function PartnerLandingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-primary)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--color-ink)', display: 'flex', flexDirection: 'column' }}>
       {/* ─── STICKY HEADER (mobile only) ─── */}
       <header className="md:hidden" style={{
         position: 'sticky',
@@ -316,7 +316,7 @@ export default function PartnerLandingPage() {
 
       {/* ─── HERO — DARK ─── */}
       <section style={{
-        background: 'var(--color-primary)',
+        background: 'var(--color-ink)',
         padding: '40px 22px 48px',
         position: 'relative',
         overflow: 'hidden',
@@ -347,9 +347,8 @@ export default function PartnerLandingPage() {
             Per ristoranti e brand
           </div>
           <h1 style={{
-            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+            fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
             fontSize: 22,
-            fontWeight: 700,
             color: '#fff',
             lineHeight: 2,
             marginBottom: 18,
@@ -369,7 +368,7 @@ export default function PartnerLandingPage() {
             onClick={scrollToForm}
             style={{
               width: '100%',
-              background: 'var(--color-accent)',
+              background: 'var(--color-corallo)',
               color: '#fff',
               border: 'none',
               borderRadius: 14,
@@ -377,7 +376,7 @@ export default function PartnerLandingPage() {
               fontSize: 15,
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -392,7 +391,7 @@ export default function PartnerLandingPage() {
 
       {/* ─── WARM CONTENT WRAPPER (rounds off the dark hero) ─── */}
       <div style={{
-        background: 'var(--color-bg)',
+        background: 'var(--color-page)',
         borderRadius: '24px 24px 0 0',
         marginTop: -16,
         paddingTop: 36,
@@ -424,10 +423,10 @@ export default function PartnerLandingPage() {
                     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
                   }}
                   style={{
-                    background: '#fff',
-                    borderRadius: 16,
+                    background: 'var(--color-card)',
+                    borderRadius: 'var(--radius-lg)',
                     padding: 16,
-                    border: '1px solid var(--color-bordo)',
+                    border: '1px solid var(--color-line)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 10,
@@ -444,14 +443,14 @@ export default function PartnerLandingPage() {
                     <div style={{
                       fontSize: 14,
                       fontWeight: 600,
-                      color: 'var(--color-primary)',
+                      color: 'var(--color-ink)',
                       marginBottom: 4,
                     }}>
                       {b.title}
                     </div>
                     <div style={{
                       fontSize: 11,
-                      color: 'var(--color-secondary)',
+                      color: 'var(--color-ink-55)',
                       lineHeight: 1.5,
                     }}>
                       {b.desc}
@@ -479,11 +478,11 @@ export default function PartnerLandingPage() {
                 <div className="flex items-start gap-3.5 md:flex-col md:items-center md:text-center">
                   <div style={{
                     width: 32, minWidth: 32, height: 32, borderRadius: '50%',
-                    background: 'var(--color-accent)',
+                    background: 'var(--color-corallo)',
                     color: '#fff',
                     fontSize: 14, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-sans)",
                   }}>
                     {i + 1}
                   </div>
@@ -491,14 +490,14 @@ export default function PartnerLandingPage() {
                     <div style={{
                       fontSize: 15,
                       fontWeight: 600,
-                      color: 'var(--color-primary)',
+                      color: 'var(--color-ink)',
                       marginBottom: 4,
                     }}>
                       {step.title}
                     </div>
                     <div style={{
                       fontSize: 12,
-                      color: 'var(--color-secondary)',
+                      color: 'var(--color-ink-55)',
                       lineHeight: 1.5,
                     }}>
                       {step.desc}
@@ -607,7 +606,7 @@ export default function PartnerLandingPage() {
                 name="motivation"
                 value={form.motivation}
                 onChange={handleChange}
-                style={{ ...inputStyle, minHeight: 80, resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+                style={{ ...inputStyle, minHeight: 80, resize: 'vertical', fontFamily: "var(--font-sans)" }}
                 placeholder="Raccontaci cosa rende unico il tuo locale..."
               />
             </div>
@@ -619,7 +618,7 @@ export default function PartnerLandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 style={{
                   fontSize: 13,
-                  color: 'var(--color-accent)',
+                  color: 'var(--color-corallo)',
                   fontWeight: 500,
                   textAlign: 'center',
                   padding: '8px 12px',
@@ -638,7 +637,7 @@ export default function PartnerLandingPage() {
               whileTap={{ scale: 0.98 }}
               style={{
                 width: '100%',
-                background: submitting ? 'var(--color-secondary)' : 'var(--color-accent)',
+                background: submitting ? 'var(--color-ink-55)' : 'var(--color-corallo)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 14,
@@ -646,7 +645,7 @@ export default function PartnerLandingPage() {
                 fontSize: 15,
                 fontWeight: 600,
                 cursor: submitting ? 'not-allowed' : 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-sans)",
                 marginTop: 6,
               }}
             >
@@ -655,7 +654,7 @@ export default function PartnerLandingPage() {
 
             <p className="md:col-span-2" style={{
               fontSize: 11,
-              color: 'var(--color-secondary)',
+              color: 'var(--color-ink-55)',
               textAlign: 'center',
               marginTop: 4,
             }}>

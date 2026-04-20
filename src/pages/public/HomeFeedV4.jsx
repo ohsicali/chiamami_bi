@@ -1,25 +1,10 @@
-/**
- * v4 Home feed — segue docs/mockups/v4-mobile-home.html
- *
- * Montato temporaneamente su /v4 per anteprima. Struttura:
- *  - Topbar: logo + city pill + geo button
- *  - Hero promo card corallo (featured drop/sconto)
- *  - Categorie bubble carousel
- *  - Sezione "Ultimi aggiunti" card scroll-snap
- *  - Sponsor banner ink
- *  - Sezione time-based (Aperitivo / Colazione / ...)
- *  - Blocco "Cosa ti consiglio" oro gradient
- *  - Card "Suggerisci un posto" ink + corallo
- *
- * Data wiring: incrementale — per ora alcuni blocchi usano placeholder
- * mentre altri (ultimi aggiunti, sconti) vengono dai hooks reali.
- */
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import SaveButton from '../../components/Restaurant/SaveButton'
 import { proxyImg } from '../../lib/supabase'
 
 const CATEGORIES = [
@@ -31,6 +16,36 @@ const CATEGORIES = [
   { key: 'colazione', emoji: '☕', label: 'Colazione' },
   { key: 'carne', emoji: '🥩', label: 'Carne' },
 ]
+
+const TIME_TABS = [
+  { key: 'colazione', emoji: '☕', label: 'Colazione' },
+  { key: 'pranzo', emoji: '🥪', label: 'Pranzo' },
+  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
+  { key: 'cena-carne', emoji: '🥩', label: 'Cena carne' },
+  { key: 'cena-pesce', emoji: '🐟', label: 'Cena pesce' },
+  { key: 'dopo-cena', emoji: '🍸', label: 'Dopo cena' },
+]
+
+function getTimeSlot() {
+  const h = new Date().getHours()
+  if (h >= 6 && h < 11) return 'colazione'
+  if (h >= 11 && h < 15) return 'pranzo'
+  if (h >= 15 && h < 20) return 'aperitivo'
+  if (h >= 20 && h < 23) return 'cena-carne'
+  return 'dopo-cena'
+}
+
+function getTimeLabel(slot) {
+  const map = {
+    colazione: 'Colazione a Torino',
+    pranzo: 'Pranzo a Torino',
+    aperitivo: 'Aperitivo a Torino',
+    'cena-carne': 'Cena a Torino',
+    'cena-pesce': 'Cena a Torino',
+    'dopo-cena': 'Dopo cena a Torino',
+  }
+  return map[slot] || 'A Torino adesso'
+}
 
 function TopBar() {
   return (
@@ -127,7 +142,7 @@ function HeroPromo({ featured }) {
           gap: 14,
           color: '#fff',
           overflow: 'hidden',
-          boxShadow: '0 4px 14px rgba(34,24,28,.08)',
+          boxShadow: '0 8px 24px rgba(34,24,28,.08)',
         }}
       >
         <div>
@@ -371,6 +386,12 @@ function Rcard({ restaurant, discount, onClick }) {
             NEW
           </span>
         )}
+        <div
+          style={{ position: 'absolute', top: 10, right: 10 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <SaveButton restaurantId={restaurant.id} size={30} />
+        </div>
       </div>
       <div style={{ padding: '10px 14px 14px' }}>
         <div
@@ -412,6 +433,423 @@ function Rcard({ restaurant, discount, onClick }) {
         </div>
       </div>
     </button>
+  )
+}
+
+function SponsorBanner() {
+  return (
+    <div style={{ padding: '14px 16px 0' }}>
+      <div
+        style={{
+          position: 'relative',
+          display: 'grid',
+          gridTemplateColumns: '72px 1fr auto',
+          gap: 14,
+          alignItems: 'center',
+          background: 'var(--color-ink)',
+          color: '#fff',
+          borderRadius: 20,
+          padding: '14px 16px',
+          overflow: 'hidden',
+        }}
+      >
+        <span
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 12,
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            color: 'rgba(255,255,255,.5)',
+            textTransform: 'uppercase',
+          }}
+        >
+          Sponsorizzato
+        </span>
+
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 10,
+            background: 'linear-gradient(135deg, #D9A441, #8A5A1F)',
+          }}
+        />
+
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--color-oro)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: 3,
+            }}
+          >
+            Partner · Vini Crosetti
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 15,
+              lineHeight: 1.15,
+              letterSpacing: '-0.01em',
+              marginBottom: 3,
+              color: '#fff',
+            }}
+          >
+            20% sulle Barbera biologiche
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', lineHeight: 1.3 }}>
+            Consegna 24h · codice BI20
+          </div>
+        </div>
+
+        <button
+          style={{
+            padding: '8px 12px',
+            background: 'var(--color-corallo)',
+            color: '#fff',
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 700,
+            border: 'none',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            alignSelf: 'center',
+          }}
+        >
+          Attiva
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
+  const [activeTab, setActiveTab] = useState(getTimeSlot)
+
+  const now = new Date()
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+  const filtered = useMemo(() => {
+    return (restaurants || []).slice(0, 8)
+  }, [restaurants])
+
+  return (
+    <section style={{ paddingTop: 22 }}>
+      <div style={{ padding: '0 20px 10px' }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            color: 'var(--color-corallo-ink)',
+            textTransform: 'uppercase',
+            marginBottom: 6,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'var(--color-corallo)',
+              animation: 'hero-pulse 1.4s infinite',
+            }}
+          />
+          Adesso · {timeStr}
+        </div>
+        <h2
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 22,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1,
+            color: 'var(--color-ink)',
+            margin: 0,
+          }}
+        >
+          {getTimeLabel(activeTab)}
+        </h2>
+        <div style={{ fontSize: 12, color: 'var(--color-ink-70)', marginTop: 4 }}>
+          {filtered.length} locali · filtra per momento
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          overflowX: 'auto',
+          padding: '14px 20px 12px',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {TIME_TABS.map((t) => {
+          const active = t.key === activeTab
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              style={{
+                flex: '0 0 auto',
+                padding: '9px 13px',
+                borderRadius: 999,
+                background: active ? 'var(--color-ink)' : 'var(--color-ink-05)',
+                fontSize: 13,
+                fontWeight: 700,
+                color: active ? '#fff' : 'var(--color-ink-70)',
+                whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {t.emoji} {t.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          overflowX: 'auto',
+          padding: '0 20px 12px',
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {filtered.map((r) => (
+          <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CosaConsiglio({ restaurants }) {
+  const navigate = useNavigate()
+  const featured = (restaurants || []).find((r) => r.featured) || (restaurants || [])[0]
+  if (!featured) return null
+
+  const tips = featured.recommended_for
+    ? featured.recommended_for.split('\n').filter(Boolean).slice(0, 3)
+    : null
+  const cat = getCategoryInfo(featured.cuisine_type || (featured.category && featured.category[0]))
+
+  return (
+    <div style={{ padding: '24px 16px 4px' }}>
+      <div
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(140deg, #FEF6E4 0%, #F4E7CC 100%)',
+          border: '1px solid rgba(176,137,84,.35)',
+          borderRadius: 28,
+          padding: '20px 20px 18px',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: -30,
+            right: -30,
+            width: 140,
+            height: 140,
+            background: 'radial-gradient(circle, rgba(176,137,84,.3) 0%, transparent 70%)',
+            borderRadius: '50%',
+          }}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, position: 'relative' }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              background: 'var(--color-ink)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+              fontSize: 16,
+            }}
+          >
+            B
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>
+              Bi — dalla guida
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--color-ink-70)' }}>
+              Selezione della settimana
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            color: 'var(--color-oro)',
+            textTransform: 'uppercase',
+            marginBottom: 6,
+            position: 'relative',
+          }}
+        >
+          Cosa ti consiglio di prendere
+        </div>
+
+        <h2
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 22,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1,
+            marginBottom: 4,
+            position: 'relative',
+            margin: 0,
+            marginBottom: 4,
+          }}
+        >
+          Questa settimana vai da
+        </h2>
+
+        <div
+          style={{
+            position: 'relative',
+            marginBottom: 14,
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 28,
+            lineHeight: 1,
+            letterSpacing: '-0.02em',
+            color: 'var(--color-ink)',
+          }}
+        >
+          {featured.name}
+          <span
+            style={{
+              display: 'block',
+              fontWeight: 600,
+              fontSize: 12,
+              color: 'var(--color-ink-70)',
+              marginTop: 4,
+              letterSpacing: 0,
+            }}
+          >
+            · {cat?.name || 'Italiana'} · {featured.address ? featured.address.split(',')[0] : 'Torino'}
+          </span>
+        </div>
+
+        {tips && tips.length > 0 && (
+          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 9, position: 'relative' }}>
+            {tips.map((tip, i) => (
+              <li
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  padding: '10px 12px',
+                  background: 'rgba(255,255,255,.65)',
+                  borderRadius: 10,
+                  border: '1px solid rgba(176,137,84,.2)',
+                }}
+              >
+                <div
+                  style={{
+                    flex: '0 0 22px',
+                    height: 22,
+                    borderRadius: '50%',
+                    background: 'var(--color-ink)',
+                    color: '#fff',
+                    fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+                    fontSize: 11,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 1,
+                  }}
+                >
+                  {i + 1}
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    fontFamily: 'var(--font-hand, "Caveat", cursive)',
+                    fontSize: 18,
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {tip}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!tips && (
+          <div
+            style={{
+              fontFamily: 'var(--font-hand, "Caveat", cursive)',
+              fontSize: 18,
+              fontWeight: 600,
+              lineHeight: 1.35,
+              color: 'var(--color-ink)',
+              position: 'relative',
+              padding: '10px 12px',
+              background: 'rgba(255,255,255,.65)',
+              borderRadius: 10,
+              border: '1px solid rgba(176,137,84,.2)',
+            }}
+          >
+            Vai, fidati. Prova il piatto del giorno e chiedi il consiglio dello chef.
+          </div>
+        )}
+
+        <button
+          onClick={() => navigate(`/restaurant/${featured.slug}`)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 14,
+            fontSize: 12,
+            fontWeight: 700,
+            color: 'var(--color-ink)',
+            textDecoration: 'none',
+            padding: '9px 14px',
+            background: 'rgba(255,255,255,.85)',
+            borderRadius: 999,
+            border: '1px solid rgba(176,137,84,.3)',
+            cursor: 'pointer',
+          }}
+        >
+          Apri la scheda <span style={{ color: 'var(--color-corallo)' }}>→</span>
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -553,6 +991,16 @@ export default function HomeFeedV4() {
           </div>
         )}
       </section>
+
+      <SponsorBanner />
+
+      <TimeBasedSection
+        restaurants={restaurants}
+        discountByRestaurant={discountByRestaurant}
+        onCardClick={onCardClick}
+      />
+
+      <CosaConsiglio restaurants={restaurants} />
 
       <SuggestCard />
     </div>

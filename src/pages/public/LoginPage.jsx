@@ -16,16 +16,16 @@ const itemVariants = {
 
 const inputStyle = {
   width: '100%',
-  background: '#fff',
-  border: '1px solid var(--color-bordo)',
-  borderRadius: 12,
+  background: 'var(--color-card)',
+  border: '1.5px solid var(--color-ink-15)',
+  borderRadius: 'var(--radius-sm)',
   padding: '14px 16px',
-  fontSize: 14,
-  color: 'var(--color-primary)',
+  fontSize: 14.5,
+  color: 'var(--color-ink)',
   outline: 'none',
-  fontFamily: "'DM Sans', sans-serif",
+  fontFamily: 'var(--font-sans)',
   boxSizing: 'border-box',
-  transition: 'border-color 0.15s',
+  transition: 'border-color 0.2s',
 }
 
 export default function LoginPage() {
@@ -165,7 +165,7 @@ export default function LoginPage() {
           top: 0,
           zIndex: 30,
           background: 'var(--color-bg)',
-          borderBottom: '1px solid rgba(0,0,0,0.04)',
+          borderBottom: '1px solid var(--color-ink-05)',
           padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px',
         }}
       >
@@ -194,11 +194,12 @@ export default function LoginPage() {
             />
             <span
               style={{
-                fontSize: 9,
-                color: 'var(--color-secondary)',
-                fontWeight: 500,
-                letterSpacing: 1.5,
+                fontSize: 8,
+                color: 'var(--color-ink-55)',
+                fontWeight: 700,
+                letterSpacing: '0.18em',
                 textTransform: 'uppercase',
+                marginTop: 3,
               }}
             >
               by Chiamami Bi
@@ -210,13 +211,13 @@ export default function LoginPage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              fontSize: 13,
-              color: 'var(--color-secondary)',
+              gap: 4,
+              fontSize: 12.5,
+              color: 'var(--color-corallo-ink)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 800,
               padding: 0,
             }}
           >
@@ -280,12 +281,13 @@ export default function LoginPage() {
           <motion.h1
             variants={itemVariants}
             style={{
-              fontFamily: "'TAN Songbird', 'DM Sans', serif",
-              fontSize: 26,
-              fontWeight: 700,
-              color: 'var(--color-primary)',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 38,
+              color: 'var(--color-ink)',
               textAlign: 'center',
-              lineHeight: 1.7,
+              lineHeight: 1.04,
+              letterSpacing: '-.03em',
               margin: 0,
             }}
           >
@@ -296,12 +298,12 @@ export default function LoginPage() {
           <motion.p
             variants={itemVariants}
             style={{
-              fontSize: 13,
-              color: 'var(--color-secondary)',
+              fontSize: 14,
+              color: 'var(--color-ink-70)',
               textAlign: 'center',
               lineHeight: 1.5,
               marginTop: 8,
-              marginBottom: 20,
+              marginBottom: 22,
             }}
           >
             {subtitleText}
@@ -317,20 +319,21 @@ export default function LoginPage() {
                 whileTap={{ scale: 0.98 }}
                 style={{
                   width: '100%',
-                  background: '#fff',
-                  border: '1px solid var(--color-bordo)',
-                  borderRadius: 14,
-                  padding: 13,
+                  background: 'var(--color-card)',
+                  border: '1px solid var(--color-ink-15)',
+                  borderRadius: 16,
+                  padding: '14px 16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 10,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: 'var(--color-primary)',
+                  gap: 12,
+                  fontSize: 14.5,
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
                   cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: 'var(--font-sans)',
                   marginBottom: 14,
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
@@ -348,13 +351,13 @@ export default function LoginPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  marginBottom: 20,
+                  gap: 10,
+                  margin: '18px 0',
                 }}
               >
-                <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
-                <span style={{ fontSize: 12, color: '#B5B0AA' }}>oppure</span>
-                <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
+                <div style={{ flex: 1, height: 1, background: 'var(--color-ink-15)' }} />
+                <span style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>oppure</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-ink-15)' }} />
               </motion.div>
             </>
           )}
@@ -416,8 +419,8 @@ export default function LoginPage() {
                         onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
                         style={{
                           fontSize: 12,
-                          color: 'var(--color-accent)',
-                          fontWeight: 500,
+                          color: 'var(--color-corallo-ink)',
+                          fontWeight: 700,
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
@@ -448,7 +451,7 @@ export default function LoginPage() {
                     onClick={() => { setMode('recovery_forgot'); setError(''); setSuccess('') }}
                     style={{
                       fontSize: 12,
-                      color: 'var(--color-secondary)',
+                      color: 'var(--color-ink-70)',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
@@ -538,14 +541,14 @@ export default function LoginPage() {
                       type="checkbox"
                       checked={acceptTerms}
                       onChange={(e) => setAcceptTerms(e.target.checked)}
-                      style={{ marginTop: 2, accentColor: 'var(--color-accent)' }}
+                      style={{ marginTop: 3, accentColor: 'var(--color-corallo)', width: 16, height: 16, flex: '0 0 auto' }}
                       required
                     />
-                    <span style={{ fontSize: 12, color: 'var(--color-secondary)', lineHeight: 1.5 }}>
+                    <span style={{ fontSize: 12, color: 'var(--color-ink-70)', lineHeight: 1.45 }}>
                       Ho letto e accetto la{' '}
-                      <Link to="/privacy" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }} target="_blank">Privacy Policy</Link>
+                      <Link to="/privacy" style={{ color: 'var(--color-ink-70)', textDecoration: 'underline' }} target="_blank">Privacy Policy</Link>
                       {' '}e i{' '}
-                      <Link to="/terms" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }} target="_blank">Termini di Servizio</Link>
+                      <Link to="/terms" style={{ color: 'var(--color-ink-70)', textDecoration: 'underline' }} target="_blank">Termini di Servizio</Link>
                     </span>
                   </label>
                 </motion.div>
@@ -561,7 +564,7 @@ export default function LoginPage() {
                   exit={{ opacity: 0 }}
                   style={{
                     fontSize: 12,
-                    color: 'var(--color-accent)',
+                    color: 'var(--color-corallo)',
                     textAlign: 'center',
                     marginTop: 4,
                     marginBottom: 12,
@@ -593,19 +596,23 @@ export default function LoginPage() {
               type="submit"
               disabled={submitting}
               whileTap={{ scale: 0.98 }}
+              whileHover={{ y: -1 }}
               style={{
                 width: '100%',
-                background: submitting ? 'var(--color-secondary)' : 'var(--color-accent)',
-                color: '#fff',
+                background: submitting ? 'var(--color-ink-15)' : 'var(--color-corallo)',
+                color: submitting ? 'var(--color-ink-55)' : '#fff',
                 border: 'none',
-                borderRadius: 14,
-                padding: 16,
+                borderRadius: 999,
+                padding: '15px 16px',
                 fontSize: 15,
-                fontWeight: 600,
+                fontWeight: 800,
                 cursor: submitting ? 'not-allowed' : 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: 'var(--font-sans)',
                 textAlign: 'center',
+                letterSpacing: '-.01em',
                 marginBottom: 20,
+                boxShadow: submitting ? 'none' : '0 8px 20px rgba(232,69,60,.28)',
+                transition: 'transform 0.15s',
               }}
             >
               {submitting
@@ -628,8 +635,8 @@ export default function LoginPage() {
           <motion.p
             variants={itemVariants}
             style={{
-              fontSize: 14,
-              color: 'var(--color-secondary)',
+              fontSize: 13,
+              color: 'var(--color-ink-70)',
               textAlign: 'center',
               marginBottom: 28,
             }}
@@ -640,7 +647,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setMode('login'); setError(''); setSuccess(''); setRecoveryOtp(''); setNewPassword(''); setConfirmPassword('') }}
-                  style={{ color: 'var(--color-accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  style={{ color: 'var(--color-corallo-ink)', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   Torna al login
                 </button>
@@ -651,7 +658,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setMode('register'); setError(''); setSuccess('') }}
-                  style={{ color: 'var(--color-accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  style={{ color: 'var(--color-corallo-ink)', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   Registrati
                 </button>
@@ -662,7 +669,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setMode('login'); setError(''); setSuccess('') }}
-                  style={{ color: 'var(--color-accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  style={{ color: 'var(--color-corallo-ink)', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   Accedi
                 </button>
@@ -673,9 +680,9 @@ export default function LoginPage() {
           {/* Scopri Bi */}
           <motion.div variants={itemVariants}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
-              <span style={{ fontSize: 10, color: '#B5B0AA', letterSpacing: 1.5, fontWeight: 600 }}>SCOPRI BI</span>
-              <div style={{ flex: 1, height: 1, background: 'var(--color-bordo)' }} />
+              <div style={{ flex: 1, height: 1, background: 'var(--color-ink-15)' }} />
+              <span style={{ fontSize: 10.5, color: 'var(--color-ink-55)', letterSpacing: '0.14em', fontWeight: 800, textTransform: 'uppercase' }}>Scopri Bi</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--color-ink-15)' }} />
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
@@ -683,19 +690,19 @@ export default function LoginPage() {
                 onClick={() => navigate('/partner')}
                 style={{
                   flex: 1,
-                  background: '#fff',
-                  border: '1px solid var(--color-bordo)',
-                  borderRadius: 12,
-                  padding: 13,
+                  background: 'var(--color-card)',
+                  border: '1px solid var(--color-ink-05)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '14px 16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
                   fontSize: 13,
-                  fontWeight: 500,
-                  color: 'var(--color-primary)',
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
                   cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -711,19 +718,19 @@ export default function LoginPage() {
                 onClick={() => navigate('/about')}
                 style={{
                   flex: 1,
-                  background: '#fff',
-                  border: '1px solid var(--color-bordo)',
-                  borderRadius: 12,
-                  padding: 13,
+                  background: 'var(--color-card)',
+                  border: '1px solid var(--color-ink-05)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '14px 16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
                   fontSize: 13,
-                  fontWeight: 500,
-                  color: 'var(--color-primary)',
+                  fontWeight: 800,
+                  color: 'var(--color-ink)',
                   cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

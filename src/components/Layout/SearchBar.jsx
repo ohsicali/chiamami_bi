@@ -56,7 +56,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
           flex: 1, background: 'transparent',
           fontSize: 14, fontWeight: 500, color: '#22181C',
           outline: 'none', border: 'none',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)",
         }}
         autoComplete="off"
         autoCapitalize="off"

@@ -94,7 +94,7 @@ export default function ProfilePage() {
       <div className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: '#FAF7F2',
+        background: 'var(--color-page)',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
             <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
           </Link>
           <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
-            fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
+            fontSize: 12, color: 'var(--color-ink-70)', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
             background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
           }}>
             <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
@@ -145,7 +145,7 @@ export default function ProfilePage() {
               minWidth: isDesktop ? 68 : 48,
               borderRadius: '50%', background: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+              fontFamily: 'var(--font-sans)', fontWeight: 900,
               fontSize: isDesktop ? 28 : 20,
               color: 'var(--color-accent)', lineHeight: 1, flexShrink: 0,
               boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
@@ -154,7 +154,7 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: isDesktop ? 20 : 17, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: isDesktop ? 20 : 17, fontWeight: 900, color: '#fff', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
                 {displayName}
               </div>
               <div style={{ fontSize: isDesktop ? 13 : 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{email}</div>
@@ -187,7 +187,7 @@ export default function ProfilePage() {
               padding: '16px 22px', margin: '20px -22px 0',
             }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontFamily: "'TAN Songbird', serif", fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 20, color: '#fff', letterSpacing: '-0.02em' }}>
                   {stats.totalSaved}<span style={{ fontSize: 14 }}>€</span>
                 </span>
                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>risparmiati con gli sconti di Bi</span>
@@ -216,7 +216,7 @@ export default function ProfilePage() {
 
       {/* ── Section label (desktop only) ── */}
       {isDesktop && (
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--color-ink-70)', marginBottom: 10 }}>
           Le tue statistiche
         </div>
       )}
@@ -237,7 +237,7 @@ export default function ProfilePage() {
             background: '#fff', borderRadius: 16, padding: isDesktop ? '18px 14px' : 16,
             textAlign: 'center', border: '1px solid var(--color-bordo)', cursor: 'pointer',
           }}>
-            <div style={{ fontFamily: "'TAN Songbird', serif", fontSize: isDesktop ? 24 : 18, fontWeight: 700, color: 'var(--color-primary)' }}>{stat.value}</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: isDesktop ? 24 : 18, color: 'var(--color-primary)', letterSpacing: '-0.02em' }}>{stat.value}</div>
             <div style={{ fontSize: isDesktop ? 11 : 10, color: 'var(--color-secondary)', marginTop: 2 }}>{stat.label}</div>
           </button>
         ))}
@@ -261,7 +261,7 @@ export default function ProfilePage() {
           <div style={{ fontSize: 10, fontWeight: 700, color: '#C4A265', letterSpacing: 2, marginBottom: 6 }}>
             INVITA UN AMICO
           </div>
-          <div style={{ fontSize: isDesktop ? 16 : 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: isDesktop ? 16 : 15, fontWeight: 900, color: '#fff', marginBottom: 2, letterSpacing: '-0.02em' }}>
             Condividi La Guida di Bi
           </div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: isDesktop ? 0 : 14 }}>
@@ -286,7 +286,7 @@ export default function ProfilePage() {
 
       {/* ── Section label (desktop only) ── */}
       {isDesktop && (
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#8A8680', marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--color-ink-70)', marginBottom: 10 }}>
           Azioni rapide
         </div>
       )}

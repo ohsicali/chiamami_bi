@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useNavigate, Navigate, Link } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -171,16 +171,15 @@ export default function SavedPage() {
       <div ref={headerRef} className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,
         padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 0',
-        background: '#FAF7F2',
+        background: 'var(--color-page)',
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
-          <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
-            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
-          </Link>
+          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, color: 'var(--color-ink)', letterSpacing: '-0.02em' }}>
+            Salvati
+          </span>
           <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
-            fontSize: 12, color: '#555', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
-            background: 'rgba(0,0,0,0.04)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
+            fontSize: 12, color: 'var(--color-ink-70)', fontWeight: 600, padding: '6px 12px', borderRadius: 20,
+            background: 'var(--color-ink-05)', border: '1px solid var(--color-bordo)', cursor: 'pointer',
           }}>
             <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
               <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--color-success)' }} />
@@ -203,16 +202,16 @@ export default function SavedPage() {
       }}>
         <div>
           <h1 style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'var(--font-sans)',
             fontSize: 26,
-            fontWeight: 700,
-            color: 'var(--color-primary)',
-            letterSpacing: -0.3,
+            fontWeight: 900,
+            color: 'var(--color-ink)',
+            letterSpacing: '-0.02em',
             marginBottom: 4,
           }}>
-            I miei salvati
+            Salvati
           </h1>
-          <p style={{ fontSize: 13, color: 'var(--color-secondary)' }}>
+          <p style={{ fontSize: 13, color: 'var(--color-ink-70)' }}>
             {cityRestaurants.length} {cityRestaurants.length === 1 ? 'ristorante salvato' : 'ristoranti salvati'}
           </p>
         </div>
@@ -231,9 +230,9 @@ export default function SavedPage() {
                   fontSize: 12.5,
                   fontWeight: 600,
                   borderRadius: 999,
-                  border: `1px solid ${chip.active ? '#22181C' : '#E8E5DE'}`,
-                  background: chip.active ? '#22181C' : '#ffffff',
-                  color: chip.active ? '#ffffff' : '#22181C',
+                  border: `1px solid ${chip.active ? 'var(--color-ink)' : 'var(--color-bordo)'}`,
+                  background: chip.active ? 'var(--color-ink)' : '#ffffff',
+                  color: chip.active ? '#ffffff' : 'var(--color-ink)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.15s ease',
@@ -283,16 +282,16 @@ export default function SavedPage() {
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-bordo)" strokeWidth="1.5" strokeLinecap="round" style={{ margin: '0 auto' }}>
               <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
             </svg>
-            <h2 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 18, color: 'var(--color-primary)', marginTop: 16 }}>
+            <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 18, color: 'var(--color-ink)', marginTop: 16 }}>
               Non hai ancora salvato nessun posto
             </h2>
-            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 8, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: 'var(--color-ink-70)', marginTop: 8, lineHeight: 1.5 }}>
               Esplora la mappa e salva i ristoranti che ti incuriosiscono
             </p>
             <button
               onClick={() => navigate('/')}
               style={{
-                background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
                 padding: '14px 28px', fontSize: 14, fontWeight: 600, marginTop: 20,
                 border: 'none', cursor: 'pointer',
               }}
@@ -303,14 +302,14 @@ export default function SavedPage() {
         ) : cityRestaurants.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <span style={{ fontSize: 28, marginBottom: 8 }}>📍</span>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Nessun locale salvato a {currentCity.name}</p>
-            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>Nessun locale salvato a {currentCity.name}</p>
+            <p style={{ fontSize: 13, color: 'var(--color-ink-70)', marginTop: 4, lineHeight: 1.5 }}>
               Prova a selezionare un'altra città
             </p>
             <button
               onClick={() => setCityPickerOpen(true)}
               style={{
-                background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
                 border: 'none', cursor: 'pointer',
               }}
@@ -321,8 +320,8 @@ export default function SavedPage() {
         ) : displayList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <span style={{ fontSize: 28, marginBottom: 8 }}>🔍</span>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Nessun salvato in questa categoria</p>
-            <p style={{ fontSize: 13, color: 'var(--color-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>Nessun salvato in questa categoria</p>
+            <p style={{ fontSize: 13, color: 'var(--color-ink-70)', marginTop: 4, lineHeight: 1.5 }}>
               Scopri tutti i ristoranti di questa categoria nell'elenco
             </p>
             <button
@@ -333,7 +332,7 @@ export default function SavedPage() {
                 navigate('/', { state: { initialCategory: cat } })
               }}
               style={{
-                background: 'var(--color-accent)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
                 border: 'none', cursor: 'pointer',
               }}
@@ -391,7 +390,7 @@ export default function SavedPage() {
                     {photoUrl ? (
                       <img src={photoUrl} alt={r.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : '#E8E5DE', fontSize: 40, opacity: 0.6 }}>
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'var(--color-cream-deep)', fontSize: 40, opacity: 0.6 }}>
                         {category?.emoji || '🍽️'}
                       </div>
                     )}
@@ -401,7 +400,7 @@ export default function SavedPage() {
                     {discount && (
                       <div style={{
                         position: 'absolute', top: 10, left: 10, zIndex: 2,
-                        background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000',
+                        background: 'linear-gradient(135deg, var(--color-corallo-soft) 0%, var(--color-corallo) 100%)', color: 'var(--color-ink)',
                         fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 8,
                       }}>
                         {discount.title || discount.discount_value}
@@ -413,7 +412,7 @@ export default function SavedPage() {
                     </div>
                     {/* Info at bottom */}
                     <div className="absolute bottom-0 left-0 right-0" style={{ padding: '14px 16px', zIndex: 2 }}>
-                      <h3 style={{ fontFamily: "'TAN Songbird', serif", fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.4, marginBottom: 4 }}>
+                      <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 15, color: '#fff', lineHeight: 1.4, marginBottom: 4 }}>
                         {r.name}
                       </h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
@@ -435,8 +434,8 @@ export default function SavedPage() {
                   style={{
                     height: 250,
                     borderRadius: 16,
-                    border: '2px dashed #E8E5DE',
-                    background: '#FAF7F2',
+                    border: '2px dashed var(--color-bordo)',
+                    background: 'var(--color-page)',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -444,14 +443,14 @@ export default function SavedPage() {
                     cursor: 'pointer',
                     transition: 'border-color 0.15s ease, background 0.15s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#D1CDC6'; e.currentTarget.style.background = '#fff' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E8E5DE'; e.currentTarget.style.background = '#FAF7F2' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink-15)'; e.currentTarget.style.background = '#fff' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-bordo)'; e.currentTarget.style.background = 'var(--color-page)' }}
                 >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D1CDC6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-15)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}>
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                   </svg>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#8A8680' }}>Esplora la mappa</span>
-                  <span style={{ fontSize: 11, color: '#B5B0AA', marginTop: 3 }}>per salvare altri ristoranti</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)' }}>Esplora la mappa</span>
+                  <span style={{ fontSize: 11, color: 'var(--color-ink-55)', marginTop: 3 }}>per salvare altri ristoranti</span>
                 </div>
               )}
             </div>

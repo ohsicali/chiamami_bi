@@ -533,26 +533,34 @@ export default function RestaurantSheet({
                 ...(!discountTitle && { borderRadius: '20px 20px 0 0' }),
               }}
             >
-              {/* Restaurant name — centered */}
+              {/* Restaurant name — centered, Satoshi 900 */}
               <motion.h1 variants={itemVariants} style={{
-                fontFamily: "'TAN Songbird', serif",
-                fontSize: 24, fontWeight: 700, color: '#22181C',
-                lineHeight: 1.7, textAlign: 'center',
+                fontFamily: "var(--font-sans, 'Satoshi', sans-serif)",
+                fontWeight: 900,
+                fontSize: 28,
+                color: 'var(--color-ink, #22181C)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.025em',
+                textAlign: 'center',
                 marginBottom: 10,
+                marginTop: 6,
               }}>
                 {restaurant.name}
               </motion.h1>
 
-              {/* Address — prominent */}
-              <motion.p variants={itemVariants} style={{
-                fontSize: 16, color: '#333', textAlign: 'center', lineHeight: 1.5,
-                fontWeight: 500, marginBottom: 10,
+              {/* Address */}
+              <motion.div variants={itemVariants} style={{
+                fontSize: 12.5, color: 'var(--color-ink-70, rgba(34,24,28,.7))',
+                textAlign: 'center', lineHeight: 1.4,
+                fontWeight: 500, marginBottom: 12,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap',
               }}>
-                {restaurant.address}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>{restaurant.address}</span>
                 {distance != null && (
-                  <span style={{ color: '#888', fontWeight: 400 }}> · {formatDistance(distance)}</span>
+                  <span style={{ color: 'var(--color-ink-40)' }}> · {formatDistance(distance)}</span>
                 )}
-              </motion.p>
+              </motion.div>
 
               {/* Categories + price — pills */}
               <motion.div variants={itemVariants} style={{
@@ -561,18 +569,23 @@ export default function RestaurantSheet({
               }}>
                 {categories.map((cat) => (
                   <span key={cat.name} style={{
-                    fontSize: 13, fontWeight: 600,
-                    color: cat.color, border: `1px solid ${cat.color}`,
-                    padding: '4px 12px', borderRadius: 20,
+                    fontSize: 12, fontWeight: 700,
+                    color: 'var(--color-corallo-ink)',
+                    border: '1.5px solid var(--color-corallo)',
+                    background: '#fff',
+                    padding: '6px 12px', borderRadius: 999,
+                    letterSpacing: '-0.01em',
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
                   }}>
                     {cat.emoji} {cat.name}
                   </span>
                 ))}
                 {priceLabel && (
                   <span style={{
-                    fontSize: 13, fontWeight: 600, color: '#555',
-                    border: '1px solid rgba(0,0,0,0.15)',
-                    padding: '4px 12px', borderRadius: 20,
+                    fontSize: 12, fontWeight: 700,
+                    color: 'var(--color-ink)',
+                    background: 'var(--color-ink-05)',
+                    padding: '6px 12px', borderRadius: 999,
                   }}>
                     {priceLabel}
                   </span>
@@ -597,16 +610,18 @@ export default function RestaurantSheet({
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
-              {/* Action buttons — with icons */}
-              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {/* CTA row — beige main + heart ghost */}
+              <motion.div variants={itemVariants} style={{ display: 'flex', gap: 8, marginBottom: 20, justifyContent: 'center', alignItems: 'center' }}>
                 {mapsUrl && (
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#F0EBE3', color: '#22181C', border: 'none',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    flex: 1, maxWidth: 280, padding: '13px 18px', borderRadius: 999,
+                    textAlign: 'center',
+                    fontSize: 14, fontWeight: 800, textDecoration: 'none',
+                    background: '#F2EDE1', color: 'var(--color-ink)',
+                    border: 'none', letterSpacing: '-0.01em',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="3 11 22 2 13 21 11 13 3 11"/>
                     </svg>
                     Indicazioni
@@ -614,28 +629,28 @@ export default function RestaurantSheet({
                 )}
                 {phoneUrl && (
                   <a href={phoneUrl} style={{
-                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#F0EBE3', color: '#22181C', border: 'none',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    width: 46, height: 46, borderRadius: '50%',
+                    background: '#fff', border: '1px solid var(--color-ink-05)',
+                    display: 'grid', placeItems: 'center',
+                    textDecoration: 'none', color: 'var(--color-ink)',
+                    flexShrink: 0,
                   }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
                     </svg>
-                    Chiama
                   </a>
                 )}
                 {restaurant.website && (
                   <a href={restaurant.website} target="_blank" rel="noopener noreferrer" style={{
-                    flex: 1, padding: '10px 0', borderRadius: 10, textAlign: 'center',
-                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    background: '#F0EBE3', color: '#22181C', border: 'none',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    width: 46, height: 46, borderRadius: '50%',
+                    background: '#fff', border: '1px solid var(--color-ink-05)',
+                    display: 'grid', placeItems: 'center',
+                    textDecoration: 'none', color: 'var(--color-ink)',
+                    flexShrink: 0,
                   }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
                     </svg>
-                    Sito
                   </a>
                 )}
               </motion.div>
@@ -645,36 +660,50 @@ export default function RestaurantSheet({
                 <OrariLocale restaurant={restaurant} />
               </motion.div>
 
-              {/* ── Secondo Bi — plain text ── */}
+              {/* ── Secondo Bi ── */}
               {reviewText && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 20, padding: '0 18px' }}>
-                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#22181C', fontWeight: 600 }}>
+                <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+                  <div style={{ padding: '0 0 4px' }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 8 }}>
+                      Secondo Bi
+                    </div>
+                    <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--color-ink)', lineHeight: 1.2, marginBottom: 10 }}>
+                      La mia opinione
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--color-ink)', fontWeight: 500 }}>
                     {reviewText}
                   </p>
+                  <div style={{ marginTop: 12, fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 22, color: 'var(--color-corallo-ink)', lineHeight: 1 }}>
+                    — Bi
+                  </div>
                   {!isItalian && (
-                    <p style={{ fontSize: 12, color: '#A89A86', marginTop: 8, fontStyle: 'italic' }}>
+                    <p style={{ fontSize: 12, color: 'var(--color-ink-70)', marginTop: 8, fontStyle: 'italic' }}>
                       {t('restaurant.originalItalian')}
                     </p>
                   )}
                 </motion.div>
               )}
 
-              {/* ── Cosa prendere — gold card ── */}
+              {/* ── Cosa prendere — oro gradient card ── */}
               {tipText && (
                 <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                   <div style={{
-                    borderRadius: 16, padding: '20px 18px',
-                    background: '#C4A265',
+                    borderRadius: 14, padding: '16px 18px',
+                    background: 'linear-gradient(135deg, var(--color-oro, #B08954) 0%, var(--color-oro-deep, #8E6B3E) 100%)',
+                    color: '#fff',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex', gap: 14, alignItems: 'flex-start',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
-                      </svg>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Cosa prendere</span>
+                    <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0, marginTop: 2 }}>🍴</span>
+                    <div>
+                      <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.01em', marginBottom: 4, color: '#fff' }}>
+                        Cosa prendere
+                      </div>
+                      <p style={{ fontSize: 14, lineHeight: 1.5, color: 'rgba(255,255,255,0.92)', fontWeight: 500 }}>
+                        {tipText}
+                      </p>
                     </div>
-                    <p style={{ fontSize: 16, lineHeight: 1.8, color: 'rgba(255,255,255,0.95)' }}>
-                      {tipText}
-                    </p>
                   </div>
                 </motion.div>
               )}
@@ -1082,70 +1111,57 @@ export default function RestaurantSheet({
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
-              {/* Chi è Bi */}
+              {/* Ciao sono Bi */}
               <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
                 <div style={{
-                  background: '#F0EBE3', borderRadius: 16, padding: '24px 20px',
+                  background: 'var(--color-cream-deep, #F1EBE0)',
+                  borderRadius: 20, padding: '20px',
+                  display: 'flex', gap: 14, alignItems: 'flex-start',
+                  border: '1px solid rgba(176,137,84,.2)',
                 }}>
-                  {/* Header row */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                    <img
-                      src="/bi-photo.JPG"
-                      alt="Bi"
-                      style={{
-                        width: 52, height: 52, borderRadius: '50%',
-                        objectFit: 'cover', flexShrink: 0,
-                        border: '2px solid rgba(232, 69, 60,0.2)',
-                      }}
-                    />
-                    <div>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: '#22181C' }}>Ciao, sono Bi</p>
-                      <p style={{ fontSize: 13, color: '#8C7A62', marginTop: 1 }}>La tua guida a Torino</p>
-                    </div>
+                  <div style={{
+                    width: 54, height: 54, borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #F4E7CC, #E8453C)',
+                    color: '#fff', display: 'grid', placeItems: 'center',
+                    fontWeight: 900, fontSize: 20, flexShrink: 0,
+                    border: '2px solid #fff',
+                    boxShadow: 'var(--shadow-sm)',
+                    overflow: 'hidden',
+                  }}>
+                    <img src="/bi-photo.JPG" alt="Bi" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = 'B' }} />
                   </div>
-
-                  {/* Bio */}
-                  <p style={{ fontSize: 15, lineHeight: 1.7, color: '#3D3428', marginBottom: 16 }}>
-                    Consiglio solo posti dove tornerei. Niente sponsorizzazioni, niente fuffa — solo i locali che amo davvero, provati e riprovati.
-                  </p>
-
-                  {/* Social links + About */}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
-                      textDecoration: 'none', color: '#22181C', fontSize: 13, fontWeight: 600,
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22181C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                      </svg>
-                      Instagram
-                    </a>
-                    <a href="https://tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(0,0,0,0.06)', borderRadius: 10, padding: '8px 14px',
-                      textDecoration: 'none', color: '#22181C', fontSize: 13, fontWeight: 600,
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#22181C">
-                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.8a8.25 8.25 0 004.76 1.5V6.86a4.84 4.84 0 01-1-.17z"/>
-                      </svg>
-                      TikTok
-                    </a>
-                    <div style={{ flex: 1 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>Ciao, sono Bi</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--color-ink-70)', marginTop: 2, marginBottom: 8 }}>La tua guida a Torino</div>
+                    <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--color-ink)', marginBottom: 10 }}>
+                      Consiglio solo posti dove tornerei. Niente sponsorizzazioni, niente fuffa — solo i locali che amo davvero.
+                    </p>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                        padding: '6px 10px', background: '#fff', border: '1px solid var(--color-ink-05)',
+                        borderRadius: 999, fontSize: 11, fontWeight: 700, color: 'var(--color-ink)',
+                        textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
+                      }}>
+                        📷 Instagram
+                      </a>
+                      <a href="https://tiktok.com/@chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                        padding: '6px 10px', background: '#fff', border: '1px solid var(--color-ink-05)',
+                        borderRadius: 999, fontSize: 11, fontWeight: 700, color: 'var(--color-ink)',
+                        textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
+                      }}>
+                        🎵 TikTok
+                      </a>
+                    </div>
                     <button
                       onClick={() => navigate('/about')}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: '#E8453C', fontSize: 13, fontWeight: 700, padding: '8px 0',
+                        display: 'inline-block', marginTop: 8,
+                        fontSize: 12, fontWeight: 800, color: 'var(--color-corallo-ink)',
+                        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                        textDecoration: 'none',
                       }}
                     >
-                      Scopri di più
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18l6-6-6-6"/>
-                      </svg>
+                      Scopri di più →
                     </button>
                   </div>
                 </div>

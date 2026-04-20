@@ -166,7 +166,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           </div>
         )}
         <div style={{
-          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)", fontWeight: 800,
           fontSize: 26, fontWeight: 600, color: '#fff',
           lineHeight: 1.1, marginBottom: 6,
         }}>
@@ -278,7 +278,7 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
         <div style={{
-          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)", fontWeight: 800,
           fontSize: 18, fontWeight: 600, color: '#22181C',
           lineHeight: 1.2, marginBottom: 3,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -497,7 +497,7 @@ export default function ListView() {
           zIndex: 60, background: '#22181C', color: '#FAF7F2',
           border: 'none', borderRadius: 28,
           padding: '12px 26px',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)",
           fontSize: 13, fontWeight: 700, letterSpacing: 0.5,
           display: 'flex', alignItems: 'center', gap: 10,
           cursor: 'pointer',

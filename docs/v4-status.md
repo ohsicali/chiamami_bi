@@ -147,4 +147,56 @@ PR: #69 (draft). Branch: `v4/track-b-reskin`.
 - `67e7551` **allineamento canonico v4-handoff.md** — corallo #E8453C + verde gradient sconto
 - `f25a264` docs: progress tracker
 - `367e995` **HomeFeedV4 primo pass** — preview su /v4 (topbar + hero promo + bolle + Ultimi aggiunti + Suggest)
-- 🚧 [next] aggiungere sponsor banner, time-based section, "Cosa ti consiglio" oro block al HomeFeedV4
+- ✅ **Full v4 reskin pass** (sessione notturna 2026-04-20):
+  - HomeFeedV4 completato: sponsor banner, time-based section, "Cosa ti consiglio" oro block
+  - MobileTabBar: 5 tab, glass pill, corallo-soft active state, deals badge
+  - DesktopNavbar: glass pill, centered links, avatar/login
+  - RestaurantSheet: Satoshi 900 names, v4 action row, "Secondo Bi" + "Cosa prendere" blocks
+  - Footer: Alfa Slab One wordmark
+  - All fonts migrated: TAN Songbird → Satoshi, DM Sans → var(--font-sans)
+  - SavedPage, ProfilePage, LoginPage: full v4 token reskin
+  - DealsPage: v4 header + token cleanup
+  - Remaining pages (About, Privacy, Terms, Settings, Reset, Verify, Partner): v4 tokens
+  - Admin pages: DM Sans → Satoshi
+  - **Routing swap**: `/` = HomeFeedV4 (feed), `/esplora` = mappa
+  - Duplicate fontWeight fixes across all files
+  - All `'Satoshi', sans-serif` literals → `var(--font-sans)`
+  - Georgia serif → var(--font-sans) in MaintenanceGate
+
+### Stato componenti shared (checklist da v4-handoff §4)
+
+- [x] Nav pill glass mobile (bottom) + desktop (top)
+- [x] Wordmark logo Alfa Slab One + subtitle
+- [ ] City pill con dot corallo (parziale — esiste ma non aggiornata)
+- [x] Card locale mobile scroll-snap 70% width (HomeFeedV4)
+- [x] Hero promo corallo (HomeFeedV4)
+- [x] Categorie bubble (HomeFeedV4)
+- [x] Sponsor banner ink (HomeFeedV4)
+- [x] Blocco editoriale "Secondo Bi" (RestaurantSheet)
+- [x] Blocco oro "Cosa prendere" (RestaurantSheet)
+- [ ] Sticky pill sconto glass (scheda) — DA FARE
+- [ ] Card locale desktop `.lcard` 118×118 + heart — DA FARE (desktop split view)
+- [ ] Pin mappa categoria — invariati (decisione Augusto: mantiene pin v3)
+- [x] Chip/tag system (FilterChips → Satoshi)
+
+### Pagine — stato reskin
+
+1. [x] Home mobile (HomeFeedV4) — `/`
+2. [x] Home desktop (HomeFeedV4) — `/`
+3. [x] Scheda locale mobile (RestaurantSheet)
+4. [ ] Scheda locale desktop — parziale (layout base ok, sticky pill sconto mancante)
+5. [x] Sconti mobile + desktop (DealsPage)
+6. [x] Salvati mobile + desktop (SavedPage)
+7. [x] Profilo mobile + desktop (ProfilePage)
+8. [x] Login/Signup (LoginPage)
+9. [x] About, Privacy, Terms, Settings, Reset, Partner (token reskin)
+10. [x] Verify ristoratori (VerifyPage) — token reskin
+11. [x] Admin pages — font migrated, token parziale
+
+### Cosa resta (per Augusto)
+
+- **Sticky pill sconto** (floating CTA quando la scheda ha uno sconto attivo)
+- **Desktop split view** con `.lcard` 118×118 (Esplora desktop)
+- **City pill** dot verde → dot corallo
+- **Verifica visiva** su device reale (iPhone, desktop Chrome)
+- Deploy su Vercel e test live

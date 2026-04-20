@@ -525,7 +525,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           </div>
           <h1
             style={{
-              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+              fontFamily: "var(--font-sans)", fontWeight: 800,
               fontSize: 20,
               fontWeight: 700,
               color: '#fff',
@@ -715,7 +715,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             </div>
             <h1
               style={{
-                fontFamily: "'TAN Songbird', 'DM Sans', serif",
+                fontFamily: "var(--font-sans)", fontWeight: 800,
                 fontSize: 24,
                 fontWeight: 700,
                 color: '#22181C',
@@ -953,7 +953,7 @@ function RestaurantHeader({ restaurant, onLogout }) {
               fontSize: 18,
               fontWeight: 700,
               color: '#fff',
-              fontFamily: "'TAN Songbird', 'DM Sans', serif",
+              fontFamily: "var(--font-sans)", fontWeight: 800,
             }}
           >
             {restaurant?.name}

@@ -1433,7 +1433,7 @@ export default function RestaurantForm() {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 10,
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)",
         }}
       >
         {/* Breadcrumb */}
@@ -1500,7 +1500,7 @@ export default function RestaurantForm() {
                 fontSize: 12,
                 fontWeight: 500,
                 cursor: 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-sans)",
               }}
             >
               Elimina
@@ -1521,7 +1521,7 @@ export default function RestaurantForm() {
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.6 : 1,
               whiteSpace: 'nowrap',
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
             }}
           >
             {saving ? 'Salvataggio...' : 'Salva'}
@@ -1665,7 +1665,7 @@ export default function RestaurantForm() {
                           border: 'none',
                           cursor: nameSearching || !nameQuery.trim() ? 'not-allowed' : 'pointer',
                           opacity: nameSearching || !nameQuery.trim() ? 0.5 : 1,
-                          fontFamily: "'DM Sans', sans-serif",
+                          fontFamily: "var(--font-sans)",
                         }}
                       >
                         {nameSearching ? 'Cerco...' : 'Cerca'}
@@ -2239,7 +2239,7 @@ export default function RestaurantForm() {
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: notifying || !form.published ? 'not-allowed' : 'pointer',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                   opacity: notifying ? 0.6 : 1,
                 }}
               >
@@ -2268,7 +2268,7 @@ export default function RestaurantForm() {
                   color: '#b91c1c',
                   fontSize: 13,
                   fontWeight: 500,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                   cursor: 'pointer',
                 }}
               >
@@ -2307,7 +2307,7 @@ export default function RestaurantForm() {
                 padding: 24,
                 maxWidth: 380,
                 width: '100%',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-sans)",
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -2329,7 +2329,7 @@ export default function RestaurantForm() {
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: 'pointer',
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-sans)",
                   }}
                 >
                   Annulla
@@ -2347,7 +2347,7 @@ export default function RestaurantForm() {
                     fontWeight: 600,
                     cursor: saving ? 'not-allowed' : 'pointer',
                     opacity: saving ? 0.6 : 1,
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-sans)",
                   }}
                 >
                   {saving ? 'Eliminazione...' : 'Elimina'}
@@ -2373,7 +2373,7 @@ function Section({ title, children }) {
         borderRadius: 12,
         border: '1px solid #eee',
         padding: '20px 22px',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       <h2
@@ -2402,7 +2402,7 @@ function CollapsibleSection({ title, subtitle, defaultOpen = true, children }) {
         borderRadius: 12,
         border: '1px solid #eee',
         overflow: 'hidden',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       <button
@@ -2418,7 +2418,7 @@ function CollapsibleSection({ title, subtitle, defaultOpen = true, children }) {
           border: 'none',
           cursor: 'pointer',
           textAlign: 'left',
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)",
         }}
       >
         <div style={{ minWidth: 0 }}>
@@ -2490,7 +2490,7 @@ function CollapsibleSection({ title, subtitle, defaultOpen = true, children }) {
 
 function Field({ label, children, error }) {
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ fontFamily: "var(--font-sans)" }}>
       <label
         style={{
           display: 'block',

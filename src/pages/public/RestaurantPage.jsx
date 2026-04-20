@@ -69,7 +69,7 @@ export default function RestaurantPage() {
           <div className="mb-4 text-6xl">🍽️</div>
           <h1
             className="mb-2 text-2xl font-bold text-primary"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             Ristorante non trovato
           </h1>

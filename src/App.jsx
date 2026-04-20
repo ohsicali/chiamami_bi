@@ -91,7 +91,7 @@ export default function App() {
   // HomePage stays mounted and we don't want to disturb the map state.
   const prevPath = useRef(location.pathname)
   useEffect(() => {
-    const isMapFamily = (p) => p === '/' || p.startsWith('/restaurant/')
+    const isMapFamily = (p) => p === '/esplora' || p.startsWith('/restaurant/')
     const crossingWithinMap = isMapFamily(prevPath.current) && isMapFamily(location.pathname)
     prevPath.current = location.pathname
     if (crossingWithinMap) return
@@ -99,7 +99,7 @@ export default function App() {
   }, [location.pathname])
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
-  const isHome = location.pathname === '/' || isRestaurantDetail
+  const isEsplora = location.pathname === '/esplora' || isRestaurantDetail
   const isAdmin = location.pathname.startsWith('/admin')
   const isPartner = location.pathname === '/partner'
   const isVerify = location.pathname === '/verify'
@@ -114,17 +114,17 @@ export default function App() {
     {showDesktopNav && <DesktopNavbar />}
 
     <Suspense fallback={<PageLoader />}>
-      {/* HomePage stays mounted when viewing restaurant detail */}
-      {isHome && <HomePage />}
+      {/* Map page stays mounted when viewing restaurant detail */}
+      {isEsplora && <HomePage />}
 
       {/* Restaurant detail overlays on top */}
       {isRestaurantDetail && <RestaurantPage />}
 
       {/* Other routes replace the page normally */}
-      {!isHome && (
+      {!isEsplora && (
         <div className={!isAdmin ? 'desktop-nav-offset' : undefined}>
         <Routes location={location} key={location.pathname}>
-          <Route path="/v4" element={<HomeFeedV4 />} />
+          <Route path="/" element={<HomeFeedV4 />} />
           <Route path="/list" element={<ListView />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />

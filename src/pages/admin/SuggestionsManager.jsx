@@ -87,7 +87,7 @@ export default function SuggestionsManager() {
 
   return (
     <AdminLayout title="Suggerimenti">
-      <div style={{ padding: '20px 28px', fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1f', margin: 0 }}>Suggerimenti</h1>

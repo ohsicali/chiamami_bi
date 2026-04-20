@@ -113,7 +113,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
         <div className="flex items-center justify-between">
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
             <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>
+            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "var(--font-sans)" }}>
               by Chiamami Bi
             </span>
           </Link>
@@ -224,7 +224,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
                   style={{
                     flex: 1, border: 'none', outline: 'none',
                     background: 'transparent', fontSize: 15, fontWeight: 500,
-                    color: '#22181C', fontFamily: "'DM Sans', sans-serif",
+                    color: '#22181C', fontFamily: "var(--font-sans)",
                   }}
                 />
                 {query && (

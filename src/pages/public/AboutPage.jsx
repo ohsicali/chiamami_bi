@@ -53,16 +53,16 @@ export default function AboutPage() {
   const [showSuggest, setShowSuggest] = useState(false)
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: '#22181C' }}>
+    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-ink)' }}>
       {/* ─── STICKY HEADER (mobile only) ─── */}
       <header className="md:hidden" style={{
         position: 'sticky',
         top: 0,
         zIndex: 30,
-        background: 'rgba(34,24,28,0.85)',
+        background: 'rgba(34, 24, 28, 0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 18px 12px',
       }}>
         <div style={{
@@ -167,7 +167,7 @@ export default function AboutPage() {
               style={{
                 display: 'flex', gap: 0, marginTop: 40, width: '100%', maxWidth: 380,
                 background: 'rgba(255,255,255,0.05)',
-                borderRadius: 16, overflow: 'hidden',
+                borderRadius: 'var(--radius-lg)', overflow: 'hidden',
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
             >
@@ -208,7 +208,7 @@ export default function AboutPage() {
 
         {/* ── Content on cream ── */}
         <div style={{
-          background: '#FAF7F2',
+          background: 'var(--color-page)',
           borderRadius: '24px 24px 0 0',
           marginTop: -1,
           position: 'relative', zIndex: 2,
@@ -223,14 +223,14 @@ export default function AboutPage() {
               variants={fadeUp}
             >
               <p style={{
-                fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                fontSize: 20, fontWeight: 700, color: '#22181C',
+                fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
+                fontSize: 20, color: 'var(--color-ink)',
                 lineHeight: 1.9, textAlign: 'center',
               }}>
                 "Mi chiamavano tutti Bea,<br />e io rispondevo sempre:<br />chiamami Bi!"
               </p>
               <p style={{
-                fontSize: 12, color: '#8A8680', textAlign: 'center',
+                fontSize: 12, color: 'var(--color-ink-55)', textAlign: 'center',
                 marginTop: 12, fontWeight: 500,
               }}>
                 Da qui è nato tutto
@@ -240,7 +240,7 @@ export default function AboutPage() {
 
           {/* ── Divider ── */}
           <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
-            <div style={{ width: 40, height: 3, borderRadius: 2, background: '#C4A265', opacity: 0.4 }} />
+            <div style={{ width: 40, height: 3, borderRadius: 2, background: 'var(--color-oro)', opacity: 0.4 }} />
           </div>
 
           {/* ── Story — editorial blocks ── */}
@@ -255,30 +255,30 @@ export default function AboutPage() {
               {/* Block 1 — who she is + numbers */}
               <motion.div variants={fadeUp}>
                 <p style={{
-                  fontSize: 16, lineHeight: 1.6, color: '#22181C', fontWeight: 700,
+                  fontSize: 16, lineHeight: 1.6, color: 'var(--color-ink)', fontWeight: 700,
                 }}>
                   Beatrice, 22 anni, Torino.
                 </p>
                 <p style={{
-                  fontSize: 14, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, marginTop: 8, textAlign: 'justify',
+                  fontSize: 14, lineHeight: 1.8, color: 'var(--color-ink-70)', fontWeight: 500, marginTop: 8, textAlign: 'justify',
                 }}>
-                  Studentessa di giurisprudenza e food creator, Bi è oggi una delle voci più seguite del food popolare italiano. Oltre <strong style={{ color: '#22181C' }}>130mila follower su Instagram</strong> e milioni di visualizzazioni ogni mese tra i suoi canali: una community che si affida ai suoi consigli per decidere dove mangiare stasera a Torino.
+                  Studentessa di giurisprudenza e food creator, Bi è oggi una delle voci più seguite del food popolare italiano. Oltre <strong style={{ color: 'var(--color-ink)' }}>130mila follower su Instagram</strong> e milioni di visualizzazioni ogni mese tra i suoi canali: una community che si affida ai suoi consigli per decidere dove mangiare stasera a Torino.
                 </p>
               </motion.div>
 
               {/* Block 2 — what she does, with her quote */}
               <motion.div variants={fadeUp} style={{
-                borderLeft: '3px solid #C4A265',
+                borderLeft: '3px solid var(--color-oro)',
                 paddingLeft: 16,
               }}>
                 <p style={{
-                  fontSize: 14, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
+                  fontSize: 14, lineHeight: 1.8, color: 'var(--color-ink-70)', fontWeight: 500, textAlign: 'justify',
                 }}>
-                  Racconta il <strong style={{ color: '#22181C' }}>cibo pop</strong>: street food, piole storiche, pizze napoletane, porzioni abbondanti e menu fissi a trenta euro. Niente cucine stellate, niente tecnicismi.
+                  Racconta il <strong style={{ color: 'var(--color-ink)' }}>cibo pop</strong>: street food, piole storiche, pizze napoletane, porzioni abbondanti e menu fissi a trenta euro. Niente cucine stellate, niente tecnicismi.
                 </p>
                 <p style={{
-                  fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                  fontSize: 14, lineHeight: 1.6, color: '#22181C',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 14, lineHeight: 1.6, color: 'var(--color-ink)',
                   fontStyle: 'italic', fontWeight: 500, marginTop: 12,
                 }}>
                   «Non sono una critica culinaria, non uso termini complessi: mi limito a dire cosa mi piace.»
@@ -288,13 +288,13 @@ export default function AboutPage() {
               {/* Block 3 — origin story with her quote */}
               <motion.div variants={fadeUp}>
                 <p style={{
-                  fontSize: 14, lineHeight: 1.8, color: '#5A504A', fontWeight: 500, textAlign: 'justify',
+                  fontSize: 14, lineHeight: 1.8, color: 'var(--color-ink-70)', fontWeight: 500, textAlign: 'justify',
                 }}>
-                  Ha aperto la pagina Instagram a <strong style={{ color: '#22181C' }}>marzo 2024</strong> insieme al suo ragazzo, un po' per gioco, pubblicando gli stessi consigli che dava agli amici. Due anni dopo è diventata uno dei riferimenti del food italiano sui social.
+                  Ha aperto la pagina Instagram a <strong style={{ color: 'var(--color-ink)' }}>marzo 2024</strong> insieme al suo ragazzo, un po' per gioco, pubblicando gli stessi consigli che dava agli amici. Due anni dopo è diventata uno dei riferimenti del food italiano sui social.
                 </p>
                 <p style={{
-                  fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                  fontSize: 14, lineHeight: 1.6, color: '#22181C',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: 14, lineHeight: 1.6, color: 'var(--color-ink)',
                   fontStyle: 'italic', fontWeight: 500, marginTop: 12,
                 }}>
                   «Eravamo appassionati di ristorazione, andavamo in giro a provare street food a Torino e ci siamo detti: perché non proviamo a fare una guida?»
@@ -312,8 +312,8 @@ export default function AboutPage() {
               variants={fadeUp}
             >
               <div style={{
-                borderRadius: 16, padding: '20px 18px',
-                background: '#C4A265',
+                borderRadius: 'var(--radius-lg)', padding: '20px 18px',
+                background: 'var(--color-oro)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -345,7 +345,7 @@ export default function AboutPage() {
                 whileTap={{ scale: 0.97 }}
                 style={{
                   flex: 1, textDecoration: 'none',
-                  background: '#22181C', borderRadius: 16, padding: '20px 16px',
+                  background: 'var(--color-ink)', borderRadius: 'var(--radius-lg)', padding: '20px 16px',
                   display: 'flex', flexDirection: 'column', gap: 14,
                   position: 'relative', overflow: 'hidden',
                 }}
@@ -372,10 +372,10 @@ export default function AboutPage() {
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 12, fontWeight: 600, color: '#E8453C',
+                  fontSize: 12, fontWeight: 600, color: 'var(--color-corallo)',
                 }}>
                   Seguimi
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-corallo)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
               </motion.a>
 
@@ -387,7 +387,7 @@ export default function AboutPage() {
                 whileTap={{ scale: 0.97 }}
                 style={{
                   flex: 1, textDecoration: 'none',
-                  background: '#22181C', borderRadius: 16, padding: '20px 16px',
+                  background: 'var(--color-ink)', borderRadius: 'var(--radius-lg)', padding: '20px 16px',
                   display: 'flex', flexDirection: 'column', gap: 14,
                   position: 'relative', overflow: 'hidden',
                 }}
@@ -412,10 +412,10 @@ export default function AboutPage() {
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 12, fontWeight: 600, color: '#E8453C',
+                  fontSize: 12, fontWeight: 600, color: 'var(--color-corallo)',
                 }}>
                   Seguimi
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-corallo)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
               </motion.a>
             </motion.div>
@@ -430,7 +430,7 @@ export default function AboutPage() {
               variants={fadeUp}
             >
               <p style={{
-                fontSize: 10, fontWeight: 600, color: '#C4A265',
+                fontSize: 10, fontWeight: 600, color: 'var(--color-oro)',
                 letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12,
               }}>
                 Parlano di Bi
@@ -441,9 +441,9 @@ export default function AboutPage() {
                 rel="noopener noreferrer"
                 style={{
                   display: 'block', textDecoration: 'none',
-                  background: '#fff',
-                  border: '1px solid rgba(34,24,28,0.08)',
-                  borderRadius: 16, padding: '18px 18px',
+                  background: 'var(--color-card)',
+                  border: '1px solid var(--color-line)',
+                  borderRadius: 'var(--radius-lg)', padding: '18px 18px',
                 }}
               >
                 <div style={{
@@ -452,25 +452,25 @@ export default function AboutPage() {
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
-                      fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
-                      fontSize: 17, fontWeight: 700, color: '#22181C',
+                      fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
+                      fontSize: 17, color: 'var(--color-ink)',
                       lineHeight: 1.3, marginBottom: 6,
                     }}>
                       Vanity Fair Italia
                     </p>
                     <p style={{
-                      fontSize: 12, lineHeight: 1.6, color: '#8A8680', fontWeight: 500,
+                      fontSize: 12, lineHeight: 1.6, color: 'var(--color-ink-55)', fontWeight: 500,
                     }}>
                       Un ritratto di Bi, la ventenne torinese che racconta il cibo popolare sui social — come una pagina nata per gioco a marzo 2024 è diventata in due anni una delle voci più seguite del food italiano, tra street food, piole e porzioni abbondanti.
                     </p>
                   </div>
                   <span style={{
                     display: 'flex', alignItems: 'center', gap: 4,
-                    fontSize: 11, fontWeight: 600, color: '#E8453C',
+                    fontSize: 11, fontWeight: 600, color: 'var(--color-corallo)',
                     flexShrink: 0, marginTop: 4,
                   }}>
                     Leggi
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E8453C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-corallo)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
                   </span>
                 </div>
               </a>
@@ -482,8 +482,8 @@ export default function AboutPage() {
             <button
               onClick={() => setShowSuggest(true)}
               style={{
-                width: '100%', background: 'var(--color-accent)', color: '#fff',
-                borderRadius: 16, padding: 18, fontSize: 15, fontWeight: 600,
+                width: '100%', background: 'var(--color-corallo)', color: '#fff',
+                borderRadius: 'var(--radius-lg)', padding: 18, fontSize: 15, fontWeight: 600,
                 border: 'none', cursor: 'pointer',
               }}
             >

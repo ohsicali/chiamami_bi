@@ -51,7 +51,7 @@ function StatCard({ label, value, accent = '#1a1a1f' }) {
         border: '1px solid #eee',
         borderRadius: 12,
         padding: '16px 18px',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       <div style={{ fontSize: 10, color: '#999', fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase' }}>
@@ -75,7 +75,7 @@ function StatusBadge({ discount: d }) {
     padding: '3px 9px',
     borderRadius: 999,
     letterSpacing: 0.2,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "var(--font-sans)",
     whiteSpace: 'nowrap',
   }
   if (expired) return <span style={{ ...style, background: '#f3f3f3', color: '#999' }}>Scaduto</span>
@@ -96,7 +96,7 @@ function DropBadge() {
         color: '#fff',
         letterSpacing: 0.5,
         marginLeft: 6,
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       DROP
@@ -116,7 +116,7 @@ function FeaturedBadge() {
         background: '#fef3c7',
         color: '#C4A265',
         marginLeft: 6,
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       ★ Evidenza
@@ -142,7 +142,7 @@ function FilterChip({ label, count, active, onClick }) {
         fontWeight: 500,
         cursor: 'pointer',
         whiteSpace: 'nowrap',
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-sans)",
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
@@ -451,7 +451,7 @@ export default function DiscountManager() {
 
   return (
     <AdminLayout title="Sconti & Drop">
-      <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ fontFamily: "var(--font-sans)" }}>
         {/* ── Header ── */}
         <div
           style={{
@@ -486,7 +486,7 @@ export default function DiscountManager() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-sans)",
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -582,7 +582,7 @@ export default function DiscountManager() {
                   padding: '7px 14px', borderRadius: 8,
                   background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
                   color: '#ccc', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 Deseleziona
@@ -595,7 +595,7 @@ export default function DiscountManager() {
                   background: '#dc2626', border: 'none',
                   color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -855,7 +855,7 @@ export default function DiscountManager() {
                   maxWidth: 520,
                   maxHeight: '85vh',
                   overflowY: 'auto',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 {/* Modal header */}
@@ -1152,7 +1152,7 @@ export default function DiscountManager() {
                       fontSize: 13,
                       fontWeight: 500,
                       cursor: 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-sans)",
                     }}
                   >
                     Annulla
@@ -1171,7 +1171,7 @@ export default function DiscountManager() {
                       fontWeight: 600,
                       cursor: saving ? 'not-allowed' : 'pointer',
                       opacity: saving || !form.restaurant_id || !form.title || !form.discount_value || !form.valid_until ? 0.5 : 1,
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-sans)",
                     }}
                   >
                     {saving ? 'Salvataggio...' : editing ? 'Salva modifiche' : 'Crea sconto'}
@@ -1200,7 +1200,7 @@ export default function DiscountManager() {
                 style={{
                   background: '#fff', borderRadius: 18, border: '1px solid #eee',
                   boxShadow: '0 24px 64px rgba(0,0,0,0.25)', padding: 28, maxWidth: 360, width: '100%',
-                  fontFamily: "'DM Sans', sans-serif", textAlign: 'center',
+                  fontFamily: "var(--font-sans)", textAlign: 'center',
                 }}
               >
                 <div style={{ fontSize: 36, marginBottom: 12 }}>🎉</div>
@@ -1230,7 +1230,7 @@ export default function DiscountManager() {
                     background: '#1a1a1f', border: 'none', color: '#fff',
                     fontSize: 14, fontWeight: 600, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-sans)",
                   }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -1259,7 +1259,7 @@ export default function DiscountManager() {
                 style={{
                   background: '#fff', borderRadius: 14, border: '1px solid #eee',
                   boxShadow: '0 20px 60px rgba(0,0,0,0.2)', padding: 24, maxWidth: 380, width: '100%',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
@@ -1275,7 +1275,7 @@ export default function DiscountManager() {
                     style={{
                       padding: '9px 16px', borderRadius: 8, background: 'transparent',
                       border: '1px solid #eee', color: '#666', fontSize: 13, fontWeight: 500,
-                      cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+                      cursor: 'pointer', fontFamily: "var(--font-sans)",
                     }}
                   >
                     Annulla
@@ -1288,7 +1288,7 @@ export default function DiscountManager() {
                       padding: '9px 16px', borderRadius: 8, background: '#dc2626', border: 'none',
                       color: '#fff', fontSize: 13, fontWeight: 600,
                       cursor: bulkDeleting ? 'wait' : 'pointer', opacity: bulkDeleting ? 0.7 : 1,
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-sans)",
                     }}
                   >
                     {bulkDeleting ? 'Eliminazione...' : `Elimina ${selectedIds.size}`}
@@ -1333,7 +1333,7 @@ export default function DiscountManager() {
                   padding: 24,
                   maxWidth: 380,
                   width: '100%',
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-sans)",
                 }}
               >
                 <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1f', margin: 0, marginBottom: 8 }}>
@@ -1355,7 +1355,7 @@ export default function DiscountManager() {
                       fontSize: 13,
                       fontWeight: 500,
                       cursor: 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-sans)",
                     }}
                   >
                     Annulla
@@ -1372,7 +1372,7 @@ export default function DiscountManager() {
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-sans)",
                     }}
                   >
                     Elimina
@@ -1411,7 +1411,7 @@ const inputStyle = {
   fontSize: 13,
   color: '#1a1a1f',
   outline: 'none',
-  fontFamily: "'DM Sans', sans-serif",
+  fontFamily: "var(--font-sans)",
 }
 
 const thStyle = {

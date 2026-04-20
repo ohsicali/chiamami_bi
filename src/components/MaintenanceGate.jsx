@@ -86,7 +86,7 @@ function GateLogin({ user, signIn, signOut }) {
               color: '#ffffff',
               padding: '10px 22px',
               borderRadius: 999,
-              fontFamily: 'Georgia, serif',
+              fontFamily: 'var(--font-sans)',
               fontSize: 14,
               fontWeight: 800,
               letterSpacing: 2,

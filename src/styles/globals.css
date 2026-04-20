@@ -1,12 +1,6 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'TAN Songbird';
-  src: url('/TANSONGBIRD.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* TAN Songbird removed — v4 handoff §3 rule 3 */
 
 @theme {
   /* v4 palette — CANONICAL from docs/v4-handoff.md §2 */
@@ -44,12 +38,11 @@
   --color-bordo: #EAE3D7;
 
   /* Font stacks — UI body (Satoshi), wordmark (Alfa Slab One),
-     handwriting (Caveat). TAN Songbird kept for legacy utility classes. */
+     handwriting (Caveat). */
   --font-sans: 'Satoshi', 'Inter', -apple-system, system-ui, sans-serif;
   --font-display: 'Satoshi', 'Inter', sans-serif;
   --font-mark: 'Alfa Slab One', Georgia, serif;
   --font-hand: 'Caveat', cursive;
-  --font-editorial: 'TAN Songbird', 'Satoshi', serif;
 
   /* Radius scale */
   --radius-sm: 10px;
@@ -221,18 +214,19 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Legacy: TAN Songbird for restaurant names (kept for backwards-compat
-   until individual components are migrated to Satoshi 800/900) */
+/* Restaurant name utility — Satoshi 800 (v4 handoff §3: no TAN Songbird) */
 .font-restaurant {
-  font-family: 'TAN Songbird', 'Satoshi', serif;
+  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.015em;
 }
 
 /* Legacy admin scroll class — no longer needed, body scrolls by default */
 
-/* Desktop navbar offset — adds top padding only on ≥768px for fixed navbar */
+/* Desktop navbar offset — sticky nav takes space in flow, minimal extra offset */
 @media (min-width: 768px) {
   .desktop-nav-offset {
-    padding-top: 56px;
+    padding-top: 12px;
   }
 }
 
@@ -249,7 +243,7 @@ body {
    ============================================================ */
 @media (min-width: 768px) {
   /* Step 1: Homepage list cards — white bg, border-bottom only,
-     DM Sans names, larger 72px photo with 14px radius. */
+     Satoshi names, larger 72px photo with 14px radius. */
   .rcard {
     background: #fff !important;
     border: none !important;
@@ -275,7 +269,7 @@ body {
     border-radius: 14px !important;
   }
   .rcard .rcard-name {
-    font-family: 'DM Sans', sans-serif !important;
+    font-family: 'Satoshi', 'Inter', -apple-system, system-ui, sans-serif !important;
     font-size: 15px !important;
     font-weight: 600 !important;
     color: #22181C !important;

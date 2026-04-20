@@ -150,7 +150,7 @@ export default function RestaurantCard({
         <div className="absolute bottom-0 left-0 right-0 p-5 z-2">
           {/* Name */}
           <h3 style={{
-            fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+            fontFamily: "var(--font-sans)", fontWeight: 800,
             fontSize: 18, fontWeight: 600, color: '#fff', lineHeight: 1.5,
             marginBottom: restaurant.tagline ? 4 : 8,
           }}>
@@ -284,7 +284,7 @@ export default function RestaurantCard({
       <div className="rcard-body flex-1 min-w-0 flex flex-col justify-center">
         {/* Name */}
         <h3 className="rcard-name" style={{
-          fontFamily: "'TAN Songbird', 'DM Sans', sans-serif",
+          fontFamily: "var(--font-sans)", fontWeight: 800,
           fontSize: 14, fontWeight: 600, color: '#22181C',
           lineHeight: 1.5, marginBottom: 3,
         }}>
