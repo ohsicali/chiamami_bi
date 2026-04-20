@@ -123,16 +123,16 @@ function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
               color: 'var(--color-ink)',
-              border: `2px solid ${filled ? '#22181C' : '#E8E5DE'}`,
+              border: `2px solid ${filled ? 'var(--color-ink)' : 'var(--color-line)'}`,
               borderRadius: box.radius,
-              background: filled ? '#fafafa' : '#fff',
+              background: filled ? 'var(--color-page)' : '#fff',
               outline: 'none',
               transition: 'border-color 0.15s, background 0.15s',
-              caretColor: '#E8453C',
+              caretColor: 'var(--color-corallo)',
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = '#E8453C')}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-corallo)')}
             onBlur={(e) =>
-              (e.currentTarget.style.borderColor = filled ? '#22181C' : '#E8E5DE')
+              (e.currentTarget.style.borderColor = filled ? 'var(--color-ink)' : 'var(--color-line)')
             }
           />
         )
@@ -257,7 +257,7 @@ function ContactBox({ desktop }) {
 /* ------------------------------------------------------------------ */
 /*  Icone                                                             */
 /* ------------------------------------------------------------------ */
-function LockIcon({ size = 22, color = '#E8453C' }) {
+function LockIcon({ size = 22, color = 'var(--color-corallo)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect x="4" y="10" width="16" height="11" rx="2.5" stroke={color} strokeWidth="1.8" />
@@ -419,8 +419,8 @@ export default function VerifyPage() {
             width: 32,
             height: 32,
             borderRadius: '50%',
-            border: '3px solid #E8E5DE',
-            borderTopColor: '#E8453C',
+            border: '3px solid var(--color-line)',
+            borderTopColor: 'var(--color-corallo)',
             animation: 'verifySpin 0.8s linear infinite',
           }}
         />
@@ -521,7 +521,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               margin: '0 auto 12px',
             }}
           >
-            <LockIcon size={22} color="#E8453C" />
+            <LockIcon size={22} color="var(--color-corallo)" />
           </div>
           <h1
             style={{
@@ -620,8 +620,8 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               fontWeight: 600,
               padding: '10px 18px',
               borderRadius: 10,
-              border: '1px solid #E8E0D4',
-              background: '#fff',
+              border: '1px solid var(--color-line)',
+              background: 'var(--color-card)',
             }}
           >
             ← Torna al sito ChiamamiBi
@@ -670,8 +670,8 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               fontWeight: 600,
               padding: '8px 14px',
               borderRadius: 10,
-              border: '1px solid #E8E0D4',
-              background: '#fff',
+              border: '1px solid var(--color-line)',
+              background: 'var(--color-card)',
             }}
           >
             ← Torna al sito
@@ -682,9 +682,9 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           style={{
             width: '100%',
             maxWidth: 440,
-            background: '#fff',
+            background: 'var(--color-card)',
             borderRadius: 20,
-            border: '1px solid #E8E5DE',
+            border: '1px solid var(--color-line)',
             padding: '36px 32px 28px',
             boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
           }}
@@ -710,7 +710,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
                 marginBottom: 14,
               }}
             >
-              <LockIcon size={24} color="#E8453C" />
+              <LockIcon size={24} color="var(--color-corallo)" />
             </div>
             <h1
               style={{
@@ -1021,7 +1021,7 @@ function GuideBadge({ compact }) {
         alignItems: 'center',
         gap: 5,
         background: 'rgba(74,222,128,0.12)',
-        color: '#4ADE80',
+        color: 'var(--color-success)',
         borderRadius: 999,
         padding: compact ? '3px 8px' : '5px 12px',
         fontSize: compact ? 8 : 10,
@@ -1036,7 +1036,7 @@ function GuideBadge({ compact }) {
           width: compact ? 4 : 6,
           height: compact ? 4 : 6,
           borderRadius: '50%',
-          background: '#4ADE80',
+          background: 'var(--color-success)',
         }}
       />
       Nella guida
@@ -1309,15 +1309,15 @@ function VerifyTab({ restaurant }) {
               fontFamily: "'SF Mono', 'Menlo', monospace",
               letterSpacing: 1.5,
               textAlign: 'center',
-              border: '2px solid #E8E0D4',
+              border: '2px solid var(--color-line)',
               borderRadius: 14,
-              background: '#fff',
+              background: 'var(--color-card)',
               color: 'var(--color-ink)',
               outline: 'none',
               transition: 'border-color 0.15s',
             }}
-            onFocus={(e) => (e.target.style.borderColor = '#E8453C')}
-            onBlur={(e) => (e.target.style.borderColor = '#E8E0D4')}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--color-corallo)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--color-line)')}
           />
 
           <button
@@ -1327,8 +1327,8 @@ function VerifyTab({ restaurant }) {
               width: '100%',
               marginTop: 14,
               padding: '16px',
-              background: code.trim() && !loading ? '#E8453C' : '#E8E0D4',
-              color: code.trim() && !loading ? '#fff' : '#8A8680',
+              background: code.trim() && !loading ? 'var(--color-corallo)' : 'var(--color-line)',
+              color: code.trim() && !loading ? '#fff' : 'var(--color-ink-55)',
               border: 'none',
               borderRadius: 14,
               fontSize: 15,
@@ -1550,7 +1550,7 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
           background: 'var(--color-ink)',
           borderRadius: 14,
           overflow: 'hidden',
-          border: '2px solid #E8E0D4',
+          border: '2px solid var(--color-line)',
         }}
       >
         {canShowVideo && (
@@ -1662,7 +1662,7 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
           marginTop: 16,
           padding: '14px',
           background: 'transparent',
-          border: '1px solid #E8E0D4',
+          border: '1px solid var(--color-line)',
           borderRadius: 14,
           color: 'var(--color-ink)',
           fontSize: 13,
@@ -2029,7 +2029,7 @@ function SuccessBurst() {
           width: 120,
           height: 120,
           borderRadius: '50%',
-          background: '#fff',
+          background: 'var(--color-card)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -2121,16 +2121,16 @@ const TONES = {
     titleColor: '#78350F',
   },
   neutral: {
-    bg: '#F5F1EA',
-    border: '#E8E0D4',
-    iconBg: '#8A8680',
+    bg: 'var(--color-cream)',
+    border: 'var(--color-line)',
+    iconBg: 'var(--color-ink-55)',
     iconColor: '#fff',
-    titleColor: '#22181C',
+    titleColor: 'var(--color-ink)',
   },
   error: {
     bg: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
     border: '#FCA5A5',
-    iconBg: '#E8453C',
+    iconBg: 'var(--color-corallo)',
     iconColor: '#fff',
     titleColor: '#7F1D1D',
   },
@@ -2316,9 +2316,9 @@ function RangePicker({ range, onChange }) {
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 4,
             padding: 4,
-            background: '#F5F1EA',
+            background: 'var(--color-cream)',
             borderRadius: 12,
-            border: '1px solid #E8E0D4',
+            border: '1px solid var(--color-line)',
             flex: 1,
             minWidth: 0,
           }}
@@ -2335,8 +2335,8 @@ function RangePicker({ range, onChange }) {
                   padding: '10px 6px',
                   borderRadius: 9,
                   border: 'none',
-                  background: active ? '#22181C' : 'transparent',
-                  color: active ? '#fff' : '#4A3F44',
+                  background: active ? 'var(--color-ink)' : 'transparent',
+                  color: active ? '#fff' : 'var(--color-ink-70)',
                   fontSize: 14,
                   fontWeight: active ? 700 : 600,
                   cursor: 'pointer',
@@ -2363,9 +2363,9 @@ function RangePicker({ range, onChange }) {
             padding: '0 14px',
             minWidth: 52,
             borderRadius: 12,
-            border: isCustom ? '1px solid #22181C' : '1px solid #E8E0D4',
-            background: isCustom ? '#22181C' : '#fff',
-            color: isCustom ? '#fff' : '#22181C',
+            border: isCustom ? '1px solid #22181C' : '1px solid var(--color-line)',
+            background: isCustom ? 'var(--color-ink)' : '#fff',
+            color: isCustom ? '#fff' : 'var(--color-ink)',
             cursor: 'pointer',
             fontSize: 14,
             fontWeight: 600,
@@ -2394,8 +2394,8 @@ function RangePicker({ range, onChange }) {
             padding: '10px 14px',
             marginBottom: 14,
             borderRadius: 10,
-            border: '1px solid #E8E0D4',
-            background: '#fff',
+            border: '1px solid var(--color-line)',
+            background: 'var(--color-card)',
             cursor: 'pointer',
             fontSize: 14,
             fontWeight: 600,
@@ -2490,8 +2490,8 @@ function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
           const inRange = rangeStart && rangeStop && ts >= rangeStart && ts <= rangeStop
           const isFuture = ts > dayTs(new Date())
           const isEdge = isFrom || isTo
-          const bg = isEdge ? '#22181C' : inRange ? '#F5E6E4' : 'transparent'
-          const color = isEdge ? '#fff' : isFuture ? '#D0C8BD' : '#22181C'
+          const bg = isEdge ? 'var(--color-ink)' : inRange ? 'var(--color-corallo-soft)' : 'transparent'
+          const color = isEdge ? '#fff' : isFuture ? 'var(--color-ink-15)' : 'var(--color-ink)'
           return (
             <button
               key={i}
@@ -2566,7 +2566,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#fff',
+          background: 'var(--color-card)',
           borderRadius: '20px 20px 0 0',
           width: '100%',
           maxWidth: 520,
@@ -2591,7 +2591,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
           <button
             onClick={onClose}
             style={{
-              background: '#F5F1EA',
+              background: 'var(--color-cream)',
               border: 'none',
               width: 40,
               height: 40,
@@ -2617,7 +2617,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <button
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
+              style={{ background: 'var(--color-cream)', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
               aria-label="Mese precedente"
             >
               ‹
@@ -2627,7 +2627,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
             </div>
             <button
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
+              style={{ background: 'var(--color-cream)', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
               aria-label="Mese successivo"
             >
               ›
@@ -2643,7 +2643,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
               textAlign: 'center',
               marginBottom: 14,
               padding: '8px 12px',
-              background: '#F5F1EA',
+              background: 'var(--color-cream)',
               borderRadius: 10,
             }}
           >
@@ -2661,7 +2661,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
             padding: '14px 20px',
             paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))',
             borderTop: '1px solid #F0EAE0',
-            background: '#fff',
+            background: 'var(--color-card)',
           }}
         >
           <button
@@ -2669,8 +2669,8 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
             style={{
               padding: '13px 16px',
               borderRadius: 12,
-              border: '1px solid #E8E0D4',
-              background: '#fff',
+              border: '1px solid var(--color-line)',
+              background: 'var(--color-card)',
               color: 'var(--color-ink)',
               fontSize: 14,
               fontWeight: 600,
@@ -2687,8 +2687,8 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
               padding: '13px 20px',
               borderRadius: 12,
               border: 'none',
-              background: canApply ? '#E8453C' : '#F5F1EA',
-              color: canApply ? '#fff' : '#8A8680',
+              background: canApply ? 'var(--color-corallo)' : 'var(--color-cream)',
+              color: canApply ? '#fff' : 'var(--color-ink-55)',
               fontSize: 15,
               fontWeight: 700,
               cursor: canApply ? 'pointer' : 'not-allowed',
@@ -2835,8 +2835,8 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
             style={{
               width: 28,
               height: 28,
-              border: '3px solid #E8E0D4',
-              borderTopColor: '#E8453C',
+              border: '3px solid var(--color-line)',
+              borderTopColor: 'var(--color-corallo)',
               borderRadius: '50%',
               margin: '0 auto 12px',
               animation: 'verifySpin 0.8s linear infinite',
@@ -2959,7 +2959,7 @@ function StatGrid({ stats, range }) {
         <div
           key={c.label}
           style={{
-            background: '#fff',
+            background: 'var(--color-card)',
             borderRadius: 14,
             padding: '16px 16px 14px',
             border: '1px solid #F0EAE0',
@@ -3091,7 +3091,7 @@ function FunnelCard({ stats, range }) {
   return (
     <div
       style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: 16,
         padding: 18,
         marginBottom: 16,
@@ -3126,7 +3126,7 @@ function FunnelCard({ stats, range }) {
                 <span style={{ color: 'var(--color-ink)', fontWeight: 500 }}>{s.label}</span>
                 <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
               </div>
-              <div style={{ height: 8, background: '#F5F1EA', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ height: 8, background: 'var(--color-cream)', borderRadius: 4, overflow: 'hidden' }}>
                 <div
                   style={{
                     width: `${Math.max(2, pct)}%`,
@@ -3150,7 +3150,7 @@ function ActivityList({ activity }) {
     return (
       <div
         style={{
-          background: '#fff',
+          background: 'var(--color-card)',
           borderRadius: 16,
           padding: '24px 18px',
           border: '1px solid #F0EAE0',
@@ -3179,7 +3179,7 @@ function ActivityList({ activity }) {
   return (
     <div
       style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: 16,
         border: '1px solid #F0EAE0',
         overflow: 'hidden',
