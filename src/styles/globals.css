@@ -57,6 +57,11 @@
   --shadow-lg: 0 12px 32px rgba(34, 24, 28, 0.12);
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg);
@@ -74,10 +79,10 @@ body {
 /* Map page: lock scroll and fill full screen including iOS Safari chrome */
 .map-fixed {
   overflow: hidden;
-  /* dvh adjusts with iOS Safari bar show/hide */
-  height: 100dvh;
-  /* iOS fallback: fill-available covers behind Safari bar */
-  height: -webkit-fill-available;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #1a1a2e;
 }
 
 /* Mapbox overrides */

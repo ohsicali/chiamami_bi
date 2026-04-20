@@ -426,7 +426,7 @@ export default function HomePage() {
   )
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* Mobile Navbar (hidden on desktop) */}
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
