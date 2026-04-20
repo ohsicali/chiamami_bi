@@ -683,10 +683,10 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             width: '100%',
             maxWidth: 440,
             background: 'var(--color-card)',
-            borderRadius: 20,
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--color-line)',
             padding: '36px 32px 28px',
-            boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
+            boxShadow: 'var(--shadow-md)',
           }}
         >
           <div
