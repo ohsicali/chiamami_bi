@@ -143,14 +143,13 @@ export default function HomePage() {
   const location = useLocation()
 
   useEffect(() => {
-    // Dark bg prevents cream flash behind fixed container
-    document.body.style.background = '#1a1a2e'
+    document.body.classList.add('map-fixed')
     // Delayed 1px scroll so iOS Safari treats this as a scrollable context
     // and auto-hides its address bar (bars only hide on scrollable pages)
     const t = setTimeout(() => window.scrollTo(0, 1), 100)
     return () => {
       clearTimeout(t)
-      document.body.style.background = ''
+      document.body.classList.remove('map-fixed')
     }
   }, [])
 
@@ -429,7 +428,7 @@ export default function HomePage() {
   )
 
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: '#1e1e2a' }}>
       {/* Mobile Navbar (hidden on desktop) */}
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
