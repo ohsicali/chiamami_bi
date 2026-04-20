@@ -461,12 +461,12 @@ export default function HomePage() {
         {!hideBottomPanel && viewportRestaurants.length > 0 && (
           <button
             onClick={openSheet}
+            className="glass-pill-v4-dark"
             style={{
               position: 'absolute', bottom: TAB_BAR_HEIGHT + 120, left: '50%',
               transform: 'translateX(-50%)', zIndex: 10,
-              background: 'var(--color-primary)', borderRadius: 20,
-              padding: '9px 18px', border: 'none', cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              borderRadius: 999,
+              padding: '10px 20px', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 7,
               WebkitTapHighlightColor: 'transparent',
             }}
@@ -476,8 +476,8 @@ export default function HomePage() {
               <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Lista</span>
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{viewportRestaurants.length}</span>
+            <span style={{ color: 'rgba(255,255,255,0.5)' }}>·</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{viewportRestaurants.length}</span>
           </button>
         )}
 
@@ -597,15 +597,12 @@ export default function HomePage() {
           {/* "Vedi la mappa" */}
           <button
             onClick={closeSheet}
+            className="glass-pill-v4-dark"
             style={{
               position: 'absolute', bottom: TAB_BAR_HEIGHT + 16,
               left: '50%', transform: 'translateX(-50%)', zIndex: 40,
-              background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(20px) saturate(1.6)',
-              WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-              color: '#fff',
               fontSize: 14, fontWeight: 600, padding: '12px 28px',
-              borderRadius: 28, border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              borderRadius: 999, border: 'none',
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
               WebkitTapHighlightColor: 'transparent',
             }}
