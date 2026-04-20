@@ -36,7 +36,6 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
-/* esp-caro-card: grid 96px 1fr auto, photo 96×88, Satoshi 800 name, category pill, → arrow */
 function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
@@ -58,73 +57,81 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       onClick={() => onClick?.(restaurant)}
       className="flex-shrink-0"
       style={{
-        flex: '0 0 82%',
-        scrollSnapAlign: 'center',
-        borderRadius: 16,
-        background: '#fff',
-        boxShadow: '0 4px 16px rgba(34,24,28,.14)',
+        width: 260,
+        scrollSnapAlign: 'start',
+        borderRadius: 14,
+        background: '#FAF7F2',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
-        display: 'grid',
-        gridTemplateColumns: '96px 1fr auto',
-        gap: 12,
-        padding: 10,
-        alignItems: 'center',
+        display: 'flex', flexDirection: 'column',
+        position: 'relative',
       }}
     >
-      {/* Photo 96×88 */}
-      <div style={{ width: 96, height: 88, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-        {photoUrl ? (
-          <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
-            {category?.emoji || '🍽️'}
+      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
+        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+          {photoUrl ? (
+            <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+              {category?.emoji || '🍽️'}
+            </div>
+          )}
+          {discountTitle && (
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              background: 'var(--color-corallo)', color: '#fff',
+              fontSize: 8, fontWeight: 700, textAlign: 'center',
+              padding: '2px 0',
+            }}>
+              {discountTitle}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 800,
+            fontSize: 15, letterSpacing: '-0.015em',
+            color: 'var(--color-ink)',
+            lineHeight: 1.15, marginBottom: 3,
+            whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+            overflow: 'hidden',
+          }}>
+            {restaurant.name}
+          </div>
+          {restaurant.tagline && (
+            <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {restaurant.tagline}
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+            {category && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 2,
+                backgroundColor: `${category.color}20`,
+                color: category.color,
+                fontSize: 9, fontWeight: 600,
+                padding: '1px 6px', borderRadius: 12,
+                whiteSpace: 'nowrap',
+              }}>
+                {category.emoji} {category.name}
+              </span>
+            )}
+            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+          </div>
+          {distance != null && (
+            <div style={{ fontSize: 10, color: '#8A8680', fontWeight: 500 }}>
+              {formatDistance(distance)}
+            </div>
+          )}
+        </div>
+        {onSave && (
+          <div style={{ position: 'absolute', top: 6, right: 6 }}>
+            <SaveButton saved={saved} onClick={onSave} size="xs" />
           </div>
         )}
-        {distance != null && (
-          <div style={{
-            position: 'absolute', bottom: 5, left: 5,
-            background: 'rgba(34,24,28,.8)', color: '#fff',
-            fontSize: 9, fontWeight: 700, padding: '3px 6px', borderRadius: 6, letterSpacing: '0.04em',
-          }}>{formatDistance(distance)}</div>
-        )}
-        {discountTitle && (
-          <div style={{
-            position: 'absolute', top: 5, left: 5,
-            background: 'linear-gradient(135deg,#A3E635,#4ADE80)', color: '#22181C',
-            fontSize: 9.5, fontWeight: 800, padding: '2.5px 6px', borderRadius: 999, letterSpacing: '-0.01em',
-          }}>{discountTitle}</div>
-        )}
       </div>
-
-      {/* Body */}
-      <div style={{ minWidth: 0 }}>
-        <div style={{
-          fontFamily: 'var(--font-sans)', fontWeight: 800,
-          fontSize: 16, letterSpacing: '-0.015em',
-          color: '#22181C', lineHeight: 1.15,
-          whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
-        }}>{restaurant.name}</div>
-        <div style={{ fontSize: 11, color: 'rgba(34,24,28,.7)', marginTop: 3, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
-          {category && (
-            <span style={{
-              background: 'rgba(34,24,28,.05)', color: '#22181C',
-              fontWeight: 700, fontSize: 9.5, padding: '2px 6px', borderRadius: 999,
-            }}>{category.emoji} {category.name}</span>
-          )}
-          {priceStr && <span>{priceStr}</span>}
-          {restaurant.neighborhood && <span>{restaurant.neighborhood}</span>}
-        </div>
-      </div>
-
-      {/* Arrow circle */}
-      <div style={{
-        width: 30, height: 30, borderRadius: '50%',
-        background: 'rgba(34,24,28,.05)', color: '#22181C',
-        display: 'grid', placeItems: 'center',
-        fontSize: 14, fontWeight: 800, flexShrink: 0,
-      }}>→</div>
     </div>
   )
 }
@@ -590,6 +597,8 @@ export default function HomePage() {
                       restaurant={r}
                       userPosition={position}
                       discountTitle={discountLabelMap[r.id]}
+                      saved={isSaved(r.id)}
+                      onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                       onClick={handleCardClick}
                     />
                   ))}
