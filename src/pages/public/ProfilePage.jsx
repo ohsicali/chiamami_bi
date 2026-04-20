@@ -243,6 +243,29 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* ── BI QUOTE — editorial Caveat (v4 §1029-1032) ── */}
+      <div style={{
+        margin: isDesktop ? '0 0 16px' : '0 22px 16px',
+        padding: '16px 18px',
+        background: 'var(--color-oro-soft, #F4E7CC)',
+        border: '1px solid rgba(176,137,84,.3)',
+        borderRadius: 16,
+      }}>
+        <div style={{
+          fontFamily: 'var(--font-hand, "Caveat", cursive)',
+          fontSize: 19, lineHeight: 1.25, color: 'var(--color-ink)',
+        }}>
+          "Bi sceglie i posti come li sceglierei io: per come si mangia,
+          non per quante stelle hanno."
+        </div>
+        <div style={{
+          fontSize: 11, color: 'var(--color-ink-70)',
+          marginTop: 6, fontWeight: 700,
+        }}>
+          — dalla bio di Bi
+        </div>
+      </div>
+
       {/* ── CARD INVITA UN AMICO (dark) — horizontal on desktop ── */}
       <div style={{
         background: 'var(--color-primary)', borderRadius: 20, padding: isDesktop ? '18px 22px' : 18,

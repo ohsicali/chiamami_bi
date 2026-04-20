@@ -975,26 +975,48 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
   )
 }
 
-/* ── HowItWorks — come funziona section ── */
+/* ── HowItWorks — come funziona (v4 mockup §291-296: 3 step grid) ── */
 function HowItWorks() {
+  const steps = [
+    { emo: '📱', t: 'Mostra il QR', s: 'Apri lo sconto e mostra il codice al ristorante' },
+    { emo: '✅', t: 'Validano', s: 'Il locale valida il codice e applica lo sconto' },
+    { emo: '🎉', t: 'Risparmia', s: 'Lo sconto viene scalato direttamente dal conto' },
+  ]
   return (
     <div>
-      <p style={{ ...sectionLabel, marginBottom: 10 }}>Come funziona</p>
-      <div style={{ background: '#fff', borderRadius: 20, padding: 18, border: '1px solid var(--color-bordo)' }}>
-        {[
-          { icon: '📱', bg: 'rgba(232, 69, 60,0.08)', title: 'Mostra il QR code', desc: 'Apri lo sconto e mostra il codice al ristorante' },
-          { icon: '✅', bg: 'rgba(176,137,84,0.1)', title: 'Ottieni lo sconto', desc: 'Il ristorante valida il codice e applica lo sconto' },
-          { icon: '🎉', bg: 'rgba(163,230,53,0.1)', title: 'Goditi il risparmio', desc: 'Lo sconto viene applicato direttamente al conto' },
-        ].map((step, i) => (
-          <div key={i} className="flex gap-3" style={{ marginBottom: i < 2 ? 14 : 0 }}>
+      <div style={{ padding: '0 0 10px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div>
+          <h3 style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 900,
+            fontSize: 18, letterSpacing: '-0.02em', lineHeight: 1.1,
+            color: 'var(--color-ink)', margin: 0,
+          }}>
+            Come funziona
+          </h3>
+          <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2 }}>
+            3 step e lo sconto è tuo
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{
+            background: '#fff',
+            border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+            borderRadius: 16,
+            padding: '14px 10px',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 24, lineHeight: 1, marginBottom: 8 }}>{s.emo}</div>
             <div style={{
-              width: 36, height: 36, borderRadius: 10, background: step.bg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, flexShrink: 0,
-            }}>{step.icon}</div>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 2 }}>{step.title}</p>
-              <p style={{ fontSize: 11, color: 'var(--color-secondary)' }}>{step.desc}</p>
+              fontFamily: 'var(--font-sans)', fontWeight: 800,
+              fontSize: 12, letterSpacing: '-0.01em',
+              color: 'var(--color-ink)', marginBottom: 4,
+            }}>
+              {s.t}
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--color-ink-70)', lineHeight: 1.35 }}>
+              {s.s}
             </div>
           </div>
         ))}
