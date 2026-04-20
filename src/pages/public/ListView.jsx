@@ -262,8 +262,8 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
         <div style={{
           fontFamily: "var(--font-sans)", fontWeight: 800,
-          fontSize: 18, fontWeight: 600, color: '#22181C',
-          lineHeight: 1.2, marginBottom: 3,
+          fontSize: 18, color: '#22181C',
+          lineHeight: 1.2, letterSpacing: '-0.015em', marginBottom: 3,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           paddingRight: 28,
         }}>
