@@ -19,7 +19,8 @@ dove siamo. Aggiorna a ogni step importante.
 ## Env vars Vercel — già configurate
 
 - `RESEND_API_KEY` ✓ (funzionante dopo rigenerazione 2026-04-19)
-- `RESEND_FROM` = `ChiamamiBi <noreply@chiamamibi.com>` ✓
+- `RESEND_FROM` = `Bi <ciao@chiamamibi.com>` ⚠️ aggiornare su Vercel (era `ChiamamiBi <noreply@chiamamibi.com>`)
+- `RESEND_REPLY_TO` = `info@chiamamibi.com` ⚠️ nuovo, impostare su Vercel (fallback codice `info@chiamamibi.com`)
 - `GOOGLE_PLACES_KEY` ✓ (server-only, no VITE_ prefix)
 - `SUPABASE_SERVICE_ROLE_KEY` ✓ (All environments)
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` ✓

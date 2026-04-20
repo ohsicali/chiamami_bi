@@ -112,7 +112,8 @@ export default async function handler(req, res) {
   // Build email content
   const subject = buildSubject(type, payload)
   const html = buildHtml(type, payload)
-  const from = process.env.RESEND_FROM || 'ChiamamiBi <noreply@chiamamibi.com>'
+  const from = process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>'
+  const replyTo = process.env.RESEND_REPLY_TO || 'info@chiamamibi.com'
 
   // Send in batches via Resend
   let sent = 0
@@ -129,7 +130,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(
-          chunk.map((email) => ({ from, to: [email], subject, html }))
+          chunk.map((email) => ({ from, reply_to: replyTo, to: [email], subject, html }))
         ),
       })
       if (!resp.ok) {

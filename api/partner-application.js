@@ -100,7 +100,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: process.env.RESEND_FROM || 'ChiamamiBi <noreply@chiamamibi.com>',
+          from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
           to: [NOTIFY_EMAIL],
           reply_to: email,
           subject: `Nuova candidatura partner: ${restaurant_name}`,

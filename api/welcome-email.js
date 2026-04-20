@@ -26,7 +26,8 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'ChiamamiBi <noreply@chiamamibi.com>',
+        from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
+        reply_to: process.env.RESEND_REPLY_TO || 'info@chiamamibi.com',
         to: [email],
         subject: `Benvenuta su ChiamamiBi, ${firstName}! 🍕`,
         html: buildWelcomeHtml(firstName),
