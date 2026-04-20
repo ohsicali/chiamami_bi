@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-04-19
+Ultima modifica: 2026-04-20
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -10,6 +10,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Track | PR | Stato | Note |
 |-------|----|----|----|
 | A — Disable user reviews | #64 | ✅ Merged (02a1f99) | SQL eseguito, code live |
+| A5 — Hide legacy reviews UI | #69 | ✅ Done (36c11bc) | Decisione Augusto 2026-04-20: nascondere. UI già senza ref a `user_reviews` dopo #64; rimosso "recensioni" da testo delete-account. DB rows preservate. |
 | C1 — Google Places hours | #65 | ✅ Merged (bf538f8) | Env + SQL + backfill fatti in sessioni precedenti |
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
