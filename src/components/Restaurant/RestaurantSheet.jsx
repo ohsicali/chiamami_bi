@@ -92,48 +92,83 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
         exit={{ y: 80, opacity: 0, scale: 0.95 }}
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
         style={{
-          position: 'absolute', bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16, zIndex: 30,
-          background: 'rgba(20,20,20,0.55)',
-          backdropFilter: 'saturate(180%) blur(40px)', WebkitBackdropFilter: 'saturate(180%) blur(40px)',
-          color: '#fff',
-          padding: '14px 18px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderRadius: 20,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-          border: '1px solid rgba(255,255,255,0.1)',
+          position: 'absolute',
+          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+          left: '50%', transform: 'translateX(-50%)',
+          width: 'calc(100% - 24px)', maxWidth: 640,
+          zIndex: 30,
+          background: 'rgba(250,247,242,.9)',
+          backdropFilter: 'saturate(140%) blur(14px)',
+          WebkitBackdropFilter: 'saturate(140%) blur(14px)',
+          border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+          borderRadius: 999,
+          padding: '8px 10px 8px 22px',
+          display: 'flex', alignItems: 'center', gap: 14,
+          boxShadow: '0 10px 40px rgba(34,24,28,.14), 0 2px 8px rgba(34,24,28,.06)',
         }}
       >
         {/* Close button */}
         <button
           onClick={() => setDismissed(true)}
+          aria-label="Chiudi"
           style={{
             position: 'absolute', top: -8, right: -8, zIndex: 1,
-            width: 24, height: 24, borderRadius: '50%',
-            background: '#22181C', border: '2px solid rgba(255,255,255,0.3)',
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'var(--color-ink, #22181C)', border: '2px solid #fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+            cursor: 'pointer', boxShadow: '0 2px 6px rgba(34,24,28,.2)',
+            padding: 0,
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Sconto esclusivo da Bi</p>
-          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginTop: 2 }}>{displayTitle}</p>
+
+        {/* Green gradient dot with glow */}
+        <span
+          aria-hidden
+          style={{
+            flex: '0 0 auto',
+            width: 9, height: 9, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+            boxShadow: '0 0 0 3px rgba(163,230,53,.18)',
+          }}
+        />
+
+        <div style={{ flex: 1, minWidth: 0, lineHeight: 1.2 }}>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
+            color: 'var(--color-ink-55, rgba(34,24,28,.55))',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+          }}>
+            Sconto attivo
+          </div>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 800,
+            letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {displayTitle}
+          </div>
         </div>
 
         {isRedeemed ? (
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+          <span style={{
+            flex: '0 0 auto', fontSize: 12, fontWeight: 700,
+            color: 'var(--color-ink-55, rgba(34,24,28,.55))', padding: '0 14px',
+          }}>
             {t('discount.alreadyUsed')}
           </span>
         ) : isGenerated ? (
           <button
             onClick={() => setShowQR(true)}
             style={{
-              background: '#E8453C', color: '#fff', border: 'none',
-              padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', flexShrink: 0,
+              flex: '0 0 auto',
+              background: 'var(--color-ink, #22181C)', color: '#fff',
+              border: 'none', height: 42, padding: '0 20px', borderRadius: 999,
+              fontSize: 13, fontWeight: 800, letterSpacing: '0.01em',
+              fontFamily: 'var(--font-sans)', cursor: 'pointer',
             }}
           >
             Mostra QR
@@ -143,12 +178,15 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
             onClick={handleUnlock}
             disabled={generating || redemptionLoading}
             style={{
-              background: 'linear-gradient(135deg, #FFE5E3 0%, #E8453C 100%)', color: '#000', border: 'none',
-              padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', opacity: generating ? 0.5 : 1, flexShrink: 0,
+              flex: '0 0 auto',
+              background: 'var(--color-ink, #22181C)', color: '#fff',
+              border: 'none', height: 42, padding: '0 20px', borderRadius: 999,
+              fontSize: 13, fontWeight: 800, letterSpacing: '0.01em',
+              fontFamily: 'var(--font-sans)', cursor: 'pointer',
+              opacity: generating ? 0.5 : 1,
             }}
           >
-            {generating ? '...' : 'Sblocca'}
+            {generating ? '...' : 'Usa sconto'}
           </button>
         )}
       </motion.div>
@@ -383,7 +421,7 @@ export default function RestaurantSheet({
         </div>
 
         {/* Scrollable content */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1 }}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
 
           {/* Mobile photo carousel — inside scroll so horizontal swipes hit useDrag
               and vertical swipes bubble up to the scroll container. Renderizzato
