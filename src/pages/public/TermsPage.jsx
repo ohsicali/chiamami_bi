@@ -45,13 +45,12 @@ export default function TermsPage() {
             <li>Puoi cancellare il tuo account in qualsiasi momento dal profilo</li>
           </ul>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>4. Contenuti degli utenti</h2>
+          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>4. Segnalazioni</h2>
           <p>
-            Pubblicando recensioni o foto su ChiamamiBi, concedi una licenza non esclusiva
-            per la visualizzazione dei contenuti sulla piattaforma. I contenuti devono essere
-            veritieri, rispettosi e non violare diritti di terzi.
+            ChiamamiBi non pubblica contenuti generati dagli utenti (recensioni, foto).
+            Tutti i contenuti pubblici sono prodotti dalla redazione. Puoi segnalare
+            errori o imprecisioni via email a <a href="mailto:info@chiamamibi.com" style={{ color: 'var(--color-corallo)', textDecoration: 'underline' }}>info@chiamamibi.com</a>.
           </p>
-          <p>Ci riserviamo il diritto di rimuovere contenuti che violino queste linee guida.</p>
 
           <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>5. Sistema sconti</h2>
           <ul className="list-disc pl-5 space-y-1">
