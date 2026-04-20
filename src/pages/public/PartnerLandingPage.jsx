@@ -246,7 +246,7 @@ export default function PartnerLandingPage() {
             style={{
               background: '#fff',
               color: 'var(--color-ink)',
-              border: '1px solid var(--color-bordo)',
+              border: '1px solid var(--color-line)',
               borderRadius: 14,
               padding: '14px 28px',
               fontSize: 14, fontWeight: 600,
@@ -509,7 +509,7 @@ export default function PartnerLandingPage() {
                   <div className="md:hidden" style={{
                     width: 1,
                     height: 16,
-                    background: 'var(--color-bordo)',
+                    background: 'var(--color-line)',
                     marginLeft: 16,
                     marginTop: 6,
                     marginBottom: 6,
@@ -640,12 +640,12 @@ export default function PartnerLandingPage() {
                 background: submitting ? 'var(--color-ink-55)' : 'var(--color-corallo)',
                 color: '#fff',
                 border: 'none',
-                borderRadius: 14,
+                borderRadius: 'var(--radius-md)',
                 padding: 16,
                 fontSize: 15,
                 fontWeight: 600,
                 cursor: submitting ? 'not-allowed' : 'pointer',
-                fontFamily: "var(--font-sans)",
+                fontFamily: 'var(--font-sans)',
                 marginTop: 6,
               }}
             >

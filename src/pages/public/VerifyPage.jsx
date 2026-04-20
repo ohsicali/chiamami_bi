@@ -122,7 +122,7 @@ function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
               fontSize: box.fs,
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
-              color: '#22181C',
+              color: 'var(--color-ink)',
               border: `2px solid ${filled ? '#22181C' : '#E8E5DE'}`,
               borderRadius: box.radius,
               background: filled ? '#fafafa' : '#fff',
@@ -167,7 +167,7 @@ function InstructionsBlock({ desktop }) {
             width: 6,
             height: 6,
             borderRadius: '50%',
-            background: '#D4AF37',
+            background: 'var(--color-oro)',
             flexShrink: 0,
           }}
         />
@@ -175,7 +175,7 @@ function InstructionsBlock({ desktop }) {
           style={{
             fontSize: 12,
             fontWeight: 600,
-            color: '#22181C',
+            color: 'var(--color-ink)',
             letterSpacing: 0.2,
           }}
         >
@@ -190,8 +190,8 @@ function InstructionsBlock({ desktop }) {
                 width: 20,
                 height: 20,
                 borderRadius: 6,
-                background: '#FAF7F2',
-                color: '#E8453C',
+                background: 'var(--color-page)',
+                color: 'var(--color-corallo)',
                 fontSize: 10,
                 fontWeight: 700,
                 display: 'flex',
@@ -205,11 +205,11 @@ function InstructionsBlock({ desktop }) {
             <div
               style={{
                 fontSize: desktop ? 12 : 11,
-                color: '#8A8680',
+                color: 'var(--color-ink-55)',
                 lineHeight: 1.5,
               }}
             >
-              <span style={{ fontWeight: 600, color: '#22181C' }}>{s.title}</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{s.title}</span>
               {' — '}
               {s.body}
             </div>
@@ -225,11 +225,11 @@ function ContactBox({ desktop }) {
     <div
       style={{
         margin: desktop ? '0 0 12px' : '10px 20px 20px',
-        background: '#FAF7F2',
+        background: 'var(--color-page)',
         borderRadius: 8,
         padding: 12,
         fontSize: 11,
-        color: '#8A8680',
+        color: 'var(--color-ink-55)',
         lineHeight: 1.5,
       }}
     >
@@ -238,14 +238,14 @@ function ContactBox({ desktop }) {
         href="https://instagram.com/chiamamibi"
         target="_blank"
         rel="noopener noreferrer"
-        style={{ color: '#E8453C', fontWeight: 600, textDecoration: 'none' }}
+        style={{ color: 'var(--color-corallo)', fontWeight: 600, textDecoration: 'none' }}
       >
         @chiamamibi
       </a>{' '}
       o a{' '}
       <a
         href="mailto:info@chiamamibi.com"
-        style={{ color: '#E8453C', fontWeight: 600, textDecoration: 'none' }}
+        style={{ color: 'var(--color-corallo)', fontWeight: 600, textDecoration: 'none' }}
       >
         info@chiamamibi.com
       </a>
@@ -408,7 +408,7 @@ export default function VerifyPage() {
       <div
         style={{
           minHeight: '100dvh',
-          background: '#FAF7F2',
+          background: 'var(--color-page)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -460,13 +460,13 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
     <>
       {/* ---- MOBILE (< 768px) ---- */}
       {!isDesktop && (
-      <div style={{ minHeight: '100dvh', background: '#FAF7F2' }}>
+      <div style={{ minHeight: '100dvh', background: 'var(--color-page)' }}>
         {/* Brand bar — ChiamamiBi logo + link to main site for people who
             stumbled onto /verify by mistake. Matches RestaurantHeader's
             brand bar style so the experience is consistent once logged in. */}
         <div
           style={{
-            background: '#22181C',
+            background: 'var(--color-ink)',
             padding: '18px 16px 14px',
             display: 'flex',
             alignItems: 'center',
@@ -504,7 +504,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
         {/* Header scuro */}
         <div
           style={{
-            background: '#22181C',
+            background: 'var(--color-ink)',
             padding: '16px 20px 24px',
             textAlign: 'center',
           }}
@@ -525,9 +525,8 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           </div>
           <h1
             style={{
-              fontFamily: "var(--font-sans)", fontWeight: 800,
+              fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
               fontSize: 20,
-              fontWeight: 700,
               color: '#fff',
               marginBottom: 4,
             }}
@@ -542,7 +541,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               fontSize: 15,
               fontWeight: 600,
-              color: '#22181C',
+              color: 'var(--color-ink)',
               marginBottom: 14,
               textAlign: 'center',
             }}
@@ -564,7 +563,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               width: '100%',
               marginTop: 16,
-              background: '#E8453C',
+              background: 'var(--color-corallo)',
               color: '#fff',
               border: 'none',
               borderRadius: 12,
@@ -584,7 +583,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               style={{
                 marginTop: 10,
                 fontSize: 11,
-                color: '#E8453C',
+                color: 'var(--color-corallo)',
                 textAlign: 'center',
                 fontWeight: 500,
               }}
@@ -597,7 +596,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               marginTop: 12,
               fontSize: 10,
-              color: '#B5B0AA',
+              color: 'var(--color-ink-55)',
               textAlign: 'center',
             }}
           >
@@ -616,7 +615,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               display: 'inline-block',
               fontSize: 13,
-              color: '#4A3F44',
+              color: 'var(--color-ink-70)',
               textDecoration: 'none',
               fontWeight: 600,
               padding: '10px 18px',
@@ -627,7 +626,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           >
             ← Torna al sito ChiamamiBi
           </Link>
-          <div style={{ marginTop: 10, fontSize: 11, color: '#B5B0AA' }}>
+          <div style={{ marginTop: 10, fontSize: 11, color: 'var(--color-ink-55)' }}>
             Questa pagina è dedicata ai ristoranti partner
           </div>
         </div>
@@ -641,7 +640,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
         style={{
           display: 'flex',
           minHeight: '100dvh',
-          background: '#FAF7F2',
+          background: 'var(--color-page)',
           flexDirection: 'column',
           alignItems: 'center',
           padding: '32px 24px 48px',
@@ -666,7 +665,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             to="/"
             style={{
               fontSize: 13,
-              color: '#4A3F44',
+              color: 'var(--color-ink-70)',
               textDecoration: 'none',
               fontWeight: 600,
               padding: '8px 14px',
@@ -715,10 +714,9 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             </div>
             <h1
               style={{
-                fontFamily: "var(--font-sans)", fontWeight: 800,
+                fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
                 fontSize: 24,
-                fontWeight: 700,
-                color: '#22181C',
+                color: 'var(--color-ink)',
                 marginBottom: 6,
               }}
             >
@@ -730,7 +728,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               fontSize: 15,
               fontWeight: 600,
-              color: '#22181C',
+              color: 'var(--color-ink)',
               marginBottom: 14,
               textAlign: 'center',
             }}
@@ -752,7 +750,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               width: '100%',
               marginTop: 20,
-              background: '#E8453C',
+              background: 'var(--color-corallo)',
               color: '#fff',
               border: 'none',
               borderRadius: 14,
@@ -772,7 +770,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
               style={{
                 marginTop: 12,
                 fontSize: 12,
-                color: '#E8453C',
+                color: 'var(--color-corallo)',
                 textAlign: 'center',
                 fontWeight: 500,
               }}
@@ -785,7 +783,7 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
             style={{
               marginTop: 14,
               fontSize: 11,
-              color: '#B5B0AA',
+              color: 'var(--color-ink-55)',
               textAlign: 'center',
             }}
           >
@@ -798,9 +796,9 @@ function PinView({ pin, setPin, error, shake, submitting, onSubmit }) {
           <ContactBox desktop />
         </div>
 
-        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#B5B0AA' }}>
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55)' }}>
           Questa pagina è dedicata ai ristoranti partner.{' '}
-          <Link to="/" style={{ color: '#4A3F44', fontWeight: 600, textDecoration: 'underline' }}>
+          <Link to="/" style={{ color: 'var(--color-ink-70)', fontWeight: 600, textDecoration: 'underline' }}>
             Torna al sito
           </Link>
         </div>
@@ -817,7 +815,7 @@ function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
   const [tab, setTab] = useState('verify')
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#FAF7F2' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--color-page)' }}>
       <RestaurantHeader restaurant={restaurant} onLogout={onLogout} />
       <TabBar tab={tab} onChange={setTab} />
       <div style={{ padding: 0 }}>
@@ -863,7 +861,7 @@ function RestaurantHeader({ restaurant, onLogout }) {
       {!isDesktop && (
       <div
         style={{
-          background: '#22181C',
+          background: 'var(--color-ink)',
           padding: '20px 16px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -879,7 +877,7 @@ function RestaurantHeader({ restaurant, onLogout }) {
       {!isDesktop && (
       <div
         style={{
-          background: '#22181C',
+          background: 'var(--color-ink)',
           padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
@@ -939,7 +937,7 @@ function RestaurantHeader({ restaurant, onLogout }) {
       <div
         className="desktop-nav-offset"
         style={{
-          background: '#22181C',
+          background: 'var(--color-ink)',
           padding: '16px 32px',
           display: 'flex',
           alignItems: 'center',
@@ -951,9 +949,8 @@ function RestaurantHeader({ restaurant, onLogout }) {
           <div
             style={{
               fontSize: 18,
-              fontWeight: 700,
               color: '#fff',
-              fontFamily: "var(--font-sans)", fontWeight: 800,
+              fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
             }}
           >
             {restaurant?.name}
@@ -1059,7 +1056,7 @@ function TabBar({ tab, onChange }) {
   return (
     <div
       style={{
-        background: '#22181C',
+        background: 'var(--color-ink)',
         display: 'flex',
         borderTop: '1px solid rgba(255,255,255,0.06)',
       }}
@@ -1094,7 +1091,7 @@ function TabBar({ tab, onChange }) {
                   bottom: 0,
                   width: 60,
                   height: 3,
-                  background: '#E8453C',
+                  background: 'var(--color-corallo)',
                   borderRadius: '3px 3px 0 0',
                 }}
               />
@@ -1115,7 +1112,7 @@ function TabPlaceholder({ title, description }) {
       style={{
         padding: '40px 20px',
         textAlign: 'center',
-        color: '#8A8680',
+        color: 'var(--color-ink-55)',
         maxWidth: 480,
         margin: '0 auto',
       }}
@@ -1124,7 +1121,7 @@ function TabPlaceholder({ title, description }) {
         style={{
           fontSize: 13,
           fontWeight: 600,
-          color: '#22181C',
+          color: 'var(--color-ink)',
           marginBottom: 6,
         }}
       >
@@ -1286,7 +1283,7 @@ function VerifyTab({ restaurant }) {
           <div
             style={{
               fontSize: 13,
-              color: '#8A8680',
+              color: 'var(--color-ink-55)',
               marginBottom: 10,
               textAlign: 'center',
             }}
@@ -1315,7 +1312,7 @@ function VerifyTab({ restaurant }) {
               border: '2px solid #E8E0D4',
               borderRadius: 14,
               background: '#fff',
-              color: '#22181C',
+              color: 'var(--color-ink)',
               outline: 'none',
               transition: 'border-color 0.15s',
             }}
@@ -1357,7 +1354,7 @@ function VerifyTab({ restaurant }) {
               padding: '10px',
               background: 'transparent',
               border: 'none',
-              color: '#22181C',
+              color: 'var(--color-ink)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -1371,7 +1368,7 @@ function VerifyTab({ restaurant }) {
             style={{
               marginTop: 16,
               fontSize: 11,
-              color: '#8A8680',
+              color: 'var(--color-ink-55)',
               textAlign: 'center',
               lineHeight: 1.5,
             }}
@@ -1537,7 +1534,7 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
       <div
         style={{
           fontSize: 13,
-          color: '#8A8680',
+          color: 'var(--color-ink-55)',
           marginBottom: 10,
           textAlign: 'center',
         }}
@@ -1550,7 +1547,7 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
           position: 'relative',
           width: '100%',
           aspectRatio: '1 / 1',
-          background: '#22181C',
+          background: 'var(--color-ink)',
           borderRadius: 14,
           overflow: 'hidden',
           border: '2px solid #E8E0D4',
@@ -1667,7 +1664,7 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
           background: 'transparent',
           border: '1px solid #E8E0D4',
           borderRadius: 14,
-          color: '#22181C',
+          color: 'var(--color-ink)',
           fontSize: 13,
           fontWeight: 600,
           cursor: 'pointer',
@@ -1680,7 +1677,7 @@ function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
         style={{
           marginTop: 12,
           fontSize: 11,
-          color: '#8A8680',
+          color: 'var(--color-ink-55)',
           textAlign: 'center',
           lineHeight: 1.5,
         }}
@@ -2215,7 +2212,7 @@ function ResultCard({ tone, icon, title, description, children, onReset, resetLa
           width: '100%',
           marginTop: 18,
           padding: '13px',
-          background: '#22181C',
+          background: 'var(--color-ink)',
           color: '#fff',
           border: 'none',
           borderRadius: 12,
@@ -2243,10 +2240,10 @@ function ResultRow({ label, value, strong }) {
         gap: 12,
       }}
     >
-      <span style={{ color: '#8A8680', fontWeight: 500, flexShrink: 0 }}>{label}</span>
+      <span style={{ color: 'var(--color-ink-55)', fontWeight: 500, flexShrink: 0 }}>{label}</span>
       <span
         style={{
-          color: '#22181C',
+          color: 'var(--color-ink)',
           fontWeight: strong ? 700 : 500,
           fontSize: strong ? 15 : 13,
           textAlign: 'right',
@@ -2402,10 +2399,10 @@ function RangePicker({ range, onChange }) {
             cursor: 'pointer',
             fontSize: 14,
             fontWeight: 600,
-            color: '#22181C',
+            color: 'var(--color-ink)',
           }}
         >
-          <span style={{ fontSize: 13, color: '#8A8680', fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 500 }}>
             Periodo selezionato
           </span>
           <span>{customDates}</span>
@@ -2479,7 +2476,7 @@ function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
     <div style={{ width: '100%' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
         {WEEKDAYS_IT.map((w, i) => (
-          <div key={i} style={{ textAlign: 'center', fontSize: 12, color: '#8A8680', fontWeight: 600 }}>
+          <div key={i} style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600 }}>
             {w}
           </div>
         ))}
@@ -2590,7 +2587,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
             borderBottom: '1px solid #F0EAE0',
           }}
         >
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#22181C' }}>Seleziona periodo</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)' }}>Seleziona periodo</div>
           <button
             onClick={onClose}
             style={{
@@ -2600,7 +2597,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
               height: 40,
               borderRadius: 12,
               cursor: 'pointer',
-              color: '#22181C',
+              color: 'var(--color-ink)',
               fontSize: 24,
               fontWeight: 400,
               lineHeight: 1,
@@ -2620,17 +2617,17 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <button
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: '#22181C' }}
+              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
               aria-label="Mese precedente"
             >
               ‹
             </button>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#22181C' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)' }}>
               {MONTHS_IT[month.getMonth()]} {month.getFullYear()}
             </div>
             <button
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: '#22181C' }}
+              style={{ background: '#F5F1EA', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
               aria-label="Mese successivo"
             >
               ›
@@ -2641,7 +2638,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
           <div
             style={{
               fontSize: 13,
-              color: '#8A8680',
+              color: 'var(--color-ink-55)',
               fontWeight: 600,
               textAlign: 'center',
               marginBottom: 14,
@@ -2674,7 +2671,7 @@ function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
               borderRadius: 12,
               border: '1px solid #E8E0D4',
               background: '#fff',
-              color: '#22181C',
+              color: 'var(--color-ink)',
               fontSize: 14,
               fontWeight: 600,
               cursor: 'pointer',
@@ -2833,7 +2830,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
       <RangePicker range={range} onChange={setRange} />
 
       {loading ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8A8680' }}>
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
           <div
             style={{
               width: 28,
@@ -2988,14 +2985,14 @@ function StatGrid({ stats, range }) {
             style={{
               fontSize: 26,
               fontWeight: 800,
-              color: '#22181C',
+              color: 'var(--color-ink)',
               lineHeight: 1,
               letterSpacing: -0.5,
             }}
           >
             {c.value.toLocaleString('it-IT')}
           </div>
-          <div style={{ fontSize: 11, color: '#8A8680', marginTop: 6 }}>{c.sublabel}</div>
+          <div style={{ fontSize: 11, color: 'var(--color-ink-55)', marginTop: 6 }}>{c.sublabel}</div>
         </div>
       ))}
     </div>
@@ -3028,7 +3025,7 @@ function ActiveDiscountCard({ discount }) {
       <div
         style={{
           fontSize: 11,
-          color: '#E8453C',
+          color: 'var(--color-corallo)',
           fontWeight: 700,
           letterSpacing: 0.8,
           textTransform: 'uppercase',
@@ -3070,7 +3067,7 @@ function ActiveDiscountCard({ discount }) {
             style={{
               width: `${pct}%`,
               height: '100%',
-              background: '#E8453C',
+              background: 'var(--color-corallo)',
               transition: 'width 0.4s',
             }}
           />
@@ -3105,7 +3102,7 @@ function FunnelCard({ stats, range }) {
         style={{
           fontSize: 12,
           fontWeight: 700,
-          color: '#8A8680',
+          color: 'var(--color-ink-55)',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
           marginBottom: 12,
@@ -3126,7 +3123,7 @@ function FunnelCard({ stats, range }) {
                   marginBottom: 5,
                 }}
               >
-                <span style={{ color: '#22181C', fontWeight: 500 }}>{s.label}</span>
+                <span style={{ color: 'var(--color-ink)', fontWeight: 500 }}>{s.label}</span>
                 <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
               </div>
               <div style={{ height: 8, background: '#F5F1EA', borderRadius: 4, overflow: 'hidden' }}>
@@ -3164,7 +3161,7 @@ function ActivityList({ activity }) {
           style={{
             fontSize: 12,
             fontWeight: 700,
-            color: '#8A8680',
+            color: 'var(--color-ink-55)',
             letterSpacing: 0.5,
             textTransform: 'uppercase',
             marginBottom: 8,
@@ -3172,7 +3169,7 @@ function ActivityList({ activity }) {
         >
           Attività recente
         </div>
-        <div style={{ fontSize: 13, color: '#8A8680' }}>
+        <div style={{ fontSize: 13, color: 'var(--color-ink-55)' }}>
           Nessuno sconto ancora generato.
         </div>
       </div>
@@ -3192,7 +3189,7 @@ function ActivityList({ activity }) {
         style={{
           fontSize: 12,
           fontWeight: 700,
-          color: '#8A8680',
+          color: 'var(--color-ink-55)',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
           padding: '14px 16px 8px',
@@ -3263,7 +3260,7 @@ function ActivityRow({ item }) {
           style={{
             fontSize: 14,
             fontWeight: 600,
-            color: '#22181C',
+            color: 'var(--color-ink)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -3274,7 +3271,7 @@ function ActivityRow({ item }) {
         <div
           style={{
             fontSize: 12,
-            color: '#8A8680',
+            color: 'var(--color-ink-55)',
             marginTop: 2,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
