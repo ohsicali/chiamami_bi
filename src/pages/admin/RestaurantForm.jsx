@@ -2015,9 +2015,9 @@ export default function RestaurantForm() {
             </div>
           </CollapsibleSection>
 
-          {/* --- Recensione Bi --- */}
-          <CollapsibleSection title="Recensione Bi" subtitle="La nostra opinione e i consigli del team" defaultOpen={false}>
-            <Field label="La nostra recensione">
+          {/* --- Secondo Bi --- */}
+          <CollapsibleSection title="Secondo Bi" subtitle="La nostra opinione e i consigli del team" defaultOpen={false}>
+            <Field label="Il testo di Bi">
               <textarea
                 value={form.our_review}
                 onChange={(e) => update('our_review', e.target.value)}

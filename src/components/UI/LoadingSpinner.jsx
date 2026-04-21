@@ -16,7 +16,7 @@ export function SkeletonCard({ className = "" }) {
         {/* Title */}
         <div className="skeleton h-5 w-3/4 rounded-md" />
 
-        {/* Rating row */}
+        {/* Tagline row */}
         <div className="flex items-center gap-2">
           <div className="skeleton h-4 w-20 rounded-md" />
           <div className="skeleton h-4 w-10 rounded-md" />
