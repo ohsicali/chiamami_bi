@@ -5,7 +5,7 @@
 <title>La Guida di Bi · v4 · Indice</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700,800,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4);
@@ -15,7 +15,7 @@
   --oro:#B08954; --green-a:#A3E635; --green-b:#4ADE80;
   --green-grad:linear-gradient(135deg,#A3E635 0%,#4ADE80 100%);
   --line:#EAE3D7;
-  --ff-ui:'Satoshi','Inter',-apple-system,system-ui,sans-serif;
+  --ff-ui:'Poppins','Inter',-apple-system,system-ui,sans-serif;
   --ff-mark:'Alfa Slab One',serif;
   --ff-hand:'Caveat',cursive;
   --shadow-sm:0 1px 3px rgba(34,24,28,.06);
@@ -43,7 +43,7 @@ a{color:inherit;text-decoration:none}
 .hero .cav{font-family:var(--ff-hand);font-size:28px;color:#fff;margin-top:22px;letter-spacing:.01em}
 
 /* ========= PRINCIPLES ========= */
-.principles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:32px}
+.principles{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:32px}
 .pr-card{background:#fff;border:1px solid var(--ink-05);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow-sm)}
 .pr-card .tit{font-weight:900;font-size:14px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
 .pr-card .tit::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--corallo);flex-shrink:0}
@@ -134,6 +134,9 @@ a{color:inherit;text-decoration:none}
 .foot .wmark{font-family:var(--ff-mark);font-size:18px;color:var(--corallo-ink);letter-spacing:-.01em}
 .foot .rt{text-align:right}
 
+@media (max-width:1100px){
+  .principles{grid-template-columns:repeat(3,1fr)}
+}
 @media (max-width:960px){
   .wrap{padding:28px 20px 60px}
   .hero{padding:36px 28px 32px}
@@ -157,7 +160,7 @@ a{color:inherit;text-decoration:none}
   <section class="hero">
     <div class="kick">v4 · Neotaste-aligned · 19 · 04 · 2026</div>
     <h1>La Guida di Bi</h1>
-    <p class="tag">Re-skin completo del prodotto: mobile, desktop, ristoratore e admin. Token canonici dal live, nomi locali in Satoshi heavy, sottrazione del chrome, un'unica voce editoriale firmata Bi.</p>
+    <p class="tag">Re-skin completo del prodotto: mobile, desktop, ristoratore e admin. Token canonici dal live, nomi locali in Poppins heavy, sottrazione del chrome, un'unica voce editoriale firmata Bi.</p>
     <p class="cav">— tutto quello che ho scelto è qui</p>
   </section>
 
@@ -178,6 +181,10 @@ a{color:inherit;text-decoration:none}
     <div class="pr-card">
       <div class="tit">Token canonici</div>
       <div class="sub">Ink #22181C · Corallo #E8453C · Page #FAF7F2 · verde sconto 135° lime→green. Estratti dal live, non stimati.</div>
+    </div>
+    <div class="pr-card" style="background:linear-gradient(135deg,rgba(232,69,60,.04) 0%,rgba(232,69,60,.08) 100%);border-color:rgba(232,69,60,.2)">
+      <div class="tit">Safari-aware</div>
+      <div class="sub">La web app resta dentro Safari. ~708px effettivi (non 844). Usare <code style="background:#fff;padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11px">100dvh</code> + <code style="background:#fff;padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:11px">env()</code>.</div>
     </div>
   </div>
 
@@ -272,7 +279,7 @@ a{color:inherit;text-decoration:none}
         <div class="body">
           <span class="label">Mobile · Scheda</span>
           <div class="name">Scheda ristorante</div>
-          <div class="desc">Hero full + card overlay centrata con nome in Satoshi 900. Banner sconto verde 135°, Secondo Bi, orari, Cosa prendere in oro, vicini. Sticky pill CTA sconto in fondo.</div>
+          <div class="desc">Hero full + card overlay centrata con nome in Poppins 900. Banner sconto verde 135°, Secondo Bi, orari, Cosa prendere in oro, vicini. Sticky pill CTA sconto in fondo.</div>
           <div class="meta">
             <div class="chips"><span class="chip">2 schermi</span><span class="chip">con / senza sconto</span></div>
             <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
@@ -504,16 +511,83 @@ a{color:inherit;text-decoration:none}
     </div>
   </section>
 
+  <!-- ========= RIFERIMENTI TECNICI ========= -->
+  <section class="sec">
+    <header class="sec-head">
+      <h2>Riferimenti tecnici</h2>
+      <div class="count">Vincolo implementativo · leggere prima di scrivere codice</div>
+    </header>
+    <div class="grid">
+
+      <a class="card" href="v4-safari-chrome-preview.html" style="grid-column:span 3">
+        <div class="mockup" style="background:linear-gradient(135deg,#0f0f10 0%,#2a1f23 100%);color:#fff;height:240px">
+          <!-- iPhone "prima" — schermo pieno 844 con zone rosse -->
+          <div class="phone-mini" style="margin-right:18px;position:relative">
+            <div class="inner">
+              <div class="hdr" style="background:#fff">HOME</div>
+              <div class="bd">
+                <div class="cor"></div>
+                <div class="ln short"></div>
+                <div class="ln"></div>
+                <div class="ln"></div>
+                <div class="ln short"></div>
+              </div>
+              <div class="nav"><span></span><span class="active"></span><span></span><span></span></div>
+            </div>
+            <!-- overlay rossi -->
+            <div style="position:absolute;top:4px;left:4px;right:4px;height:14px;background:repeating-linear-gradient(45deg,rgba(232,69,60,.6) 0 3px,transparent 3px 6px);border-radius:16px 16px 0 0;pointer-events:none"></div>
+            <div style="position:absolute;bottom:4px;left:4px;right:4px;height:22px;background:repeating-linear-gradient(45deg,rgba(232,69,60,.6) 0 3px,transparent 3px 6px);border-radius:0 0 16px 16px;pointer-events:none"></div>
+          </div>
+          <!-- iPhone "dopo" — con Safari chrome visibile -->
+          <div class="phone-mini" style="margin-left:18px;position:relative">
+            <div class="inner">
+              <div style="height:11px;background:#f2f2f7;display:flex;align-items:center;justify-content:center;font-size:4.5px;color:#8E8E93;letter-spacing:.3px;border-bottom:1px solid #d1d1d6">🔒 chiamamibi.com</div>
+              <div class="hdr" style="background:#fff;height:13px">HOME</div>
+              <div class="bd" style="padding:3px 5px 2px">
+                <div class="cor" style="height:11px"></div>
+                <div class="ln short"></div>
+                <div class="ln"></div>
+                <div class="ln short"></div>
+              </div>
+              <div class="nav" style="margin:0 -5px 0"><span></span><span class="active"></span><span></span><span></span></div>
+              <div style="height:10px;background:#f2f2f7;display:flex;align-items:center;justify-content:space-between;padding:0 4px;border-top:1px solid #d1d1d6">
+                <div style="width:3px;height:3px;border-radius:50%;background:#8E8E93"></div>
+                <div style="width:3px;height:3px;border-radius:50%;background:#8E8E93"></div>
+                <div style="width:3px;height:3px;border-radius:50%;background:#8E8E93"></div>
+              </div>
+              <div style="height:5px;background:#000"></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <span class="label" style="color:#C6372F">Safari iOS · vincolo reale</span>
+          <div class="name">v4 · Safari chrome preview</div>
+          <div class="desc">La web app resta dentro Safari (niente PWA). Safari riserva <strong>~52px in alto</strong> per la URL bar e <strong>~84px in basso</strong> per tab bar + home indicator: su iPhone 390×844 restano <strong>~708px effettivi</strong>. Tutte le schermate non-scroll (PIN, mappa Esplora, scheda con pill CTA) devono usare <code style="background:var(--ink-05);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:12px">100dvh</code> + <code style="background:var(--ink-05);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:12px">env(safe-area-inset-*)</code> + <code style="background:var(--ink-05);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:12px">viewport-fit=cover</code>. Lo file contiene 3 confronti before/after e lo snippet CSS da incollare.</div>
+          <div class="meta">
+            <div class="chips">
+              <span class="chip bi">Non-negotiable</span>
+              <span class="chip">3 confronti</span>
+              <span class="chip">CSS snippet</span>
+              <span class="chip">Leggere prima di Track B</span>
+            </div>
+            <span class="open">Apri <svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
   <!-- ========= FOOTER ========= -->
   <footer class="foot">
     <div>
       <div class="wmark">La Guida di Bi</div>
       <div style="margin-top:6px">Chiamami Bi · Torino · redesign v4 · 19 aprile 2026</div>
-      <div style="margin-top:4px">Satoshi (UI) · Alfa Slab One (wordmark) · Caveat (editoriale)</div>
+      <div style="margin-top:4px">Poppins (UI) · Alfa Slab One (wordmark) · Caveat (editoriale)</div>
     </div>
     <div class="rt">
-      <div>9 file · 23 schermi totali</div>
-      <div style="margin-top:4px">Mobile 390 · Desktop 1440 · PIN verify</div>
+      <div>10 file · 23 schermi + 1 riferimento tecnico</div>
+      <div style="margin-top:4px">Mobile 390 · Desktop 1440 · PIN verify · Safari preview</div>
       <div style="margin-top:4px">by Augusto · in collaborazione con Bi</div>
     </div>
   </footer>

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>v4 · Mobile auth · Login, Signup, Consiglia</title>
-<link rel="preconnect" href="https://api.fontshare.com">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -16,7 +16,7 @@
   --green:#2E7D5B; --green-soft:#E5F3EA;
   --green-grad:linear-gradient(135deg,#A3E635,#4ADE80);
 
-  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
   --ff-mark:'Alfa Slab One',Georgia,serif;
   --ff-hand:'Caveat',cursive;
 
@@ -165,7 +165,12 @@ body{padding:40px 20px 80px;min-height:100vh;background:radial-gradient(1200px 5
 <div class="page-head">
   <span class="kick">v4 · Mobile · auth + consiglia</span>
   <h1>Login, Signup, Consiglia un ristorante</h1>
-  <p>Le 3 schermate auth/contrib che chiudono il flusso user mobile. Satoshi ovunque, corallo pieno per le CTA, nessuna fake promessa ("GRATIS", "ESCLUSIVO", ecc.) nello stile del live. Consiglia è un <strong>bottom sheet 3-step</strong> che parte dalla tile corallo del profilo.</p>
+  <p>Le 3 schermate auth/contrib che chiudono il flusso user mobile. Poppins ovunque, corallo pieno per le CTA, nessuna fake promessa ("GRATIS", "ESCLUSIVO", ecc.) nello stile del live. Consiglia è un <strong>bottom sheet 3-step</strong> che parte dalla tile corallo del profilo.</p>
+</div>
+
+<div style="max-width:720px;margin:-8px auto 32px;padding:14px 18px;background:#FFF7ED;border:1px solid #FECBA1;border-left:4px solid #E8453C;border-radius:10px;font-size:13px;line-height:1.55;color:#3A2812;text-align:left">
+  <strong style="display:block;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#C6372F;margin-bottom:6px">⚠️ Nota implementazione · Safari iOS</strong>
+  Questo mockup mostra lo schermo pieno <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">390×844</code>. Nel prodotto reale Safari mobile riserva <strong>~52px in alto</strong> (URL bar) e <strong>~84px in basso</strong> (tab bar + home indicator): ~708px effettivi. Il codice deve usare <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">100dvh</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">env(safe-area-inset-*)</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">viewport-fit=cover</code>. Riferimento: <a href="v4-safari-chrome-preview.html" style="color:#C6372F;font-weight:800;text-decoration:underline">v4-safari-chrome-preview.html</a>.
 </div>
 
 <div class="phones">
@@ -446,7 +451,7 @@ body{padding:40px 20px 80px;min-height:100vh;background:radial-gradient(1200px 5
     </div>
     <div class="bl">
       <h4>Tokens v4 ovunque</h4>
-      <p>Stessi valori esatti delle altre mobile v4: ink <code>#22181C</code>, corallo <code>#E8453C</code>, verde grad 135° 2-stop, Satoshi 900 sugli H1 auth (38px), Alfa Slab solo sul wordmark del top bar.</p>
+      <p>Stessi valori esatti delle altre mobile v4: ink <code>#22181C</code>, corallo <code>#E8453C</code>, verde grad 135° 2-stop, Poppins 900 sugli H1 auth (38px), Alfa Slab solo sul wordmark del top bar.</p>
     </div>
   </div>
 </div>

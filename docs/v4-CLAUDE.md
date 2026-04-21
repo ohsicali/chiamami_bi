@@ -13,7 +13,7 @@
 3. **Voce di Bi in prima persona singolare.** UI copy, email, blocchi editoriali. Mai "noi" / "il team" / "Gentile" / "Cordiali saluti".
 4. **"Secondo Bi"** = nome del blocco editoriale sulla scheda locale (font Caveat).
 5. **Font Caveat SOLO** in editoriale Bi. Mai in nav, bottoni, form, admin.
-6. **Niente TAN Songbird.** Nomi locali in Satoshi bold.
+6. **Niente TAN Songbird.** Nomi locali in Poppins bold.
 7. **Non cancellare dati storici** (recensioni vecchie, utenti). Solo disabilitare scrittura/lettura.
 8. **Mobile-first.** Desktop è rifinitura.
 9. **Nessun secret nel repo.** Tutto via env vars Vercel.
@@ -28,7 +28,7 @@
 --oro-deep: #8E6B3E;   /* footer, dettagli */
 ```
 
-Font: Alfa Slab One (wordmark) · Caveat (editoriale Bi) · Satoshi (body + nomi locali).
+Font: Alfa Slab One (wordmark) · Caveat (editoriale Bi) · Poppins (body + nomi locali).
 
 ## Stack e vincoli tecnici
 

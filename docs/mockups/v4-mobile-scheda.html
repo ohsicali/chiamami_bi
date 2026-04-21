@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>v4 · Scheda ristorante · mobile</title>
-<link rel="preconnect" href="https://api.fontshare.com">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -18,10 +18,10 @@
   --green-a:#A3E635; --green-b:#4ADE80;
   --green-grad:linear-gradient(135deg,#A3E635,#4ADE80);
 
-  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
   --ff-mark:'Alfa Slab One',Georgia,serif;
   --ff-hand:'Caveat',cursive;
-  /* Niente più TAN Songbird: i nomi dei locali usano il body font (Satoshi) heavy. */
+  /* Niente più TAN Songbird: i nomi dei locali usano il body font (Poppins) heavy. */
 
   --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
   --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
@@ -77,7 +77,7 @@ body{
 }
 .card-overlay .grabber{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:99px;background:var(--ink-15)}
 
-/* Nome scheda: Satoshi 900 ~28px, centrato. (Niente più TAN Songbird.) */
+/* Nome scheda: Poppins 900 ~28px, centrato. (Niente più TAN Songbird.) */
 .tb-name{
   font-family:var(--ff-ui);font-weight:900;
   font-size:28px;line-height:1.05;letter-spacing:-.025em;color:var(--ink);
@@ -200,7 +200,7 @@ body{
 .vcard .vph img{width:100%;height:100%;object-fit:cover}
 .vcard .vph .vdisc{position:absolute;top:8px;left:8px;background:var(--green-grad);color:var(--ink);font-weight:800;font-size:10px;padding:3px 7px;border-radius:999px;letter-spacing:-.01em}
 .vcard .vbody{padding:10px 12px 12px}
-/* Nome vicini: Satoshi 800 */
+/* Nome vicini: Poppins 800 */
 .vcard .vname{font-family:var(--ff-ui);font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.15;color:var(--ink)}
 .vcard .vmeta{font-size:11px;color:var(--ink-70);margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .vcard .vmeta .vt{background:var(--ink-05);color:var(--ink);font-weight:700;font-size:10px;padding:2px 6px;border-radius:999px}
@@ -227,7 +227,12 @@ body{
 <div class="page-head">
   <span class="kick">v4 · Scheda ristorante · mobile · 17/04 · live-aligned</span>
   <h1>Scheda ristorante</h1>
-  <p>Pattern live: <strong>hero foto fullscreen</strong> + <strong>card overlay rounded-top</strong> con tutto centrato. Nome in <strong>Satoshi 900 ultra-tight</strong> (come Neotaste, feedback 17/04), indirizzo Places, chip categoria con bordo corallo, CTA "Indicazioni" <strong>beige</strong>. Se c'è uno sconto, banner col <strong>gradient verde 135deg esatto del live</strong> (lime-400 → green-400) + pill sticky floating bottom. Aggiunta v4: <strong>orari apertura</strong> (non c'erano nel live). Ciao sono Bi, Cosa prendere oro, carosello vicini: tutti conformi al live.</p>
+  <p>Pattern live: <strong>hero foto fullscreen</strong> + <strong>card overlay rounded-top</strong> con tutto centrato. Nome in <strong>Poppins 900 ultra-tight</strong> (come Neotaste, feedback 17/04), indirizzo Places, chip categoria con bordo corallo, CTA "Indicazioni" <strong>beige</strong>. Se c'è uno sconto, banner col <strong>gradient verde 135deg esatto del live</strong> (lime-400 → green-400) + pill sticky floating bottom. Aggiunta v4: <strong>orari apertura</strong> (non c'erano nel live). Ciao sono Bi, Cosa prendere oro, carosello vicini: tutti conformi al live.</p>
+</div>
+
+<div style="max-width:720px;margin:-8px auto 32px;padding:14px 18px;background:#FFF7ED;border:1px solid #FECBA1;border-left:4px solid #E8453C;border-radius:10px;font-size:13px;line-height:1.55;color:#3A2812;text-align:left">
+  <strong style="display:block;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#C6372F;margin-bottom:6px">⚠️ Nota implementazione · Safari iOS</strong>
+  Questo mockup mostra lo schermo pieno <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">390×844</code>. La <strong>pill sconto sticky floating bottom</strong> è il punto più critico: nel codice reale usare <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">bottom: calc(14px + env(safe-area-inset-bottom))</code> per non finire sotto la tab bar di Safari. Hero full-bleed deve usare <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">100dvh</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">viewport-fit=cover</code>. Riferimento: <a href="v4-safari-chrome-preview.html" style="color:#C6372F;font-weight:800;text-decoration:underline">v4-safari-chrome-preview.html</a>.
 </div>
 
 <div class="phones">
@@ -566,8 +571,8 @@ body{
   <h3>Scheda v4 — live-aligned · cosa è cambiato dalla versione bocciata</h3>
   <div class="grid">
     <div class="bl">
-      <h4>Nome in Satoshi 900</h4>
-      <p>Augusto 17/04: "non usare TAN Songbird, usa o il font del logo o quello del body". Scelto il <strong>body (Satoshi)</strong> heavy — Alfa Slab è troppo chunky per i nomi locali, resta solo per il wordmark. Ora: <code>font-family:Satoshi; font-weight:900; font-size:28px; letter-spacing:-.025em</code>, centrato nella card overlay. Niente TAN Songbird né italic né normal.</p>
+      <h4>Nome in Poppins 900</h4>
+      <p>Augusto 17/04: "non usare TAN Songbird, usa o il font del logo o quello del body". Scelto il <strong>body (Poppins)</strong> heavy — Alfa Slab è troppo chunky per i nomi locali, resta solo per il wordmark. Ora: <code>font-family:Poppins; font-weight:900; font-size:28px; letter-spacing:-.025em</code>, centrato nella card overlay. Niente TAN Songbird né italic né normal.</p>
     </div>
     <div class="bl">
       <h4>Card overlay centrata</h4>
@@ -602,8 +607,8 @@ body{
       <p>Invariati rispetto al live. Card oro gradient con emoji fork + testo bianco. Ciao sono Bi cream con avatar, bio, socials e link "Scopri di più" corallo.</p>
     </div>
     <div class="bl">
-      <h4>Carosello vicini Satoshi 800</h4>
-      <p>Nomi dei vicini sempre in <strong>Satoshi weight 800</strong>, 17px, letter-spacing <code>-.02em</code>. Stessa regola della home: una sola famiglia per il testo (body), niente serif editoriale. Alfa Slab resta solo su wordmark e pin B.</p>
+      <h4>Carosello vicini Poppins 800</h4>
+      <p>Nomi dei vicini sempre in <strong>Poppins weight 800</strong>, 17px, letter-spacing <code>-.02em</code>. Stessa regola della home: una sola famiglia per il testo (body), niente serif editoriale. Alfa Slab resta solo su wordmark e pin B.</p>
     </div>
   </div>
 </div>

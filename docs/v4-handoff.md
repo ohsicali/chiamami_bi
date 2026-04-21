@@ -78,7 +78,7 @@ CSS custom properties. **Non inventare hex nuovi.** Se serve una variante, usa `
 ### Font stack
 ```css
 /* UI, nomi locali, body */
-font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
 /* Wordmark + PIN digits solo */
 font-family: 'Alfa Slab One', serif;
@@ -87,7 +87,7 @@ font-family: 'Alfa Slab One', serif;
 font-family: 'Caveat', cursive;
 ```
 
-### Pesi Satoshi
+### Pesi Poppins
 - **500** — micro-labels, chip, footer secondario
 - **700** — body, metadati
 - **800** — subtitles, CTA
@@ -107,7 +107,7 @@ font-family: 'Caveat', cursive;
 1. **Alfa Slab One** → SOLO wordmark "CHIAMAMI BI" e le 6 cifre del PIN. **Mai** titoli.
 2. **Caveat** → SOLO nei blocchi editoriali: tip "Cosa prendere", signature "Bi", quote dentro "Secondo Bi". **Mai** in chrome (nav, button, label).
 3. **TAN Songbird** (italic decorativo) → **RIMOSSO completamente**. Se lo vedi in qualche file è un bug.
-4. Nomi locali **sempre** Satoshi 800/900 ultra-tight, mai corsivi.
+4. Nomi locali **sempre** Poppins 800/900 ultra-tight, mai corsivi.
 
 ---
 
@@ -145,7 +145,7 @@ font-family: 'Caveat', cursive;
 </div>
 ```
 - `.cover` 520px desktop / 420px mobile
-- `.name` Satoshi 900 ultra-tight
+- `.name` Poppins 900 ultra-tight
 - `.chip-new` glass bianca con puntino corallo pulsante
 
 ### 4.3 Sticky pill sconto (mobile scheda + desktop scheda)
@@ -199,14 +199,14 @@ Mobile: full-width con `env(safe-area-inset-bottom)` per iOS. Padding del conten
   backdrop-filter:saturate(140%) blur(6px);
 }
 ```
-Struttura: foto 118×118 sx · cuore overlay glass top-right · tags row (categoria + prezzo + distanza con SVG pin) · nome Satoshi 800 · indirizzo con SVG.
+Struttura: foto 118×118 sx · cuore overlay glass top-right · tags row (categoria + prezzo + distanza con SVG pin) · nome Poppins 800 · indirizzo con SVG.
 
 ### 4.5 Blocco editoriale "Secondo Bi"
 ```html
 <section class="editorial">
   <h2 class="eyebrow">SECONDO BI</h2>
   <div class="body">
-    <p>Testo curato in Satoshi 700, 16px, line-height 1.6...</p>
+    <p>Testo curato in Poppins 700, 16px, line-height 1.6...</p>
     <p class="tip">
       <span class="cav">Prova gli agnolotti del plin, sono la specialità della casa.</span>
       <span class="sig">— Bi</span>
@@ -215,7 +215,7 @@ Struttura: foto 118×118 sx · cuore overlay glass top-right · tags row (catego
 </section>
 ```
 - **Eyebrow** "SECONDO BI" (mai "Recensione di Bi" o "La mia recensione")
-- **Body** sempre Satoshi
+- **Body** sempre Poppins
 - `.cav` e `.sig` **solo** in Caveat
 
 ### 4.6 Blocco oro "Cosa prendere"
@@ -399,7 +399,7 @@ Caveat vive **solo** in 8 punti editoriali:
 
 ### Third-party
 - **Google Places API** → orari + telefono + indicazioni
-- **Font:** Satoshi (Fontshare), Alfa Slab One + Caveat (Google Fonts)
+- **Font:** Poppins (Fontshare), Alfa Slab One + Caveat (Google Fonts)
 - **Map:** Mapbox o MapLibre + tiles custom cream
 
 ---

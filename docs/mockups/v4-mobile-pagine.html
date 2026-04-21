@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>v4 · Pagine mobile · Esplora, Sconti, Salvati, Profilo</title>
-<link rel="preconnect" href="https://api.fontshare.com">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -18,10 +18,10 @@
   /* Verde sconto del live: 2-stop 135deg esatto (lime-400 → green-400) */
   --green-grad:linear-gradient(135deg,#A3E635,#4ADE80);
 
-  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
   --ff-mark:'Alfa Slab One',Georgia,serif;
   --ff-hand:'Caveat',cursive;
-  /* Niente più TAN Songbird: i nomi dei locali usano il body font (Satoshi) heavy. */
+  /* Niente più TAN Songbird: i nomi dei locali usano il body font (Poppins) heavy. */
 
   --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
   --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
@@ -66,19 +66,43 @@ body{
 .ico-btn{width:40px;height:40px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;border:0;cursor:pointer}
 .ico-btn svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:1.8}
 
-/* ============ Nav glass bottom (shared) ============ */
+/* ============ Nav LIQUID GLASS — WebGL (naughtyduk/liquidGL) · shared ============ */
+/* Tecnica: liquidGL (WebGL shader + html2canvas). Script caricato a fine body.
+   Il CSS sottostante è pre-init placeholder + fallback per device senza WebGL. */
 .nav{
-  position:absolute;left:12px;right:12px;bottom:14px;height:64px;
-  background:rgba(255,255,255,.66);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
-  border:1px solid rgba(255,255,255,.5);border-radius:var(--r-pill);
-  box-shadow:var(--shadow-md);
-  display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:40;
+  position:absolute;left:14px;right:14px;bottom:18px;height:68px;
+  border-radius:var(--r-pill);
+  display:flex;align-items:center;justify-content:space-between;padding:6px 6px;z-index:40;gap:2px;
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  /* Bordo "firma" nav — stesso usato dall'active pill */
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 2px 8px rgba(34,24,28,.06),
+    0 14px 32px rgba(34,24,28,.14);
 }
-.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-40);text-decoration:none;font-size:10px;font-weight:700;padding:8px 0;position:relative}
-.nav a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
-.nav a.active{color:var(--ink)}
-.nav a.active::before{content:"";position:absolute;top:4px;width:32px;height:32px;border-radius:50%;background:var(--corallo-soft);z-index:-1}
-.nav a .badge{position:absolute;top:6px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--corallo);border:1.5px solid rgba(255,255,255,.9)}
+.nav a{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:#141414;text-decoration:none;
+  padding:8px 4px;border-radius:28px;
+  position:relative;z-index:3;
+  transition:background .18s ease, box-shadow .18s ease;
+}
+.nav a svg{width:22px;height:22px;fill:currentColor;stroke:none}
+.nav a .nav-label{
+  font-family:var(--ff-ui);font-weight:600;font-size:11px;letter-spacing:-.005em;
+  line-height:1;white-space:nowrap;color:#141414;
+}
+/* Active = pill grigia chiara + contorno scuro 1px (stesso colore del bordo nav) */
+.nav a.active{
+  background:rgba(0,0,0,.05);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.nav a.active .nav-label{font-weight:800}
+.nav a .badge{position:absolute;top:5px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--corallo);border:1.5px solid rgba(255,255,255,.95);z-index:4}
 
 /* ============ Ristorante card (Neotaste style) ============ */
 .rcard{background:var(--white);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);text-decoration:none;color:inherit;box-shadow:var(--shadow-sm);display:block}
@@ -140,18 +164,30 @@ body{
 .esp-filters .fchip .n{font-size:9.5px;font-weight:800;background:var(--ink-05);color:var(--ink);padding:1.5px 5px;border-radius:999px}
 .esp-filters .fchip.active .n{background:rgba(255,255,255,.22);color:#fff}
 
-/* Pin = cerchi colorati per categoria (come il live), emoji bianca dentro */
-.esp-pin{position:absolute;width:38px;height:38px;margin-left:-19px;margin-top:-19px;border-radius:50%;display:grid;place-items:center;font-size:18px;line-height:1;color:#fff;filter:drop-shadow(0 4px 8px rgba(34,24,28,.34));cursor:pointer;border:2.5px solid #fff;z-index:10}
-.esp-pin.cat-pasta{background:#E06B2F}
-.esp-pin.cat-pizza{background:#3A6EA5}
-.esp-pin.cat-vino{background:#6B4E89}
-.esp-pin.cat-aperitivo{background:#EE8872}
-.esp-pin.cat-asian{background:#E86B4E}
-.esp-pin.cat-dolce{background:#D14E85}
-.esp-pin.cat-bar{background:#9A7AB8}
-.esp-pin.cat-carne{background:#B54A3D}
-.esp-pin.cat-matcha{background:#7BAE5A}
-.esp-pin.sel{width:46px;height:46px;margin-left:-23px;margin-top:-23px;font-size:22px;z-index:15;box-shadow:0 0 0 5px rgba(232,69,60,.22)}
+/* Pin stile Neotaste — teardrop drop-pin, silhouette minimal, categoria per colore */
+.esp-pin{
+  position:absolute;width:28px;height:28px;margin-left:-14px;margin-top:-28px;
+  border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;line-height:1;color:#fff;
+  filter:drop-shadow(0 3px 6px rgba(34,24,28,.32));
+  cursor:pointer;border:2px solid #fff;z-index:10;
+}
+.esp-pin > *{transform:rotate(45deg);line-height:1}
+.esp-pin.cat-pasta{background:#C8601E}
+.esp-pin.cat-pizza{background:#2E5E8C}
+.esp-pin.cat-vino{background:#5A3F75}
+.esp-pin.cat-aperitivo{background:#D36B55}
+.esp-pin.cat-asian{background:#B8563D}
+.esp-pin.cat-dolce{background:#B73F70}
+.esp-pin.cat-bar{background:#7E5FA0}
+.esp-pin.cat-carne{background:#8F3A2F}
+.esp-pin.cat-matcha{background:#5E9047}
+.esp-pin.sel{
+  width:34px;height:34px;margin-left:-17px;margin-top:-34px;
+  background:var(--corallo);font-size:14px;z-index:15;
+  filter:drop-shadow(0 4px 12px rgba(232,80,76,.45));
+}
 .esp-cluster{position:absolute;width:36px;height:36px;margin-left:-18px;margin-top:-18px;border-radius:50%;background:#fff;border:2px solid rgba(34,24,28,.35);display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--ink);filter:drop-shadow(0 3px 6px rgba(34,24,28,.2));z-index:10}
 .esp-me{position:absolute;width:16px;height:16px;border-radius:50%;background:#4285F4;border:3px solid #fff;box-shadow:0 0 0 5px rgba(66,133,244,.2);margin-left:-8px;margin-top:-8px;z-index:10}
 
@@ -169,7 +205,7 @@ body{
 .esp-caro-card .eph .edist{position:absolute;bottom:5px;left:5px;background:rgba(34,24,28,.8);color:#fff;font-size:9px;font-weight:700;padding:3px 6px;border-radius:6px;letter-spacing:.04em}
 .esp-caro-card .eph .edisc{position:absolute;top:5px;left:5px;background:var(--green-grad);color:var(--ink);font-size:9.5px;font-weight:800;padding:2.5px 6px;border-radius:999px;letter-spacing:-.01em}
 .esp-caro-card .ebody{min-width:0}
-/* Nome locale in carosello: Satoshi 800 (niente più TAN Songbird) */
+/* Nome locale in carosello: Poppins 800 (niente più TAN Songbird) */
 .esp-caro-card .ename{font-family:var(--ff-ui);font-weight:800;font-size:16px;letter-spacing:-.015em;line-height:1.15;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .esp-caro-card .emeta{font-size:11px;color:var(--ink-70);margin-top:3px;display:flex;flex-wrap:wrap;align-items:center;gap:5px}
 .esp-caro-card .emeta .et{background:var(--ink-05);color:var(--ink);font-weight:700;font-size:9.5px;padding:2px 6px;border-radius:999px}
@@ -279,7 +315,7 @@ body{
 .conv-main .cv-thumb{width:54px;height:54px;border-radius:var(--r-sm);overflow:hidden;background:#ddd}
 .conv-main .cv-thumb img{width:100%;height:100%;object-fit:cover}
 .conv-main .cv-body{min-width:0}
-/* Nome locale sconto: Satoshi 800 */
+/* Nome locale sconto: Poppins 800 */
 .conv-main .cv-name{font-family:var(--ff-ui);font-weight:800;font-size:16px;letter-spacing:-.015em;line-height:1.2;color:var(--ink)}
 .conv-main .cv-where{font-size:11px;color:var(--ink-70);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .conv-main .cv-where .tag{background:var(--ink-05);color:var(--ink);font-weight:700;font-size:10px;padding:2px 6px;border-radius:999px}
@@ -395,13 +431,18 @@ body{
   <p>Re-skin del live. <strong>Esplora</strong> tiene la logica split (mappa + lista) con pin <strong>cerchi colorati per categoria + emoji bianca</strong> ferme sulla mappa, come adesso. <strong>Sconti</strong> mantiene il tag verde sfumato del live (banda gradient chiaro→saturo→chiaro) diviso in Disponibili (drop + convenzioni) e I miei (da utilizzare + utilizzati).</p>
 </div>
 
+<div style="max-width:720px;margin:-8px auto 32px;padding:14px 18px;background:#FFF7ED;border:1px solid #FECBA1;border-left:4px solid #E8453C;border-radius:10px;font-size:13px;line-height:1.55;color:#3A2812;text-align:left">
+  <strong style="display:block;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#C6372F;margin-bottom:6px">⚠️ Nota implementazione · Safari iOS</strong>
+  Questo mockup mostra lo schermo pieno <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">390×844</code>. Nel prodotto reale Safari mobile riserva <strong>~52px in alto</strong> (URL bar) e <strong>~84px in basso</strong> (tab bar + home indicator): ~708px effettivi. Il codice deve usare <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">100dvh</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">env(safe-area-inset-*)</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">viewport-fit=cover</code>. <strong>Esplora</strong> (mappa full-bleed) e <strong>Sconti</strong> (CTA sticky bottom) sono i casi più critici. Riferimento: <a href="v4-safari-chrome-preview.html" style="color:#C6372F;font-weight:800;text-decoration:underline">v4-safari-chrome-preview.html</a>.
+</div>
+
 <div class="phones">
 
   <!-- ============================================ ESPLORA — pattern LIVE: fullscreen map + bottom carosello + pill Lista -->
   <div class="slot">
     <span class="slot-label">Esplora</span>
     <div class="slot-title">Identica al live mobile</div>
-    <div class="slot-sub">Mappa <strong>fullscreen</strong>, top bar flottante (wordmark + chip città + GPS), chip filtri categorie scrollabili, pin <strong>cerchi colorati con emoji bianca</strong>, cluster bianchi numerati. In basso <strong>pill "Lista · N"</strong> toggle + <strong>carosello</strong> card orizzontale con nome in Satoshi 800.</div>
+    <div class="slot-sub">Mappa <strong>fullscreen</strong>, top bar flottante (wordmark + chip città + GPS), chip filtri categorie scrollabili, pin <strong>teardrop stile Neotaste</strong> (drop-pin Google-Maps-like, colore per categoria, emoji bianca dentro), cluster bianchi numerati. In basso <strong>pill "Lista · N"</strong> toggle + <strong>carosello</strong> card orizzontale con nome in Poppins 800.</div>
     <div class="phone">
       <div class="screen">
         <div class="statusbar on-hero">
@@ -448,16 +489,16 @@ body{
           <!-- Posizione utente -->
           <div class="esp-me" style="left:42%;top:57%"></div>
 
-          <!-- Pin cerchi colorati per categoria + emoji bianca -->
-          <div class="esp-pin cat-pasta" style="left:26%;top:30%" title="Mo Sarpi">🍜</div>
-          <div class="esp-pin cat-aperitivo" style="left:60%;top:24%" title="Affini">🥂</div>
-          <div class="esp-pin cat-pizza" style="left:16%;top:52%" title="Perino">🍕</div>
-          <div class="esp-pin cat-vino sel" style="left:47%;top:43%" title="Bocconi">🍷</div>
-          <div class="esp-pin cat-carne" style="left:72%;top:62%" title="Consorzio">🥩</div>
-          <div class="esp-pin cat-asian" style="left:34%;top:70%" title="Kintsugi">🍣</div>
-          <div class="esp-pin cat-dolce" style="left:82%;top:40%" title="Gelateria">🍨</div>
-          <div class="esp-pin cat-bar" style="left:76%;top:78%" title="Smile Tree">🍸</div>
-          <div class="esp-pin cat-matcha" style="left:22%;top:78%" title="Rise">🍵</div>
+          <!-- Pin stile Neotaste: teardrop drop-pin, colore per categoria, emoji bianca dentro -->
+          <div class="esp-pin cat-pasta" style="left:26%;top:30%" title="Mo Sarpi"><span>🍜</span></div>
+          <div class="esp-pin cat-aperitivo" style="left:60%;top:24%" title="Affini"><span>🥂</span></div>
+          <div class="esp-pin cat-pizza" style="left:16%;top:52%" title="Perino"><span>🍕</span></div>
+          <div class="esp-pin cat-vino sel" style="left:47%;top:43%" title="Bocconi"><span>🍷</span></div>
+          <div class="esp-pin cat-carne" style="left:72%;top:62%" title="Consorzio"><span>🥩</span></div>
+          <div class="esp-pin cat-asian" style="left:34%;top:70%" title="Kintsugi"><span>🍣</span></div>
+          <div class="esp-pin cat-dolce" style="left:82%;top:40%" title="Gelateria"><span>🍨</span></div>
+          <div class="esp-pin cat-bar" style="left:76%;top:78%" title="Smile Tree"><span>🍸</span></div>
+          <div class="esp-pin cat-matcha" style="left:22%;top:78%" title="Rise"><span>🍵</span></div>
           <!-- Cluster -->
           <div class="esp-cluster" style="left:10%;top:20%">4</div>
           <div class="esp-cluster" style="left:90%;top:70%">6</div>
@@ -522,11 +563,11 @@ body{
         </div>
 
         <div class="nav">
-          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg>Home</a>
-          <a class="active"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>Esplora</a>
-          <a><span class="badge"></span><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2"/></svg>Sconti</a>
-          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Salvati</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profilo</a>
+          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg><span class="nav-label">Home</span></a>
+          <a class="active"><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg><span class="nav-label">Esplora</span></a>
+          <a><span class="badge"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2.2" fill="currentColor"/></svg><span class="nav-label">Sconti</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="nav-label">Salvati</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z"/></svg><span class="nav-label">Profilo</span></a>
         </div>
       </div>
     </div>
@@ -707,11 +748,11 @@ body{
         </div>
 
         <div class="nav">
-          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg>Home</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>Esplora</a>
-          <a class="active"><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2"/></svg>Sconti</a>
-          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Salvati</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profilo</a>
+          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg><span class="nav-label">Home</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg><span class="nav-label">Esplora</span></a>
+          <a class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2.2" fill="currentColor"/></svg><span class="nav-label">Sconti</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="nav-label">Salvati</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z"/></svg><span class="nav-label">Profilo</span></a>
         </div>
       </div>
     </div>
@@ -831,11 +872,11 @@ body{
         </div>
 
         <div class="nav">
-          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg>Home</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>Esplora</a>
-          <a class="active"><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2"/></svg>Sconti</a>
-          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Salvati</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profilo</a>
+          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg><span class="nav-label">Home</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg><span class="nav-label">Esplora</span></a>
+          <a class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2.2" fill="currentColor"/></svg><span class="nav-label">Sconti</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="nav-label">Salvati</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z"/></svg><span class="nav-label">Profilo</span></a>
         </div>
       </div>
     </div>
@@ -865,7 +906,7 @@ body{
             </div>
             <div class="topbar-r">
               <button class="ico-btn" aria-label="cerca">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg>
               </button>
               <button class="ico-btn" aria-label="opzioni">
                 <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
@@ -966,11 +1007,11 @@ body{
         </div>
 
         <div class="nav">
-          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg>Home</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>Esplora</a>
-          <a><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2"/></svg>Sconti</a>
-          <a class="active"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Salvati</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profilo</a>
+          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg><span class="nav-label">Home</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg><span class="nav-label">Esplora</span></a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2.2" fill="currentColor"/></svg><span class="nav-label">Sconti</span></a>
+          <a class="active"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="nav-label">Salvati</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z"/></svg><span class="nav-label">Profilo</span></a>
         </div>
       </div>
     </div>
@@ -1114,11 +1155,11 @@ body{
         </div>
 
         <div class="nav">
-          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg>Home</a>
-          <a><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>Esplora</a>
-          <a><svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2"/></svg>Sconti</a>
-          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Salvati</a>
-          <a class="active"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profilo</a>
+          <a><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg><span class="nav-label">Home</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg><span class="nav-label">Esplora</span></a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2.2" fill="currentColor"/></svg><span class="nav-label">Sconti</span></a>
+          <a><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="nav-label">Salvati</span></a>
+          <a class="active"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z"/></svg><span class="nav-label">Profilo</span></a>
         </div>
       </div>
     </div>
@@ -1132,7 +1173,7 @@ body{
   <div class="grid">
     <div class="bl">
       <h4>Esplora — identica al live mobile</h4>
-      <p>Mappa <strong>fullscreen</strong> (non mini-map). Top bar flottante con wordmark "LA GUIDA DI BI" + chip "Torino ▾" + GPS. Chip filtri categoria scrollabili in overlay. Pin = <strong>cerchi colorati per categoria con emoji bianca</strong> (arancione pasta, blu pizza, viola vino, rosa dolci, corallo aperitivo…). Cluster = cerchi bianchi bordati con numero. In basso: <strong>pill "Lista · 46"</strong> toggle flottante + <strong>carosello</strong> card orizzontale con foto tonda, distanza, sconto (verde 135°) e nome in <strong>Satoshi 800</strong>. Pattern 1:1 col live.</p>
+      <p>Mappa <strong>fullscreen</strong> (non mini-map). Top bar flottante con wordmark "LA GUIDA DI BI" + chip "Torino ▾" + GPS. Chip filtri categoria scrollabili in overlay. Pin = <strong>cerchi colorati per categoria con emoji bianca</strong> (arancione pasta, blu pizza, viola vino, rosa dolci, corallo aperitivo…). Cluster = cerchi bianchi bordati con numero. In basso: <strong>pill "Lista · 46"</strong> toggle flottante + <strong>carosello</strong> card orizzontale con foto tonda, distanza, sconto (verde 135°) e nome in <strong>Poppins 800</strong>. Pattern 1:1 col live.</p>
     </div>
     <div class="bl">
       <h4>Sconti — tab Disponibili / I miei</h4>
@@ -1150,11 +1191,11 @@ body{
   <h3 style="margin-top:32px">Tipografia (post-feedback 17/04)</h3>
   <div class="grid">
     <div class="bl">
-      <h4>Nome locale ora in Satoshi 800</h4>
-      <p>Augusto 17/04: "non usare TAN Songbird, usa o il font del logo o quello del body". Scelto il <strong>body (Satoshi)</strong> heavy. Nelle card: <code>font-weight:800; font-size:16px; letter-spacing:-.015em</code>. Alfa Slab resta solo per il wordmark identitario, mai sui nomi dei locali. Niente TAN Songbird, né normal né italic.</p>
+      <h4>Nome locale ora in Poppins 800</h4>
+      <p>Augusto 17/04: "non usare TAN Songbird, usa o il font del logo o quello del body". Scelto il <strong>body (Poppins)</strong> heavy. Nelle card: <code>font-weight:800; font-size:16px; letter-spacing:-.015em</code>. Alfa Slab resta solo per il wordmark identitario, mai sui nomi dei locali. Niente TAN Songbird, né normal né italic.</p>
     </div>
     <div class="bl">
-      <h4>Satoshi 900 ovunque sui titoli</h4>
+      <h4>Poppins 900 ovunque sui titoli</h4>
       <p>"Esplora", "Sconti", "Salvati", "Profilo" in top bar. H3 di sezione in <code>font-weight:900; font-size:18px</code>. Letter-spacing tight <code>-.02em</code>. Regola anti-deriva confermata.</p>
     </div>
     <div class="bl">
@@ -1167,6 +1208,15 @@ body{
     </div>
   </div>
 </div>
+
+<!--
+  NOTA: questa pagina mostra 5 screen side-by-side, quindi qui uso il CSS fallback
+  (blur + saturate + specular). Il liquid glass WebGL vero (naughtyduk/liquidGL)
+  si vede in v4-mobile-home.html, che ha un solo .screen — la libreria usa un
+  canvas condiviso che richiede elementi con stesso z-index/stacking context,
+  non adatto a una galleria multi-phone. Nel prodotto live (una pagina = un telefono)
+  vediamo l'effetto vero.
+-->
 
 </body>
 </html>

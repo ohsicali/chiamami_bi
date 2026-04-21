@@ -103,7 +103,7 @@ Ridisegno visivo del sito. I mockup v4 (file `v4-*.html`) sono la **source of tr
 **Font:**
 - Wordmark ChiamamiBi / "LA GUIDA DI BI": **Alfa Slab One** (corallo)
 - Titoli editoriali ("Secondo Bi"): **Caveat** (solo nei blocchi editoriali, vedi sotto)
-- Body + nomi locali: **Satoshi** (bold per nomi locali — NON più TAN Songbird italic, decisione del 17/04)
+- Body + nomi locali: **Poppins** (bold per nomi locali — NON più TAN Songbird italic, decisione del 17/04)
 - Font custom in email: fallback sicuro + wordmark come PNG (Alfa Slab One non renderizza in Gmail/Outlook)
 
 **Schermate toccate (vedi mockup):**
@@ -145,7 +145,7 @@ Ridisegno visivo del sito. I mockup v4 (file `v4-*.html`) sono la **source of tr
 3. **Voce di Bi in prima persona singolare.** Nelle email, nei copy UI, nei blocchi editoriali ("Secondo Bi"). Mai "noi", "il nostro team", "la piattaforma". Mai "Gentile" / "Cordiali saluti".
 4. **"Secondo Bi"** è il nome del blocco editoriale sulla scheda (non "Recensione", non "Opinione"). Font: Caveat.
 5. **Font Caveat SOLO** nei blocchi editoriali Bi (tips, signature, "Secondo Bi"). Mai in navigazione, bottoni, form, admin.
-6. **Niente TAN Songbird** — rimosso in v4. Nomi locali in Satoshi bold.
+6. **Niente TAN Songbird** — rimosso in v4. Nomi locali in Poppins bold.
 7. **Non cancellare dati storici** (recensioni esistenti, utenti, ecc.) — solo disabilitare scrittura/lettura.
 8. **Mobile-first** — Torino è mobile. Desktop è rifinitura.
 

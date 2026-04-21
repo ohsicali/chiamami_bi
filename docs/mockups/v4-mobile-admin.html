@@ -2,10 +2,11 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>v4 · Admin mobile — La Guida di Bi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Satoshi:wght@500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#22181C; --ink-2:#3d2f36; --muted:#6b6057; --line:#EAE3D7;
@@ -14,7 +15,7 @@
   --oro:#B08954; --oro-wash:#F5EDDD;
   --green-a:#A3E635; --green-b:#4ADE80; --green-wash:#E8F5D8; --green-ink:#0F2C12;
   --danger:#C0392B; --danger-wash:#FCE8E4;
-  --ff-ui:'Satoshi',system-ui,sans-serif;
+  --ff-ui:'Poppins',system-ui,sans-serif;
   --ff-mark:'Alfa Slab One',serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -281,6 +282,11 @@ body{padding:60px 24px;min-height:100vh;display:flex;flex-direction:column;align
 <div class="page-head">
   <h1>v4 · Admin mobile</h1>
   <p>La Guida di Bi · pannello di Augusto in versione mobile — dashboard, catalogo, drop, candidature, analytics (7 schermate)</p>
+</div>
+
+<div style="max-width:720px;margin:8px auto 28px;padding:14px 18px;background:rgba(232,69,60,.08);border:1px solid rgba(232,69,60,.3);border-left:4px solid #E8453C;border-radius:10px;font-size:13px;line-height:1.55;color:rgba(255,255,255,.82);text-align:left">
+  <strong style="display:block;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#F48880;margin-bottom:6px">⚠️ Nota implementazione · Safari iOS</strong>
+  Questo mockup mostra lo schermo pieno <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace;color:#fff">390×844</code>. Nel prodotto reale Safari mobile riserva <strong style="color:#fff">~52px in alto</strong> (URL bar) e <strong style="color:#fff">~84px in basso</strong> (tab bar + home indicator): ~708px effettivi. Il codice deve usare <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace;color:#fff">100dvh</code> + <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace;color:#fff">env(safe-area-inset-*)</code> + <code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace;color:#fff">viewport-fit=cover</code>. Riferimento: <a href="v4-safari-chrome-preview.html" style="color:#F48880;font-weight:800;text-decoration:underline">v4-safari-chrome-preview.html</a>.
 </div>
 
 <div class="gallery">
