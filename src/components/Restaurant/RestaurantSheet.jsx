@@ -591,9 +591,9 @@ export default function RestaurantSheet({
                 borderRadius: '20px 20px 0 0',
               }}
             >
-              {/* Restaurant name — centered, Satoshi 900 */}
+              {/* Restaurant name — centered, Poppins 700 (max loaded weight) */}
               <motion.h1 className="sec-name" variants={itemVariants} style={{
-                fontFamily: "var(--font-sans, 'Satoshi', sans-serif)",
+                fontFamily: "var(--font-sans)",
                 fontWeight: 900,
                 fontSize: 28,
                 color: 'var(--color-ink, #22181C)',

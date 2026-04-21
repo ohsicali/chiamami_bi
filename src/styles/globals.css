@@ -37,12 +37,15 @@
 
   --color-bordo: #EAE3D7;
 
-  /* Font stacks — UI body (Satoshi), wordmark (Alfa Slab One),
-     handwriting (Caveat). */
-  --font-sans: 'Satoshi', 'Inter', -apple-system, system-ui, sans-serif;
-  --font-display: 'Satoshi', 'Inter', sans-serif;
-  --font-mark: 'Alfa Slab One', Georgia, serif;
-  --font-hand: 'Caveat', cursive;
+  /* Font stacks — UI body (Poppins), wordmark (Alfa Slab One),
+     editorial handwriting (Caveat). */
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-wordmark: 'Alfa Slab One', Georgia, serif;
+  --font-editorial: 'Caveat', cursive;
+  /* Legacy aliases (kept for backwards-compat) */
+  --font-mark: var(--font-wordmark);
+  --font-hand: var(--font-editorial);
 
   /* Radius scale */
   --radius-sm: 10px;
@@ -205,27 +208,26 @@ body {
 
 /* v4 utility: wordmark logo "CHIAMAMI BI" / map pin mark */
 .font-mark {
-  font-family: 'Alfa Slab One', Georgia, serif;
+  font-family: var(--font-wordmark);
   letter-spacing: 0.01em;
 }
 
-/* v4 utility: Bi's handwritten notes / flourishes */
+/* v4 utility: Bi's handwritten notes / flourishes (Secondo Bi tip + signature) */
 .font-hand {
-  font-family: 'Caveat', cursive;
+  font-family: var(--font-editorial);
 }
 
-/* v4 display — Satoshi weight 900 for big headings with tight tracking */
-.font-display,
-.font-editorial {
-  font-family: 'Satoshi', 'Inter', sans-serif;
-  font-weight: 900;
+/* v4 display — Poppins 700 for big headings with tight tracking */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-/* Restaurant name utility — Satoshi 800 (v4 handoff §3: no TAN Songbird) */
+/* Restaurant name utility — Poppins 600 (v4 handoff §3: no TAN Songbird) */
 .font-restaurant {
-  font-family: 'Satoshi', 'Inter', sans-serif;
-  font-weight: 800;
+  font-family: var(--font-sans);
+  font-weight: 600;
   letter-spacing: -0.015em;
 }
 
