@@ -65,6 +65,13 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  /* v4 color tokens — short-name aliases for direct CSS use */
+  --ink: #22181C;
+  --corallo: #E8453C;
+  --page: #FAF7F2;
+  --cream: #F5F0E4;
+  --oro-deep: #8E6B3E;
 }
 
 body {
