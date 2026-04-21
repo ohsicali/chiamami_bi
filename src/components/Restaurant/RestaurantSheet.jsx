@@ -322,20 +322,25 @@ export default function RestaurantSheet({
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
         @media (min-width: 768px) {
-          /* v4 SCHEDA DESKTOP: 2-col (left panel 420px scrollable + right map).
-             Typography + tokens v4 (Poppins 900 name, beige CTA, etc.). */
+          /* v4 SCHEDA DESKTOP: card centrata nello stesso container della top nav
+             (padding 40 + max-width 1240), 2-col 420px left + mappa right.
+             Foto hero standalone con radius pieno, niente overlap pattern mobile. */
           .restaurant-sheet-root {
-            top: 56px !important;
+            top: 100px !important;
+            padding: 0 40px 24px !important;
             background: var(--color-page, #FAF7F2) !important;
           }
           .restaurant-sheet-root .rs-backdrop { display: none !important; }
           .restaurant-sheet-root .rs-sheet {
             pointer-events: auto !important;
+            max-width: 1240px !important;
             width: 100% !important;
-            max-width: none !important;
+            margin: 0 auto !important;
             height: 100% !important;
             overflow: hidden !important;
-            background: var(--color-page, #FAF7F2) !important;
+            background: #fff !important;
+            border-radius: 28px !important;
+            box-shadow: var(--shadow-md, 0 4px 14px rgba(34,24,28,.08)) !important;
             flex-direction: row !important;
           }
           /* Left scrollable panel 420px */
@@ -347,57 +352,64 @@ export default function RestaurantSheet({
             -webkit-overflow-scrolling: touch !important;
             padding-bottom: 40px !important;
             border-right: 1px solid var(--color-ink-05, rgba(34,24,28,.06)) !important;
-            background: var(--color-page, #FAF7F2) !important;
+            background: #fff !important;
           }
-          /* Hide mobile photo carousel area on desktop (photo is inside hero below) */
+          /* Hide mobile photo carousel on desktop */
           .restaurant-sheet-root .rs-photo-area { display: none !important; }
-          /* Desktop hero wrap — photo at top of left panel, 320px */
+          /* Desktop hero: foto standalone con border-radius pieno, padding laterale */
           .restaurant-sheet-root .rs-desktop-hero-wrap {
             display: block !important;
-            padding: 0;
+            padding: 16px 16px 0 !important;
           }
           .restaurant-sheet-root .rs-desktop-hero {
             display: block !important;
             position: relative;
-            height: 320px;
+            height: 280px;
+            border-radius: 16px;
             overflow: hidden;
           }
           .restaurant-sheet-root .rs-desktop-hero::after {
             content: "";
             position: absolute; inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 22%, transparent 65%, rgba(0,0,0,.12) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, transparent 30%, transparent 70%, rgba(0,0,0,.15) 100%);
             pointer-events: none;
             z-index: 2;
           }
+          /* Rimosso pattern overlay mobile (no margin-top negativo, no radius top-only) */
           .restaurant-sheet-root .rs-content-card {
-            margin-top: -28px !important;
-            border-radius: 24px 24px 0 0 !important;
-            background: var(--color-page, #FAF7F2) !important;
+            margin-top: 0 !important;
+            border-radius: 0 !important;
+            background: #fff !important;
             padding-top: 0 !important;
           }
           .restaurant-sheet-root .rs-motion-content {
             padding: 22px 22px 0 !important;
-            background: var(--color-page, #FAF7F2) !important;
-            border-radius: 24px 24px 0 0 !important;
+            background: #fff !important;
+            border-radius: 0 !important;
           }
-          /* Hide mobile floating buttons on desktop — topbar is on hero + sticky header */
+          /* Grabber handle mobile-only */
+          .restaurant-sheet-root .rs-grabber { display: none !important; }
+          /* Hide mobile floating buttons (topbar hero + sticky header gestiscono) */
           .restaurant-sheet-root .rs-back-btn { display: none !important; }
           .restaurant-sheet-root .rs-top-actions { display: none !important; }
-          /* Show right map panel */
+          /* Right map panel */
           .restaurant-sheet-root .rs-side-map {
             display: flex !important;
             flex: 1 1 0% !important;
             flex-direction: column;
             min-width: 0;
-            background: var(--color-page, #FAF7F2);
+            background: #fff;
           }
-          /* Sticky header: full width on desktop, over both panels */
+          /* Sticky header: sticky dentro lo scroll del left panel */
           .restaurant-sheet-root .rs-sticky-header {
-            top: 56px !important;
+            position: sticky !important;
+            top: 0 !important;
+            width: 100% !important;
+            left: auto !important;
+            right: auto !important;
             z-index: 39 !important;
-            width: 420px !important;
           }
-          /* Sticky sconto pill stays inside left panel */
+          /* Sticky sconto pill: limitata al left panel 420 */
           .restaurant-sheet-root .rs-sticky-disc-wrap {
             width: 420px !important;
             left: 0 !important;
@@ -625,7 +637,7 @@ export default function RestaurantSheet({
                 padding: '22px 22px 0',
                 background: 'var(--color-page, #FAF7F2)',
                 borderRadius: '24px 24px 0 0',
-                textAlign: 'center',
+                textAlign: 'left',
               }}
             >
               {/* Restaurant name — Poppins 900 ultra-tight, centered (spec §2) */}
@@ -888,22 +900,35 @@ export default function RestaurantSheet({
                 <OrariLocale restaurant={restaurant} />
               </motion.div>
 
-              {/* ── Cosa prendere — oro gradient card ── */}
+              {/* ── Cosa prendere — oro gradient card (spec §8) ──
+                  Heading Poppins 900 + body in Caveat (SPECS §TIPOGRAFIA DEFINITIVA
+                  regola 3: piatti consigliati SOLO in Caveat 18–22px). */}
               {tipText && (
-                <motion.div className="sec-oro" variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div className="sec-oro" variants={itemVariants} style={{ marginBottom: 20, textAlign: 'left' }}>
                   <div style={{
                     borderRadius: 14, padding: '16px 18px',
                     background: 'linear-gradient(135deg, var(--color-oro, #B08954) 0%, var(--color-oro-deep, #8E6B3E) 100%)',
                     color: '#fff',
                     boxShadow: 'var(--shadow-sm)',
                     display: 'flex', gap: 14, alignItems: 'flex-start',
+                    textAlign: 'left',
                   }}>
                     <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0, marginTop: 2 }}>🍴</span>
-                    <div>
-                      <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.01em', marginBottom: 4, color: '#fff' }}>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{
+                        fontFamily: 'var(--font-sans)',
+                        fontWeight: 900, fontSize: 16, letterSpacing: '-0.01em',
+                        marginBottom: 6, color: '#fff',
+                      }}>
                         Cosa prendere
                       </div>
-                      <p style={{ fontSize: 14, lineHeight: 1.5, color: 'rgba(255,255,255,0.92)', fontWeight: 500 }}>
+                      <p style={{
+                        fontFamily: 'var(--font-editorial, var(--font-hand, "Caveat", cursive))',
+                        fontSize: 20, lineHeight: 1.35,
+                        color: '#fff',
+                        fontWeight: 500,
+                        margin: 0,
+                      }}>
                         {tipText}
                       </p>
                     </div>
@@ -913,12 +938,13 @@ export default function RestaurantSheet({
 
               {/* Video links — "Ho fatto un video" */}
               {(restaurant.instagram_reel || restaurant.tiktok_url) && (
-                <motion.div className="sec-video" variants={itemVariants} style={{ marginBottom: 20 }}>
+                <motion.div className="sec-video" variants={itemVariants} style={{ marginBottom: 20, textAlign: 'left' }}>
                   <div style={{
                     borderRadius: 16, padding: '16px 18px',
                     background: '#fff',
                     border: '1px solid #E8E0D6',
                     boxShadow: '0 2px 8px rgba(34,24,28,0.04)',
+                    textAlign: 'left',
                   }}>
                     <p style={{
                       fontSize: 14, fontWeight: 700, color: '#22181C',
@@ -969,12 +995,13 @@ export default function RestaurantSheet({
 
 
               {/* Ciao sono Bi */}
-              <motion.div className="sec-ciao" variants={itemVariants} style={{ marginBottom: 20 }}>
+              <motion.div className="sec-ciao" variants={itemVariants} style={{ marginBottom: 20, textAlign: 'left' }}>
                 <div style={{
                   background: 'var(--color-cream-deep, #F1EBE0)',
                   borderRadius: 20, padding: '20px',
                   display: 'flex', gap: 14, alignItems: 'flex-start',
                   border: '1px solid rgba(176,137,84,.2)',
+                  textAlign: 'left',
                 }}>
                   <div style={{
                     width: 54, height: 54, borderRadius: '50%',
