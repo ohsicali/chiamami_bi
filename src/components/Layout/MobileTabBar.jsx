@@ -1,48 +1,116 @@
+import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 
-const TAB_BAR_HEIGHT = 64
+const TAB_BAR_HEIGHT = 68
 
-const HomeIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z" fill={active ? 'currentColor' : 'none'} fillOpacity={active ? 0.15 : 0} />
+// Filled black SVG icons (fill: currentColor, stroke: none). Eccezione Sconti: stroke 2.4
+// Copiate 1:1 da docs/v4-COMPONENT-SPECS.md §10 NAV LIQUID GLASS / LIBRERIA SVG ICONE
+const HomeIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z" />
   </svg>
 )
 
-const ExploreIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="7" />
-    <path d="M21 21l-4.35-4.35" />
+const ExploreIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z" />
+    <circle cx="12" cy="9" r="2.4" fill="#fff" />
   </svg>
 )
 
-const DealsIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2" />
+const DealsIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.4"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <line x1="19" y1="5" x2="5" y2="19" />
+    <circle cx="6.5" cy="6.5" r="2.2" fill="currentColor" />
+    <circle cx="17.5" cy="17.5" r="2.2" fill="currentColor" />
   </svg>
 )
 
-const HeartIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} fillOpacity={active ? 0.15 : 0} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+const SavedIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
   </svg>
 )
 
-const UserIcon = ({ active }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 21a8 8 0 0 1 16 0" />
+const ProfileIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z" />
   </svg>
 )
 
 export { TAB_BAR_HEIGHT }
+
+// Script loading is global + idempotent. Once loaded and initialized, liquidGL
+// keeps a shared canvas across mounts/unmounts; cleanup per-instance is not
+// strictly required, but we re-snapshot on route/scroll changes.
+function ensureLiquidGLLoaded() {
+  if (typeof window === 'undefined') return Promise.resolve(false)
+  if (window.__liquidGLReady) return Promise.resolve(true)
+  if (window.__liquidGLLoading) return window.__liquidGLLoading
+
+  const loadScript = (src) =>
+    new Promise((resolve, reject) => {
+      // Avoid double-injection
+      const existing = document.querySelector(`script[src="${src}"]`)
+      if (existing) {
+        if (existing.dataset.loaded === 'true') return resolve()
+        existing.addEventListener('load', () => resolve())
+        existing.addEventListener('error', reject)
+        return
+      }
+      const s = document.createElement('script')
+      s.src = src
+      s.async = true
+      s.onload = () => {
+        s.dataset.loaded = 'true'
+        resolve()
+      }
+      s.onerror = reject
+      document.head.appendChild(s)
+    })
+
+  window.__liquidGLLoading = (async () => {
+    try {
+      await loadScript('/vendor/html2canvas.min.js')
+      await loadScript('/vendor/liquidGL.js')
+      window.__liquidGLReady = typeof window.liquidGL === 'function'
+      return window.__liquidGLReady
+    } catch (err) {
+      console.warn('[bottom-nav] liquidGL vendor script load failed:', err)
+      window.__liquidGLReady = false
+      return false
+    }
+  })()
+
+  return window.__liquidGLLoading
+}
+
+function detectWebGL() {
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    return !!gl
+  } catch {
+    return false
+  }
+}
 
 export default function MobileTabBar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { discounts } = useActiveDiscounts()
+  const navRef = useRef(null)
+  const liquidGLInstanceRef = useRef(null)
 
   const path = location.pathname
 
@@ -52,99 +120,124 @@ export default function MobileTabBar() {
   const isSaved = path === '/saved'
   const isProfile = path === '/profile' || path === '/settings'
 
+  const hasActiveDrop = Array.isArray(discounts) && discounts.length > 0
+
   const tabs = [
-    { key: 'home', label: 'Home', icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
-    { key: 'explore', label: 'Esplora', icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
-    { key: 'deals', label: 'Sconti', icon: DealsIcon, active: isDeals, badge: discounts?.length || 0, onClick: () => navigate('/deals') },
-    { key: 'saved', label: 'Salvati', icon: HeartIcon, active: isSaved, onClick: () => navigate(user ? '/saved' : '/login') },
-    { key: 'profile', label: 'Profilo', icon: UserIcon, active: isProfile, onClick: () => navigate(user ? '/profile' : '/login') },
+    { key: 'home', label: 'Home', Icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
+    { key: 'explore', label: 'Esplora', Icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
+    { key: 'deals', label: 'Sconti', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
+    { key: 'saved', label: 'Salvati', Icon: SavedIcon, active: isSaved, onClick: () => navigate(user ? '/saved' : '/login') },
+    { key: 'profile', label: 'Profilo', Icon: ProfileIcon, active: isProfile, onClick: () => navigate(user ? '/profile' : '/login') },
   ]
+
+  // Initialize liquidGL once on mount. Falls back gracefully to the CSS
+  // backdrop-filter pill if WebGL is unavailable or the script fails to load.
+  useEffect(() => {
+    let cancelled = false
+    if (!detectWebGL()) return undefined
+
+    ensureLiquidGLLoaded().then((ready) => {
+      if (cancelled || !ready || typeof window.liquidGL !== 'function') return
+      if (window.__liquidGLInstance) {
+        liquidGLInstanceRef.current = window.__liquidGLInstance
+        return
+      }
+      try {
+        const instance = window.liquidGL({
+          target: '.bottom-nav',
+          snapshot: 'body',
+          resolution: 2.0,
+          refraction: 0.025,
+          bevelDepth: 0.11,
+          bevelWidth: 0.18,
+          frost: 2,
+          shadow: true,
+          specular: true,
+          reveal: 'fade',
+          magnify: 1,
+        })
+        window.__liquidGLInstance = instance
+        liquidGLInstanceRef.current = instance
+      } catch (err) {
+        console.warn('[bottom-nav] liquidGL init error:', err)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Re-snapshot on route change and throttled scroll so the refraction follows
+  // the content underneath the nav.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.liquidGL?.syncWith !== 'function') return undefined
+
+    let frame = 0
+    const resync = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        try {
+          window.liquidGL.syncWith()
+        } catch {
+          /* swallow — liquidGL may not be fully ready yet */
+        }
+      })
+    }
+
+    resync()
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        try {
+          window.liquidGL.syncWith()
+        } catch {
+          /* noop */
+        }
+      })
+    }
+
+    let scrollTimer = null
+    const throttledScroll = () => {
+      if (scrollTimer) return
+      scrollTimer = window.setTimeout(() => {
+        scrollTimer = null
+        onScroll()
+      }, 100)
+    }
+
+    window.addEventListener('scroll', throttledScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', throttledScroll)
+      if (scrollTimer) window.clearTimeout(scrollTimer)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [location.pathname])
 
   return (
     <nav
-      className="fixed md:hidden glass-pill-v4"
-      style={{
-        left: 12,
-        right: 12,
-        bottom: 'calc(14px + env(safe-area-inset-bottom, 0px))',
-        height: TAB_BAR_HEIGHT,
-        zIndex: 50,
-        borderRadius: 999,
-      }}
+      ref={navRef}
+      className="bottom-nav liquidGL md:hidden"
+      data-liquid-ignore
+      aria-label="Navigazione principale"
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          height: '100%',
-          padding: '0 8px',
-        }}
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={tab.onClick}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-              padding: '8px 0',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: tab.active ? 'var(--color-ink)' : 'rgba(34,24,28,.4)',
-              position: 'relative',
-              WebkitTapHighlightColor: 'transparent',
-              touchAction: 'manipulation',
-            }}
-          >
-            <div style={{ position: 'relative' }}>
-              {tab.active && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: -5,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: 'var(--color-corallo-soft)',
-                    zIndex: -1,
-                  }}
-                />
-              )}
-              <tab.icon active={tab.active} />
-              {tab.badge > 0 && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -8,
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: 'var(--color-corallo)',
-                    border: '1.5px solid rgba(255,255,255,.9)',
-                  }}
-                />
-              )}
-            </div>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: 0.2,
-              }}
-            >
-              {tab.label}
-            </span>
-          </button>
-        ))}
-      </div>
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={tab.onClick}
+          className={`nav-item${tab.active ? ' active' : ''}`}
+          aria-label={tab.label}
+          aria-current={tab.active ? 'page' : undefined}
+          title={tab.label}
+        >
+          {tab.badge && <span className="nav-badge" aria-hidden="true" />}
+          <tab.Icon />
+          <span className="nav-label">{tab.label}</span>
+        </button>
+      ))}
     </nav>
   )
 }
