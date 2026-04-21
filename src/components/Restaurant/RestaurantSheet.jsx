@@ -329,6 +329,7 @@ export default function RestaurantSheet({
             top: 100px !important;
             padding: 0 40px 24px !important;
             background: var(--color-page, #FAF7F2) !important;
+            align-items: center !important;
           }
           .restaurant-sheet-root .rs-backdrop { display: none !important; }
           .restaurant-sheet-root .rs-sheet {
@@ -342,6 +343,7 @@ export default function RestaurantSheet({
             border-radius: 28px !important;
             box-shadow: var(--shadow-md, 0 4px 14px rgba(34,24,28,.08)) !important;
             flex-direction: row !important;
+            flex: 0 1 1240px !important;
           }
           /* Left scrollable panel 420px */
           .restaurant-sheet-root .rs-scroll {
