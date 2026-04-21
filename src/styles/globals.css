@@ -57,26 +57,13 @@
   --shadow-lg: 0 12px 32px rgba(34, 24, 28, 0.12);
 }
 
-html {
-  margin: 0;
-  padding: 0;
-  /* Dark base so any gap around the map (safe areas, bars) blends with
-     the Mapbox tile background rather than showing cream */
-  background: #1e1e2a;
-}
-
 body {
-  margin: 0;
-  padding: 0;
   font-family: var(--font-sans);
   background-color: var(--color-bg);
   color: var(--color-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
-  /* lvh = large viewport (assumes bars hidden) — makes page technically
-     scrollable on iOS Safari so the address bar can auto-collapse */
-  min-height: 100lvh;
+  min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -84,9 +71,11 @@ body {
   min-height: 100dvh;
 }
 
-/* Map page: override body bg to dark so any residual gap blends with tiles */
+/* Map page: lock scroll and fill full screen */
 .map-fixed {
-  background: #1e1e2a !important;
+  overflow: hidden;
+  height: 100dvh;
+  height: -webkit-fill-available;
 }
 
 /* Mapbox overrides */

@@ -143,14 +143,11 @@ export default function HomePage() {
   const location = useLocation()
 
   useEffect(() => {
+    const prev = window.scrollY
+    window.scrollTo(0, 1)
     document.body.classList.add('map-fixed')
-    // Delayed 1px scroll so iOS Safari treats this as a scrollable context
-    // and auto-hides its address bar (bars only hide on scrollable pages)
-    const t = setTimeout(() => window.scrollTo(0, 1), 100)
-    return () => {
-      clearTimeout(t)
-      document.body.classList.remove('map-fixed')
-    }
+    window.scrollTo(0, prev)
+    return () => document.body.classList.remove('map-fixed')
   }, [])
 
   const { position, loading: geoLoading, locate } = useGeolocation()
@@ -428,15 +425,7 @@ export default function HomePage() {
   )
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 'calc(-1 * env(safe-area-inset-top, 0px))',
-      bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
-      left: 0,
-      right: 0,
-      overflow: 'hidden',
-      background: '#1e1e2a',
-    }}>
+    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* Mobile Navbar (hidden on desktop) */}
       <Navbar
         view={isSheetActive ? 'list' : 'map'}
