@@ -85,99 +85,132 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
 
   const displayTitle = discount.title || discount.discount_value
 
+  const periodLabel = discount.valid_days_label || 'Sconto attivo'
+  const subtitle = periodLabel
+
   return (
     <>
+      {/* Wrapper with backdrop blur + safe-area bottom (spec §4 .sticky-disc) */}
       <motion.div
-        className="rs-sticky-disc"
-        initial={{ y: 80, opacity: 0, scale: 0.95 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        exit={{ y: 80, opacity: 0, scale: 0.95 }}
+        className="rs-sticky-disc-wrap"
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 80, opacity: 0 }}
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
         style={{
           position: 'absolute',
-          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-          left: '50%', transform: 'translateX(-50%)',
-          width: 'calc(100% - 24px)', maxWidth: 640,
+          left: 0, right: 0, bottom: 0,
+          padding: `10px 14px calc(10px + env(safe-area-inset-bottom, 14px))`,
+          background: 'rgba(250,247,242,.92)',
+          backdropFilter: 'saturate(120%) blur(10px)',
+          WebkitBackdropFilter: 'saturate(120%) blur(10px)',
+          borderTop: '1px solid var(--color-ink-05, rgba(34,24,28,.05))',
           zIndex: 30,
-          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
-          borderRadius: 999,
-          height: 52,
-          padding: '0 6px 0 18px',
-          display: 'flex', alignItems: 'center', gap: 10,
-          boxShadow: '0 10px 28px rgba(34,24,28,.14), 0 2px 8px rgba(34,24,28,.06)',
         }}
       >
-        {/* Close button */}
-        <button
-          onClick={() => setDismissed(true)}
-          aria-label="Chiudi"
+        {/* Inner pill verde gradient 135° + sd-go ink button (spec §4 .pill) */}
+        <div
+          className="rs-sticky-disc"
           style={{
-            position: 'absolute', top: -8, right: -8, zIndex: 1,
-            width: 22, height: 22, borderRadius: '50%',
-            background: 'var(--color-ink, #22181C)', border: '2px solid #fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 2px 6px rgba(34,24,28,.2)',
-            padding: 0,
+            position: 'relative',
+            display: 'flex', alignItems: 'center', gap: 10,
+            height: 52,
+            padding: '0 6px 0 14px',
+            background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
+            color: 'var(--color-ink, #22181C)',
+            borderRadius: 999,
+            boxShadow: '0 6px 16px rgba(0,0,0,.08)',
           }}
         >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
-            <path d="M18 6L6 18M6 6l12 12"/>
-          </svg>
-        </button>
+          {/* Close */}
+          <button
+            onClick={() => setDismissed(true)}
+            aria-label="Chiudi"
+            style={{
+              position: 'absolute', top: -8, right: -8, zIndex: 1,
+              width: 22, height: 22, borderRadius: '50%',
+              background: 'var(--color-ink, #22181C)', border: '2px solid #fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: '0 2px 6px rgba(34,24,28,.2)',
+              padding: 0,
+            }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
 
-        <div style={{ flex: 1, minWidth: 0, lineHeight: 1.1 }}>
-          <div style={{
-            fontFamily: 'var(--font-sans)', fontSize: 14.5, fontWeight: 900,
-            letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            {displayTitle}
+          {/* Lead column: title + subtitle (spec §4 .sd-lead) */}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900, fontSize: 14.5, letterSpacing: '-0.01em',
+              color: 'var(--color-ink, #22181C)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {displayTitle}
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 10.5, fontWeight: 700, letterSpacing: '0.02em',
+              color: 'rgba(34,24,28,.72)',
+              marginTop: 2,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {subtitle}
+            </span>
           </div>
-          <div style={{
-            fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 700,
-            color: 'rgba(34,24,28,.72)', letterSpacing: '0.02em',
-            marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            Sconto attivo
-          </div>
+
+          {/* sd-go ink button (spec §4 .sd-go) */}
+          {isRedeemed ? (
+            <span style={{
+              flex: '0 0 auto', fontSize: 12, fontWeight: 700,
+              color: 'var(--color-ink-55, rgba(34,24,28,.55))', padding: '0 14px',
+            }}>
+              {t('discount.alreadyUsed')}
+            </span>
+          ) : isGenerated ? (
+            <button
+              onClick={() => setShowQR(true)}
+              style={{
+                flex: '0 0 auto',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                height: 40, padding: '0 16px',
+                background: 'var(--color-ink, #22181C)', color: '#fff',
+                border: 'none', borderRadius: 999,
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 800, fontSize: 13, letterSpacing: '-0.01em',
+                cursor: 'pointer',
+              }}
+            >
+              Mostra QR
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7"/>
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={handleUnlock}
+              disabled={generating || redemptionLoading}
+              style={{
+                flex: '0 0 auto',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                height: 40, padding: '0 16px',
+                background: 'var(--color-ink, #22181C)', color: '#fff',
+                border: 'none', borderRadius: 999,
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 800, fontSize: 13, letterSpacing: '-0.01em',
+                cursor: 'pointer',
+                opacity: generating ? 0.5 : 1,
+              }}
+            >
+              {generating ? '...' : 'Usa sconto'}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7"/>
+              </svg>
+            </button>
+          )}
         </div>
-
-        {isRedeemed ? (
-          <span style={{
-            flex: '0 0 auto', fontSize: 12, fontWeight: 700,
-            color: 'var(--color-ink-55, rgba(34,24,28,.55))', padding: '0 14px',
-          }}>
-            {t('discount.alreadyUsed')}
-          </span>
-        ) : isGenerated ? (
-          <button
-            onClick={() => setShowQR(true)}
-            style={{
-              flex: '0 0 auto',
-              background: 'var(--color-ink, #22181C)', color: '#fff',
-              border: 'none', height: 42, padding: '0 20px', borderRadius: 999,
-              fontSize: 13, fontWeight: 800, letterSpacing: '0.01em',
-              fontFamily: 'var(--font-sans)', cursor: 'pointer',
-            }}
-          >
-            Mostra QR
-          </button>
-        ) : (
-          <button
-            onClick={handleUnlock}
-            disabled={generating || redemptionLoading}
-            style={{
-              flex: '0 0 auto',
-              background: 'var(--color-ink, #22181C)', color: '#fff',
-              border: 'none', height: 42, padding: '0 20px', borderRadius: 999,
-              fontSize: 13, fontWeight: 800, letterSpacing: '0.01em',
-              fontFamily: 'var(--font-sans)', cursor: 'pointer',
-              opacity: generating ? 0.5 : 1,
-            }}
-          >
-            {generating ? '...' : 'Usa sconto'}
-          </button>
-        )}
       </motion.div>
 
       <AnimatePresence>
@@ -289,8 +322,8 @@ export default function RestaurantSheet({
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
         @media (min-width: 768px) {
-          /* Full-page scheda: v4-desktop-pagine.html §1115-1290
-             Hero 520px full-width + 2-col grid (1.4/1) + sticky sconto pill */
+          /* v4 SCHEDA DESKTOP: 2-col (left panel 420px scrollable + right map).
+             Typography + tokens v4 (Poppins 900 name, beige CTA, etc.). */
           .restaurant-sheet-root {
             top: 56px !important;
             background: var(--color-page, #FAF7F2) !important;
@@ -303,105 +336,72 @@ export default function RestaurantSheet({
             height: 100% !important;
             overflow: hidden !important;
             background: var(--color-page, #FAF7F2) !important;
+            flex-direction: row !important;
           }
-          /* Mobile photo carousel hidden — desktop uses dedicated hero */
-          .restaurant-sheet-root .rs-photo-area { display: none !important; }
+          /* Left scrollable panel 420px */
           .restaurant-sheet-root .rs-scroll {
-            flex: 1 1 0% !important;
+            flex: 0 0 420px !important;
+            width: 420px !important;
             min-height: 0 !important;
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
-            padding-bottom: 110px !important;
+            padding-bottom: 40px !important;
+            border-right: 1px solid var(--color-ink-05, rgba(34,24,28,.06)) !important;
+            background: var(--color-page, #FAF7F2) !important;
           }
-          /* Desktop hero 520px — photo con rounded corners (mockup §375-386) */
+          /* Hide mobile photo carousel area on desktop (photo is inside hero below) */
+          .restaurant-sheet-root .rs-photo-area { display: none !important; }
+          /* Desktop hero wrap — photo at top of left panel, 320px */
           .restaurant-sheet-root .rs-desktop-hero-wrap {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 24px 40px 28px;
+            display: block !important;
+            padding: 0;
           }
           .restaurant-sheet-root .rs-desktop-hero {
             display: block !important;
             position: relative;
-            height: 520px;
-            border-radius: 28px;
+            height: 320px;
             overflow: hidden;
-            box-shadow: var(--shadow-md);
           }
           .restaurant-sheet-root .rs-desktop-hero::after {
             content: "";
             position: absolute; inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, transparent 30%, transparent 70%, rgba(0,0,0,.55) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 22%, transparent 65%, rgba(0,0,0,.12) 100%);
             pointer-events: none;
             z-index: 2;
           }
           .restaurant-sheet-root .rs-content-card {
-            margin-top: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
+            margin-top: -28px !important;
+            border-radius: 24px 24px 0 0 !important;
+            background: var(--color-page, #FAF7F2) !important;
             padding-top: 0 !important;
           }
           .restaurant-sheet-root .rs-motion-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 40px 40px !important;
-            background: transparent !important;
-            border-radius: 0 !important;
-            display: grid !important;
-            grid-template-columns: 1.4fr 1fr;
-            column-gap: 40px;
-            row-gap: 0;
+            padding: 22px 22px 0 !important;
+            background: var(--color-page, #FAF7F2) !important;
+            border-radius: 24px 24px 0 0 !important;
           }
-          /* Section placement on desktop grid */
-          .restaurant-sheet-root .sec-name,
-          .restaurant-sheet-root .sec-addr,
-          .restaurant-sheet-root .sec-chips,
-          .restaurant-sheet-root .sec-cta,
-          .restaurant-sheet-root .sec-sconto,
-          .restaurant-sheet-root .sec-secondobi,
-          .restaurant-sheet-root .sec-oro,
-          .restaurant-sheet-root .sec-video { grid-column: 1; }
-          .restaurant-sheet-root .sec-orari,
-          .restaurant-sheet-root .sec-ciao,
-          .restaurant-sheet-root .sec-nearby { grid-column: 2; }
-          .restaurant-sheet-root .sec-footer { grid-column: 1 / -1; }
-          /* Desktop typography: left-aligned name 52px */
-          .restaurant-sheet-root .sec-name {
-            text-align: left !important;
-            font-size: 52px !important;
-            line-height: 1 !important;
-            letter-spacing: -0.03em !important;
-            margin-top: 0 !important;
-            margin-bottom: 10px !important;
-          }
-          .restaurant-sheet-root .sec-addr {
-            justify-content: flex-start !important;
-            text-align: left !important;
-            font-size: 14px !important;
-            margin-bottom: 18px !important;
-          }
-          .restaurant-sheet-root .sec-chips {
-            justify-content: flex-start !important;
-            margin-bottom: 22px !important;
-          }
-          .restaurant-sheet-root .sec-divider { display: none !important; }
-          .restaurant-sheet-root .sec-cta { justify-content: flex-start !important; margin-bottom: 22px !important; }
-          /* Hide floating buttons on desktop — sticky header handles back/share/save */
+          /* Hide mobile floating buttons on desktop — topbar is on hero + sticky header */
           .restaurant-sheet-root .rs-back-btn { display: none !important; }
           .restaurant-sheet-root .rs-top-actions { display: none !important; }
-          .restaurant-sheet-root .rs-side-map { display: none !important; }
-          /* Sticky header: full width on desktop */
+          /* Show right map panel */
+          .restaurant-sheet-root .rs-side-map {
+            display: flex !important;
+            flex: 1 1 0% !important;
+            flex-direction: column;
+            min-width: 0;
+            background: var(--color-page, #FAF7F2);
+          }
+          /* Sticky header: full width on desktop, over both panels */
           .restaurant-sheet-root .rs-sticky-header {
             top: 56px !important;
             z-index: 39 !important;
+            width: 420px !important;
           }
-          /* Sticky sconto pill: min-width 460 on desktop (mockup §413-439) */
-          .restaurant-sheet-root .rs-sticky-disc {
-            min-width: 460px !important;
-            bottom: 22px !important;
-          }
-          /* Show desktop hero wrap that is display:none inline */
-          .restaurant-sheet-root .rs-desktop-hero-wrap {
-            display: block !important;
+          /* Sticky sconto pill stays inside left panel */
+          .restaurant-sheet-root .rs-sticky-disc-wrap {
+            width: 420px !important;
+            left: 0 !important;
+            right: auto !important;
           }
         }
       `}</style>
@@ -480,14 +480,38 @@ export default function RestaurantSheet({
         {/* Scrollable content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-none rs-scroll" style={{ position: 'relative', zIndex: 1, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
 
-          {/* Mobile photo carousel — inside scroll so horizontal swipes hit useDrag
-              and vertical swipes bubble up to the scroll container. Renderizzato
-              SOLO su mobile: prima conviveva nel DOM con la DesktopPhotoGrid
-              raddoppiando il numero di <img> + istanziando gesture handler
-              inutilmente quando invisibile. */}
+          {/* Mobile hero — foto 320px fissi + gradient + topbar overlay (spec §1).
+              Horizontal swipes hit useDrag interno, vertical bubble al scroll. */}
           {!isDesktop && (
-            <div ref={photoRef} className="rs-photo-area" style={{ height: '45vh', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
-              <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+            <div
+              ref={photoRef}
+              className="rs-photo-area"
+              style={{
+                position: 'relative',
+                height: 320,
+                width: '100%',
+                overflow: 'hidden',
+                zIndex: 0,
+                marginTop: 0,
+              }}
+            >
+              <PhotoCarousel
+                photos={restaurant.photos || []}
+                height="320px"
+                restaurantName={restaurant.name}
+                city={restaurant.city}
+                dotsPosition="right"
+                hideDots
+                onIndexChange={setPhotoIndex}
+              />
+              {/* Gradient overlay 180deg (spec §1) */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+                  background: 'linear-gradient(180deg,rgba(0,0,0,.35) 0%,transparent 22%,transparent 65%,rgba(0,0,0,.12) 100%)',
+                }}
+              />
             </div>
           )}
 
@@ -560,15 +584,27 @@ export default function RestaurantSheet({
             </div>
           )}
 
-          {/* White content card — scrolls up over photo */}
+          {/* Card overlay — rounded-top centrata con grabber (spec §2) */}
           <div className="rs-content-card" style={{
-            background: '#fff',
-            borderRadius: '20px 20px 0 0',
-            marginTop: -24,
+            background: 'var(--color-page, #FAF7F2)',
+            borderRadius: '24px 24px 0 0',
+            marginTop: -28,
             position: 'relative', zIndex: 2,
           }}>
 
-            {/* Photo counter — anchored to white card, mobile only */}
+            {/* Grabber handle (spec §2) */}
+            <span
+              aria-hidden="true"
+              className="rs-grabber"
+              style={{
+                position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+                width: 36, height: 4, borderRadius: 99,
+                background: 'var(--color-ink-15, rgba(34,24,28,.15))',
+                zIndex: 3,
+              }}
+            />
+
+            {/* Photo counter — anchored to card overlay, mobile only */}
             {!isDesktop && photoCount > 1 && (
               <div style={{
                 position: 'absolute', top: -36, right: 16, zIndex: 3,
@@ -586,22 +622,23 @@ export default function RestaurantSheet({
               initial="hidden"
               animate="visible"
               style={{
-                padding: '28px 24px 0px',
-                background: '#fff',
-                borderRadius: '20px 20px 0 0',
+                padding: '22px 22px 0',
+                background: 'var(--color-page, #FAF7F2)',
+                borderRadius: '24px 24px 0 0',
+                textAlign: 'center',
               }}
             >
-              {/* Restaurant name — centered, Poppins 700 (max loaded weight) */}
+              {/* Restaurant name — Poppins 900 ultra-tight, centered (spec §2) */}
               <motion.h1 className="sec-name" variants={itemVariants} style={{
-                fontFamily: "var(--font-sans)",
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 900,
                 fontSize: 28,
                 color: 'var(--color-ink, #22181C)',
                 lineHeight: 1.05,
                 letterSpacing: '-0.025em',
                 textAlign: 'center',
-                marginBottom: 10,
                 marginTop: 6,
+                marginBottom: 10,
               }}>
                 {restaurant.name}
               </motion.h1>
@@ -687,7 +724,7 @@ export default function RestaurantSheet({
                     flex: 1, maxWidth: 280, padding: '13px 18px', borderRadius: 999,
                     textAlign: 'center',
                     fontSize: 14, fontWeight: 800, textDecoration: 'none',
-                    background: '#F2EDE1', color: 'var(--color-ink)',
+                    background: 'var(--color-beige-cta, #F2EDE1)', color: 'var(--color-ink)',
                     border: 'none', letterSpacing: '-0.01em',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}>
@@ -801,16 +838,41 @@ export default function RestaurantSheet({
                 </motion.button>
               )}
 
-              {/* ── Secondo Bi ── */}
+              {/* ── Secondo Bi (spec §5 + §6): eyebrow + sec-t bold + body + sig Caveat ── */}
               {reviewText && (
-                <motion.div className="sec-secondobi" variants={itemVariants} style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--color-corallo-ink)', textTransform: 'uppercase', marginBottom: 10 }}>
+                <motion.div
+                  className="sec-secondobi"
+                  variants={itemVariants}
+                  style={{ marginBottom: 20, textAlign: 'left' }}
+                >
+                  {/* Eyebrow label corallo-ink uppercase (spec §5 .sec-lbl) */}
+                  <div style={{
+                    fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
+                    color: 'var(--color-corallo-ink)', textTransform: 'uppercase',
+                    marginBottom: 8,
+                  }}>
                     Secondo Bi
                   </div>
+                  {/* sec-t bold title (spec §5, tratto da restaurant.our_tagline se disponibile) */}
+                  {restaurant.our_tagline && (
+                    <div style={{
+                      fontWeight: 900, fontSize: 19, letterSpacing: '-0.02em',
+                      color: 'var(--color-ink)', lineHeight: 1.2, marginBottom: 10,
+                    }}>
+                      {restaurant.our_tagline}
+                    </div>
+                  )}
                   <p style={{ fontSize: 14.5, lineHeight: 1.6, color: 'var(--color-ink)', fontWeight: 500 }}>
                     {reviewText}
                   </p>
-                  <div style={{ marginTop: 12, fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 22, color: 'var(--color-corallo-ink)', lineHeight: 1 }}>
+                  {/* Signature "— Bi" Caveat 22px (spec §6 .sig) */}
+                  <div style={{
+                    marginTop: 12,
+                    fontFamily: 'var(--font-editorial, var(--font-hand, "Caveat", cursive))',
+                    fontSize: 22,
+                    color: 'var(--color-corallo-ink)',
+                    lineHeight: 1,
+                  }}>
                     — Bi
                   </div>
                   {!isItalian && (
@@ -992,15 +1054,16 @@ export default function RestaurantSheet({
           )}
           <div style={{
             padding: '16px 20px',
-            borderTop: '1px solid #E8E5DE',
+            borderTop: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
             display: 'flex', gap: 10,
             background: '#fff',
           }}>
             {mapsUrl && (
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-                flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
-                fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                background: '#E8453C', color: '#fff', border: 'none',
+                flex: 1, padding: '12px 0', borderRadius: 999, textAlign: 'center',
+                fontSize: 14, fontWeight: 800, textDecoration: 'none',
+                background: 'var(--color-beige-cta, #F2EDE1)', color: 'var(--color-ink, #22181C)',
+                border: 'none', letterSpacing: '-0.01em',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1011,9 +1074,11 @@ export default function RestaurantSheet({
             )}
             {phoneUrl && (
               <a href={phoneUrl} style={{
-                flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
-                fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                background: '#F0EBE3', color: '#22181C', border: 'none',
+                flex: 1, padding: '12px 0', borderRadius: 999, textAlign: 'center',
+                fontSize: 14, fontWeight: 800, textDecoration: 'none',
+                background: '#fff', color: 'var(--color-ink, #22181C)',
+                border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+                letterSpacing: '-0.01em',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -22,6 +22,10 @@
 
   --color-oro: #B08954;
   --color-oro-deep: #8E6B3E;
+  --color-oro-soft: #F4E7CC;
+
+  --color-beige-cta: #F2EDE1;
+  --color-beige-cta-hover: #EADFCB;
 
   --color-bg: #FAF7F2;
   --color-page: #FAF7F2;
@@ -72,6 +76,9 @@
   --page: #FAF7F2;
   --cream: #F5F0E4;
   --oro-deep: #8E6B3E;
+  --oro-soft: #F4E7CC;
+  --beige-cta: #F2EDE1;
+  --beige-cta-hover: #EADFCB;
 }
 
 body {
