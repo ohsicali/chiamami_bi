@@ -81,6 +81,7 @@ const EMPTY_FORM = {
   instagram_reel: '',
   tiktok_url: '',
   verify_pin: '',
+  partner_email: '',
   published: false,
   photos: [], // { url, caption, sort_order, file? }
 }
@@ -745,6 +746,7 @@ export default function RestaurantForm() {
           instagram_reel: r.instagram_reel || '',
           tiktok_url: r.tiktok_url || '',
           verify_pin: r.verify_pin || '',
+          partner_email: r.partner_email || '',
           published: r.is_published !== false,
           photos: Array.isArray(r.photos)
             ? r.photos.map((p, i) =>
@@ -1237,6 +1239,7 @@ export default function RestaurantForm() {
       instagram_reel: form.instagram_reel.trim() || null,
       tiktok_url: form.tiktok_url.trim() || null,
       verify_pin: form.verify_pin.trim() || null,
+      partner_email: form.partner_email.trim() || null,
       is_published: form.published,
     }
 
@@ -1337,6 +1340,37 @@ export default function RestaurantForm() {
         }
 
         try { localStorage.removeItem(draftKey) } catch {}
+
+        // Manda mail di benvenuto solo su nuovo INSERT con email + pin impostati
+        if (!isEditing && form.partner_email.trim() && form.verify_pin.trim()) {
+          try {
+            const { data: { session: s } } = await supabase.auth.getSession()
+            const verifyUrl = `https://chiamamibi.com/verify?pin=${encodeURIComponent(form.verify_pin.trim())}`
+            await fetch('/api/send-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${s?.access_token || ''}`,
+              },
+              body: JSON.stringify({
+                type: 'partner',
+                to: form.partner_email.trim(),
+                nomeLocale: form.name.trim(),
+                pin: form.verify_pin.trim(),
+                verifyUrl,
+              }),
+            })
+            // Segna onboarding_email_sent_at per idempotenza
+            await supabase.from('restaurants')
+              .update({ onboarding_email_sent_at: new Date().toISOString() })
+              .eq('id', restaurantId)
+          } catch (emailErr) {
+            // L'INSERT è già avvenuto — non blocchiamo il salvataggio per un errore email
+            console.error('Benvenuto email error (non blocking):', emailErr)
+            addToast('Ristorante creato, ma errore invio email benvenuto', 'error')
+          }
+        }
+
         addToast(isEditing ? 'Ristorante aggiornato!' : 'Ristorante creato!', 'success')
         navigate('/admin')
       } else {
@@ -1870,6 +1904,19 @@ export default function RestaurantForm() {
             subtitle="PIN di accesso a /verify per il ristoratore"
             defaultOpen={false}
           >
+            <Field label="Email ristoratore">
+              <input
+                type="email"
+                value={form.partner_email}
+                onChange={(e) => update('partner_email', e.target.value)}
+                placeholder="es. mario@ristoranterossi.it"
+                className={inputClass()}
+              />
+              <p className="mt-1.5 text-xs text-secondary">
+                Destinatario della mail di benvenuto con PIN. Lascia vuoto per non inviare.
+              </p>
+            </Field>
+
             <Field label="PIN Verify (6 cifre)">
               <input
                 type="text"
