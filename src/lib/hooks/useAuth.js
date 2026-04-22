@@ -73,10 +73,11 @@ export function AuthProvider({ children }) {
           .then(() => {})
           .catch(() => {})
         // Send welcome email (fire and forget)
-        fetch('/api/welcome-email', {
+        fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'user',
             email: authUser.email,
             name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
           }),
