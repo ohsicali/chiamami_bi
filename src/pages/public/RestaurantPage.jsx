@@ -1,8 +1,10 @@
 import { useNavigate, useLocation, matchPath } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
+import DesktopRestaurantSheet from '../../components/Restaurant/DesktopRestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { LogoLoader } from '../../components/UI/Logo'
 import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
@@ -27,6 +29,7 @@ export default function RestaurantPage() {
   const { allRestaurants, loading } = useRestaurants()
   const { user } = useAuth()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const isDesktop = useIsDesktop()
 
   const restaurant = allRestaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
 
@@ -107,14 +110,25 @@ export default function RestaurantPage() {
         servesCuisine={restaurant.cuisine}
         image={restaurant.image}
       />
-      <RestaurantSheet
-        restaurant={restaurant}
-        onClose={handleBack}
-        allRestaurants={allRestaurants}
-        onSelectNearby={handleSelectNearby}
-        saved={isSaved(restaurant.id)}
-        onSaveToggle={handleSaveToggle}
-      />
+      {isDesktop ? (
+        <DesktopRestaurantSheet
+          restaurant={restaurant}
+          onClose={handleBack}
+          allRestaurants={allRestaurants}
+          onSelectNearby={handleSelectNearby}
+          saved={isSaved(restaurant.id)}
+          onSaveToggle={handleSaveToggle}
+        />
+      ) : (
+        <RestaurantSheet
+          restaurant={restaurant}
+          onClose={handleBack}
+          allRestaurants={allRestaurants}
+          onSelectNearby={handleSelectNearby}
+          saved={isSaved(restaurant.id)}
+          onSaveToggle={handleSaveToggle}
+        />
+      )}
     </>
   )
 }
