@@ -1,3 +1,4 @@
+import DesktopProfilePage from './DesktopProfilePage'
 import { useState, useEffect, cloneElement } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -83,6 +84,7 @@ export default function ProfilePage() {
   }
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
+  if (isDesktop) return <DesktopProfilePage />
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   const email = user?.email || ''
