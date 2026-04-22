@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import './VerifyPage.css'
-import { Link } from 'react-router-dom'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -83,218 +82,22 @@ function clearLockout() {
   try { localStorage.removeItem(LOCKOUT_KEY) } catch {}
 }
 
-function PinInput({ value, onChange, onComplete, disabled, shake, desktop }) {
-  const inputsRef = useRef([])
-
-  const handleChange = (i, c) => {
-    if (!/^\d?$/.test(c)) return
-    const next = value.split('')
-    next[i] = c
-    const joined = next.join('').slice(0, PIN_LENGTH)
-    onChange(joined)
-    if (c && i < PIN_LENGTH - 1) inputsRef.current[i + 1]?.focus()
-    if (i === PIN_LENGTH - 1 && c && joined.replace(/\s/g, '').length === PIN_LENGTH) {
-      onComplete?.(joined)
-    }
-  }
-  const handleKeyDown = (i, e) => {
-    if (e.key === 'Backspace' && !value[i] && i > 0) {
-      inputsRef.current[i - 1]?.focus()
-    }
-  }
-  const handlePaste = (e) => {
-    e.preventDefault()
-    const d = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, PIN_LENGTH)
-    onChange(d)
-    if (d.length === PIN_LENGTH) {
-      inputsRef.current[PIN_LENGTH - 1]?.focus()
-      onComplete?.(d)
-    }
-  }
-
-  const box = desktop
-    ? { w: 48, h: 60, fs: 24, radius: 12, gap: 8 }
-    : { w: 42, h: 54, fs: 22, radius: 10, gap: 6 }
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: box.gap,
-        justifyContent: 'center',
-        animation: shake ? 'verifyShake 0.4s' : 'none',
-      }}
-    >
-      {Array.from({ length: PIN_LENGTH }, (_, i) => i).map((i) => {
-        const filled = Boolean(value[i])
-        return (
-          <input
-            key={i}
-            ref={(el) => (inputsRef.current[i] = el)}
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={1}
-            value={value[i] || ''}
-            onChange={(e) => handleChange(i, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            onPaste={i === 0 ? handlePaste : undefined}
-            disabled={disabled}
-            style={{
-              width: box.w,
-              height: box.h,
-              textAlign: 'center',
-              fontSize: box.fs,
-              fontFamily: 'var(--font-mark, "Alfa Slab One", Georgia, serif)',
-              fontWeight: 400,
-              fontVariantNumeric: 'tabular-nums',
-              color: 'var(--color-ink)',
-              border: `2px solid ${filled ? 'var(--color-ink)' : 'var(--color-line)'}`,
-              borderRadius: box.radius,
-              background: filled ? 'var(--color-page)' : '#fff',
-              outline: 'none',
-              transition: 'border-color 0.15s, background 0.15s',
-              caretColor: 'var(--color-corallo)',
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-corallo)')}
-            onBlur={(e) =>
-              (e.currentTarget.style.borderColor = filled ? 'var(--color-ink)' : 'var(--color-line)')
-            }
-          />
-        )
-      })}
-    </div>
-  )
-}
-
 /* ------------------------------------------------------------------ */
-/*  Sezione istruzioni (mobile & desktop)                             */
+/*  PIN logo header shared across all 3 states                        */
 /* ------------------------------------------------------------------ */
-const INSTRUCTIONS = [
-  { n: 1, title: 'Il PIN lo hai ricevuto da noi', body: 'quando ti abbiamo inserito nella Guida di Bi.' },
-  { n: 2, title: 'Un cliente mostra il telefono?', body: 'Accedi e inserisci il codice che vedi sotto il suo QR.' },
-  { n: 3, title: 'Dopo la verifica', body: 'lo sconto risulta usato e non può essere riutilizzato.' },
-  { n: 4, title: 'Nella tab Dashboard', body: 'vedi le statistiche del tuo ristorante.' },
-]
-
-function InstructionsBlock({ desktop }) {
+function PinLogo() {
   return (
-    <div style={{ padding: desktop ? '0 0 24px' : '0 20px 20px' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginBottom: 12,
-        }}
-      >
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: 'var(--color-oro)',
-            flexShrink: 0,
-          }}
-        />
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'var(--color-ink)',
-            letterSpacing: 0.2,
-          }}
-        >
-          Istruzioni per il ristoratore
-        </span>
+    <div style={{ textAlign: 'center', marginTop: 16 }}>
+      <div style={{ fontFamily: 'var(--font-mark)', fontSize: 18, letterSpacing: '.02em', lineHeight: 1 }}>
+        LA GUIDA DI BI
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {INSTRUCTIONS.map((s) => (
-          <div key={s.n} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 6,
-                background: 'var(--color-page)',
-                color: 'var(--color-corallo)',
-                fontSize: 10,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {s.n}
-            </span>
-            <div
-              style={{
-                fontSize: desktop ? 12 : 11,
-                color: 'var(--color-ink-55)',
-                lineHeight: 1.5,
-              }}
-            >
-              <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{s.title}</span>
-              {' — '}
-              {s.body}
-            </div>
-          </div>
-        ))}
+      <div style={{
+        fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 10,
+        letterSpacing: '.14em', color: 'var(--color-corallo)', marginTop: 4, textTransform: 'uppercase',
+      }}>
+        Area ristoratori
       </div>
     </div>
-  )
-}
-
-function ContactBox({ desktop }) {
-  return (
-    <div
-      style={{
-        margin: desktop ? '0 0 12px' : '10px 20px 20px',
-        background: 'var(--color-page)',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 11,
-        color: 'var(--color-ink-55)',
-        lineHeight: 1.5,
-      }}
-    >
-      Non hai il PIN? Scrivici su{' '}
-      <a
-        href="https://instagram.com/chiamamibi"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: 'var(--color-corallo)', fontWeight: 600, textDecoration: 'none' }}
-      >
-        @chiamamibi
-      </a>{' '}
-      o a{' '}
-      <a
-        href="mailto:info@chiamamibi.com"
-        style={{ color: 'var(--color-corallo)', fontWeight: 600, textDecoration: 'none' }}
-      >
-        info@chiamamibi.com
-      </a>
-      .
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Icone                                                             */
-/* ------------------------------------------------------------------ */
-function LockIcon({ size = 22, color = 'var(--color-corallo)' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="4" y="10" width="16" height="11" rx="2.5" stroke={color} strokeWidth="1.8" />
-      <path
-        d="M8 10V7a4 4 0 1 1 8 0v3"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <circle cx="12" cy="15.5" r="1.5" fill={color} />
-    </svg>
   )
 }
 
@@ -311,6 +114,8 @@ export default function VerifyPage() {
   const [error, setError] = useState(null)
   const [shake, setShake] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [isPinWrong, setIsPinWrong] = useState(false)
+  const [attemptsRemaining, setAttemptsRemaining] = useState(MAX_ATTEMPTS)
   const [lockedUntil, setLockedUntil] = useState(() => readLockout().lockedUntil)
   const [nowTs, setNowTs] = useState(() => Date.now())
 
@@ -372,15 +177,15 @@ export default function VerifyPage() {
     const current = readLockout()
     if (current.lockedUntil > Date.now()) {
       setLockedUntil(current.lockedUntil)
-      setError(`Troppi tentativi. Riprova fra ${Math.ceil((current.lockedUntil - Date.now()) / 60000)} minuti.`)
       return
     }
     if (!isSupabaseConfigured()) {
-      setError('Servizio non disponibile')
+      setError('Non riesco a parlare con il server. Controlla la connessione e riprova.')
       return
     }
     setSubmitting(true)
     setError(null)
+    setIsPinWrong(false)
 
     try {
       // Server-side PIN validation + device registration.
@@ -396,7 +201,7 @@ export default function VerifyPage() {
       })
 
       if (rpcErr || !loginData || loginData.error) {
-        triggerError('PIN non valido. Riprova o contattaci.')
+        triggerError(true)
         return
       }
 
@@ -404,12 +209,14 @@ export default function VerifyPage() {
       const token = loginData.device_token
 
       if (!r || !token) {
-        triggerError("Errore durante l'accesso. Riprova.")
+        triggerError(false)
         return
       }
 
       clearLockout()
       setLockedUntil(0)
+      setIsPinWrong(false)
+      setAttemptsRemaining(MAX_ATTEMPTS)
       setCookie(COOKIE_NAME, token, COOKIE_DAYS)
       setRestaurant(normalizeRestaurant(r))
       setPin('')
@@ -417,22 +224,30 @@ export default function VerifyPage() {
       setSubmitting(false)
     } catch (e) {
       console.error(e)
-      triggerError('Errore di connessione. Riprova.')
+      triggerError(false)
     }
   }
 
-  const triggerError = (msg) => {
+  const triggerError = (isPin) => {
     const state = readLockout()
     const nextAttempts = state.attempts + 1
     if (nextAttempts >= MAX_ATTEMPTS) {
       const until = Date.now() + LOCKOUT_MS
       writeLockout({ attempts: nextAttempts, lockedUntil: until })
       setLockedUntil(until)
-      setError(`Troppi tentativi. Riprova fra ${Math.ceil(LOCKOUT_MS / 60000)} minuti.`)
+      setIsPinWrong(false)
+      setError(null)
     } else {
       writeLockout({ attempts: nextAttempts, lockedUntil: 0 })
       const remaining = MAX_ATTEMPTS - nextAttempts
-      setError(`${msg} (${remaining} ${remaining === 1 ? 'tentativo' : 'tentativi'} rimasti)`)
+      setAttemptsRemaining(remaining)
+      if (isPin) {
+        setIsPinWrong(true)
+        setError(null)
+      } else {
+        setIsPinWrong(false)
+        setError('Non riesco a parlare con il server. Controlla la connessione e riprova.')
+      }
     }
     setShake(true)
     setPin('')
@@ -493,6 +308,8 @@ export default function VerifyPage() {
         onSubmit={handleSubmit}
         isLocked={isLocked}
         lockoutRemainingSec={lockoutRemainingSec}
+        isPinWrong={isPinWrong}
+        attemptsRemaining={attemptsRemaining}
       />
     )
   } else {
@@ -510,364 +327,260 @@ export default function VerifyPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PIN View (mobile + desktop responsive)                            */
+/*  PIN View — v4 reskin (CP1 · CP2 · CP3)                           */
 /* ------------------------------------------------------------------ */
-function PinView({ pin, setPin, error, shake, submitting, onSubmit, isLocked = false, lockoutRemainingSec = 0 }) {
+function PinView({
+  pin, setPin, error, shake, submitting, onSubmit,
+  isLocked = false, lockoutRemainingSec = 0,
+  isPinWrong = false, attemptsRemaining = MAX_ATTEMPTS,
+}) {
   const isDesktop = useIsDesktop()
-  return (
-    <>
-      {/* ---- MOBILE (< 768px) ---- */}
-      {!isDesktop && (
-      <div style={{ minHeight: '100dvh', background: 'var(--color-page)' }}>
-        {/* Brand bar — ChiamamiBi logo + link to main site for people who
-            stumbled onto /verify by mistake. Matches RestaurantHeader's
-            brand bar style so the experience is consistent once logged in. */}
-        <div
-          style={{
-            background: 'var(--color-ink)',
-            padding: '18px 16px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <Link
-            to="/"
-            aria-label="Torna al sito ChiamamiBi"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              textDecoration: 'none',
-            }}
-          >
-            <LogoFull height={26} />
-          </Link>
-          <Link
-            to="/"
-            style={{
-              fontSize: 12,
-              color: 'rgba(255,255,255,0.7)',
-              textDecoration: 'none',
-              fontWeight: 500,
-              padding: '6px 10px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.15)',
-            }}
-          >
-            ← Al sito
-          </Link>
-        </div>
 
-        {/* Header scuro */}
-        <div
-          style={{
-            background: 'var(--color-ink)',
-            padding: '16px 20px 24px',
-            textAlign: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: 'rgba(232, 69, 60,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 12px',
-            }}
-          >
-            <LockIcon size={22} color="var(--color-corallo)" />
+  // "wrong" state: PIN was incorrect and user hasn't started typing again
+  const isWrong = isPinWrong && pin.length === 0
+
+  const bgNormal = 'linear-gradient(180deg,var(--color-page) 0%,var(--color-cream) 100%)'
+  const bgWrong  = 'linear-gradient(180deg,var(--color-corallo-wash) 0%,var(--color-page) 100%)'
+  const bgLocked = 'linear-gradient(180deg,var(--color-corallo-wash) 0%,var(--color-page) 60%)'
+  const bg = isLocked ? bgLocked : isWrong ? bgWrong : bgNormal
+
+  // Desktop keyboard support — digits + Backspace
+  useEffect(() => {
+    const onKey = (e) => {
+      if (isLocked || submitting) return
+      if (/^[0-9]$/.test(e.key)) {
+        setPin(prev => {
+          const next = (prev + e.key).slice(0, PIN_LENGTH)
+          if (next.length === PIN_LENGTH) setTimeout(() => onSubmit(next), 0)
+          return next
+        })
+      } else if (e.key === 'Backspace') {
+        setPin(prev => prev.slice(0, -1))
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isLocked, submitting, setPin, onSubmit])
+
+  const onPad = (k) => {
+    if (isLocked || submitting) return
+    if (k === 'del') {
+      setPin(p => p.slice(0, -1))
+    } else {
+      setPin(p => {
+        const next = (p + k).slice(0, PIN_LENGTH)
+        if (next.length === PIN_LENGTH) setTimeout(() => onSubmit(next), 0)
+        return next
+      })
+    }
+  }
+
+  const mins = Math.floor(lockoutRemainingSec / 60)
+  const secs = String(lockoutRemainingSec % 60).padStart(2, '0')
+
+  /* ---- LOCKED state ---- */
+  if (isLocked) {
+    const lockedInner = (
+      <div style={{
+        background: bg,
+        padding: `24px 28px ${isDesktop ? '28px' : 'max(24px, env(safe-area-inset-bottom))'}`,
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
+        ...(isDesktop ? {} : { height: '100%', boxSizing: 'border-box' }),
+      }}>
+        <PinLogo />
+        <div style={{
+          margin: '40px auto 18px', width: 84, height: 84, borderRadius: 26,
+          background: 'var(--color-corallo)', color: '#fff',
+          display: 'grid', placeItems: 'center', fontSize: 34,
+          boxShadow: '0 14px 32px rgba(232,69,60,.32)',
+        }}>🔒</div>
+        <div style={{ textAlign: 'center', marginBottom: 4 }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em' }}>
+            Accesso bloccato
           </div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
-              fontSize: 20,
-              color: '#fff',
-              marginBottom: 4,
-            }}
-          >
-            Area Ristoratori
-          </h1>
-        </div>
-
-        {/* PIN + submit */}
-        <div style={{ padding: '24px 20px' }}>
-          <p
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: 'var(--color-ink)',
-              marginBottom: 14,
-              textAlign: 'center',
-            }}
-          >
-            Inserisci il PIN del tuo ristorante
-          </p>
-          <PinInput
-            value={pin}
-            onChange={setPin}
-            onComplete={(v) => onSubmit(v)}
-            disabled={submitting || isLocked}
-            shake={shake}
-            desktop={false}
-          />
-
-          <button
-            onClick={() => onSubmit()}
-            disabled={pin.length !== PIN_LENGTH || submitting || isLocked}
-            style={{
-              width: '100%',
-              marginTop: 16,
-              background: 'var(--color-corallo)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 12,
-              padding: '14px',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 'pointer' : 'default',
-              opacity: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 1 : 0.5,
-              transition: 'opacity 0.15s',
-            }}
-          >
-            {isLocked
-              ? `Bloccato · ${Math.floor(lockoutRemainingSec / 60)}:${String(lockoutRemainingSec % 60).padStart(2, '0')}`
-              : submitting ? 'Verifica…' : 'Accedi'}
-          </button>
-
-          {error && (
-            <p
-              style={{
-                marginTop: 10,
-                fontSize: 11,
-                color: 'var(--color-corallo)',
-                textAlign: 'center',
-                fontWeight: 500,
-              }}
-            >
-              {error}
-            </p>
-          )}
-
-          <p
-            style={{
-              marginTop: 12,
-              fontSize: 10,
-              color: 'var(--color-ink-55)',
-              textAlign: 'center',
-            }}
-          >
-            Il dispositivo verrà ricordato — non dovrai reinserire il PIN
-          </p>
-        </div>
-
-        <InstructionsBlock desktop={false} />
-        <ContactBox desktop={false} />
-
-        {/* Footer — explicit way out for people who landed on /verify by
-            mistake (e.g. clicked a link not meant for them). */}
-        <div style={{ padding: '8px 20px 28px', textAlign: 'center' }}>
-          <Link
-            to="/"
-            style={{
-              display: 'inline-block',
-              fontSize: 13,
-              color: 'var(--color-ink-70)',
-              textDecoration: 'none',
-              fontWeight: 600,
-              padding: '10px 18px',
-              borderRadius: 10,
-              border: '1px solid var(--color-line)',
-              background: 'var(--color-card)',
-            }}
-          >
-            ← Torna al sito ChiamamiBi
-          </Link>
-          <div style={{ marginTop: 10, fontSize: 11, color: 'var(--color-ink-55)' }}>
-            Questa pagina è dedicata ai ristoranti partner
+          <div style={{ fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 700, marginTop: 2 }}>
+            Area ristoratori
           </div>
         </div>
-      </div>
-      )}
-
-      {/* ---- DESKTOP (≥ 768px) ---- */}
-      {isDesktop && (
-      <div
-        className="desktop-nav-offset"
-        style={{
-          display: 'flex',
-          minHeight: '100dvh',
-          background: 'var(--color-page)',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '32px 24px 48px',
-        }}
-      >
-        {/* Brand row — ChiamamiBi logo above the card for anyone who arrived
-            here without going through the main site. */}
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 440,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-          }}
-        >
-          <Link to="/" aria-label="Torna al sito ChiamamiBi" style={{ display: 'inline-flex', textDecoration: 'none' }}>
-            <LogoFull height={28} />
-          </Link>
-          <Link
-            to="/"
-            style={{
-              fontSize: 13,
-              color: 'var(--color-ink-70)',
-              textDecoration: 'none',
-              fontWeight: 600,
-              padding: '8px 14px',
-              borderRadius: 10,
-              border: '1px solid var(--color-line)',
-              background: 'var(--color-card)',
-            }}
-          >
-            ← Torna al sito
-          </Link>
+        <div style={{
+          textAlign: 'center', fontSize: 13, color: 'var(--color-ink)',
+          fontWeight: 600, lineHeight: 1.5, margin: '18px 12px 0',
+        }}>
+          Troppi PIN sbagliati.<br />
+          L&apos;accesso è bloccato per <b>15 minuti</b>,<br />
+          oppure chiama Bi per ri-generare un PIN nuovo.
         </div>
-
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 440,
-            background: 'var(--color-card)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--color-line)',
-            padding: '36px 32px 28px',
-            boxShadow: 'var(--shadow-md)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              marginBottom: 28,
-            }}
-          >
-            <div
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: 16,
-                background: 'rgba(232, 69, 60,0.10)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 14,
-              }}
-            >
-              <LockIcon size={24} color="var(--color-corallo)" />
+        <a href="mailto:info@chiamamibi.com" style={{
+          background: '#fff', border: '1px solid var(--color-line)', borderRadius: 16,
+          padding: 14, margin: '22px 0 0',
+          display: 'flex', alignItems: 'center', gap: 12,
+          textDecoration: 'none', color: 'inherit',
+        }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'var(--color-corallo)', color: '#fff',
+            display: 'grid', placeItems: 'center',
+            fontFamily: 'var(--font-mark)', fontSize: 15, flexShrink: 0,
+          }}>B</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 13 }}>Bi · Augusto</div>
+            <div style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+              info@chiamamibi.com
             </div>
-            <h1
-              style={{
-                fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
-                fontSize: 24,
-                color: 'var(--color-ink)',
-                marginBottom: 6,
-              }}
-            >
-              Area Ristoratori
-            </h1>
           </div>
-
-          <p
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: 'var(--color-ink)',
-              marginBottom: 14,
-              textAlign: 'center',
-            }}
-          >
-            Inserisci il PIN del tuo ristorante
-          </p>
-          <PinInput
-            value={pin}
-            onChange={setPin}
-            onComplete={(v) => onSubmit(v)}
-            disabled={submitting || isLocked}
-            shake={shake}
-            desktop
-          />
-
-          <button
-            onClick={() => onSubmit()}
-            disabled={pin.length !== PIN_LENGTH || submitting || isLocked}
-            style={{
-              width: '100%',
-              marginTop: 20,
-              background: 'var(--color-corallo)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 14,
-              padding: '16px',
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 'pointer' : 'default',
-              opacity: (pin.length === PIN_LENGTH && !submitting && !isLocked) ? 1 : 0.5,
-              transition: 'opacity 0.15s',
-            }}
-          >
-            {isLocked
-              ? `Bloccato · ${Math.floor(lockoutRemainingSec / 60)}:${String(lockoutRemainingSec % 60).padStart(2, '0')}`
-              : submitting ? 'Verifica…' : 'Accedi'}
-          </button>
-
-          {error && (
-            <p
-              style={{
-                marginTop: 12,
-                fontSize: 12,
-                color: 'var(--color-corallo)',
-                textAlign: 'center',
-                fontWeight: 500,
-              }}
-            >
-              {error}
-            </p>
-          )}
-
-          <p
-            style={{
-              marginTop: 14,
-              fontSize: 11,
-              color: 'var(--color-ink-55)',
-              textAlign: 'center',
-            }}
-          >
-            Il dispositivo verrà ricordato — non dovrai reinserire il PIN
-          </p>
-        </div>
-
-        <div style={{ width: '100%', maxWidth: 440, marginTop: 32 }}>
-          <InstructionsBlock desktop />
-          <ContactBox desktop />
-        </div>
-
-        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55)' }}>
-          Questa pagina è dedicata ai ristoranti partner.{' '}
-          <Link to="/" style={{ color: 'var(--color-ink-70)', fontWeight: 600, textDecoration: 'underline' }}>
-            Torna al sito
-          </Link>
+          <div style={{ background: '#E8F5D8', color: '#2C7A4A', borderRadius: 12, padding: '8px 10px', fontSize: 16 }}>
+            ☎
+          </div>
+        </a>
+        <div style={{
+          textAlign: 'center', marginTop: 'auto', paddingTop: 20,
+          fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600,
+        }}>
+          Sblocco automatico in <b style={{ color: 'var(--color-ink)' }}>{mins}:{secs}</b>
         </div>
       </div>
+    )
+    if (isDesktop) {
+      return (
+        <div style={{
+          minHeight: '100dvh', background: 'var(--color-page)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }}>
+          <div style={{
+            width: '100%', maxWidth: 420, borderRadius: 20, overflow: 'hidden',
+            border: '1px solid var(--color-line)', boxShadow: '0 12px 32px rgba(34,24,28,.12)',
+          }}>
+            {lockedInner}
+          </div>
+        </div>
+      )
+    }
+    return <div style={{ height: '100dvh', overflow: 'hidden' }}>{lockedInner}</div>
+  }
+
+  /* ---- NORMAL / WRONG state ---- */
+  const normalInner = (
+    <div style={{
+      background: bg,
+      padding: `24px 28px ${isDesktop ? '28px' : 'max(24px, env(safe-area-inset-bottom))'}`,
+      display: 'flex', flexDirection: 'column',
+      ...(isDesktop ? {} : { height: '100%', boxSizing: 'border-box' }),
+    }}>
+      <PinLogo />
+
+      {/* Avatar — "B" placeholder (restaurant unknown pre-auth) */}
+      <div style={{
+        width: 76, height: 76, borderRadius: 22,
+        background: 'var(--color-ink)', color: '#fff',
+        display: 'grid', placeItems: 'center',
+        fontFamily: 'var(--font-mark)', fontSize: 30,
+        margin: '30px auto 14px',
+        boxShadow: '0 14px 32px rgba(34,24,28,.2)',
+      }}>B</div>
+
+      {/* Name + zone */}
+      <div style={{ textAlign: 'center', marginBottom: 4 }}>
+        <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em' }}>
+          Area ristoratori
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 700, marginTop: 2 }}>
+          La Guida di Bi
+        </div>
+      </div>
+
+      {/* Hint / wrong label */}
+      <div style={{
+        textAlign: 'center',
+        color: isWrong ? 'var(--color-corallo)' : 'var(--color-ink-55)',
+        fontSize: 12, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase',
+        margin: '14px 0 18px',
+      }}>
+        {isWrong ? 'PIN errato · riprova' : 'inserisci le 6 cifre'}
+      </div>
+
+      {/* Dots */}
+      <div style={{
+        display: 'flex', justifyContent: 'center', gap: 11, margin: '10px 0 18px',
+        animation: shake ? 'pinShake .4s' : 'none',
+      }}>
+        {Array.from({ length: PIN_LENGTH }).map((_, i) => {
+          const filled = i < pin.length
+          return (
+            <div key={i} style={{
+              width: 15, height: 15, borderRadius: '50%',
+              border: `2px solid ${isWrong ? 'var(--color-corallo)' : filled ? 'var(--color-ink)' : 'var(--color-line)'}`,
+              background: isWrong ? 'var(--color-corallo)' : filled ? 'var(--color-ink)' : 'transparent',
+              transition: '.15s',
+            }} />
+          )
+        })}
+      </div>
+
+      {/* Attempt counter (wrong state only) */}
+      {isWrong && attemptsRemaining > 0 && (
+        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 700, marginBottom: 14 }}>
+          {attemptsRemaining} {attemptsRemaining === 1 ? 'tentativo rimasto' : 'tentativi rimasti'} prima del blocco temporaneo
+        </div>
       )}
-    </>
+
+      {/* Network / generic error */}
+      {error && !isWrong && (
+        <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-corallo)', fontWeight: 600, marginBottom: 14 }}>
+          {error}
+        </div>
+      )}
+
+      {/* Keypad 3×4 */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12,
+        marginTop: isDesktop ? 8 : 'auto',
+      }}>
+        {['1','2','3','4','5','6','7','8','9','spc','0','del'].map((k, idx) => {
+          if (k === 'spc') return <div key={idx} />
+          const isDel = k === 'del'
+          return (
+            <button key={idx} type="button" onClick={() => onPad(isDel ? 'del' : k)} style={{
+              background: isDel ? 'transparent' : '#fff',
+              border: isDel ? 'none' : '1px solid var(--color-line)',
+              borderRadius: 18, padding: 18, textAlign: 'center',
+              fontFamily: 'var(--font-sans)', fontWeight: 800,
+              fontSize: isDel ? 20 : 26, letterSpacing: '-0.02em',
+              color: isDel ? 'var(--color-ink-55)' : 'var(--color-ink)',
+              cursor: 'pointer', lineHeight: 1,
+              boxShadow: isDel ? 'none' : '0 2px 6px rgba(0,0,0,.02)',
+            }}>
+              {isDel ? '⌫' : k}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Footer */}
+      <div style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+        PIN dimenticato?{' '}
+        <a href="mailto:info@chiamamibi.com" style={{ color: 'var(--color-ink)', fontWeight: 800, textDecoration: 'underline' }}>
+          Chiama Bi
+        </a>
+      </div>
+    </div>
   )
+
+  if (isDesktop) {
+    return (
+      <div style={{
+        minHeight: '100dvh', background: 'var(--color-page)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+      }}>
+        <div style={{
+          width: '100%', maxWidth: 420, borderRadius: 20, overflow: 'hidden',
+          border: '1px solid var(--color-line)', boxShadow: '0 12px 32px rgba(34,24,28,.12)',
+        }}>
+          {normalInner}
+        </div>
+      </div>
+    )
+  }
+  return <div style={{ height: '100dvh', overflow: 'hidden' }}>{normalInner}</div>
 }
 
 /* ------------------------------------------------------------------ */
