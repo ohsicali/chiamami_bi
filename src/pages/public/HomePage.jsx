@@ -1,3 +1,4 @@
+import DesktopExplorePage from './DesktopExplorePage'
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -341,7 +342,10 @@ export default function HomePage() {
     }
   }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
 
-  /* Shared list content — used by both desktop panel and mobile sheet */
+  // ── Desktop: delegate entirely to split-view layout ──
+  if (isDesktop) return <DesktopExplorePage />
+
+  /* Shared list content — used by mobile sheet */
   const listContent = (
     <>
       <div className="md:hidden" style={{ marginBottom: 14 }}>
