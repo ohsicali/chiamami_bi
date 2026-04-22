@@ -29,8 +29,8 @@ Flusso per ogni PR:
 | 4 | Design tokens v4 | Track B | 2 | `v4-index.html` |
 | 5 | Bottom nav liquid glass | Track B | 1, 2, 4 | `v4-mobile-home.html` |
 | 6 | Reskin home | Track B | 4, 5 | `v4-mobile-home.html`, `v4-desktop-home.html` |
-| 7 | Reskin scheda locale | Track B | 4, 5 | `v4-mobile-scheda.html`, `redesign-v3-desktop-scheda.html` |
-| 8 | Reskin pagine (Esplora/Sconti/Salvati/Profilo) | Track B | 4, 5 | `v4-mobile-pagine.html`, `v4-desktop-pagine.html` |
+| 7 | Reskin scheda locale | Track B | 4, 5 | `v4-mobile-scheda.html`, `v4-desktop-pagine.html` righe 1115-1290 (blocco "Scheda ristorante") |
+| 8 | Reskin pagine (Esplora/Sconti/Salvati/Profilo) | Track B | 4, 5 | `v4-mobile-pagine.html`, `v4-desktop-pagine.html` righe 622-1117 (Esplora 622-782, Sconti 783-935, Salvati 936-1012, Profilo 1013-1117) |
 | 9 | Reskin /verify (solo CSS) | Track B | 4 | `v4-verify.html`, `v4-mobile-auth.html` |
 | 10 | Reskin admin | Track B | 4 | `v4-mobile-admin.html`, `v4-desktop-admin.html` |
 | 11 | Feature — orari Google Places | Track C | 4, 7 | `v4-ops-google-places.md` |
@@ -64,8 +64,8 @@ docs/
     ├── v4-mobile-pagine.html      ← 5 phone side-by-side: Esplora/Sconti/Sconti-preso/Salvati/Profilo
     ├── v4-mobile-auth.html        ← onboarding mobile
     ├── v4-mobile-admin.html       ← admin mobile
-    ├── v4-desktop-home.html       ← home desktop
-    ├── v4-desktop-pagine.html     ← pagine desktop
+    ├── v4-desktop-home.html       ← home desktop (standalone)
+    ├── v4-desktop-pagine.html     ← CUMULATIVO: Home(~507-621), Esplora(622-782), Sconti(783-935), Salvati(936-1012), Profilo(1013-1117), SCHEDA RISTORANTE(1118-1290)
     ├── v4-desktop-admin.html      ← admin desktop
     ├── v4-verify.html             ← login ristoratore (PIN-only)
     ├── v4-index.html              ← indice navigabile di tutti i mockup
@@ -220,7 +220,9 @@ Branch: v4/track-b-home. Una PR sola.
 ```
 Apri PR7 su branch v4/track-b-scheda.
 
-Reference: docs/mockups/v4-mobile-scheda.html (mobile) e docs/mockups/redesign-v3-desktop-scheda.html (desktop, se esiste v4-desktop-scheda.html usa quello).
+Reference:
+- **Mobile**: docs/mockups/v4-mobile-scheda.html (intero)
+- **Desktop**: docs/mockups/v4-desktop-pagine.html **righe 1115-1290** (blocco "Scheda ristorante"). NON USARE redesign-v3-desktop-scheda.html (TAN Songbird, obsoleto).
 
 Sezioni della scheda (guarda il mockup):
 - Header con nome locale in Poppins bold + categoria + distanza
@@ -230,6 +232,14 @@ Sezioni della scheda (guarda il mockup):
 - Info pratiche: indirizzo, telefono, orari (orari arrivano dopo via PR11)
 - CTA: "Chiama" (tel:), "Indicazioni" (maps), "Salva"
 - Nessun blocco "Scrivi recensione". Nessuna stella. Nessun rating.
+
+**Desktop (righe 1115-1290 del file pagine)**:
+- Hero 520px fullwidth, nome in Poppins 900 52px dentro hero
+- Sotto: 2 colonne 1.4/1 (NO mappa a destra — quella è nella pagina Esplora)
+- Left: chip row, CTA "Indicazioni" beige + 2 tondi (chiama/sito), banner sconto verde 135° inline, "Secondo Bi", blocco oro "Cosa prendere", eventuale blocco video Reel/TikTok
+- Right sidebar: card "Orari" (Google Places), "Ciao sono Bi" coral, carosello "Ristoranti vicini"
+- Sticky pill sconto floating bottom-center (glass + blur, min-w 460 max-w 640)
+- Footer con wmark "CHIAMAMI BI"
 
 Non-negoziabili: il titolo del blocco editoriale è "Secondo Bi", MAI "Recensione" (vedi docs/v4-CLAUDE.md).
 
@@ -243,7 +253,9 @@ Branch: v4/track-b-scheda. Una PR sola.
 ```
 Apri PR8 su branch v4/track-b-pagine.
 
-Reference: docs/mockups/v4-mobile-pagine.html (5 phone side-by-side, copre tutti gli stati). Desktop: docs/mockups/v4-desktop-pagine.html.
+Reference:
+- **Mobile**: docs/mockups/v4-mobile-pagine.html (5 phone side-by-side, copre tutti gli stati)
+- **Desktop**: docs/mockups/v4-desktop-pagine.html con range precisi: Esplora righe 622-782, Sconti righe 783-935, Salvati righe 936-1012, Profilo righe 1013-1117. (La SCHEDA righe 1115-1290 NON va qui, è fatta in PR7. La HOME righe 507-621 è fatta in PR6 dal file home standalone.)
 
 Quattro route da reskinnare:
 
