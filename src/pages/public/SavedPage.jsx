@@ -1,3 +1,4 @@
+import DesktopSavedPage from './DesktopSavedPage'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
@@ -141,6 +142,7 @@ export default function SavedPage() {
   }, [restaurants, filters, showDealsOnly, activeDiscounts, userLocation])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
+  if (isDesktop) return <DesktopSavedPage />
 
   const handleClick = (restaurant) => {
     navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name || '')}`)

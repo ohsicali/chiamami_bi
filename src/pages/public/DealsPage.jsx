@@ -1,3 +1,4 @@
+import DesktopDiscountsPage from './DesktopDiscountsPage'
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
@@ -7,6 +8,7 @@ import { useActiveDiscounts, useMyDiscounts, useUserRedemption } from '../../lib
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import QRCodeDisplay from '../../components/Discount/QRCodeDisplay'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import Footer from '../../components/Layout/Footer'
@@ -1182,6 +1184,7 @@ function HowItWorks() {
 export default function DealsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const isDesktop = useIsDesktop()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { city: currentCity } = useCity()
   const { activeDrops: allActiveDrops, upcomingDrops: allUpcomingDrops, featured: allFeatured, regular: allRegular, loading } = useActiveDiscounts()
@@ -1419,6 +1422,8 @@ export default function DealsPage() {
     setReminders(next)
     localStorage.setItem('drop_reminders', JSON.stringify(next))
   }
+
+  if (isDesktop) return <DesktopDiscountsPage />
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
