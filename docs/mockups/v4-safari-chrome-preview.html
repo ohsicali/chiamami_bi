@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v4 · Safari chrome preview — cosa cambia davvero su iPhone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA;
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954; --oro-soft:#F4E7CC;
+  --green:#2E7D5B; --green-soft:#E5F3EA;
+  --line:#EAE3D7;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{background:#0f0f10;color:var(--ink);font-family:var(--ff-ui);font-weight:500;line-height:1.45}
+body{padding:40px 20px 100px;min-height:100vh}
+
+.page-head{max-width:1400px;margin:0 auto 40px;text-align:center;color:#fff}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:rgba(232,69,60,.15);color:#ffa298;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+.page-head h1{font-family:var(--ff-mark);font-weight:400;font-size:34px;letter-spacing:.01em;margin:0 0 12px;color:#fff}
+.page-head p{color:rgba(255,255,255,.7);max-width:720px;margin:0 auto;line-height:1.55;font-size:15px}
+
+.intro-grid{max-width:1200px;margin:0 auto 50px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.intro-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:24px;border-radius:18px;color:rgba(255,255,255,.85)}
+.intro-card h3{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;color:#fff}
+.intro-card h3 .num{display:inline-grid;place-items:center;width:24px;height:24px;background:var(--corallo);border-radius:50%;color:#fff;font-size:11px;margin-right:10px;vertical-align:middle}
+.intro-card p{font-size:13px;line-height:1.6;margin-bottom:10px;color:rgba(255,255,255,.75)}
+.intro-card ul{list-style:none;padding-left:0}
+.intro-card li{font-size:13px;padding:6px 0;color:rgba(255,255,255,.7);border-bottom:1px dashed rgba(255,255,255,.08)}
+.intro-card li:last-child{border-bottom:0}
+.intro-card li b{color:#fff;font-weight:800}
+.intro-card code{background:rgba(0,0,0,.4);padding:2px 6px;border-radius:4px;font-size:12px;color:#a3e635;font-family:ui-monospace,Menlo,monospace}
+
+/* Comparisons */
+.compare-wrap{max-width:1400px;margin:0 auto 60px}
+.compare-title{color:#fff;font-family:var(--ff-mark);font-weight:400;font-size:22px;letter-spacing:.01em;text-align:center;margin-bottom:8px}
+.compare-sub{color:rgba(255,255,255,.5);font-size:13px;text-align:center;margin-bottom:30px}
+
+.row-phones{display:flex;gap:40px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+
+.phone-slot{display:flex;flex-direction:column;align-items:center;gap:14px;width:390px}
+.phone-slot .tag{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;padding:6px 14px;border-radius:999px}
+.phone-slot .tag.bad{background:rgba(192,57,43,.18);color:#ffa7a0}
+.phone-slot .tag.good{background:rgba(163,230,53,.15);color:#c0f27d}
+.phone-slot .caption{color:rgba(255,255,255,.5);font-size:11px;text-align:center;max-width:340px;line-height:1.5}
+
+.phone{width:390px;height:844px;background:#000;border-radius:52px;padding:10px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.3);position:relative}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:50;pointer-events:none}
+
+.screen{width:100%;height:100%;background:var(--page);border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+/* iOS Status bar (time, battery) — always present */
+.statusbar{flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;font-size:13px;font-weight:700;position:relative;z-index:20}
+.statusbar .icons{display:inline-flex;gap:6px;align-items:center;font-size:11px}
+
+/* === SAFARI CHROME OVERLAY === */
+/* Top URL bar (Safari) */
+.safari-top{flex:0 0 52px;background:linear-gradient(180deg,rgba(240,240,240,.98),rgba(230,230,230,.98));backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:0 16px;border-bottom:1px solid rgba(0,0,0,.08);position:relative;z-index:15}
+.safari-top .pill{flex:1;max-width:300px;background:rgba(0,0,0,.06);border-radius:10px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:#555;font-weight:500}
+.safari-top .pill .lock{font-size:10px;opacity:.6}
+.safari-top .pill .url{flex:1;text-align:center}
+.safari-top .pill .refresh{opacity:.5;font-size:12px}
+
+/* Bottom tab bar (Safari) + home indicator */
+.safari-bottom{flex:0 0 84px;background:linear-gradient(0deg,rgba(240,240,240,.98),rgba(230,230,230,.98));backdrop-filter:blur(8px);border-top:1px solid rgba(0,0,0,.08);display:flex;align-items:center;justify-content:space-around;padding:12px 30px 26px;position:relative;z-index:15}
+.safari-bottom .btn{width:28px;height:28px;opacity:.55;font-size:20px;display:grid;place-items:center;color:#222}
+.safari-bottom::after{content:"";position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;background:#000;border-radius:3px;opacity:.85}
+
+/* === CONTENT area (app content) === */
+.app-content{flex:1;overflow-y:auto;display:flex;flex-direction:column;position:relative;min-height:0}
+
+/* Warning overlays (for BAD version) showing where content gets clipped */
+.clipped-top,.clipped-bottom{position:absolute;left:0;right:0;height:52px;background:repeating-linear-gradient(45deg,rgba(232,69,60,.15),rgba(232,69,60,.15) 8px,rgba(232,69,60,.25) 8px,rgba(232,69,60,.25) 16px);border:1px dashed rgba(232,69,60,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#c6372f;z-index:40;pointer-events:none}
+.clipped-top{top:44px}
+.clipped-bottom{bottom:0;height:84px}
+
+/* ======= SCREEN: VERIFY (PIN ristoratore) ======= */
+.pin-scr{flex:1;background:linear-gradient(180deg,var(--page) 0%,var(--cream) 100%);padding:20px 24px;display:flex;flex-direction:column;min-height:0}
+.pin-logo{font-family:var(--ff-mark);font-size:18px;letter-spacing:.02em;text-align:center;margin-top:4px}
+.pin-logo small{display:block;font-family:var(--ff-ui);font-weight:700;font-size:9px;letter-spacing:.14em;color:var(--corallo);margin-top:3px;text-transform:uppercase}
+.pin-av{width:66px;height:66px;border-radius:20px;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:26px;margin:20px auto 10px;box-shadow:0 10px 24px rgba(34,24,28,.18)}
+.pin-biz{text-align:center;margin-bottom:2px}
+.pin-biz .n{font-family:var(--ff-ui);font-weight:900;font-size:18px;letter-spacing:-.02em}
+.pin-biz .z{font-size:11px;color:var(--ink-40);font-weight:700;margin-top:2px}
+.pin-sub{text-align:center;color:var(--ink-40);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin:10px 0 12px}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin:4px 0 10px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--line);background:transparent}
+.pin-dot.on{background:var(--ink);border-color:var(--ink)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:auto}
+.pk{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center;font-family:var(--ff-ui);font-weight:800;font-size:22px;letter-spacing:-.02em;box-shadow:0 2px 6px rgba(0,0,0,.03)}
+.pk .sub{display:block;font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--ink-40);margin-top:2px;text-transform:uppercase}
+.pk.spc{background:transparent;border:0;box-shadow:none}
+.pk.ico{font-size:16px;background:transparent;border:0;box-shadow:none;color:var(--ink-40)}
+.pin-foot{text-align:center;margin-top:10px;padding-bottom:8px;font-size:11px;color:var(--ink-40);font-weight:600}
+
+/* ======= SCREEN: HOME (mappa + card) ======= */
+.home-scr{flex:1;display:flex;flex-direction:column;min-height:0;background:#E9E4DA}
+.home-head{flex:0 0 auto;padding:12px 18px;background:var(--page);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.home-head .logo{font-family:var(--ff-mark);font-size:14px;letter-spacing:.01em;line-height:1}
+.home-head .logo small{display:block;font-family:var(--ff-ui);font-weight:700;font-size:9px;letter-spacing:.14em;color:var(--ink-40);margin-top:3px;text-transform:uppercase}
+.home-head .av{margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:13px}
+.home-filters{flex:0 0 auto;display:flex;gap:6px;padding:10px 14px;background:var(--page);overflow-x:auto;border-bottom:1px solid var(--line)}
+.home-filters .chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;background:var(--cream);font-size:11px;font-weight:800;color:var(--ink-70);white-space:nowrap}
+.home-filters .chip.on{background:var(--ink);color:#fff}
+.home-map{flex:1;min-height:0;background:linear-gradient(135deg,#d8e0d0,#b8c7aa,#c5d5b3);position:relative;overflow:hidden}
+.home-map::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 30% 40%,rgba(255,255,255,.3) 0,transparent 50%),radial-gradient(circle at 70% 60%,rgba(176,137,84,.2) 0,transparent 40%),repeating-linear-gradient(0deg,rgba(34,24,28,.03) 0 1px,transparent 1px 40px),repeating-linear-gradient(90deg,rgba(34,24,28,.03) 0 1px,transparent 1px 40px)}
+.home-map .pin{position:absolute;width:28px;height:28px;border-radius:50%;background:var(--corallo);color:#fff;display:grid;place-items:center;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.2);border:2px solid #fff}
+.home-map .pin:nth-child(1){top:24%;left:40%}
+.home-map .pin:nth-child(2){top:42%;left:58%}
+.home-map .pin:nth-child(3){top:62%;left:35%}
+.home-map .pin:nth-child(4){top:32%;left:72%}
+.home-card{position:absolute;left:14px;right:14px;bottom:14px;background:#fff;border-radius:18px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:flex;gap:12px;align-items:center}
+.home-card .thumb{width:52px;height:52px;border-radius:12px;background:var(--cream-deep);flex:0 0 auto}
+.home-card .info{flex:1;min-width:0}
+.home-card .info .name{font-weight:900;font-size:14px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-card .info .meta{font-size:11px;color:var(--ink-40);font-weight:700;margin-top:2px}
+.home-card .cta{width:36px;height:36px;border-radius:50%;background:var(--corallo);color:#fff;display:grid;place-items:center;font-size:16px;flex:0 0 auto}
+
+/* ======= SCREEN: SCHEDA con CTA fisso in fondo ======= */
+.sch-scr{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--page)}
+.sch-hero{flex:0 0 auto;height:180px;background:linear-gradient(135deg,#3d2f36,#22181C);position:relative;padding:14px 18px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end}
+.sch-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(232,69,60,.3),transparent 50%)}
+.sch-hero .back{position:absolute;top:14px;left:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(6px);display:grid;place-items:center;font-size:14px;color:#fff}
+.sch-hero .tag{position:relative;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.sch-hero .n{position:relative;font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;margin-top:3px}
+.sch-hero .z{position:relative;font-size:12px;color:rgba(255,255,255,.6);font-weight:700;margin-top:2px}
+.sch-body{flex:1;overflow-y:auto;padding:16px 18px 14px;min-height:0}
+.sch-body .sec{background:var(--cream);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.sch-body .sec .lab{font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo-ink);margin-bottom:4px}
+.sch-body .sec .txt{font-family:var(--ff-hand);font-size:18px;line-height:1.3;color:var(--ink)}
+.sch-body .hours{background:var(--green-soft);padding:10px 14px;border-radius:12px;font-size:12px;font-weight:800;color:#225f47;margin-bottom:10px}
+.sch-body .hours .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:8px;vertical-align:middle}
+.sch-bottom-cta{flex:0 0 auto;padding:12px 16px;background:rgba(250,247,242,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;gap:8px}
+.sch-bottom-cta .c{flex:1;padding:12px;text-align:center;border-radius:14px;font-weight:900;font-size:12px;letter-spacing:.02em}
+.sch-bottom-cta .c.p{background:var(--corallo);color:#fff}
+.sch-bottom-cta .c.s{background:var(--ink-05);color:var(--ink)}
+
+/* CSS snippet card */
+.snippet-wrap{max-width:1000px;margin:0 auto;background:#1a1a1c;border-radius:18px;padding:28px;border:1px solid rgba(255,255,255,.08)}
+.snippet-wrap h3{color:#fff;font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.snippet-wrap .subtitle{color:rgba(255,255,255,.5);font-size:13px;margin-bottom:20px}
+.snippet-wrap pre{background:#000;border-radius:12px;padding:18px;overflow-x:auto;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;line-height:1.65;color:#e8e8e8}
+.snippet-wrap pre .c{color:#6a9955;font-style:italic}
+.snippet-wrap pre .k{color:#ff7b72}
+.snippet-wrap pre .v{color:#a3e635}
+.snippet-wrap pre .s{color:#d2a8ff}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <span class="kick">iPhone · Safari · Chiamami Bi v4</span>
+  <h1>Come appare davvero la web app dentro Safari</h1>
+  <p>I mockup precedenti mostravano lo schermo dell'iPhone pieno 390×844 px. In realtà Safari occupa ~52 px in alto (barra URL) e ~84 px in basso (tab bar + home indicator). <b>Meno di due terzi dello schermo</b> sono davvero usabili — e l'altezza utile cambia anche quando scrolli. Ecco cosa cambia.</p>
+</header>
+
+<section class="intro-grid">
+  <div class="intro-card">
+    <h3><span class="num">1</span>Il problema</h3>
+    <p>Su iPhone, quando apri <code>chiamamibi.com</code> in Safari (non come app "Aggiungi a Home"), ci sono due barre sempre presenti:</p>
+    <ul>
+      <li><b>Top</b> · Status bar + URL bar Safari → <b>~52&nbsp;px</b> persi</li>
+      <li><b>Bottom</b> · Tab bar Safari + home indicator → <b>~84&nbsp;px</b> persi</li>
+      <li><b>Totale</b> · ~136 px sottratti a 844 = <b>~708 px utili</b></li>
+    </ul>
+    <p style="margin-top:12px">Se il layout è pensato a 844 px pieni, tutto quello che è "fissato in fondo" (nav, CTA, tastierino PIN) finisce <b>sotto la tab bar</b> e non si vede.</p>
+  </div>
+
+  <div class="intro-card">
+    <h3><span class="num">2</span>La soluzione CSS</h3>
+    <ul>
+      <li><code>min-height:&nbsp;100dvh</code> invece di <code>100vh</code> → si adatta a Safari in tempo reale</li>
+      <li><code>padding-top:&nbsp;env(safe-area-inset-top)</code> → stacco dallo status bar</li>
+      <li><code>padding-bottom:&nbsp;env(safe-area-inset-bottom)</code> → stacco dall'home indicator</li>
+      <li><code>viewport-fit=cover</code> nel meta → abilita le env()</li>
+      <li>Nav o CTA fissi in basso → <code>bottom:&nbsp;env(safe-area-inset-bottom)</code></li>
+    </ul>
+    <p style="margin-top:12px">Supportato <b>iOS 15.4+</b> (2022). Per iOS &lt; 15 usa <code>100vh</code> come fallback.</p>
+  </div>
+</section>
+
+<!-- ============ COMPARISON 1: VERIFY / PIN ============ -->
+<section class="compare-wrap">
+  <div class="compare-title">Schermata PIN ristoratore</div>
+  <div class="compare-sub">Layout fisso senza scroll — il più vulnerabile</div>
+
+  <div class="row-phones">
+    <!-- BAD -->
+    <div class="phone-slot">
+      <span class="tag bad">❌ Prima — mockup attuale</span>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><b>9:41</b><span class="icons">● ●● 🔋</span></div>
+          <div class="pin-scr">
+            <div class="pin-logo">Chiamami Bi<small>Accesso ristoratore</small></div>
+            <div class="pin-av">M</div>
+            <div class="pin-biz"><div class="n">Magazzino 52</div><div class="z">Torino · Vanchiglia</div></div>
+            <div class="pin-sub">Inserisci PIN</div>
+            <div class="pin-dots"><div class="pin-dot on"></div><div class="pin-dot on"></div><div class="pin-dot on"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+            <div class="pin-pad">
+              <div class="pk">1</div><div class="pk">2<span class="sub">ABC</span></div><div class="pk">3<span class="sub">DEF</span></div>
+              <div class="pk">4<span class="sub">GHI</span></div><div class="pk">5<span class="sub">JKL</span></div><div class="pk">6<span class="sub">MNO</span></div>
+              <div class="pk">7<span class="sub">PQRS</span></div><div class="pk">8<span class="sub">TUV</span></div><div class="pk">9<span class="sub">WXYZ</span></div>
+              <div class="pk spc"></div><div class="pk">0</div><div class="pk ico">⌫</div>
+            </div>
+            <div class="pin-foot">Non riesci ad accedere? <a href="#">Scrivi a Bi</a></div>
+          </div>
+          <!-- Overlays showing what Safari HIDES in reality -->
+          <div class="clipped-top">Safari URL bar · nascosta qui</div>
+          <div class="clipped-bottom">Safari tab bar · "Scrivi a Bi" e tastierino TAGLIATI</div>
+        </div>
+      </div>
+      <p class="caption">Il mockup presuppone 844 px pieni. Su iPhone vero, il tastierino e il link "Scrivi a Bi" finiscono sotto la tab bar di Safari.</p>
+    </div>
+
+    <!-- GOOD -->
+    <div class="phone-slot">
+      <span class="tag good">✅ Dopo — Safari-aware</span>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><b>9:41</b><span class="icons">● ●● 🔋</span></div>
+          <div class="safari-top"><div class="pill"><span class="lock">🔒</span><span class="url">chiamamibi.com/verify</span><span class="refresh">↻</span></div></div>
+          <div class="pin-scr" style="padding:14px 24px 10px">
+            <div class="pin-logo" style="font-size:16px">Chiamami Bi<small>Accesso ristoratore</small></div>
+            <div class="pin-av" style="width:56px;height:56px;font-size:22px;margin:14px auto 6px">M</div>
+            <div class="pin-biz"><div class="n" style="font-size:17px">Magazzino 52</div><div class="z">Torino · Vanchiglia</div></div>
+            <div class="pin-sub" style="margin:6px 0 8px">Inserisci PIN</div>
+            <div class="pin-dots" style="margin:0 0 6px"><div class="pin-dot on"></div><div class="pin-dot on"></div><div class="pin-dot on"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+            <div class="pin-pad" style="gap:7px">
+              <div class="pk" style="padding:10px;font-size:20px">1</div><div class="pk" style="padding:10px;font-size:20px">2<span class="sub">ABC</span></div><div class="pk" style="padding:10px;font-size:20px">3<span class="sub">DEF</span></div>
+              <div class="pk" style="padding:10px;font-size:20px">4<span class="sub">GHI</span></div><div class="pk" style="padding:10px;font-size:20px">5<span class="sub">JKL</span></div><div class="pk" style="padding:10px;font-size:20px">6<span class="sub">MNO</span></div>
+              <div class="pk" style="padding:10px;font-size:20px">7<span class="sub">PQRS</span></div><div class="pk" style="padding:10px;font-size:20px">8<span class="sub">TUV</span></div><div class="pk" style="padding:10px;font-size:20px">9<span class="sub">WXYZ</span></div>
+              <div class="pk spc"></div><div class="pk" style="padding:10px;font-size:20px">0</div><div class="pk ico">⌫</div>
+            </div>
+            <div class="pin-foot" style="margin-top:6px">Non riesci ad accedere? <a href="#">Scrivi a Bi</a></div>
+          </div>
+          <div class="safari-bottom"><span class="btn">‹</span><span class="btn">›</span><span class="btn">⬆</span><span class="btn">▢</span><span class="btn">☰</span></div>
+        </div>
+      </div>
+      <p class="caption">Tastierino e footer riadattati per stare dentro i ~708 px reali. Font e padding ridotti di 10-15%. Tutto resta visibile, niente scroll sulla PIN screen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARISON 2: HOME (mappa) ============ -->
+<section class="compare-wrap">
+  <div class="compare-title">Home — mappa full-bleed + card ristorante</div>
+  <div class="compare-sub">La card "dettaglio locale" va ancorata sopra la tab bar di Safari</div>
+
+  <div class="row-phones">
+    <div class="phone-slot">
+      <span class="tag bad">❌ Prima</span>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><b>9:41</b><span class="icons">● ●● 🔋</span></div>
+          <div class="home-scr">
+            <div class="home-head">
+              <div class="logo">Chiamami Bi<small>Torino</small></div>
+              <div class="av">A</div>
+            </div>
+            <div class="home-filters">
+              <div class="chip on">Tutto</div><div class="chip">Trattoria</div><div class="chip">Pizza</div><div class="chip">Aperitivo</div><div class="chip">Dolci</div>
+            </div>
+            <div class="home-map">
+              <div class="pin">🍝</div><div class="pin">🍕</div><div class="pin">🍷</div><div class="pin">🥐</div>
+              <div class="home-card">
+                <div class="thumb"></div>
+                <div class="info"><div class="name">Magazzino 52</div><div class="meta">Trattoria · Vanchiglia</div></div>
+                <div class="cta">→</div>
+              </div>
+            </div>
+          </div>
+          <div class="clipped-bottom">Card locale · coperta dalla tab bar</div>
+        </div>
+      </div>
+      <p class="caption">La card ancorata <code>bottom:14px</code> finisce sotto la tab bar di Safari.</p>
+    </div>
+
+    <div class="phone-slot">
+      <span class="tag good">✅ Dopo</span>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><b>9:41</b><span class="icons">● ●● 🔋</span></div>
+          <div class="safari-top"><div class="pill"><span class="lock">🔒</span><span class="url">chiamamibi.com</span><span class="refresh">↻</span></div></div>
+          <div class="home-scr">
+            <div class="home-head">
+              <div class="logo">Chiamami Bi<small>Torino</small></div>
+              <div class="av">A</div>
+            </div>
+            <div class="home-filters">
+              <div class="chip on">Tutto</div><div class="chip">Trattoria</div><div class="chip">Pizza</div><div class="chip">Aperitivo</div><div class="chip">Dolci</div>
+            </div>
+            <div class="home-map">
+              <div class="pin">🍝</div><div class="pin">🍕</div><div class="pin">🍷</div><div class="pin">🥐</div>
+              <div class="home-card" style="bottom:14px">
+                <div class="thumb"></div>
+                <div class="info"><div class="name">Magazzino 52</div><div class="meta">Trattoria · Vanchiglia</div></div>
+                <div class="cta">→</div>
+              </div>
+            </div>
+          </div>
+          <div class="safari-bottom"><span class="btn">‹</span><span class="btn">›</span><span class="btn">⬆</span><span class="btn">▢</span><span class="btn">☰</span></div>
+        </div>
+      </div>
+      <p class="caption">Mappa e card stanno dentro i ~630 px utili. La card usa <code>bottom:&nbsp;calc(14px + env(safe-area-inset-bottom))</code> così resta sopra la tab bar anche quando Safari espande la URL bar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARISON 3: SCHEDA con CTA fisso ============ -->
+<section class="compare-wrap">
+  <div class="compare-title">Scheda locale — CTA fissi in fondo</div>
+  <div class="compare-sub">"Chiama" / "Indicazioni" ancorati in basso con safe-area</div>
+
+  <div class="row-phones">
+    <div class="phone-slot">
+      <span class="tag bad">❌ Prima</span>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><b>9:41</b><span class="icons">● ●● 🔋</span></div>
+          <div class="sch-scr">
+            <div class="sch-hero">
+              <div class="back">‹</div>
+              <div class="tag">Trattoria piemontese</div>
+              <div class="n">Magazzino 52</div>
+              <div class="z">Via Mazzini 52 · Vanchiglia</div>
+            </div>
+            <div class="sch-body">
+              <div class="hours"><span class="dot"></span>Aperto ora · chiude alle 23:00</div>
+              <div class="sec">
+                <div class="lab">Secondo Bi</div>
+                <div class="txt">Andateci per i plin al sugo d'arrosto. Tovagliato vero, servizio che non ti mette fretta.</div>
+              </div>
+              <div class="sec">
+                <div class="lab">Il mio consiglio</div>
+                <div class="txt">Prenotate il tavolo vicino alla vetrata — luce bella, rumore basso.</div>
+              </div>
+            </div>
+            <div class="sch-bottom-cta">
+              <div class="c p">Chiama</div>
+              <div class="c s">Indicazioni</div>
+              <div class="c s">Salva</div>
+            </div>
+          </div>
+          <div class="clipped-bottom">CTA coperti dalla tab bar</div>
+        </div>
+      </div>
+      <p class="caption">Bottoni Chiama/Indicazioni coperti dalla tab bar. L'utente non riesce a tappare "Chiama".</p>
+    </div>
+
+    <div class="phone-slot">
+      <span class="tag good">✅ Dopo</span>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><b>9:41</b><span class="icons">● ●● 🔋</span></div>
+          <div class="safari-top"><div class="pill"><span class="lock">🔒</span><span class="url">chiamamibi.com/magazzino-52</span><span class="refresh">↻</span></div></div>
+          <div class="sch-scr">
+            <div class="sch-hero" style="height:140px">
+              <div class="back">‹</div>
+              <div class="tag">Trattoria piemontese</div>
+              <div class="n" style="font-size:20px">Magazzino 52</div>
+              <div class="z">Via Mazzini 52 · Vanchiglia</div>
+            </div>
+            <div class="sch-body" style="padding:14px 18px 10px">
+              <div class="hours"><span class="dot"></span>Aperto ora · chiude alle 23:00</div>
+              <div class="sec">
+                <div class="lab">Secondo Bi</div>
+                <div class="txt">Andateci per i plin al sugo d'arrosto. Tovagliato vero, servizio che non ti mette fretta.</div>
+              </div>
+              <div class="sec">
+                <div class="lab">Il mio consiglio</div>
+                <div class="txt">Prenotate il tavolo vicino alla vetrata — luce bella, rumore basso.</div>
+              </div>
+            </div>
+            <div class="sch-bottom-cta">
+              <div class="c p">Chiama</div>
+              <div class="c s">Indicazioni</div>
+              <div class="c s">Salva</div>
+            </div>
+          </div>
+          <div class="safari-bottom"><span class="btn">‹</span><span class="btn">›</span><span class="btn">⬆</span><span class="btn">▢</span><span class="btn">☰</span></div>
+        </div>
+      </div>
+      <p class="caption">La barra CTA usa <code>padding-bottom:&nbsp;calc(12px + env(safe-area-inset-bottom))</code>. Hero accorciato da 180 a 140 px per recuperare verticalità.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CSS SNIPPET ============ -->
+<section class="snippet-wrap">
+  <h3>Snippet CSS da applicare nel codice reale</h3>
+  <p class="subtitle">Questo è quello che deve cambiare in src/ — dallo a Claude Code come PR singola prima di Track B</p>
+<pre><span class="c">/* index.html — meta viewport già presente, verifica che abbia viewport-fit */</span>
+&lt;<span class="k">meta</span> <span class="v">name</span>=<span class="s">"viewport"</span>
+       <span class="v">content</span>=<span class="s">"width=device-width, initial-scale=1, viewport-fit=cover"</span>&gt;
+
+<span class="c">/* src/styles/globals.css — ovunque uso 100vh, sostituire con 100dvh */</span>
+<span class="k">.screen-full</span> {
+  <span class="v">min-height</span>: <span class="s">100vh</span>;            <span class="c">/* fallback iOS &lt; 15.4 */</span>
+  <span class="v">min-height</span>: <span class="s">100dvh</span>;           <span class="c">/* iOS 15.4+ Safari-aware */</span>
+}
+
+<span class="c">/* Root layout — padding per non andare sotto status bar e home indicator */</span>
+<span class="k">.app-root</span> {
+  <span class="v">padding-top</span>: <span class="s">env(safe-area-inset-top)</span>;
+  <span class="v">padding-bottom</span>: <span class="s">env(safe-area-inset-bottom)</span>;
+}
+
+<span class="c">/* Nav/CTA fissi in basso (es. bottom-sheet, CTA scheda locale) */</span>
+<span class="k">.bottom-nav</span>, <span class="k">.bottom-cta</span> {
+  <span class="v">position</span>: <span class="s">fixed</span>;
+  <span class="v">bottom</span>: <span class="s">0</span>;
+  <span class="v">left</span>: <span class="s">0</span>;
+  <span class="v">right</span>: <span class="s">0</span>;
+  <span class="v">padding-bottom</span>: <span class="s">calc(12px + env(safe-area-inset-bottom))</span>;
+}
+
+<span class="c">/* Card flottanti (es. card ristorante sulla mappa) */</span>
+<span class="k">.floating-card</span> {
+  <span class="v">position</span>: <span class="s">absolute</span>;
+  <span class="v">bottom</span>: <span class="s">calc(14px + env(safe-area-inset-bottom))</span>;
+}
+
+<span class="c">/* Schermate che NON devono scrollare (PIN, verify, splash) */</span>
+<span class="k">.no-scroll-screen</span> {
+  <span class="v">height</span>: <span class="s">100dvh</span>;                   <span class="c">/* NON 100vh */</span>
+  <span class="v">overflow</span>: <span class="s">hidden</span>;
+  <span class="v">display</span>: <span class="s">flex</span>;
+  <span class="v">flex-direction</span>: <span class="s">column</span>;
+}</pre>
+</section>
+
+</body>
+</html>

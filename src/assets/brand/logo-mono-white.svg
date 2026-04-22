@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" width="1000" height="200">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&amp;display=swap');
+      .wm { font-family: 'Alfa Slab One', 'Rockwell', serif; font-weight: 400; fill: #ffffff; }
+      .pin-b { font-family: 'Alfa Slab One', 'Rockwell', serif; font-weight: 400; fill: #22181C; }
+    </style>
+  </defs>
+  <g transform="translate(20, 20)">
+    <circle cx="80" cy="80" r="74" fill="#ffffff"/>
+    <text x="80" y="112" text-anchor="middle" class="pin-b" font-size="112">B</text>
+  </g>
+  <text x="200" y="130" class="wm" font-size="88" letter-spacing="-1">LA GUIDA DI BI</text>
+</svg>

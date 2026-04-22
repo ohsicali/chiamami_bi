@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>v4 · Home mobile · La Guida di Bi</title>
-<link rel="preconnect" href="https://api.fontshare.com">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -14,7 +14,7 @@
   --page:#FAF7F2; --cream-deep:#F1EBE0; --white:#FFFFFF;
   --oro:#B08954; --oro-soft:#F4E7CC;
 
-  --ff-ui:'Satoshi',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
   --ff-mark:'Alfa Slab One',Georgia,serif;
   --ff-hand:'Caveat',cursive;
 
@@ -85,7 +85,7 @@ body{
 .cat-b .lbl{font-size:11px;font-weight:700;color:var(--ink);max-width:72px;text-align:center;line-height:1.15}
 .cat-b.active .lbl{color:var(--corallo-ink)}
 
-/* ============ Section head (Satoshi 900, no serif) ============ */
+/* ============ Section head (Poppins 900, no serif) ============ */
 .sec{padding:8px 0 4px}
 .sec-head{padding:0 20px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .sec-head h2{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
@@ -171,19 +171,47 @@ body{
 .suggest-cta{padding:11px 14px;background:var(--corallo);color:#fff;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;position:relative;z-index:1}
 .suggest-cta::after{content:" →"}
 
-/* ============ Nav glass bottom ============ */
+/* ============ Nav LIQUID GLASS — WebGL (naughtyduk/liquidGL) ============ */
+/* Tecnica: liquidGL (WebGL shader + html2canvas snapshot).
+   Caricato via <script> in fondo al body. Prende il .screen come snapshot,
+   applica rifrazione/bevel/specular sulla pill .nav.
+   Il CSS qui sotto è: (a) pre-init placeholder prima che WebGL monti,
+                       (b) fallback per device senza WebGL. */
 .nav{
-  position:absolute;left:12px;right:12px;bottom:14px;height:64px;
-  background:rgba(255,255,255,.66);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
-  border:1px solid rgba(255,255,255,.5);border-radius:var(--r-pill);
-  box-shadow:var(--shadow-md);
-  display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:40;
+  position:absolute;left:14px;right:14px;bottom:18px;height:68px;
+  border-radius:var(--r-pill);
+  display:flex;align-items:center;justify-content:space-between;padding:6px 6px;z-index:40;gap:2px;
+  /* Pre-init / no-WebGL fallback */
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  /* Bordo "firma" nav — lo stesso usato dall'active pill */
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 2px 8px rgba(34,24,28,.06),
+    0 14px 32px rgba(34,24,28,.14);
 }
-.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-40);text-decoration:none;font-size:10px;font-weight:700;padding:8px 0;position:relative}
-.nav a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
-.nav a.active{color:var(--ink)}
-.nav a.active::before{content:"";position:absolute;top:4px;width:32px;height:32px;border-radius:50%;background:var(--corallo-soft);z-index:-1}
-.nav a .badge{position:absolute;top:6px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--corallo);border:1.5px solid rgba(255,255,255,.9)}
+.nav a{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:#141414;text-decoration:none;
+  padding:8px 4px;border-radius:28px;
+  position:relative;z-index:3;
+  transition:background .18s ease, box-shadow .18s ease;
+}
+.nav a svg{width:22px;height:22px;fill:currentColor;stroke:none}
+.nav a .nav-label{
+  font-family:var(--ff-ui);font-weight:600;font-size:11px;letter-spacing:-.005em;
+  line-height:1;white-space:nowrap;color:#141414;
+}
+/* Active = pill grigia chiara + contorno scuro 1px (stesso colore del bordo nav) */
+.nav a.active{
+  background:rgba(0,0,0,.05);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.nav a.active .nav-label{font-weight:800}
+.nav a .badge{position:absolute;top:5px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--corallo);border:1.5px solid rgba(255,255,255,.95);z-index:4}
 
 /* ============ Annotations ============ */
 .annot{max-width:560px;margin:40px auto 0;background:var(--white);border-radius:var(--r-lg);padding:24px;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm)}
@@ -201,7 +229,12 @@ body{
 <div class="page-head">
   <span class="kick">v4 · Home mobile · allineato moodboard</span>
   <h1>Più Neotaste, meno Michelin.</h1>
-  <p>Titoli di sezione e nomi ristorante in Satoshi heavy (800/900 ultra-tight, come Neotaste). Hero è una promo card — lo sconto è il titolone, non il nome. Categorie come bubble rotonde. Caveat solo dentro il blocco "cosa ti consiglio".</p>
+  <p>Titoli di sezione e nomi ristorante in Poppins heavy (800/900 ultra-tight, come Neotaste). Hero è una promo card — lo sconto è il titolone, non il nome. Categorie come bubble rotonde. Caveat solo dentro il blocco "cosa ti consiglio".</p>
+</div>
+
+<div style="max-width:720px;margin:-8px auto 32px;padding:14px 18px;background:#FFF7ED;border:1px solid #FECBA1;border-left:4px solid #E8453C;border-radius:10px;font-size:13px;line-height:1.55;color:#3A2812;text-align:left">
+  <strong style="display:block;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#C6372F;margin-bottom:6px">⚠️ Nota implementazione · Safari iOS</strong>
+  Questo mockup mostra lo schermo pieno <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">390×844</code>. Nel prodotto reale Safari mobile riserva <strong>~52px in alto</strong> (URL bar) e <strong>~84px in basso</strong> (tab bar + home indicator): ~708px effettivi. Il codice deve usare <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">100dvh</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">env(safe-area-inset-*)</code> + <code style="background:#fff;padding:1px 6px;border-radius:4px;font:500 12px ui-monospace,monospace">viewport-fit=cover</code>. Riferimento: <a href="v4-safari-chrome-preview.html" style="color:#C6372F;font-weight:800;text-decoration:underline">v4-safari-chrome-preview.html</a>.
 </div>
 
 <div class="phone">
@@ -423,28 +456,28 @@ body{
 
     </div>
 
-    <!-- NAV GLASS BOTTOM -->
-    <div class="nav">
-      <a class="active">
+    <!-- NAV LIQUID GLASS (naughtyduk/liquidGL · WebGL) — Neotaste-style active pill: capsula corallo che avvolge icona + label -->
+    <div class="nav liquidGL" data-liquid-ignore aria-label="Navigazione principale">
+      <a class="active" aria-label="Home" title="Home">
         <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z"/></svg>
-        Home
+        <span class="nav-label">Home</span>
       </a>
-      <a>
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-        Esplora
+      <a aria-label="Esplora" title="Esplora">
+        <svg viewBox="0 0 24 24"><path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff"/></svg>
+        <span class="nav-label">Esplora</span>
       </a>
-      <a>
+      <a aria-label="Sconti" title="Sconti">
         <span class="badge"></span>
-        <svg viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 0 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 11v2M13 17v2"/></svg>
-        Sconti
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor"/><circle cx="17.5" cy="17.5" r="2.2" fill="currentColor"/></svg>
+        <span class="nav-label">Sconti</span>
       </a>
-      <a>
+      <a aria-label="Salvati" title="Salvati">
         <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        Salvati
+        <span class="nav-label">Salvati</span>
       </a>
-      <a>
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-        Profilo
+      <a aria-label="Profilo" title="Profilo">
+        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.4 0-8 2.5-8 6v2h16v-2c0-3.5-3.6-6-8-6z"/></svg>
+        <span class="nav-label">Profilo</span>
       </a>
     </div>
 
@@ -455,18 +488,51 @@ body{
 <div class="annot">
   <h3>Cosa è cambiato rispetto al tentativo editoriale</h3>
   <ul>
-    <li><strong>Titoli di sezione in Satoshi 900</strong>, tight (-.02em), 22px. Niente più TAN Songbird italic su "Ultimi aggiunti", "Aperitivo", "Cosa ti consiglio". È la stessa regola del moodboard.</li>
-    <li><strong>Hero = promo card corallo</strong>. Il titolone è lo sconto ("-10% da Orma"), Satoshi 900 su due righe. Nome del ristorante integrato nel claim, non un nameplate magazine.</li>
+    <li><strong>Titoli di sezione in Poppins 900</strong>, tight (-.02em), 22px. Niente più TAN Songbird italic su "Ultimi aggiunti", "Aperitivo", "Cosa ti consiglio". È la stessa regola del moodboard.</li>
+    <li><strong>Hero = promo card corallo</strong>. Il titolone è lo sconto ("-10% da Orma"), Poppins 900 su due righe. Nome del ristorante integrato nel claim, non un nameplate magazine.</li>
     <li><strong>Categorie bubble rotonde</strong> in cima, carosello orizzontale. Clic → filtro sulla Esplora. L'attivo è corallo, le altre cream.</li>
-    <li><strong>Card ristorante compatte</strong> (70% larghezza, aspect 16/11). Nome in Satoshi 800 ultra-tight (-.015em), no più TAN Songbird neanche qui. Category tag in coral-soft pill.</li>
+    <li><strong>Card ristorante compatte</strong> (70% larghezza, aspect 16/11). Nome in Poppins 800 ultra-tight (-.015em), no più TAN Songbird neanche qui. Category tag in coral-soft pill.</li>
     <li><strong>Banner sponsorizzato compatto</strong>, ink su cream, label "Sponsorizzato" in alto a destra. Foto/titolo/CTA in riga.</li>
     <li><strong>Time-based strip</strong>: 6 tab (Colazione, Pranzo, Aperitivo, Cena carne, Cena pesce, Dopo cena), il tab attivo è ink, gli altri cream. Card row cambia in base al tab.</li>
-    <li><strong>Blocco "Cosa prendere"</strong>: kicker Satoshi 700 oro, h2 Satoshi 900, nome ristorante Satoshi 900 (no TAN Songbird), piatti in Caveat 18px. Scritta a mano solo qui.</li>
+    <li><strong>Blocco "Cosa prendere"</strong>: kicker Poppins 700 oro, h2 Poppins 900, nome ristorante Poppins 900 (no TAN Songbird), piatti in Caveat 18px. Scritta a mano solo qui.</li>
     <li><strong>Niente sezione "Categorie" in fondo</strong>: ridondante con le bubble in alto.</li>
     <li><strong>"Conosci un posto?"</strong> compatta, dark + coral glow, CTA pill coral.</li>
-    <li><strong>Nav glass bottom full-width pill</strong>, invariato dal moodboard.</li>
+    <li><strong>Nav liquid glass WebGL + active pill stile Neotaste</strong>: pill floating 16px dai lati, 64px alta. Icone sempre visibili; le label compaiono <em>solo sulla voce attiva</em>, dentro una <strong>capsula corallo orizzontale</strong> che avvolge icona+testo (come Neotaste). Le altre voci restano compatte in ink-60. Tecnica di sfondo: <strong>libreria liquidGL</strong> (WebGL shader + html2canvas per lo snapshot dello sfondo). Supporto Safari/Chrome/Firefox/Edge. L'effetto è rifrazione reale del contenuto dietro la nav + bevel + specular. <em>Dipendenze live:</em> html2canvas (~48KB gz) + liquidGL (~20KB gz) = ~68KB extra. Il CSS resta come fallback pre-init e per device senza WebGL.</li>
   </ul>
 </div>
+
+<!-- ============================================================ -->
+<!-- LIQUID GLASS WebGL (naughtyduk/liquidGL)                       -->
+<!-- https://github.com/naughtyduk/liquidGL  · MIT license         -->
+<!-- Tecnica: html2canvas snapshotta .screen, liquidGL applica      -->
+<!-- uno shader di rifrazione+bevel+specular sulla pill .nav.        -->
+<!-- ============================================================ -->
+<!-- Script vendorizzati in locale: aprire il file via file:// carica direttamente da disco (nessun CORS). -->
+<script src="vendor/html2canvas.min.js" defer></script>
+<script src="vendor/liquidGL.js" defer></script>
+<script>
+window.addEventListener('load', () => {
+  if (typeof liquidGL === 'undefined') {
+    console.warn('[v4] liquidGL non caricato — fallback CSS attivo');
+    return;
+  }
+  try {
+    liquidGL({
+      target: '.liquidGL',
+      snapshot: '.screen',     // cattura solo il contenuto del telefono, non la pagina
+      resolution: 2.0,
+      refraction: 0.025,       // rifrazione sottile (nav piccola, poca magnificazione)
+      bevelDepth: 0.11,
+      bevelWidth: 0.18,
+      frost: 2,                // leggero frost per coerenza con gli altri fallback
+      shadow: true,
+      specular: true,
+      reveal: 'fade',
+      magnify: 1,              // niente zoom — la nav non deve comportarsi da lente
+    });
+  } catch (e) { console.warn('[v4] liquidGL init error:', e); }
+});
+</script>
 
 </body>
 </html>

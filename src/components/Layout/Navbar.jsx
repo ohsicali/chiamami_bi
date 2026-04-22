@@ -99,74 +99,96 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
   // Only show popular cities that actually have restaurants
   const availableCities = citiesWithRestaurants();
 
+  const isMapView = view === 'map'
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 md:hidden"
+      <nav className="fixed left-0 right-0 z-40 md:hidden"
         style={{
-          padding: '0 22px',
+          top: 0,
+          padding: '0 20px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-          paddingBottom: '10px',
-          background: '#FAF7F2',
-          borderBottom: '1px solid rgba(0,0,0,0.04)',
+          paddingBottom: '14px',
+          background: 'rgba(250, 247, 242, 0.94)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(34,24,28,0.05)',
         }}
       >
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
-            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "var(--font-sans)" }}>
-              by Chiamami Bi
-            </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Wordmark — same as HomeFeedV4 TopBar */}
+          <Link
+            to="/"
+            style={{
+              display: 'flex', flexDirection: 'column', lineHeight: 0.92,
+              textDecoration: 'none',
+            }}
+          >
+            <span style={{
+              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+              fontSize: 15,
+              letterSpacing: '0.02em',
+              color: 'var(--color-corallo)',
+            }}>LA GUIDA DI BI</span>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
+              fontSize: 8,
+              letterSpacing: '0.15em',
+              color: 'rgba(34,24,28,.4)',
+              marginTop: 3,
+              textTransform: 'uppercase',
+            }}>by Chiamami Bi</span>
           </Link>
 
-          <div className="flex items-center" style={{ gap: 8 }}>
-            <div className="hidden md:block">
-              <LanguageSwitcher />
-            </div>
+          {/* City chip — same as HomeFeedV4 TopBar */}
+          <button
+            onClick={() => setCityPickerOpen(true)}
+            style={{
+              marginLeft: 'auto',
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '8px 12px',
+              background: 'var(--color-ink-05, rgba(34,24,28,.06))',
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 13,
+              color: '#22181C',
+              border: 'none',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)', flexShrink: 0 }} />
+            {selectedCity}
+            <svg viewBox="0 0 10 10" width="10" height="10">
+              <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+            </svg>
+          </button>
 
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
+
+          {/* GPS button — same as HomeFeedV4 TopBar */}
+          {onLocateMe && (
             <button
-              onClick={() => setCityPickerOpen(true)}
-              className="flex items-center gap-1.5"
+              onClick={onLocateMe}
+              aria-label="La mia posizione"
               style={{
-                fontSize: 12, color: '#555', fontWeight: 600,
-                padding: '6px 12px', borderRadius: 20,
-                background: '#fff',
-                border: '1px solid var(--color-bordo)',
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: 'var(--color-ink-05, rgba(34,24,28,.06))',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <span style={{ position: 'relative', width: 8, height: 8, display: 'inline-block' }}>
-                <span style={{
-                  position: 'absolute', inset: 0,
-                  borderRadius: '50%', background: 'var(--color-corallo)',
-                }} />
-                <span style={{
-                  position: 'absolute', inset: -2,
-                  borderRadius: '50%', background: 'var(--color-corallo)',
-                  opacity: 0.4,
-                  animation: 'cityPulse 2s ease-in-out infinite',
-                }} />
-              </span>
-              {selectedCity}
-              <ChevronDown />
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="8"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                <path d="M12 2v3M12 19v3M22 12h-3M5 12H2"/>
+              </svg>
             </button>
-
-            {onLocateMe && (
-              <button
-                onClick={onLocateMe}
-                style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: '#fff', border: '1px solid var(--color-bordo)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', flexShrink: 0,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-                aria-label="La mia posizione"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="none">
-                  <path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/>
-                </svg>
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </nav>
 

@@ -197,7 +197,7 @@ Privacy: chiamamibi.com/privacy
 
 ## Template HTML minimale (per il dev)
 
-Tutti i template ereditano questo layout. Design: wordmark corallo in alto, body bianco, corpo in Satoshi, CTA corallo.
+Tutti i template ereditano questo layout. Design: wordmark corallo in alto, body bianco, corpo in Poppins, CTA corallo.
 
 ```html
 <!DOCTYPE html>
@@ -207,7 +207,7 @@ Tutti i template ereditano questo layout. Design: wordmark corallo in alto, body
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{subject}}</title>
 </head>
-<body style="margin:0;padding:0;background:#FAF7F2;font-family:-apple-system,'Satoshi',Helvetica,sans-serif;color:#22181C;">
+<body style="margin:0;padding:0;background:#FAF7F2;font-family:-apple-system,'Poppins',Helvetica,sans-serif;color:#22181C;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto;padding:32px 24px;">
     <tr>
       <td style="padding-bottom:24px;">
@@ -237,7 +237,7 @@ Tutti i template ereditano questo layout. Design: wordmark corallo in alto, body
 ```
 
 **Note per il dev:**
-- Font custom (Alfa Slab One, Satoshi) non renderizzano affidabilmente in Gmail/Outlook → usare **font-stack sicuro** + wordmark come PNG per il brand
+- Font custom (Alfa Slab One, Poppins) non renderizzano affidabilmente in Gmail/Outlook → usare **font-stack sicuro** + wordmark come PNG per il brand
 - Larghezza max **560px** (standard mobile-first)
 - Colori da v4 tokens: `--corallo:#E8453C` per CTA, `--ink:#22181C` per testo, `--page:#FAF7F2` per bg, `--oro-deep:#8E6B3E` per footer
 - CTA pill corallo arrotondato (`border-radius:999px`) per coerenza con mockup v4

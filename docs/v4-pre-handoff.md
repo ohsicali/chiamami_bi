@@ -26,7 +26,7 @@
 | **Legal URLs** | ✅ `/privacy` `/termini` `/cookies` `/chi-e-bi` `/about` `/terms` tutte attive (privacy updated Marzo 2026) | **update contenuti** (vedi R7) |
 | **Multi-city / multi-lang** | ✅ `selectedCity` + `chiamamibi_lang` in localStorage | architettura pronta |
 | **SEO sitemap** | ❌ `/sitemap.xml` ritorna SPA fallback, non XML | **gap da chiudere** |
-| Font Satoshi / Alfa Slab / Caveat | ✅ già caricati nel live | conferma v4 |
+| Font Poppins / Alfa Slab / Caveat | ✅ già caricati nel live | conferma v4 |
 | TAN Songbird | ⚠️ **ancora usato nel live** per titoli display ("Area Ristoratori", "Privacy Policy") | decidere se mantenere nei titoli generali o rimuovere ovunque |
 | **Sistema recensioni utenti** | ⚠️ **esiste nel backend** ma va **DISATTIVATO** | privacy cita "recensioni, foto caricate" — vedi sezione nuova §0 |
 
@@ -66,7 +66,7 @@ Stack: **React + Vite + Vercel + Supabase + Mapbox**. Il dev deve avere:
 - **Newsletter:**
   - Double opt-in
   - Cadenza (settimanale? mensile?)
-  - Template brand-aligned (corallo + Alfa Slab + Satoshi)
+  - Template brand-aligned (corallo + Alfa Slab + Poppins)
   - Gestione iscritti + unsubscribe
 
 **Decisioni da prendere:**

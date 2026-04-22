@@ -74,13 +74,13 @@ function StatusBadge({ published }) {
         display: 'inline-block',
         fontSize: 10,
         padding: '2px 8px',
-        borderRadius: 12,
-        fontWeight: 500,
-        background: published ? '#ecfdf5' : '#fef3c7',
-        color: published ? '#059669' : '#b45309',
+        borderRadius: 20,
+        fontWeight: 600,
+        background: published ? 'var(--color-green-wash)' : 'var(--color-cream)',
+        color: published ? '#2d7a4f' : '#888',
       }}
     >
-      {published ? 'Pubblicato' : 'Bozza'}
+      {published ? 'Live' : 'Bozza'}
     </span>
   )
 }
@@ -208,150 +208,85 @@ export default function AdminRestaurants() {
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
-    <AdminLayout title="Ristoranti">
-      {/* ─── DESKTOP HEADER ─── */}
+    <AdminLayout>
+      {/* ─── DESKTOP STICKY TOP BAR ─── */}
       <div
-        className="hidden md:block"
-        style={{ borderBottom: '1px solid #eee', background: '#fff' }}
+        className="hidden md:flex"
+        style={{
+          position: 'sticky', top: 0, zIndex: 20,
+          background: 'var(--color-page)',
+          borderBottom: '1px solid var(--color-line)',
+          padding: '0 28px',
+          height: 56,
+          alignItems: 'center',
+          gap: 12,
+        }}
       >
-        <div style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Ristoranti</h1>
-            <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
-              {restaurants.length} ristoranti · {published} pubblicati · {drafts} bozze
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#999' }}>
-                <SearchIcon w={14} />
-              </span>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cerca ristoranti..."
-                style={{
-                  paddingLeft: 30,
-                  paddingRight: 12,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                  borderRadius: 8,
-                  border: '1px solid #eee',
-                  fontSize: 13,
-                  outline: 'none',
-                  background: '#fff',
-                  width: 220,
-                }}
-              />
-            </div>
-            <Link
-              to="/admin/restaurant/new"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: '#E8453C',
-                color: '#fff',
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              <PlusIcon w={14} /> Aggiungi
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── MOBILE HEADER ─── */}
-      <div
-        className="md:hidden"
-        style={{ borderBottom: '1px solid #eee', background: '#fff', padding: '14px 18px' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
-          <button
-            onClick={() => navigate('/admin')}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              padding: 4,
-              color: '#666',
-              cursor: 'pointer',
-              display: 'flex',
-            }}
-            aria-label="Indietro"
-          >
-            <BackIcon w={18} />
-          </button>
-          <h1 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0, flex: 1 }}>Ristoranti</h1>
-          <Link
-            to="/admin/restaurant/new"
-            style={{
-              background: '#E8453C',
-              color: '#fff',
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textDecoration: 'none',
-            }}
-            aria-label="Aggiungi"
-          >
-            <PlusIcon w={14} />
-          </Link>
-        </div>
-
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: 12 }}>
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#999' }}>
-            <SearchIcon w={14} />
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10, padding: '0 12px', height: 36 }}>
+          <SearchIcon w={14} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cerca ristoranti..."
-            style={{
-              width: '100%',
-              paddingLeft: 30,
-              paddingRight: 12,
-              paddingTop: 8,
-              paddingBottom: 8,
-              borderRadius: 8,
-              border: '1px solid #eee',
-              fontSize: 13,
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
+            placeholder="Cerca ristoranti, quartiere…"
+            style={{ border: 'none', outline: 'none', fontSize: 13, color: 'var(--color-ink)', background: 'transparent', flex: 1 }}
+          />
+        </div>
+        <Link
+          to="/admin/restaurant/new"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'var(--color-corallo)', color: '#fff',
+            padding: '0 16px', height: 36, borderRadius: 10,
+            fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0,
+          }}
+        >
+          <PlusIcon w={13} /> Aggiungi ristorante
+        </Link>
+      </div>
+
+      {/* ─── MOBILE CONTENT HEADER ─── */}
+      <div className="md:hidden" style={{ padding: '16px 18px 0' }}>
+        <div style={{ fontSize: 11, color: '#999', fontWeight: 500, marginBottom: 6 }}>
+          Admin · <b style={{ color: 'var(--color-ink)' }}>Ristoranti</b>
+        </div>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--color-ink)', margin: '0 0 2px', fontFamily: 'var(--font-sans)' }}>
+          Locali nel catalogo
+        </h1>
+        <p style={{ fontSize: 12, color: '#999', margin: '0 0 12px' }}>
+          {restaurants.length} totali · {published} live · {drafts} in bozza
+        </p>
+
+        {/* Mobile search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10, padding: '0 12px', height: 38, marginBottom: 12 }}>
+          <SearchIcon w={14} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cerca locale, quartiere, tag…"
+            style={{ border: 'none', outline: 'none', fontSize: 13, color: 'var(--color-ink)', background: 'transparent', flex: 1 }}
           />
         </div>
 
-        {/* Filter chips */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {/* Mobile filter chips */}
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
           {[
-            { key: 'all', label: `Tutti (${restaurants.length})` },
-            { key: 'published', label: `Pubblicati (${published})` },
-            { key: 'draft', label: `Bozze (${drafts})` },
+            { key: 'all', label: `Tutti · ${restaurants.length}` },
+            { key: 'published', label: `Live · ${published}` },
+            { key: 'draft', label: `Bozza · ${drafts}` },
           ].map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
               style={{
                 flexShrink: 0,
-                padding: '6px 12px',
-                borderRadius: 16,
-                border: filter === f.key ? 'none' : '1px solid #eee',
+                padding: '6px 14px',
+                borderRadius: 20,
+                border: filter === f.key ? 'none' : '1px solid var(--color-line)',
                 background: filter === f.key ? 'var(--color-ink)' : '#fff',
-                color: filter === f.key ? '#fff' : '#999',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
+                color: filter === f.key ? '#fff' : '#666',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
               {f.label}
@@ -360,33 +295,41 @@ export default function AdminRestaurants() {
         </div>
       </div>
 
-      {/* ─── DESKTOP: FILTER CHIPS ─── */}
-      <div
-        className="hidden md:flex"
-        style={{ padding: '14px 28px 0', gap: 8 }}
-      >
-        {[
-          { key: 'all', label: `Tutti (${restaurants.length})` },
-          { key: 'published', label: `Pubblicati (${published})` },
-          { key: 'draft', label: `Bozze (${drafts})` },
-        ].map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 16,
-              border: filter === f.key ? 'none' : '1px solid #eee',
-              background: filter === f.key ? 'var(--color-ink)' : '#fff',
-              color: filter === f.key ? '#fff' : '#666',
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* ─── DESKTOP CONTENT HEADER + FILTERS ─── */}
+      <div className="hidden md:block" style={{ padding: '20px 28px 0' }}>
+        <div style={{ fontSize: 11, color: '#999', fontWeight: 500, marginBottom: 6 }}>
+          Catalogo › <b style={{ color: 'var(--color-ink)' }}>Ristoranti</b>
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--color-ink)', margin: '0 0 2px', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          Ristoranti
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#999', background: 'var(--color-cream)', padding: '2px 10px', borderRadius: 20 }}>
+            {restaurants.length} totali · {published} pubblicati
+          </span>
+        </h1>
+        <p style={{ fontSize: 12, color: '#999', margin: '0 0 14px' }}>
+          Filtra, edita, archivia
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {[
+            { key: 'all', label: `Tutti · ${restaurants.length}` },
+            { key: 'published', label: `Pubblicati · ${published}` },
+            { key: 'draft', label: `Bozza · ${drafts}` },
+          ].map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              style={{
+                padding: '6px 14px', borderRadius: 20,
+                border: filter === f.key ? 'none' : '1px solid var(--color-line)',
+                background: filter === f.key ? 'var(--color-ink)' : '#fff',
+                color: filter === f.key ? '#fff' : '#666',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ─── DESKTOP TABLE ─── */}
@@ -394,13 +337,13 @@ export default function AdminRestaurants() {
         <div
           style={{
             background: '#fff',
-            border: '1px solid #eee',
-            borderRadius: 10,
+            border: '1px solid var(--color-line)',
+            borderRadius: 12,
             overflow: 'hidden',
           }}
         >
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
+            <thead style={{ background: 'var(--color-cream)', borderBottom: '1px solid var(--color-line)' }}>
               <tr>
                 <th
                   style={{
@@ -510,7 +453,7 @@ export default function AdminRestaurants() {
                     <td style={cellStyle}>
                       {discount ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ color: '#E8453C', fontWeight: 600, fontSize: 13 }}>
+                          <span style={{ color: 'var(--color-corallo)', fontWeight: 600, fontSize: 13 }}>
                             {discount.discount_value}
                           </span>
                           {isDrop && (
@@ -548,7 +491,7 @@ export default function AdminRestaurants() {
                             e.stopPropagation()
                             setDeleteId(r.id)
                           }}
-                          style={{ ...actionBtn, color: '#dc2626' }}
+                          style={{ ...actionBtn, color: 'var(--color-corallo)' }}
                           title="Elimina"
                         >
                           <TrashIcon w={14} />
@@ -571,7 +514,7 @@ export default function AdminRestaurants() {
       </div>
 
       {/* ─── MOBILE CARDS ─── */}
-      <div className="md:hidden" style={{ padding: '14px 18px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="md:hidden" style={{ padding: '14px 18px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {filtered.map((r) => {
           const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
             .map((name) => getCategoryInfo(name))
@@ -595,7 +538,7 @@ export default function AdminRestaurants() {
               to={`/admin/restaurant/${r.id}/edit`}
               style={{
                 background: '#fff',
-                border: '1px solid #eee',
+                border: '1px solid var(--color-line)',
                 borderRadius: 12,
                 padding: 12,
                 display: 'flex',
@@ -646,11 +589,11 @@ export default function AdminRestaurants() {
                   <span
                     style={{
                       fontSize: 9,
-                      padding: '2px 6px',
-                      borderRadius: 10,
-                      fontWeight: 500,
-                      background: isPublished ? '#ecfdf5' : '#fef3c7',
-                      color: isPublished ? '#059669' : '#b45309',
+                      padding: '2px 8px',
+                      borderRadius: 20,
+                      fontWeight: 600,
+                      background: isPublished ? 'var(--color-green-wash)' : 'var(--color-cream)',
+                      color: isPublished ? '#2d7a4f' : '#888',
                       flexShrink: 0,
                     }}
                   >
@@ -681,7 +624,7 @@ export default function AdminRestaurants() {
                 >
                   {discount && (
                     <>
-                      <span style={{ color: '#E8453C', fontWeight: 600 }}>{discount.discount_value}</span>
+                      <span style={{ color: 'var(--color-corallo)', fontWeight: 600 }}>{discount.discount_value}</span>
                       {isDrop && (
                         <span
                           style={{
@@ -763,7 +706,7 @@ export default function AdminRestaurants() {
                   onClick={() => setDeleteId(null)}
                   style={{
                     background: 'transparent',
-                    border: '1px solid #eee',
+                    border: '1px solid var(--color-line)',
                     padding: '8px 16px',
                     borderRadius: 8,
                     fontSize: 13,
@@ -777,7 +720,7 @@ export default function AdminRestaurants() {
                 <button
                   onClick={handleDelete}
                   style={{
-                    background: '#dc2626',
+                    background: 'var(--color-corallo)',
                     border: 'none',
                     padding: '8px 16px',
                     borderRadius: 8,

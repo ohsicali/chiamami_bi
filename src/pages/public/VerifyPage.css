@@ -2,6 +2,12 @@
 
 @keyframes verifySpin { to { transform: rotate(360deg); } }
 
+@keyframes pinShake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
+
 @keyframes verifyShake {
   0%, 100% { transform: translateX(0); }
   15%       { transform: translateX(-8px); }

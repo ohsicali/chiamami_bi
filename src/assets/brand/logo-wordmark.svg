@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" width="720" height="160">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&amp;display=swap');
+      .wm { font-family: 'Alfa Slab One', 'Rockwell', serif; font-weight: 400; fill: #22181C; }
+    </style>
+  </defs>
+  <text x="360" y="112" text-anchor="middle" class="wm" font-size="88" letter-spacing="-1">LA GUIDA DI BI</text>
+</svg>

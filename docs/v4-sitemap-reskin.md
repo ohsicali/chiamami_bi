@@ -15,7 +15,7 @@
 | **City pill** | "Torino" dot verde + caret | dot **corallo** + caret |
 | **Geolocation icon top-right** | cerchio bianco + arrow | invariato |
 | **Accent color** | `#E8453C` rosso v3 | `#EE5C55` **corallo** |
-| **Body font** | DM Sans | **Satoshi** (Fontshare) |
+| **Body font** | DM Sans | **Poppins** (Fontshare) |
 | **Titoli ristoranti** | TAN Songbird italic | **TAN Songbird invariato** |
 | **Monogramma pin mappa** | vari pin colorati con emoji cucina | pin goccia corallo + "B" in font-mark, statici |
 | **Tab bar mobile** | pill espanso, bg crema | **nav glass full-width** pill, `rgba(255,255,255,.66)` + blur(22px) |
@@ -44,7 +44,7 @@
 - Split: lista verticale sx (~380px) | mappa dx (full height)
 
 **v4 interventi**
-- Tutti i **pin mappa** → goccia corallo + "B" Alfa Slab, statici (niente oscillazione). Cluster = cerchio corallo + numero Satoshi 700
+- Tutti i **pin mappa** → goccia corallo + "B" Alfa Slab, statici (niente oscillazione). Cluster = cerchio corallo + numero Poppins 700
 - **Pill dark** "Lista · N" e "Vedi la mappa" → diventano **nav glass pill** stesso trattamento della bottom nav (coerenza)
 - **Chip categorie**: attivo = pill ink; inattivi = pill white + bordo `ink-15`
 - **Card mini bottom**: restano ma con nuova pelle (niente stelle)
@@ -124,7 +124,7 @@
   - Chip categoria + chip prezzo (€/€€/€€€)
   - "Prezzo accessibile"
 - Row 3 quick-action: Indicazioni · Chiama · Sito
-- Descrizione long-form Satoshi weight 700
+- Descrizione long-form Poppins weight 700
 - **Card oro "Cosa prendere"** (bg `--oro`, testo white, coltello-forchetta emoji, suggerimento di Bi)
 - Card outline "Ho fatto un video in questo posto, guardalo!" con bottoni Reel / TikTok
 - Author card "Ciao, sono Bi · La tua guida a Torino"
@@ -146,7 +146,7 @@
 **Live**
 - Top bar logo + link "Esplora la mappa"
 - Titolo "Ciao di nuovo!" TAN Songbird XL
-- Subtitle Satoshi
+- Subtitle Poppins
 - Bottone white "Continua con Google"
 - Divider "oppure"
 - Input email/password con bordo ink-15
@@ -157,7 +157,7 @@
 - 2 tile outline: Ristoratori · Chi è Bi
 
 **v4 interventi**
-- Re-skin con corallo invariato (già così) + font stack Satoshi + ink-15 borders
+- Re-skin con corallo invariato (già così) + font stack Poppins + ink-15 borders
 
 ---
 
@@ -180,7 +180,7 @@
 **v4 interventi**
 - Attivo sidebar → pill `--corallo-soft` (già così)
 - CTA + "Nuovo X" → corallo (già così)
-- Font → Satoshi
+- Font → Poppins
 - Pill "Live" → resta verde o → corallo? **da decidere**
 - Resto pelle invariata
 
@@ -210,7 +210,7 @@
 - Underline tab attivo → corallo (già così)
 - Stat icons → mantenere i colori diversi (pattern semantico utile) ma adattare il viola/rosa a varianti più vicine alla palette v4
 - Card "SCONTO ATTIVO" dark → resta dark ma dot corallo (già così)
-- Font → Satoshi
+- Font → Poppins
 - CTA "Inserisci codice manualmente" outline → ink-15 border
 
 ---

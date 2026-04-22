@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
@@ -6,6 +6,17 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import { proxyImg } from '../../lib/supabase'
+
+function formatCountdown(endsAt) {
+  if (!endsAt) return null
+  const diff = new Date(endsAt).getTime() - Date.now()
+  if (diff <= 0) return null
+  const totalMinutes = Math.floor(diff / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`
+  return `${minutes}m`
+}
 
 const CATEGORIES = [
   { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
@@ -129,7 +140,22 @@ function TopBar() {
 
 function HeroPromo({ featured }) {
   const navigate = useNavigate()
+  const [countdown, setCountdown] = useState(() => formatCountdown(featured?.endsAt))
+
+  useEffect(() => {
+    if (!featured?.endsAt) {
+      setCountdown(null)
+      return
+    }
+    setCountdown(formatCountdown(featured.endsAt))
+    const id = setInterval(() => setCountdown(formatCountdown(featured.endsAt)), 60000)
+    return () => clearInterval(id)
+  }, [featured?.endsAt])
+
   if (!featured) return null
+
+  const chipLabel = countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'
+
   return (
     <div className="hfv4-hero-wrap" style={{ padding: '4px 16px 22px' }}>
       <div
@@ -149,6 +175,7 @@ function HeroPromo({ featured }) {
       >
         <div className="hfv4-hero-body">
           <span
+            className="hfv4-hero-chip"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -162,6 +189,7 @@ function HeroPromo({ featured }) {
               fontWeight: 700,
               letterSpacing: '0.06em',
               marginBottom: 10,
+              width: 'fit-content',
             }}
           >
             <span
@@ -173,7 +201,7 @@ function HeroPromo({ featured }) {
                 animation: 'hero-pulse 1.4s infinite',
               }}
             />
-            DROP LIVE
+            {chipLabel}
           </span>
           <div
             className="hfv4-hero-title"
@@ -190,6 +218,22 @@ function HeroPromo({ featured }) {
           >
             {featured.title}
           </div>
+          {featured.restLine && (
+            <div
+              className="hfv4-hero-rest-line"
+              style={{
+                display: 'none',
+                alignItems: 'center',
+                gap: 10,
+                fontSize: 15,
+                fontWeight: 600,
+                color: 'rgba(255,255,255,.9)',
+                marginBottom: 4,
+              }}
+            >
+              {featured.restLine}
+            </div>
+          )}
           {featured.subtitle && (
             <div
               className="hfv4-hero-sub"
@@ -204,29 +248,55 @@ function HeroPromo({ featured }) {
               {featured.subtitle}
             </div>
           )}
-          <button
-            onClick={() => navigate(featured.href)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 16px',
-              background: 'var(--color-ink)',
-              color: '#fff',
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 700,
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {featured.cta} →
-          </button>
+          <div className="hfv4-hero-ctas" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => navigate(featured.href)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 16px',
+                background: 'var(--color-ink)',
+                color: '#fff',
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {featured.cta} →
+            </button>
+            {featured.secondaryCta && (
+              <button
+                className="hfv4-hero-cta-ghost"
+                onClick={() => navigate(featured.href)}
+                style={{
+                  display: 'none',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '10px 16px',
+                  background: 'rgba(255,255,255,.18)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  color: '#fff',
+                  borderRadius: 999,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {featured.secondaryCta}
+              </button>
+            )}
+          </div>
         </div>
         {featured.photo && (
           <div
             className="hfv4-hero-photo"
             style={{
+              position: 'relative',
               borderRadius: 20,
               overflow: 'hidden',
               background: '#333',
@@ -239,6 +309,25 @@ function HeroPromo({ featured }) {
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
+            {countdown && (
+              <div
+                className="hfv4-hero-progress"
+                style={{
+                  display: 'none',
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: '16px 20px',
+                  background: 'linear-gradient(0deg, rgba(34,24,28,.7), transparent)',
+                  color: '#fff',
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
+                  Scade tra {countdown}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -253,7 +342,7 @@ function CategoryBubbles({ activeKey, onSelect }) {
         className="hfv4-cats-row"
         style={{
           display: 'flex',
-          gap: 14,
+          gap: 10,
           overflowX: 'auto',
           padding: '6px 20px 20px',
           WebkitOverflowScrolling: 'touch',
@@ -283,14 +372,14 @@ function CategoryBubbles({ activeKey, onSelect }) {
               <span
                 className="hfv4-cat-bubble"
                 style={{
-                  width: 54,
-                  height: 54,
+                  width: 64,
+                  height: 64,
                   borderRadius: '50%',
                   background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
                   boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
                   display: 'grid',
                   placeItems: 'center',
-                  fontSize: 24,
+                  fontSize: 28,
                 }}
               >
                 {c.emoji}
@@ -370,7 +459,7 @@ function SectionHead({ title, kicker, subtitle, trailing }) {
   )
 }
 
-function Rcard({ restaurant, discount, onClick }) {
+function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
   const cat = getCategoryInfo(restaurant.cuisine_type || (restaurant.category && restaurant.category[0]))
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
@@ -398,7 +487,7 @@ function Rcard({ restaurant, discount, onClick }) {
         fontFamily: 'inherit',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#ddd', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/11', background: '#ddd', overflow: 'hidden' }}>
         {photoUrl ? (
           <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
         ) : (
@@ -423,11 +512,8 @@ function Rcard({ restaurant, discount, onClick }) {
             NEW
           </span>
         )}
-        <div
-          style={{ position: 'absolute', top: 10, right: 10 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <SaveButton restaurantId={restaurant.id} size={30} />
+        <div style={{ position: 'absolute', top: 10, right: 10 }}>
+          <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
         </div>
       </div>
       <div style={{ padding: '10px 14px 14px' }}>
@@ -569,7 +655,7 @@ function SponsorBanner() {
   )
 }
 
-function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
+function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick, isSaved, toggleSave }) {
   const [activeTab, setActiveTab] = useState(getTimeSlot)
 
   const now = new Date()
@@ -678,7 +764,14 @@ function TimeBasedSection({ restaurants, discountByRestaurant, onCardClick }) {
         }}
       >
         {filtered.map((r) => (
-          <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} />
+          <Rcard
+            key={r.id}
+            restaurant={r}
+            discount={discountByRestaurant[r.id]}
+            onClick={onCardClick}
+            saved={isSaved ? isSaved(r.id) : false}
+            onToggleSave={toggleSave ? () => toggleSave(r.id) : undefined}
+          />
         ))}
       </div>
     </section>
@@ -722,181 +815,180 @@ function CosaConsiglio({ restaurants }) {
         />
 
         <div className="hfv4-consiglio-l" style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, position: 'relative' }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: 'var(--color-ink)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+                fontSize: 16,
+              }}
+            >
+              B
+            </div>
+            <div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>
+                Bi — dalla guida
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-ink-70)' }}>
+                Selezione della settimana
+              </div>
+            </div>
+          </div>
+
           <div
+            className="hfv4-consiglio-kicker"
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: 'var(--color-ink)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-              fontSize: 16,
+              fontFamily: 'var(--font-sans)',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              color: 'var(--color-oro)',
+              textTransform: 'uppercase',
+              marginBottom: 6,
             }}
           >
-            B
+            Cosa ti consiglio di prendere
           </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>
-              Bi — dalla guida
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--color-ink-70)' }}>
-              Selezione della settimana
-            </div>
-          </div>
-        </div>
 
-        <div
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '0.14em',
-            color: 'var(--color-oro)',
-            textTransform: 'uppercase',
-            marginBottom: 6,
-            position: 'relative',
-          }}
-        >
-          Cosa ti consiglio di prendere
-        </div>
-
-        <h2
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 900,
-            fontSize: 22,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.1,
-            marginBottom: 4,
-            position: 'relative',
-            margin: 0,
-            marginBottom: 4,
-          }}
-        >
-          Questa settimana vai da
-        </h2>
-
-        <div
-          style={{
-            position: 'relative',
-            marginBottom: 14,
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 900,
-            fontSize: 28,
-            lineHeight: 1,
-            letterSpacing: '-0.02em',
-            color: 'var(--color-ink)',
-          }}
-        >
-          {featured.name}
-          <span
+          <h2
+            className="hfv4-consiglio-title"
             style={{
-              display: 'block',
-              fontWeight: 600,
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 22,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              margin: 0,
+              marginBottom: 4,
+            }}
+          >
+            Questa settimana vai da
+          </h2>
+
+          <div
+            className="hfv4-consiglio-rest"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 28,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              color: 'var(--color-ink)',
+              marginBottom: 6,
+            }}
+          >
+            {featured.name}
+          </div>
+          <div
+            className="hfv4-consiglio-place"
+            style={{
+              fontFamily: 'var(--font-sans)',
               fontSize: 12,
+              fontWeight: 600,
               color: 'var(--color-ink-70)',
-              marginTop: 4,
-              letterSpacing: 0,
+              marginBottom: 14,
             }}
           >
             · {cat?.name || 'Italiana'} · {featured.address ? featured.address.split(',')[0] : 'Torino'}
-          </span>
-        </div>
+          </div>
 
-        </div> {/* end consiglio-l */}
-        <div className="hfv4-consiglio-r" style={{ position: 'relative', zIndex: 1 }}>
-        {tips && tips.length > 0 && (
-          <ul className="hfv4-consiglio-list" style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 9, position: 'relative' }}>
-            {tips.map((tip, i) => (
-              <li
-                key={i}
-                style={{
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'flex-start',
-                  padding: '10px 12px',
-                  background: 'rgba(255,255,255,.65)',
-                  borderRadius: 10,
-                  border: '1px solid rgba(176,137,84,.2)',
-                }}
-              >
-                <div
-                  style={{
-                    flex: '0 0 22px',
-                    height: 22,
-                    borderRadius: '50%',
-                    background: 'var(--color-ink)',
-                    color: '#fff',
-                    fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-                    fontSize: 11,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 1,
-                  }}
-                >
-                  {i + 1}
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    fontFamily: 'var(--font-hand, "Caveat", cursive)',
-                    fontSize: 18,
-                    fontWeight: 600,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {tip}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {!tips && (
-          <div
+          <button
+            onClick={() => navigate(`/restaurant/${featured.slug}`)}
+            className="hfv4-consiglio-cta"
             style={{
-              fontFamily: 'var(--font-hand, "Caveat", cursive)',
-              fontSize: 18,
-              fontWeight: 600,
-              lineHeight: 1.35,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 700,
               color: 'var(--color-ink)',
-              position: 'relative',
-              padding: '10px 12px',
-              background: 'rgba(255,255,255,.65)',
-              borderRadius: 10,
-              border: '1px solid rgba(176,137,84,.2)',
+              padding: '9px 14px',
+              background: 'rgba(255,255,255,.85)',
+              borderRadius: 999,
+              border: '1px solid rgba(176,137,84,.3)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
             }}
           >
-            Vai, fidati. Prova il piatto del giorno e chiedi il consiglio dello chef.
-          </div>
-        )}
+            Apri la scheda <span style={{ color: 'var(--color-corallo)' }}>→</span>
+          </button>
+        </div>
 
-        <button
-          onClick={() => navigate(`/restaurant/${featured.slug}`)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 14,
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--color-ink)',
-            textDecoration: 'none',
-            padding: '9px 14px',
-            background: 'rgba(255,255,255,.85)',
-            borderRadius: 999,
-            border: '1px solid rgba(176,137,84,.3)',
-            cursor: 'pointer',
-          }}
-        >
-          Apri la scheda <span style={{ color: 'var(--color-corallo)' }}>→</span>
-        </button>
-        </div> {/* end consiglio-r */}
+        <div className="hfv4-consiglio-r" style={{ position: 'relative', zIndex: 1, marginTop: 14 }}>
+          {tips && tips.length > 0 && (
+            <ul className="hfv4-consiglio-list" style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {tips.map((tip, i) => (
+                <li
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    alignItems: 'flex-start',
+                    padding: '10px 12px',
+                    background: 'rgba(255,255,255,.65)',
+                    borderRadius: 10,
+                    border: '1px solid rgba(176,137,84,.2)',
+                  }}
+                >
+                  <div
+                    style={{
+                      flex: '0 0 22px',
+                      height: 22,
+                      borderRadius: '50%',
+                      background: 'var(--color-ink)',
+                      color: '#fff',
+                      fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+                      fontSize: 11,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginTop: 1,
+                    }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div
+                    className="hfv4-consiglio-tip"
+                    style={{
+                      flex: 1,
+                      fontFamily: 'var(--font-hand, "Caveat", cursive)',
+                      fontSize: 18,
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {tip}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!tips && (
+            <div
+              style={{
+                fontFamily: 'var(--font-hand, "Caveat", cursive)',
+                fontSize: 18,
+                fontWeight: 600,
+                lineHeight: 1.35,
+                color: 'var(--color-ink)',
+                padding: '10px 12px',
+                background: 'rgba(255,255,255,.65)',
+                borderRadius: 10,
+                border: '1px solid rgba(176,137,84,.2)',
+              }}
+            >
+              Vai, fidati. Prova il piatto del giorno e chiedi il consiglio dello chef.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -970,7 +1062,7 @@ export default function HomeFeedV4() {
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
   const { discounts } = useActiveDiscounts()
-  useSavedRestaurants(user?.id)
+  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
   const discountByRestaurant = useMemo(
     () => Object.fromEntries((discounts || []).map((d) => [d.restaurant_id, d])),
@@ -989,10 +1081,13 @@ export default function HomeFeedV4() {
     const label = drop.discount_type === 'percentage' ? `-${String(drop.discount_value).replace('%','')}%` : `-${drop.discount_value}€`
     return {
       title: `${label}\nda ${r.name}.`,
+      restLine: r.name,
       subtitle: drop.description || drop.title,
       cta: 'Vai al drop',
+      secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
       photo,
+      endsAt: drop.drop_ends_at || drop.ends_at || null,
     }
   }, [discounts, restaurants])
 
@@ -1023,10 +1118,15 @@ export default function HomeFeedV4() {
             padding: 0 !important;
             border-radius: 28px !important;
           }
-          .hfv4-hero-body { padding: 52px 56px !important; gap: 18px !important; }
-          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; }
-          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
+          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 14px !important; }
+          .hfv4-hero-chip { font-size: 12px !important; letter-spacing: .08em !important; padding: 6px 12px !important; margin-bottom: 0 !important; }
+          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-rest-line { display: flex !important; }
+          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; margin-bottom: 0 !important; }
+          .hfv4-hero-ctas { margin-top: 6px; }
+          .hfv4-hero-cta-ghost { display: inline-flex !important; }
           .hfv4-hero-photo { min-height: auto !important; border-radius: 0 !important; }
+          .hfv4-hero-progress { display: block !important; }
           /* Category bubbles: 80px wrap grid, no scroll */
           .hfv4-cats-row {
             overflow-x: visible !important;
@@ -1058,6 +1158,24 @@ export default function HomeFeedV4() {
             display: inline-flex !important; align-items: center; gap: 6px;
           }
           .hfv4-sec-head-sub { font-size: 14px !important; display: block !important; }
+          /* "Vedi tutti" pill replaces round → on desktop */
+          .hfv4-sec-head-all {
+            width: auto !important; height: auto !important; border-radius: 999px !important;
+            padding: 10px 16px !important;
+            background: var(--color-ink-05) !important;
+            font-weight: 700 !important;
+            color: var(--color-ink) !important;
+            display: inline-flex !important; align-items: center !important; gap: 6px !important;
+            font-size: 0 !important;
+          }
+          .hfv4-sec-head-all::before {
+            content: 'Vedi tutti';
+            font-size: 13px;
+          }
+          .hfv4-sec-head-all::after {
+            content: '→';
+            font-size: 14px; margin-left: 4px;
+          }
           /* Sponsor banner wide */
           .hfv4-spon-banner {
             grid-template-columns: 108px 1fr auto !important;
@@ -1087,6 +1205,9 @@ export default function HomeFeedV4() {
           .hfv4-consiglio-rest { font-size: 48px !important; margin-bottom: 6px; }
           .hfv4-consiglio-list { gap: 12px !important; }
           .hfv4-consiglio-tip { font-size: 22px !important; }
+          /* Consiglio tweaks for 2-col desktop */
+          .hfv4-consiglio-r { margin-top: 0 !important; }
+          .hfv4-consiglio-cta { margin-top: 8px; }
           /* Suggest desktop */
           .hfv4-suggest {
             grid-template-columns: 1fr auto !important;
@@ -1097,6 +1218,38 @@ export default function HomeFeedV4() {
           .hfv4-suggest-title { font-size: 30px !important; max-width: 500px !important; }
           .hfv4-suggest-sub { font-size: 15px !important; max-width: 560px !important; }
           .hfv4-suggest-cta { padding: 14px 24px !important; font-size: 14px !important; }
+          /* Footer desktop */
+          .hfv4-foot {
+            display: block !important;
+            max-width: 1240px;
+            margin: 60px auto 0;
+            padding: 40px 40px 48px;
+            border-top: 1px solid var(--color-ink-05);
+          }
+          .hfv4-foot-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+          }
+          .hfv4-foot-links {
+            display: flex;
+            gap: 26px;
+            flex-wrap: wrap;
+          }
+          .hfv4-foot-links a {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-ink-70);
+            text-decoration: none;
+          }
+          .hfv4-foot-links a:hover { color: var(--color-corallo); }
+          .hfv4-foot-copy {
+            font-size: 12px;
+            color: var(--color-ink-40, rgba(34,24,28,.45));
+          }
         }
       `}</style>
       <TopBar />
@@ -1141,7 +1294,14 @@ export default function HomeFeedV4() {
             }}
           >
             {recent.map((r) => (
-              <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} />
+              <Rcard
+                key={r.id}
+                restaurant={r}
+                discount={discountByRestaurant[r.id]}
+                onClick={onCardClick}
+                saved={isSaved(r.id)}
+                onToggleSave={() => toggleSave(r.id)}
+              />
             ))}
           </div>
         )}
@@ -1153,11 +1313,49 @@ export default function HomeFeedV4() {
         restaurants={restaurants}
         discountByRestaurant={discountByRestaurant}
         onCardClick={onCardClick}
+        isSaved={isSaved}
+        toggleSave={toggleSave}
       />
 
       <CosaConsiglio restaurants={restaurants} />
 
       <SuggestCard />
+
+      <footer className="hfv4-foot" style={{ display: 'none' }}>
+        <div className="hfv4-foot-inner">
+          <Link to="/" className="hfv4-foot-wordmark" style={{ textDecoration: 'none', display: 'inline-flex', flexDirection: 'column', lineHeight: 0.92 }}>
+            <span style={{
+              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+              fontSize: 18,
+              letterSpacing: '0.02em',
+              color: 'var(--color-corallo)',
+            }}>
+              LA GUIDA DI BI
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 700,
+              fontSize: 9,
+              letterSpacing: '0.15em',
+              color: 'var(--color-ink-40, rgba(34,24,28,.4))',
+              marginTop: 4,
+              textTransform: 'uppercase',
+            }}>
+              by Chiamami Bi
+            </span>
+          </Link>
+          <nav className="hfv4-foot-links">
+            <Link to="/about">Su di me</Link>
+            <Link to="/about">Come scelgo</Link>
+            <Link to="/partner">Per i locali</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Termini</Link>
+          </nav>
+        </div>
+        <div className="hfv4-foot-copy">
+          © {new Date().getFullYear()} Chiamami Bi · Torino, Italia
+        </div>
+      </footer>
     </div>
   )
 }

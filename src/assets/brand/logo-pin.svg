@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&amp;display=swap');
+      .pin-b { font-family: 'Alfa Slab One', 'Rockwell', serif; font-weight: 400; fill: #ffffff; }
+    </style>
+  </defs>
+  <!-- Coral circle with white border -->
+  <circle cx="100" cy="100" r="92" fill="#E8453C"/>
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#ffffff" stroke-width="6"/>
+  <!-- B glyph -->
+  <text x="100" y="140" text-anchor="middle" class="pin-b" font-size="140">B</text>
+</svg>
