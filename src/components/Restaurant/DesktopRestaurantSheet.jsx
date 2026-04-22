@@ -149,7 +149,11 @@ export default function DesktopRestaurantSheet({
       overflowY: 'auto', overflowX: 'hidden',
     }}>
 
-      <style>{`@keyframes dskPulse{0%,100%{box-shadow:0 0 0 3px rgba(163,230,53,.18)}50%{box-shadow:0 0 0 6px rgba(163,230,53,.08)}}`}</style>
+      <style>{`
+        @keyframes dskPulse{0%,100%{box-shadow:0 0 0 3px rgba(163,230,53,.18)}50%{box-shadow:0 0 0 6px rgba(163,230,53,.08)}}
+        .dsk-sticky-pill{display:none}
+        @media(min-width:768px){.dsk-sticky-pill{display:flex}}
+      `}</style>
 
       {/* ── HERO ── */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 28px', width: '100%' }}>
@@ -575,18 +579,21 @@ export default function DesktopRestaurantSheet({
 
       {/* ── STICKY PILL SCONTO (desktop only — mobile uses its own bar) ── */}
       {discount && (
-        <div style={{
-          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 60, minWidth: 460, maxWidth: 640,
-          background: 'rgba(250,247,242,.9)',
-          backdropFilter: 'saturate(140%) blur(14px)',
-          WebkitBackdropFilter: 'saturate(140%) blur(14px)',
-          border: `1px solid ${INK05}`,
-          borderRadius: 999,
-          padding: '8px 10px 8px 22px',
-          display: 'flex', alignItems: 'center', gap: 18,
-          boxShadow: '0 10px 40px rgba(34,24,28,.14),0 2px 8px rgba(34,24,28,.06)',
-        }}>
+        <div
+          className="dsk-sticky-pill"
+          style={{
+            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 60, minWidth: 460, maxWidth: 640,
+            background: 'rgba(250,247,242,.9)',
+            backdropFilter: 'saturate(140%) blur(14px)',
+            WebkitBackdropFilter: 'saturate(140%) blur(14px)',
+            border: `1px solid ${INK05}`,
+            borderRadius: 999,
+            padding: '8px 10px 8px 22px',
+            alignItems: 'center', gap: 18,
+            boxShadow: '0 10px 40px rgba(34,24,28,.14),0 2px 8px rgba(34,24,28,.06)',
+          }}
+        >
           {/* lead */}
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
             <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-.01em', color: INK, display: 'flex', alignItems: 'center', gap: 10 }}>
