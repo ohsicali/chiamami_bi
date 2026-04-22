@@ -38,7 +38,7 @@ function StatCard({ label, value, sub, subColor }) {
   return (
     <div style={{
       background: '#fff',
-      border: '1px solid var(--color-line)',
+      border: '1px solid #eee',
       borderRadius: 10,
       padding: '12px 14px',
     }}>
@@ -71,7 +71,7 @@ function GeoCard({ title, rows, emptyLabel }) {
   const isDevice = title === 'Dispositivi'
   const isCountry = title === 'Top paesi'
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10, padding: 16 }}>
+    <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
       <h3 style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {title}
       </h3>
@@ -429,7 +429,7 @@ export default function AnalyticsPage() {
           style={{
             width: 32,
             height: 32,
-            border: '3px solid var(--color-corallo)',
+            border: '3px solid #E8453C',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
@@ -447,60 +447,41 @@ export default function AnalyticsPage() {
   const hasData = visitsChartData.some((b) => b.visite > 0 || b.utenti > 0)
 
   return (
-    <AdminLayout>
-      {/* ─── DESKTOP STICKY TOP BAR ─── */}
-      <div
-        className="hidden md:flex"
-        style={{
-          position: 'sticky', top: 0, zIndex: 20,
-          background: 'var(--color-page)',
-          borderBottom: '1px solid var(--color-line)',
-          padding: '0 28px', height: 56,
-          alignItems: 'center', gap: 12,
-        }}
-      >
-        <div style={{ flex: 1 }} />
-        {/* Period selector */}
-        <div style={{ display: 'flex', background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10, padding: 3 }}>
-          {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setPeriod(p.key)}
-              style={{
-                padding: '5px 12px', fontSize: 12, fontWeight: 600,
-                border: 'none', borderRadius: 7, cursor: 'pointer',
-                background: period === p.key ? 'var(--color-ink)' : 'transparent',
-                color: period === p.key ? '#fff' : '#666',
-                transition: 'background 0.15s',
-              }}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── CONTENT HEADER ─── */}
-      <div className="px-[18px] pt-[18px] pb-0 md:px-[28px] md:pt-[20px]">
-        <div style={{ fontSize: 11, color: '#999', fontWeight: 500, marginBottom: 6 }}>
-          Admin · <b style={{ color: 'var(--color-ink)' }}>Analytics</b>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+    <AdminLayout title="Analytics">
+      {/* ─── HEADER ─── */}
+      <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--color-ink)', margin: '0 0 2px', fontFamily: 'var(--font-sans)' }}>Numeri</h1>
-            <p style={{ fontSize: 12, color: '#999', margin: 0 }}>Performance e metriche in tempo reale</p>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Analytics</h1>
+            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>
+              Performance e metriche in tempo reale
+            </p>
           </div>
-          {/* Mobile period selector */}
-          <div className="md:hidden" style={{ display: 'flex', background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10, padding: 2 }}>
+
+          {/* Period selector */}
+          <div
+            style={{
+              display: 'flex',
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 6,
+              padding: 2,
+            }}
+          >
             {PERIODS.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setPeriod(p.key)}
                 style={{
-                  padding: '5px 10px', fontSize: 11, fontWeight: 600,
-                  border: 'none', borderRadius: 8, cursor: 'pointer',
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer',
                   background: period === p.key ? 'var(--color-ink)' : 'transparent',
                   color: period === p.key ? '#fff' : '#666',
+                  transition: 'background 0.15s',
                 }}
               >
                 {p.label}
@@ -569,9 +550,9 @@ export default function AnalyticsPage() {
           className="md:!grid-cols-4 md:!gap-[10px]"
         >
           <StatCard label="Visitatori unici" value={metrics.uniqueSessions} sub={metrics.totalVisits > 0 ? `${metrics.totalVisits} pagine viste` : 'sessioni distinte'} />
-          <StatCard label="Utenti registrati" value={metrics.usersTotal} sub={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod} nel periodo` : null} subColor="#2d7a4f" />
+          <StatCard label="Utenti registrati" value={metrics.usersTotal} sub={metrics.usersInPeriod > 0 ? `+${metrics.usersInPeriod} nel periodo` : null} subColor="#059669" />
           <StatCard label="QR presi" value={metrics.qrGenerated} sub="sconti attivati" />
-          <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="var(--color-corallo)" />
+          <StatCard label="QR utilizzati" value={metrics.qrRedeemed} sub={`${conversionRate}% conversione`} subColor="#E8453C" />
         </div>
 
         {/* ─── VISITS CHART + PAGE BREAKDOWN ─── */}
@@ -587,7 +568,7 @@ export default function AnalyticsPage() {
           <div
             style={{
               background: '#fff',
-              border: '1px solid var(--color-line)',
+              border: '1px solid #eee',
               borderRadius: 10,
               padding: 16,
             }}
@@ -614,7 +595,7 @@ export default function AnalyticsPage() {
               </h3>
               <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--color-corallo)' }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: '#E8453C' }} />
                   <span style={{ color: '#666' }}>Visite</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -628,8 +609,8 @@ export default function AnalyticsPage() {
                 <AreaChart data={visitsChartData}>
                   <defs>
                     <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--color-corallo)" stopOpacity={0.18} />
-                      <stop offset="100%" stopColor="var(--color-corallo)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#E8453C" stopOpacity={0.18} />
+                      <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke="#f5f5f5" strokeWidth={0.5} />
@@ -638,7 +619,7 @@ export default function AnalyticsPage() {
                   <Tooltip
                     contentStyle={{
                       borderRadius: 8,
-                      border: '1px solid var(--color-line)',
+                      border: '1px solid #eee',
                       fontSize: 11,
                       boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                     }}
@@ -646,7 +627,7 @@ export default function AnalyticsPage() {
                   <Area
                     type="monotone"
                     dataKey="visite"
-                    stroke="var(--color-corallo)"
+                    stroke="#E8453C"
                     strokeWidth={2}
                     fill="url(#grad1)"
                     name="Visite"
@@ -682,7 +663,7 @@ export default function AnalyticsPage() {
           <div
             style={{
               background: '#fff',
-              border: '1px solid var(--color-line)',
+              border: '1px solid #eee',
               borderRadius: 10,
               padding: 16,
             }}
@@ -776,7 +757,7 @@ export default function AnalyticsPage() {
           <div
             style={{
               background: '#fff',
-              border: '1px solid var(--color-line)',
+              border: '1px solid #eee',
               borderRadius: 10,
               padding: 16,
             }}
@@ -873,7 +854,7 @@ export default function AnalyticsPage() {
                             <div style={{ fontSize: 9, color: '#999' }}>Usati</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-corallo)' }}>{convRate}%</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: '#E8453C' }}>{convRate}%</div>
                             <div style={{ fontSize: 9, color: '#999' }}>Conv.</div>
                           </div>
                         </div>
@@ -902,7 +883,7 @@ export default function AnalyticsPage() {
           <div
             style={{
               background: '#fff',
-              border: '1px solid var(--color-line)',
+              border: '1px solid #eee',
               borderRadius: 10,
               padding: 16,
             }}
@@ -951,7 +932,7 @@ export default function AnalyticsPage() {
                         style={{
                           fontSize: 16,
                           fontWeight: 700,
-                          color: i === 0 ? 'var(--color-corallo)' : '#bbb',
+                          color: i === 0 ? '#E8453C' : '#bbb',
                           width: 20,
                           textAlign: 'center',
                           flexShrink: 0,

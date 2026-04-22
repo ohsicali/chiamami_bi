@@ -48,8 +48,8 @@ function StatCard({ label, value, accent = 'var(--color-ink)' }) {
     <div
       style={{
         background: '#fff',
-        border: '1px solid var(--color-line)',
-        borderRadius: 14,
+        border: '1px solid #eee',
+        borderRadius: 12,
         padding: '16px 18px',
         fontFamily: "var(--font-sans)",
       }}
@@ -78,9 +78,9 @@ function StatusBadge({ discount: d }) {
     fontFamily: "var(--font-sans)",
     whiteSpace: 'nowrap',
   }
-  if (expired) return <span style={{ ...style, background: 'var(--color-cream)', color: '#888' }}>Scaduto</span>
-  if (!d.is_active) return <span style={{ ...style, background: 'var(--color-cream)', color: '#888' }}>Disattivato</span>
-  return <span style={{ ...style, background: 'var(--color-green-wash)', color: '#2d7a4f' }}>Attivo</span>
+  if (expired) return <span style={{ ...style, background: '#f3f3f3', color: '#999' }}>Scaduto</span>
+  if (!d.is_active) return <span style={{ ...style, background: '#fef3c7', color: '#b45309' }}>Disattivato</span>
+  return <span style={{ ...style, background: '#ecfdf5', color: '#059669' }}>Attivo</span>
 }
 
 function DropBadge() {
@@ -450,72 +450,51 @@ export default function DiscountManager() {
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Sconti & Drop">
       <div style={{ fontFamily: "var(--font-sans)" }}>
-        {/* ── Desktop sticky top bar ── */}
+        {/* ── Header ── */}
         <div
-          className="hidden md:flex"
           style={{
-            position: 'sticky', top: 0, zIndex: 20,
-            background: 'var(--color-page)',
-            borderBottom: '1px solid var(--color-line)',
-            padding: '0 28px', height: 56,
-            alignItems: 'center', gap: 12,
+            padding: '22px 20px 18px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ flex: 1 }} />
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0, letterSpacing: '-0.3px' }}>
+              Sconti & Drop
+            </h1>
+            <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
+              Gestisci offerte e drop dei ristoranti del network
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => { resetForm(); setShowForm(true) }}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'var(--color-corallo)', color: '#fff',
-              padding: '0 16px', height: 36, borderRadius: 10,
-              fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+              padding: '10px 18px',
+              borderRadius: 10,
+              background: '#E8453C',
+              color: '#fff',
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
               fontFamily: "var(--font-sans)",
             }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Nuovo sconto
           </button>
-        </div>
-
-        {/* ── Content header ── */}
-        <div style={{ padding: '20px 20px 0' }}>
-          <div style={{ fontSize: 11, color: '#999', fontWeight: 500, marginBottom: 6 }}>
-            Admin · <b style={{ color: 'var(--color-ink)' }}>Sconti & Drop</b>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-            <div>
-              <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--color-ink)', margin: '0 0 2px', fontFamily: 'var(--font-sans)' }}>
-                Sconti & Drop
-              </h1>
-              <p style={{ fontSize: 12, color: '#999', margin: 0 }}>
-                {stats.active} attivi · {stats.drops} drop
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => { resetForm(); setShowForm(true) }}
-              className="md:hidden"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: 'var(--color-corallo)', color: '#fff',
-                padding: '0 16px', height: 36, borderRadius: 10,
-                fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
-                fontFamily: "var(--font-sans)", flexShrink: 0,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Nuovo
-            </button>
-          </div>
         </div>
 
         {/* ── Stats ── */}
@@ -530,9 +509,9 @@ export default function DiscountManager() {
           className="md:!grid-cols-4"
         >
           <StatCard label="Totali" value={stats.total} />
-          <StatCard label="Attivi" value={stats.active} accent="#2d7a4f" />
-          <StatCard label="Drop attivi" value={stats.drops} accent="var(--color-ink)" />
-          <StatCard label="QR utilizzati" value={stats.redemptions} accent="var(--color-corallo)" />
+          <StatCard label="Attivi" value={stats.active} accent="#059669" />
+          <StatCard label="Drop attivi" value={stats.drops} accent="#B08954" />
+          <StatCard label="QR utilizzati" value={stats.redemptions} accent="#E8453C" />
         </div>
 
         {/* ── Filter chips ── */}
@@ -566,7 +545,7 @@ export default function DiscountManager() {
               padding: '48px 24px',
               textAlign: 'center',
               background: '#fff',
-              border: '1px solid var(--color-line)',
+              border: '1px solid #eee',
               borderRadius: 12,
             }}
           >
@@ -613,7 +592,7 @@ export default function DiscountManager() {
                 onClick={() => setBulkDeleteConfirm(true)}
                 style={{
                   padding: '7px 14px', borderRadius: 8,
-                  background: 'var(--color-corallo)', border: 'none',
+                  background: '#dc2626', border: 'none',
                   color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
                   fontFamily: "var(--font-sans)",
@@ -631,7 +610,7 @@ export default function DiscountManager() {
         {/* ── Desktop table ── */}
         {!loading && filteredDiscounts.length > 0 && (
           <div className="hidden md:block" style={{ padding: '0 20px 40px' }}>
-            <div style={{ background: '#fff', border: '1px solid var(--color-line)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
@@ -640,7 +619,7 @@ export default function DiscountManager() {
                         type="checkbox"
                         checked={filteredDiscounts.length > 0 && selectedIds.size === filteredDiscounts.length}
                         onChange={toggleSelectAll}
-                        style={{ cursor: 'pointer', width: 15, height: 15, accentColor: 'var(--color-corallo)' }}
+                        style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#dc2626' }}
                       />
                     </th>
                     <th style={thStyle}>Ristorante</th>
@@ -669,7 +648,7 @@ export default function DiscountManager() {
                           type="checkbox"
                           checked={selectedIds.has(d.id)}
                           onChange={() => toggleSelect(d.id)}
-                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: 'var(--color-corallo)' }}
+                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#dc2626' }}
                         />
                       </td>
                       <td style={tdStyle}>
@@ -680,7 +659,7 @@ export default function DiscountManager() {
                         </div>
                       </td>
                       <td style={tdStyle}>
-                        <div style={{ color: 'var(--color-corallo)', fontWeight: 700 }}>{d.discount_value}</div>
+                        <div style={{ color: '#E8453C', fontWeight: 700 }}>{d.discount_value}</div>
                         <div style={{ color: '#999', fontSize: 11, marginTop: 2 }}>{d.title}</div>
                       </td>
                       <td style={{ ...tdStyle, color: '#666' }}>{TYPE_LABELS[d.discount_type] || d.discount_type}</td>
@@ -730,7 +709,7 @@ export default function DiscountManager() {
                           type="button"
                           onClick={() => setDeleteConfirm(d)}
                           title="Elimina"
-                          style={{ ...iconBtnStyle, color: 'var(--color-corallo)' }}
+                          style={{ ...iconBtnStyle, color: '#dc2626' }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -754,7 +733,7 @@ export default function DiscountManager() {
                 onClick={() => handleEdit(d)}
                 style={{
                   background: selectedIds.has(d.id) ? '#fff8f8' : '#fff',
-                  border: selectedIds.has(d.id) ? '1.5px solid var(--color-corallo)' : '1px solid #eee',
+                  border: selectedIds.has(d.id) ? '1.5px solid #dc2626' : '1px solid #eee',
                   borderRadius: 12,
                   padding: '14px 16px',
                   cursor: 'pointer',
@@ -770,7 +749,7 @@ export default function DiscountManager() {
                       type="checkbox"
                       checked={selectedIds.has(d.id)}
                       onChange={() => toggleSelect(d.id)}
-                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: 'var(--color-corallo)', marginTop: 2, flexShrink: 0 }}
+                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#dc2626', marginTop: 2, flexShrink: 0 }}
                     />
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
@@ -778,7 +757,7 @@ export default function DiscountManager() {
                         {d.is_drop && <DropBadge />}
                         {d.is_featured && !d.is_drop && <FeaturedBadge />}
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-corallo)', marginTop: 4 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
                         {d.discount_value}
                       </div>
                       <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{d.title}</div>
@@ -827,7 +806,7 @@ export default function DiscountManager() {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setDeleteConfirm(d) }}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--color-corallo)', padding: 4, cursor: 'pointer' }}
+                      style={{ background: 'transparent', border: 'none', color: '#dc2626', padding: 4, cursor: 'pointer' }}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -870,7 +849,7 @@ export default function DiscountManager() {
                 style={{
                   background: '#fff',
                   borderRadius: 14,
-                  border: '1px solid var(--color-line)',
+                  border: '1px solid #eee',
                   boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
                   width: '100%',
                   maxWidth: 520,
@@ -930,7 +909,7 @@ export default function DiscountManager() {
                         {showRestDD && (
                           <div style={{
                             position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                            background: '#fff', border: '1px solid var(--color-line)', borderRadius: 10,
+                            background: '#fff', border: '1px solid #eee', borderRadius: 10,
                             boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4,
                             maxHeight: 220, overflowY: 'auto',
                           }}>
@@ -1147,13 +1126,13 @@ export default function DiscountManager() {
                       type="checkbox"
                       checked={form.is_active}
                       onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                      style={{ accentColor: 'var(--color-corallo)', width: 16, height: 16 }}
+                      style={{ accentColor: '#E8453C', width: 16, height: 16 }}
                     />
                     <span style={{ fontSize: 13, color: 'var(--color-ink)' }}>Attivo</span>
                   </label>
 
                   {saveError && (
-                    <p style={{ fontSize: 11, color: 'var(--color-corallo)', margin: 0, padding: 10, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
+                    <p style={{ fontSize: 11, color: '#dc2626', margin: 0, padding: 10, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
                       {saveError}
                     </p>
                   )}
@@ -1168,7 +1147,7 @@ export default function DiscountManager() {
                       padding: '9px 16px',
                       borderRadius: 8,
                       background: 'transparent',
-                      border: '1px solid var(--color-line)',
+                      border: '1px solid #eee',
                       color: '#666',
                       fontSize: 13,
                       fontWeight: 500,
@@ -1185,7 +1164,7 @@ export default function DiscountManager() {
                     style={{
                       padding: '9px 18px',
                       borderRadius: 8,
-                      background: 'var(--color-corallo)',
+                      background: '#E8453C',
                       border: 'none',
                       color: '#fff',
                       fontSize: 13,
@@ -1219,7 +1198,7 @@ export default function DiscountManager() {
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  background: '#fff', borderRadius: 18, border: '1px solid var(--color-line)',
+                  background: '#fff', borderRadius: 18, border: '1px solid #eee',
                   boxShadow: '0 24px 64px rgba(0,0,0,0.25)', padding: 28, maxWidth: 360, width: '100%',
                   fontFamily: "var(--font-sans)", textAlign: 'center',
                 }}
@@ -1278,7 +1257,7 @@ export default function DiscountManager() {
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  background: '#fff', borderRadius: 14, border: '1px solid var(--color-line)',
+                  background: '#fff', borderRadius: 14, border: '1px solid #eee',
                   boxShadow: '0 20px 60px rgba(0,0,0,0.2)', padding: 24, maxWidth: 380, width: '100%',
                   fontFamily: "var(--font-sans)",
                 }}
@@ -1295,7 +1274,7 @@ export default function DiscountManager() {
                     onClick={() => setBulkDeleteConfirm(false)}
                     style={{
                       padding: '9px 16px', borderRadius: 8, background: 'transparent',
-                      border: '1px solid var(--color-line)', color: '#666', fontSize: 13, fontWeight: 500,
+                      border: '1px solid #eee', color: '#666', fontSize: 13, fontWeight: 500,
                       cursor: 'pointer', fontFamily: "var(--font-sans)",
                     }}
                   >
@@ -1306,7 +1285,7 @@ export default function DiscountManager() {
                     onClick={handleBulkDelete}
                     disabled={bulkDeleting}
                     style={{
-                      padding: '9px 16px', borderRadius: 8, background: 'var(--color-corallo)', border: 'none',
+                      padding: '9px 16px', borderRadius: 8, background: '#dc2626', border: 'none',
                       color: '#fff', fontSize: 13, fontWeight: 600,
                       cursor: bulkDeleting ? 'wait' : 'pointer', opacity: bulkDeleting ? 0.7 : 1,
                       fontFamily: "var(--font-sans)",
@@ -1349,7 +1328,7 @@ export default function DiscountManager() {
                 style={{
                   background: '#fff',
                   borderRadius: 14,
-                  border: '1px solid var(--color-line)',
+                  border: '1px solid #eee',
                   boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
                   padding: 24,
                   maxWidth: 380,
@@ -1371,7 +1350,7 @@ export default function DiscountManager() {
                       padding: '9px 16px',
                       borderRadius: 8,
                       background: 'transparent',
-                      border: '1px solid var(--color-line)',
+                      border: '1px solid #eee',
                       color: '#666',
                       fontSize: 13,
                       fontWeight: 500,
@@ -1387,7 +1366,7 @@ export default function DiscountManager() {
                     style={{
                       padding: '9px 16px',
                       borderRadius: 8,
-                      background: 'var(--color-corallo)',
+                      background: '#dc2626',
                       border: 'none',
                       color: '#fff',
                       fontSize: 13,
@@ -1427,7 +1406,7 @@ const inputStyle = {
   width: '100%',
   padding: '9px 12px',
   borderRadius: 8,
-  border: '1px solid var(--color-line)',
+  border: '1px solid #eee',
   background: '#fff',
   fontSize: 13,
   color: 'var(--color-ink)',

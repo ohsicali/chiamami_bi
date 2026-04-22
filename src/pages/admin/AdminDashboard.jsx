@@ -322,213 +322,507 @@ export default function AdminDashboard() {
     },
   ]
 
-  const GG = ['dom','lun','mar','mer','gio','ven','sab']
-  const MM = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']
-  const _t = new Date()
-  const dateLabel = `${GG[_t.getDay()]} ${_t.getDate()} ${MM[_t.getMonth()]}`
-  const avatarInitial = (user?.email || 'A')[0].toUpperCase()
-
   return (
-    <AdminLayout>
-      {/* ─── DESKTOP TOP BAR ─── */}
-      <div className="hidden md:flex" style={{ alignItems:'center', gap:16, padding:'14px 28px', background:'rgba(255,255,255,0.6)', backdropFilter:'blur(20px)', borderBottom:'1px solid var(--color-line)', position:'sticky', top:0, zIndex:10 }}>
-        <div style={{ flex:1, maxWidth:440, display:'flex', alignItems:'center', gap:8, background:'#fff', border:'1px solid var(--color-line)', borderRadius:999, padding:'9px 14px', fontSize:13, color:'rgba(34,24,28,0.55)' }}>
-          🔍 <span>Cerca — ristoranti, utenti, sconti…</span>
+    <AdminLayout title="Dashboard">
+      {/* ─── HEADER ─── */}
+      <div
+        style={{
+          borderBottom: '1px solid #eee',
+          background: '#fff',
+        }}
+        className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]"
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Desktop title */}
+            <div className="hidden md:block">
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Dashboard</h1>
+              <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>Panoramica della guida</p>
+            </div>
+            {/* Mobile title */}
+            <div className="md:hidden">
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
+                Ciao, {userName}
+              </h1>
+              <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
+                Ecco cosa succede sulla guida
+              </p>
+            </div>
+          </div>
+
+          {/* Desktop: new restaurant button */}
+          <Link
+            to="/admin/restaurant/new"
+            className="hidden md:inline-flex"
+            style={{
+              alignItems: 'center',
+              gap: 6,
+              background: '#E8453C',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <PlusIcon w={14} /> Nuovo ristorante
+          </Link>
         </div>
-        <div style={{ flex:1 }} />
-        <div style={{ background:'#fff', border:'1px solid var(--color-line)', borderRadius:999, padding:'7px 14px', fontSize:12, fontWeight:700, color:'var(--color-ink)', cursor:'pointer' }}>Ultimi 30 giorni ▾</div>
-        <Link to="/admin/restaurant/new" style={{ background:'var(--color-corallo)', color:'#fff', padding:'7px 14px', borderRadius:999, fontSize:12, fontWeight:800, textDecoration:'none', boxShadow:'0 6px 14px rgba(232,69,60,.28)' }}>+ Nuovo</Link>
-        <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--color-corallo)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-mark)', fontSize:13 }}>{avatarInitial}</div>
+
+        {/* Mobile quick actions — horizontal scroll */}
+        <div
+          className="md:hidden"
+          style={{
+            display: 'flex',
+            gap: 8,
+            marginTop: 14,
+            overflowX: 'auto',
+            paddingBottom: 4,
+            scrollbarWidth: 'none',
+          }}
+        >
+          <Link
+            to="/admin/restaurant/new"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#E8453C',
+              color: '#fff',
+              padding: '10px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            <PlusIcon w={12} /> Nuovo ristorante
+          </Link>
+          <Link
+            to="/admin/discounts"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#fff',
+              color: 'var(--color-ink)',
+              border: '1px solid #eee',
+              padding: '10px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            <PlusIcon w={12} /> Nuovo sconto
+          </Link>
+        </div>
       </div>
 
       {/* ─── CONTENT ─── */}
-      <div className="px-[18px] py-[16px] md:px-[32px] md:py-[28px]" style={{ display:'flex', flexDirection:'column', gap:16 }}>
-        {/* Mobile: breadcrumb + titolo + sottotitolo */}
-        <div className="md:hidden">
-          <div style={{ fontSize:11, fontWeight:700, color:'rgba(34,24,28,0.55)', letterSpacing:'.05em', marginBottom:4 }}>Home · <b style={{color:'var(--color-ink)'}}>Dashboard</b></div>
-          <h1 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:26, letterSpacing:'-.025em', lineHeight:1.05, marginBottom:4, color:'var(--color-ink)' }}>Ciao, {userName}</h1>
-          <div style={{ color:'rgba(34,24,28,0.55)', fontWeight:500, fontSize:13, marginBottom:20, display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
-            <span>Oggi · {dateLabel}</span>
-            <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(34,24,28,0.55)',flexShrink:0}} />
-            <span>tutto in regola</span>
-          </div>
-        </div>
-        {/* Desktop: breadcrumb + saluto + data */}
-        <div className="hidden md:block" style={{ marginBottom:12 }}>
-          <div style={{ fontSize:12, fontWeight:600, color:'rgba(34,24,28,0.55)', marginBottom:8 }}>Dashboard · <b style={{color:'var(--color-ink)'}}>panoramica</b></div>
-          <h1 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:32, letterSpacing:'-.025em', marginBottom:4, color:'var(--color-ink)', display:'flex', alignItems:'center', gap:14 }}>Ciao Bi 👋</h1>
-          <div style={{ color:'rgba(34,24,28,0.55)', fontWeight:500, marginBottom:28, display:'flex', gap:12, alignItems:'center' }}>
-            <span>{dateLabel}</span>
-            <span style={{width:3,height:3,borderRadius:'50%',background:'rgba(34,24,28,0.55)',flexShrink:0}} />
-            <span style={{fontSize:13}}>{metrics.pendingApplications > 0 && `${metrics.pendingApplications} candidature nuove, `}{metrics.dropsActive} drop attivi</span>
-          </div>
-        </div>
+      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* ─── 4 STAT CARDS ─── */}
-        {/* KPI grid: 2×2 mobile + full-width sparkline | 4-col desktop */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10 }} className="md:!grid-cols-4 md:!gap-[16px]">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 8,
+          }}
+          className="md:!grid-cols-4 md:!gap-[10px]"
+        >
           {statCards.map((s, i) => (
-            <motion.div key={s.label} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:i*0.04,duration:0.25}}
-              style={{ background:'#fff', border:'1px solid var(--color-line)', borderRadius:16, padding:14 }}
-              className="md:!rounded-[18px] md:!p-[18px]"
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04, duration: 0.25 }}
+              style={{
+                background: '#fff',
+                border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+                borderRadius: 18,
+                padding: 18,
+              }}
             >
-              <div style={{ fontSize:10, fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', color:'rgba(34,24,28,0.55)' }} className="md:!text-[11px]">{s.label}</div>
-              <div style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:26, letterSpacing:'-.03em', lineHeight:1, marginTop:6, color:'var(--color-ink)' }} className="md:!text-[34px] md:!mt-[8px]">
+              <div style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
+                textTransform: 'uppercase', color: 'var(--color-ink-55, #7a6e68)',
+              }}>
+                {s.label}
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-sans)', fontWeight: 900,
+                fontSize: 34, letterSpacing: '-0.03em',
+                lineHeight: 1, marginTop: 8,
+                color: 'var(--color-ink)',
+              }}>
                 {typeof s.value === 'number' ? s.value.toLocaleString('it-IT') : s.value}
               </div>
-              {s.delta && <div style={{ marginTop:4, fontSize:11, fontWeight:700, display:'inline-flex', alignItems:'center', gap:3, color:s.deltaDir==='dn'?'#C0392B':'#2C7A4A' }} className="md:!text-[12px]">{s.deltaDir==='dn'?'▼':'▲'} {s.delta}</div>}
-              <div style={{ height:28, marginTop:8, display:'flex', alignItems:'flex-end', gap:3 }} className="md:!h-[34px] md:!mt-[10px]">
-                {s.spark.map((h,idx)=>(
-                  <span key={idx} style={{ flex:1, height:`${h}%`, borderRadius:2, background:idx>=s.spark.length-2?'var(--color-corallo)':'var(--color-cream-deep)' }} />
+              {s.delta && (
+                <div style={{
+                  marginTop: 6, fontSize: 12, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  color: s.deltaDir === 'dn' ? 'var(--color-corallo, #E8453C)' : '#2C7A4A',
+                }}>
+                  {s.deltaDir === 'dn' ? '▼' : '▲'} {s.delta}
+                </div>
+              )}
+              <div style={{
+                height: 34, marginTop: 10,
+                display: 'flex', alignItems: 'flex-end', gap: 3,
+              }}>
+                {s.spark.map((h, idx) => (
+                  <span key={idx} style={{
+                    flex: 1, height: `${h}%`, borderRadius: 2,
+                    background: idx >= s.spark.length - 2
+                      ? 'var(--color-corallo, #E8453C)'
+                      : 'var(--color-cream-deep, #F1EBE0)',
+                  }} />
                 ))}
               </div>
             </motion.div>
           ))}
-          {/* Mobile only: full-width sparkline tile (redenzioni settimana) */}
-          <div className="md:hidden" style={{ gridColumn:'1/-1', background:'#fff', border:'1px solid var(--color-line)', borderRadius:16, padding:14 }}>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', color:'rgba(34,24,28,0.55)' }}>Redenzioni QR · settimana</div>
-            <div style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:26, letterSpacing:'-.03em', lineHeight:1, marginTop:6, color:'var(--color-ink)' }}>{metrics.qrUsedThisWeek || 0}</div>
-            <div style={{ height:28, marginTop:8, display:'flex', alignItems:'flex-end', gap:3 }}>
-              {miniSpark(metrics.qrUsed+5).map((h,idx)=>(
-                <span key={idx} style={{ flex:1, height:`${h}%`, borderRadius:2, background:idx>=6?'var(--color-corallo)':'var(--color-cream-deep)' }} />
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* ─── DROP ATTIVO (mobile + desktop) ─── */}
-        {metrics.dropsActive > 0 && (
-          <div style={{ background:'linear-gradient(135deg,#FFF1EF,#FCE4E1)', border:'1px solid var(--color-corallo-soft)', borderRadius:18, padding:16, position:'relative' }}>
-            <div style={{ position:'absolute', top:12, right:14, fontSize:20 }}>🔥</div>
-            <div style={{ fontSize:10, fontWeight:800, color:'var(--color-corallo)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>Drop attivo</div>
-            <h3 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:18, letterSpacing:'-.02em', marginBottom:3, paddingRight:34, color:'var(--color-ink)' }}>
-              {metrics.dropsActive === 1 ? 'Sconto drop in corso' : `${metrics.dropsActive} drop in corso`}
-            </h3>
-            <div style={{ fontSize:12, color:'#3d2f36', fontWeight:600, marginBottom:12 }}>
-              Sconto attivo per i lettori della guida
-            </div>
-            <div style={{ height:7, background:'rgba(232,69,60,.18)', borderRadius:999, overflow:'hidden', marginBottom:6 }}>
-              <div style={{ height:'100%', width:'65%', background:'var(--color-corallo)', borderRadius:999 }} />
-            </div>
-            <div style={{ fontSize:11, fontWeight:700, color:'#3d2f36', display:'flex', justifyContent:'space-between' }}>
-              <span>{metrics.qrUsedThisWeek} riscatti questa settimana</span><span>65%</span>
-            </div>
-          </div>
-        )}
-
-        {/* ─── INBOX ALERT candidature ─── */}
-        {metrics.pendingApplications > 0 && (
-          <Link to="/admin/applications" style={{ textDecoration:'none' }}>
-            <div style={{ background:'var(--color-ink)', color:'#fff', borderRadius:16, padding:14, display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:40, height:40, borderRadius:12, background:'var(--color-corallo)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>✉</div>
-              <div style={{ flex:1, fontSize:12, lineHeight:1.3, color:'rgba(255,255,255,0.8)' }}>
-                <b style={{ display:'block', fontSize:14, marginBottom:2, color:'#fff' }}>{metrics.pendingApplications} nuove candidature</b>
-                Locali che chiedono di entrare in guida
-              </div>
-              <div style={{ fontSize:18, opacity:.6, color:'#fff' }}>›</div>
-            </div>
-          </Link>
-        )}
-
-        {/* ─── ATTIVITÀ RECENTE + TOP 5 ─── */}
-        {/* Mobile: card verticali */}
-        <div className="md:hidden">
-          {/* Activity card */}
-          <div style={{ background:'#fff', border:'1px solid var(--color-line)', borderRadius:16, padding:16, marginBottom:12 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-              <h3 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:15, letterSpacing:'-.01em', margin:0, color:'var(--color-ink)' }}>Attività recente</h3>
-              <Link to="/admin/restaurants" style={{ marginLeft:'auto', fontSize:11, fontWeight:700, color:'var(--color-corallo)', textDecoration:'none' }}>Tutto ›</Link>
-            </div>
-            {latestRestaurants.slice(0,4).map(r => (
-              <div key={r.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 0', borderBottom:'1px dashed var(--color-line)', fontSize:12 }}>
-                <div style={{ width:32, height:32, borderRadius:10, background:'var(--color-green-wash,#E8F5D8)', display:'grid', placeItems:'center', fontSize:14, flexShrink:0 }}>✓</div>
-                <div style={{ flex:1 }}><b style={{fontWeight:800}}>{r.name}</b> aggiunto al catalogo</div>
-                <div style={{ fontSize:10, color:'rgba(34,24,28,0.55)', fontWeight:600, flexShrink:0 }}>{formatDate(r.created_at)}</div>
-              </div>
-            ))}
-            {latestRestaurants.length === 0 && <div style={{ padding:14, textAlign:'center', fontSize:12, color:'#999' }}>Nessuna attività recente</div>}
-          </div>
-          {/* Top 5 card */}
-          <div style={{ background:'#fff', border:'1px solid var(--color-line)', borderRadius:16, padding:16 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-              <h3 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:15, letterSpacing:'-.01em', margin:0, color:'var(--color-ink)' }}>Top 5 · questa settimana</h3>
-              <Link to="/admin/analytics" style={{ marginLeft:'auto', fontSize:11, fontWeight:700, color:'var(--color-corallo)', textDecoration:'none' }}>Analytics ›</Link>
-            </div>
-            {latestRestaurants.slice(0,5).map((r,i) => (
-              <div key={r.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:i<4?'1px dashed var(--color-line)':0 }}>
-                <div style={{ width:22, textAlign:'center', fontFamily:'var(--font-sans)', fontWeight:900, fontSize:15, color:'rgba(34,24,28,0.55)' }}>{i+1}</div>
-                <div style={{ width:40, height:40, borderRadius:10, background:'var(--color-cream-deep)', flexShrink:0 }} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontWeight:800, fontSize:13, lineHeight:1.15, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.name}</div>
-                  <div style={{ fontSize:10, color:'rgba(34,24,28,0.55)', fontWeight:600, marginTop:2 }}>{r.cuisine_type || '—'}</div>
-                </div>
-                <div style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:15, color:'var(--color-ink)' }}>+{(i+1)*8+12}%</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Desktop: 2-col dash row (activity + top ristoranti) + inbox tile */}
-        <div className="hidden md:block">
-          {/* Dash row */}
-          <div style={{ display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginBottom:24 }}>
-            <div style={{ background:'#fff', border:'1px solid var(--color-line)', borderRadius:18, padding:20 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-                <h3 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:17, letterSpacing:'-.01em', margin:0 }}>Attività recente</h3>
-                <span style={{ fontSize:10, fontWeight:800, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(34,24,28,0.55)' }}>cosa è successo oggi</span>
-                <Link to="/admin/restaurants" style={{ marginLeft:'auto', fontSize:12, fontWeight:700, color:'var(--color-corallo)', textDecoration:'none' }}>Vedi tutto →</Link>
-              </div>
-              {latestRestaurants.map(r => (
-                <div key={r.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0', borderBottom:'1px dashed var(--color-line)', fontSize:13 }}>
-                  <div style={{ width:34, height:34, borderRadius:10, background:'var(--color-green-wash,#E8F5D8)', display:'grid', placeItems:'center', fontSize:15, flexShrink:0 }}>✓</div>
-                  <div><b style={{fontWeight:800}}>{r.name}</b> aggiunto al catalogo</div>
-                  <div style={{ marginLeft:'auto', fontSize:11, color:'rgba(34,24,28,0.55)', fontWeight:600 }}>{formatDate(r.created_at)}</div>
-                </div>
-              ))}
-              {latestRestaurants.length === 0 && <div style={{ padding:14, textAlign:'center', fontSize:13, color:'#999' }}>Nessuna attività recente</div>}
-            </div>
-            <div style={{ background:'#fff', border:'1px solid var(--color-line)', borderRadius:18, padding:20 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-                <h3 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:17, letterSpacing:'-.01em', margin:0 }}>Top ristoranti · settimana</h3>
-                <Link to="/admin/analytics" style={{ marginLeft:'auto', fontSize:12, fontWeight:700, color:'var(--color-corallo)', textDecoration:'none' }}>Vedi tutto →</Link>
-              </div>
-              {latestRestaurants.slice(0,5).map((r,i) => (
-                <div key={r.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:i<latestRestaurants.length-1?'1px dashed var(--color-line)':0 }}>
-                  <div style={{ width:44, height:44, borderRadius:12, background:'var(--color-cream-deep)', flexShrink:0 }} />
-                  <div>
-                    <div style={{ fontWeight:800, fontSize:14 }}>{r.name}</div>
-                    <div style={{ fontSize:11, color:'rgba(34,24,28,0.55)', fontWeight:600, marginTop:2 }}>{r.cuisine_type || '—'}</div>
+        {/* ─── DA GESTIRE ─── */}
+        <div>
+          <h2
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--color-ink)',
+              margin: '0 0 10px',
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}
+          >
+            Da gestire
+          </h2>
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 14,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            {manageItems.map((item, i) => {
+              const isZero = item.count === 0
+              const Content = (
+                <>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: isZero ? '#f5f5f5' : item.bg,
+                      color: isZero ? '#bbb' : item.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <item.Icon w={16} />
                   </div>
-                  <span style={{ fontSize:10, fontWeight:700, padding:'3px 7px', borderRadius:999, background:'var(--color-cream-deep)', color:'rgba(34,24,28,0.7)' }}>+{(i+1)*8+12}%</span>
-                  <div style={{ marginLeft:'auto', fontFamily:'var(--font-sans)', fontWeight:900, fontSize:18 }}>—</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: isZero ? '#999' : 'var(--color-ink)',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {item.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: '#999',
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.subtitle}
+                    </div>
+                  </div>
+                  {!isZero && (
+                    <div style={{ color: '#ccc', flexShrink: 0 }}>
+                      <ChevronRight w={14} />
+                    </div>
+                  )}
+                </>
+              )
+              return isZero ? (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 10,
+                    borderRadius: 8,
+                    background: '#fafafa',
+                  }}
+                >
+                  {Content}
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Inbox tile — candidature */}
-          <div style={{ background:'var(--color-cream)', borderRadius:18, padding:20 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-              <h3 style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:17, letterSpacing:'-.01em', margin:0 }}>Candidature da aprire</h3>
-              <span style={{ fontSize:10, fontWeight:800, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(34,24,28,0.55)' }}>rispondi entro 3gg</span>
-              {metrics.pendingApplications > 0 && <span style={{ marginLeft:4, background:'var(--color-corallo)', color:'#fff', fontSize:11, fontWeight:800, padding:'3px 9px', borderRadius:999 }}>{metrics.pendingApplications}</span>}
-              <Link to="/admin/applications" style={{ marginLeft:'auto', fontSize:12, fontWeight:700, color:'var(--color-corallo)', textDecoration:'none' }}>Vedi tutte →</Link>
-            </div>
-            {metrics.pendingApplications > 0 ? latestRestaurants.slice(0,3).map(r => (
-              <div key={r.id} style={{ display:'flex', gap:12, padding:12, background:'#fff', borderRadius:12, marginBottom:8, fontSize:12, alignItems:'center' }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:'var(--color-cream-deep)', flexShrink:0 }} />
-                <div>
-                  <div style={{ fontWeight:800, fontSize:13 }}>{r.name}</div>
-                  <div style={{ color:'rgba(34,24,28,0.55)', marginTop:2, fontSize:11, fontWeight:600 }}>In attesa di revisione</div>
-                </div>
-                <div style={{ marginLeft:'auto', display:'flex', gap:6 }}>
-                  <span style={{ padding:'5px 10px', borderRadius:999, fontSize:11, fontWeight:800, background:'var(--color-cream)', color:'var(--color-ink)', cursor:'pointer' }}>Archivia</span>
-                  <Link to="/admin/applications" style={{ padding:'5px 10px', borderRadius:999, fontSize:11, fontWeight:800, background:'var(--color-ink)', color:'#fff', textDecoration:'none' }}>→ Apri</Link>
-                </div>
-              </div>
-            )) : <div style={{ textAlign:'center', fontSize:13, color:'rgba(34,24,28,0.55)', padding:'14px 0' }}>Nessuna candidatura in attesa</div>}
+              ) : (
+                <Link
+                  key={i}
+                  to={item.to}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 10,
+                    borderRadius: 8,
+                    background: item.bg,
+                    textDecoration: 'none',
+                  }}
+                >
+                  {Content}
+                </Link>
+              )
+            })}
           </div>
         </div>
 
+        {/* ─── ULTIMI AGGIUNTI ─── */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--color-ink)',
+                margin: 0,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              Ultimi aggiunti
+            </h2>
+            <Link
+              to="/admin/restaurants"
+              style={{
+                fontSize: 12,
+                color: '#E8453C',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}
+            >
+              Tutti →
+            </Link>
+          </div>
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 8,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {latestRestaurants.map((r) => {
+              const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
+                .map((name) => getCategoryInfo(name))
+                .filter(Boolean)
+              const firstCat = cats[0]
+              const thumb = proxyImg(
+                Array.isArray(r.photos) && r.photos.length > 0
+                  ? typeof r.photos[0] === 'string'
+                    ? r.photos[0]
+                    : r.photos[0]?.thumb_url || r.photos[0]?.photo_url
+                  : null
+              )
+              const isPublished = r.is_published !== false
+              return (
+                <Link
+                  key={r.id}
+                  to={`/admin/restaurant/${r.id}/edit`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '8px 8px',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                  }}
+                >
+                  {thumb ? (
+                    <img
+                      src={thumb}
+                      alt={r.name}
+                      style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        background: '#f0f0f0',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--color-ink)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {r.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+                      {firstCat?.name || '—'} · {formatDate(r.created_at)}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontWeight: 500,
+                      background: isPublished ? '#ecfdf5' : '#fef3c7',
+                      color: isPublished ? '#059669' : '#b45309',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isPublished ? 'Live' : 'Bozza'}
+                  </span>
+                </Link>
+              )
+            })}
+            {latestRestaurants.length === 0 && (
+              <div style={{ padding: 14, textAlign: 'center', fontSize: 12, color: '#999' }}>
+                Nessun ristorante
+              </div>
+            )}
+          </div>
+        </div>
 
+        {/* ─── GRAFICI — solo desktop ─── */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* Registrazioni */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 16,
+            }}
+          >
+            <h3
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-ink)',
+                margin: '0 0 12px',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              Registrazioni settimanali
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={registrationData}>
+                <defs>
+                  <linearGradient id="reggrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#E8453C" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+                <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" />
+                <YAxis tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid #eee',
+                    fontSize: 12,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  }}
+                />
+                <Area type="monotone" dataKey="count" stroke="#E8453C" strokeWidth={2} fill="url(#reggrad)" name="Utenti" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Top categorie */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #eee',
+              borderRadius: 10,
+              padding: 16,
+            }}
+          >
+            <h3
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-ink)',
+                margin: '0 0 12px',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              Top categorie
+            </h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={topCategoriesData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: '#999' }}
+                  stroke="#eee"
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid #eee',
+                    fontSize: 12,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  }}
+                />
+                <Bar dataKey="count" fill="#E8453C" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   )
