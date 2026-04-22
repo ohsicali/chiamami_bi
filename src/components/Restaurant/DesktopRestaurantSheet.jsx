@@ -156,9 +156,9 @@ export default function DesktopRestaurantSheet({
       `}</style>
 
       {/* ── HERO ── */}
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 28px', width: '100%' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '100px 40px 28px', width: '100%' }}>
         <div style={{
-          height: 520, borderRadius: 28, overflow: 'hidden',
+          height: 520, borderRadius: 24, overflow: 'hidden',
           position: 'relative', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
           background: '#e0d8cc',
         }}>
@@ -235,7 +235,7 @@ export default function DesktopRestaurantSheet({
             <h1 style={{
               fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
               fontWeight: 900, fontSize: 52, lineHeight: 1,
-              letterSpacing: '-.035em', color: INK,
+              letterSpacing: '-.03em', color: INK,
               marginBottom: 10, marginTop: 0,
             }}>
               {restaurant.name}
