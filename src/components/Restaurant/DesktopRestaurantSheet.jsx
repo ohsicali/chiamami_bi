@@ -6,6 +6,7 @@ import { useActiveDiscounts, useUserRedemption } from '../../lib/hooks/useDiscou
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { proxyImg } from '../../lib/supabase'
+import { getDistance, formatDistance } from '../../lib/utils/distance'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 
 /* ── design tokens ── */
@@ -29,6 +30,16 @@ const GLASS_BTN = {
   background: 'rgba(255,255,255,.92)',
   backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
   border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer',
+}
+
+/* ── orari helpers ── */
+const DAY_LABELS = { 0: 'Domenica', 1: 'Lunedì', 2: 'Martedì', 3: 'Mercoledì', 4: 'Giovedì', 5: 'Venerdì', 6: 'Sabato' }
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
+function fmtTime(h, m) { return `${String(h ?? 0).padStart(2, '0')}:${String(m ?? 0).padStart(2, '0')}` }
+function periodsLabel(ps) {
+  return ps.filter(p => p.open && p.close)
+    .map(p => `${fmtTime(p.open.hour, p.open.minute)}–${fmtTime(p.close.hour, p.close.minute)}`)
+    .join(' · ')
 }
 
 /* ── share helper ── */
@@ -68,7 +79,7 @@ export default function DesktopRestaurantSheet({
   const [inlineShowQR, setInlineShowQR] = useState(false)
   const { handleShare } = useShare(restaurant)
   const { discounts: activeDiscounts } = useActiveDiscounts()
-  const { status: orariStatus } = useOrariStatus(restaurant)
+  const { status: orariStatus, data: orariData, hasVerified: orariVerified } = useOrariStatus(restaurant)
 
   const discount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
@@ -370,8 +381,159 @@ export default function DesktopRestaurantSheet({
             )}
           </div>
 
-          {/* ══ RIGHT COLUMN (checkpoint 3) ══ */}
-          <div />
+          {/* ══ RIGHT COLUMN ══ */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+            {/* ── Card Orari ── */}
+            {orariVerified && (() => {
+              const periods = orariData?.regularOpeningHours?.periods || []
+              const todayDow = new Date().getDay()
+              const byDay = new Map()
+              for (const p of periods) {
+                const d = p.open?.day
+                if (d == null) continue
+                if (!byDay.has(d)) byDay.set(d, [])
+                byDay.get(d).push(p)
+              }
+              return (
+                <div style={{
+                  background: '#fff', border: `1px solid ${INK05}`,
+                  borderRadius: 20, padding: '22px', marginBottom: 18,
+                  boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
+                }}>
+                  {/* open badge */}
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '5px 11px', background: orariStatus?.openNow ? GREEN_SOFT : INK05,
+                    color: orariStatus?.openNow ? GREEN : INK40,
+                    borderRadius: 999, fontSize: 11.5, fontWeight: 800, marginBottom: 10,
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: orariStatus?.openNow ? GREEN : '#9a8e84' }} />
+                    {orariStatus?.openNow ? 'Aperto ora' : 'Chiuso ora'}
+                  </div>
+                  <h4 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 15, letterSpacing: '-.01em', marginBottom: 10, marginTop: 0, color: INK }}>
+                    Orari
+                  </h4>
+                  {/* hours list */}
+                  <div style={{ fontSize: 13.5, color: INK, lineHeight: 1.9 }}>
+                    {DAY_ORDER.map(dow => {
+                      const dayPs = byDay.get(dow) || []
+                      const isToday = dow === todayDow
+                      const label = dayPs.length === 0 ? 'Chiuso' : periodsLabel(dayPs)
+                      const dayName = DAY_LABELS[dow] + (isToday ? ' (oggi)' : '')
+                      return (
+                        <div key={dow} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontWeight: isToday ? 800 : 500 }}>
+                          <span style={{ color: isToday ? INK : INK70 }}>{dayName}</span>
+                          <span style={{ color: dayPs.length === 0 ? INK40 : (isToday ? INK : INK) }}>
+                            {dayPs.length === 0 ? <span style={{ color: INK40 }}>Chiuso</span> : label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 11, color: INK40 }}>
+                    Fonte: Google Places · aggiornato in automatico
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* ── Card Ciao sono Bi ── */}
+            <div style={{
+              background: '#F1EBE0', borderRadius: 20, padding: 22,
+              border: `1px solid ${INK05}`, marginBottom: 18,
+            }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%',
+                  background: CORALLO, color: '#fff',
+                  fontFamily: '"Alfa Slab One", Georgia, serif',
+                  display: 'grid', placeItems: 'center', fontSize: 22, flexShrink: 0,
+                  overflow: 'hidden',
+                }}>
+                  <img src="/bi-photo.JPG" alt="Bi" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; e.target.parentElement.textContent = 'B' }} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 16, letterSpacing: '-.02em', color: INK }}>Ciao, sono Bi</div>
+                  <div style={{ fontSize: 11.5, color: INK70, marginTop: 2 }}>La tua guida a Torino</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: INK, lineHeight: 1.55, fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 500 }}>
+                Non sono una guida scritta a tavolino. Sono un'amica che ha mangiato in tutti questi posti e ti dice dove andare, cosa ordinare e cosa evitare — senza stelle, senza classifiche, senza sponsor.
+              </p>
+              <button
+                onClick={() => navigate('/about')}
+                style={{
+                  marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+                  fontWeight: 800, fontSize: 12.5, color: CORALLO_INK,
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                }}
+              >
+                Scopri di più →
+              </button>
+            </div>
+
+            {/* ── Ristoranti vicini ── */}
+            {(() => {
+              if (!restaurant.latitude || !restaurant.longitude) return null
+              const nearby = allRestaurants
+                .filter(r => r.id !== restaurant.id && r.latitude && r.longitude)
+                .map(r => ({ ...r, _dist: getDistance(restaurant.latitude, restaurant.longitude, r.latitude, r.longitude) }))
+                .sort((a, b) => a._dist - b._dist)
+                .slice(0, 3)
+              if (!nearby.length) return null
+              return (
+                <div>
+                  <h4 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 15, letterSpacing: '-.02em', marginBottom: 12, marginTop: 0, color: INK }}>
+                    Ristoranti vicini
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {nearby.map(r => {
+                      const catName = (r.category || [])[0] || r.cuisine_type
+                      const cat = catName ? getCategoryInfo(catName) : null
+                      const photoRaw = Array.isArray(r.photos) && r.photos.length > 0
+                        ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.thumb_url || r.photos[0]?.photo_url)
+                        : null
+                      const photoSrc = proxyImg(photoRaw)
+                      return (
+                        <button
+                          key={r.id}
+                          onClick={() => onSelectNearby?.(r)}
+                          style={{
+                            display: 'grid', gridTemplateColumns: '56px 1fr', gap: 10,
+                            padding: 10, background: '#fff', border: `1px solid ${INK05}`,
+                            borderRadius: 14, cursor: 'pointer', textAlign: 'left',
+                          }}
+                        >
+                          <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 10, overflow: 'hidden' }}>
+                            {photoSrc
+                              ? <img src={photoSrc} alt={r.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 20 }}>{cat?.emoji || '🍽️'}</div>
+                            }
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 800, fontSize: 14, letterSpacing: '-.02em', lineHeight: 1.15, color: INK }}>
+                              {r.name}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: INK70, marginTop: 3, display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
+                              {cat && (
+                                <span style={{ padding: '2px 6px', background: '#FDEBEA', color: CORALLO_INK, borderRadius: 999, fontSize: 9.5, fontWeight: 700 }}>
+                                  {cat.emoji} {cat.name}
+                                </span>
+                              )}
+                              <span>{formatDistance(r._dist)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
+          </div>
 
         </div>
       </div>
