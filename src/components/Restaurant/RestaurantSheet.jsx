@@ -7,6 +7,7 @@ import NearbySection from './NearbySection'
 import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
 import OrariLocale from './OrariLocale'
+import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -687,6 +688,15 @@ export default function RestaurantSheet({
                   </span>
                 )}
               </motion.div>
+
+              {/* ── Hours pill — sotto chips, sopra CTA ── */}
+              {restaurant.hours_cache && (
+                <motion.div variants={itemVariants} style={{
+                  display: 'flex', justifyContent: 'center', marginBottom: 16,
+                }}>
+                  <HoursPill hours={restaurant.hours_cache} />
+                </motion.div>
+              )}
 
               {/* Divider */}
               <div className="sec-divider" style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />

@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
+import HoursPill from '../HoursPill'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { proxyImg } from '../../lib/supabase'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -407,15 +408,18 @@ export default function DesktopRestaurantSheet({
                   borderRadius: 20, padding: '22px', marginBottom: 18,
                   boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
                 }}>
-                  {/* open badge */}
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 11px', background: orariStatus?.openNow ? GREEN_SOFT : INK05,
-                    color: orariStatus?.openNow ? GREEN : INK40,
-                    borderRadius: 999, fontSize: 11.5, fontWeight: 800, marginBottom: 10,
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: orariStatus?.openNow ? GREEN : '#9a8e84' }} />
-                    {orariStatus?.openNow ? 'Aperto ora' : 'Chiuso ora'}
+                  {/* open badge + closing_soon pill affiancati */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '5px 11px', background: orariStatus?.openNow ? GREEN_SOFT : INK05,
+                      color: orariStatus?.openNow ? GREEN : INK40,
+                      borderRadius: 999, fontSize: 11.5, fontWeight: 800,
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: orariStatus?.openNow ? GREEN : '#9a8e84' }} />
+                      {orariStatus?.openNow ? 'Aperto ora' : 'Chiuso ora'}
+                    </div>
+                    <HoursPill hours={restaurant.hours_cache} onlyClosingSoon />
                   </div>
                   <h4 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 15, letterSpacing: '-.01em', marginBottom: 10, marginTop: 0, color: INK }}>
                     Orari
