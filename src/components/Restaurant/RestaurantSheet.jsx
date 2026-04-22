@@ -366,7 +366,7 @@ export default function RestaurantSheet({
           .restaurant-sheet-root .rs-desktop-hero {
             display: block !important;
             position: relative;
-            height: 280px;
+            aspect-ratio: 16 / 9 !important;
             border-radius: 16px;
             overflow: hidden;
           }
@@ -389,28 +389,29 @@ export default function RestaurantSheet({
             background: #fff !important;
             border-radius: 0 !important;
           }
-          /* Grabber handle mobile-only */
-          .restaurant-sheet-root .rs-grabber { display: none !important; }
           /* Hide mobile floating buttons (topbar hero + sticky header gestiscono) */
           .restaurant-sheet-root .rs-back-btn { display: none !important; }
           .restaurant-sheet-root .rs-top-actions { display: none !important; }
-          /* Right map panel */
+          /* Sticky header (back/title/share/save) mobile-only */
+          .restaurant-sheet-root .rs-sticky-header { display: none !important; }
+          /* Desktop inline back link, visibile solo su desktop */
+          .restaurant-sheet-root .rs-desktop-back { display: inline-flex !important; }
+          /* Right map panel — sticky full height del sheet */
           .restaurant-sheet-root .rs-side-map {
             display: flex !important;
             flex: 1 1 0% !important;
-            flex-direction: column;
-            min-width: 0;
-            background: #fff;
+            flex-direction: column !important;
+            min-width: 0 !important;
+            align-self: stretch !important;
+            background: #fff !important;
+            overflow: hidden !important;
           }
-          /* Sticky header: sticky dentro lo scroll del left panel */
-          .restaurant-sheet-root .rs-sticky-header {
-            position: sticky !important;
-            top: 0 !important;
-            width: 100% !important;
-            left: auto !important;
-            right: auto !important;
-            z-index: 39 !important;
+          .restaurant-sheet-root .rs-side-map > div:first-child {
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
           }
+          /* Grabber handle mobile-only */
+          .restaurant-sheet-root .rs-grabber { display: none !important; }
           /* Sticky sconto pill: limitata al left panel 420 */
           .restaurant-sheet-root .rs-sticky-disc-wrap {
             width: 420px !important;
@@ -581,13 +582,43 @@ export default function RestaurantSheet({
             </div>
           </div>
 
-          {/* Desktop hero — full-width 520px photo with corallo radius (mockup §1138-1151) */}
+          {/* Desktop inline back link — replaces sticky header on desktop */}
+          {isDesktop && (
+            <button
+              type="button"
+              className="rs-desktop-back"
+              onClick={handleClose}
+              style={{
+                display: 'none',
+                alignItems: 'center',
+                gap: 6,
+                margin: '14px 16px 0',
+                padding: '6px 10px 6px 6px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-ink-70, rgba(34,24,28,.7))',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+                alignSelf: 'flex-start',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+              </svg>
+              Torna all'elenco
+            </button>
+          )}
+
+          {/* Desktop hero — aspect 16/9 photo nel left panel 420px */}
           {isDesktop && (restaurant.photos || []).length > 0 && (
             <div className="rs-desktop-hero-wrap" style={{ display: 'none' }}>
               <div className="rs-desktop-hero">
                 <PhotoCarousel
                   photos={restaurant.photos}
-                  height="520px"
+                  height="100%"
                   restaurantName={restaurant.name}
                   city={restaurant.city}
                   dotsPosition="center"
