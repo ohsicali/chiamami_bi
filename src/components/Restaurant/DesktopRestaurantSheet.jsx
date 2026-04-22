@@ -149,6 +149,8 @@ export default function DesktopRestaurantSheet({
       overflowY: 'auto', overflowX: 'hidden',
     }}>
 
+      <style>{`@keyframes dskPulse{0%,100%{box-shadow:0 0 0 3px rgba(163,230,53,.18)}50%{box-shadow:0 0 0 6px rgba(163,230,53,.08)}}`}</style>
+
       {/* ── HERO ── */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 28px', width: '100%' }}>
         <div style={{
@@ -538,6 +540,27 @@ export default function DesktopRestaurantSheet({
         </div>
       </div>
 
+      {/* ── FOOTER ── */}
+      <div style={{
+        maxWidth: 1280, margin: '0 auto', padding: '0 40px',
+        borderTop: `1px solid ${INK05}`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: 18,
+        paddingTop: 30, paddingBottom: 30,
+        fontSize: 12, color: INK70,
+        marginBottom: 80,
+      }}>
+        <span style={{ fontFamily: '"Alfa Slab One", Georgia, serif', color: CORALLO, fontSize: 16, letterSpacing: '.02em' }}>
+          CHIAMAMI BI
+        </span>
+        <nav style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+          {['Chi è Bi', 'Sconti', 'Per i ristoratori', 'Privacy', 'Termini'].map(link => (
+            <span key={link} style={{ color: INK70, cursor: 'pointer', fontWeight: 500 }}>{link}</span>
+          ))}
+        </nav>
+        <span>© 2026 · v1.0</span>
+      </div>
+
       {/* QR overlay */}
       <AnimatePresence>
         {inlineShowQR && redemption && (
@@ -549,6 +572,58 @@ export default function DesktopRestaurantSheet({
           />
         )}
       </AnimatePresence>
+
+      {/* ── STICKY PILL SCONTO (desktop only — mobile uses its own bar) ── */}
+      {discount && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 60, minWidth: 460, maxWidth: 640,
+          background: 'rgba(250,247,242,.9)',
+          backdropFilter: 'saturate(140%) blur(14px)',
+          WebkitBackdropFilter: 'saturate(140%) blur(14px)',
+          border: `1px solid ${INK05}`,
+          borderRadius: 999,
+          padding: '8px 10px 8px 22px',
+          display: 'flex', alignItems: 'center', gap: 18,
+          boxShadow: '0 10px 40px rgba(34,24,28,.14),0 2px 8px rgba(34,24,28,.06)',
+        }}>
+          {/* lead */}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
+            <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-.01em', color: INK, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                width: 9, height: 9, borderRadius: '50%', flexShrink: 0,
+                background: 'linear-gradient(135deg,#A3E635,#4ADE80)',
+                animation: 'dskPulse 1.6s ease-in-out infinite',
+              }} />
+              {discount.title || discount.discount_value}
+            </span>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: INK70, marginTop: 4, letterSpacing: '.01em' }}>
+              {discount.description ? `${discount.description} · ` : ''}scheda aggiornata da Bi
+            </span>
+          </div>
+          {/* CTA */}
+          <button
+            onClick={handleDiscountClick}
+            disabled={inlineGenerating || redemptionLoading}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: INK, color: '#fff',
+              height: 42, padding: '0 20px',
+              borderRadius: 999, border: 0,
+              fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+              fontWeight: 800, fontSize: 13.5, letterSpacing: '-.01em',
+              cursor: 'pointer', whiteSpace: 'nowrap',
+              opacity: inlineGenerating ? 0.6 : 1,
+              transition: 'background .15s ease, transform .15s ease',
+            }}
+          >
+            {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Usa sconto'}
+            <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
