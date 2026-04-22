@@ -6,17 +6,17 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
 const STATUS_CONFIG = {
-  pending: { label: 'In attesa', bg: '#fef3c7', color: '#b45309' },
-  contacted: { label: 'Contattato', bg: '#eef2ff', color: '#4338ca' },
-  approved: { label: 'Approvato', bg: '#ecfdf5', color: '#059669' },
-  rejected: { label: 'Rifiutato', bg: '#fef2f2', color: '#dc2626' },
+  pending: { label: 'In attesa', bg: 'var(--color-corallo-wash)', color: 'var(--color-corallo)' },
+  contacted: { label: 'Contattato', bg: 'var(--color-cream)', color: 'var(--color-ink)' },
+  approved: { label: 'Approvato', bg: 'var(--color-green-wash)', color: '#2d7a4f' },
+  rejected: { label: 'Rifiutato', bg: 'var(--color-cream)', color: '#888' },
 }
 
 function StatCard({ label, value, color = 'var(--color-ink)' }) {
   return (
     <div style={{
       background: '#fff',
-      border: '1px solid #eee',
+      border: '1px solid var(--color-line)',
       borderRadius: 12,
       padding: '16px 18px',
       flex: 1,
@@ -104,26 +104,45 @@ export default function ApplicationManager() {
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
-    <AdminLayout title="Candidature">
-      <div style={{ padding: '20px 28px', fontFamily: "var(--font-sans)" }}>
+    <AdminLayout>
+      <div style={{ fontFamily: "var(--font-sans)" }}>
+        {/* ── Desktop sticky top bar ── */}
+        <div
+          className="hidden md:flex"
+          style={{
+            position: 'sticky', top: 0, zIndex: 20,
+            background: 'var(--color-page)',
+            borderBottom: '1px solid var(--color-line)',
+            padding: '0 28px', height: 56,
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ flex: 1 }} />
+        </div>
+
         {/* Header */}
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>Candidature Partner</h1>
-          <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0' }}>
-            Ristoranti che hanno fatto richiesta di partnership
+        <div style={{ padding: '20px 20px 0', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: '#999', fontWeight: 500, marginBottom: 6 }}>
+            Admin · <b style={{ color: 'var(--color-ink)' }}>Candidature</b>
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--color-ink)', margin: '0 0 2px', fontFamily: 'var(--font-sans)' }}>
+            Chi vuole entrare nella guida
+          </h1>
+          <p style={{ fontSize: 12, color: '#999', margin: 0 }}>
+            {stats.total} in coda · {stats.pending} nuove
           </p>
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, margin: '0 20px 16px', flexWrap: 'wrap' }}>
           <StatCard label="Totali" value={stats.total} />
-          <StatCard label="In attesa" value={stats.pending} color="#b45309" />
-          <StatCard label="Contattati" value={stats.contacted} color="#4338ca" />
-          <StatCard label="Approvati" value={stats.approved} color="#059669" />
+          <StatCard label="In attesa" value={stats.pending} color="var(--color-corallo)" />
+          <StatCard label="Contattati" value={stats.contacted} color="var(--color-ink)" />
+          <StatCard label="Approvati" value={stats.approved} color="#2d7a4f" />
         </div>
 
         {/* Filter chips */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ display: 'flex', gap: 8, margin: '0 20px 16px', overflowX: 'auto', paddingBottom: 4 }}>
           {[
             { key: 'all', label: 'Tutti', count: stats.total },
             { key: 'pending', label: 'In attesa', count: stats.pending },
@@ -171,9 +190,10 @@ export default function ApplicationManager() {
           </div>
         ) : filtered.length === 0 ? (
           <div style={{
+            margin: '0 20px',
             background: '#fff',
-            border: '1px solid #eee',
-            borderRadius: 12,
+            border: '1px solid var(--color-line)',
+            borderRadius: 14,
             padding: 60,
             textAlign: 'center',
           }}>
@@ -185,7 +205,7 @@ export default function ApplicationManager() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 20px' }}>
             {filtered.map(a => {
               const st = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
               return (
@@ -194,7 +214,7 @@ export default function ApplicationManager() {
                   layout
                   style={{
                     background: '#fff',
-                    border: '1px solid #eee',
+                    border: '1px solid var(--color-line)',
                     borderRadius: 12,
                     padding: 18,
                   }}
@@ -239,7 +259,7 @@ export default function ApplicationManager() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <span style={{ color: '#999', minWidth: 70 }}>Email:</span>
-                      <a href={`mailto:${a.email}`} style={{ color: '#E8453C', textDecoration: 'none', fontWeight: 500 }}>
+                      <a href={`mailto:${a.email}`} style={{ color: 'var(--color-corallo)', textDecoration: 'none', fontWeight: 500 }}>
                         {a.email || '—'}
                       </a>
                     </div>
@@ -261,7 +281,7 @@ export default function ApplicationManager() {
                       fontStyle: 'italic',
                       padding: '10px 12px',
                       background: '#fafafa',
-                      borderLeft: '3px solid #E8453C',
+                      borderLeft: '3px solid var(--color-corallo)',
                       borderRadius: '0 8px 8px 0',
                     }}>
                       "{a.message}"
@@ -283,7 +303,7 @@ export default function ApplicationManager() {
                       style={{
                         padding: '8px 12px',
                         borderRadius: 8,
-                        border: '1px solid #e5e5e5',
+                        border: '1px solid var(--color-line)',
                         background: '#fff',
                         fontSize: 12,
                         fontWeight: 600,
@@ -303,7 +323,7 @@ export default function ApplicationManager() {
                         borderRadius: 8,
                         border: 'none',
                         background: '#fef2f2',
-                        color: '#dc2626',
+                        color: 'var(--color-corallo)',
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -341,7 +361,7 @@ export default function ApplicationManager() {
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   background: '#fff', borderRadius: 14, padding: 24,
-                  maxWidth: 400, width: '100%', border: '1px solid #eee',
+                  maxWidth: 400, width: '100%', border: '1px solid var(--color-line)',
                   fontFamily: "var(--font-sans)",
                 }}
               >
@@ -355,7 +375,7 @@ export default function ApplicationManager() {
                   <button
                     onClick={() => setDeleteConfirm(null)}
                     style={{
-                      padding: '10px 18px', borderRadius: 10, border: '1px solid #e5e5e5',
+                      padding: '10px 18px', borderRadius: 10, border: '1px solid var(--color-line)',
                       background: '#fff', color: 'var(--color-ink)', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
@@ -366,7 +386,7 @@ export default function ApplicationManager() {
                     onClick={handleDelete}
                     style={{
                       padding: '10px 18px', borderRadius: 10, border: 'none',
-                      background: '#dc2626', color: '#fff', fontSize: 13, fontWeight: 600,
+                      background: 'var(--color-corallo)', color: '#fff', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
