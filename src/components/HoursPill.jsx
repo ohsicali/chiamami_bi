@@ -27,9 +27,10 @@ const STYLES = {
  * Invisible when data is absent or malformed (state='unknown').
  * Re-evaluates every 60 s so the pill transitions live.
  *
- * @param {{ hours: object|null }} props - pass restaurant.hours_cache
+ * @param {{ hours: object|null, onlyClosingSoon?: boolean }} props
+ *   onlyClosingSoon=true → renders only when state==='closing_soon' (used in chip row)
  */
-export default function HoursPill({ hours }) {
+export default function HoursPill({ hours, onlyClosingSoon = false }) {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function HoursPill({ hours }) {
   const status = useMemo(() => getHoursStatus(hours, now), [hours, now])
 
   if (status.state === 'unknown') return null
+  if (onlyClosingSoon && status.state !== 'closing_soon') return null
 
   const s = STYLES[status.state]
 

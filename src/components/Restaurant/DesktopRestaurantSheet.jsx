@@ -285,6 +285,8 @@ export default function DesktopRestaurantSheet({
                   {openChipText}
                 </span>
               )}
+              {/* closing_soon tag — appare fianco ad "Aperto ora" solo quando mancano ≤30 min */}
+              <HoursPill hours={restaurant.hours_cache} onlyClosingSoon />
             </div>
 
             {/* CTA row */}
