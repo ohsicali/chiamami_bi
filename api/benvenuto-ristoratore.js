@@ -7,22 +7,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-
-const RATE_LIMIT_MAP = new Map()
-const RATE_LIMIT_MAX = 5
-const RATE_LIMIT_WINDOW = 60_000
-
-function checkRateLimit(ip) {
-  const now = Date.now()
-  const entry = RATE_LIMIT_MAP.get(ip) || { count: 0, reset: now + RATE_LIMIT_WINDOW }
-  if (now > entry.reset) {
-    entry.count = 0
-    entry.reset = now + RATE_LIMIT_WINDOW
-  }
-  entry.count++
-  RATE_LIMIT_MAP.set(ip, entry)
-  return entry.count <= RATE_LIMIT_MAX
-}
+import { rateLimit, maybeCleanup } from './_rate-limit.js'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -32,36 +17,46 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || 'unknown'
-  if (!checkRateLimit(ip)) return res.status(429).json({ error: 'Too many requests' })
+  maybeCleanup()
+  const limited = rateLimit(req, { key: 'benvenuto-ristoratore', max: 5, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
 
-  // Verifica che sia un admin autenticato
-  const authHeader = req.headers['authorization'] || ''
-  const token = authHeader.replace('Bearer ', '').trim()
-  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing authorization token' })
+  }
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const apiKey = process.env.RESEND_API_KEY
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  const resendKey = process.env.RESEND_API_KEY
 
-  if (!apiKey) return res.status(500).json({ error: 'Email service not configured' })
-  if (!supabaseUrl || !serviceKey) return res.status(500).json({ error: 'DB not configured' })
+  if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+    return res.status(500).json({ error: 'Server configuration error: missing Supabase env vars' })
+  }
+  if (!resendKey) {
+    return res.status(500).json({ error: 'Server configuration error: missing RESEND_API_KEY' })
+  }
 
-  try {
-    // Verifica admin
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey)
-    const { data: { user }, error: authError } = await createClient(supabaseUrl, process.env.VITE_SUPABASE_ANON_KEY || serviceKey)
-      .auth.getUser(token)
-    if (authError || !user) return res.status(401).json({ error: 'Invalid token' })
+  // Verifica che il caller sia un admin autenticato
+  const token = authHeader.replace('Bearer ', '')
+  const anonClient = createClient(supabaseUrl, anonKey)
+  const { data: { user }, error: authError } = await anonClient.auth.getUser(token)
+  if (authError || !user) {
+    return res.status(401).json({ error: 'Invalid or expired token' })
+  }
 
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-    if (!profile?.is_admin) return res.status(403).json({ error: 'Admin only' })
-  } catch {
-    return res.status(401).json({ error: 'Auth check failed' })
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.is_admin) {
+    return res.status(403).json({ error: 'Admin role required' })
   }
 
   const { to, nomeLocale, pin, verifyUrl } = req.body || {}
@@ -76,7 +71,7 @@ export default async function handler(req, res) {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resendKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
