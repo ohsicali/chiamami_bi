@@ -1345,7 +1345,6 @@ export default function RestaurantForm() {
         if (!isEditing && form.partner_email.trim() && form.verify_pin.trim()) {
           try {
             const { data: { session: s } } = await supabase.auth.getSession()
-            const verifyUrl = `https://chiamamibi.com/verify?pin=${encodeURIComponent(form.verify_pin.trim())}`
             await fetch('/api/send-email', {
               method: 'POST',
               headers: {
@@ -1357,7 +1356,7 @@ export default function RestaurantForm() {
                 to: form.partner_email.trim(),
                 nomeLocale: form.name.trim(),
                 pin: form.verify_pin.trim(),
-                verifyUrl,
+                restaurantId,
               }),
             })
             // Segna onboarding_email_sent_at per idempotenza

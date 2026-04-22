@@ -3,11 +3,12 @@
  *
  * Router interno su `type`:
  * - type='user'    → welcome email dopo Google OAuth (no auth, body {email, name})
- * - type='partner' → benvenuto ristoratore dopo admin insert (Bearer admin, body {to, nomeLocale, pin, verifyUrl})
+ * - type='partner' → benvenuto ristoratore dopo admin insert (Bearer admin, body {to, nomeLocale, pin, restaurantId})
  *
  * Motivo del merge: Vercel Hobby cap = 12 serverless functions.
  */
 
+import { randomUUID } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 
@@ -119,10 +120,30 @@ async function handlePartnerWelcome(req, res) {
     return res.status(403).json({ error: 'Admin role required' })
   }
 
-  const { to, nomeLocale, pin, verifyUrl } = req.body || {}
-  if (!to || !nomeLocale || !pin || !verifyUrl) {
-    return res.status(400).json({ error: 'Missing required fields: to, nomeLocale, pin, verifyUrl' })
+  const { to, nomeLocale, pin, restaurantId } = req.body || {}
+  if (!to || !nomeLocale || !pin || !restaurantId) {
+    return res.status(400).json({ error: 'Missing required fields: to, nomeLocale, pin, restaurantId' })
   }
+
+  // Generate one-shot magic token (24h TTL) for email CTA auto-login
+  const magicToken = randomUUID()
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+  const { error: tokenError } = await admin
+    .from('restaurants')
+    .update({
+      magic_token: magicToken,
+      magic_token_expires_at: expiresAt.toISOString(),
+    })
+    .eq('id', restaurantId)
+
+  if (tokenError) {
+    console.error('Failed to store magic token:', tokenError)
+  }
+
+  const verifyUrl = !tokenError
+    ? `https://chiamamibi.com/verify?token=${magicToken}&pin=${encodeURIComponent(pin)}`
+    : `https://chiamamibi.com/verify?pin=${encodeURIComponent(pin)}`
 
   const html = buildBenvenutoHtml({ nomeLocale, pin, verifyUrl })
   const text = buildBenvenutoText({ nomeLocale, pin, verifyUrl })
@@ -226,8 +247,6 @@ function buildWelcomeHtml(name) {
 // --corallo #E8453C  --ink #22181C  --page #FAF7F2  --cream #F2EDE4  --line #E8E1D4
 
 function buildBenvenutoHtml({ nomeLocale, pin, verifyUrl }) {
-  const pinFormatted = pin.replace(/(\d{2})(\d{2})(\d{2})/, '$1 $2 $3')
-
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -248,7 +267,13 @@ function buildBenvenutoHtml({ nomeLocale, pin, verifyUrl }) {
         <!-- Wordmark header -->
         <tr>
           <td style="padding:28px 32px 20px;border-bottom:1px solid #E8E1D4;">
-            <span style="font-family:'Georgia',serif;font-size:18px;font-weight:700;color:#22181C;letter-spacing:0.04em;">ChiamamiBi</span>
+            <img
+              src="https://chiamamibi.com/email-assets/guida-bi-ink.png"
+              alt="La Guida di Bi"
+              width="180"
+              height="30"
+              style="display:block;max-width:180px;height:auto;border:0;outline:none;"
+            />
           </td>
         </tr>
 
@@ -276,7 +301,7 @@ function buildBenvenutoHtml({ nomeLocale, pin, verifyUrl }) {
                     Il tuo PIN di accesso
                   </p>
                   <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:36px;font-weight:700;letter-spacing:0.18em;color:#22181C;line-height:1;">
-                    ${escapeHtml(pinFormatted)}
+                    ${escapeHtml(pin)}
                   </p>
                 </td>
               </tr>

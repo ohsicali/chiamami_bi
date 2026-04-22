@@ -142,11 +142,36 @@ export default function VerifyPage() {
         setStatus('pin')
         return
       }
-      const token = getCookie(COOKIE_NAME)
-      if (!token) {
-        setStatus('pin')
+      const cookieToken = getCookie(COOKIE_NAME)
+      if (!cookieToken) {
+        // Magic-link auto-login: ?token=<uuid>&pin=<6digits> from email CTA
+        const urlToken = searchParams.get('token')
+        const urlPin = searchParams.get('pin')
+        if (urlToken && urlPin && /^\d{6}$/.test(urlPin)) {
+          try {
+            const { data, error } = await supabase.rpc('verify_magic_token', {
+              p_token: urlToken,
+              p_pin: urlPin,
+            })
+            if (cancelled) return
+            if (!error && data?.length > 0) {
+              // Token valid — hand off to PIN login (creates device cookie, shows dashboard)
+              setStatus('pin')
+              handleSubmit(urlPin)
+              return
+            }
+            if (!cancelled) {
+              setError('Link scaduto o non valido. Inserisci il PIN manualmente.')
+              setPin(urlPin)
+            }
+          } catch {
+            if (!cancelled) setPin(urlPin)
+          }
+        }
+        if (!cancelled) setStatus('pin')
         return
       }
+      const token = cookieToken
       try {
         const { data } = await supabase
           .from('verified_devices')
