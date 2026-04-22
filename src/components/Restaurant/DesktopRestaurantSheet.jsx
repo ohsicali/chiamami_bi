@@ -285,8 +285,6 @@ export default function DesktopRestaurantSheet({
                   {openChipText}
                 </span>
               )}
-              {/* closing_soon tag — appare fianco ad "Aperto ora" solo quando mancano ≤30 min */}
-              <HoursPill hours={restaurant.hours_cache} onlyClosingSoon />
             </div>
 
             {/* CTA row */}
@@ -393,21 +391,6 @@ export default function DesktopRestaurantSheet({
           {/* ══ RIGHT COLUMN ══ */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
-            {/* ── HoursPill block — stato rapido aperto/chiuso ── */}
-            {restaurant.hours_cache && (
-              <div style={{ marginBottom: 18 }}>
-                <div style={{
-                  fontSize: 11, fontWeight: 800,
-                  letterSpacing: '.14em', textTransform: 'uppercase',
-                  color: INK70, marginBottom: 8,
-                  fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
-                }}>
-                  Orari
-                </div>
-                <HoursPill hours={restaurant.hours_cache} />
-              </div>
-            )}
-
             {/* ── Card Orari ── */}
             {orariVerified && (() => {
               const periods = orariData?.regularOpeningHours?.periods || []
@@ -425,15 +408,18 @@ export default function DesktopRestaurantSheet({
                   borderRadius: 20, padding: '22px', marginBottom: 18,
                   boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
                 }}>
-                  {/* open badge */}
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 11px', background: orariStatus?.openNow ? GREEN_SOFT : INK05,
-                    color: orariStatus?.openNow ? GREEN : INK40,
-                    borderRadius: 999, fontSize: 11.5, fontWeight: 800, marginBottom: 10,
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: orariStatus?.openNow ? GREEN : '#9a8e84' }} />
-                    {orariStatus?.openNow ? 'Aperto ora' : 'Chiuso ora'}
+                  {/* open badge + closing_soon pill affiancati */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '5px 11px', background: orariStatus?.openNow ? GREEN_SOFT : INK05,
+                      color: orariStatus?.openNow ? GREEN : INK40,
+                      borderRadius: 999, fontSize: 11.5, fontWeight: 800,
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: orariStatus?.openNow ? GREEN : '#9a8e84' }} />
+                      {orariStatus?.openNow ? 'Aperto ora' : 'Chiuso ora'}
+                    </div>
+                    <HoursPill hours={restaurant.hours_cache} onlyClosingSoon />
                   </div>
                   <h4 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 15, letterSpacing: '-.01em', marginBottom: 10, marginTop: 0, color: INK }}>
                     Orari
