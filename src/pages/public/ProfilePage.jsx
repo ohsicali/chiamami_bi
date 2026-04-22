@@ -276,7 +276,7 @@ export default function ProfilePage() {
         </div>
 
         {showSuggest && (
-          <SuggestRestaurantSheet userId={user?.id} onClose={() => setShowSuggest(false)} />
+          <SuggestRestaurantSheet userId={user?.id} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />
         )}
         <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
       </div>
@@ -727,7 +727,7 @@ export default function ProfilePage() {
 
       {/* ── SUGGEST RESTAURANT SHEET ── */}
       {showSuggest && (
-        <SuggestRestaurantSheet userId={user?.id} onClose={() => setShowSuggest(false)} />
+        <SuggestRestaurantSheet userId={user?.id} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />
       )}
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />

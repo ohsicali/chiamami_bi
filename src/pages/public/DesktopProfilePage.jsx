@@ -314,7 +314,7 @@ export default function DesktopProfilePage() {
         <span>© 2026 · v1.0</span>
       </div>
 
-      {showSuggest && <SuggestRestaurantSheet onClose={() => setShowSuggest(false)} />}
+      {showSuggest && <SuggestRestaurantSheet userId={user?.id ?? null} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />}
     </div>
   )
 }

@@ -689,6 +689,8 @@ export default function HomePage() {
       {showSuggest && (
         <SuggestRestaurantSheet
           userId={user?.id ?? null}
+          userEmail={user?.email ?? null}
+          userName={user?.user_metadata?.full_name ?? null}
           onClose={() => setShowSuggest(false)}
         />
       )}

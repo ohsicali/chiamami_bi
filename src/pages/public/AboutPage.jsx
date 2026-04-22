@@ -494,7 +494,7 @@ export default function AboutPage() {
       </div>
 
       {showSuggest && (
-        <SuggestRestaurantSheet userId={user?.id} onClose={() => setShowSuggest(false)} />
+        <SuggestRestaurantSheet userId={user?.id} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />
       )}
 
       <Footer />
