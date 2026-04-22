@@ -24,7 +24,7 @@ export default function DesktopNavbar() {
       style={{
         position: 'sticky',
         top: 16,
-        zIndex: 40,
+        zIndex: 55,
         padding: '0 40px',
       }}
     >
