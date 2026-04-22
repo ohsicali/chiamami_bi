@@ -7,6 +7,7 @@ import NearbySection from './NearbySection'
 import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
 import OrariLocale from './OrariLocale'
+import DesktopRestaurantSheet from './DesktopRestaurantSheet'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -304,6 +305,20 @@ export default function RestaurantSheet({
 
   if (!restaurant) return null
 
+  // Desktop layout (≥768px) — componente dedicato che segue mockup v4-desktop-pagine rows 1115-1290
+  if (isDesktop) {
+    return (
+      <DesktopRestaurantSheet
+        restaurant={restaurant}
+        onClose={onClose}
+        allRestaurants={allRestaurants}
+        onSelectNearby={onSelectNearby}
+        saved={saved}
+        onSaveToggle={onSaveToggle}
+      />
+    )
+  }
+
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name)).filter(Boolean)
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
@@ -320,107 +335,6 @@ export default function RestaurantSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
-      <style>{`
-        @media (min-width: 768px) {
-          /* v4 SCHEDA DESKTOP — full viewport sotto la navbar (16 gap + 68 pill = 84px).
-             2-col: left 420px scroll + right flex:1 mappa sticky.
-             Niente floating card, niente max-width, niente padding: la sheet riempie
-             100% width × (100vh - 84px) e copre la HomePage sotto. */
-          .restaurant-sheet-root {
-            top: 84px !important;
-            padding: 0 !important;
-            background: var(--color-page, #FAF7F2) !important;
-          }
-          .restaurant-sheet-root .rs-backdrop { display: none !important; }
-          .restaurant-sheet-root .rs-sheet {
-            pointer-events: auto !important;
-            max-width: none !important;
-            width: 100% !important;
-            margin: 0 !important;
-            height: 100% !important;
-            overflow: hidden !important;
-            background: #fff !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            flex-direction: row !important;
-            flex: 1 1 0% !important;
-          }
-          /* Left scrollable panel 420px */
-          .restaurant-sheet-root .rs-scroll {
-            flex: 0 0 420px !important;
-            width: 420px !important;
-            min-height: 0 !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            padding-bottom: 40px !important;
-            border-right: 1px solid var(--color-ink-05, rgba(34,24,28,.06)) !important;
-            background: #fff !important;
-          }
-          /* Hide mobile photo carousel on desktop */
-          .restaurant-sheet-root .rs-photo-area { display: none !important; }
-          /* Desktop hero: foto standalone con border-radius pieno, padding laterale */
-          .restaurant-sheet-root .rs-desktop-hero-wrap {
-            display: block !important;
-            padding: 16px 16px 0 !important;
-          }
-          .restaurant-sheet-root .rs-desktop-hero {
-            display: block !important;
-            position: relative;
-            aspect-ratio: 16 / 9 !important;
-            border-radius: 16px;
-            overflow: hidden;
-          }
-          .restaurant-sheet-root .rs-desktop-hero::after {
-            content: "";
-            position: absolute; inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, transparent 30%, transparent 70%, rgba(0,0,0,.15) 100%);
-            pointer-events: none;
-            z-index: 2;
-          }
-          /* Rimosso pattern overlay mobile (no margin-top negativo, no radius top-only) */
-          .restaurant-sheet-root .rs-content-card {
-            margin-top: 0 !important;
-            border-radius: 0 !important;
-            background: #fff !important;
-            padding-top: 0 !important;
-          }
-          .restaurant-sheet-root .rs-motion-content {
-            padding: 22px 22px 0 !important;
-            background: #fff !important;
-            border-radius: 0 !important;
-          }
-          /* Hide mobile floating buttons (topbar hero + sticky header gestiscono) */
-          .restaurant-sheet-root .rs-back-btn { display: none !important; }
-          .restaurant-sheet-root .rs-top-actions { display: none !important; }
-          /* Sticky header (back/title/share/save) mobile-only */
-          .restaurant-sheet-root .rs-sticky-header { display: none !important; }
-          /* Desktop inline back link, visibile solo su desktop */
-          .restaurant-sheet-root .rs-desktop-back { display: inline-flex !important; }
-          /* Right map panel — sticky full height del sheet */
-          .restaurant-sheet-root .rs-side-map {
-            display: flex !important;
-            flex: 1 1 0% !important;
-            flex-direction: column !important;
-            min-width: 0 !important;
-            align-self: stretch !important;
-            background: #fff !important;
-            overflow: hidden !important;
-          }
-          .restaurant-sheet-root .rs-side-map > div:first-child {
-            flex: 1 1 0% !important;
-            min-height: 0 !important;
-          }
-          /* Grabber handle mobile-only */
-          .restaurant-sheet-root .rs-grabber { display: none !important; }
-          /* Sticky sconto pill: limitata al left panel 420 */
-          .restaurant-sheet-root .rs-sticky-disc-wrap {
-            width: 420px !important;
-            left: 0 !important;
-            right: auto !important;
-          }
-        }
-      `}</style>
-
       {/* Backdrop — mobile only */}
       <motion.div
         ref={backdropScope}
