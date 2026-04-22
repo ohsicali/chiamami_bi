@@ -45,7 +45,9 @@ function Stepper({ current }) {
 
 // userId is optional: when null the form shows an email field so anonymous
 // users can submit without registering. Photo upload requires a userId.
-export default function SuggestRestaurantSheet({ userId = null, onClose }) {
+// userEmail / userName: passed from parent for authenticated users so the
+// confirmation email can be sent without exposing auth state inside this sheet.
+export default function SuggestRestaurantSheet({ userId = null, userEmail = null, userName = null, onClose }) {
   const isAnon = !userId
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
@@ -106,19 +108,55 @@ export default function SuggestRestaurantSheet({ userId = null, onClose }) {
         }
       }
 
-      const { error: insertErr } = await supabase.from('restaurant_suggestions').insert({
-        user_id: isAnon ? null : userId,
-        email: isAnon ? email.trim() : null,
-        restaurant_name: name.trim(),
-        address: address.trim() || null,
-        google_maps_url: mapsUrl.trim() || null,
-        tags: selectedTags,
-        description: description.trim() || null,
-        photo_url: photoUrl,
-      })
+      const { data: inserted, error: insertErr } = await supabase
+        .from('restaurant_suggestions')
+        .insert({
+          user_id: isAnon ? null : userId,
+          email: isAnon ? email.trim() : null,
+          restaurant_name: name.trim(),
+          address: address.trim() || null,
+          google_maps_url: mapsUrl.trim() || null,
+          tags: selectedTags,
+          description: description.trim() || null,
+          photo_url: photoUrl,
+        })
+        .select('id')
+        .single()
 
       if (insertErr) throw insertErr
       setSuccess(true)
+
+      // Fire confirmation + internal-notify emails in parallel (non-blocking)
+      const recipientEmail = isAnon ? email.trim() : userEmail
+      const senderName = isAnon ? '' : (userName || '')
+      if (recipientEmail) {
+        Promise.allSettled([
+          fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'confirmation',
+              to: recipientEmail,
+              nome_utente: senderName,
+              nome_locale: name.trim(),
+            }),
+          }),
+          fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'internal-notify',
+              nome_locale: name.trim(),
+              address: address.trim() || undefined,
+              tags: selectedTags.length ? selectedTags.join(', ') : undefined,
+              description: description.trim() || undefined,
+              nome_utente: senderName,
+              email_utente: recipientEmail,
+              id: inserted?.id,
+            }),
+          }),
+        ]).catch(() => {})
+      }
     } catch (err) {
       setError(err.message || 'Errore durante l\'invio')
     }
@@ -207,7 +245,9 @@ export default function SuggestRestaurantSheet({ userId = null, onClose }) {
                 Grazie!
               </div>
               <p style={{ fontSize: 13, color: 'var(--color-secondary)', lineHeight: 1.5, margin: '0 auto 20px', maxWidth: 280 }}>
-                Bi valuterà il tuo consiglio e magari il prossimo ristorante della guida sarà il tuo!
+                {(isAnon ? email.trim() : userEmail)
+                  ? 'Ti ho mandato un riepilogo per email. Ci passo al più presto.'
+                  : 'Bi valuterà il tuo consiglio e magari il prossimo ristorante della guida sarà il tuo!'}
               </p>
               <button onClick={onClose} style={{ ...btnSecondary, flex: 'none', width: '100%' }}>Chiudi</button>
             </div>
