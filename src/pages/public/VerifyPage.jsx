@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import './VerifyPage.css'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
@@ -108,9 +109,14 @@ export default function VerifyPage() {
   // 'loading' → controllo cookie iniziale
   // 'pin'     → mostra schermata PIN
   // 'authed'  → autenticato, mostra header + tab (step 3+)
+  const [searchParams] = useSearchParams()
   const [status, setStatus] = useState('loading')
   const [restaurant, setRestaurant] = useState(null)
-  const [pin, setPin] = useState('')
+  // Pre-popola il PIN dal query param ?pin= (es. dalla mail di benvenuto)
+  const [pin, setPin] = useState(() => {
+    const p = searchParams.get('pin') || ''
+    return /^\d{1,6}$/.test(p) ? p : ''
+  })
   const [error, setError] = useState(null)
   const [shake, setShake] = useState(false)
   const [submitting, setSubmitting] = useState(false)
