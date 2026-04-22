@@ -322,28 +322,28 @@ export default function RestaurantSheet({
     <div className="fixed inset-0 z-50 flex flex-col restaurant-sheet-root">
       <style>{`
         @media (min-width: 768px) {
-          /* v4 SCHEDA DESKTOP: card centrata nello stesso container della top nav
-             (padding 40 + max-width 1240), 2-col 420px left + mappa right.
-             Foto hero standalone con radius pieno, niente overlap pattern mobile. */
+          /* v4 SCHEDA DESKTOP — full viewport sotto la navbar (16 gap + 68 pill = 84px).
+             2-col: left 420px scroll + right flex:1 mappa sticky.
+             Niente floating card, niente max-width, niente padding: la sheet riempie
+             100% width × (100vh - 84px) e copre la HomePage sotto. */
           .restaurant-sheet-root {
-            top: 100px !important;
-            padding: 0 40px 24px !important;
+            top: 84px !important;
+            padding: 0 !important;
             background: var(--color-page, #FAF7F2) !important;
-            align-items: center !important;
           }
           .restaurant-sheet-root .rs-backdrop { display: none !important; }
           .restaurant-sheet-root .rs-sheet {
             pointer-events: auto !important;
-            max-width: 1240px !important;
+            max-width: none !important;
             width: 100% !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
             height: 100% !important;
             overflow: hidden !important;
             background: #fff !important;
-            border-radius: 28px !important;
-            box-shadow: var(--shadow-md, 0 4px 14px rgba(34,24,28,.08)) !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
             flex-direction: row !important;
-            flex: 0 1 1240px !important;
+            flex: 1 1 0% !important;
           }
           /* Left scrollable panel 420px */
           .restaurant-sheet-root .rs-scroll {
