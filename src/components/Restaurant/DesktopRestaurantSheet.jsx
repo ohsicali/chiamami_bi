@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
+import HoursPill from '../HoursPill'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { proxyImg } from '../../lib/supabase'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -389,6 +390,21 @@ export default function DesktopRestaurantSheet({
 
           {/* ══ RIGHT COLUMN ══ */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+            {/* ── HoursPill block — stato rapido aperto/chiuso ── */}
+            {restaurant.hours_cache && (
+              <div style={{ marginBottom: 18 }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 800,
+                  letterSpacing: '.14em', textTransform: 'uppercase',
+                  color: INK70, marginBottom: 8,
+                  fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+                }}>
+                  Orari
+                </div>
+                <HoursPill hours={restaurant.hours_cache} />
+              </div>
+            )}
 
             {/* ── Card Orari ── */}
             {orariVerified && (() => {
