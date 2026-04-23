@@ -102,6 +102,7 @@ export default function ApplicationManager() {
     if (app.restaurant_name) params.set('name', app.restaurant_name)
     if (app.email) params.set('email', app.email)
     if (app.city) params.set('city', app.city)
+    if (app.phone) params.set('phone', app.phone)
     navigate(`/admin/restaurant/new?${params.toString()}`)
   }
 

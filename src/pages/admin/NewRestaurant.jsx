@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -52,6 +52,7 @@ const EMPTY_FORM = {
 export default function NewRestaurant() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [form, setForm] = useState(EMPTY_FORM)
   const [mapsUrl, setMapsUrl] = useState('')
   const [mapsFilling, setMapsFilling] = useState(false)
@@ -59,6 +60,32 @@ export default function NewRestaurant() {
   const [saving, setSaving] = useState(null) // null | 'draft' | 'publish'
   const [saveError, setSaveError] = useState(null)
   const [createdPin, setCreatedPin] = useState(null)
+  const [prefillBanner, setPrefillBanner] = useState(null)
+
+  // Pre-fill from URL query params (used when arriving from Candidature
+  // via "+ Apri pre-compilata" — carries name/email/city from the application).
+  useEffect(() => {
+    const name = searchParams.get('name')
+    const email = searchParams.get('email')
+    const city = searchParams.get('city')
+    const phone = searchParams.get('phone')
+    const website = searchParams.get('website')
+    if (!name && !email && !city && !phone && !website) return
+    const patch = {}
+    if (name) {
+      patch.name = name
+      patch.slug = slugify(name)
+    }
+    if (email) patch.partner_email = email
+    if (city) patch.city = city
+    if (phone) patch.phone = phone
+    if (website) patch.website = website
+    setForm((prev) => ({ ...prev, ...patch }))
+    setPrefillBanner({
+      fields: Object.keys(patch).filter((k) => k !== 'slug').length,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function updateField(patch) {
     setForm((prev) => ({
@@ -346,6 +373,30 @@ export default function NewRestaurant() {
               {createdPin}
             </code>
             <span style={{ flex: 1 }}>Apro il drawer di edit…</span>
+          </div>
+        )}
+
+        {/* ── Pre-fill banner (from Candidature query params) ── */}
+        {prefillBanner && (
+          <div
+            style={{
+              padding: '12px 16px',
+              background: 'var(--color-oro-wash, #F5EDDD)',
+              color: 'var(--color-oro, #B08954)',
+              border: '1px solid rgba(176,137,84,0.25)',
+              borderRadius: 12,
+              marginBottom: 14,
+              fontSize: 13,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span aria-hidden>✨</span>
+            <span>
+              Pre-compilato da Candidature · {prefillBanner.fields} camp{prefillBanner.fields === 1 ? 'o' : 'i'} già valorizzat{prefillBanner.fields === 1 ? 'o' : 'i'}. Rivedi e completa.
+            </span>
           </div>
         )}
 
