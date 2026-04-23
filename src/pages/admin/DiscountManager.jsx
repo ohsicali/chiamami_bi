@@ -4,6 +4,8 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
+import PillTab from '../../components/admin/PillTab'
+import EmptyState from '../../components/admin/EmptyState'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -38,6 +40,287 @@ const EMPTY_FORM = {
   drop_ends_at: '',
   max_quantity: '',
   is_featured: false,
+}
+
+/* ------------------------------------------------------------------ */
+/*  DropCard — mockup frame 4 style (responsive, replaces table+mobile)*/
+/* ------------------------------------------------------------------ */
+function countdown(target) {
+  const diff = new Date(target).getTime() - Date.now()
+  if (diff <= 0) return { label: 'Scaduto', value: '—' }
+  const d = Math.floor(diff / 86400000)
+  const h = Math.floor((diff % 86400000) / 3600000)
+  if (d > 0) return { label: 'Al termine', value: `${d}g ${h}h` }
+  const m = Math.floor((diff % 3600000) / 60000)
+  return { label: 'Al termine', value: `${h}h ${m}m` }
+}
+
+function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
+  const isDrop = d.is_drop
+  const isFeatured = d.is_featured && !d.is_drop
+  const ttl = countdown(d.valid_until)
+  const pct = d.max_redemptions
+    ? Math.min(100, Math.round(((d.redeemed_count || 0) / d.max_redemptions) * 100))
+    : null
+
+  const pillLabel = isDrop ? '🔥 HOT' : isFeatured ? 'EVIDENZA' : 'SCONTO'
+  const pillBg = isDrop
+    ? 'var(--color-corallo, #E8453C)'
+    : isFeatured
+      ? 'var(--color-oro, #B08954)'
+      : 'var(--color-ink, #22181C)'
+
+  return (
+    <div
+      style={{
+        background: isDrop
+          ? 'linear-gradient(135deg, #FFF8F7, #FDECEA)'
+          : selected
+            ? 'var(--color-corallo-wash, #FDEDEB)'
+            : '#fff',
+        border: isDrop
+          ? '1px solid var(--color-corallo-soft, #F6B7B1)'
+          : selected
+            ? '1px solid var(--color-corallo, #E8453C)'
+            : '1px solid var(--color-line, #EAE3D7)',
+        borderRadius: 18,
+        padding: 16,
+        display: 'grid',
+        gridTemplateColumns: '18px 80px 1fr auto auto',
+        gap: 14,
+        alignItems: 'center',
+        transition: 'background 0.15s, border 0.15s',
+      }}
+      className="max-md:!grid-cols-[18px_1fr_auto]"
+    >
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={onSelect}
+        onClick={(e) => e.stopPropagation()}
+        style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#E8453C', justifySelf: 'center' }}
+        aria-label="Seleziona"
+      />
+
+      <div
+        onClick={onEdit}
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: 14,
+          background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
+          position: 'relative',
+          flexShrink: 0,
+          cursor: 'pointer',
+        }}
+        className="max-md:!hidden"
+      >
+        <span
+          style={{
+            position: 'absolute',
+            top: 6,
+            left: 6,
+            background: pillBg,
+            color: '#fff',
+            fontSize: 9,
+            fontWeight: 900,
+            padding: '3px 7px',
+            borderRadius: 999,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {pillLabel}
+        </span>
+      </div>
+
+      <div onClick={onEdit} style={{ cursor: 'pointer', minWidth: 0 }}>
+        <h4
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 15,
+            letterSpacing: '-0.01em',
+            margin: 0,
+            color: 'var(--color-ink, #22181C)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          {d.restaurant?.name || '—'}
+          <span style={{ color: 'var(--color-corallo, #E8453C)', fontWeight: 900 }}>{d.discount_value}</span>
+          {!active && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: 999,
+                background: 'var(--color-cream-deep, #F1EBE0)',
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Pausa
+            </span>
+          )}
+        </h4>
+        <div style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 600, marginTop: 3 }}>
+          {d.title}
+          {d.conditions ? ` · ${d.conditions}` : ''}
+        </div>
+        {pct !== null ? (
+          <div style={{ marginTop: 10 }}>
+            <div
+              style={{
+                height: 6,
+                background: 'var(--color-cream-deep, #F1EBE0)',
+                borderRadius: 999,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${pct}%`,
+                  background: isDrop
+                    ? 'var(--color-corallo, #E8453C)'
+                    : 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                marginTop: 4,
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>{d.redeemed_count || 0} / {d.max_redemptions} riscattati</span>
+              <span>{pct}%</span>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              marginTop: 8,
+            }}
+          >
+            {d.generated_count || 0} presi · {d.redeemed_count || 0} usati · nessun limite
+          </div>
+        )}
+      </div>
+
+      <div
+        onClick={onEdit}
+        style={{
+          textAlign: 'center',
+          background: isDrop ? '#fff' : 'var(--color-cream, #F5F0E4)',
+          borderRadius: 14,
+          padding: '10px 14px',
+          minWidth: 92,
+          cursor: 'pointer',
+        }}
+        className="max-md:!hidden"
+      >
+        <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 20, letterSpacing: '-0.03em', color: 'var(--color-ink)' }}>
+          {ttl.value}
+        </div>
+        <div
+          style={{
+            fontSize: 9,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+            marginTop: 2,
+          }}
+        >
+          {ttl.label}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 4,
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ActionIcon
+          onClick={onNotify}
+          disabled={notifying || !active}
+          title={notifyLog ? `Già inviato a ${notifyLog.sent_count} iscritti — clicca per inviare di nuovo` : !active ? 'Attiva per notificare' : 'Notifica iscritti newsletter'}
+          color={notifyLog ? '#2C7A4A' : 'var(--color-ink)'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 11l18-8v18L3 13v-2z" />
+            <path d="M11.6 16.8A3 3 0 0 1 8 20" />
+          </svg>
+        </ActionIcon>
+        <ActionIcon onClick={onToggleActive} title={d.is_active ? 'Metti in pausa' : 'Riattiva'}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {d.is_active ? (
+              <>
+                <rect x="6" y="5" width="4" height="14" />
+                <rect x="14" y="5" width="4" height="14" />
+              </>
+            ) : (
+              <polygon points="5 3 19 12 5 21 5 3" />
+            )}
+          </svg>
+        </ActionIcon>
+        <ActionIcon onClick={onEdit} title="Modifica">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+        </ActionIcon>
+        <ActionIcon onClick={onDelete} title="Elimina" color="var(--color-danger, #C0392B)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+          </svg>
+        </ActionIcon>
+      </div>
+    </div>
+  )
+}
+
+function ActionIcon({ onClick, disabled, title, color, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: 10,
+        border: 0,
+        background: 'var(--color-cream, #F5F0E4)',
+        color: color || 'var(--color-ink)',
+        display: 'grid',
+        placeItems: 'center',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {children}
+    </button>
+  )
 }
 
 /* ------------------------------------------------------------------ */
@@ -568,64 +851,55 @@ export default function DiscountManager() {
           <StatCard label="QR utilizzati" value={stats.redemptions} accent="var(--color-corallo, #E8453C)" />
         </div>
 
-        {/* ── Filter chips ── */}
+        {/* ── Filter pills (v4 mockup) ── */}
         <div
           style={{
-            padding: '0 20px 16px',
             display: 'flex',
-            gap: 8,
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
+            gap: 10,
+            marginBottom: 16,
+            flexWrap: 'wrap',
+            alignItems: 'center',
           }}
         >
-          <FilterChip label="Tutti" count={counts.all} active={filter === 'all'} onClick={() => setFilter('all')} />
-          <FilterChip label="Attivi" count={counts.active} active={filter === 'active'} onClick={() => setFilter('active')} />
-          <FilterChip label="Drop" count={counts.drops} active={filter === 'drops'} onClick={() => setFilter('drops')} />
-          <FilterChip label="Scaduti" count={counts.expired} active={filter === 'expired'} onClick={() => setFilter('expired')} />
+          <PillTab active={filter === 'all'} count={counts.all} onClick={() => setFilter('all')}>Tutti</PillTab>
+          <PillTab active={filter === 'drops'} count={counts.drops} onClick={() => setFilter('drops')}>Drop attivi</PillTab>
+          <PillTab active={filter === 'active'} count={counts.active} onClick={() => setFilter('active')}>Sconti sempre attivi</PillTab>
+          <PillTab active={filter === 'expired'} count={counts.expired} onClick={() => setFilter('expired')}>Scaduti</PillTab>
         </div>
 
         {/* ── Loading ── */}
         {loading && (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#999', fontSize: 13 }}>
-            Caricamento...
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 13 }}>
+            Carico…
           </div>
         )}
 
         {/* ── Empty state ── */}
         {!loading && filteredDiscounts.length === 0 && (
-          <div
-            style={{
-              margin: '0 20px 20px',
-              padding: '48px 24px',
-              textAlign: 'center',
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 12,
-            }}
-          >
-            <div style={{ fontSize: 32, marginBottom: 10 }}>🏷️</div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
-              {filter === 'all' ? 'Nessuno sconto creato' : 'Nessuno sconto in questa categoria'}
-            </p>
-            <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
-              {filter === 'all' ? 'Crea il primo sconto per un ristorante partner' : 'Cambia filtro per vedere altri sconti'}
-            </p>
-          </div>
+          <EmptyState
+            icon="🎟"
+            title={filter === 'all' ? 'Nessuno sconto creato' : 'Nessuno sconto in questa categoria'}
+            subtitle={filter === 'all' ? 'Crea il primo sconto per un ristorante partner.' : 'Cambia filtro per vedere altri sconti.'}
+            cta={filter === 'all' ? { label: '+ Nuovo drop', onClick: () => { resetForm(); setShowForm(true) } } : null}
+          />
         )}
 
         {/* ── Bulk action bar — appears when items are selected ── */}
         {selectedIds.size > 0 && (
-          <div style={{
-            margin: '0 20px 12px',
-            padding: '10px 16px',
-            background: 'var(--color-ink)',
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
+          <div
+            style={{
+              padding: '10px 16px',
+              background: 'var(--color-ink, #22181C)',
+              borderRadius: 999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              marginBottom: 12,
+              boxShadow: '0 6px 14px rgba(34,24,28,0.15)',
+            }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
               {selectedIds.size} {selectedIds.size === 1 ? 'sconto selezionato' : 'sconti selezionati'}
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -633,10 +907,15 @@ export default function DiscountManager() {
                 type="button"
                 onClick={() => setSelectedIds(new Set())}
                 style={{
-                  padding: '7px 14px', borderRadius: 8,
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#ccc', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: "var(--font-sans)",
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 Deseleziona
@@ -645,230 +924,50 @@ export default function DiscountManager() {
                 type="button"
                 onClick={() => setBulkDeleteConfirm(true)}
                 style={{
-                  padding: '7px 14px', borderRadius: 8,
-                  background: '#dc2626', border: 'none',
-                  color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  fontFamily: "var(--font-sans)",
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  background: 'var(--color-danger, #C0392B)',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                </svg>
                 Elimina {selectedIds.size}
               </button>
             </div>
           </div>
         )}
 
-        {/* ── Desktop table ── */}
+        {/* ── Drop-card list (responsive, mockup frame 4) ── */}
         {!loading && filteredDiscounts.length > 0 && (
-          <div className="hidden md:block" style={{ padding: '0 20px 40px' }}>
-            <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
-                    <th style={{ ...thStyle, width: 40 }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={filteredDiscounts.length > 0 && selectedIds.size === filteredDiscounts.length}
-                        onChange={toggleSelectAll}
-                        style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#dc2626' }}
-                      />
-                    </th>
-                    <th style={thStyle}>Ristorante</th>
-                    <th style={thStyle}>Sconto</th>
-                    <th style={thStyle}>Tipo</th>
-                    <th style={thStyle}>Scadenza</th>
-                    <th style={thStyle}>QR presi / usati</th>
-                    <th style={thStyle}>Stato</th>
-                    <th style={{ ...thStyle, width: 100 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDiscounts.map((d) => (
-                    <tr
-                      key={d.id}
-                      style={{
-                        borderBottom: '1px solid #f3f3f3', cursor: 'pointer', transition: 'background 0.1s',
-                        background: selectedIds.has(d.id) ? '#fff8f8' : 'transparent',
-                      }}
-                      onClick={() => handleEdit(d)}
-                      onMouseEnter={(e) => { if (!selectedIds.has(d.id)) e.currentTarget.style.background = '#fafafa' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(d.id) ? '#fff8f8' : 'transparent' }}
-                    >
-                      <td style={tdStyle} onClick={(e) => { e.stopPropagation(); toggleSelect(d.id) }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(d.id)}
-                          onChange={() => toggleSelect(d.id)}
-                          style={{ cursor: 'pointer', width: 15, height: 15, accentColor: '#dc2626' }}
-                        />
-                      </td>
-                      <td style={tdStyle}>
-                        <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
-                          {d.restaurant?.name || '—'}
-                          {d.is_drop && <DropBadge />}
-                          {d.is_featured && !d.is_drop && <FeaturedBadge />}
-                        </div>
-                      </td>
-                      <td style={tdStyle}>
-                        <div style={{ color: '#E8453C', fontWeight: 700 }}>{d.discount_value}</div>
-                        <div style={{ color: '#999', fontSize: 11, marginTop: 2 }}>{d.title}</div>
-                      </td>
-                      <td style={{ ...tdStyle, color: '#666' }}>{TYPE_LABELS[d.discount_type] || d.discount_type}</td>
-                      <td style={{ ...tdStyle, color: '#666' }}>{formatDate(d.valid_until)}</td>
-                      <td style={{ ...tdStyle, color: '#666' }}>
-                        <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{d.generated_count || 0}</span>
-                        <span style={{ color: '#999' }}> / </span>
-                        <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
-                        {d.max_redemptions ? <span style={{ color: '#999' }}> · max {d.max_redemptions}</span> : null}
-                      </td>
-                      <td style={tdStyle}>
-                        <StatusBadge discount={d} />
-                      </td>
-                      <td style={{ ...tdStyle, textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
-                        {(() => {
-                          const key = `${d.is_drop ? 'drop' : 'discount'}:${d.id}`
-                          const sent = notifyLogs[key]
-                          const disabled = notifyingId === d.id || !isActive(d)
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => handleNotify(d)}
-                              disabled={disabled}
-                              title={sent
-                                ? `Già inviato il ${new Date(sent.sent_at).toLocaleDateString('it-IT')} a ${sent.sent_count} iscritti — clicca per inviare di nuovo`
-                                : !isActive(d) ? 'Attiva lo sconto per notificare' : 'Notifica iscritti newsletter'}
-                              style={{ ...iconBtnStyle, color: sent ? '#059669' : 'var(--color-ink)', opacity: disabled ? 0.4 : 1 }}
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 11l18-8v18L3 13v-2z" />
-                                <path d="M11.6 16.8A3 3 0 0 1 8 20" />
-                              </svg>
-                            </button>
-                          )
-                        })()}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(d.id, d.is_active)}
-                          title={d.is_active ? 'Disattiva' : 'Attiva'}
-                          style={iconBtnStyle}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            {d.is_active ? <circle cx="12" cy="12" r="9" /> : <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />}
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteConfirm(d)}
-                          title="Elimina"
-                          style={{ ...iconBtnStyle, color: '#dc2626' }}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ── Mobile cards ── */}
-        {!loading && filteredDiscounts.length > 0 && (
-          <div className="md:hidden" style={{ padding: '0 20px 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 40 }}>
+            {/* Select-all */}
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', cursor: 'pointer', marginBottom: 4, paddingLeft: 12 }}>
+              <input
+                type="checkbox"
+                checked={selectedIds.size === filteredDiscounts.length}
+                onChange={toggleSelectAll}
+                style={{ cursor: 'pointer', width: 14, height: 14 }}
+              />
+              Seleziona tutti ({filteredDiscounts.length})
+            </label>
             {filteredDiscounts.map((d) => (
-              <div
+              <DropCard
                 key={d.id}
-                onClick={() => handleEdit(d)}
-                style={{
-                  background: selectedIds.has(d.id) ? '#fff8f8' : '#fff',
-                  border: selectedIds.has(d.id) ? '1.5px solid #dc2626' : '1px solid #eee',
-                  borderRadius: 12,
-                  padding: '14px 16px',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s, background 0.15s',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}
-                    onClick={(e) => { e.stopPropagation(); toggleSelect(d.id) }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(d.id)}
-                      onChange={() => toggleSelect(d.id)}
-                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#dc2626', marginTop: 2, flexShrink: 0 }}
-                    />
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                        {d.restaurant?.name || '—'}
-                        {d.is_drop && <DropBadge />}
-                        {d.is_featured && !d.is_drop && <FeaturedBadge />}
-                      </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
-                        {d.discount_value}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{d.title}</div>
-                    </div>
-                  </div>
-                  <StatusBadge discount={d} />
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 10,
-                    paddingTop: 10,
-                    borderTop: '1px solid #f3f3f3',
-                    fontSize: 11,
-                    color: '#999',
-                  }}
-                >
-                  <span>
-                    <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{d.generated_count || 0}</span>
-                    <span> presi · </span>
-                    <span style={{ color: '#059669', fontWeight: 600 }}>{d.redeemed_count || 0}</span>
-                    <span> usati{d.max_redemptions ? ` · max ${d.max_redemptions}` : ''} · Scade {formatDate(d.valid_until)}</span>
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    {(() => {
-                      const key = `${d.is_drop ? 'drop' : 'discount'}:${d.id}`
-                      const sent = notifyLogs[key]
-                      const disabled = notifyingId === d.id || !isActive(d)
-                      return (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); handleNotify(d) }}
-                          disabled={disabled}
-                          title={sent ? `Già inviato a ${sent.sent_count} iscritti` : 'Notifica iscritti'}
-                          style={{ background: 'transparent', border: 'none', color: sent ? '#059669' : 'var(--color-ink)', padding: 4, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 11l18-8v18L3 13v-2z" />
-                            <path d="M11.6 16.8A3 3 0 0 1 8 20" />
-                          </svg>
-                        </button>
-                      )
-                    })()}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(d) }}
-                      style={{ background: 'transparent', border: 'none', color: '#dc2626', padding: 4, cursor: 'pointer' }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                d={d}
+                selected={selectedIds.has(d.id)}
+                notifyLog={notifyLogs[`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]}
+                notifying={notifyingId === d.id}
+                active={isActive(d)}
+                onSelect={() => toggleSelect(d.id)}
+                onEdit={() => handleEdit(d)}
+                onNotify={() => handleNotify(d)}
+                onToggleActive={() => handleToggleActive(d.id, d.is_active)}
+                onDelete={() => setDeleteConfirm(d)}
+              />
             ))}
           </div>
         )}
