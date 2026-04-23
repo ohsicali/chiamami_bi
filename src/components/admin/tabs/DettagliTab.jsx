@@ -10,15 +10,15 @@ import GooglePlacesBlock from '../GooglePlacesBlock'
  * Contains: Anagrafica + Voce di Bi. Foto e piatti vivono negli altri tab.
  * Credenziali PIN: info box che rimanda al tab "Credenziali" (evita duplicazione).
  */
-export default function DettagliTab({ form, onChange, restaurantId }) {
+export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
   const { categories } = useCategories()
   const ai = useAiCorrect()
 
   return (
     <div>
-      {/* Google Maps update (compact, collapsible) */}
+      {/* Google Maps import — banner (espanso) su nuovo ristorante, compact su edit */}
       <GoogleMapsImportBlock
-        variant="compact"
+        variant={isNew ? 'banner' : 'compact'}
         onApply={(patch) => onChange(patch)}
         onSlug={slugify}
         currentPlaceId={form.place_id}

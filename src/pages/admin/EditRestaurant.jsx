@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -36,6 +36,8 @@ export default function EditRestaurant() {
   const { id: restaurantId } = useParams()
   const { user, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isNew = searchParams.get('new') === '1'
 
   const isDesktop = useIsDesktop()
   const [activeTab, setActiveTab] = useState('dettagli')
@@ -322,7 +324,7 @@ export default function EditRestaurant() {
             onChange={setActiveTab}
           >
             {activeTab === 'dettagli' && (
-              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} />
+              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} />
             )}
             {activeTab === 'foto' && (
               <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
@@ -424,7 +426,7 @@ export default function EditRestaurant() {
             </nav>
 
             <Section id="sec-dettagli" num="01" title="Dettagli">
-              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} />
+              <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} isNew={isNew} />
             </Section>
             <Section id="sec-foto" num="02" title="Foto & galleria">
               <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
