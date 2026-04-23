@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { supabase } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 
@@ -116,6 +117,27 @@ export default function LoginPage() {
       } else {
         await signUp(email, password, fullName)
         setSuccess('Registrazione completata! Controlla la tua email per confermare.')
+        // Welcome email (fire-and-forget — non blocca il signup)
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'user',
+            email,
+            name: fullName || email.split('@')[0],
+          }),
+        }).catch(() => {})
+        // Newsletter auto-subscribe se l'utente ha accettato
+        if (newsletterOptIn) {
+          supabase
+            .from('newsletter_subscribers')
+            .upsert(
+              { email: email.toLowerCase(), source: 'registration', subscribed: true },
+              { onConflict: 'email' }
+            )
+            .then(() => {})
+            .catch(() => {})
+        }
       }
     } catch (err) {
       setError(err.message === 'Invalid login credentials'
