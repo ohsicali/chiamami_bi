@@ -448,14 +448,63 @@ export default function AnalyticsPage() {
 
   return (
     <AdminLayout title="Analytics">
-      {/* ─── HEADER ─── */}
-      <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
+        {/* ─── HEADER mockup-aligned ─── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+            marginBottom: 24,
+          }}
+        >
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Analytics</h1>
-            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>
-              Performance e metriche in tempo reale
-            </p>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                letterSpacing: '0.04em',
+                marginBottom: 8,
+              }}
+            >
+              Numeri › <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Analytics</b>
+            </div>
+            <h1
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 900,
+                fontSize: 32,
+                letterSpacing: '-0.025em',
+                margin: 0,
+                color: 'var(--color-ink, #22181C)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                flexWrap: 'wrap',
+              }}
+            >
+              Analytics
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  background: 'var(--color-cream-deep, #F1EBE0)',
+                  color: 'var(--color-ink, #22181C)',
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {PERIODS.find((p) => p.key === period)?.label || 'periodo'}
+              </span>
+            </h1>
+            <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
+              Traffico, utenti, redenzioni · i numeri fattuali, non rating.
+            </div>
           </div>
 
           {/* Period selector */}
@@ -463,9 +512,9 @@ export default function AnalyticsPage() {
             style={{
               display: 'flex',
               background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 6,
-              padding: 2,
+              border: '1px solid var(--color-line, #EAE3D7)',
+              borderRadius: 999,
+              padding: 4,
             }}
           >
             {PERIODS.map((p) => (
@@ -473,15 +522,16 @@ export default function AnalyticsPage() {
                 key={p.key}
                 onClick={() => setPeriod(p.key)}
                 style={{
-                  padding: '6px 12px',
+                  padding: '7px 14px',
                   fontSize: 12,
-                  fontWeight: 500,
+                  fontWeight: 700,
                   border: 'none',
-                  borderRadius: 4,
+                  borderRadius: 999,
                   cursor: 'pointer',
-                  background: period === p.key ? 'var(--color-ink)' : 'transparent',
-                  color: period === p.key ? '#fff' : '#666',
+                  background: period === p.key ? 'var(--color-ink, #22181C)' : 'transparent',
+                  color: period === p.key ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
                   transition: 'background 0.15s',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {p.label}
@@ -489,13 +539,8 @@ export default function AnalyticsPage() {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* ─── CONTENT ─── */}
-      <div
-        className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]"
-        style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* ─── LIVE BANNER ─── */}
         <div
           style={{
@@ -985,6 +1030,7 @@ export default function AnalyticsPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </AdminLayout>
   )
