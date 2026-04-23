@@ -5,8 +5,8 @@
     "api/resolve-maps.js": {
       "maxDuration": 30
     },
-    "api/resolve-reel.js": {
-      "maxDuration": 15
+    "api/ai.js": {
+      "maxDuration": 30
     },
     "api/img.js": {
       "maxDuration": 10

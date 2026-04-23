@@ -1,8 +1,17 @@
 /**
- * Vercel Serverless Function — resolve Google Maps URL and fetch place details
+ * Vercel Serverless Function — resolve external links and fetch metadata
  * Runs in US region (iad1) to bypass EU consent page for CID URLs.
  *
- * Supports: maps.app.goo.gl, goo.gl, share.google, ?cid= URLs, full place URLs
+ * Dispatcher (body.type):
+ *   - default / 'maps'  → Google Maps URL resolution (legacy).
+ *                         Supports: maps.app.goo.gl, goo.gl, share.google,
+ *                         ?cid= URLs, full place URLs, Places text-search
+ *                         by name (body.query).
+ *   - 'reel'            → Instagram Reel og:image/og:title/og:description
+ *                         extraction (body.url, https://instagram.com/...).
+ *
+ * Consolidato con l'ex endpoint /api/resolve-reel (PR17, per restare sotto
+ * al cap Vercel Hobby di 12 functions).
  */
 
 // SSRF guard: only fetch URLs on these Google-owned hosts. The endpoint
@@ -32,7 +41,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { url, query } = req.body || {}
+  const { url, query, type } = req.body || {}
+
+  // Instagram Reel metadata extraction (ex /api/resolve-reel)
+  if (type === 'reel') {
+    return await resolveReel(url, res)
+  }
+
   if (!url && !query) return res.status(200).json({ error: 'url or query is required' })
 
   const apiKey = process.env.VITE_GOOGLE_PLACES_KEY
@@ -372,4 +387,58 @@ async function followRedirects(url, maxRedirects = 10) {
     current = next
   }
   return current
+}
+
+/* ------------------------------------------------------------------ */
+/*  resolveReel — Instagram Reel og:image / og:title / og:description  */
+/*  (ex /api/resolve-reel, consolidato qui per stare sotto al cap      */
+/*  Vercel Hobby di 12 functions).                                     */
+/* ------------------------------------------------------------------ */
+async function resolveReel(url, res) {
+  if (!url || typeof url !== 'string') {
+    return res.status(200).json({ error: 'url is required' })
+  }
+  let parsed
+  try {
+    parsed = new URL(url)
+  } catch {
+    return res.status(400).json({ error: 'URL non valido' })
+  }
+  if (parsed.protocol !== 'https:') {
+    return res.status(403).json({ error: 'Only https allowed' })
+  }
+  const host = parsed.hostname.toLowerCase()
+  const instagramOk = host === 'instagram.com' || host.endsWith('.instagram.com')
+  if (!instagramOk) {
+    return res.status(403).json({ error: 'Not an Instagram URL' })
+  }
+
+  try {
+    const safeUrl = `${parsed.origin}${parsed.pathname}${parsed.search}`
+    const response = await fetch(safeUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
+    })
+    const html = await response.text()
+
+    const pickMeta = (prop) => {
+      const m = html.match(new RegExp(`<meta\\s+(?:property|name)="${prop}"\\s+content="([^"]+)"`, 'i'))
+        || html.match(new RegExp(`content="([^"]+)"\\s+(?:property|name)="${prop}"`, 'i'))
+      return m ? m[1].replace(/&amp;/g, '&') : null
+    }
+    const thumbnail = pickMeta('og:image')
+    const title = pickMeta('og:title')
+    const description = pickMeta('og:description')
+
+    if (!thumbnail) {
+      return res.status(200).json({ error: 'Could not extract thumbnail from Instagram page' })
+    }
+    return res.status(200).json({ thumbnail, title, description })
+  } catch (err) {
+    return res.status(200).json({ error: `Fetch failed: ${err.message}` })
+  }
 }

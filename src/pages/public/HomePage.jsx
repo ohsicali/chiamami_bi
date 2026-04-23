@@ -1,6 +1,6 @@
 import DesktopExplorePage from './DesktopExplorePage'
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
@@ -142,6 +142,7 @@ export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
     const prev = window.scrollY
@@ -286,6 +287,35 @@ export default function HomePage() {
       window.history.replaceState({}, '')
     }
   }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // URL params ⟷ filters sync — coerenza con home (card "+" → /esplora?moment=…)
+  // Leggi all'avvio, poi aggiorna la URL quando cambiano i filtri.
+  useEffect(() => {
+    const urlMoment = searchParams.get('moment')
+    const urlCategory = searchParams.get('category')
+    const urlPrice = searchParams.get('price')
+    const next = {}
+    if (urlMoment) next.moment = urlMoment
+    if (urlCategory) next.category = urlCategory
+    if (urlPrice) next.priceRange = Number(urlPrice) || null
+    if (Object.keys(next).length > 0) {
+      setFilters(f => ({ ...f, ...next }))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // read once on mount
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (filters.moment) params.set('moment', filters.moment)
+    if (filters.category) {
+      const v = Array.isArray(filters.category) ? filters.category.join(',') : filters.category
+      if (v) params.set('category', v)
+    }
+    if (filters.priceRange) params.set('price', String(filters.priceRange))
+    const current = searchParams.toString()
+    const next = params.toString()
+    if (current !== next) setSearchParams(params, { replace: true })
+  }, [filters.moment, filters.category, filters.priceRange]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll-based sticky detection for sheet filters
   useEffect(() => {
