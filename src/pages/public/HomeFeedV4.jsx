@@ -248,6 +248,10 @@ function HeroPromo({ featured }) {
                 lineHeight: 1.4,
                 marginBottom: 14,
                 maxWidth: 180,
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
               }}
             >
               {featured.subtitle}
@@ -1174,11 +1178,11 @@ export default function HomeFeedV4() {
           .hfv4-hero-card {
             grid-template-columns: 1.05fr .95fr !important;
             gap: 0 !important;
-            min-height: 300px;
+            min-height: 260px;
             padding: 0 !important;
             border-radius: 28px !important;
           }
-          .hfv4-hero-body { padding: 36px 48px !important; display: flex; flex-direction: column; justify-content: center; gap: 10px !important; }
+          .hfv4-hero-body { padding: 30px 44px !important; display: flex; flex-direction: column; justify-content: center; gap: 8px !important; }
           .hfv4-hero-chip {
             font-size: 12px !important; letter-spacing: .08em !important;
             padding: 6px 12px !important; margin-bottom: 0 !important;
@@ -1186,7 +1190,7 @@ export default function HomeFeedV4() {
           }
           .hfv4-hero-title { font-size: 56px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
           .hfv4-hero-rest-line { display: flex !important; }
-          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; margin-bottom: 0 !important; }
+          .hfv4-hero-sub { font-size: 14px !important; max-width: 320px !important; margin-bottom: 0 !important; -webkit-line-clamp: 2 !important; }
           .hfv4-hero-ctas { margin-top: 6px; }
           .hfv4-hero-cta-ghost { display: inline-flex !important; }
           .hfv4-hero-photo { min-height: auto !important; border-radius: 0 !important; }
