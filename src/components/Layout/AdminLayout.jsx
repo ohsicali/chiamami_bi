@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation, Navigate } from 'react-router-dom'
+import { Link, useLocation, Navigate, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -149,7 +149,7 @@ const MENU_SECTIONS = [
     label: 'GESTIONE',
     items: [
       { to: '/admin/restaurants', label: 'Ristoranti', icon: RestaurantIcon, counterKey: 'restaurants' },
-      { to: '/admin/discounts', label: 'Sconti & Drop', icon: DiscountIcon },
+      { to: '/admin/discounts', label: 'Sconti & Drop', icon: DiscountIcon, counterKey: 'discounts' },
       { to: '/admin/categories', label: 'Categorie', icon: CategoryIcon },
     ],
   },
@@ -157,13 +157,13 @@ const MENU_SECTIONS = [
     label: 'COMMUNITY',
     items: [
       { to: '/admin/users', label: 'Utenti', icon: UsersIcon },
-      { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, dotKey: 'suggestions', dotColor: '#E8453C' },
+      { to: '/admin/suggestions', label: 'Suggerimenti', icon: SuggestionIcon, counterKey: 'suggestions' },
     ],
   },
   {
     label: 'BUSINESS',
     items: [
-      { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, dotKey: 'applications', dotColor: '#B08954' },
+      { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, counterKey: 'applications' },
       { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
       { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
     ],
@@ -275,7 +275,6 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
               const active = isActive(item)
               const Icon = item.icon
               const count = item.counterKey ? counts[item.counterKey] : null
-              const showDot = item.dotKey && counts[item.dotKey] > 0
               return (
                 <Link
                   key={item.label}
@@ -284,23 +283,32 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
-                    padding: '9px 10px',
-                    borderRadius: 8,
+                    gap: 12,
+                    padding: '9px 12px',
+                    borderRadius: 10,
                     textDecoration: 'none',
                     fontSize: 13,
-                    fontWeight: active ? 500 : 400,
-                    color: active ? '#E8453C' : 'rgba(255,255,255,0.6)',
-                    background: active ? 'rgba(232, 69, 60,0.1)' : 'transparent',
-                    marginBottom: 1,
-                    transition: 'background 0.15s, color 0.15s',
+                    fontWeight: active ? 700 : 600,
+                    color: active ? '#fff' : 'rgba(255,255,255,0.78)',
+                    background: active ? '#E8453C' : 'transparent',
+                    boxShadow: active ? '0 6px 14px rgba(232,69,60,0.35)' : 'none',
+                    marginBottom: 2,
+                    transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                    if (!active) e.currentTarget.style.color = '#fff'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = 'transparent'
+                    if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.78)'
                   }}
                 >
                   <Icon
-                    width={16}
-                    height={16}
+                    width={18}
+                    height={18}
                     style={{
-                      color: active ? '#E8453C' : 'rgba(255,255,255,0.4)',
+                      color: active ? '#fff' : 'rgba(255,255,255,0.55)',
                       flexShrink: 0,
                     }}
                   />
@@ -308,26 +316,18 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
                   {count != null && count > 0 && (
                     <span
                       style={{
-                        fontSize: 10,
-                        color: 'rgba(255,255,255,0.2)',
-                        background: 'rgba(255,255,255,0.06)',
-                        padding: '1px 6px',
-                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: active ? '#fff' : 'rgba(255,255,255,0.75)',
+                        background: active ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.12)',
+                        padding: '2px 8px',
+                        borderRadius: 10,
+                        minWidth: 22,
+                        textAlign: 'center',
                       }}
                     >
                       {count}
                     </span>
-                  )}
-                  {showDot && (
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: item.dotColor,
-                        flexShrink: 0,
-                      }}
-                    />
                   )}
                 </Link>
               )
@@ -394,12 +394,146 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Desktop top bar — search + date pill + "+ Nuovo" + avatar          */
+/* ------------------------------------------------------------------ */
+function AdminTopBar({ userInitial }) {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  function onSubmit(e) {
+    e.preventDefault()
+    const q = query.trim()
+    if (!q) return
+    navigate(`/admin/restaurants?q=${encodeURIComponent(q)}`)
+  }
+
+  return (
+    <div
+      className="hidden md:flex"
+      style={{
+        alignItems: 'center',
+        gap: 16,
+        padding: '14px 28px',
+        background: 'rgba(255,255,255,0.7)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--color-line, #EAE3D7)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}
+    >
+      <form
+        onSubmit={onSubmit}
+        style={{
+          flex: 1,
+          maxWidth: 440,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: '#fff',
+          border: '1px solid var(--color-line, #EAE3D7)',
+          borderRadius: 999,
+          padding: '8px 14px',
+        }}
+      >
+        <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#9a8e84" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <circle cx={11} cy={11} r={8} />
+          <line x1={21} y1={21} x2={16.65} y2={16.65} />
+        </svg>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Cerca ovunque — ristoranti, utenti, sconti…"
+          style={{
+            flex: 1,
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 13,
+            color: 'var(--color-ink, #22181C)',
+            padding: 0,
+          }}
+        />
+      </form>
+
+      <div style={{ flex: 1 }} />
+
+      <button
+        type="button"
+        disabled
+        title="Disponibile in Analytics"
+        style={{
+          background: '#fff',
+          border: '1px solid var(--color-line, #EAE3D7)',
+          borderRadius: 999,
+          padding: '7px 14px',
+          fontSize: 12,
+          fontWeight: 700,
+          color: 'var(--color-ink, #22181C)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          cursor: 'default',
+          fontFamily: 'var(--font-sans)',
+          opacity: 0.7,
+        }}
+      >
+        <span aria-hidden>📅</span>
+        Ultimi 30 giorni
+        <span aria-hidden style={{ fontSize: 9 }}>▾</span>
+      </button>
+
+      <Link
+        to="/admin/restaurant/new"
+        style={{
+          background: '#E8453C',
+          border: '1px solid #E8453C',
+          borderRadius: 999,
+          padding: '8px 16px',
+          fontSize: 12,
+          fontWeight: 800,
+          color: '#fff',
+          textDecoration: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
+          fontFamily: 'var(--font-sans)',
+        }}
+      >
+        + Nuovo
+      </Link>
+
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          background: '#E8453C',
+          display: 'grid',
+          placeItems: 'center',
+          color: '#fff',
+          fontFamily: 'var(--font-wordmark, "Alfa Slab One")',
+          fontSize: 13,
+          flexShrink: 0,
+        }}
+      >
+        {userInitial}
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main AdminLayout                                                   */
 /* ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title }) {
   const { user, loading: authLoading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [counts, setCounts] = useState({ restaurants: 0, suggestions: 0, applications: 0 })
+  const [counts, setCounts] = useState({ restaurants: 0, discounts: 0, suggestions: 0, applications: 0 })
   const location = useLocation()
 
   // Close mobile menu + scroll to top on route change
@@ -427,8 +561,14 @@ export default function AdminLayout({ children, title }) {
 
     async function fetchCounts() {
       try {
-        const [restRes, suggRes, appRes] = await Promise.all([
+        const nowIso = new Date().toISOString()
+        const [restRes, discRes, suggRes, appRes] = await Promise.all([
           supabase.from('restaurants').select('id', { count: 'exact', head: true }),
+          supabase
+            .from('discounts')
+            .select('id', { count: 'exact', head: true })
+            .eq('is_active', true)
+            .gt('valid_until', nowIso),
           supabase
             .from('restaurant_suggestions')
             .select('id', { count: 'exact', head: true })
@@ -441,6 +581,7 @@ export default function AdminLayout({ children, title }) {
         if (cancelled) return
         setCounts({
           restaurants: restRes.count || 0,
+          discounts: discRes.count || 0,
           suggestions: suggRes.count || 0,
           applications: appRes.count || 0,
         })
@@ -501,7 +642,7 @@ export default function AdminLayout({ children, title }) {
         className="hidden md:flex"
         style={{
           flexDirection: 'column',
-          width: 220,
+          width: 240,
           flexShrink: 0,
           position: 'fixed',
           top: 0,
@@ -627,8 +768,9 @@ export default function AdminLayout({ children, title }) {
           flexDirection: 'column',
           background: '#fafafa',
         }}
-        className="md:ml-[220px] pt-[48px] md:pt-0"
+        className="md:ml-[240px] pt-[48px] md:pt-0"
       >
+        <AdminTopBar userInitial={initials} />
         <main
           style={{
             flex: 1,
