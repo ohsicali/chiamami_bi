@@ -225,13 +225,14 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
           <div
             style={{
               fontFamily: "var(--font-mark)",
-              fontSize: 15,
+              fontSize: 13,
               color: '#fff',
               letterSpacing: '0.02em',
               lineHeight: 1.1,
+              whiteSpace: 'nowrap',
             }}
           >
-            LA GUIDA<br />DI BI
+            LA GUIDA DI BI
           </div>
           <div
             style={{
