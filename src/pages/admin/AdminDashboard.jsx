@@ -100,7 +100,7 @@ function ActivityIcon({ type }) {
 /*  Main Dashboard                                                     */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
-  const { user, isAdmin, loading: authLoading } = useAuth()
+  const { user, isAdmin, loading: authLoading, profile } = useAuth()
 
   const [metrics, setMetrics] = useState({
     restaurants: 0,
@@ -125,6 +125,23 @@ export default function AdminDashboard() {
   const [topRestaurants, setTopRestaurants] = useState([])
   const [activeDrop, setActiveDrop] = useState(null)
   const [inboxApps, setInboxApps] = useState([])
+  const [liveVisitors, setLiveVisitors] = useState(null)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !user) return
+    let cancelled = false
+    let interval
+    async function fetchLive() {
+      try {
+        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+        const { data } = await supabase.from('page_views').select('session_id').gte('created_at', fiveMinAgo)
+        if (!cancelled) setLiveVisitors(new Set((data || []).map((r) => r.session_id)).size)
+      } catch { if (!cancelled) setLiveVisitors(0) }
+    }
+    fetchLive()
+    interval = setInterval(fetchLive, 30000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [user])
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
@@ -315,7 +332,7 @@ export default function AdminDashboard() {
   if (authLoading) return <LoadingScreen />
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
-  const userInitial = (user?.email || 'B')[0].toUpperCase()
+  const firstName = profile?.full_name?.split(' ')?.[0] || (user?.email || '').split('@')[0]
 
   return (
     <AdminLayout title="Dashboard">
@@ -346,7 +363,7 @@ export default function AdminDashboard() {
               color: 'var(--color-ink, #22181C)',
             }}
           >
-            Ciao {userInitial === 'B' ? 'Bi' : userInitial} <span aria-hidden>👋</span>
+            Ciao {firstName} <span aria-hidden>👋</span>
           </h1>
           <div
             style={{
@@ -367,6 +384,15 @@ export default function AdminDashboard() {
               {metrics.inboxApplications} candidature nuove, {metrics.activeDropsCount} drop attivi
               {metrics.openSuggestions > 0 ? `, ${metrics.openSuggestions} suggerimenti` : ''}
             </span>
+            {liveVisitors != null && liveVisitors > 0 && (
+              <>
+                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor' }} />
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, textTransform: 'none' }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 6px rgba(74,222,128,0.6)', display: 'inline-block' }} />
+                  {liveVisitors} {liveVisitors === 1 ? 'persona live' : 'persone live'}
+                </span>
+              </>
+            )}
           </div>
         </div>
 

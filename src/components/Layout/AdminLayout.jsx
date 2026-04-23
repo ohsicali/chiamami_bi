@@ -518,7 +518,8 @@ function AdminTopBar({ userInitial }) {
         + Nuovo
       </Link>
 
-      <div
+      <Link
+        to="/admin/settings"
         style={{
           width: 32,
           height: 32,
@@ -530,10 +531,12 @@ function AdminTopBar({ userInitial }) {
           fontFamily: 'var(--font-wordmark, "Alfa Slab One")',
           fontSize: 13,
           flexShrink: 0,
+          textDecoration: 'none',
         }}
+        title="Impostazioni account"
       >
         {userInitial}
-      </div>
+      </Link>
     </div>
   )
 }

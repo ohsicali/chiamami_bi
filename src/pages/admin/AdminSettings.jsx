@@ -9,16 +9,16 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 /* ------------------------------------------------------------------ */
 const cardStyle = {
   background: '#fff',
-  border: '1px solid #eee',
-  borderRadius: 12,
-  padding: 18,
+  border: '1px solid var(--color-line, #EAE3D7)',
+  borderRadius: 18,
+  padding: '20px 22px',
 }
 
 const inputStyle = {
   flex: '1 1 200px',
   padding: '10px 14px',
   borderRadius: 10,
-  border: '1px solid #e5e5e5',
+  border: '1px solid var(--color-line, #EAE3D7)',
   background: '#fff',
   fontSize: 13,
   fontFamily: 'inherit',
@@ -27,30 +27,44 @@ const inputStyle = {
 }
 
 const btnPrimary = {
-  padding: '10px 18px',
-  borderRadius: 10,
+  padding: '9px 20px',
+  borderRadius: 999,
   border: 'none',
   background: '#E8453C',
   color: '#fff',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 12,
+  fontWeight: 800,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  whiteSpace: 'nowrap',
+  letterSpacing: '0.01em',
+}
+
+const btnDark = {
+  ...btnPrimary,
+  background: 'var(--color-ink, #22181C)',
+}
+
+const btnGhost = {
+  padding: '9px 20px',
+  borderRadius: 999,
+  border: '1px solid var(--color-line, #EAE3D7)',
+  background: '#fff',
+  color: 'var(--color-ink)',
+  fontSize: 12,
+  fontWeight: 700,
   cursor: 'pointer',
   fontFamily: 'inherit',
   whiteSpace: 'nowrap',
 }
 
-const btnDark = {
-  ...btnPrimary,
-  background: 'var(--color-ink)',
-}
-
 const sectionLabel = {
   fontSize: 10,
-  color: '#999',
-  fontWeight: 600,
+  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+  fontWeight: 800,
   textTransform: 'uppercase',
-  letterSpacing: 1.2,
-  marginBottom: 12,
+  letterSpacing: '0.1em',
+  marginBottom: 10,
 }
 
 /* ------------------------------------------------------------------ */
@@ -476,11 +490,7 @@ function ChangePassword({ userEmail }) {
             <button
               type="button"
               onClick={() => { setUnlocked(false); setPassword(''); setConfirm(''); setCurrentPwd(''); setStatus(null) }}
-              style={{
-                padding: '10px 18px', borderRadius: 10, border: '1px solid #e5e5e5',
-                background: '#fff', color: '#666', fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
+              style={btnGhost}
             >
               Annulla
             </button>
@@ -589,7 +599,7 @@ function AdminList({ currentUserId }) {
           {admins.map((admin) => (
             <div key={admin.id} style={{
               display: 'flex', alignItems: 'center', gap: 12,
-              padding: '10px 14px', borderRadius: 10, background: '#fafafa',
+              padding: '10px 14px', borderRadius: 12, background: 'var(--color-cream, #F5F0E4)',
             }}>
               {admin.avatar_url ? (
                 <img
@@ -720,75 +730,70 @@ export default function AdminSettings() {
 
   return (
     <AdminLayout title="Impostazioni">
-      {/* ─── HEADER ─── */}
-      <div style={{ borderBottom: '1px solid #eee', background: '#fff' }} className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Impostazioni</h1>
-            <p style={{ fontSize: 11, color: '#999', margin: '4px 0 0' }}>
-              Strumenti di manutenzione e configurazione
-            </p>
+      <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
+
+        {/* ─── HEADER ─── */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', letterSpacing: '0.04em', marginBottom: 8 }}>
+            Account › <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Impostazioni</b>
           </div>
-        </div>
-      </div>
-
-      {/* ─── CONTENT ─── */}
-      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        {/* Account section — 2 cols on desktop */}
-        <div>
-          <div style={sectionLabel}>ACCOUNT</div>
-          <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}
-            className="md:!grid-cols-2"
-          >
-            <ChangeEmail currentEmail={user.email} user={user} />
-            <ChangePassword userEmail={user.email} />
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 32, letterSpacing: '-0.025em', margin: 0, color: 'var(--color-ink, #22181C)' }}>
+            Impostazioni
+          </h1>
+          <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
+            Account, team e strumenti di configurazione.
           </div>
         </div>
 
-        {/* Team + Tools — 2 cols on desktop */}
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}
-          className="md:!grid-cols-2 md:!gap-x-16"
-        >
-          {/* Team section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* Account — 2 cols on desktop */}
           <div>
-            <div style={sectionLabel}>TEAM</div>
-            <AdminList currentUserId={user.id} />
+            <div style={sectionLabel}>ACCOUNT</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }} className="md:!grid-cols-2">
+              <ChangeEmail currentEmail={user.email} user={user} />
+              <ChangePassword userEmail={user.email} />
+            </div>
           </div>
 
-          {/* Tools section */}
-          <div>
-            <div style={sectionLabel}>STRUMENTI</div>
-            <ThumbnailTool />
+          {/* Team + Tools — 2 cols on desktop */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }} className="md:!grid-cols-2">
+            <div>
+              <div style={sectionLabel}>TEAM</div>
+              <AdminList currentUserId={user.id} />
+            </div>
+            <div>
+              <div style={sectionLabel}>STRUMENTI</div>
+              <ThumbnailTool />
+            </div>
           </div>
-        </div>
 
-        {/* Logout */}
-        <div style={{ borderTop: '1px solid #eee', paddingTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '10px 24px',
-              fontSize: 13,
-              fontWeight: 600,
-              background: 'transparent',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              color: '#E8453C',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Esci
-          </button>
+          {/* Logout */}
+          <div style={{ borderTop: '1px solid var(--color-line, #EAE3D7)', paddingTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '9px 20px',
+                fontSize: 12,
+                fontWeight: 800,
+                background: 'transparent',
+                border: '1px solid var(--color-line, #EAE3D7)',
+                borderRadius: 999,
+                color: '#E8453C',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                letterSpacing: '0.01em',
+              }}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Esci
+            </button>
+          </div>
         </div>
       </div>
     </AdminLayout>
