@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { supabase } from '../../../lib/supabase'
 
 /**
  * AiCorrectButton + SuggestionBox — small inline AI text corrector.
  *
  * Legacy feature migrated from RestaurantForm.jsx (handleAiCorrect).
- * Calls POST /api/correct-text with { text, context } and returns
- * { corrected, changed }. If the AI found a different text, we show
- * the corrected version and let the admin Accept/Reject.
+ * Calls POST /api/admin-actions with { action: 'correct-text', text, context }
+ * and returns { corrected, changed }. (Inlined into admin-actions to stay
+ * under the Vercel hobby cap of 12 functions.) If the AI found a different
+ * text, we show the corrected version and let the admin Accept/Reject.
  *
  * Usage inside a tab (e.g. DettagliTab):
  *
@@ -34,10 +36,16 @@ export function useAiCorrect() {
     setSuggestion(null)
     setError(null)
     try {
-      const resp = await fetch('/api/correct-text', {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      if (!token) throw new Error('Sessione scaduta, rifai il login admin')
+      const resp = await fetch('/api/admin-actions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, context }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'correct-text', text, context }),
       })
       const data = await resp.json()
       if (data?.error) {

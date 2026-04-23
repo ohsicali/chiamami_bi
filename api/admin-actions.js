@@ -16,6 +16,9 @@
  *                           Body: { action, restaurant_id }
  *                           Returns: { seo_title, seo_description, og_title,
  *                                      og_description, suggested_keywords }
+ *   - "correct-text"      → AI text correction su singolo testo (Claude Haiku).
+ *                           Body: { action, text, context }
+ *                           Returns: { corrected, changed }
  *
  * Auth: Bearer JWT Supabase + profiles.is_admin=true.
  */
@@ -71,6 +74,7 @@ export default async function handler(req, res) {
     if (action === 'rotate-pin') return await rotatePin(req, res, admin)
     if (action === 'toggle-disable') return await toggleDisable(req, res, admin)
     if (action === 'ai-seo-suggest') return await aiSeoSuggest(req, res, admin)
+    if (action === 'correct-text') return await correctText(req, res)
     return res.status(400).json({ error: `Unknown action: ${action}` })
   } catch (err) {
     console.error(`admin-actions/${action} failed:`, err)
@@ -240,6 +244,58 @@ function parseSeoJson(text) {
   } catch {
     return null
   }
+}
+
+/* ------------------------------------------------------------------ */
+/*  correct-text (was /api/correct-text — inlined to stay under the    */
+/*  Vercel hobby cap of 12 functions)                                  */
+/* ------------------------------------------------------------------ */
+async function correctText(req, res) {
+  const { text, context } = req.body || {}
+  const trimmedText = typeof text === 'string' ? text.trim() : ''
+  if (!trimmedText) return res.status(400).json({ error: 'text required' })
+  if (trimmedText.length > 4000) {
+    return res.status(400).json({ error: 'Testo troppo lungo (max 4000 caratteri)' })
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY non configurata' })
+
+  const contextHint =
+    context === 'restaurant review'
+      ? 'This is a restaurant review written in Italian.'
+      : context === 'restaurant tip'
+        ? 'This is a restaurant dining tip written in Italian.'
+        : 'This is Italian text about a restaurant.'
+
+  const prompt = `${contextHint} Correggi SOLO errori grammaticali e ortografici. NON cambiare tono, stile, emoji, espressioni personali. Mantieni tutto il resto identico. Rispondi SOLO con il testo corretto, nient'altro.\n\nTesto originale:\n${trimmedText}`
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': ANTHROPIC_VERSION,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
+
+  if (!response.ok) {
+    const errBody = await response.text()
+    console.error('Anthropic correct-text error:', response.status, errBody)
+    return res.status(502).json({ error: 'AI service error' })
+  }
+
+  const data = await response.json()
+  const corrected = data.content?.[0]?.text || ''
+  return res.status(200).json({
+    corrected: corrected || null,
+    changed: corrected.trim() !== trimmedText,
+  })
 }
 
 /* ------------------------------------------------------------------ */
