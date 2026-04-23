@@ -45,6 +45,7 @@ export default function NewRestaurant() {
     const payload = {
       name: draftName,
       slug: slugify(draftName) + '-' + uniqueSuffix,
+      address: '',
       city: city || 'Torino',
       partner_email: email || null,
       phone: phone || null,
