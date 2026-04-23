@@ -435,61 +435,44 @@ export default function AdminRestaurants() {
             cta={!search ? { label: '+ Nuovo ristorante', to: '/admin/restaurant/new' } : null}
           />
         ) : (
-          <>
-            <div
-              className="hidden md:block"
-              style={{
-                background: '#fff',
-                border: '1px solid var(--color-line, #EAE3D7)',
-                borderRadius: 18,
-                overflow: 'hidden',
-              }}
-            >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <Th style={{ width: 40 }}></Th>
-                    <Th>Ristorante</Th>
-                    <Th>Categoria</Th>
-                    <Th>Zona</Th>
-                    <Th>Sconto</Th>
-                    <Th>Aggiunto</Th>
-                    <Th>Views 30gg</Th>
-                    <Th>Status</Th>
-                    <Th style={{ textAlign: 'right' }}>Azioni</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((r, idx) => (
-                    <RestaurantRow
-                      key={r.id}
-                      r={r}
-                      idx={idx}
-                      discount={discountsMap[r.id]}
-                      views={viewsMap[r.slug] || 0}
-                      onDelete={() => setDeleteId(r.id)}
-                      onEdit={() => openEdit(r.id)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-              <Paging page={pageClamped} totalPages={totalPages} totalItems={filtered.length} onChange={setPage} />
-            </div>
-
-            {/* Mobile card list */}
-            <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {paginated.map((r) => (
-                <MobileCard
-                  key={r.id}
-                  r={r}
-                  discount={discountsMap[r.id]}
-                  views={viewsMap[r.slug] || 0}
-                  onOpen={() => openEdit(r.id)}
-                />
-              ))}
-              <MobilePaging page={pageClamped} totalPages={totalPages} onChange={setPage} />
-            </div>
-          </>
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid var(--color-line, #EAE3D7)',
+              borderRadius: 18,
+              overflow: 'auto',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 700 }}>
+              <thead>
+                <tr>
+                  <Th style={{ width: 40 }}></Th>
+                  <Th>Ristorante</Th>
+                  <Th>Categoria</Th>
+                  <Th>Zona</Th>
+                  <Th>Sconto</Th>
+                  <Th>Aggiunto</Th>
+                  <Th>Views 30gg</Th>
+                  <Th>Status</Th>
+                  <Th style={{ textAlign: 'right' }}>Azioni</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map((r, idx) => (
+                  <RestaurantRow
+                    key={r.id}
+                    r={r}
+                    idx={idx}
+                    discount={discountsMap[r.id]}
+                    views={viewsMap[r.slug] || 0}
+                    onDelete={() => setDeleteId(r.id)}
+                    onEdit={() => openEdit(r.id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+            <Paging page={pageClamped} totalPages={totalPages} totalItems={filtered.length} onChange={setPage} />
+          </div>
         )}
       </div>
 
@@ -660,69 +643,6 @@ function RestaurantRow({ r, idx, discount, views, onDelete, onEdit }) {
   )
 }
 
-function MobileCard({ r, discount, views, onOpen }) {
-  const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map((n) => getCategoryInfo(n)).filter(Boolean)
-  const firstCat = cats[0]
-  const thumb = proxyImg(pickThumb(r))
-  const isPublished = r.is_published !== false
-  const isDrop = discount?.drop_time != null
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      style={{
-        background: '#fff',
-        border: '1px solid var(--color-line, #EAE3D7)',
-        borderRadius: 14,
-        padding: 12,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        textDecoration: 'none',
-        color: 'var(--color-ink)',
-        textAlign: 'left',
-        width: '100%',
-        fontFamily: 'var(--font-sans)',
-        cursor: 'pointer',
-      }}
-    >
-      {thumb ? (
-        <img src={thumb} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
-      ) : (
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
-            flexShrink: 0,
-          }}
-        />
-      )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontWeight: 800, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-            {r.name}
-          </div>
-          {discount && <DiscountTag value={discount.discount_value} />}
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 600, marginTop: 2 }}>
-          {firstCat?.name || '—'} · {r.city || 'Torino'}
-          {isDrop ? ' · drop 🔥' : ''}
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 4, fontSize: 11 }}>
-          <StatusPill published={isPublished} />
-          {views > 0 && (
-            <span style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 700 }}>
-              {views} views · 30gg
-            </span>
-          )}
-        </div>
-      </div>
-    </button>
-  )
-}
-
 /* ------------------------------------------------------------------ */
 /*  Sub UI                                                             */
 /* ------------------------------------------------------------------ */
@@ -762,8 +682,8 @@ function Paging({ page, totalPages, totalItems, onChange }) {
   const numbers = pageNumbers(page, totalPages)
   return (
     <div
-      className="hidden md:flex"
       style={{
+        display: 'flex',
         alignItems: 'center',
         gap: 8,
         padding: '14px 18px',
@@ -789,17 +709,6 @@ function Paging({ page, totalPages, totalItems, onChange }) {
         )
       )}
       <PageButton onClick={() => onChange(next)} disabled={page === totalPages}>›</PageButton>
-    </div>
-  )
-}
-
-function MobilePaging({ page, totalPages, onChange }) {
-  if (totalPages <= 1) return null
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', padding: '12px 0', fontSize: 12, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
-      <PageButton onClick={() => onChange(Math.max(1, page - 1))} disabled={page === 1}>‹</PageButton>
-      <span>{page} / {totalPages}</span>
-      <PageButton onClick={() => onChange(Math.min(totalPages, page + 1))} disabled={page === totalPages}>›</PageButton>
     </div>
   )
 }
