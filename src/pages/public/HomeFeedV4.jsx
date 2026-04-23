@@ -27,7 +27,6 @@ const CATEGORIES = [
   { key: 'colazione',   emoji: '☕', label: 'Colazione' },
   { key: 'carne',       emoji: '🥩', label: 'Carne' },
   { key: 'italiana',    emoji: '🍝', label: 'Italiana' },
-  { key: 'barbecue',    emoji: '🍖', label: 'Barbecue' },
   { key: 'vegano',      emoji: '🥬', label: 'Vegano' },
   { key: 'cocktail',    emoji: '🍸', label: 'Cocktail' },
 ]
@@ -1189,9 +1188,10 @@ export default function HomeFeedV4() {
           /* Category bubbles: 80px wrap grid, no scroll */
           .hfv4-cats-row {
             overflow-x: visible !important;
-            flex-wrap: wrap !important;
+            flex-wrap: nowrap !important;
             gap: 22px !important;
             padding: 6px 0 38px !important;
+            justify-content: center !important;
           }
           .hfv4-cat-bubble {
             width: 80px !important; height: 80px !important;
