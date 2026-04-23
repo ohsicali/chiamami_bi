@@ -1,23 +1,31 @@
 /**
- * @deprecated since PR15e.3 (2026-04-23)
+ * @deprecated since PR15e.3 · feature fully migrated in PR15f.1 + PR15f.2
  *
- * Questo componente NON è più referenziato dal routing (src/App.jsx).
- * Il flusso standard di editing di un ristorante è ora il drawer 720px
- * aperto da /admin/restaurants?edit={id} (vedi src/components/admin/
- * drawer/RestaurantDrawer.jsx e le 6 tab in src/components/admin/tabs/).
+ * Questo file NON è più referenziato da nessun routing (src/App.jsx) né
+ * da alcun Link nell'admin. Il flusso di editing ristorante è il drawer
+ * 720px (RestaurantDrawer + 6 tab). Il flusso di creazione è NewRestaurant.
  *
- * Il file è preservato per riferimento perché contiene alcune feature
- * che NON sono ancora state migrate al drawer:
- *   - AI text correction per occhiello/racconto (handleAiCorrect →
- *     chiama POST /api/correct-text)
- *   - Google Places name-search fallback (handleNameSearch) quando
- *     /api/resolve-maps ritorna CAPTCHA
- *   - Mapbox reverse-geocode quando manca l'indirizzo
+ * Tutte le feature legacy sono state migrate:
+ *   ✓ AI text correction            → _AiCorrect hook in DettagliTab
+ *                                      + CosaTiConsiglioTab (PR15f.2)
+ *   ✓ Google name-search fallback   → GoogleMapsImportBlock shared
+ *                                      (PR15f.1 + PR15f.2)
+ *   ✓ Mapbox reverse-geocode        → GoogleMapsImportBlock shared
+ *                                      (PR15f.1)
+ *   ✓ Google Maps URL resolve       → GoogleMapsImportBlock shared
+ *                                      (PR15c-2 + PR15f.2)
+ *   ✓ Google Maps update in edit    → DettagliTab variant="compact"
+ *                                      (PR15f.2)
+ *   ✓ Partner PIN generation        → /api/admin-actions rotate-pin
+ *                                      + CredenzialiTab (PR15c)
+ *   ✓ Discount inline CRUD          → DiscountManager standalone +
+ *                                      drawer ScontoTab (PR15c + PR15d)
+ *   ✓ Photo upload + WebP            → FotoGalleriaTab with @dnd-kit
+ *                                      (PR15c)
  *
- * Prossimi step (PR futura):
- *   1. Migrare queste 3 feature nel DettagliTab del drawer
- *   2. Verificare che nessun bookmark punti ancora a questa route
- *   3. Eliminare completamente questo file
+ * Il file resta come dead code documentato. Sara' rimosso in una PR
+ * di cleanup dedicata dopo una window di osservazione (p.es. 1 mese
+ * di uso prod per verificare che nessun bookmark/deep-link lo richiami).
  */
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
