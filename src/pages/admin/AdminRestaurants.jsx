@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -7,7 +7,6 @@ import { useCategories } from '../../lib/hooks/useCategories'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
-import RestaurantDrawer from '../../components/admin/drawer/RestaurantDrawer'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 
 const PAGE_SIZE = 20
@@ -120,12 +119,12 @@ function StatusPill({ published }) {
 /* ------------------------------------------------------------------ */
 export default function AdminRestaurants() {
   const { user, isAdmin, loading: authLoading } = useAuth()
-  const { allRestaurants: restaurants, loading: dataLoading, refetch: refreshRestaurants } = useRestaurants()
+  const navigate = useNavigate()
+  const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
   const { categories } = useCategories()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const queryFromUrl = searchParams.get('q') || ''
-  const editingId = searchParams.get('edit')
   const [search, setSearch] = useState(queryFromUrl)
   const [statusFilter, setStatusFilter] = useState('all') // all | published | draft
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -136,15 +135,19 @@ export default function AdminRestaurants() {
   const [discountsMap, setDiscountsMap] = useState({})
   const [viewsMap, setViewsMap] = useState({})
 
+  // Click a row → navigate to full-page edit (replaces drawer overlay).
+  // Back-compat: if the URL still carries ?edit=ID (from older bookmarks
+  // or from the dashboard Top restaurants link), redirect to the proper
+  // edit page so nothing breaks.
+  useEffect(() => {
+    const legacyEditId = searchParams.get('edit')
+    if (legacyEditId) {
+      navigate(`/admin/restaurant/${legacyEditId}/edit`, { replace: true })
+    }
+  }, [searchParams, navigate])
+
   const openEdit = (id) => {
-    const p = new URLSearchParams(searchParams)
-    p.set('edit', id)
-    setSearchParams(p)
-  }
-  const closeEdit = () => {
-    const p = new URLSearchParams(searchParams)
-    p.delete('edit')
-    setSearchParams(p)
+    navigate(`/admin/restaurant/${id}/edit`)
   }
 
   // Sync URL ?q= → search state on mount / URL change
@@ -568,15 +571,6 @@ export default function AdminRestaurants() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ── Edit drawer ── */}
-      <RestaurantDrawer
-        restaurantId={editingId}
-        onClose={closeEdit}
-        onSaved={() => {
-          refreshRestaurants?.()
-        }}
-      />
     </AdminLayout>
   )
 }

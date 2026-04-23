@@ -44,11 +44,10 @@ const AdminRestaurants = lazy(() => import('./pages/admin/AdminRestaurants'))
 const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'))
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 const NewRestaurant = lazy(() => import('./pages/admin/NewRestaurant'))
-// NOTE: RestaurantForm.jsx is the legacy full-page edit form. It's no longer
-// routed anywhere in the app — drawer edit in AdminRestaurants covers the
-// standard flow. The file is preserved as a reference for a few legacy
-// features (AI text correction, Google Places name-search fallback) that
-// still need to be migrated into the drawer tabs in a future PR.
+const EditRestaurant = lazy(() => import('./pages/admin/EditRestaurant'))
+// NOTE: RestaurantForm.jsx is the legacy full-page edit form. Replaced by
+// EditRestaurant.jsx (PR15g.2, same 6 shared tabs used in NewRestaurant).
+// The file is preserved as dead code but will be removed in a cleanup PR.
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
@@ -140,6 +139,7 @@ export default function App() {
           <Route path="/admin/restaurants" element={<AdminRestaurants />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/restaurant/new" element={<NewRestaurant />} />
+          <Route path="/admin/restaurant/:id/edit" element={<EditRestaurant />} />
           <Route path="/admin/categories" element={<CategoryManager />} />
           <Route path="/admin/discounts" element={<DiscountManager />} />
           <Route path="/admin/partners" element={<PartnerManager />} />

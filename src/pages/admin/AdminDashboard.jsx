@@ -595,7 +595,7 @@ function TopRestaurantsCard({ items }) {
         return (
           <Link
             key={r.id}
-            to={`/admin/restaurants?edit=${r.id}`}
+            to={`/admin/restaurant/${r.id}/edit`}
             style={{
               display: 'flex',
               alignItems: 'center',
