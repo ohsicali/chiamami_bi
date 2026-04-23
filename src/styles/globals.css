@@ -245,6 +245,10 @@ body {
 }
 @media (min-width: 768px) {
   .bottom-nav { display: none !important; }
+  .footer-tab-offset { padding-bottom: 40px !important; }
+}
+@media (max-width: 767px) {
+  .footer-tab-offset { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px) !important; }
 }
 
 .bottom-nav .nav-item {
