@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v4 · Home desktop REDESIGN · La Guida di Bi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA; --corallo-wash:#FDF2F0;
+  --ink:#22181C; --ink-2:#3d2f36; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954; --oro-soft:#F4E7CC;
+  --line:#EAE3D7;
+  --green-a:#A3E635; --green-b:#4ADE80;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{font-family:var(--ff-ui);background:#0f0f10;color:var(--ink)}
+
+body{min-height:100vh;padding:60px 32px;display:flex;flex-direction:column;align-items:center;gap:50px;background:radial-gradient(900px 500px at 20% -10%,rgba(232,69,60,.12),transparent 60%),radial-gradient(700px 400px at 80% 20%,rgba(176,137,84,.08),transparent 60%),#0f0f10}
+
+.page-head{max-width:900px;text-align:center;color:#fff}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:rgba(232,69,60,.15);color:#FFAFA8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(232,69,60,.3)}
+.page-head h1{font-family:var(--ff-ui);font-weight:900;font-size:38px;letter-spacing:-.02em;margin:16px 0 10px;line-height:1.05}
+.page-head p{color:rgba(255,255,255,.65);font-size:14px;line-height:1.55;max-width:620px;margin:0 auto}
+
+.frame-label{color:rgba(255,255,255,.55);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px;text-align:left;padding-left:8px}
+.frame-label span{color:var(--corallo);font-family:var(--ff-mark);font-size:13px;letter-spacing:.04em;margin-right:8px;text-transform:none}
+
+/* Laptop frame */
+.laptop{width:1440px;height:900px;background:#111;border-radius:18px 18px 6px 6px;padding:22px 16px 16px;box-shadow:0 40px 100px rgba(0,0,0,.5);position:relative;transform-origin:top center}
+.laptop::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:70px;height:6px;background:#222;border-radius:3px}
+.laptop .screen{width:100%;height:100%;border-radius:6px;overflow:hidden;background:var(--page);position:relative}
+@media (max-width:1520px){.laptop{transform:scale(.88)}}
+@media (max-width:1360px){.laptop{transform:scale(.78)}}
+@media (max-width:1200px){.laptop{transform:scale(.68)}}
+@media (max-width:1040px){.laptop{transform:scale(.58)}}
+
+/* Second laptop can be shorter for variant showcase */
+.laptop.tall{height:1400px}
+
+/* ============ SHELL ============ */
+.shell{height:100%;display:flex;flex-direction:column;background:var(--page);overflow-y:auto}
+.shell::-webkit-scrollbar{display:none}
+
+/* ============ TOP BAR ============ */
+.nav-top{
+  display:flex;align-items:center;gap:20px;padding:14px 36px;
+  background:rgba(250,247,242,.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;
+}
+.nav-logo{display:flex;flex-direction:column;line-height:.92}
+.nav-logo .l1{font-family:var(--ff-mark);font-size:18px;letter-spacing:.02em;color:var(--corallo)}
+.nav-logo .l2{font-family:var(--ff-ui);font-weight:700;font-size:9px;letter-spacing:.15em;color:var(--ink-40);margin-top:3px;text-transform:uppercase}
+
+.nav-links{display:flex;gap:4px;margin-left:24px}
+.nav-links a{padding:9px 14px;border-radius:999px;font-size:13.5px;font-weight:700;color:var(--ink-70);text-decoration:none}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a.active{background:var(--ink-05);color:var(--ink)}
+
+.nav-search{
+  flex:1;max-width:360px;margin-left:12px;
+  display:flex;align-items:center;gap:8px;padding:9px 16px;
+  background:var(--white);border:1px solid var(--line);border-radius:999px;
+  font-size:13px;color:var(--ink-40);font-weight:500;
+}
+.nav-search::before{content:"🔍";font-size:13px}
+
+.nav-city{
+  margin-left:auto;display:inline-flex;align-items:center;gap:9px;
+  padding:10px 16px 10px 14px;background:var(--ink-05);border:1px solid var(--ink-15);
+  border-radius:999px;font-weight:700;font-size:14px;letter-spacing:-.01em;
+}
+.nav-city .dot{width:8px;height:8px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 3px rgba(232,69,60,.15)}
+.nav-city .chev{font-size:10px;color:var(--ink-40);margin-left:2px}
+
+.avatar-top{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;display:grid;place-items:center;
+  font-family:var(--ff-mark);font-size:16px;
+  box-shadow:0 6px 14px rgba(232,69,60,.3);
+  border:2px solid #fff;cursor:pointer;
+}
+
+/* ============ MAIN LAYOUT ============ */
+.main-wrap{padding:24px 36px 60px;max-width:1380px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start}
+
+/* ============ SPONSOR HERO (desktop) ============ */
+.sponsor-hero{
+  position:relative;background:var(--ink);color:#fff;border-radius:var(--r-xl);
+  overflow:hidden;box-shadow:var(--shadow-md);grid-column:1 / -1;
+  display:grid;grid-template-columns:460px 1fr;gap:0;min-height:280px;
+}
+.sponsor-hero-photo{
+  position:relative;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,0) 50%,rgba(34,24,28,.6) 100%),
+    linear-gradient(135deg,#D4843A 0%,#8A4420 55%,#3A1D0F 100%);
+}
+.sponsor-hero-photo::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(500px 200px at 30% 30%,rgba(255,255,255,.12),transparent 60%);
+}
+.sponsor-hero-adlabel{
+  position:absolute;top:20px;left:20px;
+  padding:6px 14px;background:rgba(255,255,255,.16);backdrop-filter:blur(14px);
+  color:rgba(255,255,255,.9);border-radius:999px;
+  font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.12);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.sponsor-hero-adlabel::before{content:"✦";color:var(--oro)}
+.sponsor-hero-cat{
+  position:absolute;bottom:22px;left:22px;
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.85);
+}
+.sponsor-hero-cat .bub{width:6px;height:6px;border-radius:50%;background:var(--corallo)}
+
+.sponsor-hero-body{padding:36px 40px 32px;display:flex;flex-direction:column;justify-content:center}
+.sponsor-hero-title{font-family:var(--ff-ui);font-weight:900;font-size:48px;letter-spacing:-.025em;line-height:1;color:#fff;margin-bottom:14px}
+.sponsor-hero-sub{font-size:15px;color:rgba(255,255,255,.72);line-height:1.55;max-width:480px;margin-bottom:20px}
+.sponsor-hero-sub b{color:#fff;font-weight:700}
+.sponsor-hero-meta{font-size:12px;color:rgba(255,255,255,.52);font-weight:600;margin-bottom:24px;letter-spacing:.02em}
+.sponsor-hero-meta .sep{opacity:.5}
+
+.sponsor-hero-ctas{display:flex;gap:10px;flex-wrap:wrap}
+.btn-d-discount{
+  padding:15px 22px;background:var(--corallo);color:#fff;border-radius:999px;
+  font-size:14px;font-weight:800;text-decoration:none;
+  box-shadow:0 10px 24px rgba(232,69,60,.38);
+  display:inline-flex;align-items:center;gap:10px;letter-spacing:-.01em;
+}
+.btn-d-discount .p{background:rgba(255,255,255,.25);padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.btn-d-explore{
+  padding:15px 22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;
+  border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-d-explore::after{content:"→"}
+.btn-d-save{
+  padding:15px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;
+  border-radius:50%;text-decoration:none;width:52px;height:52px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:16px;
+}
+
+/* ============ TIME HERO + MOMENT TABS ============ */
+.time-d{
+  grid-column:1 / 2;
+  background:var(--white);border:1px solid var(--line);border-radius:var(--r-xl);
+  padding:32px 36px;box-shadow:var(--shadow-sm);
+}
+.time-d-top{display:flex;align-items:baseline;gap:22px;margin-bottom:22px;flex-wrap:wrap}
+.time-d-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--corallo-wash);color:var(--corallo-ink);border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.time-d-tag .pulse{width:6px;height:6px;border-radius:50%;background:var(--corallo);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.time-d-clock{font-family:var(--ff-mark);font-size:88px;line-height:.92;letter-spacing:-.02em;color:var(--ink);font-weight:400}
+.time-d-right{flex:1;min-width:280px}
+.time-d-q{font-family:var(--ff-ui);font-weight:900;font-size:28px;letter-spacing:-.02em;line-height:1.1;color:var(--ink);margin-bottom:8px}
+.time-d-s{font-size:14px;color:var(--ink-70);line-height:1.4}
+
+.moment-d-tabs{display:flex;gap:10px;flex-wrap:wrap}
+.md-tab{
+  display:flex;align-items:center;gap:10px;padding:12px 18px;
+  border-radius:999px;background:var(--ink-05);color:var(--ink);text-decoration:none;
+  border:1px solid transparent;font-weight:700;font-size:13.5px;
+}
+.md-tab .emoji{font-size:18px;line-height:1}
+.md-tab.active{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(34,24,28,.18)}
+
+/* ============ RESULTS GRID ============ */
+.results-d{grid-column:1 / 2;margin-top:4px}
+.results-d-head{display:flex;align-items:baseline;justify-content:space-between;padding:0 2px;margin-bottom:14px}
+.results-d-head h3{font-family:var(--ff-ui);font-weight:800;font-size:18px;letter-spacing:-.01em}
+.results-d-head .count{font-size:12px;font-weight:700;color:var(--ink-70);letter-spacing:.04em}
+.results-d-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ld-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;text-decoration:none;color:inherit;box-shadow:var(--shadow-sm);display:flex;flex-direction:column}
+.ld-card .ph{position:relative;aspect-ratio:16/11;background:linear-gradient(135deg,#E8CFA8,#8A5E2A)}
+.ld-card .ph.a1{background:linear-gradient(135deg,#C5A386,#5D3D24)}
+.ld-card .ph.a2{background:linear-gradient(135deg,#D9A441,#8A5A1F)}
+.ld-card .ph.a3{background:linear-gradient(135deg,#B8936E,#5E3E24)}
+.ld-card .ph .openp{position:absolute;bottom:10px;left:10px;padding:5px 10px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:999px;font-size:10px;font-weight:800;color:#137C3E;display:inline-flex;align-items:center;gap:5px}
+.ld-card .ph .openp .od{width:5px;height:5px;border-radius:50%;background:#137C3E}
+.ld-card .ph .heart{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);display:grid;place-items:center;font-size:14px}
+.ld-card .body{padding:12px 14px 14px}
+.ld-card .name{font-family:var(--ff-ui);font-weight:800;font-size:16px;letter-spacing:-.01em;margin-bottom:3px}
+.ld-card .meta{font-size:11px;color:var(--ink-70);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ld-card .meta .tag{background:var(--corallo-soft);color:var(--corallo-ink);font-weight:700;font-size:10px;padding:3px 7px;border-radius:999px}
+.ld-card .meta .sep{color:var(--ink-40)}
+
+/* Card "+" */
+.ld-more{
+  background:linear-gradient(135deg,var(--ink) 0%,#3d2f36 100%);color:#fff;
+  border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  padding:24px 16px;text-decoration:none;text-align:center;
+}
+.ld-more .plus{width:64px;height:64px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;font-size:32px;font-weight:700;color:#fff;box-shadow:0 10px 22px rgba(232,69,60,.4)}
+.ld-more .t{font-family:var(--ff-ui);font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1.1;color:#fff}
+.ld-more .s{font-size:12px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.02em}
+
+/* Map CTA */
+.map-d{
+  grid-column:1 / 2;
+  position:relative;display:grid;grid-template-columns:76px 1fr auto;gap:16px;align-items:center;
+  background:linear-gradient(135deg,#2C5E4A 0%,#173D30 100%);color:#fff;
+  border-radius:var(--r-lg);padding:18px 24px;overflow:hidden;margin-top:16px;
+  text-decoration:none;
+}
+.map-d::after{content:"";position:absolute;inset:0;background:radial-gradient(300px 120px at 80% 30%,rgba(255,255,255,.1),transparent 60%),repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 2px,transparent 2px 8px);pointer-events:none}
+.map-d .pin-ic{width:76px;height:76px;border-radius:18px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:32px;position:relative;z-index:1}
+.map-d .txt{position:relative;z-index:1}
+.map-d .t{font-family:var(--ff-ui);font-weight:800;font-size:18px;letter-spacing:-.01em;margin-bottom:4px}
+.map-d .s{font-size:12px;color:rgba(255,255,255,.72)}
+.map-d .arr{position:relative;z-index:1;width:46px;height:46px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;font-size:20px;font-weight:800;box-shadow:0 8px 18px rgba(232,69,60,.35)}
+
+/* ============ RIGHT COLUMN ============ */
+.col-right{grid-column:2 / 3;display:flex;flex-direction:column;gap:22px;position:sticky;top:90px}
+
+/* Chat AI */
+.ai-d{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--r-xl);
+  padding:24px 22px 22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+.ai-d::before{content:"";position:absolute;top:-80px;right:-60px;width:260px;height:260px;background:radial-gradient(circle,rgba(232,69,60,.1),transparent 60%);border-radius:50%}
+.ai-d-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;position:relative}
+.ai-d-av{
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;display:grid;place-items:center;
+  font-family:var(--ff-mark);font-size:22px;
+  box-shadow:0 6px 16px rgba(232,69,60,.35);position:relative;
+}
+.ai-d-av .spark{position:absolute;top:3px;right:3px;width:12px;height:12px;background:var(--oro);border-radius:50%;border:2px solid #fff}
+.ai-d-head .t{font-family:var(--ff-ui);font-weight:900;font-size:20px;letter-spacing:-.01em;line-height:1.1}
+.ai-d-head .s{font-size:12.5px;color:var(--ink-70);margin-top:3px;line-height:1.35}
+
+.ai-d-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:relative}
+.ai-d-chip{padding:7px 12px;background:var(--corallo-wash);color:var(--corallo-ink);border-radius:999px;font-size:11.5px;font-weight:700;border:1px solid rgba(232,69,60,.18)}
+
+.ai-d-inp{width:100%;padding:14px 16px;border-radius:var(--r-md);background:var(--cream);border:1px solid var(--ink-15);font-family:var(--ff-ui);font-weight:500;font-size:14px;color:var(--ink);resize:none;min-height:92px;line-height:1.4;margin-bottom:12px}
+.ai-d-inp::placeholder{color:var(--ink-40);font-style:italic}
+.ai-d-actions{display:flex;gap:10px;align-items:center;position:relative}
+.ai-d-hint{flex:1;font-size:11.5px;color:var(--ink-40);font-weight:600;line-height:1.35}
+.ai-d-submit{padding:12px 20px;background:var(--ink);color:#fff;border:0;border-radius:999px;font-size:13.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 6px 14px rgba(34,24,28,.22)}
+.ai-d-submit::after{content:"→"}
+
+/* Editorial secondo Bi */
+.edit-d{
+  position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#FEF6E4 0%,#F4E7CC 100%);
+  border:1px solid rgba(176,137,84,.35);
+  border-radius:var(--r-xl);padding:22px 20px 20px;
+}
+.edit-d .author{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative}
+.av-bi-sm{width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:16px}
+.edit-d-kicker{font-family:var(--ff-ui);font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--oro);text-transform:uppercase;margin-bottom:6px;position:relative}
+.edit-d-t{font-family:var(--ff-ui);font-weight:900;font-size:20px;letter-spacing:-.02em;line-height:1.1;margin-bottom:8px;position:relative}
+.edit-d-b{font-family:var(--ff-hand);font-size:18px;font-weight:600;line-height:1.35;color:var(--ink);position:relative}
+
+/* Notes side */
+.notes{max-width:900px;color:#fff;padding:0 8px}
+.notes h3{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--corallo);margin-bottom:14px}
+.notes h4{font-family:var(--ff-ui);font-weight:800;font-size:15px;color:#fff;margin-top:22px;margin-bottom:8px;letter-spacing:-.01em}
+.notes p{font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.6;margin-bottom:10px}
+.notes ul{list-style:none;padding:0;margin:6px 0 12px}
+.notes li{position:relative;padding-left:18px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;margin-bottom:6px}
+.notes li::before{content:"→";position:absolute;left:0;top:0;color:var(--corallo);font-weight:800}
+.notes code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;color:#FFE3A5}
+.notes b{color:#fff;font-weight:700}
+
+/* AI output preview (below chat) — only desktop second laptop */
+.ai-output-d{margin-top:18px;padding:16px 20px;background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg)}
+.ai-output-d .bub{background:var(--ink-05);border-radius:14px 14px 14px 4px;padding:10px 14px;font-size:13px;color:var(--ink);max-width:360px;line-height:1.4;font-weight:500;margin-bottom:12px}
+.ai-output-d .bub i{color:var(--corallo);font-style:normal;font-weight:700}
+.ai-result-d{display:flex;gap:12px;padding:10px;background:var(--cream);border-radius:var(--r-md);margin-bottom:8px;text-decoration:none;color:inherit;align-items:center}
+.ai-result-d .ph{width:70px;height:70px;border-radius:var(--r-sm);background:linear-gradient(135deg,#C9A57B,#7D5230);flex:0 0 70px}
+.ai-result-d .ph.a2{background:linear-gradient(135deg,#D2B078,#8C6632)}
+.ai-result-d .body{flex:1;min-width:0}
+.ai-result-d .why{font-family:var(--ff-hand);font-size:15px;color:var(--corallo-ink);font-weight:600;line-height:1.2}
+.ai-result-d .n{font-family:var(--ff-ui);font-weight:800;font-size:15px;letter-spacing:-.01em;margin-top:2px}
+.ai-result-d .m{font-size:11px;color:var(--ink-70);margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="kick"><span>✦</span> v4 · Home desktop redesign</div>
+  <h1>Home contestuale · desktop</h1>
+  <p>Stessa logica del mobile, impaginata per grande schermo. Sponsor banner hero 1440px, orologio + 5 pill momento a sinistra, chat AI colonna destra in sticky, risultati in griglia 4-col con card "+" finale.</p>
+</div>
+
+<div style="max-width:1440px;width:100%">
+  <div class="frame-label"><span>01</span> Home desktop · vista principale (1440×900)</div>
+  <div class="laptop tall">
+    <div class="screen">
+      <div class="shell">
+        <!-- Top nav -->
+        <div class="nav-top">
+          <div class="nav-logo"><div class="l1">CHIAMAMI BI</div><div class="l2">la guida di bi</div></div>
+          <nav class="nav-links">
+            <a class="active" href="#">Home</a>
+            <a href="#">Esplora</a>
+            <a href="#">Sconti</a>
+            <a href="#">Salvati</a>
+          </nav>
+          <div class="nav-search">Cerca un ristorante, una zona, una categoria…</div>
+          <div class="nav-city"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+          <div class="avatar-top">A</div>
+        </div>
+
+        <div class="main-wrap">
+          <!-- Sponsor hero full-width -->
+          <div class="sponsor-hero">
+            <div class="sponsor-hero-photo">
+              <div class="sponsor-hero-adlabel">Annuncio</div>
+              <div class="sponsor-hero-cat"><span class="bub"></span>Burger · Vanchiglia</div>
+            </div>
+            <div class="sponsor-hero-body">
+              <div class="sponsor-hero-title">Smashers</div>
+              <div class="sponsor-hero-sub">Smash burger senza compromessi. <b>Doppio con cheddar</b> la cosa da prendere, secondo me — con patate cotte bene e birra pescata da uno scaffale curato.</div>
+              <div class="sponsor-hero-meta">€€ · 15–25€ <span class="sep">·</span> Aperto ora <span class="sep">·</span> fino alle 23:30</div>
+              <div class="sponsor-hero-ctas">
+                <a class="btn-d-discount" href="#">Attiva sconto <span class="p">-15%</span></a>
+                <a class="btn-d-explore" href="#">Scopri il locale</a>
+                <a class="btn-d-save" href="#" aria-label="Salva">♡</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time + moment tabs -->
+          <div class="time-d">
+            <div class="time-d-top">
+              <div>
+                <div class="time-d-tag" style="margin-bottom:10px"><span class="pulse"></span>Aperitivo</div>
+                <div class="time-d-clock">18:42</div>
+              </div>
+              <div class="time-d-right">
+                <div class="time-d-q">È l'ora dell'aperitivo. Ce l'hai un posto in mente?</div>
+                <div class="time-d-s">Ti mostro dove andare ora, a Torino.</div>
+              </div>
+            </div>
+            <div class="moment-d-tabs">
+              <a class="md-tab" href="#"><span class="emoji">🥐</span>Colazione</a>
+              <a class="md-tab" href="#"><span class="emoji">🍝</span>Pranzo</a>
+              <a class="md-tab active" href="#"><span class="emoji">🥂</span>Aperitivo</a>
+              <a class="md-tab" href="#"><span class="emoji">🍷</span>Cena</a>
+              <a class="md-tab" href="#"><span class="emoji">🍸</span>Dopo cena</a>
+            </div>
+          </div>
+
+          <!-- Chat AI (right column sticky) -->
+          <div class="col-right">
+            <div class="ai-d">
+              <div class="ai-d-head">
+                <div class="ai-d-av">B<span class="spark"></span></div>
+                <div>
+                  <div class="t">Chiedi a Bi</div>
+                  <div class="s">Dimmi cosa ti va, ti suggerisco io.</div>
+                </div>
+              </div>
+              <div class="ai-d-chips">
+                <span class="ai-d-chip">✨ un cinese aperto stasera</span>
+                <span class="ai-d-chip">✨ sotto i 20€</span>
+                <span class="ai-d-chip">✨ brunch San Salvario</span>
+                <span class="ai-d-chip">✨ vino naturale</span>
+              </div>
+              <textarea class="ai-d-inp" placeholder="es. un cinese aperto a cena che costi poco ma abbia una buona carta vini…"></textarea>
+              <div class="ai-d-actions">
+                <div class="ai-d-hint">Bi incrocia la tua voglia con la Guida</div>
+                <button class="ai-d-submit">Chiedi a Bi</button>
+              </div>
+
+              <!-- Example output inline -->
+              <div class="ai-output-d">
+                <div class="bub">Ho incrociato <i>cinese + stasera + budget</i>. Ti proporrei questi due — entrambi aperti ora.</div>
+                <a class="ai-result-d" href="#">
+                  <div class="ph"></div>
+                  <div class="body">
+                    <div class="why">Per te, stasera.</div>
+                    <div class="n">Ristorante Yangtze</div>
+                    <div class="m">Cinese · Porta Nuova · €</div>
+                  </div>
+                </a>
+                <a class="ai-result-d" href="#">
+                  <div class="ph a2"></div>
+                  <div class="body">
+                    <div class="why">Piccolo, silenzioso.</div>
+                    <div class="n">Golden China Lab</div>
+                    <div class="m">Cinese · Vanchiglia · €€</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Secondo Bi editorial -->
+            <div class="edit-d">
+              <div class="author"><div class="av-bi-sm">B</div><div><div style="font-weight:700;font-size:13px">Bi</div><div style="font-size:11px;color:var(--ink-70)">Secondo Bi</div></div></div>
+              <div class="edit-d-kicker">Settimana del 22 aprile</div>
+              <div class="edit-d-t">Questa settimana passerei da Consorzio.</div>
+              <div class="edit-d-b">Daniele ha messo in carta il vitello tonnato all'antica, versione non riconciliata con la maionese. Non l'avevo più trovato così.</div>
+            </div>
+          </div>
+
+          <!-- Results grid (spans col 1 only) -->
+          <div class="results-d">
+            <div class="results-d-head">
+              <h3>Aperitivo ora · 23 aperti fino dopo le 20</h3>
+              <span class="count">Top 3 per te</span>
+            </div>
+            <div class="results-d-grid">
+              <a class="ld-card" href="#">
+                <div class="ph a2">
+                  <div class="heart">♡</div>
+                  <div class="openp"><span class="od"></span>Aperto · fino 21:00</div>
+                </div>
+                <div class="body"><div class="name">Scaldapiatti</div><div class="meta"><span class="tag">Aperitivo</span><span class="sep">·</span>Quadrilatero<span class="sep">·</span>€€</div></div>
+              </a>
+              <a class="ld-card" href="#">
+                <div class="ph a1">
+                  <div class="heart">♡</div>
+                  <div class="openp"><span class="od"></span>Aperto · fino 23:00</div>
+                </div>
+                <div class="body"><div class="name">Banco Vini</div><div class="meta"><span class="tag">Enoteca</span><span class="sep">·</span>Vanchiglia<span class="sep">·</span>€€</div></div>
+              </a>
+              <a class="ld-card" href="#">
+                <div class="ph a3">
+                  <div class="heart">♡</div>
+                  <div class="openp"><span class="od"></span>Aperto · fino 22:00</div>
+                </div>
+                <div class="body"><div class="name">Gaudenzio</div><div class="meta"><span class="tag">Enoteca</span><span class="sep">·</span>San Salvario<span class="sep">·</span>€€</div></div>
+              </a>
+              <a class="ld-more" href="#">
+                <div class="plus">+</div>
+                <div class="t">Vedi gli altri 20</div>
+                <div class="s">Sulla mappa</div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Map CTA -->
+          <a class="map-d" href="#">
+            <div class="pin-ic">📍</div>
+            <div class="txt">
+              <div class="t">Mostrameli sulla mappa</div>
+              <div class="s">23 locali aperti per aperitivo, filtrati ora</div>
+            </div>
+            <div class="arr">→</div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:880px;margin:50px auto 0">
+    <div class="notes" style="max-width:100%;padding:0">
+      <h3>✦ Note desktop</h3>
+
+      <h4>1 · Layout a 2 colonne</h4>
+      <p>Main column (<b>~1000px</b>) contiene banner sponsor hero + orologio + risultati griglia + mappa CTA. Right column (<b>360px sticky</b>) contiene chat AI + Secondo Bi. Il banner sponsor hero si estende a tutta larghezza.</p>
+
+      <h4>2 · Top bar</h4>
+      <p>Logo + nav links (Home/Esplora/Sconti/Salvati) + search globale + city-pill <b>Torino ▾</b> + avatar iniziale corallo. Niente bottom nav su desktop — tutto in top.</p>
+
+      <h4>3 · Sponsor hero</h4>
+      <p>Dimensione <b>grande</b>: foto a sinistra (460px) + body a destra. Stessa logica 3 variant del mobile (con sconto / senza sconto / brand non-food). Titolo Poppins 900 a 48px (quasi editorial). CTA triplo: <b>attiva sconto</b> + <b>scopri</b> + <b>salva</b> (icona).</p>
+
+      <h4>4 · Orologio + momenti</h4>
+      <p>Orologio 88px Alfa Slab One. 5 pill moment inline (non scroll necessario su desktop). Active pill = ink pieno con shadow.</p>
+
+      <h4>5 · Griglia risultati</h4>
+      <p>4-col responsive. Card "+" finale porta alla mappa filtrata (<b>pattern gemello del mobile</b>). Numero dinamico "Vedi gli altri N" sulla card.</p>
+
+      <h4>6 · Chat AI sticky</h4>
+      <p>La chat AI è sempre visibile in colonna destra mentre l'utente scrolla i risultati. Output inline sotto l'input, come nel mobile. 4 chip suggeriti invece di 3 (c'è più spazio).</p>
+
+      <h4>7 · Secondo Bi</h4>
+      <p>In colonna destra sotto la chat, come card editoriale compatta. Layout identico al mobile ma width 360px.</p>
+
+      <h4>Cose che non cambiano (gestite nel mobile, stesso comportamento)</h4>
+      <ul>
+        <li>Label <b>Annuncio</b> sempre visibile in alto-sinistra del banner sponsor</li>
+        <li>Se banner <b>ristorante senza sconto</b>: CTA diventa "Scopri di più" + icona cuore salva</li>
+        <li>Se banner <b>brand non-food</b>: layout alternativo compact</li>
+        <li>Fasce orarie contestuali: 06:30–10:30 colazione · 11:30–14:30 pranzo · 17:00–20:30 aperitivo · 19:30–23:30 cena · <b>22:30–02:00 dopo cena / cocktail</b></li>
+        <li>Geolocalizzazione non in home — solo nella pagina Esplora/mappa</li>
+        <li>Filtri Esplora riorganizzati: Categoria · Orario (momento) · Prezzo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px;margin:40px auto 0;text-align:center;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.1em">
+  v4 · Home desktop redesign · 24/04/2026 · coerente con v4-mobile-home-redesign.html
+</div>
+
+</body>
+</html>

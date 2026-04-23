@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v4 · Home mobile REDESIGN · La Guida di Bi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA; --corallo-wash:#FDF2F0;
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954; --oro-soft:#F4E7CC;
+  --green-a:#A3E635; --green-b:#4ADE80; --green-wash:#E8F5D8;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{background:#0f0f10;color:var(--ink);font-family:var(--ff-ui);font-weight:500;line-height:1.45}
+
+body{
+  min-height:100vh;padding:40px 20px 80px;
+  display:flex;flex-direction:column;align-items:center;gap:40px;
+  background:
+    radial-gradient(900px 500px at 20% -10%,rgba(232,69,60,.12),transparent 60%),
+    radial-gradient(700px 400px at 80% 20%,rgba(176,137,84,.08),transparent 60%),
+    #0f0f10;
+}
+
+/* ================ Page header ================ */
+.page-head{max-width:720px;text-align:center;color:#fff;margin:0 auto 8px}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:rgba(232,69,60,.15);color:#FFAFA8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(232,69,60,.3)}
+.page-head h1{font-family:var(--ff-ui);font-weight:900;font-size:34px;letter-spacing:-.02em;margin:16px 0 10px;line-height:1.05;color:#fff}
+.page-head p{color:rgba(255,255,255,.65);font-size:14px;line-height:1.55;max-width:560px;margin:0 auto}
+.page-head .meta{display:inline-flex;align-items:center;gap:10px;margin-top:16px;font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.4);text-transform:uppercase}
+.page-head .meta .dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.35)}
+
+/* ================ Frames section label ================ */
+.frame-label{color:rgba(255,255,255,.55);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin-bottom:12px}
+.frame-label span{color:var(--corallo);font-family:var(--ff-mark);font-size:13px;letter-spacing:.04em;margin-right:8px;text-transform:none}
+
+/* ================ Phone frame ================ */
+.phone-grid{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:14px}
+
+.phone{width:390px;height:1660px;background:#000;border-radius:52px;padding:10px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(0,0,0,.4)}
+.phone.short{height:844px}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:50;pointer-events:none}
+.phone{position:relative}
+.screen{width:100%;height:100%;background:var(--page);border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;font-size:13px;font-weight:700}
+.statusbar .icons{display:inline-flex;gap:6px;align-items:center}
+.statusbar svg{width:16px;height:12px}
+
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:110px}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ================ Top bar ================ */
+.topbar{padding:12px 20px 14px;display:flex;align-items:center;gap:10px}
+.logo{flex:0 0 auto;display:flex;flex-direction:column;line-height:.92}
+.logo .l1{font-family:var(--ff-mark);font-size:15px;letter-spacing:.02em;color:var(--corallo)}
+.logo .l2{font-family:var(--ff-ui);font-weight:700;font-size:8px;letter-spacing:.15em;color:var(--ink-40);margin-top:3px;text-transform:uppercase}
+.city-pill{margin-left:auto;display:inline-flex;align-items:center;gap:9px;padding:10px 16px 10px 14px;background:var(--ink-05);border:1px solid var(--ink-15);border-radius:999px;font-weight:700;font-size:14px;letter-spacing:-.01em}
+.city-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 3px rgba(232,69,60,.15)}
+.city-pill .chev{font-size:10px;color:var(--ink-40);margin-left:2px}
+.avatar-sm{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:16px;box-shadow:0 6px 14px rgba(232,69,60,.3);border:2px solid #fff}
+
+/* ================ SPONSOR BANNER v2 (ristorante) ================ */
+.sponsor-wrap{padding:8px 16px 18px}
+.sponsor-card{
+  position:relative;background:var(--ink);color:#fff;border-radius:var(--r-xl);
+  overflow:hidden;box-shadow:var(--shadow-md);
+}
+.sponsor-photo{
+  height:178px;position:relative;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%),
+    linear-gradient(135deg,#C48E4E 0%,#7D5230 60%,#3C2312 100%);
+}
+.sponsor-photo::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(500px 200px at 20% 20%,rgba(255,255,255,.1),transparent 60%);
+}
+.sponsor-adlabel{
+  position:absolute;top:12px;left:12px;
+  padding:5px 10px;background:rgba(255,255,255,.16);backdrop-filter:blur(14px);
+  color:rgba(255,255,255,.9);border-radius:999px;
+  font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.12);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.sponsor-adlabel::before{content:"✦";color:var(--oro)}
+.sponsor-save{
+  position:absolute;top:12px;right:12px;
+  width:38px;height:38px;border-radius:50%;
+  background:rgba(0,0,0,.4);backdrop-filter:blur(14px);
+  display:grid;place-items:center;font-size:16px;color:#fff;
+  border:1px solid rgba(255,255,255,.14);
+}
+.sponsor-cat{
+  position:absolute;bottom:14px;left:14px;
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(255,255,255,.85);
+}
+.sponsor-cat .bub{width:5px;height:5px;border-radius:50%;background:var(--corallo)}
+
+.sponsor-body{padding:18px 18px 18px;display:flex;flex-direction:column;gap:10px;}
+.sponsor-title{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.02em;line-height:1.05;color:#fff}
+.sponsor-sub{font-size:12px;color:rgba(255,255,255,.6);line-height:1.45}
+.sponsor-sub b{color:rgba(255,255,255,.85);font-weight:700}
+.sponsor-meta{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:11px;color:rgba(255,255,255,.5);font-weight:600}
+.sponsor-meta .sep{opacity:.4}
+
+.sponsor-ctas{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:6px}
+.btn-discount{
+  padding:13px 14px;background:var(--corallo);color:#fff;border-radius:999px;
+  font-size:13px;font-weight:800;text-align:center;text-decoration:none;
+  box-shadow:0 8px 20px rgba(232,69,60,.35);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:-.01em;
+}
+.btn-discount::before{content:"";width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.btn-discount .p{background:rgba(255,255,255,.25);padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-left:4px}
+.btn-explore{
+  padding:13px 16px;background:transparent;border:1px solid rgba(255,255,255,.18);color:#fff;
+  border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;justify-content:center;
+}
+.btn-explore::after{content:"→"}
+
+/* ================ TIME-BASED HERO ================ */
+.time-hero{padding:22px 20px 14px;text-align:left}
+.time-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--corallo-wash);color:var(--corallo-ink);border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
+.time-tag .pulse{width:6px;height:6px;border-radius:50%;background:var(--corallo);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+.time-clock{font-family:var(--ff-mark);font-size:96px;line-height:.92;letter-spacing:-.02em;color:var(--ink);margin-bottom:12px;font-weight:400}
+.time-question{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.02em;line-height:1.1;color:var(--ink);max-width:320px}
+.time-sub{margin-top:8px;font-size:14px;color:var(--ink-70);line-height:1.4;max-width:300px}
+
+/* ================ Moment tabs (5 · scroll orizzontale) ================ */
+.moment-tabs{display:flex;gap:8px;overflow-x:auto;padding:18px 20px 16px;-webkit-overflow-scrolling:touch}
+.moment-tabs::-webkit-scrollbar{display:none}
+.mtab{
+  flex:0 0 auto;min-width:76px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:12px 10px;border-radius:var(--r-md);
+  background:var(--ink-05);color:var(--ink);text-decoration:none;
+  border:1px solid transparent;
+}
+.mtab .emoji{font-size:22px;line-height:1}
+.mtab .lbl{font-size:11px;font-weight:700;color:var(--ink-70);letter-spacing:.02em;white-space:nowrap}
+.mtab.active{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(34,24,28,.18)}
+.mtab.active .lbl{color:rgba(255,255,255,.8)}
+
+/* ================ Filtered results for moment ================ */
+.results-head{padding:4px 20px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.results-head h3{font-family:var(--ff-ui);font-weight:800;font-size:15px;letter-spacing:-.01em;color:var(--ink)}
+.results-head .count{font-size:11px;font-weight:700;color:var(--ink-40);letter-spacing:.04em}
+
+.loc-row{display:flex;gap:12px;overflow-x:auto;padding:0 20px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.loc-row::-webkit-scrollbar{display:none}
+.lcard{flex:0 0 72%;scroll-snap-align:start;background:#fff;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);text-decoration:none;color:inherit;box-shadow:var(--shadow-sm);display:block}
+.lcard .ph{position:relative;width:100%;aspect-ratio:16/11;background:linear-gradient(135deg,#E8CFA8,#8A5E2A);overflow:hidden}
+.lcard .ph.alt1{background:linear-gradient(135deg,#C5A386,#5D3D24)}
+.lcard .ph.alt2{background:linear-gradient(135deg,#D9A441,#8A5A1F)}
+.lcard .ph .open-pill{position:absolute;bottom:10px;left:10px;padding:5px 10px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:999px;font-size:10px;font-weight:800;color:#137C3E;display:inline-flex;align-items:center;gap:5px}
+.lcard .ph .open-pill .od{width:5px;height:5px;border-radius:50%;background:#137C3E}
+.lcard .ph .heart{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:14px}
+.lcard .body{padding:12px 14px 14px}
+.lcard .name{font-family:var(--ff-ui);font-weight:800;font-size:16px;line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
+.lcard .meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-70);margin-top:4px;flex-wrap:wrap}
+.lcard .meta .tag{background:var(--corallo-soft);color:var(--corallo-ink);font-weight:700;font-size:10px;padding:3px 7px;border-radius:999px}
+.lcard .meta .sep{color:var(--ink-40)}
+
+/* Card "+" final (see-more → mappa) */
+.lcard.more{
+  flex:0 0 60%;scroll-snap-align:start;
+  background:linear-gradient(135deg,#22181C 0%,#3d2f36 100%);color:#fff;
+  border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  padding:32px 18px;text-decoration:none;text-align:center;min-height:220px;
+}
+.lcard.more .plus{
+  width:52px;height:52px;border-radius:50%;background:var(--corallo);
+  display:grid;place-items:center;font-size:26px;font-weight:700;color:#fff;
+  box-shadow:0 8px 20px rgba(232,69,60,.4);
+}
+.lcard.more .t{font-family:var(--ff-ui);font-weight:800;font-size:16px;letter-spacing:-.01em;color:#fff;line-height:1.15}
+.lcard.more .s{font-size:11px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.02em}
+
+/* Map CTA card */
+.map-cta-wrap{padding:8px 16px 26px}
+.map-cta{
+  position:relative;display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;
+  background:linear-gradient(135deg,#2C5E4A 0%,#173D30 100%);color:#fff;
+  border-radius:var(--r-lg);padding:14px 16px;overflow:hidden;
+  box-shadow:var(--shadow-sm);text-decoration:none;
+}
+.map-cta::after{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(200px 80px at 80% 30%,rgba(255,255,255,.08),transparent 60%),
+    repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 2px,transparent 2px 8px);
+  pointer-events:none;
+}
+.map-cta .pin-ic{
+  width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.12);
+  display:grid;place-items:center;font-size:22px;position:relative;z-index:1;
+}
+.map-cta .txt{position:relative;z-index:1}
+.map-cta .txt .t{font-family:var(--ff-ui);font-weight:800;font-size:14px;line-height:1.2;margin-bottom:3px}
+.map-cta .txt .s{font-size:11px;color:rgba(255,255,255,.7)}
+.map-cta .arr{position:relative;z-index:1;width:36px;height:36px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;font-size:16px;font-weight:800}
+
+/* ================ Divider editorial ================ */
+.divider{margin:0 20px 4px;text-align:center;color:var(--ink-40);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:14px 0;display:flex;align-items:center;gap:10px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--ink-15)}
+
+/* ================ AI CHAT SECTION (Chiedi a Bi) ================ */
+.ai-wrap{padding:10px 16px 24px}
+.ai-card{
+  position:relative;background:var(--white);border:1px solid var(--ink-05);
+  border-radius:var(--r-xl);padding:22px 20px 20px;overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.ai-card::before{
+  content:"";position:absolute;top:-60px;right:-60px;width:220px;height:220px;
+  background:radial-gradient(circle,rgba(232,69,60,.1),transparent 60%);border-radius:50%;
+}
+.ai-card::after{
+  content:"";position:absolute;bottom:-80px;left:-40px;width:180px;height:180px;
+  background:radial-gradient(circle,rgba(176,137,84,.08),transparent 60%);border-radius:50%;
+}
+.ai-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative}
+.ai-bi-av{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;display:grid;place-items:center;
+  font-family:var(--ff-mark);font-size:22px;
+  box-shadow:0 6px 16px rgba(232,69,60,.35);
+  flex:0 0 48px;
+}
+.ai-bi-av .spark{position:absolute;top:4px;right:4px;width:10px;height:10px;background:var(--oro);border-radius:50%;border:2px solid #fff}
+.ai-head .t{font-family:var(--ff-ui);font-weight:900;font-size:18px;letter-spacing:-.01em;line-height:1.1;color:var(--ink)}
+.ai-head .s{font-size:12px;color:var(--ink-70);margin-top:3px;line-height:1.35}
+
+.ai-prompts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px;position:relative}
+.ai-chip{padding:7px 12px;background:var(--corallo-wash);color:var(--corallo-ink);border-radius:999px;font-size:11px;font-weight:700;border:1px solid rgba(232,69,60,.18)}
+
+.ai-input-wrap{position:relative;margin-bottom:12px}
+.ai-input{
+  width:100%;padding:14px 16px 14px 16px;border-radius:var(--r-md);
+  background:var(--cream);border:1px solid var(--ink-15);
+  font-family:var(--ff-ui);font-weight:500;font-size:14px;color:var(--ink);
+  resize:none;min-height:80px;line-height:1.4;
+}
+.ai-input::placeholder{color:var(--ink-40);font-style:italic}
+.ai-actions{display:flex;gap:8px;align-items:center;position:relative}
+.ai-hint{flex:1;font-size:11px;color:var(--ink-40);font-weight:600}
+.ai-submit{
+  padding:11px 18px;background:var(--ink);color:#fff;border-radius:999px;
+  font-size:13px;font-weight:800;border:0;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;
+  box-shadow:0 6px 14px rgba(34,24,28,.2);
+}
+.ai-submit::after{content:"→"}
+
+/* AI example output */
+.ai-output-wrap{padding:4px 16px 22px}
+.ai-output-head{
+  padding:4px 4px 14px;display:flex;align-items:center;gap:10px;
+}
+.ai-output-head .av{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:13px}
+.ai-output-head .bub{background:var(--ink-05);border-radius:14px 14px 14px 4px;padding:9px 14px;font-size:13px;color:var(--ink);max-width:250px;line-height:1.4;font-weight:500}
+.ai-output-head .bub i{color:var(--corallo);font-style:normal;font-weight:700}
+
+.ai-result-card{
+  background:#fff;border:1px solid var(--ink-05);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--shadow-sm);display:flex;gap:0;margin-bottom:8px;text-decoration:none;color:inherit;
+}
+.ai-result-card .ph{flex:0 0 108px;height:108px;background:linear-gradient(135deg,#C9A57B,#7D5230)}
+.ai-result-card .ph.alt{background:linear-gradient(135deg,#D2B078,#8C6632)}
+.ai-result-card .body{padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;flex:1;min-width:0}
+.ai-result-card .why{font-family:var(--ff-hand);font-size:14px;color:var(--corallo-ink);font-weight:600;line-height:1.2}
+.ai-result-card .n{font-family:var(--ff-ui);font-weight:800;font-size:15px;letter-spacing:-.01em;margin-top:2px}
+.ai-result-card .m{font-size:11px;color:var(--ink-70);margin-top:2px}
+.ai-result-card .open-ok{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:10px;font-weight:700;color:#137C3E}
+.ai-result-card .open-ok::before{content:"";width:5px;height:5px;border-radius:50%;background:#137C3E}
+
+.ai-see-all{
+  display:flex;justify-content:center;padding:6px 0 0;
+}
+.ai-see-all a{font-size:12px;font-weight:700;color:var(--ink);padding:9px 14px;background:var(--ink-05);border-radius:999px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.ai-see-all a::after{content:"→";color:var(--corallo)}
+
+/* ================ SECONDO BI (preserviamo il blocco editoriale) ================ */
+.editorial-wrap{padding:14px 16px 24px}
+.editorial{
+  position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#FEF6E4 0%,#F4E7CC 100%);
+  border:1px solid rgba(176,137,84,.35);
+  border-radius:var(--r-xl);padding:22px 20px 20px;
+}
+.editorial .author{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative}
+.av-bi-sm{width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-mark);font-size:16px}
+.editorial-kicker{font-family:var(--ff-ui);font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--oro);text-transform:uppercase;position:relative;margin-bottom:6px}
+.editorial-title{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;line-height:1.1;margin-bottom:8px;position:relative}
+.editorial-body{font-family:var(--ff-hand);font-size:18px;font-weight:600;line-height:1.35;color:var(--ink);position:relative;max-width:280px}
+
+/* ================ NAV BOTTOM (liquid glass) ================ */
+.nav{
+  position:absolute;left:14px;right:14px;bottom:18px;height:68px;
+  border-radius:var(--r-pill);
+  display:flex;align-items:center;justify-content:space-between;padding:6px 6px;z-index:40;gap:2px;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(34,24,28,.06),0 14px 32px rgba(34,24,28,.14);
+}
+.nav a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#141414;text-decoration:none;padding:8px 4px;border-radius:28px;font-size:10px;font-weight:700;letter-spacing:.02em}
+.nav a .ic{font-size:18px;line-height:1}
+.nav a.active{background:rgba(240,238,234,.92);border:1px solid rgba(34,24,28,.12);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}
+.nav a.active .ic{transform:scale(1.08)}
+
+/* ================ Notes panel (right of phone) ================ */
+.notes{max-width:480px;color:#fff;padding:6px 2px}
+.notes h3{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--corallo);margin-bottom:14px}
+.notes h4{font-family:var(--ff-ui);font-weight:800;font-size:15px;color:#fff;margin-top:22px;margin-bottom:8px;letter-spacing:-.01em}
+.notes p{font-size:13.5px;color:rgba(255,255,255,.75);line-height:1.6;margin-bottom:10px}
+.notes ul{list-style:none;padding:0;margin:6px 0 12px}
+.notes li{position:relative;padding-left:18px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;margin-bottom:6px}
+.notes li::before{content:"→";position:absolute;left:0;top:0;color:var(--corallo);font-weight:800}
+.notes code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;color:#FFE3A5}
+.notes b{color:#fff;font-weight:700}
+.notes .callout{background:rgba(232,69,60,.08);border-left:3px solid var(--corallo);padding:14px 18px;border-radius:0 12px 12px 0;margin:14px 0}
+.notes .callout .lb{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo);margin-bottom:6px}
+.notes .callout p{margin:0;color:rgba(255,255,255,.85);font-size:13px;line-height:1.55}
+
+/* ================ Brand variant (alt sponsor) ================ */
+.alt-banner{padding:16px 0 0}
+.alt-banner .lb{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px}
+.alt-sponsor-card{
+  background:linear-gradient(135deg,#F5EEE2 0%,#E8DCC6 100%);
+  border-radius:var(--r-xl);padding:16px;display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:center;
+  border:1px solid rgba(176,137,84,.3);
+}
+.alt-sponsor-card .logo-brand{
+  width:72px;height:72px;border-radius:var(--r-md);background:#fff;
+  display:grid;place-items:center;font-family:var(--ff-mark);font-size:14px;color:var(--ink);letter-spacing:.02em;
+  border:1px solid rgba(176,137,84,.25);box-shadow:var(--shadow-sm);text-align:center;line-height:1.1;padding:6px;
+}
+.alt-sponsor-card .body{min-width:0}
+.alt-sponsor-card .adlbl{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--oro);margin-bottom:4px}
+.alt-sponsor-card .t{font-family:var(--ff-ui);font-weight:900;font-size:16px;letter-spacing:-.01em;line-height:1.2;color:var(--ink);margin-bottom:3px}
+.alt-sponsor-card .s{font-size:11px;color:var(--ink-70);line-height:1.4;margin-bottom:10px}
+.alt-sponsor-card .cta{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--ink);color:#fff;border-radius:999px;font-size:11px;font-weight:700}
+.alt-sponsor-card .cta::after{content:"→"}
+
+/* ================ Responsive ================ */
+@media (max-width:1024px){
+  .phone-grid{gap:24px}
+  .notes{max-width:100%;padding:0 8px}
+}
+@media (max-width:450px){
+  .phone{transform:scale(.88);transform-origin:top center}
+}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="kick"><span>✦</span> v4 · Home redesign</div>
+  <h1>Home, ora contestuale</h1>
+  <p>Banner sponsor più pulito e trasparente, orologio che suggerisce il momento,
+  filtri coerenti con Esplora, e un nuovo blocco "Chiedi a Bi" con AI che incrocia
+  voglia dell'utente + catalogo Guida.</p>
+  <div class="meta">
+    <span>390 · iPhone mockup</span>
+    <span class="dot"></span>
+    <span>24/04/2026</span>
+    <span class="dot"></span>
+    <span>Pre-handoff Claude Code</span>
+  </div>
+</div>
+
+<div class="phone-grid">
+  <!-- ============ PHONE 1: HOME COMPLETA ============ -->
+  <div class="phone-col">
+    <div class="frame-label"><span>01</span> Home redesign · scroll</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar">
+          <span>18:42</span>
+          <div class="icons">
+            <svg viewBox="0 0 24 12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+            <svg viewBox="0 0 16 12" fill="currentColor"><path d="M8 2c2 0 4 .8 5.5 2.2l-1.2 1.2C11.2 4.4 9.7 3.8 8 3.8s-3.2.6-4.3 1.6L2.5 4.2C4 2.8 6 2 8 2zm0 3c1.2 0 2.3.5 3.2 1.3L10 7.5c-.5-.5-1.2-.8-2-.8s-1.5.3-2 .8L4.8 6.3C5.7 5.5 6.8 5 8 5zm0 3c.8 0 1.4.6 1.4 1.4S8.8 10.8 8 10.8s-1.4-.6-1.4-1.4S7.2 8 8 8z"/></svg>
+            <span style="display:inline-block;width:24px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative"><span style="position:absolute;left:1px;top:1px;bottom:1px;width:70%;background:currentColor;border-radius:1px"></span></span>
+          </div>
+        </div>
+
+        <div class="scroll">
+          <!-- Top bar -->
+          <div class="topbar">
+            <div class="logo"><div class="l1">CHIAMAMI BI</div><div class="l2">la guida di bi</div></div>
+            <div class="city-pill"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+            <div class="avatar-sm">A</div>
+          </div>
+
+          <!-- Sponsor banner v2 (ristorante CON sconto attivo) -->
+          <div class="sponsor-wrap">
+            <div class="sponsor-card">
+              <div class="sponsor-photo" style="background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%),linear-gradient(135deg,#D4843A 0%,#8A4420 55%,#3A1D0F 100%)">
+                <div class="sponsor-adlabel">Annuncio</div>
+                <div class="sponsor-save">♡</div>
+                <div class="sponsor-cat"><span class="bub"></span>Burger · Vanchiglia</div>
+              </div>
+              <div class="sponsor-body">
+                <div class="sponsor-title">Smashers</div>
+                <div class="sponsor-sub">Smash burger senza compromessi. <b>Doppio con cheddar</b> la cosa da prendere, secondo me.</div>
+                <div class="sponsor-meta">€€ · 15–25€ <span class="sep">·</span> Aperto ora <span class="sep">·</span> fino alle 23:30</div>
+                <div class="sponsor-ctas">
+                  <a class="btn-discount" href="#">Attiva sconto<span class="p">-15%</span></a>
+                  <a class="btn-explore" href="#">Scopri</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time-based hero -->
+          <div class="time-hero">
+            <div class="time-tag"><span class="pulse"></span>Aperitivo</div>
+            <div class="time-clock">18:42</div>
+            <div class="time-question">È l'ora dell'aperitivo. Ce l'hai un posto in mente?</div>
+            <div class="time-sub">Ti mostro dove andare ora, a Torino.</div>
+          </div>
+
+          <!-- Moment tabs (5) -->
+          <div class="moment-tabs">
+            <a class="mtab" href="#"><span class="emoji">🥐</span><span class="lbl">Colazione</span></a>
+            <a class="mtab" href="#"><span class="emoji">🍝</span><span class="lbl">Pranzo</span></a>
+            <a class="mtab active" href="#"><span class="emoji">🥂</span><span class="lbl">Aperitivo</span></a>
+            <a class="mtab" href="#"><span class="emoji">🍷</span><span class="lbl">Cena</span></a>
+            <a class="mtab" href="#"><span class="emoji">🍸</span><span class="lbl">Dopo cena</span></a>
+          </div>
+
+          <!-- Results -->
+          <div class="results-head">
+            <h3>Aperitivo ora · aperti fino dopo le 20</h3>
+            <span class="count">23 locali</span>
+          </div>
+          <div class="loc-row">
+            <a class="lcard" href="#">
+              <div class="ph alt2">
+                <div class="heart">♡</div>
+                <div class="open-pill"><span class="od"></span>Aperto · fino 21:00</div>
+              </div>
+              <div class="body">
+                <div class="name">Scaldapiatti</div>
+                <div class="meta"><span class="tag">Aperitivo</span><span class="sep">·</span>Quadrilatero<span class="sep">·</span>€€</div>
+              </div>
+            </a>
+            <a class="lcard" href="#">
+              <div class="ph alt1">
+                <div class="heart">♡</div>
+                <div class="open-pill"><span class="od"></span>Aperto · fino 23:00</div>
+              </div>
+              <div class="body">
+                <div class="name">Banco Vini</div>
+                <div class="meta"><span class="tag">Enoteca</span><span class="sep">·</span>Vanchiglia<span class="sep">·</span>€€</div>
+              </div>
+            </a>
+            <a class="lcard" href="#">
+              <div class="ph">
+                <div class="heart">♡</div>
+                <div class="open-pill"><span class="od"></span>Aperto · fino 22:00</div>
+              </div>
+              <div class="body">
+                <div class="name">Gaudenzio</div>
+                <div class="meta"><span class="tag">Enoteca</span><span class="sep">·</span>San Salvario<span class="sep">·</span>€€</div>
+              </div>
+            </a>
+            <a class="lcard more" href="#">
+              <div class="plus">+</div>
+              <div class="t">Vedi gli altri 20</div>
+              <div class="s">Sulla mappa</div>
+            </a>
+          </div>
+
+          <!-- Map CTA -->
+          <div class="map-cta-wrap">
+            <a class="map-cta" href="#">
+              <div class="pin-ic">📍</div>
+              <div class="txt">
+                <div class="t">Mostrameli sulla mappa</div>
+                <div class="s">23 locali aperti per aperitivo ora</div>
+              </div>
+              <div class="arr">→</div>
+            </a>
+          </div>
+
+          <!-- AI Chat section -->
+          <div class="divider">Oppure</div>
+
+          <div class="ai-wrap">
+            <div class="ai-card">
+              <div class="ai-head">
+                <div class="ai-bi-av" style="position:relative">B<span class="spark"></span></div>
+                <div>
+                  <div class="t">Chiedi a Bi</div>
+                  <div class="s">Dimmi cosa ti va, ti suggerisco io.</div>
+                </div>
+              </div>
+
+              <div class="ai-prompts">
+                <span class="ai-chip">✨ un cinese aperto stasera</span>
+                <span class="ai-chip">✨ sotto i 20€</span>
+                <span class="ai-chip">✨ brunch San Salvario</span>
+              </div>
+
+              <div class="ai-input-wrap">
+                <textarea class="ai-input" placeholder="es. un cinese aperto a cena che costi poco ma abbia una buona carta vini…"></textarea>
+              </div>
+              <div class="ai-actions">
+                <div class="ai-hint">Bi incrocia la tua voglia con la Guida</div>
+                <button class="ai-submit">Chiedi a Bi</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Output sample -->
+          <div class="ai-output-wrap">
+            <div class="ai-output-head">
+              <div class="av">B</div>
+              <div class="bub">Ho incrociato <i>cinese + stasera + budget</i>. Ti proporrei questi due — entrambi aperti ora, sotto i 25€.</div>
+            </div>
+            <a class="ai-result-card" href="#">
+              <div class="ph"></div>
+              <div class="body">
+                <div>
+                  <div class="why">Per te, stasera.</div>
+                  <div class="n">Ristorante Yangtze</div>
+                  <div class="m">Cinese · Porta Nuova · € · aperto fino 23:30</div>
+                </div>
+                <div class="open-ok">aperto ora</div>
+              </div>
+            </a>
+            <a class="ai-result-card" href="#">
+              <div class="ph alt"></div>
+              <div class="body">
+                <div>
+                  <div class="why">Piccolo, silenzioso.</div>
+                  <div class="n">Golden China Lab</div>
+                  <div class="m">Cinese · Vanchiglia · €€ · aperto fino 22:30</div>
+                </div>
+                <div class="open-ok">aperto ora</div>
+              </div>
+            </a>
+            <div class="ai-see-all"><a href="#">Scrivi a Bi per altri</a></div>
+          </div>
+
+          <!-- Secondo Bi editorial -->
+          <div class="editorial-wrap">
+            <div class="editorial">
+              <div class="author"><div class="av-bi-sm">B</div><div><div style="font-weight:700;font-size:13px">Bi</div><div style="font-size:11px;color:var(--ink-70)">Secondo Bi</div></div></div>
+              <div class="editorial-kicker">Settimana del 22 aprile</div>
+              <div class="editorial-title">Questa settimana passerei da Consorzio.</div>
+              <div class="editorial-body">Daniele ha messo in carta il vitello tonnato all'antica, versione non riconciliata con la maionese. Non l'avevo più trovato così.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nav bottom -->
+        <div class="nav">
+          <a class="active" href="#"><span class="ic">🏠</span><span>Home</span></a>
+          <a href="#"><span class="ic">🗺️</span><span>Esplora</span></a>
+          <a href="#"><span class="ic">%</span><span>Sconti</span></a>
+          <a href="#"><span class="ic">♡</span><span>Salvati</span></a>
+          <a href="#"><span class="ic">○</span><span>Profilo</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ NOTES SIDE ============ -->
+  <div class="notes">
+    <h3>✦ Cosa cambia</h3>
+    <p>La home attuale è statica: stessi blocchi indipendentemente dal momento. Il redesign la rende <b>contestuale</b>: cambia con l'ora, con la voglia, con chi stai cercando.</p>
+
+    <h4>1 · Banner sponsor · 3 variant</h4>
+    <p>Label <code>Annuncio</code> sempre visibile in alto a sinistra (niente ambiguità legale). Variant a seconda del caso:</p>
+    <ul>
+      <li><b>Ristorante + sconto attivo:</b> 2 CTA · "Attiva sconto -15%" (corallo pieno) + "Scopri" (outline)</li>
+      <li><b>Ristorante senza sconto:</b> 2 CTA · "Scopri di più" (bianco) + icona cuore salva (outline)</li>
+      <li><b>Brand non-food</b> (cantine, gastronomie, produttori): layout compact logo 72x72 + testo + "Scopri il brand" (vedi frame 2)</li>
+    </ul>
+    <p>Meta riga <code>€€ · Aperto ora · fino alle 23:30</code> dice subito se è raggiungibile adesso.</p>
+
+    <h4>2 · Orologio + domanda contestuale</h4>
+    <p>L'ora è grande, Alfa Slab One, brand-forte. La domanda cambia in base all'ora di sistema:</p>
+    <ul>
+      <li><b>06:30–10:30</b> · "È l'ora della colazione. Ce l'hai un posto in mente?"</li>
+      <li><b>11:30–14:30</b> · "È l'ora del pranzo. Ce l'hai un posto in mente?"</li>
+      <li><b>17:00–20:30</b> · "È l'ora dell'aperitivo. Ce l'hai un posto in mente?"</li>
+      <li><b>19:30–23:30</b> · "È l'ora di cena. Ce l'hai un posto in mente?"</li>
+      <li><b>22:30–02:00</b> · "È l'ora di un cocktail. Ce l'hai un posto in mente?"</li>
+      <li><b>Fasce grigie:</b> "Dove ti porto adesso?"</li>
+    </ul>
+
+    <h4>3 · Tabs momento giornata · 5</h4>
+    <p>5 pill in scroll orizzontale: <b>Colazione · Pranzo · Aperitivo · Cena · Dopo cena</b>. Quella contestuale è <b>active</b> (ink pieno). Click → filtra i locali sotto. Questo pattern è gemello dei filtri Esplora — stessa tassonomia.</p>
+    <div class="callout">
+      <div class="lb">Coerenza con Esplora</div>
+      <p>I filtri di <code>/esplora</code> vanno riorganizzati così: <b>Categoria</b> · <b>Orario (= momento giornata)</b> · <b>Prezzo</b>. Sparisce il filtro "zona" come default visibile, resta disponibile nella mappa.</p>
+    </div>
+
+    <h4>4 · Cards risultati</h4>
+    <p>Lo scroll orizzontale mostra 2 card + pip della terza (anteprima). Ogni card ha <b>aperto ora + fino a che ora</b> — essenziale per decidere in 2 secondi. "Mostrameli sulla mappa" apre Esplora pre-filtrato.</p>
+
+    <h4>5 · Chiedi a Bi · AI chat</h4>
+    <p>Sostituisce la sezione "Questa settimana vai da..." attuale. L'input è libero, l'AI incrocia la voglia con il catalogo Guida (categoria, orari, prezzo, zona, tag "cosa ti consiglio"). Output inline: 2-3 locali con una riga-motivo scritta in voce Bi (handwriting corallo).</p>
+    <div class="callout">
+      <div class="lb">Come funziona tecnicamente</div>
+      <p>Claude completions + function calling su Supabase. L'AI chiama una function <code>search_restaurants(query_intent)</code> che legge filters derivati dal prompt e fa query su <code>restaurants</code>. Alternativa più semplice: embeddings dei profili ristoranti + similarity search su prompt utente.</p>
+    </div>
+
+    <h4>6 · Secondo Bi · invariato</h4>
+    <p>Il blocco editoriale settimanale (Caveat handwriting) resta: è il differenziatore principale del brand. Non va toccato.</p>
+
+    <h4>Da discutere con te</h4>
+    <ul>
+      <li>Banner brand non-food → vedi preview accanto, va ancora lavorato</li>
+      <li>"Mostra di più" dai risultati momento → apre Esplora pre-filtrato o modal con lista piena?</li>
+      <li>Prompt chip suggeriti ("un cinese aperto stasera"…) → li generiamo statici o dinamici per momento giornata?</li>
+      <li>Chat AI history: si salva per utente? (utile per rifinire consigli)</li>
+    </ul>
+  </div>
+
+  <!-- ============ PHONE 2: Brand variant compact ============ -->
+  <div class="phone-col">
+    <div class="frame-label"><span>02</span> Banner brand · variant</div>
+    <div class="phone short">
+      <div class="screen">
+        <div class="statusbar">
+          <span>14:08</span>
+          <div class="icons">
+            <svg viewBox="0 0 24 12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+            <svg viewBox="0 0 16 12" fill="currentColor"><path d="M8 2c2 0 4 .8 5.5 2.2l-1.2 1.2C11.2 4.4 9.7 3.8 8 3.8s-3.2.6-4.3 1.6L2.5 4.2C4 2.8 6 2 8 2zm0 3c1.2 0 2.3.5 3.2 1.3L10 7.5c-.5-.5-1.2-.8-2-.8s-1.5.3-2 .8L4.8 6.3C5.7 5.5 6.8 5 8 5zm0 3c.8 0 1.4.6 1.4 1.4S8.8 10.8 8 10.8s-1.4-.6-1.4-1.4S7.2 8 8 8z"/></svg>
+            <span style="display:inline-block;width:24px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative"><span style="position:absolute;left:1px;top:1px;bottom:1px;width:60%;background:currentColor;border-radius:1px"></span></span>
+          </div>
+        </div>
+        <div class="scroll">
+          <div class="topbar">
+            <div class="logo"><div class="l1">CHIAMAMI BI</div><div class="l2">la guida di bi</div></div>
+            <div class="city-pill"><span class="dot"></span>Torino</div>
+            <div class="avatar-sm">A</div>
+          </div>
+
+          <div class="sponsor-wrap">
+            <div class="alt-banner">
+              <div class="lb">— Variant per brand non-food (es. cantine, gastronomie, produttori) —</div>
+              <div class="alt-sponsor-card">
+                <div class="logo-brand">CASCINA<br>TORRICELLI</div>
+                <div class="body">
+                  <div class="adlbl">✦ Annuncio</div>
+                  <div class="t">Cascina Torricelli</div>
+                  <div class="s">Bianchi del Monferrato · produttore che Bi frequenta.</div>
+                  <a class="cta" href="#">Scopri il brand</a>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding-top:22px">
+              <div class="alt-banner" style="padding:0 0 10px">
+                <div class="lb">— Variant ristorante SENZA sconto attivo —</div>
+              </div>
+              <div class="sponsor-card">
+                <div class="sponsor-photo" style="background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%),linear-gradient(135deg,#A58A6E 0%,#5A4030 60%,#2E1D14 100%)">
+                  <div class="sponsor-adlabel">Annuncio</div>
+                  <div class="sponsor-save">♡</div>
+                  <div class="sponsor-cat"><span class="bub"></span>Bakery · San Salvario</div>
+                </div>
+                <div class="sponsor-body">
+                  <div class="sponsor-title">Perino Vesco</div>
+                  <div class="sponsor-sub">Lievito madre, <b>ore 6 di mattino</b>. Il posto per la colazione se vuoi partire bene.</div>
+                  <div class="sponsor-meta">€ · Apre alle 06:30</div>
+                  <div class="sponsor-ctas" style="grid-template-columns:1fr auto">
+                    <a class="btn-discount" href="#" style="background:#fff;color:var(--ink);box-shadow:none">Scopri di più</a>
+                    <a class="btn-explore" href="#" style="padding:13px 14px" aria-label="Salva"><span style="font-size:16px">♡</span></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:20px;text-align:center;color:var(--ink-70);font-size:12px;font-style:italic;line-height:1.5">
+            Anteprima 3 variant banner:<br>1 · brand non-food · 2 · ristorante senza sconto
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px;margin:16px auto 0;text-align:center;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.1em">
+  v4 · Home redesign mockup · 24/04/2026 · tokens Poppins + Alfa Slab One + Caveat
+</div>
+
+</body>
+</html>
