@@ -67,7 +67,7 @@ export default function NewRestaurant() {
         .select('id')
         .single()
       if (err) throw err
-      navigate(`/admin/restaurant/${data.id}/edit`, { replace: true })
+      navigate(`/admin/restaurant/${data.id}/edit?new=1`, { replace: true })
     } catch (err) {
       setError('Errore durante la creazione: ' + (err.message || 'unknown'))
     }
