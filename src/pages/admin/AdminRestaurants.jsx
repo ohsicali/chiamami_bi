@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -7,6 +7,7 @@ import { useCategories } from '../../lib/hooks/useCategories'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
+import RestaurantDrawer from '../../components/admin/drawer/RestaurantDrawer'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 
 const PAGE_SIZE = 20
@@ -119,12 +120,12 @@ function StatusPill({ published }) {
 /* ------------------------------------------------------------------ */
 export default function AdminRestaurants() {
   const { user, isAdmin, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
-  const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
+  const { allRestaurants: restaurants, loading: dataLoading, refetch: refreshRestaurants } = useRestaurants()
   const { categories } = useCategories()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const queryFromUrl = searchParams.get('q') || ''
+  const editingId = searchParams.get('edit')
   const [search, setSearch] = useState(queryFromUrl)
   const [statusFilter, setStatusFilter] = useState('all') // all | published | draft
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -134,6 +135,17 @@ export default function AdminRestaurants() {
   const [deleteId, setDeleteId] = useState(null)
   const [discountsMap, setDiscountsMap] = useState({})
   const [viewsMap, setViewsMap] = useState({})
+
+  const openEdit = (id) => {
+    const p = new URLSearchParams(searchParams)
+    p.set('edit', id)
+    setSearchParams(p)
+  }
+  const closeEdit = () => {
+    const p = new URLSearchParams(searchParams)
+    p.delete('edit')
+    setSearchParams(p)
+  }
 
   // Sync URL ?q= → search state on mount / URL change
   useEffect(() => {
@@ -453,7 +465,7 @@ export default function AdminRestaurants() {
                       discount={discountsMap[r.id]}
                       views={viewsMap[r.slug] || 0}
                       onDelete={() => setDeleteId(r.id)}
-                      onEdit={() => navigate(`/admin/restaurant/${r.id}/edit`)}
+                      onEdit={() => openEdit(r.id)}
                     />
                   ))}
                 </tbody>
@@ -469,6 +481,7 @@ export default function AdminRestaurants() {
                   r={r}
                   discount={discountsMap[r.id]}
                   views={viewsMap[r.slug] || 0}
+                  onOpen={() => openEdit(r.id)}
                 />
               ))}
               <MobilePaging page={pageClamped} totalPages={totalPages} onChange={setPage} />
@@ -555,6 +568,15 @@ export default function AdminRestaurants() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Edit drawer ── */}
+      <RestaurantDrawer
+        restaurantId={editingId}
+        onClose={closeEdit}
+        onSaved={() => {
+          refreshRestaurants?.()
+        }}
+      />
     </AdminLayout>
   )
 }
@@ -644,15 +666,16 @@ function RestaurantRow({ r, idx, discount, views, onDelete, onEdit }) {
   )
 }
 
-function MobileCard({ r, discount, views }) {
+function MobileCard({ r, discount, views, onOpen }) {
   const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map((n) => getCategoryInfo(n)).filter(Boolean)
   const firstCat = cats[0]
   const thumb = proxyImg(pickThumb(r))
   const isPublished = r.is_published !== false
   const isDrop = discount?.drop_time != null
   return (
-    <Link
-      to={`/admin/restaurant/${r.id}/edit`}
+    <button
+      type="button"
+      onClick={onOpen}
       style={{
         background: '#fff',
         border: '1px solid var(--color-line, #EAE3D7)',
@@ -663,6 +686,10 @@ function MobileCard({ r, discount, views }) {
         gap: 12,
         textDecoration: 'none',
         color: 'var(--color-ink)',
+        textAlign: 'left',
+        width: '100%',
+        fontFamily: 'var(--font-sans)',
+        cursor: 'pointer',
       }}
     >
       {thumb ? (
@@ -698,7 +725,7 @@ function MobileCard({ r, discount, views }) {
           )}
         </div>
       </div>
-    </Link>
+    </button>
   )
 }
 
