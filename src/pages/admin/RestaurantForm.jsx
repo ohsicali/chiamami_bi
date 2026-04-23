@@ -1,3 +1,24 @@
+/**
+ * @deprecated since PR15e.3 (2026-04-23)
+ *
+ * Questo componente NON è più referenziato dal routing (src/App.jsx).
+ * Il flusso standard di editing di un ristorante è ora il drawer 720px
+ * aperto da /admin/restaurants?edit={id} (vedi src/components/admin/
+ * drawer/RestaurantDrawer.jsx e le 6 tab in src/components/admin/tabs/).
+ *
+ * Il file è preservato per riferimento perché contiene alcune feature
+ * che NON sono ancora state migrate al drawer:
+ *   - AI text correction per occhiello/racconto (handleAiCorrect →
+ *     chiama POST /api/correct-text)
+ *   - Google Places name-search fallback (handleNameSearch) quando
+ *     /api/resolve-maps ritorna CAPTCHA
+ *   - Mapbox reverse-geocode quando manca l'indirizzo
+ *
+ * Prossimi step (PR futura):
+ *   1. Migrare queste 3 feature nel DettagliTab del drawer
+ *   2. Verificare che nessun bookmark punti ancora a questa route
+ *   3. Eliminare completamente questo file
+ */
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useParams, Link, Navigate } from 'react-router-dom'
