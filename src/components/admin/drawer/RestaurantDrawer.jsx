@@ -414,6 +414,12 @@ function toFormState(r) {
     verify_pin: r.verify_pin || '',
     partner_email: r.partner_email || '',
     last_pin_rotation_at: r.last_pin_rotation_at || null,
+    // Google Places (orari automatici)
+    place_id: r.place_id || '',
+    place_id_confidence: r.place_id_confidence ?? null,
+    place_id_verified_at: r.place_id_verified_at || null,
+    hours_cache_updated_at: r.hours_cache_updated_at || null,
+    // SEO
     seo_title: r.seo_title || '',
     seo_description: r.seo_description || '',
     og_title: r.og_title || '',
@@ -441,6 +447,9 @@ function toDbPayload(form, alsoPublish) {
     recommended_for: form.recommended_for,
     photos: form.photos,
     partner_email: form.partner_email || null,
+    place_id: form.place_id || null,
+    place_id_confidence: form.place_id_confidence,
+    place_id_verified_at: form.place_id_verified_at,
     seo_title: form.seo_title || null,
     seo_description: form.seo_description || null,
     og_title: form.og_title || null,

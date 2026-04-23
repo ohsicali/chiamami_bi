@@ -3,13 +3,14 @@ import FGroup from './_FGroup'
 import { FField, FInput, FTextarea, FSelect, FRow } from './_Fields'
 import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
 import GoogleMapsImportBlock from '../GoogleMapsImportBlock'
+import GooglePlacesBlock from '../GooglePlacesBlock'
 
 /**
  * DettagliTab — scope ridotto alla parte testuale (no cover-grid).
  * Contains: Anagrafica + Voce di Bi. Foto e piatti vivono negli altri tab.
  * Credenziali PIN: info box che rimanda al tab "Credenziali" (evita duplicazione).
  */
-export default function DettagliTab({ form, onChange }) {
+export default function DettagliTab({ form, onChange, restaurantId }) {
   const { categories } = useCategories()
   const ai = useAiCorrect()
 
@@ -21,6 +22,9 @@ export default function DettagliTab({ form, onChange }) {
         onApply={(patch) => onChange(patch)}
         onSlug={slugify}
       />
+
+      {/* Google Places — orari automatici */}
+      <GooglePlacesBlock form={form} onChange={onChange} restaurantId={restaurantId} />
 
       {/* Anagrafica */}
       <FGroup title="Anagrafica" count="il minimo necessario">

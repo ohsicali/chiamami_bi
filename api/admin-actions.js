@@ -19,6 +19,12 @@
  *   - "correct-text"      → AI text correction su singolo testo (Claude Haiku).
  *                           Body: { action, text, context }
  *                           Returns: { corrected, changed }
+ *   - "search-places"     → Google Places Text Search per trovare candidates
+ *                           dato nome+indirizzo. Usato per associare place_id
+ *                           a un ristorante (prerequisito per orari automatici).
+ *                           Body: { action, name, address? }
+ *                           Returns: { candidates: [{place_id, display_name,
+ *                                                    address, confidence}] }
  *
  * Auth: Bearer JWT Supabase + profiles.is_admin=true.
  */
@@ -75,6 +81,7 @@ export default async function handler(req, res) {
     if (action === 'toggle-disable') return await toggleDisable(req, res, admin)
     if (action === 'ai-seo-suggest') return await aiSeoSuggest(req, res, admin)
     if (action === 'correct-text') return await correctText(req, res)
+    if (action === 'search-places') return await searchPlaces(req, res)
     return res.status(400).json({ error: `Unknown action: ${action}` })
   } catch (err) {
     console.error(`admin-actions/${action} failed:`, err)
@@ -296,6 +303,60 @@ async function correctText(req, res) {
     corrected: corrected || null,
     changed: corrected.trim() !== trimmedText,
   })
+}
+
+/* ------------------------------------------------------------------ */
+/*  search-places — Google Places Text Search                          */
+/* ------------------------------------------------------------------ */
+async function searchPlaces(req, res) {
+  const { name, address } = req.body || {}
+  if (!name || !name.trim()) return res.status(400).json({ error: 'name required' })
+
+  const apiKey = process.env.GOOGLE_PLACES_KEY
+  if (!apiKey) return res.status(500).json({ error: 'GOOGLE_PLACES_KEY non configurata' })
+
+  const query = [name, address].filter(Boolean).join(' ').trim()
+
+  try {
+    const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location',
+      },
+      body: JSON.stringify({ textQuery: query, languageCode: 'it', regionCode: 'IT' }),
+    })
+    if (!r.ok) {
+      const errBody = await r.text()
+      console.error('Places searchText error:', r.status, errBody)
+      return res.status(502).json({ error: 'Google Places API error' })
+    }
+    const data = await r.json()
+    const places = Array.isArray(data.places) ? data.places : []
+    // Rough confidence: higher when input name is contained in displayName
+    const needle = name.toLowerCase().trim()
+    const candidates = places.slice(0, 5).map((p) => {
+      const dn = p.displayName?.text || ''
+      const dnLower = dn.toLowerCase()
+      let confidence = 0.4
+      if (dnLower === needle) confidence = 0.95
+      else if (dnLower.startsWith(needle)) confidence = 0.8
+      else if (dnLower.includes(needle)) confidence = 0.65
+      return {
+        place_id: p.id,
+        display_name: dn,
+        address: p.formattedAddress || '',
+        latitude: p.location?.latitude ?? null,
+        longitude: p.location?.longitude ?? null,
+        confidence,
+      }
+    })
+    return res.status(200).json({ candidates })
+  } catch (err) {
+    console.error('search-places failed:', err)
+    return res.status(500).json({ error: err.message || 'Internal error' })
+  }
 }
 
 /* ------------------------------------------------------------------ */
