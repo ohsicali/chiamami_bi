@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
@@ -27,8 +27,265 @@ const PERIODS = [
   { key: '90d', label: '90g', days: 90 },
 ]
 
-function periodStart(days) {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+function getDateRange(period, customFrom, customTo) {
+  if (period === 'custom' && customFrom && customTo) {
+    const endDate = new Date(customTo)
+    endDate.setHours(23, 59, 59, 999)
+    const days = Math.max(1, Math.ceil((endDate - customFrom) / (24 * 60 * 60 * 1000)))
+    return { start: customFrom.toISOString(), end: endDate.toISOString(), days }
+  }
+  const p = PERIODS.find((x) => x.key === period)
+  const days = p?.days || 7
+  return {
+    start: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
+    end: null,
+    days,
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  DateRangePicker                                                    */
+/* ------------------------------------------------------------------ */
+const MONTH_NAMES = [
+  'Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+  'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre',
+]
+const DAY_LABELS = ['Lu','Ma','Me','Gi','Ve','Sa','Do']
+
+function startOfDay(d) {
+  const r = new Date(d)
+  r.setHours(0, 0, 0, 0)
+  return r
+}
+
+function isSameDay(a, b) {
+  if (!a || !b) return false
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+function DateRangePicker({ from, to, onApply, onClose }) {
+  const today = startOfDay(new Date())
+  const [viewYear, setViewYear] = useState(() => (from || today).getFullYear())
+  const [viewMonth, setViewMonth] = useState(() => (from || today).getMonth())
+  const [localFrom, setLocalFrom] = useState(from || null)
+  const [localTo, setLocalTo] = useState(to || null)
+  const [hoverDate, setHoverDate] = useState(null)
+
+  function getMonthDays(y, m) {
+    const first = new Date(y, m, 1)
+    const last = new Date(y, m + 1, 0)
+    const days = []
+    // Monday-first (Italian): (getDay()+6)%7 → Mon=0, Sun=6
+    const pad = (first.getDay() + 6) % 7
+    for (let i = 0; i < pad; i++) days.push(null)
+    for (let d = 1; d <= last.getDate(); d++) days.push(new Date(y, m, d))
+    return days
+  }
+
+  function handleDayClick(day) {
+    if (!day) return
+    const d = startOfDay(day)
+    if (d > today) return
+    if (!localFrom || localTo) {
+      setLocalFrom(d)
+      setLocalTo(null)
+    } else {
+      if (d < localFrom) {
+        setLocalTo(localFrom)
+        setLocalFrom(d)
+      } else {
+        setLocalTo(d)
+      }
+    }
+  }
+
+  function effectiveTo() {
+    if (localTo) return localTo
+    if (localFrom && hoverDate && hoverDate > localFrom) return hoverDate
+    return null
+  }
+
+  function isInRange(day) {
+    if (!day || !localFrom) return false
+    const d = startOfDay(day)
+    const eTo = effectiveTo()
+    if (!eTo) return false
+    return d > localFrom && d < eTo
+  }
+
+  function isEdge(day, which) {
+    if (!day || !localFrom) return false
+    const d = startOfDay(day)
+    if (which === 'start') return isSameDay(d, localFrom)
+    const eTo = effectiveTo()
+    return eTo ? isSameDay(d, eTo) : false
+  }
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
+    else setViewMonth(m => m - 1)
+  }
+
+  function nextMonth() {
+    const next = new Date(viewYear, viewMonth + 1, 1)
+    if (next > today) return
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
+    else setViewMonth(m => m + 1)
+  }
+
+  function fmtShort(d) {
+    if (!d) return '—'
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: '2-digit' })
+  }
+
+  const days = getMonthDays(viewYear, viewMonth)
+  const nextIsAfterToday = new Date(viewYear, viewMonth + 1, 1) > today
+  const canApply = localFrom && localTo
+
+  const btnBase = {
+    border: 'none',
+    borderRadius: 999,
+    cursor: 'pointer',
+    fontFamily: 'var(--font-sans)',
+    fontWeight: 700,
+    fontSize: 12,
+    padding: '8px 18px',
+  }
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        right: 0,
+        top: 'calc(100% + 8px)',
+        zIndex: 200,
+        background: '#fff',
+        border: '1px solid var(--color-line, #EAE3D7)',
+        borderRadius: 16,
+        padding: 20,
+        boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+        width: 300,
+        fontFamily: 'var(--font-sans)',
+      }}
+    >
+      {/* Selected range summary */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+        <div style={{
+          flex: 1, background: 'var(--color-cream-deep,#F1EBE0)', borderRadius: 8,
+          padding: '6px 10px', textAlign: 'center', fontSize: 11, fontWeight: 700,
+          color: localFrom ? 'var(--color-ink)' : '#bbb',
+        }}>
+          {fmtShort(localFrom)}
+        </div>
+        <span style={{ color: '#bbb', fontSize: 12 }}>→</span>
+        <div style={{
+          flex: 1, background: 'var(--color-cream-deep,#F1EBE0)', borderRadius: 8,
+          padding: '6px 10px', textAlign: 'center', fontSize: 11, fontWeight: 700,
+          color: effectiveTo() ? 'var(--color-ink)' : '#bbb',
+        }}>
+          {fmtShort(effectiveTo())}
+        </div>
+      </div>
+
+      {/* Month navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <button
+          onClick={prevMonth}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--color-ink)', padding: '2px 8px', borderRadius: 6 }}
+        >‹</button>
+        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-ink)' }}>
+          {MONTH_NAMES[viewMonth]} {viewYear}
+        </span>
+        <button
+          onClick={nextMonth}
+          disabled={nextIsAfterToday}
+          style={{ background: 'none', border: 'none', cursor: nextIsAfterToday ? 'default' : 'pointer', fontSize: 18, color: nextIsAfterToday ? '#ddd' : 'var(--color-ink)', padding: '2px 8px', borderRadius: 6 }}
+        >›</button>
+      </div>
+
+      {/* Day labels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 4 }}>
+        {DAY_LABELS.map((d) => (
+          <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#bbb', padding: '2px 0' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+        {days.map((day, i) => {
+          if (!day) return <div key={`e${i}`} />
+          const isFuture = startOfDay(day) > today
+          const inRange = isInRange(day)
+          const isStart = isEdge(day, 'start')
+          const isEnd = isEdge(day, 'end')
+          const isT = isSameDay(day, today)
+          const active = isStart || isEnd
+
+          return (
+            <button
+              key={day.toISOString()}
+              onClick={() => handleDayClick(day)}
+              onMouseEnter={() => {
+                if (localFrom && !localTo) setHoverDate(startOfDay(day))
+              }}
+              onMouseLeave={() => setHoverDate(null)}
+              disabled={isFuture}
+              style={{
+                padding: '5px 2px',
+                border: 'none',
+                borderRadius: active ? 999 : inRange ? 2 : 6,
+                cursor: isFuture ? 'default' : 'pointer',
+                fontSize: 11,
+                fontWeight: isT && !active ? 800 : 500,
+                background: active
+                  ? 'var(--color-ink,#22181C)'
+                  : inRange
+                  ? 'rgba(34,24,28,0.08)'
+                  : 'transparent',
+                color: active ? '#fff' : isFuture ? '#ddd' : isT ? 'var(--color-ink)' : '#444',
+                fontFamily: 'var(--font-sans)',
+                textDecoration: isT && !active ? 'underline' : 'none',
+                textDecorationColor: '#E8453C',
+              }}
+            >
+              {day.getDate()}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Hint */}
+      {localFrom && !localTo && (
+        <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center', marginTop: 10, fontStyle: 'italic' }}>
+          Seleziona la data di fine
+        </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <button onClick={onClose} style={{ ...btnBase, background: 'var(--color-cream-deep,#F1EBE0)', color: 'var(--color-ink)', flex: 1 }}>
+          Annulla
+        </button>
+        <button
+          onClick={() => canApply && onApply(localFrom, localTo)}
+          disabled={!canApply}
+          style={{
+            ...btnBase,
+            background: canApply ? 'var(--color-ink,#22181C)' : '#ddd',
+            color: canApply ? '#fff' : '#aaa',
+            flex: 1,
+            cursor: canApply ? 'pointer' : 'default',
+          }}
+        >
+          Applica
+        </button>
+      </div>
+    </div>
+  )
 }
 
 /* ------------------------------------------------------------------ */
@@ -116,6 +373,10 @@ export default function AnalyticsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const { allRestaurants: restaurants } = useRestaurants()
   const [period, setPeriod] = useState('7d')
+  const [customFrom, setCustomFrom] = useState(null)
+  const [customTo, setCustomTo] = useState(null)
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const datePickerRef = useRef(null)
 
   // Live visitors — distinct session_id from page_views in last 5 minutes
   const [liveVisitors, setLiveVisitors] = useState(null)
@@ -165,46 +426,28 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
+    if (period === 'custom' && (!customFrom || !customTo)) return
     let cancelled = false
 
     async function fetchAll() {
-      const days = PERIODS.find((p) => p.key === period)?.days || 7
-      const start = periodStart(days)
+      const { start, end } = getDateRange(period, customFrom, customTo)
+
+      const rng = (q, field) => {
+        let r = q.gte(field, start)
+        if (end) r = r.lte(field, end)
+        return r
+      }
 
       try {
         const [usersTotal, usersInPeriod, qrGen, qrUsed, periodRedemptions, savedTop, pvTotal, pvByPath] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          supabase
-            .from('profiles')
-            .select('id', { count: 'exact', head: true })
-            .gte('created_at', start),
-          supabase
-            .from('discount_redemptions')
-            .select('id', { count: 'exact', head: true })
-            .gte('generated_at', start),
-          supabase
-            .from('discount_redemptions')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'redeemed')
-            .gte('redeemed_at', start),
-          // Fetch all redemptions in the period (with status) to group by discount
-          supabase
-            .from('discount_redemptions')
-            .select('discount_id, status')
-            .gte('generated_at', start),
-          supabase
-            .from('saved_restaurants')
-            .select('restaurant_id')
-            .gte('created_at', start),
-          supabase
-            .from('page_views')
-            .select('id', { count: 'exact', head: true })
-            .gte('created_at', start),
-          supabase
-            .from('page_views')
-            .select('path, session_id, country, city, device_type')
-            .gte('created_at', start)
-            .limit(50000),
+          rng(supabase.from('profiles').select('id', { count: 'exact', head: true }), 'created_at'),
+          rng(supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }), 'generated_at'),
+          rng(supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed'), 'redeemed_at'),
+          rng(supabase.from('discount_redemptions').select('discount_id, status'), 'generated_at'),
+          rng(supabase.from('saved_restaurants').select('restaurant_id'), 'created_at'),
+          rng(supabase.from('page_views').select('id', { count: 'exact', head: true }), 'created_at'),
+          rng(supabase.from('page_views').select('path, session_id, country, city, device_type').limit(50000), 'created_at'),
         ])
 
         if (cancelled) return
@@ -350,28 +593,30 @@ export default function AnalyticsPage() {
     }
 
     fetchAll()
-  }, [period, user, restaurants])
+  }, [period, customFrom, customTo, user, restaurants])
 
   // Visits chart data — real page_views bucketed by time
   const [visitsChartData, setVisitsChartData] = useState([])
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
+    if (period === 'custom' && (!customFrom || !customTo)) return
     let cancelled = false
 
     async function fetchChart() {
       try {
-        const days = PERIODS.find((p) => p.key === period)?.days || 7
+        const { start, end, days } = getDateRange(period, customFrom, customTo)
         const points = days === 1 ? 24 : Math.min(days, 30)
+        const spacing = days === 1 ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
+
+        const rng = (q, field) => {
+          let r = q.gte(field, start)
+          if (end) r = r.lte(field, end)
+          return r
+        }
 
         const [pvRes, regsRes] = await Promise.all([
-          supabase
-            .from('page_views')
-            .select('created_at')
-            .gte('created_at', periodStart(days)),
-          supabase
-            .from('profiles')
-            .select('created_at')
-            .gte('created_at', periodStart(days)),
+          rng(supabase.from('page_views').select('created_at'), 'created_at'),
+          rng(supabase.from('profiles').select('created_at'), 'created_at'),
         ])
 
         if (cancelled) return
@@ -379,39 +624,28 @@ export default function AnalyticsPage() {
         const pvs = pvRes.data || []
         const regs = regsRes.data || []
 
-        // Build buckets
+        // Build buckets forward from range start
+        const rangeStart = new Date(start)
         const buckets = []
-        const now = new Date()
-        const spacing = days === 1 ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
-        for (let i = points - 1; i >= 0; i--) {
-          const start = new Date(now.getTime() - i * spacing)
+        for (let i = 0; i < points; i++) {
+          const bucketStart = new Date(rangeStart.getTime() + i * spacing)
           const label =
             days === 1
-              ? start.toLocaleTimeString('it-IT', { hour: '2-digit' }) + 'h'
-              : start.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-          buckets.push({
-            key: label,
-            visite: 0,
-            utenti: 0,
-            start: start.getTime(),
-          })
+              ? bucketStart.toLocaleTimeString('it-IT', { hour: '2-digit' }) + 'h'
+              : bucketStart.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+          buckets.push({ key: label, visite: 0, utenti: 0, start: bucketStart.getTime() })
         }
+
         pvs.forEach((row) => {
           const t = new Date(row.created_at).getTime()
           for (let i = buckets.length - 1; i >= 0; i--) {
-            if (t >= buckets[i].start) {
-              buckets[i].visite += 1
-              break
-            }
+            if (t >= buckets[i].start) { buckets[i].visite += 1; break }
           }
         })
         regs.forEach((row) => {
           const t = new Date(row.created_at).getTime()
           for (let i = buckets.length - 1; i >= 0; i--) {
-            if (t >= buckets[i].start) {
-              buckets[i].utenti += 1
-              break
-            }
+            if (t >= buckets[i].start) { buckets[i].utenti += 1; break }
           }
         })
         setVisitsChartData(buckets)
@@ -420,7 +654,32 @@ export default function AnalyticsPage() {
       }
     }
     fetchChart()
-  }, [period, user])
+  }, [period, customFrom, customTo, user])
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    if (!showDatePicker) return
+    function handler(e) {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
+        setShowDatePicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showDatePicker])
+
+  function handleCustomApply(from, to) {
+    setCustomFrom(from)
+    setCustomTo(to)
+    setPeriod('custom')
+    setShowDatePicker(false)
+  }
+
+  function customPeriodLabel() {
+    if (period !== 'custom' || !customFrom || !customTo) return null
+    const fmt = (d) => d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+    return `${fmt(customFrom)} → ${fmt(customTo)}`
+  }
 
   if (authLoading) {
     return (
@@ -499,7 +758,7 @@ export default function AnalyticsPage() {
                   textTransform: 'uppercase',
                 }}
               >
-                {PERIODS.find((p) => p.key === period)?.label || 'periodo'}
+                {customPeriodLabel() || PERIODS.find((p) => p.key === period)?.label || 'periodo'}
               </span>
             </h1>
             <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
@@ -508,35 +767,72 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Period selector */}
-          <div
-            style={{
-              display: 'flex',
-              background: '#fff',
-              border: '1px solid var(--color-line, #EAE3D7)',
-              borderRadius: 999,
-              padding: 4,
-            }}
-          >
-            {PERIODS.map((p) => (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'flex',
+                background: '#fff',
+                border: '1px solid var(--color-line, #EAE3D7)',
+                borderRadius: 999,
+                padding: 4,
+              }}
+            >
+              {PERIODS.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => { setPeriod(p.key); setShowDatePicker(false) }}
+                  style={{
+                    padding: '7px 14px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    border: 'none',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    background: period === p.key ? 'var(--color-ink, #22181C)' : 'transparent',
+                    color: period === p.key ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                    transition: 'background 0.15s',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom date range button + picker */}
+            <div ref={datePickerRef} style={{ position: 'relative' }}>
               <button
-                key={p.key}
-                onClick={() => setPeriod(p.key)}
+                onClick={() => setShowDatePicker((v) => !v)}
                 style={{
                   padding: '7px 14px',
                   fontSize: 12,
                   fontWeight: 700,
-                  border: 'none',
+                  border: '1px solid var(--color-line, #EAE3D7)',
                   borderRadius: 999,
                   cursor: 'pointer',
-                  background: period === p.key ? 'var(--color-ink, #22181C)' : 'transparent',
-                  color: period === p.key ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                  background: period === 'custom' ? 'var(--color-ink,#22181C)' : '#fff',
+                  color: period === 'custom' ? '#fff' : 'var(--color-ink-55,rgba(34,24,28,0.55))',
                   transition: 'background 0.15s',
                   fontFamily: 'var(--font-sans)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {p.label}
+                <span aria-hidden style={{ fontSize: 13 }}>📅</span>
+                {customPeriodLabel() || 'Personalizza'}
               </button>
-            ))}
+
+              {showDatePicker && (
+                <DateRangePicker
+                  from={customFrom}
+                  to={customTo}
+                  onApply={handleCustomApply}
+                  onClose={() => setShowDatePicker(false)}
+                />
+              )}
+            </div>
           </div>
         </div>
 
