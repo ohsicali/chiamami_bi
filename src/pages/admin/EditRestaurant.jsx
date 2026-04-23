@@ -48,6 +48,7 @@ export default function EditRestaurant() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
   const [loadError, setLoadError] = useState(null)
+  const [notifyOnPublish, setNotifyOnPublish] = useState(true)
 
   useEffect(() => {
     if (!restaurantId || !isSupabaseConfigured()) return
@@ -95,6 +96,7 @@ export default function EditRestaurant() {
     async (alsoPublish) => {
       if (!form) return
       setSaving(true)
+      const isFirstPublish = alsoPublish === true && !restaurant?.is_published
       try {
         const payload = toDbPayload(form, alsoPublish)
         const { error } = await supabase.from('restaurants').update(payload).eq('id', restaurantId)
@@ -106,6 +108,36 @@ export default function EditRestaurant() {
         })
         setRestaurant((prev) => ({ ...prev, ...payload }))
         setTimeout(() => setToast(null), 2400)
+
+        // On first publish: auto-send PIN email to partner + notify subscribers
+        if (isFirstPublish) {
+          const { data: sess } = await supabase.auth.getSession()
+          const token = sess?.session?.access_token
+
+          // Auto-send PIN to partner (fire-and-forget)
+          if (token && form.partner_email && form.verify_pin) {
+            fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                type: 'partner',
+                to: form.partner_email,
+                nomeLocale: form.name,
+                pin: form.verify_pin,
+                restaurantId,
+              }),
+            }).catch(() => {})
+          }
+
+          // Notify newsletter subscribers (fire-and-forget, only if toggle is on)
+          if (token && notifyOnPublish) {
+            fetch('/api/notify-subscribers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ type: 'restaurant', id: restaurantId }),
+            }).catch(() => {})
+          }
+        }
       } catch (err) {
         setToast({ kind: 'err', text: `Errore: ${err.message || 'save failed'}` })
         setTimeout(() => setToast(null), 3400)
@@ -113,7 +145,7 @@ export default function EditRestaurant() {
         setSaving(false)
       }
     },
-    [form, restaurantId]
+    [form, restaurantId, restaurant, notifyOnPublish]
   )
 
   // SEO lock: until minimum data is filled, the SEO section shows a
@@ -309,6 +341,30 @@ export default function EditRestaurant() {
               </button>
             </div>
           </div>
+
+          {/* Toggle "notifica iscritti" — visibile solo se il ristorante non è ancora pubblicato */}
+          {!form.is_published && (
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                id="notify-on-publish"
+                type="checkbox"
+                checked={notifyOnPublish}
+                onChange={(e) => setNotifyOnPublish(e.target.checked)}
+                style={{ accentColor: 'var(--color-corallo, #E8453C)', width: 14, height: 14 }}
+              />
+              <label
+                htmlFor="notify-on-publish"
+                style={{
+                  fontSize: 12,
+                  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                  fontFamily: 'var(--font-sans)',
+                  cursor: 'pointer',
+                }}
+              >
+                Notifica iscritti newsletter alla pubblicazione
+              </label>
+            </div>
+          )}
         </div>
 
         {isDesktop ? (
