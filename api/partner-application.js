@@ -115,6 +115,21 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('Email send error:', err)
     }
+
+    // Send confirmation to candidate (fire-and-forget — does not block the response)
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      const siteUrl = process.env.SITE_URL || 'https://chiamamibi.com'
+      fetch(`${siteUrl}/api/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'partner-application-confirmation',
+          to: email,
+          nome_referente: contact_name,
+          nome_attivita: restaurant_name,
+        }),
+      }).catch((err) => console.warn('[partner-application] confirmation send failed:', err))
+    }
   }
 
   return res.status(200).json({ success: true })
