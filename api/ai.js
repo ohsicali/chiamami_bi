@@ -337,14 +337,20 @@ async function executeSearch(admin, filters) {
     .limit(30)
 
   if (filters.category) {
-    const cat = String(filters.category).trim()
-    query = query.or(`cuisine_type.ilike.%${cat}%,category.cs.{${cat}}`)
+    const cat = String(filters.category).trim().replace(/[%,{}]/g, '')
+    if (cat) {
+      // Matcha sia cuisine_type (case-insensitive) sia ogni elemento nell'array category.
+      // array_to_string permette il match case-insensitive sugli array.
+      const capitalized = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()
+      query = query.or(`cuisine_type.ilike.%${cat}%,category.cs.{${cat}},category.cs.{${capitalized}}`)
+    }
   }
   if (typeof filters.price_max === 'number' && filters.price_max > 0) {
     query = query.lte('price_range', filters.price_max)
   }
   if (filters.zone) {
-    query = query.ilike('address', `%${filters.zone}%`)
+    const zoneQuery = mapZoneToAddressPatterns(filters.zone)
+    if (zoneQuery) query = query.or(zoneQuery)
   }
   if (Array.isArray(filters.tags) && filters.tags.length > 0) {
     // Soft match via 'tagline' or 'our_review' — OR concat
@@ -384,6 +390,24 @@ async function executeSearch(admin, filters) {
   if (filters.moment) filtered = filtered.filter((r) => r.moment_match)
   if (filters.open_now) filtered = filtered.filter((r) => r.open_now || r.closes_at == null)
 
+  // Retry allargato: se zero risultati, prova senza zone e senza open_now
+  if (filtered.length === 0 && (filters.zone || filters.open_now)) {
+    const relaxed = { ...filters, zone: null, open_now: false }
+    const relaxedResult = await executeSearch(admin, relaxed)
+    if (relaxedResult.results && relaxedResult.results.length > 0) {
+      return { results: relaxedResult.results, total: relaxedResult.total, relaxed: true }
+    }
+  }
+
+  // Retry ancora più permissivo: se zero, rilassa anche price_max di +1
+  if (filtered.length === 0 && typeof filters.price_max === 'number' && filters.price_max < 4) {
+    const relaxed = { ...filters, zone: null, open_now: false, price_max: filters.price_max + 1 }
+    const relaxedResult = await executeSearch(admin, relaxed)
+    if (relaxedResult.results && relaxedResult.results.length > 0) {
+      return { results: relaxedResult.results, total: relaxedResult.total, relaxed: true }
+    }
+  }
+
   return { results: filtered.slice(0, 5), total: filtered.length }
 }
 
@@ -391,6 +415,27 @@ function extractZone(address) {
   if (!address) return ''
   const part = address.split(',')[0] || ''
   return part.trim().slice(0, 40)
+}
+
+/**
+ * Mappa termini generici utente → pattern address Supabase.
+ * "centro" → ILIKE su quartieri del centro storico di Torino.
+ * Ritorna stringa OR per Supabase.or() o null.
+ */
+function mapZoneToAddressPatterns(zoneRaw) {
+  if (!zoneRaw) return null
+  const zone = String(zoneRaw).toLowerCase().trim().replace(/[%,]/g, '')
+  if (!zone) return null
+
+  // Alias per termini generici → quartieri concreti di Torino
+  const ALIASES = {
+    'centro': ['crocetta', 'san salvario', 'quadrilatero', 'porta nuova', 'porta palazzo', 'centro storico', 'piazza castello', 'via po', 'via roma', 'piazza vittorio', 'piazza san carlo', 'carlina', 'romana'],
+    'centro storico': ['quadrilatero', 'porta palazzo', 'piazza castello', 'via po', 'via roma', 'piazza san carlo'],
+    'centro città': ['crocetta', 'san salvario', 'quadrilatero', 'porta nuova'],
+  }
+
+  const patterns = ALIASES[zone] || [zone]
+  return patterns.map(p => `address.ilike.%${p}%`).join(',')
 }
 
 function computeOpenStatus(hours, now) {

@@ -86,7 +86,6 @@ export default function MomentResultsGrid({
             key={r.id}
             r={r}
             closesAt={match.closesAt}
-            verified={match.verified}
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
             onToggleSave={toggleSave ? () => toggleSave(r.id) : undefined}
@@ -157,7 +156,7 @@ export default function MomentResultsGrid({
   )
 }
 
-function Lcard({ r, closesAt, verified, onClick, saved, onToggleSave }) {
+function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
@@ -210,7 +209,7 @@ function Lcard({ r, closesAt, verified, onClick, saved, onToggleSave }) {
             {cat?.emoji || '🍽️'}
           </div>
         )}
-        <OpenPill closesAt={closesAt} verified={verified} />
+        <OpenPill closesAt={closesAt} />
         {onToggleSave && (
           <div
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave() }}
@@ -283,12 +282,8 @@ function Lcard({ r, closesAt, verified, onClick, saved, onToggleSave }) {
   )
 }
 
-function OpenPill({ closesAt, verified }) {
-  const text = verified
-    ? (closesAt ? `Aperto · fino ${closesAt}` : 'Aperto')
-    : 'Orari non verificati'
-  const color = verified ? '#137C3E' : '#8A6D2B'
-  const bg = verified ? 'rgba(255,255,255,.92)' : 'rgba(255,246,228,.95)'
+function OpenPill({ closesAt }) {
+  const text = closesAt ? `Aperto · fino ${closesAt}` : 'Aperto'
   return (
     <span
       style={{
@@ -296,19 +291,19 @@ function OpenPill({ closesAt, verified }) {
         bottom: 10,
         left: 10,
         padding: '5px 10px',
-        background: bg,
+        background: 'rgba(255,255,255,.92)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         borderRadius: 999,
         fontSize: 10,
         fontWeight: 800,
-        color,
+        color: '#137C3E',
         display: 'inline-flex',
         alignItems: 'center',
         gap: 5,
       }}
     >
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#137C3E' }} />
       {text}
     </span>
   )

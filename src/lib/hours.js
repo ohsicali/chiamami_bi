@@ -174,7 +174,7 @@ export function getCurrentMoment(now = new Date()) {
  *
  * Return:
  *   { match: true,  verified: true,  closesAt: 'HH:MM' }  → aperto + overlap
- *   { match: true,  verified: false, closesAt: null    }  → no hours_cache, tolleranza
+ *   { match: false, verified: false, closesAt: null    }  → no hours_cache (non mostrato)
  *   { match: false, verified: true,  closesAt: null    }  → orari noti ma non aperto per quel momento
  */
 export function isOpenForMoment(hours, moment, now = new Date()) {
@@ -183,8 +183,8 @@ export function isOpenForMoment(hours, moment, now = new Date()) {
   const slot = MOMENT_SLOTS[moment]
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
   if (!source || !Array.isArray(source.periods) || source.periods.length === 0) {
-    // Tolleranza: ristoranti senza orari popolati passano il filtro (con label "non verificati")
-    return { match: true, verified: false, closesAt: null }
+    // No tolleranza: ristoranti senza hours_cache non appaiono nel filtro momento
+    return { match: false, verified: false, closesAt: null }
   }
 
   const utcOffset = typeof hours?.utcOffsetMinutes === 'number' ? hours.utcOffsetMinutes : null
