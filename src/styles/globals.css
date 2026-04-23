@@ -243,6 +243,9 @@ body {
     0 2px 8px rgba(34, 24, 28, 0.06),
     0 14px 32px rgba(34, 24, 28, 0.14);
 }
+@media (min-width: 768px) {
+  .bottom-nav { display: none !important; }
+}
 
 .bottom-nav .nav-item {
   flex: 1;
