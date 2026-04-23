@@ -306,17 +306,15 @@ function HeroPromo({ featured }) {
             className="hfv4-hero-photo"
             style={{
               position: 'relative',
-              borderRadius: 20,
               overflow: 'hidden',
               background: '#333',
-              alignSelf: 'stretch',
               minHeight: 160,
             }}
           >
             <img
               src={featured.photo}
               alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
             {showProgress && (
               <div
@@ -1173,29 +1171,29 @@ export default function HomeFeedV4() {
             margin-left: auto; margin-right: auto;
             padding-left: 40px !important; padding-right: 40px !important;
           }
-          /* Hero desktop: fixed height so portrait photos can't stretch the card */
+          /* Hero desktop — identico al mockup v4-desktop-home.html */
           .hfv4-hero-wrap { padding-top: 16px !important; }
           .hfv4-hero-card {
             grid-template-columns: 1.05fr .95fr !important;
             gap: 0 !important;
-            height: 360px !important;
-            min-height: 0 !important;
+            min-height: 380px !important;
+            height: auto !important;
             padding: 0 !important;
             border-radius: 28px !important;
             overflow: hidden !important;
           }
-          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 14px !important; }
+          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
           .hfv4-hero-chip {
             font-size: 12px !important; letter-spacing: .08em !important;
-            padding: 6px 12px !important; margin-bottom: 0 !important;
+            padding: 7px 13px !important; margin-bottom: 0 !important;
             animation: drop-live-ring 2s ease-out infinite !important;
           }
-          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
-          .hfv4-hero-rest-line { display: flex !important; font-size: 15px !important; }
-          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; margin-bottom: 0 !important; -webkit-line-clamp: 2 !important; }
-          .hfv4-hero-ctas { margin-top: 6px; }
+          .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-rest-line { display: flex !important; font-size: 15px !important; font-weight: 600 !important; }
+          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; line-height: 1.5 !important; margin-bottom: 0 !important; -webkit-line-clamp: 2 !important; }
+          .hfv4-hero-ctas { margin-top: 6px !important; }
           .hfv4-hero-cta-ghost { display: inline-flex !important; }
-          .hfv4-hero-photo { height: 100% !important; min-height: 0 !important; border-radius: 0 !important; }
+          .hfv4-hero-photo { min-height: 0 !important; border-radius: 0 !important; }
           .hfv4-hero-progress { display: block !important; }
           /* Category bubbles: 80px wrap grid, no scroll */
           .hfv4-cats-row {
