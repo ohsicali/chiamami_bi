@@ -1,157 +1,235 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { useCategories } from '../../lib/hooks/useCategories'
 import AdminLayout from '../../components/Layout/AdminLayout'
+import PillTab from '../../components/admin/PillTab'
+import EmptyState from '../../components/admin/EmptyState'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
+
+const PAGE_SIZE = 20
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                              */
 /* ------------------------------------------------------------------ */
-const ic = {
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.8,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-}
-function PlusIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  )
-}
-function SearchIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  )
-}
-function EditIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  )
-}
-function TrashIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-    </svg>
-  )
-}
-function ChevronRightIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  )
-}
-function BackIcon({ w = 18 }) {
-  return (
-    <svg {...ic} width={w} height={w} viewBox="0 0 24 24">
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
-    </svg>
-  )
-}
+const ic = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+const SearchIcon = ({ w = 14 }) => (
+  <svg {...ic} width={w} height={w} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+)
+const EditIcon = ({ w = 13 }) => (
+  <svg {...ic} width={w} height={w} viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+)
+const TrashIcon = ({ w = 13 }) => (
+  <svg {...ic} width={w} height={w} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+)
+const OpenIcon = ({ w = 13 }) => (
+  <svg {...ic} width={w} height={w} viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+)
 
 /* ------------------------------------------------------------------ */
-/*  Status badge                                                       */
+/*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
-function StatusBadge({ published }) {
+function formatShortDate(d) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: '2-digit' })
+}
+
+function pickThumb(r) {
+  if (!Array.isArray(r.photos) || r.photos.length === 0) return null
+  const first = r.photos[0]
+  if (typeof first === 'string') return first
+  return first?.thumb_url || first?.photo_url || null
+}
+
+function categoryTagColor(idx) {
+  const palette = ['', 'c', 'g', 'm']
+  return palette[idx % palette.length]
+}
+
+function CategoryTag({ name, colorKey = '' }) {
+  const bg = {
+    '': 'var(--color-cream-deep, #F1EBE0)',
+    c: 'var(--color-corallo-wash, #FDEDEB)',
+    g: 'var(--color-green-wash, #E8F5D8)',
+    m: 'var(--color-oro-wash, #F5EDDD)',
+  }[colorKey]
+  const fg = {
+    '': 'var(--color-ink, #22181C)',
+    c: 'var(--color-corallo, #E8453C)',
+    g: '#2C7A4A',
+    m: 'var(--color-oro, #B08954)',
+  }[colorKey]
   return (
     <span
       style={{
         display: 'inline-block',
-        fontSize: 10,
-        padding: '2px 8px',
-        borderRadius: 12,
-        fontWeight: 500,
-        background: published ? '#ecfdf5' : '#fef3c7',
-        color: published ? '#059669' : '#b45309',
+        padding: '3px 9px',
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 800,
+        background: bg,
+        color: fg,
       }}
     >
+      {name}
+    </span>
+  )
+}
+
+function DiscountTag({ value }) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '4px 10px',
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 900,
+        background: 'linear-gradient(135deg, var(--color-green-a, #A3E635), var(--color-green-b, #4ADE80))',
+        color: '#0f2c12',
+      }}
+    >
+      {value}
+    </span>
+  )
+}
+
+function StatusPill({ published }) {
+  const color = published ? '#2C7A4A' : 'var(--color-ink-55, rgba(34,24,28,0.55))'
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color }}>
+      <span
+        style={{
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          background: published ? '#2C7A4A' : '#999',
+        }}
+      />
       {published ? 'Pubblicato' : 'Bozza'}
     </span>
   )
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main page                                                          */
+/*  Main                                                               */
 /* ------------------------------------------------------------------ */
 export default function AdminRestaurants() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
+  const { categories } = useCategories()
 
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all') // 'all' | 'published' | 'draft'
+  const [searchParams, setSearchParams] = useSearchParams()
+  const queryFromUrl = searchParams.get('q') || ''
+  const [search, setSearch] = useState(queryFromUrl)
+  const [statusFilter, setStatusFilter] = useState('all') // all | published | draft
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [discountFilter, setDiscountFilter] = useState('all') // all | with | without
+  const [sortBy, setSortBy] = useState('recent') // recent | name | views
+  const [page, setPage] = useState(1)
   const [deleteId, setDeleteId] = useState(null)
   const [discountsMap, setDiscountsMap] = useState({})
-  const [savedCountMap, setSavedCountMap] = useState({})
+  const [viewsMap, setViewsMap] = useState({})
 
-  // Fetch active discounts per restaurant (for showing -X% badge)
+  // Sync URL ?q= → search state on mount / URL change
+  useEffect(() => {
+    setSearch(queryFromUrl)
+  }, [queryFromUrl])
+
+  // Push search into URL when user types (debounced by React state)
+  useEffect(() => {
+    const current = searchParams.get('q') || ''
+    if (search !== current) {
+      const params = new URLSearchParams(searchParams)
+      if (search) params.set('q', search)
+      else params.delete('q')
+      setSearchParams(params, { replace: true })
+      setPage(1)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
+  // Active discounts map (for discount badge + filter)
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
     let cancelled = false
-    async function fetchDiscounts() {
-      try {
-        const nowIso = new Date().toISOString()
-        const { data } = await supabase
-          .from('discounts')
-          .select('id, restaurant_id, discount_value, discount_type, drop_time, is_active, valid_until')
-          .eq('is_active', true)
-          .gte('valid_until', nowIso)
-        if (cancelled) return
-        const map = {}
-        ;(data || []).forEach((d) => {
-          if (!map[d.restaurant_id]) map[d.restaurant_id] = d
-        })
-        setDiscountsMap(map)
-      } catch {
-        if (!cancelled) setDiscountsMap({})
-      }
+    async function run() {
+      const nowIso = new Date().toISOString()
+      const { data } = await supabase
+        .from('discounts')
+        .select('id, restaurant_id, discount_value, drop_time, is_active, valid_until')
+        .eq('is_active', true)
+        .gt('valid_until', nowIso)
+      if (cancelled) return
+      const map = {}
+      ;(data || []).forEach((d) => {
+        if (!map[d.restaurant_id]) map[d.restaurant_id] = d
+      })
+      setDiscountsMap(map)
     }
-    fetchDiscounts()
+    run()
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
-  // Fetch saved counts per restaurant
+  // Views map last 30d by slug (client aggregate over capped sample)
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
     let cancelled = false
-    async function fetchSaved() {
-      try {
-        const { data } = await supabase.from('saved_restaurants').select('restaurant_id')
-        if (cancelled) return
-        const map = {}
-        ;(data || []).forEach((row) => {
-          map[row.restaurant_id] = (map[row.restaurant_id] || 0) + 1
-        })
-        setSavedCountMap(map)
-      } catch {
-        if (!cancelled) setSavedCountMap({})
-      }
+    async function run() {
+      const since = new Date(Date.now() - MONTH_MS).toISOString()
+      const { data } = await supabase
+        .from('page_views')
+        .select('path')
+        .ilike('path', '/r/%')
+        .gte('created_at', since)
+        .limit(10000)
+      if (cancelled) return
+      const map = {}
+      ;(data || []).forEach((row) => {
+        const m = row.path.match(/^\/r\/([^?/]+)/)
+        if (!m) return
+        map[m[1]] = (map[m[1]] || 0) + 1
+      })
+      setViewsMap(map)
     }
-    fetchSaved()
+    run()
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
-  // Stats + filter
-  const { published, drafts, filtered } = useMemo(() => {
+  // Derived stats
+  const stats = useMemo(() => {
     const pub = restaurants.filter((r) => r.is_published !== false).length
-    const drf = restaurants.length - pub
+    return {
+      total: restaurants.length,
+      published: pub,
+      draft: restaurants.length - pub,
+    }
+  }, [restaurants])
 
+  // Filtered + sorted
+  const filtered = useMemo(() => {
     let result = [...restaurants]
-    if (filter === 'published') result = result.filter((r) => r.is_published !== false)
-    else if (filter === 'draft') result = result.filter((r) => r.is_published === false)
+
+    if (statusFilter === 'published') result = result.filter((r) => r.is_published !== false)
+    else if (statusFilter === 'draft') result = result.filter((r) => r.is_published === false)
+
+    if (categoryFilter !== 'all') {
+      result = result.filter((r) => {
+        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+        return cats.includes(categoryFilter)
+      })
+    }
+
+    if (discountFilter === 'with') result = result.filter((r) => discountsMap[r.id])
+    else if (discountFilter === 'without') result = result.filter((r) => !discountsMap[r.id])
 
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -164,561 +242,242 @@ export default function AdminRestaurants() {
       )
     }
 
-    result.sort((a, b) => a.name.localeCompare(b.name, 'it'))
-    return { published: pub, drafts: drf, filtered: result }
-  }, [restaurants, filter, search])
+    if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'it'))
+    else if (sortBy === 'views') result.sort((a, b) => (viewsMap[b.slug] || 0) - (viewsMap[a.slug] || 0))
+    else result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
-  const handleDelete = async () => {
+    return result
+  }, [restaurants, statusFilter, categoryFilter, discountFilter, search, sortBy, discountsMap, viewsMap])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageClamped = Math.min(page, totalPages)
+  const paginated = useMemo(() => {
+    const start = (pageClamped - 1) * PAGE_SIZE
+    return filtered.slice(start, start + PAGE_SIZE)
+  }, [filtered, pageClamped])
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, categoryFilter, discountFilter, sortBy])
+
+  async function handleDelete() {
     if (!deleteId || !isSupabaseConfigured()) return
     try {
       await supabase.from('restaurants').delete().eq('id', deleteId)
       setDeleteId(null)
       window.location.reload()
     } catch (err) {
-      console.error('Delete failed:', err)
-      alert('Errore durante eliminazione')
+      alert('Errore durante eliminazione: ' + (err?.message || 'unknown'))
     }
   }
 
-  if (authLoading || dataLoading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#fafafa',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            border: '3px solid #E8453C',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    )
-  }
+  if (authLoading || dataLoading) return <LoadingScreen />
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
   return (
     <AdminLayout title="Ristoranti">
-      {/* ─── DESKTOP HEADER ─── */}
-      <div
-        className="hidden md:block"
-        style={{ borderBottom: '1px solid #eee', background: '#fff' }}
-      >
-        <div style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Ristoranti</h1>
-            <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
-              {restaurants.length} ristoranti · {published} pubblicati · {drafts} bozze
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#999' }}>
-                <SearchIcon w={14} />
-              </span>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cerca ristoranti..."
-                style={{
-                  paddingLeft: 30,
-                  paddingRight: 12,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                  borderRadius: 8,
-                  border: '1px solid #eee',
-                  fontSize: 13,
-                  outline: 'none',
-                  background: '#fff',
-                  width: 220,
-                }}
-              />
-            </div>
-            <Link
-              to="/admin/restaurant/new"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: '#E8453C',
-                color: '#fff',
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              <PlusIcon w={14} /> Aggiungi
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── MOBILE HEADER ─── */}
-      <div
-        className="md:hidden"
-        style={{ borderBottom: '1px solid #eee', background: '#fff', padding: '14px 18px' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
-          <button
-            onClick={() => navigate('/admin')}
+      <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
+        {/* ── Header ── */}
+        <div style={{ marginBottom: 24 }}>
+          <div
             style={{
-              background: 'transparent',
-              border: 'none',
-              padding: 4,
-              color: '#666',
-              cursor: 'pointer',
-              display: 'flex',
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              letterSpacing: '0.04em',
+              marginBottom: 8,
             }}
-            aria-label="Indietro"
           >
-            <BackIcon w={18} />
-          </button>
-          <h1 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0, flex: 1 }}>Ristoranti</h1>
-          <Link
-            to="/admin/restaurant/new"
+            Catalogo › <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Ristoranti</b>
+          </div>
+          <h1
             style={{
-              background: '#E8453C',
-              color: '#fff',
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 32,
+              letterSpacing: '-0.025em',
+              margin: 0,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              textDecoration: 'none',
+              gap: 14,
+              color: 'var(--color-ink, #22181C)',
+              flexWrap: 'wrap',
             }}
-            aria-label="Aggiungi"
           >
-            <PlusIcon w={14} />
-          </Link>
-        </div>
-
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: 12 }}>
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#999' }}>
-            <SearchIcon w={14} />
-          </span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cerca ristoranti..."
-            style={{
-              width: '100%',
-              paddingLeft: 30,
-              paddingRight: 12,
-              paddingTop: 8,
-              paddingBottom: 8,
-              borderRadius: 8,
-              border: '1px solid #eee',
-              fontSize: 13,
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        {/* Filter chips */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[
-            { key: 'all', label: `Tutti (${restaurants.length})` },
-            { key: 'published', label: `Pubblicati (${published})` },
-            { key: 'draft', label: `Bozze (${drafts})` },
-          ].map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
+            Ristoranti
+            <span
               style={{
-                flexShrink: 0,
-                padding: '6px 12px',
-                borderRadius: 16,
-                border: filter === f.key ? 'none' : '1px solid #eee',
-                background: filter === f.key ? 'var(--color-ink)' : '#fff',
-                color: filter === f.key ? '#fff' : '#999',
+                fontFamily: 'var(--font-sans)',
                 fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                background: 'var(--color-cream-deep, #F1EBE0)',
+                color: 'var(--color-ink, #22181C)',
+                padding: '5px 10px',
+                borderRadius: 999,
+                textTransform: 'uppercase',
               }}
             >
-              {f.label}
-            </button>
-          ))}
+              {stats.total} totali · {stats.published} pubblicati
+            </span>
+          </h1>
+          <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
+            Filtra, edita, archivia la guida.
+          </div>
         </div>
-      </div>
 
-      {/* ─── DESKTOP: FILTER CHIPS ─── */}
-      <div
-        className="hidden md:flex"
-        style={{ padding: '14px 28px 0', gap: 8 }}
-      >
-        {[
-          { key: 'all', label: `Tutti (${restaurants.length})` },
-          { key: 'published', label: `Pubblicati (${published})` },
-          { key: 'draft', label: `Bozze (${drafts})` },
-        ].map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 16,
-              border: filter === f.key ? 'none' : '1px solid #eee',
-              background: filter === f.key ? 'var(--color-ink)' : '#fff',
-              color: filter === f.key ? '#fff' : '#666',
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ─── DESKTOP TABLE ─── */}
-      <div className="hidden md:block" style={{ padding: '16px 28px 24px' }}>
+        {/* ── Filters ── */}
         <div
           style={{
-            background: '#fff',
-            border: '1px solid #eee',
-            borderRadius: 10,
-            overflow: 'hidden',
+            display: 'flex',
+            gap: 10,
+            marginBottom: 16,
+            alignItems: 'center',
+            flexWrap: 'wrap',
           }}
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
-              <tr>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '10px 14px',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#999',
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  Ristorante
-                </th>
-                <th style={headCellStyle}>Categoria</th>
-                <th style={headCellStyle}>Stato</th>
-                <th style={headCellStyle}>Sconto</th>
-                <th style={{ ...headCellStyle, textAlign: 'right' }}>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => {
-                const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-                  .map((name) => getCategoryInfo(name))
-                  .filter(Boolean)
-                const firstCat = cats[0]
-                const isPublished = r.is_published !== false
-                const thumb = proxyImg(
-                  Array.isArray(r.photos) && r.photos.length > 0
-                    ? typeof r.photos[0] === 'string'
-                      ? r.photos[0]
-                      : r.photos[0]?.thumb_url || r.photos[0]?.photo_url
-                    : null
-                )
-                const discount = discountsMap[r.id]
-                const isDrop = discount?.drop_time != null
-                return (
-                  <tr
-                    key={r.id}
-                    style={{
-                      borderBottom: '1px solid #f5f5f5',
-                      transition: 'background 0.15s',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    onClick={() => navigate(`/admin/restaurant/${r.id}/edit`)}
-                  >
-                    <td style={{ padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        {thumb ? (
-                          <img
-                            src={thumb}
-                            alt=""
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              objectFit: 'cover',
-                              flexShrink: 0,
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              background: '#f0f0f0',
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                        <div style={{ minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color: 'var(--color-ink)',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: 280,
-                            }}
-                          >
-                            {r.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              color: '#999',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: 280,
-                            }}
-                          >
-                            {r.address || '—'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={cellStyle}>{firstCat?.name || '—'}</td>
-                    <td style={cellStyle}>
-                      <StatusBadge published={isPublished} />
-                    </td>
-                    <td style={cellStyle}>
-                      {discount ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ color: '#E8453C', fontWeight: 600, fontSize: 13 }}>
-                            {discount.discount_value}
-                          </span>
-                          {isDrop && (
-                            <span
-                              style={{
-                                fontSize: 9,
-                                padding: '2px 6px',
-                                background: 'rgba(176,137,84,0.15)',
-                                color: '#B08954',
-                                borderRadius: 4,
-                                fontWeight: 600,
-                                letterSpacing: 0.3,
-                              }}
-                            >
-                              DROP
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span style={{ color: '#ccc' }}>—</span>
-                      )}
-                    </td>
-                    <td style={{ ...cellStyle, textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: 2 }}>
-                        <Link
-                          to={`/admin/restaurant/${r.id}/edit`}
-                          onClick={(e) => e.stopPropagation()}
-                          style={actionBtn}
-                          title="Modifica"
-                        >
-                          <EditIcon w={14} />
-                        </Link>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteId(r.id)
-                          }}
-                          style={{ ...actionBtn, color: '#dc2626' }}
-                          title="Elimina"
-                        >
-                          <TrashIcon w={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#999', fontSize: 13 }}>
-                    {search ? 'Nessun ristorante trovato' : 'Nessun ristorante ancora'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          <PillTab active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} count={stats.total}>
+            Tutti
+          </PillTab>
+          <PillTab active={statusFilter === 'published'} onClick={() => setStatusFilter('published')} count={stats.published}>
+            Pubblicati
+          </PillTab>
+          <PillTab active={statusFilter === 'draft'} onClick={() => setStatusFilter('draft')} count={stats.draft}>
+            Bozze
+          </PillTab>
 
-      {/* ─── MOBILE CARDS ─── */}
-      <div className="md:hidden" style={{ padding: '14px 18px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {filtered.map((r) => {
-          const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-            .map((name) => getCategoryInfo(name))
-            .filter(Boolean)
-          const firstCat = cats[0]
-          const isPublished = r.is_published !== false
-          const thumb = proxyImg(
-            Array.isArray(r.photos) && r.photos.length > 0
-              ? typeof r.photos[0] === 'string'
-                ? r.photos[0]
-                : r.photos[0]?.thumb_url || r.photos[0]?.photo_url
-              : null
-          )
-          const discount = discountsMap[r.id]
-          const isDrop = discount?.drop_time != null
-          const priceLabel = PRICE_LABELS[r.price_range] || ''
-          const savedCount = savedCountMap[r.id] || 0
-          return (
-            <Link
-              key={r.id}
-              to={`/admin/restaurant/${r.id}/edit`}
+          <FilterSelect
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            placeholder="Categoria ▾"
+          >
+            <option value="all">Tutte le categorie</option>
+            {categories.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </FilterSelect>
+
+          <FilterSelect
+            value={discountFilter}
+            onChange={setDiscountFilter}
+            placeholder="Sconto ▾"
+          >
+            <option value="all">Sconto · tutti</option>
+            <option value="with">Solo con sconto</option>
+            <option value="without">Solo senza sconto</option>
+          </FilterSelect>
+
+          <FilterSelect value={sortBy} onChange={setSortBy} placeholder="Ordina ▾">
+            <option value="recent">Ordina: recenti</option>
+            <option value="name">Ordina: nome</option>
+            <option value="views">Ordina: più visti</option>
+          </FilterSelect>
+
+          {/* Small search */}
+          <div
+            style={{
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#fff',
+              border: '1px solid var(--color-line, #EAE3D7)',
+              borderRadius: 999,
+              padding: '7px 12px',
+              fontSize: 12,
+              minWidth: 240,
+            }}
+          >
+            <SearchIcon w={13} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cerca per nome…"
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 12,
+                color: 'var(--color-ink)',
+                padding: 0,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ── Table (desktop) / Card list (mobile) ── */}
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon="🍽"
+            title={search ? 'Nessun ristorante trovato' : 'Nessun ristorante'}
+            subtitle={search ? `Prova a cambiare filtri o ricerca "${search}"` : 'Aggiungi il primo per iniziare la guida.'}
+            cta={!search ? { label: '+ Nuovo ristorante', to: '/admin/restaurant/new' } : null}
+          />
+        ) : (
+          <>
+            <div
+              className="hidden md:block"
               style={{
                 background: '#fff',
-                border: '1px solid #eee',
-                borderRadius: 12,
-                padding: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                textDecoration: 'none',
+                border: '1px solid var(--color-line, #EAE3D7)',
+                borderRadius: 18,
+                overflow: 'hidden',
               }}
             >
-              {thumb ? (
-                <img
-                  src={thumb}
-                  alt={r.name}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 10,
-                    objectFit: 'cover',
-                    flexShrink: 0,
-                  }}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <Th style={{ width: 40 }}></Th>
+                    <Th>Ristorante</Th>
+                    <Th>Categoria</Th>
+                    <Th>Zona</Th>
+                    <Th>Sconto</Th>
+                    <Th>Aggiunto</Th>
+                    <Th>Views 30gg</Th>
+                    <Th>Status</Th>
+                    <Th style={{ textAlign: 'right' }}>Azioni</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((r, idx) => (
+                    <RestaurantRow
+                      key={r.id}
+                      r={r}
+                      idx={idx}
+                      discount={discountsMap[r.id]}
+                      views={viewsMap[r.slug] || 0}
+                      onDelete={() => setDeleteId(r.id)}
+                      onEdit={() => navigate(`/admin/restaurant/${r.id}/edit`)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+              <Paging page={pageClamped} totalPages={totalPages} totalItems={filtered.length} onChange={setPage} />
+            </div>
+
+            {/* Mobile card list */}
+            <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {paginated.map((r) => (
+                <MobileCard
+                  key={r.id}
+                  r={r}
+                  discount={discountsMap[r.id]}
+                  views={viewsMap[r.slug] || 0}
                 />
-              ) : (
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 10,
-                    background: '#f0f0f0',
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: 'var(--color-ink)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    {r.name}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 9,
-                      padding: '2px 6px',
-                      borderRadius: 10,
-                      fontWeight: 500,
-                      background: isPublished ? '#ecfdf5' : '#fef3c7',
-                      color: isPublished ? '#059669' : '#b45309',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isPublished ? 'Live' : 'Bozza'}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: '#999',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {firstCat?.name || '—'}
-                  {priceLabel && ` · ${priceLabel}`}
-                  {r.address && ` · ${r.address}`}
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginTop: 4,
-                    fontSize: 11,
-                  }}
-                >
-                  {discount && (
-                    <>
-                      <span style={{ color: '#E8453C', fontWeight: 600 }}>{discount.discount_value}</span>
-                      {isDrop && (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            padding: '1px 5px',
-                            background: 'rgba(176,137,84,0.15)',
-                            color: '#B08954',
-                            borderRadius: 4,
-                            fontWeight: 600,
-                            letterSpacing: 0.3,
-                          }}
-                        >
-                          DROP
-                        </span>
-                      )}
-                      <span style={{ color: '#ccc' }}>·</span>
-                    </>
-                  )}
-                  <span style={{ color: '#999' }}>
-                    {savedCount} {savedCount === 1 ? 'salvataggio' : 'salvataggi'}
-                  </span>
-                </div>
-              </div>
-              <div style={{ color: '#ccc', flexShrink: 0 }}>
-                <ChevronRightIcon w={14} />
-              </div>
-            </Link>
-          )
-        })}
-        {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#999', fontSize: 13 }}>
-            {search ? 'Nessun ristorante trovato' : 'Nessun ristorante ancora'}
-          </div>
+              ))}
+              <MobilePaging page={pageClamped} totalPages={totalPages} onChange={setPage} />
+            </div>
+          </>
         )}
       </div>
 
-      {/* ─── DELETE CONFIRMATION MODAL ─── */}
+      {/* ── Delete modal ── */}
       <AnimatePresence>
         {deleteId && (
           <motion.div
@@ -728,7 +487,7 @@ export default function AdminRestaurants() {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0,0,0,0.4)',
+              background: 'rgba(34,24,28,0.5)',
               backdropFilter: 'blur(4px)',
               zIndex: 100,
               display: 'flex',
@@ -744,32 +503,33 @@ export default function AdminRestaurants() {
               exit={{ scale: 0.95, opacity: 0 }}
               style={{
                 background: '#fff',
-                borderRadius: 14,
-                padding: 24,
-                maxWidth: 360,
+                borderRadius: 18,
+                padding: 28,
+                maxWidth: 420,
                 width: '100%',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
-                Conferma eliminazione
+              <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 20, letterSpacing: '-0.015em', color: 'var(--color-ink)', margin: 0 }}>
+                Elimina ristorante?
               </h3>
-              <p style={{ fontSize: 13, color: '#666', margin: '8px 0 20px', lineHeight: 1.5 }}>
-                Sei sicuro di voler eliminare questo ristorante? Questa azione non può essere annullata.
+              <p style={{ fontSize: 14, color: 'var(--color-ink-70, rgba(34,24,28,0.7))', margin: '10px 0 22px', lineHeight: 1.55 }}>
+                Questa azione cancella anche sconti, redenzioni e foto collegate. Non è reversibile.
               </p>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button
                   onClick={() => setDeleteId(null)}
                   style={{
                     background: 'transparent',
-                    border: '1px solid #eee',
-                    padding: '8px 16px',
-                    borderRadius: 8,
+                    border: '1px solid var(--color-line, #EAE3D7)',
+                    padding: '10px 18px',
+                    borderRadius: 999,
                     fontSize: 13,
-                    color: '#666',
+                    color: 'var(--color-ink)',
                     cursor: 'pointer',
-                    fontWeight: 500,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-sans)',
                   }}
                 >
                   Annulla
@@ -777,14 +537,15 @@ export default function AdminRestaurants() {
                 <button
                   onClick={handleDelete}
                   style={{
-                    background: '#dc2626',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: 8,
+                    background: 'var(--color-danger, #C0392B)',
+                    border: 0,
+                    padding: '10px 18px',
+                    borderRadius: 999,
                     fontSize: 13,
                     color: '#fff',
                     cursor: 'pointer',
-                    fontWeight: 500,
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-sans)',
                   }}
                 >
                   Elimina
@@ -798,32 +559,320 @@ export default function AdminRestaurants() {
   )
 }
 
-const headCellStyle = {
-  textAlign: 'left',
-  padding: '10px 14px',
-  fontSize: 10,
-  fontWeight: 600,
-  color: '#999',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
+/* ------------------------------------------------------------------ */
+/*  Row (desktop) + Card (mobile)                                      */
+/* ------------------------------------------------------------------ */
+function RestaurantRow({ r, idx, discount, views, onDelete, onEdit }) {
+  const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map((n) => getCategoryInfo(n)).filter(Boolean)
+  const firstCat = cats[0]
+  const isPublished = r.is_published !== false
+  const thumb = proxyImg(pickThumb(r))
+  const isDrop = discount?.drop_time != null
+  const zona = r.city && r.city !== 'Torino' ? r.city : '—'
+  return (
+    <tr
+      onClick={onEdit}
+      style={{
+        borderBottom: '1px solid var(--color-line, #EAE3D7)',
+        cursor: 'pointer',
+        transition: 'background 0.15s',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-cream, #F5F0E4)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+    >
+      <Td>
+        <input type="checkbox" onClick={(e) => e.stopPropagation()} onChange={() => {}} aria-label={`Seleziona ${r.name}`} />
+      </Td>
+      <Td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {thumb ? (
+            <img src={thumb} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div
+              style={{
+                width: 56,
+                height: 40,
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
+                flexShrink: 0,
+              }}
+            />
+          )}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-ink)' }}>{r.name}</div>
+            <div style={{ fontWeight: 600, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 11, marginTop: 2 }}>
+              {isDrop ? '+ drop attivo 🔥' : (r.website || r.address || '').slice(0, 48) || '—'}
+            </div>
+          </div>
+        </div>
+      </Td>
+      <Td>{firstCat ? <CategoryTag name={firstCat.name} colorKey={categoryTagColor(idx)} /> : '—'}</Td>
+      <Td>{zona}</Td>
+      <Td>{discount ? <DiscountTag value={discount.discount_value} /> : <span style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>—</span>}</Td>
+      <Td>{formatShortDate(r.created_at)}</Td>
+      <Td>
+        <b style={{ fontWeight: 900 }}>{views > 0 ? views.toLocaleString('it-IT') : '—'}</b>
+      </Td>
+      <Td>
+        <StatusPill published={isPublished} />
+      </Td>
+      <Td style={{ textAlign: 'right' }}>
+        <div style={{ display: 'inline-flex', gap: 4, justifyContent: 'flex-end' }}>
+          <button onClick={(e) => { e.stopPropagation(); onEdit() }} style={actionBtn} title="Modifica">
+            <EditIcon w={13} />
+          </button>
+          <a
+            href={`/r/${r.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={actionBtn}
+            title="Apri scheda pubblica"
+          >
+            <OpenIcon w={13} />
+          </a>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete() }}
+            style={{ ...actionBtn, color: 'var(--color-danger, #C0392B)' }}
+            title="Elimina"
+          >
+            <TrashIcon w={13} />
+          </button>
+        </div>
+      </Td>
+    </tr>
+  )
 }
 
-const cellStyle = {
-  padding: '10px 14px',
-  fontSize: 13,
-  color: '#666',
+function MobileCard({ r, discount, views }) {
+  const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map((n) => getCategoryInfo(n)).filter(Boolean)
+  const firstCat = cats[0]
+  const thumb = proxyImg(pickThumb(r))
+  const isPublished = r.is_published !== false
+  const isDrop = discount?.drop_time != null
+  return (
+    <Link
+      to={`/admin/restaurant/${r.id}/edit`}
+      style={{
+        background: '#fff',
+        border: '1px solid var(--color-line, #EAE3D7)',
+        borderRadius: 14,
+        padding: 12,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        textDecoration: 'none',
+        color: 'var(--color-ink)',
+      }}
+    >
+      {thumb ? (
+        <img src={thumb} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+      ) : (
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 10,
+            background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
+            flexShrink: 0,
+          }}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontWeight: 800, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            {r.name}
+          </div>
+          {discount && <DiscountTag value={discount.discount_value} />}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 600, marginTop: 2 }}>
+          {firstCat?.name || '—'} · {r.city || 'Torino'}
+          {isDrop ? ' · drop 🔥' : ''}
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 4, fontSize: 11 }}>
+          <StatusPill published={isPublished} />
+          {views > 0 && (
+            <span style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 700 }}>
+              {views} views · 30gg
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub UI                                                             */
+/* ------------------------------------------------------------------ */
+function FilterSelect({ value, onChange, children, placeholder }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label={placeholder}
+      style={{
+        background: '#fff',
+        border: '1px solid var(--color-line, #EAE3D7)',
+        borderRadius: 999,
+        padding: '8px 14px',
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--color-ink)',
+        cursor: 'pointer',
+        fontFamily: 'var(--font-sans)',
+        outline: 'none',
+        appearance: 'none',
+        paddingRight: 28,
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' stroke='%2322181C' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>\")",
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 10px center',
+      }}
+    >
+      {children}
+    </select>
+  )
+}
+
+function Paging({ page, totalPages, totalItems, onChange }) {
+  const prev = Math.max(1, page - 1)
+  const next = Math.min(totalPages, page + 1)
+  const numbers = pageNumbers(page, totalPages)
+  return (
+    <div
+      className="hidden md:flex"
+      style={{
+        alignItems: 'center',
+        gap: 8,
+        padding: '14px 18px',
+        borderTop: '1px solid var(--color-line, #EAE3D7)',
+        background: 'var(--color-cream, #F5F0E4)',
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+      }}
+    >
+      <span>
+        {totalItems} risultati · pagina {page} di {totalPages}
+      </span>
+      <div style={{ flex: 1 }} />
+      <PageButton onClick={() => onChange(prev)} disabled={page === 1}>‹</PageButton>
+      {numbers.map((n, i) =>
+        n === '…' ? (
+          <span key={i} style={{ padding: '0 4px' }}>…</span>
+        ) : (
+          <PageButton key={i} active={n === page} onClick={() => onChange(n)}>
+            {n}
+          </PageButton>
+        )
+      )}
+      <PageButton onClick={() => onChange(next)} disabled={page === totalPages}>›</PageButton>
+    </div>
+  )
+}
+
+function MobilePaging({ page, totalPages, onChange }) {
+  if (totalPages <= 1) return null
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', padding: '12px 0', fontSize: 12, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+      <PageButton onClick={() => onChange(Math.max(1, page - 1))} disabled={page === 1}>‹</PageButton>
+      <span>{page} / {totalPages}</span>
+      <PageButton onClick={() => onChange(Math.min(totalPages, page + 1))} disabled={page === totalPages}>›</PageButton>
+    </div>
+  )
+}
+
+function PageButton({ active, disabled, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        display: 'grid',
+        placeItems: 'center',
+        background: active ? 'var(--color-ink, #22181C)' : '#fff',
+        color: active ? '#fff' : 'var(--color-ink)',
+        border: `1px solid ${active ? 'var(--color-ink, #22181C)' : 'var(--color-line, #EAE3D7)'}`,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        fontFamily: 'var(--font-sans)',
+        fontSize: 12,
+        fontWeight: 700,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function pageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  if (current <= 3) return [1, 2, 3, 4, '…', total]
+  if (current >= total - 2) return [1, '…', total - 3, total - 2, total - 1, total]
+  return [1, '…', current - 1, current, current + 1, '…', total]
+}
+
+function LoadingScreen() {
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-page, #FAF7F2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          border: '3px solid #E8453C',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Styles                                                             */
+/* ------------------------------------------------------------------ */
+function Th({ style, children }) {
+  return (
+    <th
+      style={{
+        textAlign: 'left',
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+        padding: '12px 16px',
+        background: 'var(--color-cream, #F5F0E4)',
+        borderBottom: '1px solid var(--color-line, #EAE3D7)',
+        ...style,
+      }}
+    >
+      {children}
+    </th>
+  )
+}
+
+function Td({ style, children }) {
+  return <td style={{ padding: '12px 16px', verticalAlign: 'middle', ...style }}>{children}</td>
 }
 
 const actionBtn = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
   width: 28,
   height: 28,
-  borderRadius: 6,
-  background: 'transparent',
+  borderRadius: 8,
+  display: 'grid',
+  placeItems: 'center',
+  background: 'var(--color-cream, #F5F0E4)',
   border: 'none',
-  color: '#666',
+  color: 'var(--color-ink)',
   cursor: 'pointer',
   textDecoration: 'none',
+  padding: 0,
 }
