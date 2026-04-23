@@ -1,17 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
+import { supabase, proxyImg } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
-
-const CHIPS_BY_MOMENT = {
-  colazione: ['✨ cornetto croccante', '✨ brunch in zona', '✨ colazione vista panorama'],
-  pranzo:    ['✨ pranzo veloce in Centro', '✨ sotto i 15€ con colleghi', '✨ pausa salutare'],
-  aperitivo: ['✨ aperitivo con terrazza', '✨ vini naturali', '✨ tagliere abbondante'],
-  cena:      ['✨ cena romantica', '✨ carne alla brace', '✨ pizzeria gourmet'],
-  dopocena:  ['✨ cocktail bar autore', '✨ vinile dopo cena', '✨ birra artigianale'],
-}
-
-const DEFAULT_CHIPS = ['✨ un cinese aperto stasera', '✨ sotto i 20€', '✨ brunch San Salvario']
+import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 
 /**
  * AskBiChat · chat AI "Chiedi a Bi".
@@ -26,8 +17,6 @@ export default function AskBiChat({ currentMoment }) {
   const [error, setError] = useState(null)
   const [response, setResponse] = useState(null)
   const [conversationId, setConversationId] = useState(null)
-
-  const chips = CHIPS_BY_MOMENT[currentMoment] || DEFAULT_CHIPS
 
   const submit = async (promptText) => {
     const text = (promptText ?? input).trim()
@@ -159,28 +148,8 @@ export default function AskBiChat({ currentMoment }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 14px', position: 'relative' }}>
-            {chips.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => submit(chip.replace(/^✨\s*/, ''))}
-                disabled={loading}
-                style={{
-                  padding: '7px 12px',
-                  background: 'var(--color-corallo-wash, #FDF2F0)',
-                  color: 'var(--color-corallo-ink, #C6372F)',
-                  borderRadius: 999,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  border: '1px solid rgba(232,69,60,.18)',
-                  cursor: loading ? 'default' : 'pointer',
-                  opacity: loading ? 0.55 : 1,
-                }}
-              >
-                {chip}
-              </button>
-            ))}
+          <div style={{ margin: '2px 0 14px', position: 'relative', fontSize: 13, color: 'var(--color-ink-70)', lineHeight: 1.5 }}>
+            Scrivimi di cosa hai voglia. <b style={{ color: 'var(--color-ink)' }}>Sushi? Pizza? Un piemontese economico in centro? Un locale per bere con gli amici?</b> Scrivi qua sotto e ti suggerisco i locali più adatti.
           </div>
 
           <div style={{ position: 'relative', marginBottom: 12 }}>
@@ -255,6 +224,30 @@ export default function AskBiChat({ currentMoment }) {
 
 function AiOutput({ response, isGuest }) {
   const results = Array.isArray(response.results) ? response.results : []
+  const { user } = useAuth()
+  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const [photos, setPhotos] = useState({})
+
+  useEffect(() => {
+    const ids = results.map(r => r.restaurant_id).filter(Boolean)
+    if (ids.length === 0) return
+    let cancelled = false
+    supabase
+      .from('restaurant_photos')
+      .select('restaurant_id, photo_url, thumb_url, sort_order')
+      .in('restaurant_id', ids)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => {
+        if (cancelled) return
+        const map = {}
+        for (const p of (data || [])) {
+          if (!map[p.restaurant_id]) map[p.restaurant_id] = p.thumb_url || p.photo_url
+        }
+        setPhotos(map)
+      })
+    return () => { cancelled = true }
+  }, [results.map(r => r.restaurant_id).join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="hfv4-ai-output" style={{ padding: '4px 16px 22px' }}>
       <div style={{ padding: '16px 4px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -290,109 +283,67 @@ function AiOutput({ response, isGuest }) {
         </div>
       </div>
 
-      {results.map((r, i) => (
-        <Link
-          key={r.restaurant_id || r.slug || i}
-          to={r.slug ? `/restaurant/${r.slug}` : '#'}
-          className="hfv4-ai-result"
-          style={{
-            background: '#fff',
-            border: '1px solid var(--color-ink-05)',
-            borderRadius: 20,
-            overflow: 'hidden',
-            boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
-            display: 'flex',
-            gap: 0,
-            marginBottom: 8,
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
-        >
+      {results.map((r, i) => {
+        const photoUrl = photos[r.restaurant_id] ? proxyImg(photos[r.restaurant_id]) : null
+        const saved = r.restaurant_id && isSaved ? isSaved(r.restaurant_id) : false
+        return (
           <div
-            style={{
-              flex: '0 0 108px',
-              height: 108,
-              background: `linear-gradient(135deg,#C9A57B,#7D5230)`,
-            }}
-          />
-          <div
-            style={{
-              padding: '12px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              flex: 1,
-              minWidth: 0,
-            }}
+            key={r.restaurant_id || r.slug || i}
+            className="hfv4-ai-result"
+            style={{ background: '#fff', border: '1px solid var(--color-ink-05)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)', display: 'flex', gap: 0, marginBottom: 8, position: 'relative' }}
           >
-            <div>
-              {r.why && (
-                <div
-                  style={{
-                    fontFamily: 'var(--font-hand, "Caveat", cursive)',
-                    fontSize: 18,
-                    color: 'var(--color-corallo-ink, #C6372F)',
-                    fontWeight: 600,
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {r.why}
-                </div>
-              )}
+            <Link
+              to={r.slug ? `/restaurant/${r.slug}` : '#'}
+              style={{ display: 'flex', gap: 0, textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}
+            >
               <div
                 style={{
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: 800,
-                  fontSize: 15,
-                  letterSpacing: '-0.01em',
-                  marginTop: 2,
+                  flex: '0 0 108px',
+                  height: 108,
+                  background: photoUrl ? `url(${photoUrl}) center/cover` : 'linear-gradient(135deg,#C9A57B,#7D5230)',
                 }}
-              >
-                {r.name}
+              />
+              <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, minWidth: 0 }}>
+                <div>
+                  {r.why && (
+                    <div style={{ fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 18, color: 'var(--color-corallo-ink, #C6372F)', fontWeight: 600, lineHeight: 1.1 }}>{r.why}</div>
+                  )}
+                  <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em', marginTop: 2 }}>{r.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2 }}>
+                    {[r.category, r.zone, r.price, r.closes_at ? `aperto fino ${r.closes_at}` : null].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                {r.open_now && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, fontSize: 10, fontWeight: 700, color: '#137C3E' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#137C3E' }} />aperto ora
+                  </span>
+                )}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2 }}>
-                {[r.category, r.zone, r.price, r.closes_at ? `aperto fino ${r.closes_at}` : null]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </div>
-            </div>
-            {r.open_now && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  marginTop: 5,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: '#137C3E',
-                }}
+            </Link>
+            {r.restaurant_id && toggleSave && (
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSave(r.restaurant_id) }}
+                aria-label={saved ? 'Rimuovi dai salvati' : 'Salva'}
+                style={{ position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,.95)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: saved ? 'var(--color-corallo)' : 'var(--color-ink-70)', border: 0, cursor: 'pointer' }}
               >
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#137C3E' }} />
-                aperto ora
-              </span>
+                {saved ? '♥' : '♡'}
+              </button>
             )}
           </div>
-        </Link>
-      ))}
+        )
+      })}
 
       {results.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0 0' }}>
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: 'var(--color-ink)',
-              padding: '9px 14px',
-              background: 'var(--color-ink-05)',
-              borderRadius: 999,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
+          <a
+            href="https://www.instagram.com/chiamamibi/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink)', padding: '9px 14px', background: 'var(--color-ink-05)', borderRadius: 999, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            Scrivi a Bi per altri <span style={{ color: 'var(--color-corallo)' }}>→</span>
-          </span>
+            Scrivi a Bi su Instagram <span style={{ color: 'var(--color-corallo)' }}>→</span>
+          </a>
         </div>
       )}
 

@@ -30,7 +30,7 @@ export default function MomentResultsGrid({
       .slice(0, 10)
   }, [restaurants, activeMoment])
 
-  const visibleCards = filtered.slice(0, 8)
+  const visibleCards = filtered.slice(0, 7)
   const remaining = Math.max(0, filtered.length - visibleCards.length)
 
   return (
