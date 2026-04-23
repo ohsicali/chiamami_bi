@@ -1109,14 +1109,32 @@ export default function HomeFeedV4() {
     const expiresAt = drop.drop_ends_at || drop.ends_at || drop.valid_until || null
     let expiresLabel = null
     if (expiresAt) {
-      const d = new Date(expiresAt)
-      expiresLabel = `scade alle ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+      const exp = new Date(expiresAt)
+      const diffHours = (exp - Date.now()) / 3_600_000
+      if (diffHours > 0) {
+        if (diffHours < 24) {
+          expiresLabel = `scade alle ${String(exp.getHours()).padStart(2, '0')}:${String(exp.getMinutes()).padStart(2, '0')}`
+        } else {
+          const tomorrow = new Date()
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          if (exp.toDateString() === tomorrow.toDateString()) {
+            expiresLabel = 'scade domani'
+          } else {
+            const months = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']
+            expiresLabel = `scade il ${exp.getDate()} ${months[exp.getMonth()]}`
+          }
+        }
+      }
     }
+
+    // Subtitle: description + conditions if present
+    const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
+    const subtitle = subtitleParts.join(' · ')
 
     return {
       title: `${label}\nda ${r.name}.`,
       restLine,
-      subtitle: drop.description || drop.title,
+      subtitle,
       cta: 'Vai al drop',
       secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
@@ -1133,6 +1151,10 @@ export default function HomeFeedV4() {
   return (
     <div className="hfv4-root" style={{ background: 'var(--color-page)', minHeight: '100dvh', paddingBottom: 100 }}>
       <style>{`
+        @keyframes drop-live-ring {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,.4); }
+          60% { box-shadow: 0 0 0 5px rgba(255,255,255,.0); }
+        }
         /* v4 Home desktop (mockup v4-desktop-home.html) — kick in ≥1024px */
         @media (min-width: 1024px) {
           .hfv4-root { padding-bottom: 40px; }
@@ -1152,13 +1174,17 @@ export default function HomeFeedV4() {
           .hfv4-hero-card {
             grid-template-columns: 1.05fr .95fr !important;
             gap: 0 !important;
-            min-height: 380px;
+            min-height: 300px;
             padding: 0 !important;
             border-radius: 28px !important;
           }
-          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 14px !important; }
-          .hfv4-hero-chip { font-size: 12px !important; letter-spacing: .08em !important; padding: 6px 12px !important; margin-bottom: 0 !important; }
-          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-body { padding: 36px 48px !important; display: flex; flex-direction: column; justify-content: center; gap: 10px !important; }
+          .hfv4-hero-chip {
+            font-size: 12px !important; letter-spacing: .08em !important;
+            padding: 6px 12px !important; margin-bottom: 0 !important;
+            animation: drop-live-ring 2s ease-out infinite !important;
+          }
+          .hfv4-hero-title { font-size: 56px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
           .hfv4-hero-rest-line { display: flex !important; }
           .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; margin-bottom: 0 !important; }
           .hfv4-hero-ctas { margin-top: 6px; }
