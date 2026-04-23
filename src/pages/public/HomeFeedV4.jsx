@@ -250,7 +250,7 @@ function HeroPromo({ featured }) {
                 maxWidth: 180,
                 overflow: 'hidden',
                 display: '-webkit-box',
-                WebkitLineClamp: 3,
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
               }}
             >
@@ -1173,27 +1173,29 @@ export default function HomeFeedV4() {
             margin-left: auto; margin-right: auto;
             padding-left: 40px !important; padding-right: 40px !important;
           }
-          /* Hero desktop: spacing from floating navbar + 2-col layout */
+          /* Hero desktop: fixed height so portrait photos can't stretch the card */
           .hfv4-hero-wrap { padding-top: 16px !important; }
           .hfv4-hero-card {
             grid-template-columns: 1.05fr .95fr !important;
             gap: 0 !important;
+            height: 360px !important;
             min-height: 0 !important;
             padding: 0 !important;
             border-radius: 28px !important;
+            overflow: hidden !important;
           }
-          .hfv4-hero-body { padding: 22px 40px !important; display: flex; flex-direction: column; justify-content: center; gap: 6px !important; }
+          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 14px !important; }
           .hfv4-hero-chip {
-            font-size: 11px !important; letter-spacing: .07em !important;
-            padding: 5px 10px !important; margin-bottom: 0 !important;
+            font-size: 12px !important; letter-spacing: .08em !important;
+            padding: 6px 12px !important; margin-bottom: 0 !important;
             animation: drop-live-ring 2s ease-out infinite !important;
           }
-          .hfv4-hero-title { font-size: 44px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
-          .hfv4-hero-rest-line { display: flex !important; font-size: 13px !important; }
-          .hfv4-hero-sub { font-size: 13px !important; max-width: 300px !important; margin-bottom: 0 !important; -webkit-line-clamp: 1 !important; }
-          .hfv4-hero-ctas { margin-top: 4px; }
+          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-rest-line { display: flex !important; font-size: 15px !important; }
+          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; margin-bottom: 0 !important; -webkit-line-clamp: 2 !important; }
+          .hfv4-hero-ctas { margin-top: 6px; }
           .hfv4-hero-cta-ghost { display: inline-flex !important; }
-          .hfv4-hero-photo { min-height: 180px !important; border-radius: 0 !important; }
+          .hfv4-hero-photo { height: 100% !important; min-height: 0 !important; border-radius: 0 !important; }
           .hfv4-hero-progress { display: block !important; }
           /* Category bubbles: 80px wrap grid, no scroll */
           .hfv4-cats-row {
