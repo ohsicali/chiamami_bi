@@ -117,6 +117,15 @@ function SettingsIcon(props) {
     </svg>
   )
 }
+function EllipsisIcon({ width = 20, height = 20 }) {
+  return (
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </svg>
+  )
+}
 function MenuIcon({ width = 18 }) {
   return (
     <svg width={width} height={width} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
@@ -607,22 +616,6 @@ function MobileTopBar({ userInitial, mobileOpen, onBurgerClick }) {
         </div>
       </div>
 
-      <div
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 12,
-          background: '#fff',
-          border: '1px solid var(--color-line, #EAE3D7)',
-          display: 'grid',
-          placeItems: 'center',
-          fontSize: 16,
-          flexShrink: 0,
-        }}
-      >
-        🔔
-      </div>
-
       <Link
         to="/admin/settings"
         style={{
@@ -679,7 +672,7 @@ function MobileBottomNav({ location, counts, onAltroClick }) {
 
   return (
     <div
-      className="md:hidden"
+      className="admin-mobile-nav"
       style={{
         position: 'fixed',
         left: 12,
@@ -697,19 +690,19 @@ function MobileBottomNav({ location, counts, onAltroClick }) {
       }}
     >
       <Link to="/admin" style={tabStyle(dashActive)}>
-        <span style={{ fontSize: 17, lineHeight: 1 }}>◧</span>
+        <DashboardIcon width={20} height={20} />
         <span>Dashboard</span>
       </Link>
       <Link to="/admin/restaurants" style={tabStyle(localiActive)}>
-        <span style={{ fontSize: 17, lineHeight: 1 }}>🏠</span>
+        <RestaurantIcon width={20} height={20} />
         <span>Locali</span>
       </Link>
       <Link to="/admin/discounts" style={tabStyle(scontiActive)}>
-        <span style={{ fontSize: 17, lineHeight: 1 }}>🏷</span>
+        <DiscountIcon width={20} height={20} />
         <span>Sconti</span>
       </Link>
       <Link to="/admin/applications" style={tabStyle(candActive)}>
-        <span style={{ fontSize: 17, lineHeight: 1 }}>✉</span>
+        <NewsletterIcon width={20} height={20} />
         <span>Candidature</span>
         {counts.applications > 0 && (
           <span
@@ -741,7 +734,7 @@ function MobileBottomNav({ location, counts, onAltroClick }) {
           fontFamily: 'var(--font-sans)',
         }}
       >
-        <span style={{ fontSize: 17, lineHeight: 1 }}>•••</span>
+        <EllipsisIcon width={20} height={20} />
         <span>Altro</span>
       </button>
     </div>
@@ -763,7 +756,7 @@ function MobileFAB({ location }) {
   return (
     <Link
       to={to}
-      className="md:hidden"
+      className="admin-mobile-fab"
       style={{
         position: 'fixed',
         bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
@@ -993,6 +986,10 @@ export default function AdminLayout({ children, title }) {
         <style>{`
           @media (max-width: 767px) {
             .admin-mobile-main { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+          }
+          @media (min-width: 768px) {
+            .admin-mobile-nav { display: none !important; }
+            .admin-mobile-fab { display: none !important; }
           }
         `}</style>
         <main
