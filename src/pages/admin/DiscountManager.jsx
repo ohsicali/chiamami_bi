@@ -48,16 +48,36 @@ function StatCard({ label, value, accent = 'var(--color-ink)' }) {
     <div
       style={{
         background: '#fff',
-        border: '1px solid #eee',
-        borderRadius: 12,
-        padding: '16px 18px',
+        border: '1px solid var(--color-line, #EAE3D7)',
+        borderRadius: 18,
+        padding: 18,
         fontFamily: "var(--font-sans)",
       }}
     >
-      <div style={{ fontSize: 10, color: '#999', fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+      <div
+        style={{
+          fontSize: 11,
+          color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}
+      >
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: accent, marginTop: 6 }}>{value}</div>
+      <div
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 900,
+          fontSize: 34,
+          letterSpacing: '-0.03em',
+          color: accent,
+          marginTop: 8,
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
     </div>
   )
 }
@@ -451,56 +471,90 @@ export default function DiscountManager() {
 
   return (
     <AdminLayout title="Sconti & Drop">
-      <div style={{ fontFamily: "var(--font-sans)" }}>
+      <div style={{ fontFamily: "var(--font-sans)", padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
         {/* ── Header ── */}
         <div
           style={{
-            padding: '22px 20px 18px',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: 16,
             flexWrap: 'wrap',
+            marginBottom: 24,
           }}
         >
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-ink)', margin: 0, letterSpacing: '-0.3px' }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                letterSpacing: '0.04em',
+                marginBottom: 8,
+              }}
+            >
+              Gestione › <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Sconti & Drop</b>
+            </div>
+            <h1
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 900,
+                fontSize: 32,
+                letterSpacing: '-0.025em',
+                margin: 0,
+                color: 'var(--color-ink, #22181C)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                flexWrap: 'wrap',
+              }}
+            >
               Sconti & Drop
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  background: 'var(--color-cream-deep, #F1EBE0)',
+                  color: 'var(--color-ink, #22181C)',
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {stats.active} attivi · {stats.drops} drop
+              </span>
             </h1>
-            <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
-              Gestisci offerte e drop dei ristoranti del network
-            </p>
+            <div style={{ marginTop: 6, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 14, fontWeight: 500 }}>
+              Gestisci offerte e drop dei ristoranti della guida.
+            </div>
           </div>
           <button
             type="button"
             onClick={() => { resetForm(); setShowForm(true) }}
             style={{
               padding: '10px 18px',
-              borderRadius: 10,
-              background: '#E8453C',
+              borderRadius: 999,
+              background: 'var(--color-corallo, #E8453C)',
               color: '#fff',
               border: 'none',
               fontSize: 13,
-              fontWeight: 600,
+              fontWeight: 800,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
               fontFamily: "var(--font-sans)",
+              boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Nuovo sconto
+            + Nuovo drop
           </button>
         </div>
 
         {/* ── Stats ── */}
         <div
           style={{
-            padding: '0 20px',
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
             gap: 10,
@@ -509,9 +563,9 @@ export default function DiscountManager() {
           className="md:!grid-cols-4"
         >
           <StatCard label="Totali" value={stats.total} />
-          <StatCard label="Attivi" value={stats.active} accent="#059669" />
-          <StatCard label="Drop attivi" value={stats.drops} accent="#B08954" />
-          <StatCard label="QR utilizzati" value={stats.redemptions} accent="#E8453C" />
+          <StatCard label="Attivi" value={stats.active} accent="#2C7A4A" />
+          <StatCard label="Drop attivi" value={stats.drops} accent="var(--color-oro, #B08954)" />
+          <StatCard label="QR utilizzati" value={stats.redemptions} accent="var(--color-corallo, #E8453C)" />
         </div>
 
         {/* ── Filter chips ── */}
