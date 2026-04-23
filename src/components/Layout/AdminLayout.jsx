@@ -542,6 +542,253 @@ function AdminTopBar({ userInitial }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Mobile Top Bar                                                     */
+/* ------------------------------------------------------------------ */
+function MobileTopBar({ userInitial, mobileOpen, onBurgerClick }) {
+  return (
+    <div
+      className="flex md:hidden"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        background: 'var(--color-page, #FAF7F2)',
+        zIndex: 20,
+        alignItems: 'center',
+        gap: 10,
+        padding: '8px 16px 14px',
+        borderBottom: '1px solid var(--color-line, #EAE3D7)',
+      }}
+    >
+      <button
+        onClick={onBurgerClick}
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: mobileOpen ? 'var(--color-ink, #22181C)' : '#fff',
+          border: `1px solid ${mobileOpen ? 'var(--color-ink,#22181C)' : 'var(--color-line,#EAE3D7)'}`,
+          display: 'grid',
+          placeItems: 'center',
+          cursor: 'pointer',
+          color: mobileOpen ? '#fff' : 'var(--color-ink, #22181C)',
+          flexShrink: 0,
+        }}
+        aria-label={mobileOpen ? 'Chiudi menu' : 'Apri menu'}
+      >
+        {mobileOpen ? <XIcon width={15} /> : <MenuIcon width={15} />}
+      </button>
+
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-mark, 'Alfa Slab One', serif)",
+            fontSize: 14,
+            letterSpacing: '0.01em',
+            lineHeight: 1,
+            color: 'var(--color-ink, #22181C)',
+          }}
+        >
+          LA GUIDA DI BI
+        </div>
+        <div
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 700,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            color: 'var(--color-muted, #6b6057)',
+            marginTop: 3,
+            textTransform: 'uppercase',
+          }}
+        >
+          ADMIN
+        </div>
+      </div>
+
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: '#fff',
+          border: '1px solid var(--color-line, #EAE3D7)',
+          display: 'grid',
+          placeItems: 'center',
+          fontSize: 16,
+          flexShrink: 0,
+        }}
+      >
+        🔔
+      </div>
+
+      <Link
+        to="/admin/settings"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: '50%',
+          background: '#E8453C',
+          display: 'grid',
+          placeItems: 'center',
+          color: '#fff',
+          fontFamily: "var(--font-mark, 'Alfa Slab One', serif)",
+          fontSize: 14,
+          flexShrink: 0,
+          textDecoration: 'none',
+        }}
+        title="Impostazioni account"
+      >
+        {userInitial}
+      </Link>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile Bottom Nav                                                  */
+/* ------------------------------------------------------------------ */
+function MobileBottomNav({ location, counts, onAltroClick }) {
+  const p = location.pathname
+  const dashActive  = p === '/admin'
+  const localiActive = p.startsWith('/admin/restaurant')
+  const scontiActive = p.startsWith('/admin/discount')
+  const candActive  = p.startsWith('/admin/applications')
+  const altroActive = !dashActive && !localiActive && !scontiActive && !candActive
+
+  function tabStyle(active) {
+    return {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 2,
+      padding: '8px 10px',
+      borderRadius: 18,
+      color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+      fontSize: 10,
+      fontWeight: 700,
+      cursor: 'pointer',
+      minWidth: 54,
+      background: active ? '#E8453C' : 'transparent',
+      boxShadow: active ? '0 6px 14px rgba(232,69,60,0.35)' : 'none',
+      textDecoration: 'none',
+      position: 'relative',
+    }
+  }
+
+  return (
+    <div
+      className="md:hidden"
+      style={{
+        position: 'fixed',
+        left: 12,
+        right: 12,
+        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+        background: 'rgba(34,24,28,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: 28,
+        padding: '10px 8px',
+        display: 'flex',
+        justifyContent: 'space-around',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+        zIndex: 20,
+      }}
+    >
+      <Link to="/admin" style={tabStyle(dashActive)}>
+        <span style={{ fontSize: 17, lineHeight: 1 }}>◧</span>
+        <span>Dashboard</span>
+      </Link>
+      <Link to="/admin/restaurants" style={tabStyle(localiActive)}>
+        <span style={{ fontSize: 17, lineHeight: 1 }}>🏠</span>
+        <span>Locali</span>
+      </Link>
+      <Link to="/admin/discounts" style={tabStyle(scontiActive)}>
+        <span style={{ fontSize: 17, lineHeight: 1 }}>🏷</span>
+        <span>Sconti</span>
+      </Link>
+      <Link to="/admin/applications" style={tabStyle(candActive)}>
+        <span style={{ fontSize: 17, lineHeight: 1 }}>✉</span>
+        <span>Candidature</span>
+        {counts.applications > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              background: candActive ? '#fff' : '#E8453C',
+              color: candActive ? '#E8453C' : '#fff',
+              fontSize: 9,
+              fontWeight: 800,
+              padding: '2px 5px',
+              borderRadius: 8,
+              minWidth: 16,
+              textAlign: 'center',
+              border: '2px solid rgba(34,24,28,0.92)',
+              lineHeight: 1.2,
+            }}
+          >
+            {counts.applications}
+          </span>
+        )}
+      </Link>
+      <button
+        onClick={onAltroClick}
+        style={{
+          ...tabStyle(altroActive),
+          border: 'none',
+          fontFamily: 'var(--font-sans)',
+        }}
+      >
+        <span style={{ fontSize: 17, lineHeight: 1 }}>•••</span>
+        <span>Altro</span>
+      </button>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mobile FAB                                                         */
+/* ------------------------------------------------------------------ */
+function MobileFAB({ location }) {
+  const p = location.pathname
+  const isRestaurants = p === '/admin/restaurants'
+  const isDiscounts   = p === '/admin/discounts'
+  if (!isRestaurants && !isDiscounts) return null
+
+  const to   = isRestaurants ? '/admin/restaurant/new' : '/admin/discount/new'
+  const icon = isDiscounts ? '🔥' : '+'
+
+  return (
+    <Link
+      to={to}
+      className="md:hidden"
+      style={{
+        position: 'fixed',
+        bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
+        right: 16,
+        width: 52,
+        height: 52,
+        borderRadius: '50%',
+        background: '#E8453C',
+        color: '#fff',
+        display: 'grid',
+        placeItems: 'center',
+        fontSize: 26,
+        fontWeight: 300,
+        boxShadow: '0 10px 24px rgba(232,69,60,0.4)',
+        zIndex: 15,
+        textDecoration: 'none',
+        lineHeight: 1,
+      }}
+    >
+      {icon}
+    </Link>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main AdminLayout                                                   */
 /* ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title }) {
@@ -668,64 +915,12 @@ export default function AdminLayout({ children, title }) {
         <SidebarContent user={user} location={location} counts={counts} onNavClick={() => {}} />
       </aside>
 
-      {/* ── Mobile top header ── */}
-      <div
-        className="flex md:hidden"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 48,
-          background: 'var(--color-ink)',
-          zIndex: 20,
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 14px',
-        }}
-      >
-        <button
-          onClick={() => setMobileOpen(true)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'rgba(255,255,255,0.6)',
-            padding: 6,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          aria-label="Apri menu"
-        >
-          <MenuIcon width={18} />
-        </button>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#E8453C',
-            letterSpacing: 1,
-          }}
-        >
-          ADMIN
-        </div>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            background: 'rgba(232, 69, 60,0.15)',
-            color: '#E8453C',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 11,
-            fontWeight: 600,
-          }}
-        >
-          {initials}
-        </div>
-      </div>
+      {/* ── Mobile top bar ── */}
+      <MobileTopBar
+        userInitial={initials}
+        mobileOpen={mobileOpen}
+        onBurgerClick={() => setMobileOpen(!mobileOpen)}
+      />
 
       {/* ── Mobile overlay sidebar ── */}
       <AnimatePresence>
@@ -773,6 +968,16 @@ export default function AdminLayout({ children, title }) {
         )}
       </AnimatePresence>
 
+      {/* ── Mobile bottom nav ── */}
+      <MobileBottomNav
+        location={location}
+        counts={counts}
+        onAltroClick={() => setMobileOpen(!mobileOpen)}
+      />
+
+      {/* ── Mobile FAB ── */}
+      <MobileFAB location={location} />
+
       {/* ── Main content ── */}
       <div
         style={{
@@ -782,10 +987,16 @@ export default function AdminLayout({ children, title }) {
           flexDirection: 'column',
           background: '#fafafa',
         }}
-        className="md:ml-[240px] pt-[48px] md:pt-0"
+        className="md:ml-[240px] pt-[60px] md:pt-0"
       >
         <AdminTopBar userInitial={initials} />
+        <style>{`
+          @media (max-width: 767px) {
+            .admin-mobile-main { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+          }
+        `}</style>
         <main
+          className="admin-mobile-main"
           style={{
             flex: 1,
             minWidth: 0,
