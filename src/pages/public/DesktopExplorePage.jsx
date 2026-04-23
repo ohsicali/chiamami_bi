@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import MapView from '../../components/Map/MapView'
 import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
@@ -204,6 +204,7 @@ function MapPopup({ restaurant, hasDiscount, discountLabel, onClose, onNavigate 
 
 export default function DesktopExplorePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { position, locate } = useGeolocation()
   const { user } = useAuth()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
@@ -227,8 +228,13 @@ export default function DesktopExplorePage() {
     setFilters,
   } = useRestaurants(position)
 
-  const [activeCat, setActiveCat] = useState(null)
+  const [activeCat, setActiveCat] = useState(() => location.state?.initialCategory || null)
   const [selectedId, setSelectedId] = useState(null)
+
+  // Clear location state so refreshing doesn't re-apply the filter
+  useEffect(() => {
+    if (location.state?.initialCategory) window.history.replaceState({}, '')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const mapRef = useRef(null)
   const listRef = useRef(null)
   const cardRefs = useRef({})

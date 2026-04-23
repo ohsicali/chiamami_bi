@@ -19,13 +19,17 @@ function formatCountdown(endsAt) {
 }
 
 const CATEGORIES = [
-  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
-  { key: 'piemontese', emoji: '🍝', label: 'Piemontese' },
-  { key: 'pizza', emoji: '🍕', label: 'Pizza' },
-  { key: 'giapponese', emoji: '🍣', label: 'Giapponese' },
-  { key: 'pesce', emoji: '🐟', label: 'Pesce' },
-  { key: 'colazione', emoji: '☕', label: 'Colazione' },
-  { key: 'carne', emoji: '🥩', label: 'Carne' },
+  { key: 'aperitivo',   emoji: '🥂', label: 'Aperitivo' },
+  { key: 'piemontese',  emoji: '🍷', label: 'Piemontese' },
+  { key: 'pizza',       emoji: '🍕', label: 'Pizza' },
+  { key: 'giapponese',  emoji: '🍣', label: 'Giapponese' },
+  { key: 'pesce',       emoji: '🐟', label: 'Pesce' },
+  { key: 'colazione',   emoji: '☕', label: 'Colazione' },
+  { key: 'carne',       emoji: '🥩', label: 'Carne' },
+  { key: 'italiana',    emoji: '🍝', label: 'Italiana' },
+  { key: 'barbecue',    emoji: '🍖', label: 'Barbecue' },
+  { key: 'vegano',      emoji: '🥬', label: 'Vegano' },
+  { key: 'cocktail',    emoji: '🍸', label: 'Cocktail' },
 ]
 
 const TIME_TABS = [
@@ -350,15 +354,30 @@ function HeroPromo({ featured }) {
   )
 }
 
-function CategoryBubbles({ activeKey, onSelect }) {
+function CategoryBubbles({ activeKey, onSelect, onAltro }) {
+  const bubbleStyle = (active) => ({
+    width: 64, height: 64, borderRadius: '50%',
+    background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
+    boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
+    display: 'grid', placeItems: 'center', fontSize: 28,
+  })
+  const labelStyle = (active) => ({
+    fontSize: 11, fontWeight: 700,
+    color: active ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
+    maxWidth: 72, textAlign: 'center', lineHeight: 1.15,
+  })
+  const btnStyle = {
+    flex: '0 0 auto', display: 'flex', flexDirection: 'column',
+    alignItems: 'center', gap: 6, background: 'transparent',
+    border: 'none', scrollSnapAlign: 'start', cursor: 'pointer', padding: 0,
+  }
+
   return (
     <div className="hfv4-cats-wrap">
       <div
         className="hfv4-cats-row"
         style={{
-          display: 'flex',
-          gap: 10,
-          overflowX: 'auto',
+          display: 'flex', gap: 10, overflowX: 'auto',
           padding: '6px 20px 20px',
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'x proximity',
@@ -368,53 +387,25 @@ function CategoryBubbles({ activeKey, onSelect }) {
         {CATEGORIES.map((c) => {
           const active = c.key === activeKey
           return (
-            <button
-              key={c.key}
-              onClick={() => onSelect?.(c.key)}
-              style={{
-                flex: '0 0 auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                background: 'transparent',
-                border: 'none',
-                scrollSnapAlign: 'start',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              <span
-                className="hfv4-cat-bubble"
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
-                  boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 28,
-                }}
-              >
-                {c.emoji}
-              </span>
-              <span
-                className="hfv4-cat-label"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: active ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
-                  maxWidth: 72,
-                  textAlign: 'center',
-                  lineHeight: 1.15,
-                }}
-              >
-                {c.label}
-              </span>
+            <button key={c.key} onClick={() => onSelect?.(c)} style={btnStyle}>
+              <span className="hfv4-cat-bubble" style={bubbleStyle(active)}>{c.emoji}</span>
+              <span className="hfv4-cat-label" style={labelStyle(active)}>{c.label}</span>
             </button>
           )
         })}
+        {/* "Altro" bubble — porta alla mappa senza filtro */}
+        <button onClick={onAltro} style={btnStyle}>
+          <span
+            className="hfv4-cat-bubble"
+            style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: 'var(--color-ink-05)',
+              display: 'grid', placeItems: 'center',
+              fontSize: 22, fontWeight: 800, color: 'var(--color-ink)',
+            }}
+          >+</span>
+          <span className="hfv4-cat-label" style={labelStyle(false)}>Altro</span>
+        </button>
       </div>
     </div>
   )
@@ -1322,7 +1313,10 @@ export default function HomeFeedV4() {
       `}</style>
       <TopBar />
       <HeroPromo featured={featuredDrop} />
-      <CategoryBubbles onSelect={(k) => navigate(`/list?cat=${encodeURIComponent(k)}`)} />
+      <CategoryBubbles
+        onSelect={(c) => navigate('/esplora', { state: { initialCategory: c.label } })}
+        onAltro={() => navigate('/esplora')}
+      />
 
       <section className="hfv4-section" style={{ padding: '8px 0 4px' }}>
         <SectionHead
