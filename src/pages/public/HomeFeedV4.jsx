@@ -155,6 +155,11 @@ function HeroPromo({ featured }) {
   if (!featured) return null
 
   const chipLabel = countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'
+  const claimedCount = featured.claimedCount || 0
+  const maxQuantity = featured.maxQuantity || null
+  const expiresLabel = featured.expiresLabel || null
+  const progressPct = maxQuantity ? Math.min(100, Math.round(claimedCount / maxQuantity * 100)) : null
+  const showProgress = progressPct != null || !!countdown || !!expiresLabel
 
   return (
     <div className="hfv4-hero-wrap" style={{ padding: '4px 16px 22px' }}>
@@ -309,7 +314,7 @@ function HeroPromo({ featured }) {
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
-            {countdown && (
+            {showProgress && (
               <div
                 className="hfv4-hero-progress"
                 style={{
@@ -323,8 +328,16 @@ function HeroPromo({ featured }) {
                   color: '#fff',
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
-                  Scade tra {countdown}
+                {progressPct != null && (
+                  <div style={{ height: 6, background: 'rgba(255,255,255,.2)', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ height: '100%', width: `${progressPct}%`, background: '#fff', borderRadius: 999 }} />
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
+                  <span>
+                    {maxQuantity ? `${claimedCount} / ${maxQuantity} sbloccati` : (countdown ? `Scade tra ${countdown}` : '')}
+                  </span>
+                  {expiresLabel && <span>{expiresLabel}</span>}
                 </div>
               </div>
             )}
@@ -1076,18 +1089,42 @@ export default function HomeFeedV4() {
     if (!drop) return null
     const r = (restaurants || []).find((x) => x.id === drop.restaurant_id)
     if (!r) return null
+
+    // Use full-quality photo_url first, thumbnail as fallback
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.thumb_url || photos?.photo_url) : null)
+    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null)
+
     const label = drop.discount_type === 'percentage' ? `-${String(drop.discount_value).replace('%','')}%` : `-${drop.discount_value}€`
+
+    // restLine: Cuisine · Neighborhood · Tagline (not restaurant name, already in title)
+    const catName = r.category?.[0] || r.cuisine_type || ''
+    const catInfo = getCategoryInfo(catName)
+    const neighborhood = r.address ? r.address.split(',')[0].trim() : ''
+    const tagline = r.tagline || ''
+    const restLine = [catInfo?.name || catName, neighborhood, tagline].filter(Boolean).slice(0, 3).join(' · ')
+
+    // Progress bar data
+    const claimedCount = drop.claimed_count || drop.total_redeemed || 0
+    const maxQuantity = drop.max_quantity || null
+    const expiresAt = drop.drop_ends_at || drop.ends_at || drop.valid_until || null
+    let expiresLabel = null
+    if (expiresAt) {
+      const d = new Date(expiresAt)
+      expiresLabel = `scade alle ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    }
+
     return {
       title: `${label}\nda ${r.name}.`,
-      restLine: r.name,
+      restLine,
       subtitle: drop.description || drop.title,
       cta: 'Vai al drop',
       secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
       photo,
       endsAt: drop.drop_ends_at || drop.ends_at || null,
+      claimedCount,
+      maxQuantity,
+      expiresLabel,
     }
   }, [discounts, restaurants])
 
@@ -1110,7 +1147,8 @@ export default function HomeFeedV4() {
             margin-left: auto; margin-right: auto;
             padding-left: 40px !important; padding-right: 40px !important;
           }
-          /* Hero desktop: 2-col 1.05/.95, min-height 380 */
+          /* Hero desktop: spacing from floating navbar + 2-col layout */
+          .hfv4-hero-wrap { padding-top: 16px !important; }
           .hfv4-hero-card {
             grid-template-columns: 1.05fr .95fr !important;
             gap: 0 !important;
