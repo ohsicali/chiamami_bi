@@ -27,10 +27,11 @@ export default async function handler(req, res) {
 
   maybeCleanup()
 
-  if (type === 'user')            return handleUserWelcome(req, res)
-  if (type === 'partner')         return handlePartnerWelcome(req, res)
-  if (type === 'confirmation')    return handleSuggestionConfirmation(req, res)
-  if (type === 'internal-notify') return handleInternalNotify(req, res)
+  if (type === 'user')                             return handleUserWelcome(req, res)
+  if (type === 'partner')                          return handlePartnerWelcome(req, res)
+  if (type === 'confirmation')                     return handleSuggestionConfirmation(req, res)
+  if (type === 'internal-notify')                  return handleInternalNotify(req, res)
+  if (type === 'partner-application-confirmation') return handlePartnerApplicationConfirmation(req, res)
   return res.status(400).json({ error: `Unknown type: ${type}` })
 }
 
@@ -631,6 +632,126 @@ function buildInternalNotifyHtml({ nome_locale, address, tags, description, nome
 
   </div>
 
+</body>
+</html>`
+}
+
+/* ------------------------------------------------------------------ */
+/*  PARTNER-APPLICATION-CONFIRMATION — conferma al candidato           */
+/* ------------------------------------------------------------------ */
+
+async function handlePartnerApplicationConfirmation(req, res) {
+  const limited = rateLimit(req, { key: 'send-email-partner-app-conf', max: 5, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
+
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return res.status(500).json({ error: 'Email service not configured' })
+
+  const { to, nome_referente, nome_attivita } = req.body || {}
+  if (!to || !nome_referente || !nome_attivita) {
+    return res.status(400).json({ error: 'Missing required fields: to, nome_referente, nome_attivita' })
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    return res.status(400).json({ error: 'Invalid email address' })
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
+        reply_to: 'info@chiamamibi.com',
+        to: [to],
+        subject: 'Abbiamo ricevuto la tua richiesta',
+        html: buildPartnerAppConfirmationHtml({ nome_referente, nome_attivita }),
+      }),
+    })
+
+    if (!response.ok) {
+      const err = await response.json()
+      console.error('[send-email partner-application-confirmation] Resend error:', err)
+      return res.status(502).json({ error: 'Failed to send email' })
+    }
+
+    return res.status(200).json({ success: true })
+  } catch (err) {
+    console.error('[send-email partner-application-confirmation] error:', err)
+    return res.status(500).json({ error: 'Failed to send email' })
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Template PARTNER-APPLICATION-CONFIRMATION                          */
+/* ------------------------------------------------------------------ */
+
+function buildPartnerAppConfirmationHtml({ nome_referente, nome_attivita }) {
+  return `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background:#FAF7F2;font-family:-apple-system,'Poppins',Helvetica,sans-serif;color:#22181C;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#FAF7F2;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#F2EDE4;border-radius:16px;border:1px solid #E8E1D4;overflow:hidden;">
+
+        <!-- Wordmark -->
+        <tr>
+          <td style="padding:28px 32px 20px;border-bottom:1px solid #E8E1D4;">
+            <img src="https://chiamamibi.com/email-assets/guida-bi-ink.png" alt="CHIAMAMI BI" width="180" style="display:block;max-width:180px;height:auto;border:0;outline:none;" />
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 32px 0;font-size:16px;line-height:1.65;">
+            <p style="margin:0 0 16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;color:#22181C;">
+              Gentile ${escapeHtml(nome_referente)},
+            </p>
+            <p style="margin:0 0 16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;color:#22181C;">
+              grazie per aver scelto di raccontare il tuo progetto al team di Bi.
+              Abbiamo ricevuto correttamente la tua richiesta di collaborazione
+              per <strong>${escapeHtml(nome_attivita)}</strong>.
+            </p>
+            <p style="margin:0 0 16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;color:#22181C;">
+              Il team di Bi analizzer&agrave; la richiesta nei prossimi 7 giorni.
+              In caso di valutazione positiva, ti contatteremo personalmente
+              per discutere le modalit&agrave; di promozione sui canali di Bi
+              &mdash; sito, social, feed editoriale.
+            </p>
+            <p style="margin:0 0 16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;color:#22181C;">
+              Ti segnaliamo che la mancata risposta entro 7 giorni equivale
+              a una non selezione per il periodo in corso.
+            </p>
+            <p style="margin:0 0 32px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;color:#22181C;">
+              Grazie dell&rsquo;interesse verso ChiamamiBi.
+            </p>
+            <p style="margin:0 0 40px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#22181C;">
+              Il team di ChiamamiBi
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #E8E1D4;">
+            <p style="margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;color:#8E6B3E;line-height:1.5;">
+              ChiamamiBi &nbsp;&middot;&nbsp; Torino &nbsp;&middot;&nbsp;
+              <a href="mailto:info@chiamamibi.com" style="color:#8E6B3E;text-decoration:none;">info@chiamamibi.com</a>
+              &nbsp;&middot;&nbsp;
+              <a href="https://chiamamibi.com/privacy" style="color:#8E6B3E;text-decoration:none;">Privacy</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`
 }

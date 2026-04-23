@@ -97,10 +97,11 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: err.message })
   }
 
-  // Load subscribers
+  // Load subscribers — only those who haven't opted out
   const { data: subs, error: subsErr } = await admin
     .from('newsletter_subscribers')
     .select('email')
+    .eq('subscribed', true)
   if (subsErr) {
     return res.status(500).json({ error: `Failed to load subscribers: ${subsErr.message}` })
   }
@@ -260,7 +261,7 @@ function shell(innerHtml) {
           <p style="margin:0;color:#999;font-size:12px;">
             <a href="${SITE_URL}/privacy" style="color:#E8604C;text-decoration:none;">Privacy</a>
             &nbsp;·&nbsp;
-            <a href="${SITE_URL}/profile" style="color:#E8604C;text-decoration:none;">Gestisci iscrizione</a>
+            <a href="${SITE_URL}/settings#newsletter" style="color:#E8604C;text-decoration:none;">Disiscriviti</a>
           </p>
         </td></tr>
       </table>

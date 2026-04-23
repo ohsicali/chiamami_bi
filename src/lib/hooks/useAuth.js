@@ -69,7 +69,10 @@ export function AuthProvider({ children }) {
       if (authUser.email) {
         supabase
           .from('newsletter_subscribers')
-          .upsert({ email: authUser.email, source: 'registration' }, { onConflict: 'email' })
+          .upsert(
+            { email: authUser.email.toLowerCase(), user_id: authUser.id, source: 'registration', subscribed: true },
+            { onConflict: 'email' }
+          )
           .then(() => {})
           .catch(() => {})
         // Send welcome email (fire and forget)

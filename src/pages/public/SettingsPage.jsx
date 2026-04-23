@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -160,6 +160,7 @@ export default function SettingsPage() {
   // ── Newsletter ──
   const [newsletterEnabled, setNewsletterEnabled] = useState(true)
   const [loadingNewsletter, setLoadingNewsletter] = useState(true)
+  const newsletterRef = useRef(null)
 
   // ── Delete ──
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -173,9 +174,26 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user?.email || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
-    supabase.from('newsletter_subscribers').select('id').eq('email', user.email).single()
-      .then(({ data }) => { setNewsletterEnabled(!!data); setLoadingNewsletter(false) })
+    supabase
+      .from('newsletter_subscribers')
+      .select('subscribed')
+      .eq('email', user.email)
+      .maybeSingle()
+      .then(({ data }) => {
+        // Row absent → not subscribed. Row present → use subscribed field (default true).
+        setNewsletterEnabled(data ? (data.subscribed !== false) : false)
+        setLoadingNewsletter(false)
+      })
   }, [user?.email])
+
+  // Scroll to #newsletter anchor when hash is present
+  useEffect(() => {
+    if (window.location.hash === '#newsletter' && newsletterRef.current) {
+      setTimeout(() => {
+        newsletterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 300)
+    }
+  }, [loadingNewsletter])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
 
@@ -342,8 +360,18 @@ export default function SettingsPage() {
     if (!user?.email || !isSupabaseConfigured()) return
     const newState = !newsletterEnabled
     setNewsletterEnabled(newState)
-    if (newState) { await supabase.from('newsletter_subscribers').upsert({ email: user.email, source: 'profile_toggle' }, { onConflict: 'email' }) }
-    else { await supabase.from('newsletter_subscribers').delete().eq('email', user.email) }
+    await supabase
+      .from('newsletter_subscribers')
+      .upsert(
+        {
+          email: user.email.toLowerCase(),
+          user_id: user.id,
+          source: 'profile_toggle',
+          subscribed: newState,
+          opted_out_at: newState ? null : new Date().toISOString(),
+        },
+        { onConflict: 'email' }
+      )
   }
 
   // ── Handlers: Delete ──
@@ -576,7 +604,7 @@ export default function SettingsPage() {
         )}
 
         {/* ── NEWSLETTER ── */}
-        <div style={cardStyle}>
+        <div id="newsletter" ref={newsletterRef} style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-ink)' }}>Newsletter</h3>
