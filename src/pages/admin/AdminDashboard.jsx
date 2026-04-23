@@ -1,829 +1,827 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import AdminLayout from '../../components/Layout/AdminLayout'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
+import AdminLayout from '../../components/Layout/AdminLayout'
+import KpiCard from '../../components/admin/KpiCard'
 
 /* ------------------------------------------------------------------ */
-/*  Format helpers                                                     */
+/*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
-function formatDate(date) {
+const DAY_MS = 24 * 60 * 60 * 1000
+const WEEK_MS = 7 * DAY_MS
+const MONTH_MS = 30 * DAY_MS
+
+function relativeTime(date) {
   if (!date) return ''
-  const d = new Date(date)
-  const now = new Date()
-  const diff = Math.floor((now - d) / 1000)
+  const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
   if (diff < 60) return 'Adesso'
   if (diff < 3600) return `${Math.floor(diff / 60)} min fa`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} ore fa`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h fa`
   if (diff < 172800) return 'Ieri'
-  if (diff < 604800) return `${Math.floor(diff / 86400)} g fa`
-  return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+  if (diff < 604800) return `${Math.floor(diff / 86400)}g fa`
+  return new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+}
+
+function formatDateLong() {
+  return new Date().toLocaleDateString('it-IT', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+}
+
+function bucketByDay(items, dateField, days = 8) {
+  // Returns array of `days` length: count of items per day, oldest first, today last.
+  const buckets = new Array(days).fill(0)
+  const now = Date.now()
+  const dayStart = new Date()
+  dayStart.setHours(0, 0, 0, 0)
+  const todayStart = dayStart.getTime()
+  items.forEach((item) => {
+    const t = new Date(item[dateField]).getTime()
+    const diffDays = Math.floor((todayStart - t) / DAY_MS)
+    const idx = days - 1 - diffDays
+    if (idx >= 0 && idx < days) buckets[idx] += 1
+    else if (t >= todayStart) buckets[days - 1] += 1
+  })
+  return buckets
+}
+
+function toSparkHeights(buckets) {
+  // Normalize to 0-100 range for visual sparkline; keep zero at 8 min so bar is visible.
+  const max = Math.max(...buckets, 1)
+  return buckets.map((v) => Math.round((v / max) * 100) || 8)
+}
+
+function countdown(target) {
+  const diff = new Date(target).getTime() - Date.now()
+  if (diff <= 0) return 'Scaduto'
+  const d = Math.floor(diff / DAY_MS)
+  const h = Math.floor((diff % DAY_MS) / (60 * 60 * 1000))
+  if (d > 0) return `${d}g ${h}h`
+  const m = Math.floor((diff % (60 * 60 * 1000)) / 60000)
+  return `${h}h ${m}m`
 }
 
 /* ------------------------------------------------------------------ */
-/*  Icons                                                              */
+/*  Activity icon by event type                                        */
 /* ------------------------------------------------------------------ */
-const ic = {
-  width: 16,
-  height: 16,
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.8,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
+function ActivityIcon({ type }) {
+  const styles = {
+    redemption: { bg: 'var(--color-green-wash, #E8F5D8)', label: '✓' },
+    drop: { bg: 'var(--color-corallo-wash, #FDEDEB)', label: '🔥' },
+    signup: { bg: 'var(--color-oro-wash, #F5EDDD)', label: '+' },
+    application: { bg: 'var(--color-cream, #F5F0E4)', label: '📥' },
+    suggestion: { bg: 'var(--color-cream, #F5F0E4)', label: '✉' },
+    pinrotation: { bg: 'var(--color-cream, #F5F0E4)', label: '🔑' },
+  }
+  const s = styles[type] || styles.application
+  return (
+    <div
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 10,
+        background: s.bg,
+        display: 'grid',
+        placeItems: 'center',
+        fontSize: 15,
+        flexShrink: 0,
+      }}
+      aria-hidden
+    >
+      {s.label}
+    </div>
+  )
 }
 
-function PlusIcon({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w}>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  )
-}
-function ChevronRight({ w = 14 }) {
-  return (
-    <svg {...ic} width={w} height={w}>
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  )
-}
-function SuggestionIc({ w = 16 }) {
-  return (
-    <svg {...ic} width={w} height={w}>
-      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
-    </svg>
-  )
-}
-function ApplicationIc({ w = 16 }) {
-  return (
-    <svg {...ic} width={w} height={w}>
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-    </svg>
-  )
-}
 /* ------------------------------------------------------------------ */
 /*  Main Dashboard                                                     */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
   const { user, isAdmin, loading: authLoading } = useAuth()
-  const { allRestaurants: restaurants, loading: dataLoading } = useRestaurants()
 
   const [metrics, setMetrics] = useState({
-    restaurantsTotal: 0,
-    usersTotal: 0,
-    usersThisWeek: 0,
+    restaurants: 0,
+    restaurantsPublished: 0,
+    users: 0,
+    usersLastWeek: 0,
     discountsActive: 0,
     dropsActive: 0,
-    qrUsed: 0,
-    qrUsedThisWeek: 0,
-    pendingSuggestions: 0,
-    pendingApplications: 0,
+    redemptions30d: 0,
+    redemptionsPrev30d: 0,
+    inboxApplications: 0,
+    activeDropsCount: 0,
+    openSuggestions: 0,
   })
-  const [recentRestaurants, setRecentRestaurants] = useState([])
+  const [sparklines, setSparklines] = useState({
+    restaurants: new Array(8).fill(8),
+    users: new Array(8).fill(8),
+    discounts: new Array(8).fill(8),
+    redemptions: new Array(8).fill(8),
+  })
+  const [recentActivity, setRecentActivity] = useState([])
+  const [topRestaurants, setTopRestaurants] = useState([])
+  const [activeDrop, setActiveDrop] = useState(null)
+  const [inboxApps, setInboxApps] = useState([])
 
-  // Fetch metrics from Supabase
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
     let cancelled = false
 
-    async function fetchMetrics() {
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      const nowIso = new Date().toISOString()
+    async function load() {
+      const now = Date.now()
+      const sevenDaysAgo = new Date(now - WEEK_MS).toISOString()
+      const thirtyDaysAgo = new Date(now - MONTH_MS).toISOString()
+      const sixtyDaysAgo = new Date(now - 2 * MONTH_MS).toISOString()
+      const eightDaysAgo = new Date(now - 8 * DAY_MS).toISOString()
+      const nowIso = new Date(now).toISOString()
 
       try {
         const [
           restCount,
-          usersCount,
+          restPub,
+          usersTotal,
           usersWeek,
-          activeDiscounts,
-          qrUsed,
-          qrUsedWeek,
+          discActive,
+          dropsActive,
+          redemp30,
+          redempPrev30,
+          pendApps,
           pendSugg,
-          pendApp,
-          recentRest,
+          restRecent,
+          usersRecent,
+          discRecent,
+          redempRecent,
+          activeDropRow,
+          actRedemptions,
+          actApplications,
+          actSuggestions,
+          actSignups,
+          actDrops,
+          inboxRows,
+          topViews,
         ] = await Promise.all([
           supabase.from('restaurants').select('id', { count: 'exact', head: true }),
+          supabase.from('restaurants').select('id', { count: 'exact', head: true }).eq('is_published', true),
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
-          supabase
-            .from('discounts')
-            .select('id, drop_time', { count: 'exact' })
-            .eq('is_active', true)
-            .gte('valid_until', nowIso),
-          supabase
-            .from('discount_redemptions')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'redeemed'),
-          supabase
-            .from('discount_redemptions')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'redeemed')
-            .gte('redeemed_at', weekAgo),
-          supabase
-            .from('restaurant_suggestions')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'pending'),
-          supabase
-            .from('partner_applications')
-            .select('id', { count: 'exact', head: true })
-            .eq('status', 'pending'),
-          supabase
-            .from('restaurants')
-            .select('id, name, slug, cuisine_type, category, photos, is_published, created_at')
-            .order('created_at', { ascending: false })
-            .limit(5),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
+          supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true).gt('valid_until', nowIso),
+          supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true).gt('valid_until', nowIso).not('drop_time', 'is', null),
+          supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed').gte('redeemed_at', thirtyDaysAgo),
+          supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed').gte('redeemed_at', sixtyDaysAgo).lt('redeemed_at', thirtyDaysAgo),
+          supabase.from('partner_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('restaurant_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('restaurants').select('created_at').gte('created_at', eightDaysAgo),
+          supabase.from('profiles').select('created_at').gte('created_at', eightDaysAgo),
+          supabase.from('discounts').select('created_at').gte('created_at', eightDaysAgo),
+          supabase.from('discount_redemptions').select('redeemed_at').eq('status', 'redeemed').gte('redeemed_at', eightDaysAgo),
+          supabase.from('discounts').select('id, restaurant_id, title, discount_value, drop_time, valid_until, max_redemptions, total_redeemed').not('drop_time', 'is', null).eq('is_active', true).gt('valid_until', nowIso).order('drop_time', { ascending: true }).limit(1),
+          supabase.from('discount_redemptions').select('id, status, redeemed_at, discount_id, user_id, discounts(title, discount_value, restaurants(name))').eq('status', 'redeemed').order('redeemed_at', { ascending: false }).limit(6),
+          supabase.from('partner_applications').select('id, restaurant_name, city, status, created_at').order('created_at', { ascending: false }).limit(6),
+          supabase.from('restaurant_suggestions').select('id, restaurant_name, status, created_at').order('created_at', { ascending: false }).limit(6),
+          supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false }).limit(6),
+          supabase.from('discounts').select('id, title, drop_time, created_at, restaurants(name)').not('drop_time', 'is', null).order('created_at', { ascending: false }).limit(6),
+          supabase.from('partner_applications').select('id, restaurant_name, city, message, created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(3),
+          supabase.from('page_views').select('path').ilike('path', '/r/%').gte('created_at', sevenDaysAgo).limit(5000),
         ])
 
         if (cancelled) return
 
-        const dropsActive = (activeDiscounts.data || []).filter((d) => d.drop_time != null).length
+        // ── Sparklines ──
+        const restBuckets = bucketByDay(restRecent.data || [], 'created_at')
+        const userBuckets = bucketByDay(usersRecent.data || [], 'created_at')
+        const discBuckets = bucketByDay(discRecent.data || [], 'created_at')
+        const redempBuckets = bucketByDay(redempRecent.data || [], 'redeemed_at')
+
+        setSparklines({
+          restaurants: toSparkHeights(restBuckets),
+          users: toSparkHeights(userBuckets),
+          discounts: toSparkHeights(discBuckets),
+          redemptions: toSparkHeights(redempBuckets),
+        })
 
         setMetrics({
-          restaurantsTotal: restCount.count || 0,
-          usersTotal: usersCount.count || 0,
-          usersThisWeek: usersWeek.count || 0,
-          discountsActive: activeDiscounts.count || 0,
-          dropsActive,
-          qrUsed: qrUsed.count || 0,
-          qrUsedThisWeek: qrUsedWeek.count || 0,
-          pendingSuggestions: pendSugg.count || 0,
-          pendingApplications: pendApp.count || 0,
+          restaurants: restCount.count || 0,
+          restaurantsPublished: restPub.count || 0,
+          users: usersTotal.count || 0,
+          usersLastWeek: usersWeek.count || 0,
+          discountsActive: discActive.count || 0,
+          dropsActive: dropsActive.count || 0,
+          redemptions30d: redemp30.count || 0,
+          redemptionsPrev30d: redempPrev30.count || 0,
+          inboxApplications: pendApps.count || 0,
+          activeDropsCount: dropsActive.count || 0,
+          openSuggestions: pendSugg.count || 0,
         })
-        setRecentRestaurants(recentRest.data || [])
-      } catch (err) {
-        console.warn('Dashboard metrics error:', err?.message || err)
-      }
-    }
 
-    fetchMetrics()
-  }, [user])
+        setActiveDrop(activeDropRow.data?.[0] || null)
+        setInboxApps(inboxRows.data || [])
 
-  // Chart: weekly registrations (last 8 weeks) — we try to get real data
-  const [registrationData, setRegistrationData] = useState([])
-  useEffect(() => {
-    if (!isSupabaseConfigured() || !user) return
-    let cancelled = false
+        // ── Recent activity UNION ──
+        const activity = []
+        ;(actRedemptions.data || []).forEach((row) => {
+          activity.push({
+            type: 'redemption',
+            at: row.redeemed_at,
+            text: `Riscatto ${row.discounts?.discount_value || ''} da ${row.discounts?.restaurants?.name || '—'}`,
+          })
+        })
+        ;(actApplications.data || []).forEach((row) => {
+          activity.push({
+            type: 'application',
+            at: row.created_at,
+            text: `Candidatura da ${row.restaurant_name}${row.city ? ` — ${row.city}` : ''}`,
+          })
+        })
+        ;(actSuggestions.data || []).forEach((row) => {
+          activity.push({
+            type: 'suggestion',
+            at: row.created_at,
+            text: `Suggerimento: ${row.restaurant_name}`,
+          })
+        })
+        ;(actSignups.data || []).forEach((row) => {
+          const name = row.full_name || (row.email ? row.email.split('@')[0] : 'Nuovo utente')
+          activity.push({
+            type: 'signup',
+            at: row.created_at,
+            text: `${name} si è registrato`,
+          })
+        })
+        ;(actDrops.data || []).forEach((row) => {
+          activity.push({
+            type: 'drop',
+            at: row.created_at,
+            text: `Drop schedulato · ${row.restaurants?.name || '—'}`,
+          })
+        })
+        activity.sort((a, b) => new Date(b.at) - new Date(a.at))
+        setRecentActivity(activity.slice(0, 8))
 
-    async function fetchRegistrations() {
-      try {
-        const eightWeeksAgo = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000).toISOString()
-        const { data } = await supabase
-          .from('profiles')
-          .select('created_at')
-          .gte('created_at', eightWeeksAgo)
-          .order('created_at', { ascending: true })
-
-        if (cancelled) return
-
-        // Bucket by week
-        const buckets = []
-        const now = new Date()
-        for (let i = 7; i >= 0; i--) {
-          const start = new Date(now)
-          start.setDate(start.getDate() - i * 7)
-          const label = start.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-          buckets.push({ week: label, start: start.getTime(), count: 0 })
-        }
-        ;(data || []).forEach((row) => {
-          const t = new Date(row.created_at).getTime()
-          // Find bucket
-          for (let i = buckets.length - 1; i >= 0; i--) {
-            if (t >= buckets[i].start) {
-              buckets[i].count += 1
-              break
-            }
+        // ── Top restaurants by views (7d) ──
+        const viewsByPath = {}
+        ;(topViews.data || []).forEach((row) => {
+          const m = row.path.match(/^\/r\/([^?/]+)/)
+          if (!m) return
+          const slug = m[1]
+          viewsByPath[slug] = (viewsByPath[slug] || 0) + 1
+        })
+        const topSlugs = Object.entries(viewsByPath)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+        if (topSlugs.length > 0) {
+          const { data: topRest } = await supabase
+            .from('restaurants')
+            .select('id, name, slug, cuisine_type, category, city, photos')
+            .in(
+              'slug',
+              topSlugs.map(([s]) => s)
+            )
+          if (!cancelled) {
+            const ordered = topSlugs
+              .map(([slug, count]) => {
+                const r = (topRest || []).find((x) => x.slug === slug)
+                return r ? { ...r, views: count } : null
+              })
+              .filter(Boolean)
+            setTopRestaurants(ordered)
           }
-        })
-        setRegistrationData(buckets)
+        } else {
+          setTopRestaurants([])
+        }
       } catch (err) {
-        console.warn('Registration chart error:', err?.message || err)
+        console.warn('Dashboard load error:', err?.message || err)
       }
     }
-    fetchRegistrations()
+
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
-  // Top categories chart
-  const topCategoriesData = useMemo(() => {
-    const counts = {}
-    restaurants.forEach((r) => {
-      const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-      cats.forEach((c) => {
-        counts[c] = (counts[c] || 0) + 1
-      })
-    })
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, count]) => ({ name, count }))
-  }, [restaurants])
+  const redemptionsDelta = useMemo(() => {
+    const { redemptions30d, redemptionsPrev30d } = metrics
+    if (!redemptionsPrev30d) return null
+    const pct = Math.round(((redemptions30d - redemptionsPrev30d) / redemptionsPrev30d) * 100)
+    return {
+      pct,
+      dir: pct >= 0 ? 'up' : 'dn',
+    }
+  }, [metrics])
 
-  // "Ultimi aggiunti" from useRestaurants hook (always available)
-  const latestRestaurants = useMemo(() => {
-    return [...restaurants]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 3)
-  }, [restaurants])
-
-  if (authLoading || dataLoading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#fafafa',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            border: '3px solid #E8453C',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    )
-  }
-
+  if (authLoading) return <LoadingScreen />
   if (!user || !isAdmin) return <Navigate to="/admin/login" replace />
 
-  const userName = user?.email?.split('@')[0] ?? 'Admin'
-
-  const publishedCount = restaurants.filter(r => r.is_published !== false).length
-
-  // Stat cards data — v4 KPI (k-lab/k-val/k-delta/k-spark) §77-86
-  const miniSpark = (seed = 1) => {
-    const base = [40, 55, 45, 60, 52, 70, 68, 82]
-    return base.map((h) => Math.max(20, Math.min(100, Math.round(h * (0.85 + (seed % 13) / 42)))))
-  }
-  const statCards = [
-    {
-      label: 'Ristoranti',
-      value: metrics.restaurantsTotal,
-      delta: publishedCount > 0 ? `${publishedCount} pubblicati` : null,
-      deltaDir: 'up',
-      spark: miniSpark(metrics.restaurantsTotal),
-    },
-    {
-      label: 'Utenti registrati',
-      value: metrics.usersTotal,
-      delta: metrics.usersThisWeek > 0 ? `+${metrics.usersThisWeek} · 7gg` : null,
-      deltaDir: 'up',
-      spark: miniSpark(metrics.usersTotal),
-    },
-    {
-      label: 'Sconti attivi',
-      value: metrics.discountsActive,
-      delta: metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : null,
-      deltaDir: 'up',
-      spark: miniSpark(metrics.discountsActive + 3),
-    },
-    {
-      label: 'Redenzioni QR',
-      value: metrics.qrUsed,
-      delta: metrics.qrUsedThisWeek > 0 ? `+${metrics.qrUsedThisWeek} · 7gg` : null,
-      deltaDir: 'up',
-      spark: miniSpark(metrics.qrUsed + 7),
-    },
-  ]
-
-  // "Da gestire" items
-  const manageItems = [
-    {
-      count: metrics.pendingSuggestions,
-      title: metrics.pendingSuggestions === 1 ? '1 suggerimento utente' : `${metrics.pendingSuggestions} suggerimenti utenti`,
-      subtitle: metrics.pendingSuggestions > 0 ? 'Nuovi da rivedere' : 'Nessun nuovo',
-      color: '#E8453C',
-      bg: 'rgba(232, 69, 60,0.08)',
-      to: '/admin/suggestions',
-      Icon: SuggestionIc,
-    },
-    {
-      count: metrics.pendingApplications,
-      title: metrics.pendingApplications === 1 ? '1 candidatura partner' : `${metrics.pendingApplications} candidature partner`,
-      subtitle: metrics.pendingApplications > 0 ? 'Da contattare' : 'Nessuna nuova',
-      color: '#B08954',
-      bg: 'rgba(176,137,84,0.12)',
-      to: '/admin/applications',
-      Icon: ApplicationIc,
-    },
-  ]
+  const userInitial = (user?.email || 'B')[0].toUpperCase()
 
   return (
     <AdminLayout title="Dashboard">
-      {/* ─── HEADER ─── */}
-      <div
-        style={{
-          borderBottom: '1px solid #eee',
-          background: '#fff',
-        }}
-        className="px-[18px] py-[16px] md:px-[28px] md:py-[20px]"
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 16,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Desktop title */}
-            <div className="hidden md:block">
-              <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>Dashboard</h1>
-              <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>Panoramica della guida</p>
-            </div>
-            {/* Mobile title */}
-            <div className="md:hidden">
-              <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
-                Ciao, {userName}
-              </h1>
-              <p style={{ fontSize: 12, color: '#999', margin: '4px 0 0' }}>
-                Ecco cosa succede sulla guida
-              </p>
-            </div>
+      <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
+        {/* ── HEADER ── */}
+        <div style={{ marginBottom: 28 }}>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              letterSpacing: '0.04em',
+              marginBottom: 8,
+            }}
+          >
+            <b style={{ color: 'var(--color-ink)', fontWeight: 800 }}>Dashboard</b> · panoramica
           </div>
-
-          {/* Desktop: new restaurant button */}
-          <Link
-            to="/admin/restaurant/new"
-            className="hidden md:inline-flex"
+          <h1
             style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 32,
+              letterSpacing: '-0.025em',
+              margin: 0,
+              display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              background: '#E8453C',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 500,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
+              gap: 14,
+              color: 'var(--color-ink, #22181C)',
             }}
           >
-            <PlusIcon w={14} /> Nuovo ristorante
-          </Link>
+            Ciao {userInitial === 'B' ? 'Bi' : userInitial} <span aria-hidden>👋</span>
+          </h1>
+          <div
+            style={{
+              marginTop: 6,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              fontSize: 14,
+              fontWeight: 500,
+              display: 'flex',
+              gap: 10,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              textTransform: 'capitalize',
+            }}
+          >
+            <span>{formatDateLong()}</span>
+            <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor' }} />
+            <span style={{ textTransform: 'none' }}>
+              {metrics.inboxApplications} candidature nuove, {metrics.activeDropsCount} drop attivi
+              {metrics.openSuggestions > 0 ? `, ${metrics.openSuggestions} suggerimenti` : ''}
+            </span>
+          </div>
         </div>
 
-        {/* Mobile quick actions — horizontal scroll */}
-        <div
-          className="md:hidden"
-          style={{
-            display: 'flex',
-            gap: 8,
-            marginTop: 14,
-            overflowX: 'auto',
-            paddingBottom: 4,
-            scrollbarWidth: 'none',
-          }}
-        >
-          <Link
-            to="/admin/restaurant/new"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: '#E8453C',
-              color: '#fff',
-              padding: '10px 14px',
-              borderRadius: 10,
-              fontSize: 12,
-              fontWeight: 500,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }}
-          >
-            <PlusIcon w={12} /> Nuovo ristorante
-          </Link>
-          <Link
-            to="/admin/discounts"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: '#fff',
-              color: 'var(--color-ink)',
-              border: '1px solid #eee',
-              padding: '10px 14px',
-              borderRadius: 10,
-              fontSize: 12,
-              fontWeight: 500,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }}
-          >
-            <PlusIcon w={12} /> Nuovo sconto
-          </Link>
-        </div>
-      </div>
-
-      {/* ─── CONTENT ─── */}
-      <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* ─── 4 STAT CARDS ─── */}
+        {/* ── 4 KPI ── */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 16,
+            marginBottom: 24,
           }}
-          className="md:!grid-cols-4 md:!gap-[10px]"
+          className="max-md:!grid-cols-2 max-md:!gap-[10px]"
         >
-          {statCards.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04, duration: 0.25 }}
-              style={{
-                background: '#fff',
-                border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
-                borderRadius: 18,
-                padding: 18,
-              }}
-            >
-              <div style={{
-                fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
-                textTransform: 'uppercase', color: 'var(--color-ink-55, #7a6e68)',
-              }}>
-                {s.label}
-              </div>
-              <div style={{
-                fontFamily: 'var(--font-sans)', fontWeight: 900,
-                fontSize: 34, letterSpacing: '-0.03em',
-                lineHeight: 1, marginTop: 8,
-                color: 'var(--color-ink)',
-              }}>
-                {typeof s.value === 'number' ? s.value.toLocaleString('it-IT') : s.value}
-              </div>
-              {s.delta && (
-                <div style={{
-                  marginTop: 6, fontSize: 12, fontWeight: 700,
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  color: s.deltaDir === 'dn' ? 'var(--color-corallo, #E8453C)' : '#2C7A4A',
-                }}>
-                  {s.deltaDir === 'dn' ? '▼' : '▲'} {s.delta}
-                </div>
-              )}
-              <div style={{
-                height: 34, marginTop: 10,
-                display: 'flex', alignItems: 'flex-end', gap: 3,
-              }}>
-                {s.spark.map((h, idx) => (
-                  <span key={idx} style={{
-                    flex: 1, height: `${h}%`, borderRadius: 2,
-                    background: idx >= s.spark.length - 2
-                      ? 'var(--color-corallo, #E8453C)'
-                      : 'var(--color-cream-deep, #F1EBE0)',
-                  }} />
-                ))}
-              </div>
-            </motion.div>
-          ))}
+          <KpiCard
+            label="Ristoranti pubblicati"
+            value={metrics.restaurantsPublished.toLocaleString('it-IT')}
+            delta={`${metrics.restaurants} totali`}
+            deltaDir="up"
+            sparkline={sparklines.restaurants}
+          />
+          <KpiCard
+            label="Utenti registrati"
+            value={metrics.users.toLocaleString('it-IT')}
+            delta={metrics.usersLastWeek > 0 ? `+${metrics.usersLastWeek} · 7gg` : '— · 7gg'}
+            deltaDir="up"
+            sparkline={sparklines.users}
+          />
+          <KpiCard
+            label="Sconti attivi"
+            value={metrics.discountsActive.toLocaleString('it-IT')}
+            delta={metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : 'Nessun drop live'}
+            deltaDir="up"
+            sparkline={sparklines.discounts}
+          />
+          <KpiCard
+            label="Redenzioni QR (30gg)"
+            value={metrics.redemptions30d.toLocaleString('it-IT')}
+            delta={redemptionsDelta ? `${redemptionsDelta.pct >= 0 ? '+' : ''}${redemptionsDelta.pct}% vs mese prec.` : null}
+            deltaDir={redemptionsDelta?.dir || 'up'}
+            sparkline={sparklines.redemptions}
+          />
         </div>
 
-        {/* ─── DA GESTIRE ─── */}
-        <div>
-          <h2
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: 'var(--color-ink)',
-              margin: '0 0 10px',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
-            Da gestire
-          </h2>
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 14,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            {manageItems.map((item, i) => {
-              const isZero = item.count === 0
-              const Content = (
-                <>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: isZero ? '#f5f5f5' : item.bg,
-                      color: isZero ? '#bbb' : item.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <item.Icon w={16} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: isZero ? '#999' : 'var(--color-ink)',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {item.title}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        color: '#999',
-                        marginTop: 2,
-                      }}
-                    >
-                      {item.subtitle}
-                    </div>
-                  </div>
-                  {!isZero && (
-                    <div style={{ color: '#ccc', flexShrink: 0 }}>
-                      <ChevronRight w={14} />
-                    </div>
-                  )}
-                </>
-              )
-              return isZero ? (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 10,
-                    borderRadius: 8,
-                    background: '#fafafa',
-                  }}
-                >
-                  {Content}
-                </div>
-              ) : (
-                <Link
-                  key={i}
-                  to={item.to}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 10,
-                    borderRadius: 8,
-                    background: item.bg,
-                    textDecoration: 'none',
-                  }}
-                >
-                  {Content}
-                </Link>
-              )
-            })}
-          </div>
+        {/* ── DROP SPOTLIGHT ── */}
+        {activeDrop && <DropSpotlight drop={activeDrop} />}
+
+        {/* ── 2-col: Activity + Top Restaurants ── */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1.4fr 1fr',
+            gap: 16,
+            marginBottom: 24,
+          }}
+          className="max-md:!grid-cols-1"
+        >
+          <ActivityCard items={recentActivity} />
+          <TopRestaurantsCard items={topRestaurants} />
         </div>
 
-        {/* ─── ULTIMI AGGIUNTI ─── */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--color-ink)',
-                margin: 0,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              Ultimi aggiunti
-            </h2>
-            <Link
-              to="/admin/restaurants"
-              style={{
-                fontSize: 12,
-                color: '#E8453C',
-                fontWeight: 500,
-                textDecoration: 'none',
-              }}
-            >
-              Tutti →
-            </Link>
-          </div>
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 8,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {latestRestaurants.map((r) => {
-              const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : []))
-                .map((name) => getCategoryInfo(name))
-                .filter(Boolean)
-              const firstCat = cats[0]
-              const thumb = proxyImg(
-                Array.isArray(r.photos) && r.photos.length > 0
-                  ? typeof r.photos[0] === 'string'
-                    ? r.photos[0]
-                    : r.photos[0]?.thumb_url || r.photos[0]?.photo_url
-                  : null
-              )
-              const isPublished = r.is_published !== false
-              return (
-                <Link
-                  key={r.id}
-                  to={`/admin/restaurant/${r.id}/edit`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '8px 8px',
-                    borderRadius: 8,
-                    textDecoration: 'none',
-                  }}
-                >
-                  {thumb ? (
-                    <img
-                      src={thumb}
-                      alt={r.name}
-                      style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        background: '#f0f0f0',
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: 'var(--color-ink)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {r.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
-                      {firstCat?.name || '—'} · {formatDate(r.created_at)}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      padding: '2px 8px',
-                      borderRadius: 12,
-                      fontWeight: 500,
-                      background: isPublished ? '#ecfdf5' : '#fef3c7',
-                      color: isPublished ? '#059669' : '#b45309',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isPublished ? 'Live' : 'Bozza'}
-                  </span>
-                </Link>
-              )
-            })}
-            {latestRestaurants.length === 0 && (
-              <div style={{ padding: 14, textAlign: 'center', fontSize: 12, color: '#999' }}>
-                Nessun ristorante
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── GRAFICI — solo desktop ─── */}
-        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          {/* Registrazioni */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 16,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-ink)',
-                margin: '0 0 12px',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              Registrazioni settimanali
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={registrationData}>
-                <defs>
-                  <linearGradient id="reggrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#E8453C" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#E8453C" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-                <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" />
-                <YAxis tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 8,
-                    border: '1px solid #eee',
-                    fontSize: 12,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                  }}
-                />
-                <Area type="monotone" dataKey="count" stroke="#E8453C" strokeWidth={2} fill="url(#reggrad)" name="Utenti" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Top categorie */}
-          <div
-            style={{
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 10,
-              padding: 16,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--color-ink)',
-                margin: '0 0 12px',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              Top categorie
-            </h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={topCategoriesData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#999' }} stroke="#eee" allowDecimals={false} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 10, fill: '#999' }}
-                  stroke="#eee"
-                  width={80}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 8,
-                    border: '1px solid #eee',
-                    fontSize: 12,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                  }}
-                />
-                <Bar dataKey="count" fill="#E8453C" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* ── Inbox candidature ── */}
+        <InboxCandidatureTile applications={inboxApps} totalPending={metrics.inboxApplications} />
       </div>
     </AdminLayout>
   )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub-components                                                     */
+/* ------------------------------------------------------------------ */
+
+function DropSpotlight({ drop }) {
+  const redeemed = drop.total_redeemed || 0
+  const target = drop.max_redemptions || Math.max(redeemed, 100)
+  const pct = Math.min(100, Math.round((redeemed / target) * 100))
+  return (
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #FFF1EF, #FCE4E1)',
+        border: '1px solid var(--color-corallo-soft, #F6B7B1)',
+        borderRadius: 20,
+        padding: 20,
+        display: 'grid',
+        gridTemplateColumns: '1.3fr 1fr',
+        gap: 20,
+        marginBottom: 24,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      className="max-md:!grid-cols-1 max-md:!gap-[12px]"
+    >
+      <span style={{ position: 'absolute', top: 14, right: 18, fontSize: 24 }} aria-hidden>🔥</span>
+      <div>
+        <div
+          style={{
+            color: 'var(--color-corallo, #E8453C)',
+            fontSize: 11,
+            fontWeight: 900,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            marginBottom: 6,
+          }}
+        >
+          🔥 Drop in corso
+        </div>
+        <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-ink)' }}>
+          {drop.title}
+        </h3>
+        <div style={{ fontSize: 13, color: 'var(--color-ink-70, rgba(34,24,28,0.7))', fontWeight: 600, marginBottom: 14 }}>
+          {drop.max_redemptions ? `Target: ${drop.max_redemptions} redenzioni` : 'Nessun target impostato'}
+        </div>
+        <div
+          style={{
+            height: 8,
+            background: 'rgba(232,69,60,0.18)',
+            borderRadius: 999,
+            overflow: 'hidden',
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${pct}%`,
+              background: 'var(--color-corallo, #E8453C)',
+              borderRadius: 999,
+              transition: 'width 0.3s',
+            }}
+          />
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70, rgba(34,24,28,0.7))' }}>
+          {redeemed} su {target} redenzioni
+          {drop.max_redemptions ? ` · ${Math.max(0, target - redeemed)} posti rimasti` : ''}
+        </div>
+      </div>
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 14,
+          padding: 14,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 32, letterSpacing: '-0.03em', color: 'var(--color-ink)' }}>
+          {countdown(drop.valid_until)}
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+            marginTop: 4,
+          }}
+        >
+          Al termine
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ActivityCard({ items }) {
+  return (
+    <div style={cardStyle}>
+      <div style={cardHeadStyle}>
+        <h3 style={cardTitleStyle}>Attività recente</h3>
+        <span style={cardMetaStyle}>cosa è successo oggi</span>
+      </div>
+      {items.length === 0 && (
+        <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+          Nessuna attività recente
+        </div>
+      )}
+      {items.map((item, i) => (
+        <div
+          key={i}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '11px 0',
+            borderBottom: i === items.length - 1 ? 0 : '1px dashed var(--color-line, #EAE3D7)',
+            fontSize: 13,
+          }}
+        >
+          <ActivityIcon type={item.type} />
+          <div style={{ flex: 1, color: 'var(--color-ink)', lineHeight: 1.4 }}>{item.text}</div>
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+          >
+            {relativeTime(item.at)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function TopRestaurantsCard({ items }) {
+  return (
+    <div style={cardStyle}>
+      <div style={cardHeadStyle}>
+        <h3 style={cardTitleStyle}>Top ristoranti · settimana</h3>
+        <Link to="/admin/analytics" style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 700, color: 'var(--color-corallo, #E8453C)', textDecoration: 'none' }}>
+          Vedi tutto →
+        </Link>
+      </div>
+      {items.length === 0 && (
+        <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+          Ancora poche visite per il ranking
+        </div>
+      )}
+      {items.map((r, i) => {
+        const thumb = proxyImg(pickThumb(r))
+        const cat = (r.category && r.category[0]) || r.cuisine_type || '—'
+        return (
+          <Link
+            key={r.id}
+            to={`/admin/restaurant/${r.id}/edit`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 0',
+              borderBottom: i === items.length - 1 ? 0 : '1px dashed var(--color-line, #EAE3D7)',
+              textDecoration: 'none',
+              color: 'var(--color-ink)',
+            }}
+          >
+            {thumb ? (
+              <img src={thumb} alt="" style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
+            ) : (
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 14 }}>{r.name}</div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                  fontWeight: 600,
+                  marginTop: 2,
+                }}
+              >
+                {(r.city || 'Torino')} · {cat}
+              </div>
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 900,
+                fontSize: 18,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {r.views}
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+function InboxCandidatureTile({ applications, totalPending }) {
+  if (!applications || applications.length === 0) {
+    return (
+      <div style={{ background: 'var(--color-cream, #F5F0E4)', borderRadius: 18, padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <h3 style={cardTitleStyle}>Candidature</h3>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+            tutto gestito
+          </span>
+        </div>
+        <div style={{ color: 'var(--color-ink-70, rgba(34,24,28,0.7))', fontSize: 13 }}>
+          Nessuna candidatura aperta al momento. Bel lavoro.
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div style={{ background: 'var(--color-cream, #F5F0E4)', borderRadius: 18, padding: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <h3 style={cardTitleStyle}>Candidature da aprire</h3>
+        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+          rispondi entro 3gg
+        </span>
+        <span
+          style={{
+            marginLeft: 'auto',
+            background: 'var(--color-corallo, #E8453C)',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 800,
+            padding: '3px 10px',
+            borderRadius: 999,
+          }}
+        >
+          {totalPending}
+        </span>
+        <Link to="/admin/applications" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-corallo, #E8453C)', textDecoration: 'none' }}>
+          Vedi tutte →
+        </Link>
+      </div>
+      {applications.map((app) => (
+        <div
+          key={app.id}
+          style={{
+            display: 'flex',
+            gap: 12,
+            padding: 12,
+            background: '#fff',
+            borderRadius: 12,
+            marginBottom: 8,
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-ink)' }}>
+              {app.restaurant_name}
+              {app.city && (
+                <span style={{ fontWeight: 600, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 11 }}>
+                  {' '}· {app.city}
+                </span>
+              )}
+            </div>
+            <div
+              style={{
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                marginTop: 2,
+                fontSize: 11,
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 480,
+              }}
+            >
+              «{(app.message || 'Nessun messaggio').slice(0, 120)}»
+            </div>
+          </div>
+          <Link
+            to={`/admin/applications#app-${app.id}`}
+            style={{
+              padding: '7px 12px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 800,
+              background: 'var(--color-ink, #22181C)',
+              color: '#fff',
+              textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
+            Apri →
+          </Link>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Utils                                                              */
+/* ------------------------------------------------------------------ */
+function pickThumb(r) {
+  if (!Array.isArray(r.photos) || r.photos.length === 0) return null
+  const first = r.photos[0]
+  if (typeof first === 'string') return first
+  return first?.thumb_url || first?.photo_url || null
+}
+
+function LoadingScreen() {
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--color-page, #FAF7F2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          border: '3px solid #E8453C',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }}
+      />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Shared styles                                                      */
+/* ------------------------------------------------------------------ */
+const cardStyle = {
+  background: '#fff',
+  border: '1px solid var(--color-line, #EAE3D7)',
+  borderRadius: 18,
+  padding: 20,
+}
+
+const cardHeadStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  marginBottom: 14,
+}
+
+const cardTitleStyle = {
+  fontFamily: 'var(--font-sans)',
+  fontWeight: 900,
+  fontSize: 17,
+  letterSpacing: '-0.01em',
+  color: 'var(--color-ink, #22181C)',
+  margin: 0,
+}
+
+const cardMetaStyle = {
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
 }
