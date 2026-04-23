@@ -18,6 +18,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase'
 import FGroup from './_FGroup'
 import { FField, FInput, FTextarea } from './_Fields'
+import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
 
 /**
  * CosaTiConsiglioTab — consiglio di Bi in 2 formati:
@@ -33,6 +34,7 @@ export default function CosaTiConsiglioTab({ form, onChange, restaurantId }) {
   const [dishes, setDishes] = useState([])
   const [loadingDishes, setLoadingDishes] = useState(true)
   const [savingId, setSavingId] = useState(null)
+  const ai = useAiCorrect()
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -130,7 +132,17 @@ export default function CosaTiConsiglioTab({ form, onChange, restaurantId }) {
       {/* Note generale (our_tip) */}
       <FGroup title="Nota generale" count="quello che diresti a un amico">
         <FField
-          label="Cosa consigli a grandi linee"
+          label={
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <span>Cosa consigli a grandi linee</span>
+              <AiCorrectButton
+                ai={ai}
+                field="our_tip"
+                getText={() => form.our_tip}
+                context="restaurant tip"
+              />
+            </span>
+          }
           hint="Usalo quando non ricordi i piatti specifici ma sai cosa è buono qui."
         >
           <FTextarea
@@ -139,6 +151,7 @@ export default function CosaTiConsiglioTab({ form, onChange, restaurantId }) {
             rows={3}
             placeholder="Es. «Tutto ciò che cuociono in forno. Se hanno la pasta del giorno, prendi quella.»"
           />
+          <AiSuggestionBox ai={ai} field="our_tip" onAccept={(t) => onChange({ our_tip: t })} />
         </FField>
       </FGroup>
 

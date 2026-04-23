@@ -1,6 +1,8 @@
 import { useCategories } from '../../../lib/hooks/useCategories'
 import FGroup from './_FGroup'
 import { FField, FInput, FTextarea, FSelect, FRow } from './_Fields'
+import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
+import GoogleMapsImportBlock from '../GoogleMapsImportBlock'
 
 /**
  * DettagliTab — scope ridotto alla parte testuale (no cover-grid).
@@ -9,9 +11,17 @@ import { FField, FInput, FTextarea, FSelect, FRow } from './_Fields'
  */
 export default function DettagliTab({ form, onChange }) {
   const { categories } = useCategories()
+  const ai = useAiCorrect()
 
   return (
     <div>
+      {/* Google Maps update (compact, collapsible) */}
+      <GoogleMapsImportBlock
+        variant="compact"
+        onApply={(patch) => onChange(patch)}
+        onSlug={slugify}
+      />
+
       {/* Anagrafica */}
       <FGroup title="Anagrafica" count="il minimo necessario">
         <FRow>
@@ -66,23 +76,49 @@ export default function DettagliTab({ form, onChange }) {
       {/* Voce di Bi */}
       <FGroup title="La voce di Bi" count="il cuore della scheda">
         <FRow one>
-          <FField label="Occhiello (una riga)">
+          <FField
+            label={
+              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <span>Occhiello (una riga)</span>
+                <AiCorrectButton
+                  ai={ai}
+                  field="tagline"
+                  getText={() => form.tagline}
+                  context="restaurant tip"
+                />
+              </span>
+            }
+          >
             <FInput
               value={form.tagline}
               onChange={(v) => onChange({ tagline: v })}
               placeholder="La piola che prende tutto sul serio, tranne se stessa."
               maxLength={180}
             />
+            <AiSuggestionBox ai={ai} field="tagline" onAccept={(t) => onChange({ tagline: t })} />
           </FField>
         </FRow>
         <FRow one>
-          <FField label="Racconto completo">
+          <FField
+            label={
+              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <span>Racconto completo</span>
+                <AiCorrectButton
+                  ai={ai}
+                  field="our_review"
+                  getText={() => form.our_review}
+                  context="restaurant review"
+                />
+              </span>
+            }
+          >
             <FTextarea
               value={form.our_review}
               onChange={(v) => onChange({ our_review: v })}
               placeholder="Cosa racconti a un amico che ti chiede perché ci deve andare?"
               rows={8}
             />
+            <AiSuggestionBox ai={ai} field="our_review" onAccept={(t) => onChange({ our_review: t })} />
           </FField>
         </FRow>
       </FGroup>

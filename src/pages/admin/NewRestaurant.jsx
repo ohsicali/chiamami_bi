@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { reverseGeocode } from '../../lib/utils/geocoding'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import DettagliTab from '../../components/admin/tabs/DettagliTab'
+import GoogleMapsImportBlock from '../../components/admin/GoogleMapsImportBlock'
 import FGroup from '../../components/admin/tabs/_FGroup'
 import { FField, FInput } from '../../components/admin/tabs/_Fields'
 
@@ -55,13 +55,6 @@ export default function NewRestaurant() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [form, setForm] = useState(EMPTY_FORM)
-  const [mapsUrl, setMapsUrl] = useState('')
-  const [mapsFilling, setMapsFilling] = useState(false)
-  const [mapsError, setMapsError] = useState(null)
-  // Name-search fallback (shown when Google Maps URL resolution hits CAPTCHA)
-  const [showNameSearch, setShowNameSearch] = useState(false)
-  const [nameQuery, setNameQuery] = useState('')
-  const [nameSearching, setNameSearching] = useState(false)
   const [saving, setSaving] = useState(null) // null | 'draft' | 'publish'
   const [saveError, setSaveError] = useState(null)
   const [createdPin, setCreatedPin] = useState(null)
@@ -99,128 +92,6 @@ export default function NewRestaurant() {
       // auto-derive slug when name changes and user hasn't manually set slug yet
       ...(patch.name !== undefined && !prev.slug ? { slug: slugify(patch.name) } : {}),
     }))
-  }
-
-  async function handleImportFromMaps() {
-    const url = mapsUrl.trim()
-    if (!url) {
-      setMapsError('Incolla un link Google Maps')
-      return
-    }
-    setMapsError(null)
-    setMapsFilling(true)
-    setShowNameSearch(false)
-    try {
-      // Reject CID URLs (not resolvable server-side)
-      if (/[?&]cid=\d+/.test(url)) {
-        setMapsError('Link CID non supportato. Dall\'app Maps: Condividi → Copia link (inizia con maps.app.goo.gl).')
-        setMapsFilling(false)
-        return
-      }
-
-      const patch = {}
-      const isShortUrl = /^https?:\/\/(maps\.app\.goo\.gl|goo\.gl|share\.google)\//i.test(url)
-      const placeMatch = url.match(/\/place\/([^/@]+)/)
-      const coordMatch = url.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/)
-
-      if (!isShortUrl && placeMatch) {
-        const name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
-        if (!isInvalidName(name)) patch.name = name
-        if (coordMatch) {
-          patch.latitude = String(parseFloat(coordMatch[1]))
-          patch.longitude = String(parseFloat(coordMatch[2]))
-        }
-      } else {
-        const res = await fetch('/api/resolve-maps', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        })
-        const data = await res.json()
-        if (data?.error) {
-          // Google CAPTCHA fallback → offer name-search
-          if (data.captcha) {
-            setShowNameSearch(true)
-            setMapsError('Google ha bloccato il link. Cerca il ristorante per nome qui sotto.')
-          } else {
-            setMapsError(data.error)
-          }
-          setMapsFilling(false)
-          return
-        }
-        if (data.name && !isInvalidName(data.name)) patch.name = data.name
-        if (data.address) patch.address = data.address
-        if (data.website) patch.website = data.website
-        if (data.phone) patch.phone = data.phone
-        if (data.latitude) patch.latitude = String(data.latitude)
-        if (data.longitude) patch.longitude = String(data.longitude)
-        if (data.resolved_url && data.resolved_url !== url) patch.google_maps_url = data.resolved_url
-      }
-
-      if (!patch.name && !patch.latitude) {
-        setMapsError('Non sono riuscito a estrarre dati da questo link.')
-        setMapsFilling(false)
-        return
-      }
-
-      patch.google_maps_url = patch.google_maps_url || url
-      if (patch.name) patch.slug = slugify(patch.name)
-
-      // Mapbox reverse-geocode fallback: if we have coords but no address,
-      // try to resolve via Mapbox (token VITE_MAPBOX_TOKEN)
-      if (patch.latitude && patch.longitude && !patch.address) {
-        try {
-          const address = await reverseGeocode(parseFloat(patch.latitude), parseFloat(patch.longitude))
-          if (address) patch.address = address
-        } catch {
-          // silent — not fatal
-        }
-      }
-
-      updateField(patch)
-    } catch (err) {
-      setMapsError('Errore nella compilazione: ' + err.message)
-    } finally {
-      setMapsFilling(false)
-    }
-  }
-
-  // Name-search fallback (Google CAPTCHA path). Calls /api/resolve-maps with
-  // { query } instead of { url } — the endpoint uses Google Places text search.
-  async function handleNameSearch() {
-    const q = nameQuery.trim()
-    if (!q) return
-    setNameSearching(true)
-    try {
-      const res = await fetch('/api/resolve-maps', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q }),
-      })
-      const data = await res.json()
-      if (data?.error) {
-        setMapsError(data.error)
-        setNameSearching(false)
-        return
-      }
-      const patch = {}
-      if (data.name) patch.name = data.name
-      if (data.address) patch.address = data.address
-      if (data.latitude) patch.latitude = String(data.latitude)
-      if (data.longitude) patch.longitude = String(data.longitude)
-      if (data.phone) patch.phone = data.phone
-      if (data.website) patch.website = data.website
-      if (data.resolved_url) patch.google_maps_url = data.resolved_url
-      if (patch.name) patch.slug = slugify(patch.name)
-      updateField(patch)
-      setShowNameSearch(false)
-      setNameQuery('')
-      setMapsError(null)
-    } catch (err) {
-      setMapsError('Errore ricerca: ' + err.message)
-    } finally {
-      setNameSearching(false)
-    }
   }
 
   async function handleSave(mode) {
@@ -462,182 +333,12 @@ export default function NewRestaurant() {
           </div>
         )}
 
-        {/* ── Google Maps import banner ── */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #FFF1EF, #FCE4E1)',
-            border: '1px solid var(--color-corallo-soft, #F6B7B1)',
-            borderRadius: 16,
-            padding: 18,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 10,
-              fontFamily: 'var(--font-sans)',
-              fontWeight: 800,
-              fontSize: 12,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--color-corallo, #E8453C)',
-            }}
-          >
-            📍 Importa da Google Maps
-            <span
-              style={{
-                marginLeft: 'auto',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: 0,
-                textTransform: 'none',
-                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-              }}
-            >
-              opzionale
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <input
-              type="text"
-              value={mapsUrl}
-              onChange={(e) => setMapsUrl(e.target.value)}
-              placeholder="https://maps.app.goo.gl/… oppure link completo"
-              style={{
-                flex: 1,
-                minWidth: 260,
-                border: '1px solid var(--color-corallo-soft, #F6B7B1)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 13,
-                background: '#fff',
-                outline: 'none',
-                color: 'var(--color-ink)',
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleImportFromMaps}
-              disabled={mapsFilling || !mapsUrl.trim()}
-              style={{
-                background: 'var(--color-corallo, #E8453C)',
-                color: '#fff',
-                border: 0,
-                padding: '10px 18px',
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 800,
-                cursor: mapsFilling ? 'wait' : 'pointer',
-                fontFamily: 'var(--font-sans)',
-                boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-                whiteSpace: 'nowrap',
-                opacity: !mapsUrl.trim() ? 0.5 : 1,
-              }}
-            >
-              {mapsFilling ? 'Compilo…' : 'Compila automaticamente'}
-            </button>
-          </div>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 11,
-              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-              fontWeight: 600,
-              lineHeight: 1.5,
-            }}
-          >
-            Precompila nome, indirizzo, telefono, website, coordinate. Poi tu revisioni e aggiungi la voce editoriale.
-          </div>
-          {mapsError && (
-            <div
-              style={{
-                marginTop: 10,
-                padding: '8px 12px',
-                background: 'var(--color-danger-wash, #FCE8E4)',
-                color: 'var(--color-danger, #C0392B)',
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            >
-              {mapsError}
-            </div>
-          )}
-
-          {/* Name-search fallback (appears when Google blocks the URL resolution) */}
-          {showNameSearch && (
-            <div
-              style={{
-                marginTop: 10,
-                padding: 12,
-                background: '#fff',
-                borderRadius: 10,
-                border: '1px dashed var(--color-corallo-soft, #F6B7B1)',
-                display: 'flex',
-                gap: 8,
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  color: 'var(--color-corallo, #E8453C)',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  width: '100%',
-                  marginBottom: 2,
-                }}
-              >
-                🔎 Cerca per nome
-              </div>
-              <input
-                type="text"
-                value={nameQuery}
-                onChange={(e) => setNameQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleNameSearch())}
-                placeholder="Nome del ristorante + zona (es. Consorzio Torino)"
-                style={{
-                  flex: 1,
-                  minWidth: 220,
-                  border: '1px solid var(--color-line, #EAE3D7)',
-                  borderRadius: 10,
-                  padding: '9px 12px',
-                  fontFamily: 'var(--font-sans)',
-                  fontSize: 13,
-                  background: '#fff',
-                  outline: 'none',
-                  color: 'var(--color-ink)',
-                }}
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={handleNameSearch}
-                disabled={nameSearching || !nameQuery.trim()}
-                style={{
-                  background: 'var(--color-ink, #22181C)',
-                  color: '#fff',
-                  border: 0,
-                  padding: '9px 16px',
-                  borderRadius: 10,
-                  fontSize: 13,
-                  fontWeight: 800,
-                  cursor: nameSearching || !nameQuery.trim() ? 'wait' : 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                  opacity: !nameQuery.trim() ? 0.5 : 1,
-                }}
-              >
-                {nameSearching ? 'Cerco…' : 'Cerca'}
-              </button>
-            </div>
-          )}
-        </div>
+        {/* ── Google Maps import (shared block) ── */}
+        <GoogleMapsImportBlock
+          variant="banner"
+          onApply={(patch) => updateField(patch)}
+          onSlug={slugify}
+        />
 
         {/* ── PIN placeholder info box ── */}
         <FGroup title="Credenziali PIN · al momento del salva" variant="corallo">
