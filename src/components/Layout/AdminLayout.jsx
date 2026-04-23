@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation, Navigate, useNavigate } from 'react-router-dom'
+import { Link, useLocation, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -398,13 +398,28 @@ function SidebarContent({ user, location, counts, onNavClick, onClose }) {
 /* ------------------------------------------------------------------ */
 function AdminTopBar({ userInitial }) {
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+
+  // Sync search input with URL ?q= when on the restaurants page
+  const isRestaurantsPage = location.pathname === '/admin/restaurants'
+  const urlQ = isRestaurantsPage ? (searchParams.get('q') || '') : ''
+  const [query, setQuery] = useState(urlQ)
+
+  useEffect(() => {
+    setQuery(urlQ)
+  }, [urlQ])
 
   function onSubmit(e) {
     e.preventDefault()
     const q = query.trim()
-    if (!q) return
-    navigate(`/admin/restaurants?q=${encodeURIComponent(q)}`)
+    if (q) navigate(`/admin/restaurants?q=${encodeURIComponent(q)}`)
+    else navigate('/admin/restaurants')
+  }
+
+  function clearSearch() {
+    setQuery('')
+    if (isRestaurantsPage) navigate('/admin/restaurants')
   }
 
   return (
@@ -432,9 +447,10 @@ function AdminTopBar({ userInitial }) {
           alignItems: 'center',
           gap: 8,
           background: '#fff',
-          border: '1px solid var(--color-line, #EAE3D7)',
+          border: `1px solid ${query ? 'var(--color-ink,#22181C)' : 'var(--color-line,#EAE3D7)'}`,
           borderRadius: 999,
           padding: '8px 14px',
+          transition: 'border-color 0.15s',
         }}
       >
         <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#9a8e84" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -445,7 +461,7 @@ function AdminTopBar({ userInitial }) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca ovunque — ristoranti, utenti, sconti…"
+          placeholder="Cerca ristoranti…"
           style={{
             flex: 1,
             border: 'none',
@@ -457,34 +473,28 @@ function AdminTopBar({ userInitial }) {
             padding: 0,
           }}
         />
+        {query && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              lineHeight: 1,
+              color: '#aaa',
+              fontSize: 16,
+              flexShrink: 0,
+            }}
+            aria-label="Cancella ricerca"
+          >
+            ×
+          </button>
+        )}
       </form>
 
       <div style={{ flex: 1 }} />
-
-      <button
-        type="button"
-        disabled
-        title="Disponibile in Analytics"
-        style={{
-          background: '#fff',
-          border: '1px solid var(--color-line, #EAE3D7)',
-          borderRadius: 999,
-          padding: '7px 14px',
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--color-ink, #22181C)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          cursor: 'default',
-          fontFamily: 'var(--font-sans)',
-          opacity: 0.7,
-        }}
-      >
-        <span aria-hidden>📅</span>
-        Ultimi 30 giorni
-        <span aria-hidden style={{ fontSize: 9 }}>▾</span>
-      </button>
 
       <Link
         to="/admin/restaurant/new"
