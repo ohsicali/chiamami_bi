@@ -16,12 +16,7 @@ export default function Footer() {
   return (
     <footer className="bg-white border-t border-gray-100 md:mt-12">
       <div
-        className="max-w-screen-lg md:max-w-[960px] mx-auto px-5 pt-10 pb-10"
-        style={
-          tabBarVisible
-            ? { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }
-            : undefined
-        }
+        className={`max-w-screen-lg md:max-w-[960px] mx-auto px-5 pt-10 pb-10${tabBarVisible ? ' footer-tab-offset' : ''}`}
       >
         {/* Top section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">

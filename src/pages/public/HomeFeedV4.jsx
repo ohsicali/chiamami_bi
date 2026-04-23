@@ -19,13 +19,16 @@ function formatCountdown(endsAt) {
 }
 
 const CATEGORIES = [
-  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
-  { key: 'piemontese', emoji: '🍝', label: 'Piemontese' },
-  { key: 'pizza', emoji: '🍕', label: 'Pizza' },
-  { key: 'giapponese', emoji: '🍣', label: 'Giapponese' },
-  { key: 'pesce', emoji: '🐟', label: 'Pesce' },
-  { key: 'colazione', emoji: '☕', label: 'Colazione' },
-  { key: 'carne', emoji: '🥩', label: 'Carne' },
+  { key: 'aperitivo',   emoji: '🥂', label: 'Aperitivo' },
+  { key: 'piemontese',  emoji: '🍷', label: 'Piemontese' },
+  { key: 'pizza',       emoji: '🍕', label: 'Pizza' },
+  { key: 'giapponese',  emoji: '🍣', label: 'Giapponese' },
+  { key: 'pesce',       emoji: '🐟', label: 'Pesce' },
+  { key: 'colazione',   emoji: '☕', label: 'Colazione' },
+  { key: 'carne',       emoji: '🥩', label: 'Carne' },
+  { key: 'italiana',    emoji: '🍝', label: 'Italiana' },
+  { key: 'vegano',      emoji: '🥬', label: 'Vegano' },
+  { key: 'cocktail',    emoji: '🍸', label: 'Cocktail' },
 ]
 
 const TIME_TABS = [
@@ -155,6 +158,11 @@ function HeroPromo({ featured }) {
   if (!featured) return null
 
   const chipLabel = countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'
+  const claimedCount = featured.claimedCount || 0
+  const maxQuantity = featured.maxQuantity || null
+  const expiresLabel = featured.expiresLabel || null
+  const progressPct = maxQuantity ? Math.min(100, Math.round(claimedCount / maxQuantity * 100)) : null
+  const showProgress = progressPct != null || !!countdown || !!expiresLabel
 
   return (
     <div className="hfv4-hero-wrap" style={{ padding: '4px 16px 22px' }}>
@@ -243,6 +251,10 @@ function HeroPromo({ featured }) {
                 lineHeight: 1.4,
                 marginBottom: 14,
                 maxWidth: 180,
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
               }}
             >
               {featured.subtitle}
@@ -297,19 +309,17 @@ function HeroPromo({ featured }) {
             className="hfv4-hero-photo"
             style={{
               position: 'relative',
-              borderRadius: 20,
               overflow: 'hidden',
               background: '#333',
-              alignSelf: 'stretch',
               minHeight: 160,
             }}
           >
             <img
               src={featured.photo}
               alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
-            {countdown && (
+            {showProgress && (
               <div
                 className="hfv4-hero-progress"
                 style={{
@@ -323,8 +333,16 @@ function HeroPromo({ featured }) {
                   color: '#fff',
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
-                  Scade tra {countdown}
+                {progressPct != null && (
+                  <div style={{ height: 6, background: 'rgba(255,255,255,.2)', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ height: '100%', width: `${progressPct}%`, background: '#fff', borderRadius: 999 }} />
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
+                  <span>
+                    {maxQuantity ? `${claimedCount} / ${maxQuantity} sbloccati` : (countdown ? `Scade tra ${countdown}` : '')}
+                  </span>
+                  {expiresLabel && <span>{expiresLabel}</span>}
                 </div>
               </div>
             )}
@@ -335,15 +353,30 @@ function HeroPromo({ featured }) {
   )
 }
 
-function CategoryBubbles({ activeKey, onSelect }) {
+function CategoryBubbles({ activeKey, onSelect, onAltro }) {
+  const bubbleStyle = (active) => ({
+    width: 64, height: 64, borderRadius: '50%',
+    background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
+    boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
+    display: 'grid', placeItems: 'center', fontSize: 28,
+  })
+  const labelStyle = (active) => ({
+    fontSize: 11, fontWeight: 700,
+    color: active ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
+    maxWidth: 72, textAlign: 'center', lineHeight: 1.15,
+  })
+  const btnStyle = {
+    flex: '0 0 auto', display: 'flex', flexDirection: 'column',
+    alignItems: 'center', gap: 6, background: 'transparent',
+    border: 'none', scrollSnapAlign: 'start', cursor: 'pointer', padding: 0,
+  }
+
   return (
     <div className="hfv4-cats-wrap">
       <div
         className="hfv4-cats-row"
         style={{
-          display: 'flex',
-          gap: 10,
-          overflowX: 'auto',
+          display: 'flex', gap: 10, overflowX: 'auto',
           padding: '6px 20px 20px',
           WebkitOverflowScrolling: 'touch',
           scrollSnapType: 'x proximity',
@@ -353,53 +386,25 @@ function CategoryBubbles({ activeKey, onSelect }) {
         {CATEGORIES.map((c) => {
           const active = c.key === activeKey
           return (
-            <button
-              key={c.key}
-              onClick={() => onSelect?.(c.key)}
-              style={{
-                flex: '0 0 auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                background: 'transparent',
-                border: 'none',
-                scrollSnapAlign: 'start',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              <span
-                className="hfv4-cat-bubble"
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  background: active ? 'var(--color-corallo)' : 'var(--color-ink-05)',
-                  boxShadow: active ? '0 6px 16px rgba(232,69,60,0.35)' : 'none',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 28,
-                }}
-              >
-                {c.emoji}
-              </span>
-              <span
-                className="hfv4-cat-label"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: active ? 'var(--color-corallo-ink)' : 'var(--color-ink)',
-                  maxWidth: 72,
-                  textAlign: 'center',
-                  lineHeight: 1.15,
-                }}
-              >
-                {c.label}
-              </span>
+            <button key={c.key} onClick={() => onSelect?.(c)} style={btnStyle}>
+              <span className="hfv4-cat-bubble" style={bubbleStyle(active)}>{c.emoji}</span>
+              <span className="hfv4-cat-label" style={labelStyle(active)}>{c.label}</span>
             </button>
           )
         })}
+        {/* "Altro" bubble — porta alla mappa senza filtro */}
+        <button onClick={onAltro} style={btnStyle}>
+          <span
+            className="hfv4-cat-bubble"
+            style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: 'var(--color-ink-05)',
+              display: 'grid', placeItems: 'center',
+              fontSize: 22, fontWeight: 800, color: 'var(--color-ink)',
+            }}
+          >+</span>
+          <span className="hfv4-cat-label" style={labelStyle(false)}>Altro</span>
+        </button>
       </div>
     </div>
   )
@@ -1076,18 +1081,60 @@ export default function HomeFeedV4() {
     if (!drop) return null
     const r = (restaurants || []).find((x) => x.id === drop.restaurant_id)
     if (!r) return null
+
+    // Use full-quality photo_url first, thumbnail as fallback
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.thumb_url || photos?.photo_url) : null)
+    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null)
+
     const label = drop.discount_type === 'percentage' ? `-${String(drop.discount_value).replace('%','')}%` : `-${drop.discount_value}€`
+
+    // restLine: Cuisine · Neighborhood · Tagline (not restaurant name, already in title)
+    const catName = r.category?.[0] || r.cuisine_type || ''
+    const catInfo = getCategoryInfo(catName)
+    const neighborhood = r.address ? r.address.split(',')[0].trim() : ''
+    const tagline = r.tagline || ''
+    const restLine = [catInfo?.name || catName, neighborhood, tagline].filter(Boolean).slice(0, 3).join(' · ')
+
+    // Progress bar data
+    const claimedCount = drop.claimed_count || drop.total_redeemed || 0
+    const maxQuantity = drop.max_quantity || null
+    const expiresAt = drop.drop_ends_at || drop.ends_at || drop.valid_until || null
+    let expiresLabel = null
+    if (expiresAt) {
+      const exp = new Date(expiresAt)
+      const diffHours = (exp - Date.now()) / 3_600_000
+      if (diffHours > 0) {
+        if (diffHours < 24) {
+          expiresLabel = `scade alle ${String(exp.getHours()).padStart(2, '0')}:${String(exp.getMinutes()).padStart(2, '0')}`
+        } else {
+          const tomorrow = new Date()
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          if (exp.toDateString() === tomorrow.toDateString()) {
+            expiresLabel = 'scade domani'
+          } else {
+            const months = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']
+            expiresLabel = `scade il ${exp.getDate()} ${months[exp.getMonth()]}`
+          }
+        }
+      }
+    }
+
+    // Subtitle: description + conditions if present
+    const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
+    const subtitle = subtitleParts.join(' · ')
+
     return {
       title: `${label}\nda ${r.name}.`,
-      restLine: r.name,
-      subtitle: drop.description || drop.title,
+      restLine,
+      subtitle,
       cta: 'Vai al drop',
       secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
       photo,
       endsAt: drop.drop_ends_at || drop.ends_at || null,
+      claimedCount,
+      maxQuantity,
+      expiresLabel,
     }
   }, [discounts, restaurants])
 
@@ -1096,9 +1143,13 @@ export default function HomeFeedV4() {
   return (
     <div className="hfv4-root" style={{ background: 'var(--color-page)', minHeight: '100dvh', paddingBottom: 100 }}>
       <style>{`
+        @keyframes drop-live-ring {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,.4); }
+          60% { box-shadow: 0 0 0 5px rgba(255,255,255,.0); }
+        }
         /* v4 Home desktop (mockup v4-desktop-home.html) — kick in ≥1024px */
         @media (min-width: 1024px) {
-          .hfv4-root { padding-bottom: 40px; }
+          .hfv4-root { padding-bottom: 0; }
           .hfv4-topbar { display: none !important; }
           .hfv4-section,
           .hfv4-hero-wrap,
@@ -1110,29 +1161,37 @@ export default function HomeFeedV4() {
             margin-left: auto; margin-right: auto;
             padding-left: 40px !important; padding-right: 40px !important;
           }
-          /* Hero desktop: 2-col 1.05/.95, min-height 380 */
+          /* Hero desktop — identico al mockup v4-desktop-home.html */
+          .hfv4-hero-wrap { padding-top: 16px !important; }
           .hfv4-hero-card {
             grid-template-columns: 1.05fr .95fr !important;
             gap: 0 !important;
-            min-height: 380px;
+            min-height: 380px !important;
+            height: auto !important;
             padding: 0 !important;
             border-radius: 28px !important;
+            overflow: hidden !important;
           }
-          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 14px !important; }
-          .hfv4-hero-chip { font-size: 12px !important; letter-spacing: .08em !important; padding: 6px 12px !important; margin-bottom: 0 !important; }
-          .hfv4-hero-title { font-size: 68px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
-          .hfv4-hero-rest-line { display: flex !important; }
-          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; margin-bottom: 0 !important; }
-          .hfv4-hero-ctas { margin-top: 6px; }
+          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
+          .hfv4-hero-chip {
+            font-size: 12px !important; letter-spacing: .08em !important;
+            padding: 7px 13px !important; margin-bottom: 0 !important;
+            animation: drop-live-ring 2s ease-out infinite !important;
+          }
+          .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-rest-line { display: flex !important; font-size: 15px !important; font-weight: 600 !important; }
+          .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; line-height: 1.5 !important; margin-bottom: 0 !important; -webkit-line-clamp: 2 !important; }
+          .hfv4-hero-ctas { margin-top: 6px !important; }
           .hfv4-hero-cta-ghost { display: inline-flex !important; }
-          .hfv4-hero-photo { min-height: auto !important; border-radius: 0 !important; }
+          .hfv4-hero-photo { min-height: 0 !important; border-radius: 0 !important; }
           .hfv4-hero-progress { display: block !important; }
           /* Category bubbles: 80px wrap grid, no scroll */
           .hfv4-cats-row {
             overflow-x: visible !important;
-            flex-wrap: wrap !important;
+            flex-wrap: nowrap !important;
             gap: 22px !important;
             padding: 6px 0 38px !important;
+            justify-content: center !important;
           }
           .hfv4-cat-bubble {
             width: 80px !important; height: 80px !important;
@@ -1223,7 +1282,7 @@ export default function HomeFeedV4() {
             display: block !important;
             max-width: 1240px;
             margin: 60px auto 0;
-            padding: 40px 40px 48px;
+            padding: 40px 40px 28px;
             border-top: 1px solid var(--color-ink-05);
           }
           .hfv4-foot-inner {
@@ -1254,7 +1313,10 @@ export default function HomeFeedV4() {
       `}</style>
       <TopBar />
       <HeroPromo featured={featuredDrop} />
-      <CategoryBubbles onSelect={(k) => navigate(`/list?cat=${encodeURIComponent(k)}`)} />
+      <CategoryBubbles
+        onSelect={(c) => navigate('/esplora', { state: { initialCategory: c.label } })}
+        onAltro={() => navigate('/esplora')}
+      />
 
       <section className="hfv4-section" style={{ padding: '8px 0 4px' }}>
         <SectionHead
