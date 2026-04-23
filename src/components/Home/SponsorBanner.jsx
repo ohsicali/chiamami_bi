@@ -21,11 +21,49 @@ export default function SponsorBanner() {
   const { placement } = useSponsoredPlacement()
   const { activeDrops } = useActiveDiscounts()
 
-  const effective = placement || buildVirtualFromDrop(activeDrops)
+  // Demo placement abilitato via env var `VITE_DEMO_SPONSOR=smashers` o
+  // query string `?demo=smashers` — Augusto può testarlo su Vercel preview.
+  const demo = getDemoPlacement()
+
+  const effective = placement || buildVirtualFromDrop(activeDrops) || demo
   if (!effective) return null
 
   if (effective.variant === 'brand') return <BrandVariant p={effective} />
   return <RestaurantVariant p={effective} />
+}
+
+function getDemoPlacement() {
+  if (typeof window === 'undefined') return null
+  const envDemo = import.meta.env.VITE_DEMO_SPONSOR
+  const qsDemo = new URLSearchParams(window.location.search).get('demo')
+  const active = qsDemo || envDemo
+  if (active !== 'smashers') return null
+  return {
+    variant: 'restaurant_discount',
+    restaurant: {
+      id: 'demo-smashers',
+      slug: 'smashers',
+      name: 'Smashers',
+      cuisine_type: 'Burger',
+      category: ['Burger'],
+      price_range: 2,
+      address: 'Vanchiglia, Torino',
+      tagline: 'Smash burger senza compromessi. Doppio con cheddar la cosa da prendere, secondo me.',
+      hours_cache: null,
+      photos: [],
+    },
+    discount: {
+      id: 'demo-smashers-discount',
+      title: 'Sconto Smashers',
+      description: 'Smash burger senza compromessi. Doppio con cheddar la cosa da prendere, secondo me.',
+      discount_type: 'percentage',
+      discount_value: '15',
+    },
+    headline: 'Smashers',
+    subtitle: 'Smash burger senza compromessi. Doppio con cheddar la cosa da prendere, secondo me.',
+    cta_label: 'Attiva sconto',
+    cover_image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80',
+  }
 }
 
 function buildVirtualFromDrop(activeDrops) {

@@ -184,51 +184,26 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
         display: 'block',
       }}
     >
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '16/11',
-          background: photo
-            ? `url(${photo}) center/cover`
-            : `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.2) 100%)`,
-          overflow: 'hidden',
-        }}
-      >
-        {!photo && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 46,
-              opacity: 0.55,
-            }}
-          >
-            {cat?.emoji || '🍽️'}
-          </div>
+      <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background: `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.15) 100%)`, overflow:'hidden' }}>
+        {/* Fallback emoji SEMPRE sotto la foto — se img non carica, si vede */}
+        <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center', fontSize:46, opacity:0.55 }}>
+          {cat?.emoji || '🍽️'}
+        </div>
+        {/* Foto su top se disponibile — onError nasconde l'img lasciando il fallback sotto */}
+        {photo && (
+          <img
+            src={photo}
+            alt=""
+            loading="lazy"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}
+          />
         )}
         <OpenPill closesAt={closesAt} />
         {onToggleSave && (
           <div
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave() }}
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: 10,
-              width: 30,
-              height: 30,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,.88)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 14,
-              color: saved ? 'var(--color-corallo)' : 'var(--color-ink-70)',
-            }}
+            style={{ position:'absolute', top:10, right:10, width:30, height:30, borderRadius:'50%', background:'rgba(255,255,255,.88)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color: saved ? 'var(--color-corallo)' : 'var(--color-ink-70)', cursor:'pointer' }}
             aria-label={saved ? 'Rimuovi dai salvati' : 'Salva'}
           >
             {saved ? '♥' : '♡'}

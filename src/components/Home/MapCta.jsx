@@ -1,16 +1,21 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 /**
  * MapCta · card con anteprima mappa Mapbox Static + overlay ink + CTA corallo.
  * Link a /esplora?moment={activeMoment}.
  *
- * La preview usa Mapbox Static Images API (chiave client-side già esposta in
- * env var VITE_MAPBOX_TOKEN). Se la chiave manca, fallback a gradient verde.
+ * Rendering strategy:
+ * - SEMPRE il gradient verde come background base (fallback visibile).
+ * - Sopra, un <img> Mapbox Static absolute-positioned con onError handler:
+ *   se il token manca o l'URL fallisce, l'img si nasconde e vediamo il gradient.
+ * - Overlay ink gradient al 55% sopra tutto per leggibilità del testo.
  */
-const TORINO_CENTER = [7.6869, 45.0703] // lng, lat — Piazza Castello
+const TORINO_CENTER = [7.6869, 45.0703] // Piazza Castello
 const MAPBOX_STYLE = 'mapbox/streets-v12'
 
 export default function MapCta({ activeMoment, count }) {
+  const [imgOk, setImgOk] = useState(true)
   const token = import.meta.env.VITE_MAPBOX_TOKEN
 
   const label = activeMoment
@@ -19,12 +24,8 @@ export default function MapCta({ activeMoment, count }) {
 
   const [lng, lat] = TORINO_CENTER
   const staticUrl = token
-    ? `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE}/static/pin-s-restaurant+EE5C55(${lng},${lat})/${lng},${lat},13,0/800x400@2x?access_token=${token}&logo=false&attribution=false`
+    ? `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE}/static/pin-s+EE5C55(${lng},${lat})/${lng},${lat},13,0/800x400@2x?access_token=${token}&logo=false&attribution=false`
     : null
-
-  const background = staticUrl
-    ? `linear-gradient(180deg, rgba(34,24,28,.1) 0%, rgba(34,24,28,.55) 100%), url(${staticUrl}) center/cover`
-    : 'linear-gradient(135deg,#2C5E4A 0%,#173D30 100%)'
 
   return (
     <div className="hfv4-mapcta-wrap" style={{ padding: '8px 16px 26px' }}>
@@ -34,17 +35,35 @@ export default function MapCta({ activeMoment, count }) {
         style={{
           position: 'relative',
           display: 'block',
-          background,
+          background: 'linear-gradient(135deg,#2C5E4A 0%,#173D30 100%)',
           color: '#fff',
           borderRadius: 20,
           overflow: 'hidden',
           boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
           textDecoration: 'none',
           minHeight: 160,
+          height: 160,
         }}
       >
-        {/* Overlay subtle grid pattern quando c'è la mappa (aggiunge profondità) */}
-        {!staticUrl && (
+        {/* Layer 1: Mapbox img (nascosto se fallisce) */}
+        {staticUrl && imgOk && (
+          <img
+            src={staticUrl}
+            alt=""
+            onError={() => setImgOk(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        )}
+
+        {/* Layer 2: pattern grid (solo in fallback, sopra verde ma sotto content) */}
+        {(!staticUrl || !imgOk) && (
           <span
             aria-hidden
             style={{
@@ -58,7 +77,20 @@ export default function MapCta({ activeMoment, count }) {
           />
         )}
 
-        {/* Content row in fondo alla card */}
+        {/* Layer 3: overlay ink sopra la mappa per leggibilità */}
+        {staticUrl && imgOk && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(180deg, rgba(34,24,28,.1) 0%, rgba(34,24,28,.55) 100%)',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+
+        {/* Layer 4: content row in fondo */}
         <div
           style={{
             position: 'absolute',
@@ -69,7 +101,7 @@ export default function MapCta({ activeMoment, count }) {
             gridTemplateColumns: '56px 1fr auto',
             gap: 12,
             alignItems: 'center',
-            zIndex: 1,
+            zIndex: 2,
           }}
         >
           <span
@@ -89,10 +121,10 @@ export default function MapCta({ activeMoment, count }) {
             📍
           </span>
           <span>
-            <span style={{ display: 'block', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 15, lineHeight: 1.2, marginBottom: 3, textShadow: '0 1px 3px rgba(0,0,0,.3)' }}>
+            <span style={{ display: 'block', fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 15, lineHeight: 1.2, marginBottom: 3, textShadow: '0 1px 3px rgba(0,0,0,.35)' }}>
               Mostrameli sulla mappa
             </span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,.9)', textShadow: '0 1px 3px rgba(0,0,0,.3)' }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,.92)', textShadow: '0 1px 3px rgba(0,0,0,.35)' }}>
               {label}
             </span>
           </span>
