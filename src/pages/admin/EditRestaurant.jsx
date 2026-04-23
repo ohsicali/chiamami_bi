@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -11,15 +11,7 @@ import CosaTiConsiglioTab from '../../components/admin/tabs/CosaTiConsiglioTab'
 import ScontoTab from '../../components/admin/tabs/ScontoTab'
 import CredenzialiTab from '../../components/admin/tabs/CredenzialiTab'
 import SeoTab from '../../components/admin/tabs/SeoTab'
-
-const TABS = [
-  { key: 'dettagli', label: 'Dettagli' },
-  { key: 'foto', label: 'Foto & galleria' },
-  { key: 'consiglio', label: 'Cosa ti consiglio' },
-  { key: 'sconto', label: 'Sconto' },
-  { key: 'credenziali', label: 'Credenziali' },
-  { key: 'seo', label: 'SEO' },
-]
+import { checkSeoReady, SeoLockedPlaceholder } from '../../components/admin/tabs/_SeoLockCheck'
 
 /**
  * EditRestaurant — full-page edit (replaces drawer 720px).
@@ -109,6 +101,31 @@ export default function EditRestaurant() {
       }
     },
     [form, restaurantId]
+  )
+
+  // SEO lock: until minimum data is filled, the SEO tab is locked and
+  // shows a checklist instead of the form. A 🔒 icon appears on the pill.
+  const { ready: seoReady, missing: seoMissing } = useMemo(
+    () => (form ? checkSeoReady(form) : { ready: false, missing: [] }),
+    [form]
+  )
+  const tabsWithLock = useMemo(
+    () => [
+      { key: 'dettagli', label: 'Dettagli' },
+      { key: 'foto', label: 'Foto & galleria' },
+      { key: 'consiglio', label: 'Cosa ti consiglio' },
+      { key: 'sconto', label: 'Sconto' },
+      { key: 'credenziali', label: 'Credenziali' },
+      {
+        key: 'seo',
+        label: 'SEO',
+        locked: !seoReady,
+        lockedReason: seoReady
+          ? undefined
+          : 'Completa nome, zona e racconto (almeno 80 caratteri) per sbloccare.',
+      },
+    ],
+    [seoReady]
   )
 
   if (authLoading || loading) return <LoadingScreen />
@@ -299,8 +316,8 @@ export default function EditRestaurant() {
           </div>
         </div>
 
-        {/* ── Tabs + content ── */}
-        <TabsShell tabs={TABS} activeKey={activeTab} onChange={setActiveTab}>
+        {/* ── Tabs + content (SEO locked until minimum data) ── */}
+        <TabsShell tabs={tabsWithLock} activeKey={activeTab} onChange={setActiveTab}>
           {activeTab === 'dettagli' && (
             <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} />
           )}
@@ -328,9 +345,12 @@ export default function EditRestaurant() {
               }}
             />
           )}
-          {activeTab === 'seo' && (
-            <SeoTab form={form} onChange={updateField} restaurantId={restaurantId} />
-          )}
+          {activeTab === 'seo' &&
+            (seoReady ? (
+              <SeoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+            ) : (
+              <SeoLockedPlaceholder missing={seoMissing} onGoToDettagli={() => setActiveTab('dettagli')} />
+            ))}
         </TabsShell>
       </div>
 

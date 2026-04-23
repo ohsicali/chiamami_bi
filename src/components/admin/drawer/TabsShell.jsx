@@ -1,12 +1,14 @@
 /**
  * TabsShell — horizontal pill-tab navigation + content panel.
  *
- * Used inside RestaurantDrawer (PR15c) and on the Nuovo ristorante page
- * (PR15c-2), so the 6 tabs look identical in both contexts.
+ * Used inside EditRestaurant (PR15g.2) and NewRestaurant (PR15c-2), so
+ * the 6 tabs look identical in both contexts.
  *
  * Props:
- *   tabs       → array of { key, label, hide? } — hide=true skips a tab
- *                (e.g. "Credenziali" in create mode)
+ *   tabs       → array of { key, label, hide?, locked?, lockedReason? }
+ *                - hide=true skips a tab (e.g. "Credenziali" in create mode)
+ *                - locked=true greys out the tab + shows 🔒 + tooltip.
+ *                  Click is still allowed; parent renders a placeholder.
  *   activeKey  → current tab key
  *   onChange   → (key) => void
  *   children   → tab content (single React node, parent switches)
@@ -43,26 +45,32 @@ export default function TabsShell({ tabs, activeKey, onChange, children, sticky 
         >
           {visible.map((t) => {
             const active = t.key === activeKey
+            const locked = t.locked === true
             return (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => onChange(t.key)}
+                title={locked ? t.lockedReason || 'Questa tab è bloccata.' : undefined}
                 style={{
                   padding: '8px 16px',
                   borderRadius: 999,
                   fontSize: 12,
                   fontWeight: 700,
-                  color: active ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                  color: active ? '#fff' : locked ? 'var(--color-ink-55, rgba(34,24,28,0.45))' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
                   background: active ? 'var(--color-ink, #22181C)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans)',
                   whiteSpace: 'nowrap',
                   transition: 'background 0.15s, color 0.15s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {t.label}
+                {locked && <span aria-hidden style={{ fontSize: 10, opacity: active ? 1 : 0.65 }}>🔒</span>}
+                <span style={{ opacity: locked && !active ? 0.7 : 1 }}>{t.label}</span>
               </button>
             )
           })}

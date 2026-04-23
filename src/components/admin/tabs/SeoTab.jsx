@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../../lib/supabase'
 import FGroup from './_FGroup'
 import { FField, FInput, FTextarea, FRow, CharCounter } from './_Fields'
@@ -9,6 +9,10 @@ import { FField, FInput, FTextarea, FRow, CharCounter } from './_Fields'
  * "✨ Genera con AI" calls /api/admin-actions (action=ai-seo-suggest) that
  * runs Claude Haiku 4.5 server-side. Augusto reviews + saves manually.
  *
+ * Auto-pre-fill: the FIRST time this tab is rendered AND all SEO fields
+ * are still empty AND restaurantId exists, AI is run automatically so the
+ * admin lands on populated suggestions instead of a blank form.
+ *
  * Preview zones (right column on desktop, stacked below on mobile):
  *   - Google SERP preview (blue title, green URL, gray description)
  *   - Social card preview (OG image + OG title + OG description)
@@ -16,6 +20,21 @@ import { FField, FInput, FTextarea, FRow, CharCounter } from './_Fields'
 export default function SeoTab({ form, onChange, restaurantId }) {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState(null)
+  const autoRanRef = useRef(false)
+
+  const allSeoEmpty =
+    !form.seo_title && !form.seo_description && !form.og_title && !form.og_description
+
+  // First-visit auto-run: only if all SEO fields are empty and the restaurant
+  // already exists in DB (needs restaurantId for the AI endpoint).
+  useEffect(() => {
+    if (autoRanRef.current) return
+    if (!restaurantId) return
+    if (!allSeoEmpty) return
+    autoRanRef.current = true
+    handleGenerate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId])
 
   async function handleGenerate() {
     setAiLoading(true)
