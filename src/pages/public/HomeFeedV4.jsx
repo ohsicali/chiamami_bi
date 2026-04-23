@@ -1149,7 +1149,7 @@ export default function HomeFeedV4() {
         }
         /* v4 Home desktop (mockup v4-desktop-home.html) — kick in ≥1024px */
         @media (min-width: 1024px) {
-          .hfv4-root { padding-bottom: 40px; }
+          .hfv4-root { padding-bottom: 0; }
           .hfv4-topbar { display: none !important; }
           .hfv4-section,
           .hfv4-hero-wrap,
@@ -1282,7 +1282,7 @@ export default function HomeFeedV4() {
             display: block !important;
             max-width: 1240px;
             margin: 60px auto 0;
-            padding: 40px 40px 48px;
+            padding: 40px 40px 28px;
             border-top: 1px solid var(--color-ink-05);
           }
           .hfv4-foot-inner {
