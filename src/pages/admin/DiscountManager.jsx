@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
@@ -112,9 +112,19 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
           position: 'relative',
           flexShrink: 0,
           cursor: 'pointer',
+          overflow: 'hidden',
         }}
         className="max-md:!hidden"
       >
+        {d.restaurant_photo && (
+          <img
+            src={proxyImg(d.restaurant_photo)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        )}
         <span
           style={{
             position: 'absolute',
@@ -509,7 +519,7 @@ export default function DiscountManager() {
     }
     Promise.all([
       supabase.from('discounts').select('*, restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
-      supabase.from('restaurants').select('id, name').order('name'),
+      supabase.from('restaurants').select('id, name, restaurant_photos(photo_url)').order('name'),
       supabase.from('discount_redemptions').select('discount_id, status'),
       supabase.from('restaurant_partners').select('restaurant_id').eq('is_active', true),
     ]).then(([discRes, restRes, redRes, partRes]) => {
@@ -521,13 +531,18 @@ export default function DiscountManager() {
           usedMap[r.discount_id] = (usedMap[r.discount_id] || 0) + 1
         }
       })
+      const restPhotoMap = {}
+      ;(restRes.data || []).forEach((r) => {
+        restPhotoMap[r.id] = r.restaurant_photos?.[0]?.photo_url || null
+      })
       const enriched = (discRes.data || []).map((d) => ({
         ...d,
         generated_count: genMap[d.id] || 0,
         redeemed_count: usedMap[d.id] || 0,
+        restaurant_photo: restPhotoMap[d.restaurant_id] || null,
       }))
       setDiscounts(enriched)
-      setRestaurants(restRes.data || [])
+      setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name })))
       setPartnerIds(new Set((partRes.data || []).map((p) => p.restaurant_id)))
       setLoading(false)
     })

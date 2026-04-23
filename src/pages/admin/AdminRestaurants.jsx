@@ -585,7 +585,7 @@ function RestaurantRow({ r, idx, discount, views, onDelete, onEdit }) {
       <Td>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {thumb ? (
-            <img src={thumb} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+            <img src={thumb} alt="" loading="lazy" decoding="async" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
           ) : (
             <div
               style={{
