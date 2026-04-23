@@ -190,6 +190,31 @@ export default function GooglePlacesBlock({ form, onChange, restaurantId }) {
           >
             {searching ? 'Cerco…' : '🔎 Cerca su Google'}
           </button>
+          <a
+            href={buildMapsSearchUrl(form.name, form.address, form.city)}
+            target="_blank"
+            rel="noreferrer"
+            title="Apri Google Maps in una nuova scheda per cercare manualmente, poi copia il Place ID qui"
+            style={{
+              background: 'transparent',
+              color: 'var(--color-ink, #22181C)',
+              border: '1px solid var(--color-line, #EAE3D7)',
+              padding: '9px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 700,
+              textDecoration: 'none',
+              fontFamily: 'var(--font-sans)',
+              whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              pointerEvents: form.name?.trim() ? 'auto' : 'none',
+              opacity: form.name?.trim() ? 1 : 0.5,
+            }}
+          >
+            🌐 Apri su Maps
+          </a>
         </div>
 
         {/* Candidates list */}
@@ -210,7 +235,16 @@ export default function GooglePlacesBlock({ form, onChange, restaurantId }) {
                 marginBottom: 6,
               }}
             >
-              {candidates.length} candidat{candidates.length === 1 ? 'o' : 'i'} — clicca quello giusto:
+              {candidates.length} candidat{candidates.length === 1 ? 'o' : 'i'} — clicca quello giusto, oppure{' '}
+              <a
+                href={buildMapsSearchUrl(form.name, form.address, form.city)}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: 'var(--color-corallo, #E8453C)', fontWeight: 800 }}
+              >
+                cerca su Google Maps
+              </a>{' '}
+              e incolla il Place ID:
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {candidates.map((c) => {
@@ -324,10 +358,14 @@ export default function GooglePlacesBlock({ form, onChange, restaurantId }) {
         {/* Status line */}
         <div style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontWeight: 600, lineHeight: 1.55 }}>
           {!hasId && (
-            <>Senza Place ID verificato, la scheda pubblica mostra "Chiama per orari" come fallback.</>
+            <>
+              Senza Place ID verificato, la scheda pubblica mostra "Chiama per orari" come fallback.
+              <br />
+              <b>Come ottenerlo manualmente:</b> apri Google Maps, cerca il locale, aprilo, click su "Condividi" → "Incorpora una mappa", oppure estrai il <code>place_id</code> dall'URL condiviso (parametro <code>ftid</code> o hash).
+            </>
           )}
           {hasId && !isVerified && (
-            <>Place ID impostato ma <b>non verificato</b>. Il sito non userà questi orari finché non cliccchi "Verifica".</>
+            <>Place ID impostato ma <b>non verificato</b>. Il sito non userà questi orari finché non clicchi "Verifica".</>
           )}
           {isVerified && form.place_id_confidence != null && (
             <>
@@ -368,6 +406,12 @@ export default function GooglePlacesBlock({ form, onChange, restaurantId }) {
       </div>
     </div>
   )
+}
+
+function buildMapsSearchUrl(name, address, city) {
+  const q = [name, address, city].filter(Boolean).join(' ').trim()
+  if (!q) return 'https://www.google.com/maps'
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
 }
 
 function StatusChip({ hasId, verified }) {

@@ -21,6 +21,7 @@ export default function DettagliTab({ form, onChange, restaurantId }) {
         variant="compact"
         onApply={(patch) => onChange(patch)}
         onSlug={slugify}
+        currentPlaceId={form.place_id}
       />
 
       {/* Google Places — orari automatici */}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { reverseGeocode } from '../../lib/utils/geocoding'
+import { supabase } from '../../lib/supabase'
 
 /**
  * GoogleMapsImportBlock — shared block for auto-filling restaurant data
@@ -13,13 +14,25 @@ import { reverseGeocode } from '../../lib/utils/geocoding'
  * Props:
  *   variant   → 'banner' (peach gradient, new page) | 'compact' (line, edit drawer)
  *   onApply   → ({ name, slug, address, website, phone, latitude, longitude,
- *                   google_maps_url }) => void
+ *                   google_maps_url, place_id?, place_id_confidence? }) => void
  *   onSlug    → (name) => slug (optional custom slugifier; default below)
+ *   currentPlaceId → skip auto place_id fetch if this is already set
  *
  * Migrated from legacy RestaurantForm.jsx (handleGoogleFill + handleNameSearch)
  * and used by both NewRestaurant.jsx and DettagliTab.jsx.
+ *
+ * BONUS: after a successful import, if we have name+address AND no place_id
+ * is yet set, we auto-call /api/admin-actions search-places and apply the
+ * top candidate (if confidence >= 0.65) with place_id_verified_at=null.
+ * The admin still has to press "Verifica come corretto" to enable the
+ * public hours cache — zero risk of mis-applying a wrong place.
  */
-export default function GoogleMapsImportBlock({ variant = 'banner', onApply, onSlug = defaultSlugify }) {
+export default function GoogleMapsImportBlock({
+  variant = 'banner',
+  onApply,
+  onSlug = defaultSlugify,
+  currentPlaceId,
+}) {
   const [url, setUrl] = useState('')
   const [filling, setFilling] = useState(false)
   const [error, setError] = useState(null)
@@ -103,10 +116,43 @@ export default function GoogleMapsImportBlock({ variant = 'banner', onApply, onS
 
       onApply?.(patch)
       if (variant === 'compact') setUrl('')
+
+      // Auto-fetch place_id if we have enough data and none is set yet.
+      if (patch.name && !currentPlaceId) {
+        tryAutoFetchPlaceId(patch.name, patch.address || '')
+      }
     } catch (err) {
       setError('Errore nella compilazione: ' + err.message)
     } finally {
       setFilling(false)
+    }
+  }
+
+  async function tryAutoFetchPlaceId(name, address) {
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      if (!token) return
+      const res = await fetch('/api/admin-actions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'search-places', name, address }),
+      })
+      const data = await res.json()
+      if (!res.ok) return
+      const top = data.candidates?.[0]
+      if (top && top.confidence >= 0.65) {
+        onApply?.({
+          place_id: top.place_id,
+          place_id_confidence: top.confidence,
+          place_id_verified_at: null,
+        })
+      }
+    } catch {
+      // silent — admin can still "Cerca su Google" manually from the Places block
     }
   }
 
@@ -139,6 +185,11 @@ export default function GoogleMapsImportBlock({ variant = 'banner', onApply, onS
       setShowNameSearch(false)
       setNameQuery('')
       setError(null)
+
+      // Auto-fetch place_id from name-search result too
+      if (patch.name && !currentPlaceId) {
+        tryAutoFetchPlaceId(patch.name, patch.address || '')
+      }
     } catch (err) {
       setError('Errore ricerca: ' + err.message)
     } finally {

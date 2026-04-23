@@ -345,6 +345,7 @@ export default function NewRestaurant() {
           variant="banner"
           onApply={(patch) => updateField(patch)}
           onSlug={slugify}
+          currentPlaceId={form.place_id}
         />
 
         {/* ── PIN placeholder info box ── */}

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
-import TabsShell from '../../components/admin/drawer/TabsShell'
 import DettagliTab from '../../components/admin/tabs/DettagliTab'
 import FotoGalleriaTab from '../../components/admin/tabs/FotoGalleriaTab'
 import CosaTiConsiglioTab from '../../components/admin/tabs/CosaTiConsiglioTab'
@@ -12,6 +11,15 @@ import ScontoTab from '../../components/admin/tabs/ScontoTab'
 import CredenzialiTab from '../../components/admin/tabs/CredenzialiTab'
 import SeoTab from '../../components/admin/tabs/SeoTab'
 import { checkSeoReady, SeoLockedPlaceholder } from '../../components/admin/tabs/_SeoLockCheck'
+
+const SECTIONS = [
+  { key: 'dettagli', num: '01', label: 'Dettagli' },
+  { key: 'foto', num: '02', label: 'Foto' },
+  { key: 'consiglio', num: '03', label: 'Cosa consigli' },
+  { key: 'sconto', num: '04', label: 'Sconto' },
+  { key: 'credenziali', num: '05', label: 'Credenziali' },
+  { key: 'seo', num: '06', label: 'SEO' },
+]
 
 /**
  * EditRestaurant — full-page edit (replaces drawer 720px).
@@ -32,7 +40,6 @@ export default function EditRestaurant() {
   const [form, setForm] = useState(null)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState('dettagli')
   const [toast, setToast] = useState(null)
   const [loadError, setLoadError] = useState(null)
 
@@ -103,29 +110,11 @@ export default function EditRestaurant() {
     [form, restaurantId]
   )
 
-  // SEO lock: until minimum data is filled, the SEO tab is locked and
-  // shows a checklist instead of the form. A 🔒 icon appears on the pill.
+  // SEO lock: until minimum data is filled, the SEO section shows a
+  // checklist instead of the form.
   const { ready: seoReady, missing: seoMissing } = useMemo(
     () => (form ? checkSeoReady(form) : { ready: false, missing: [] }),
     [form]
-  )
-  const tabsWithLock = useMemo(
-    () => [
-      { key: 'dettagli', label: 'Dettagli' },
-      { key: 'foto', label: 'Foto & galleria' },
-      { key: 'consiglio', label: 'Cosa ti consiglio' },
-      { key: 'sconto', label: 'Sconto' },
-      { key: 'credenziali', label: 'Credenziali' },
-      {
-        key: 'seo',
-        label: 'SEO',
-        locked: !seoReady,
-        lockedReason: seoReady
-          ? undefined
-          : 'Completa nome, zona e racconto (almeno 80 caratteri) per sbloccare.',
-      },
-    ],
-    [seoReady]
   )
 
   if (authLoading || loading) return <LoadingScreen />
@@ -316,42 +305,113 @@ export default function EditRestaurant() {
           </div>
         </div>
 
-        {/* ── Tabs + content (SEO locked until minimum data) ── */}
-        <TabsShell tabs={tabsWithLock} activeKey={activeTab} onChange={setActiveTab}>
-          {activeTab === 'dettagli' && (
-            <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} />
-          )}
-          {activeTab === 'foto' && (
-            <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
-          )}
-          {activeTab === 'consiglio' && (
-            <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
-          )}
-          {activeTab === 'sconto' && (
-            <ScontoTab form={form} onChange={updateField} restaurantId={restaurantId} />
-          )}
-          {activeTab === 'credenziali' && (
-            <CredenzialiTab
-              form={form}
-              onChange={updateField}
-              restaurantId={restaurantId}
-              onPinRotated={(pin, at) => {
-                setForm((prev) => ({ ...prev, verify_pin: pin, last_pin_rotation_at: at }))
-                setRestaurant((prev) => ({ ...prev, verify_pin: pin, last_pin_rotation_at: at }))
-              }}
-              onDisableToggled={(flag) => {
-                setForm((prev) => ({ ...prev, is_disabled: flag }))
-                setRestaurant((prev) => ({ ...prev, is_disabled: flag }))
-              }}
+        {/* ── Quick-nav sticky (scroll to section) ── */}
+        <nav
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 5,
+            background: 'var(--color-page, #FAF7F2)',
+            padding: '8px 0 12px',
+            marginBottom: 8,
+            borderBottom: '1px solid var(--color-line, #EAE3D7)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: 4,
+              background: '#fff',
+              border: '1px solid var(--color-line, #EAE3D7)',
+              borderRadius: 999,
+              padding: 4,
+              width: 'fit-content',
+              maxWidth: '100%',
+              overflowX: 'auto',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {SECTIONS.map((s) => {
+              const locked = s.key === 'seo' && !seoReady
+              return (
+                <a
+                  key={s.key}
+                  href={`#sec-${s.key}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById(`sec-${s.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                    background: 'transparent',
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  <span style={{ fontFamily: 'var(--font-wordmark, "Alfa Slab One")', color: 'var(--color-corallo, #E8453C)', fontSize: 10 }}>
+                    {s.num}
+                  </span>
+                  {locked && <span aria-hidden style={{ fontSize: 10 }}>🔒</span>}
+                  {s.label}
+                </a>
+              )
+            })}
+          </div>
+        </nav>
+
+        {/* ── Sezioni in scroll unico (wizard verticale) ── */}
+        <Section id="sec-dettagli" num="01" title="Dettagli">
+          <DettagliTab form={form} onChange={updateField} restaurantId={restaurantId} />
+        </Section>
+
+        <Section id="sec-foto" num="02" title="Foto & galleria">
+          <FotoGalleriaTab form={form} onChange={updateField} restaurantId={restaurantId} />
+        </Section>
+
+        <Section id="sec-consiglio" num="03" title="Cosa ti consiglio">
+          <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
+        </Section>
+
+        <Section id="sec-sconto" num="04" title="Sconto">
+          <ScontoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+        </Section>
+
+        <Section id="sec-credenziali" num="05" title="Credenziali PIN">
+          <CredenzialiTab
+            form={form}
+            onChange={updateField}
+            restaurantId={restaurantId}
+            onPinRotated={(pin, at) => {
+              setForm((prev) => ({ ...prev, verify_pin: pin, last_pin_rotation_at: at }))
+              setRestaurant((prev) => ({ ...prev, verify_pin: pin, last_pin_rotation_at: at }))
+            }}
+            onDisableToggled={(flag) => {
+              setForm((prev) => ({ ...prev, is_disabled: flag }))
+              setRestaurant((prev) => ({ ...prev, is_disabled: flag }))
+            }}
+          />
+        </Section>
+
+        <Section id="sec-seo" num="06" title="SEO" locked={!seoReady}>
+          {seoReady ? (
+            <SeoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+          ) : (
+            <SeoLockedPlaceholder
+              missing={seoMissing}
+              onGoToDettagli={() =>
+                document.getElementById('sec-dettagli')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
             />
           )}
-          {activeTab === 'seo' &&
-            (seoReady ? (
-              <SeoTab form={form} onChange={updateField} restaurantId={restaurantId} />
-            ) : (
-              <SeoLockedPlaceholder missing={seoMissing} onGoToDettagli={() => setActiveTab('dettagli')} />
-            ))}
-        </TabsShell>
+        </Section>
       </div>
 
       {/* Save toast */}
@@ -382,6 +442,71 @@ export default function EditRestaurant() {
         )}
       </AnimatePresence>
     </AdminLayout>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section — big numbered heading + content wrapper                   */
+/* ------------------------------------------------------------------ */
+function Section({ id, num, title, locked, children }) {
+  return (
+    <section id={id} style={{ paddingTop: 28, scrollMarginTop: 72 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 14,
+          marginBottom: 16,
+          paddingBottom: 10,
+          borderBottom: '1px solid var(--color-line, #EAE3D7)',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'var(--font-wordmark, "Alfa Slab One")',
+            color: 'var(--color-corallo, #E8453C)',
+            fontSize: 20,
+            letterSpacing: '0.04em',
+            lineHeight: 1,
+          }}
+        >
+          {num}
+        </div>
+        <h2
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 22,
+            letterSpacing: '-0.02em',
+            margin: 0,
+            color: 'var(--color-ink, #22181C)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          {title}
+          {locked && (
+            <span
+              aria-hidden
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                padding: '3px 10px',
+                borderRadius: 999,
+                background: 'var(--color-cream-deep, #F1EBE0)',
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              🔒 bloccato
+            </span>
+          )}
+        </h2>
+      </div>
+      {children}
+    </section>
   )
 }
 
