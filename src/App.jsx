@@ -44,6 +44,7 @@ const AdminRestaurants = lazy(() => import('./pages/admin/AdminRestaurants'))
 const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'))
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 const RestaurantForm = lazy(() => import('./pages/admin/RestaurantForm'))
+const NewRestaurant = lazy(() => import('./pages/admin/NewRestaurant'))
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
@@ -134,7 +135,7 @@ export default function App() {
           <Route path="/admin/analytics" element={<AnalyticsPage />} />
           <Route path="/admin/restaurants" element={<AdminRestaurants />} />
           <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/restaurant/new" element={<RestaurantForm />} />
+          <Route path="/admin/restaurant/new" element={<NewRestaurant />} />
           <Route path="/admin/restaurant/:id/edit" element={<RestaurantForm />} />
           <Route path="/admin/categories" element={<CategoryManager />} />
           <Route path="/admin/discounts" element={<DiscountManager />} />
