@@ -63,7 +63,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
     ? Math.min(100, Math.round(((d.redeemed_count || 0) / d.max_redemptions) * 100))
     : null
 
-  const pillLabel = isDrop ? '🔥 HOT' : isFeatured ? 'EVIDENZA' : 'SCONTO'
+  const pillLabel = isDrop ? '🔥 DROP' : isFeatured ? 'EVIDENZA' : 'SCONTO'
   const pillBg = isDrop
     ? 'var(--color-corallo, #E8453C)'
     : isFeatured
