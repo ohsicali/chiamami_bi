@@ -196,17 +196,10 @@ function HeroPromo({ featured }) {
             style={{
               fontFamily: 'var(--font-sans)', fontWeight: 900,
               fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4,
+              whiteSpace: 'pre-line',
             }}
           >
-            {featured.discountLabel}
-          </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 900,
-              fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 10, opacity: 0.95,
-            }}
-          >
-            da {featured.restaurantName}
+            {featured.title}
           </div>
           {featured.restLine && (
             <div className="hfv4-hero-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', lineHeight: 1.4, marginBottom: 4 }}>
@@ -556,8 +549,10 @@ export default function HomeFeedV4() {
           }
           .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
           .hfv4-hero-chip { font-size: 12px !important; padding: 7px 13px !important; margin-bottom: 0 !important; animation: drop-live-ring 2s ease-out infinite !important; }
-          .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; white-space: pre-line !important; }
           .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
+          .hfv4-hero-progress { display: none !important; }
+          .hfv4-hero-ctas { display: flex !important; gap: 10px !important; flex-wrap: wrap !important; }
           .hfv4-hero-photo { height: auto !important; }
           .hfv4-cats-row {
             overflow-x: visible !important;
