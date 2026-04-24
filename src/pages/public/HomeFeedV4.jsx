@@ -644,13 +644,7 @@ export default function HomeFeedV4() {
           .hfv4-zone-b .hfv4-ai-wrap { padding: 0 !important; }
           .hfv4-zone-b .hfv4-ai-output { padding: 0 !important; }
 
-          .hfv4-spon-wrap { padding-left: 0 !important; padding-right: 0 !important; }
           .hfv4-timehero { padding-left: 0 !important; padding-right: 0 !important; }
-          .hfv4-moment-tabs {
-            overflow-x: visible !important;
-            flex-wrap: wrap !important;
-            padding-left: 0 !important; padding-right: 0 !important;
-          }
           .hfv4-results-head { padding-left: 0 !important; padding-right: 0 !important; }
           .hfv4-results-row {
             display: grid !important;
@@ -663,13 +657,56 @@ export default function HomeFeedV4() {
           .hfv4-mapcta-wrap, .hfv4-consiglio-wrap, .hfv4-suggest-wrap {
             padding-left: 0 !important; padding-right: 0 !important;
           }
-          .hfv4-timehero-clock { font-size: 128px !important; }
-          .hfv4-timehero-q { font-size: 32px !important; max-width: 480px !important; }
+
+          /* === Banner sponsor full-width === */
+          .hfv4-spon-outer {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 40px 24px;
+          }
+          .hfv4-spon-outer .hfv4-spon-wrap { padding: 0 !important; }
           .hfv4-spon-banner {
             display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
+            grid-template-columns: 440px 1fr !important;
           }
-          .hfv4-spon-banner .spon-photo { height: auto !important; min-height: 320px !important; }
+          .hfv4-spon-banner .spon-photo { height: auto !important; min-height: 280px !important; }
+          .hfv4-spon-banner .spon-title { font-size: 48px !important; letter-spacing: -.025em !important; line-height: 1 !important; }
+          .hfv4-spon-banner-body { padding: 40px 44px !important; justify-content: center !important; }
+
+          /* === Box bianco orologio + moment tabs === */
+          .hfv4-time-box {
+            background: #fff;
+            border: 1px solid rgba(234,227,215,1);
+            border-radius: 28px;
+            padding: 28px 32px 24px;
+            box-shadow: 0 1px 2px rgba(34,24,28,.04), 0 4px 12px rgba(34,24,28,.04);
+            margin-bottom: 24px;
+          }
+          .hfv4-time-box .hfv4-timehero {
+            display: grid !important;
+            grid-template-columns: auto 1fr !important;
+            column-gap: 28px;
+            padding: 0 !important;
+            margin-bottom: 22px;
+            text-align: left;
+          }
+          .hfv4-time-box .hfv4-timehero-tag { grid-column: 1; grid-row: 1; align-self: start; margin-bottom: 10px; }
+          .hfv4-time-box .hfv4-timehero-clock { grid-column: 1; grid-row: 2 / 4; align-self: center; font-size: 88px !important; margin-bottom: 0 !important; }
+          .hfv4-time-box .hfv4-timehero-q { grid-column: 2; grid-row: 2; align-self: end; font-size: 28px !important; max-width: none !important; }
+          .hfv4-time-box .hfv4-timehero-sub { grid-column: 2; grid-row: 3; align-self: start; max-width: none; margin-top: 6px; }
+          .hfv4-time-box .hfv4-moment-tabs {
+            overflow-x: visible !important;
+            flex-wrap: wrap !important;
+            padding: 0 !important;
+            gap: 10px !important;
+          }
+          .hfv4-time-box .hfv4-moment-tab {
+            flex-direction: row !important;
+            min-width: auto !important;
+            gap: 10px !important;
+            padding: 12px 18px !important;
+            border-radius: 999px !important;
+          }
         }
       `}</style>
 
@@ -702,14 +739,19 @@ export default function HomeFeedV4() {
         )}
       </section>
 
+      {/* Sponsor banner: full-width su desktop, fuori dalla griglia 2-col */}
+      <div className="hfv4-spon-outer">
+        <SponsorBanner />
+      </div>
+
       <div className="hfv4-main">
         {/* Zone A: contenuto principale sopra la chat */}
         <div className="hfv4-zone-a">
-          <SponsorBanner />
-
-          <TimeContextHero activeMomentKey={activeMoment} />
-
-          <MomentTabs activeKey={activeMoment} onChange={setActiveMoment} />
+          {/* Box bianco orologio + tabs su desktop */}
+          <div className="hfv4-time-box">
+            <TimeContextHero activeMomentKey={activeMoment} />
+            <MomentTabs activeKey={activeMoment} onChange={setActiveMoment} />
+          </div>
 
           {loading ? (
             <div style={{ padding: '20px', color: 'var(--color-ink-70)' }}>Caricamento…</div>

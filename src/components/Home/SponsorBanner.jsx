@@ -205,7 +205,7 @@ function RestaurantVariant({ p }) {
         </div>
 
         {/* Body */}
-        <div style={{ padding: '18px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="hfv4-spon-banner-body" style={{ padding: '18px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div
             className="spon-title"
             style={{
