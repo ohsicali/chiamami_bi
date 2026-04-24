@@ -203,6 +203,13 @@ export default function ProfilePage() {
         <PfSec>Il mio account</PfSec>
         <PfList>
           <PfItem
+            onClick={() => navigate('/profile/chat')}
+            icVariant="cor"
+            icon={<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
+            label="Le mie conversazioni con Bi"
+            sub="Storia chat AI · suggerimenti personali"
+          />
+          <PfItem
             onClick={() => navigate('/settings')}
             icon={<svg viewBox="0 0 24 24"><path d="M12 2l3 6 6.5 1-5 4.5 1.5 6.5L12 17l-6 3 1.5-6.5L2.5 9 9 8z"/></svg>}
             label="Preferenze"

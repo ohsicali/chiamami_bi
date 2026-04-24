@@ -109,6 +109,17 @@ function NewsletterIcon(props) {
     </svg>
   )
 }
+function PlacementIcon(props) {
+  return (
+    <svg {...iconProps} {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 9h18" />
+      <path d="M8 13h3" />
+      <path d="M15 13h1" />
+      <path d="M8 16h8" />
+    </svg>
+  )
+}
 function SettingsIcon(props) {
   return (
     <svg {...iconProps} {...props}>
@@ -174,6 +185,7 @@ const MENU_SECTIONS = [
     items: [
       { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, counterKey: 'applications' },
       { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
+      { to: '/admin/placements', label: 'Placements', icon: PlacementIcon },
       { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
     ],
   },

@@ -94,6 +94,162 @@ function findNextOpen(periods, todayDow, nowHM) {
   return null
 }
 
+/**
+ * Canonical 5 daily moments — gemelli dei pill di home e filtri Esplora.
+ * Ogni fascia ha un intervallo [startMin, endMin] in minuti dall'inizio
+ * della giornata locale. `endMin > 24*60` significa cross-midnight.
+ */
+export const MOMENT_SLOTS = {
+  colazione: { startMin:  6 * 60 + 30, endMin: 10 * 60 + 30, emoji: '🥐', label: 'Colazione' },
+  pranzo:    { startMin: 11 * 60 + 30, endMin: 14 * 60 + 30, emoji: '🍝', label: 'Pranzo' },
+  aperitivo: { startMin: 17 * 60,      endMin: 20 * 60 + 30, emoji: '🥂', label: 'Aperitivo' },
+  cena:      { startMin: 19 * 60 + 30, endMin: 23 * 60 + 30, emoji: '🍷', label: 'Cena' },
+  dopocena:  { startMin: 22 * 60 + 30, endMin: 26 * 60,      emoji: '🍸', label: 'Dopo cena' },
+}
+
+export const MOMENT_KEYS = ['colazione', 'pranzo', 'aperitivo', 'cena', 'dopocena']
+
+/**
+ * Domanda contestuale in voce Bi per ogni fascia, usata nel Time Hero.
+ */
+export const MOMENT_QUESTIONS = {
+  colazione: "È l'ora della colazione. Ce l'hai un posto in mente?",
+  pranzo:    "È l'ora del pranzo. Ce l'hai un posto in mente?",
+  aperitivo: "È l'ora dell'aperitivo. Ce l'hai un posto in mente?",
+  cena:      "È l'ora di cena. Ce l'hai un posto in mente?",
+  dopocena:  "È l'ora di un cocktail. Ce l'hai un posto in mente?",
+  // fallback fasce grigie (15:00, 03:00 ecc.)
+  none:      'Dove ti porto adesso?',
+}
+
+/**
+ * Dato un Date, ritorna { active: string|null, next: string } dove:
+ * - active = chiave del momento corrente se siamo dentro una fascia (null se fascia grigia)
+ * - next   = chiave del momento più vicino in futuro (mai null, rotazione circolare).
+ *
+ * Le fasce canoniche si sovrappongono (es. aperitivo 17-20:30 + cena 19:30-23:30):
+ * nel sovrapposto priorità alla fascia iniziata più tardi (= quella più "attuale").
+ */
+export function getCurrentMoment(now = new Date()) {
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  const nowMinCross = nowMin + 24 * 60 // per confronti cross-midnight
+
+  let active = null
+  let activeStart = -1
+  for (const key of MOMENT_KEYS) {
+    const s = MOMENT_SLOTS[key]
+    const inNormal = nowMin >= s.startMin && nowMin < s.endMin
+    const inCross = s.endMin > 24 * 60 && nowMinCross < s.endMin && nowMin < s.startMin
+    if ((inNormal || inCross) && s.startMin > activeStart) {
+      active = key
+      activeStart = s.startMin
+    }
+  }
+
+  // next: se siamo in fascia grigia trova il prossimo inizio ≥ ora
+  let next = null
+  let bestDelta = Infinity
+  for (const key of MOMENT_KEYS) {
+    const s = MOMENT_SLOTS[key]
+    let delta = s.startMin - nowMin
+    if (delta <= 0) delta += 24 * 60
+    if (delta < bestDelta) {
+      bestDelta = delta
+      next = key
+    }
+  }
+
+  return { active, next }
+}
+
+/**
+ * isOpenForMoment — ritorna se un ristorante è ragionevolmente aperto per
+ * un dato momento giornata. Regola: overlap tra la fascia del momento
+ * e uno dei `periods[]` di `hours_cache` proiettati sul giorno target.
+ *
+ * Input:
+ *   hours: restaurant.hours_cache (formato Google Places) o null
+ *   moment: 'colazione' | 'pranzo' | 'aperitivo' | 'cena' | 'dopocena'
+ *   now: Date (default = ora corrente)
+ *
+ * Return:
+ *   { match: true,  verified: true,  closesAt: 'HH:MM' }  → aperto + overlap
+ *   { match: false, verified: false, closesAt: null    }  → no hours_cache (non mostrato)
+ *   { match: false, verified: true,  closesAt: null    }  → orari noti ma non aperto per quel momento
+ */
+export function isOpenForMoment(hours, moment, now = new Date()) {
+  if (!MOMENT_SLOTS[moment]) return { match: false, verified: true, closesAt: null }
+
+  const slot = MOMENT_SLOTS[moment]
+  const source = hours?.regularOpeningHours || hours?.currentOpeningHours
+  if (!source || !Array.isArray(source.periods) || source.periods.length === 0) {
+    // No tolleranza: ristoranti senza hours_cache non appaiono nel filtro momento
+    return { match: false, verified: false, closesAt: null }
+  }
+
+  const utcOffset = typeof hours?.utcOffsetMinutes === 'number' ? hours.utcOffsetMinutes : null
+  const { dow: todayDow } = toLocalTime(now, utcOffset)
+
+  // Giorno target = oggi per la maggior parte dei momenti; dopocena cross-midnight
+  // viene gestito iterando anche il giorno precedente per catturare periodi 22:00→02:00.
+  const daysToCheck = moment === 'dopocena' ? [todayDow, (todayDow + 6) % 7] : [todayDow]
+
+  let bestCloseMin = null
+
+  for (const checkDow of daysToCheck) {
+    for (const p of source.periods) {
+      if (p.open?.day == null) continue
+      const openDay = p.open.day
+      const closeDay = p.close?.day ?? openDay
+      const openMin = (p.open.hour || 0) * 60 + (p.open.minute || 0)
+      const closeMinRaw = p.close ? (p.close.hour || 0) * 60 + (p.close.minute || 0) : 24 * 60
+
+      // Considera un periodo come intervallo [periodStart, periodEnd] sul giorno target.
+      // Due casi:
+      //   a) openDay == checkDow e close lo stesso giorno → [openMin, closeMin]
+      //   b) openDay == checkDow con cross-midnight (closeDay != openDay) → [openMin, 24h + closeMin]
+      //   c) openDay == checkDow-1 con cross-midnight → [0, closeMin] (mattina presto)
+      let periodStart, periodEnd
+      if (openDay === checkDow && closeDay === openDay) {
+        periodStart = openMin
+        periodEnd = closeMinRaw <= openMin ? 24 * 60 : closeMinRaw
+      } else if (openDay === checkDow && closeDay !== openDay) {
+        periodStart = openMin
+        periodEnd = 24 * 60 + closeMinRaw
+      } else if (closeDay === checkDow && openDay !== closeDay && checkDow !== todayDow) {
+        // Periodo cross-midnight del giorno precedente che si estende al mattino di oggi.
+        // Rilevante solo per dopocena su giorno corrente: periodStart negativo.
+        periodStart = -(24 * 60 - openMin)
+        periodEnd = closeMinRaw
+      } else {
+        continue
+      }
+
+      // Overlap con slot [slot.startMin, slot.endMin]
+      const overlapStart = Math.max(periodStart, slot.startMin)
+      const overlapEnd = Math.min(periodEnd, slot.endMin)
+      if (overlapEnd > overlapStart) {
+        // Match! Prendi l'orario di chiusura più tardivo tra i periodi che matchano.
+        const closeNormalized = periodEnd > 24 * 60 ? periodEnd - 24 * 60 : periodEnd
+        if (bestCloseMin == null || closeNormalized > bestCloseMin) {
+          bestCloseMin = closeNormalized
+        }
+      }
+    }
+  }
+
+  if (bestCloseMin != null) {
+    const h = Math.floor(bestCloseMin / 60) % 24
+    const m = bestCloseMin % 60
+    return {
+      match: true,
+      verified: true,
+      closesAt: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+    }
+  }
+  return { match: false, verified: true, closesAt: null }
+}
+
 export function getHoursStatus(hours, now = new Date()) {
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
   if (!source) return { state: 'unknown', message: '', nextChange: null }

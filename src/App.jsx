@@ -51,11 +51,13 @@ const EditRestaurant = lazy(() => import('./pages/admin/EditRestaurant'))
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
+const MyChatPage = lazy(() => import('./pages/public/MyChatPage'))
 const DealsPage = lazy(() => import('./pages/public/DealsPage'))
 const SavedPage = lazy(() => import('./pages/public/SavedPage'))
 const VerifyPage = lazy(() => import('./pages/public/VerifyPage'))
 const DiscountManager = lazy(() => import('./pages/admin/DiscountManager'))
 const PartnerManager = lazy(() => import('./pages/admin/PartnerManager'))
+const PlacementManager = lazy(() => import('./pages/admin/PlacementManager'))
 const PartnerLandingPage = lazy(() => import('./pages/public/PartnerLandingPage'))
 const NewsletterManager = lazy(() => import('./pages/admin/NewsletterManager'))
 const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager'))
@@ -133,6 +135,7 @@ export default function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/chat" element={<MyChatPage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AnalyticsPage />} />
@@ -143,6 +146,7 @@ export default function App() {
           <Route path="/admin/categories" element={<CategoryManager />} />
           <Route path="/admin/discounts" element={<DiscountManager />} />
           <Route path="/admin/partners" element={<PartnerManager />} />
+          <Route path="/admin/placements" element={<PlacementManager />} />
           <Route path="/admin/newsletter" element={<NewsletterManager />} />
           <Route path="/admin/applications" element={<ApplicationManager />} />
           <Route path="/admin/suggestions" element={<SuggestionsManager />} />

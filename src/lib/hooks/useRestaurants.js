@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { getDistance } from '../utils/distance'
+import { isOpenForMoment } from '../hours'
 
 // Re-export from useCategories for backwards compatibility
 export { getCategoryInfo, DEFAULT_CATEGORIES as CUISINE_CATEGORIES, useCategories } from './useCategories'
@@ -345,7 +346,7 @@ export function useRestaurants(userPosition = null) {
   const [filters, setFilters] = useState({
     category: null,
     priceRange: null,
-    minRating: null,
+    moment: null, // 'colazione'|'pranzo'|'aperitivo'|'cena'|'dopocena' — gemello dei pill home
     sortBy: 'name',
   })
   const [searchQuery, setSearchQuery] = useState('')
@@ -418,6 +419,10 @@ export function useRestaurants(userPosition = null) {
 
     if (filters.priceRange) {
       result = result.filter(r => r.price_range === filters.priceRange)
+    }
+
+    if (filters.moment) {
+      result = result.filter(r => isOpenForMoment(r.hours_cache, filters.moment).match)
     }
 
     // Sort

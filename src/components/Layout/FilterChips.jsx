@@ -4,11 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { useCategories } from '../../lib/hooks/useCategories'
+import { MOMENT_KEYS, MOMENT_SLOTS } from '../../lib/hours'
 
 export default function FilterChips({ filters, onFilterChange, onNearbyClick, showDealsOnly, onToggleDeals, dealsCount = 0 }) {
   const { categories: CUISINE_CATEGORIES } = useCategories()
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
+  const activeMoment = filters.moment || null
+
+  function handleMomentClick(key) {
+    onFilterChange?.({ ...filters, moment: activeMoment === key ? null : key })
+  }
 
   const selected = filters.category
     ? (Array.isArray(filters.category) ? filters.category : [filters.category])
@@ -37,6 +43,39 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Momento row — gemello dei pill home, 5 momenti giornata */}
+      <div
+        className="flex gap-2 overflow-x-auto -mx-1 px-1"
+        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+      >
+        {MOMENT_KEYS.map((key) => {
+          const slot = MOMENT_SLOTS[key]
+          const active = activeMoment === key
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleMomentClick(key)}
+              className="flex items-center gap-1.5 flex-shrink-0"
+              style={{
+                padding: '8px 14px',
+                borderRadius: 40,
+                background: active ? '#22181C' : '#fff',
+                border: `1.5px solid ${active ? '#22181C' : '#E8E5DE'}`,
+                fontSize: 12,
+                fontWeight: 700,
+                color: active ? '#FAF7F2' : '#22181C',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+              }}
+            >
+              <span>{slot.emoji}</span>
+              {slot.label}
+            </button>
+          )
+        })}
+      </div>
+
       {/* Category capsules — editorial pill style */}
       <div
         className="flex gap-2 overflow-x-auto -mx-1 px-1"
