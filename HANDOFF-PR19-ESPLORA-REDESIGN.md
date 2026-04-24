@@ -75,7 +75,7 @@ Se manca qualcosa (es. `tags_dietary`) serve migration o va fuori scope.
 
 **`<CategoryBubble>`**: bubble rotondo 64-82px con emoji grande + label sotto. Grid 4-col nel filter sheet.
 
-**`<MiniCard>`**: foto 96px (mobile) / 132px (desktop) + body (name + sub + meta chips). Preservare layout del live attuale. Props: `rank`, `discountPct`, `distance`, `openUntil`.
+**`<MiniCard>`** ⚠️: il mockup mostra un placeholder. **NON CREARE un MiniCard nuovo** — usa il componente che è già nel live oggi (grep per "restaurant card", "mini card", "RestaurantCard" nel codebase). Se esiste come componente shared, **riutilizzalo invariato** (props `rank`, `discountPct`, `distance`, `openUntil` sono quelli da passare, ma lo stile è già definito). Se è definito inline in una singola pagina, **estrailo come shared SENZA modificare lo stile**. Se ci sono nomi diversi nelle card mobile vs desktop, per il mobile **tieni esattamente quello attuale**. Augusto ha detto esplicitamente: "le mini card devono rimanere come quelle attuali sul sito live."
 
 **Commit:** `feat(esplora): shared FilterPill, CategoryBubble, MiniCard components`
 
@@ -285,15 +285,27 @@ Testa su mobile 430×932 + desktop 1440×900:
 
 ---
 
-## Vincoli
+## Vincoli · NON-NEGOZIABILI
 
-1. **Pin mappa rotondi** (no teardrop, come live)
-2. **Mini-card stile live** preservato (non cambiare foto 96px + body)
-3. **Icone SVG Lucide** uniforme in tutte le pill filtro
-4. **Header floating** come componente shared (da usare in tutto il sito desktop)
-5. **No sort by dropdown** sul mobile (desktop sì, inline al count)
-6. **Vercel Hobby cap 12** functions
-7. **URL query params** per tutti i filtri (deep-link friendly)
+### ⚠️ CRITICO — NON toccare questi 3 elementi già esistenti nel live
+
+1. **Mini-card ristorante mobile** → **USA I COMPONENTI ESATTI che sono nel live oggi**. Non ricreare, non ri-stilare, non cambiare padding/foto/font. Lo stile attuale del live (foto quadrata + nome + descrizione + tag categoria + prezzo) **PIACE ad Augusto e va mantenuto IDENTICO**. Il mockup le rappresenta solo come layout placeholder — il componente reale è quello che c'è oggi.
+2. **Bottom nav mobile** → NON cambiare. Usa il componente che c'è oggi nel live (Home / Esplora / Sconti / Salvati / Profilo con active pill liquid glass). Stesso identico stile, stesso comportamento.
+3. **Header mobile** (logo "LA GUIDA DI BI" + Torino pill + geo-btn) → USA il componente AppHeader esistente se c'è, o lo stile esatto attuale. Non ri-styliizzare wordmark/pill/icone.
+
+**Regola:** se ti stai ritrovando a riscrivere CSS per mini-card, bottom nav o header → fermati. Questi 3 elementi sono già vivi in prod e Augusto li vuole INVARIATI. Il tuo lavoro su Esplora è solo: **layout della pagina, filtri, mappa, filter sheet, pill toggle**. I componenti visuali core restano quelli che ci sono.
+
+Se in CP1 Discovery non trovi questi componenti come shared riusabili, estraili prima come component wrapper senza cambiarne lo stile.
+
+### Altri vincoli
+
+4. **Pin mappa rotondi** (no teardrop, come live — stesso comportamento)
+5. **Icone SVG Lucide** premium uniforme **solo** nelle pill filtro (Filtri / Categorie / Sconti) e nel floating toggle Mappa/Lista. Non toccare icone bottom nav o altre icone esistenti.
+6. **Header floating desktop** come componente shared (da usare anche in home — estrai da PR17 se non esiste già)
+7. **No sort by dropdown** sul mobile (desktop sì, inline al count)
+8. **Vercel Hobby cap 12** functions
+9. **URL query params** per tutti i filtri (deep-link friendly)
+10. **Scope ristretto**: modifica **SOLO** la pagina Esplora (mobile + desktop). Non toccare Home, Sconti, Salvati, Profilo, Admin. Non modificare comportamenti già funzionanti altrove.
 
 ---
 
