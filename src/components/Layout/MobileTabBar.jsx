@@ -49,6 +49,18 @@ const ProfileIcon = () => (
 
 export { TAB_BAR_HEIGHT }
 
+// iOS Safari has a known html2canvas bug with position:fixed elements — the
+// snapshot fails silently, leaving the WebGL canvas blank. The CSS
+// backdrop-filter fallback already looks native on iOS (WebKit renders it
+// identically to UIKit blur), so we skip liquidGL entirely there.
+function isIOSDevice() {
+  if (typeof navigator === 'undefined') return false
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  )
+}
+
 // Script loading is global + idempotent. Once loaded and initialized, liquidGL
 // keeps a shared canvas across mounts/unmounts; cleanup per-instance is not
 // strictly required, but we re-snapshot on route/scroll changes.
@@ -134,7 +146,7 @@ export default function MobileTabBar() {
   // backdrop-filter pill if WebGL is unavailable or the script fails to load.
   useEffect(() => {
     let cancelled = false
-    if (!detectWebGL()) return undefined
+    if (isIOSDevice() || !detectWebGL()) return undefined
 
     ensureLiquidGLLoaded().then((ready) => {
       if (cancelled || !ready || typeof window.liquidGL !== 'function') return
@@ -171,7 +183,8 @@ export default function MobileTabBar() {
   // Re-snapshot on route change and throttled scroll so the refraction follows
   // the content underneath the nav.
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.liquidGL?.syncWith !== 'function') return undefined
+    if (typeof window === 'undefined' || isIOSDevice()) return undefined
+    if (typeof window.liquidGL?.syncWith !== 'function') return undefined
 
     let frame = 0
     const resync = () => {
