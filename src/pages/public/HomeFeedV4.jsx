@@ -353,9 +353,9 @@ function CategoryBubbles({ onSelect, onAltro }) {
   const btnStyle = { flex:'0 0 auto', display:'flex', flexDirection:'column', alignItems:'center', gap:6, background:'transparent', border:'none', scrollSnapAlign:'start', cursor:'pointer', padding:0 }
   return (
     <div className="hfv4-cats-wrap">
-      <div className="hfv4-cats-row" style={{ display:'flex', gap:10, overflowX:'auto', padding:'6px 20px 20px', WebkitOverflowScrolling:'touch', scrollSnapType:'x proximity', scrollbarWidth:'none' }}>
-        {CATEGORIES.map((c) => (
-          <button key={c.key} onClick={() => onSelect?.(c)} style={btnStyle}>
+      <div className="hfv4-cats-row" style={{ display:'flex', gap:10, overflowX:'auto', padding:'6px 20px 20px 0', WebkitOverflowScrolling:'touch', scrollSnapType:'x proximity', scrollbarWidth:'none' }}>
+        {CATEGORIES.map((c, i) => (
+          <button key={c.key} onClick={() => onSelect?.(c)} style={{ ...btnStyle, ...(i === 0 ? { marginLeft: 20 } : {}) }}>
             <span className="hfv4-cat-bubble" style={bubbleStyle()}>{c.emoji}</span>
             <span className="hfv4-cat-label" style={labelStyle()}>{c.label}</span>
           </button>
@@ -382,7 +382,7 @@ function SectionHead({ title, kicker, subtitle, trailing }) {
   )
 }
 
-function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
+function Rcard({ restaurant, discount, onClick, saved, onToggleSave, extraStyle }) {
   const cat = getCategoryInfo(restaurant.cuisine_type || (restaurant.category && restaurant.category[0]))
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
@@ -391,7 +391,7 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
     ? (discount.discount_type === 'percentage' ? `-${String(discount.discount_value).replace('%','')}%` : `-${discount.discount_value}€`)
     : null
   return (
-    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 82%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 82%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit', ...extraStyle }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'#ddd', overflow:'hidden' }}>
         {photoUrl
           ? <img src={photoUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" />
@@ -550,16 +550,6 @@ export default function HomeFeedV4() {
         .hfv4-cats-row::-webkit-scrollbar,
         .hfv4-cards-row::-webkit-scrollbar { display: none; }
 
-        /* iOS Safari ignora padding-left sui container overflow-x:auto.
-           Si usa margin-left sul primo figlio per garantire l'indentatura. */
-        @media (max-width: 1023px) {
-          .hfv4-cats-row,
-          .hfv4-cards-row,
-          .hfv4-results-row { padding-left: 0 !important; }
-          .hfv4-cats-row > *:first-child,
-          .hfv4-cards-row > *:first-child,
-          .hfv4-results-row > *:first-child { margin-left: 20px; }
-        }
         .hfv4-cats-wrap { position: relative; }
         .hfv4-cats-wrap::after {
           content: "";
@@ -826,9 +816,9 @@ export default function HomeFeedV4() {
         {loading ? (
           <div style={{ padding: '0 20px', color: 'var(--color-ink-70)' }}>Caricamento...</div>
         ) : (
-          <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px', scrollSnapType:'x mandatory', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
-            {recent.map((r) => (
-              <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => toggleSave(r.id)} />
+          <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px 0', scrollSnapType:'x mandatory', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
+            {recent.map((r, i) => (
+              <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => toggleSave(r.id)} extraStyle={i === 0 ? { marginLeft: 20 } : undefined} />
             ))}
           </div>
         )}

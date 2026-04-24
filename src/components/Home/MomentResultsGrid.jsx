@@ -75,13 +75,13 @@ export default function MomentResultsGrid({
           display: 'flex',
           gap: 12,
           overflowX: 'auto',
-          padding: '0 20px 12px',
+          padding: '0 20px 12px 0',
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
         }}
       >
-        {visibleCards.map(({ r, match }) => (
+        {visibleCards.map(({ r, match }, i) => (
           <Lcard
             key={r.id}
             r={r}
@@ -89,6 +89,7 @@ export default function MomentResultsGrid({
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
             onToggleSave={toggleSave ? () => toggleSave(r.id) : undefined}
+            extraStyle={i === 0 ? { marginLeft: 20 } : undefined}
           />
         ))}
 
@@ -156,7 +157,7 @@ export default function MomentResultsGrid({
   )
 }
 
-function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
+function Lcard({ r, closesAt, onClick, saved, onToggleSave, extraStyle }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
@@ -182,6 +183,7 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
         color: 'inherit',
         boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
         display: 'block',
+        ...extraStyle,
       }}
     >
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background: `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.15) 100%)`, overflow:'hidden' }}>
