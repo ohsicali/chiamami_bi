@@ -353,7 +353,7 @@ function CategoryBubbles({ onSelect, onAltro }) {
   const btnStyle = { flex:'0 0 auto', display:'flex', flexDirection:'column', alignItems:'center', gap:6, background:'transparent', border:'none', scrollSnapAlign:'start', cursor:'pointer', padding:0 }
   return (
     <div className="hfv4-cats-wrap">
-      <div className="hfv4-cats-row" style={{ display:'flex', gap:10, overflowX:'auto', padding:'6px 20px 20px 0', WebkitOverflowScrolling:'touch', scrollSnapType:'x proximity', scrollbarWidth:'none' }}>
+      <div className="hfv4-cats-row" style={{ display:'flex', gap:10, overflowX:'auto', padding:'6px 20px 20px 0', WebkitOverflowScrolling:'touch', scrollSnapType:'x mandatory', scrollPaddingLeft:20, scrollbarWidth:'none' }}>
         <span className="hfv4-scroll-spacer" aria-hidden="true" />
         {CATEGORIES.map((c) => (
           <button key={c.key} onClick={() => onSelect?.(c)} style={btnStyle}>

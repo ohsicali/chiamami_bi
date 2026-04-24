@@ -77,6 +77,7 @@ export default function MomentResultsGrid({
           overflowX: 'auto',
           padding: '0 20px 12px 0',
           scrollSnapType: 'x mandatory',
+          scrollPaddingLeft: 20,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
         }}
