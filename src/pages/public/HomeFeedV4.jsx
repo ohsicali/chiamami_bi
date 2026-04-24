@@ -4,7 +4,7 @@ import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
-import { getCurrentMoment, isOpenForMoment } from '../../lib/hours'
+import { getCurrentMoment } from '../../lib/hours'
 import { proxyImg } from '../../lib/supabase'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
@@ -12,7 +12,6 @@ import SponsorBanner from '../../components/Home/SponsorBanner'
 import TimeContextHero from '../../components/Home/TimeContextHero'
 import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
-import MapCta from '../../components/Home/MapCta'
 import AskBiChat from '../../components/Home/AskBiChat'
 
 function formatCountdown(endsAt) {
@@ -300,134 +299,6 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
   )
 }
 
-/**
- * CosaConsiglio · "Secondo Bi" editorial (blocco gradient oro preservato).
- * Mostra un ristorante featured con tip handwriting.
- */
-function CosaConsiglio({ restaurant }) {
-  const navigate = useNavigate()
-  if (!restaurant) return null
-
-  const tips = Array.isArray(restaurant.recommended_for) && restaurant.recommended_for.length > 0
-    ? restaurant.recommended_for.slice(0, 3)
-    : null
-
-  return (
-    <div className="hfv4-consiglio-wrap" style={{ padding: '14px 16px 24px' }}>
-      <div
-        style={{
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(140deg,#FEF6E4 0%,#F4E7CC 100%)',
-          border: '1px solid rgba(176,137,84,.35)',
-          borderRadius: 28,
-          padding: '22px 20px 20px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: 'var(--color-ink)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-              fontSize: 16,
-            }}
-          >
-            B
-          </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700 }}>
-              Bi — dalla guida
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--color-ink-70)' }}>
-              Secondo Bi
-            </div>
-          </div>
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: 10,
-            fontWeight: 800,
-            letterSpacing: '0.14em',
-            color: 'var(--color-oro, #B08954)',
-            textTransform: 'uppercase',
-            marginBottom: 6,
-          }}
-        >
-          Settimana del {new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 900,
-            fontSize: 22,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.1,
-            marginBottom: 10,
-          }}
-        >
-          Questa settimana passerei da {restaurant.name}.
-        </div>
-        <div
-          style={{
-            fontFamily: 'var(--font-hand, "Caveat", cursive)',
-            fontSize: 18,
-            fontWeight: 600,
-            lineHeight: 1.35,
-            color: 'var(--color-ink)',
-            maxWidth: 280,
-          }}
-        >
-          {restaurant.our_tip || restaurant.tagline || 'Uno dei posti di cui non mi stanco mai.'}
-        </div>
-        {tips && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
-            {tips.map((t) => (
-              <span
-                key={t}
-                style={{
-                  padding: '4px 10px',
-                  background: 'rgba(176,137,84,.18)',
-                  color: 'var(--color-ink)',
-                  borderRadius: 999,
-                  fontSize: 11,
-                  fontWeight: 700,
-                }}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
-          style={{
-            marginTop: 16,
-            padding: '10px 14px',
-            background: 'var(--color-ink)',
-            color: '#fff',
-            borderRadius: 999,
-            fontSize: 12,
-            fontWeight: 800,
-            border: 0,
-            cursor: 'pointer',
-          }}
-        >
-          Vai alla scheda →
-        </button>
-      </div>
-    </div>
-  )
-}
-
 function SuggestCard() {
   const { user } = useAuth()
   const [showSuggest, setShowSuggest] = useState(false)
@@ -531,18 +402,6 @@ export default function HomeFeedV4() {
     }
   }, [discounts, restaurants])
 
-  const featuredForEditorial = useMemo(() => {
-    if (!Array.isArray(restaurants) || restaurants.length === 0) return null
-    return restaurants.find((r) => r.featured)
-      || restaurants.find((r) => (r.our_tip && r.our_tip.length > 30))
-      || restaurants[0]
-  }, [restaurants])
-
-  const momentCount = useMemo(() => {
-    if (!Array.isArray(restaurants)) return 0
-    return restaurants.filter((r) => r.is_published !== false && isOpenForMoment(r.hours_cache, activeMoment).match).length
-  }, [restaurants, activeMoment])
-
   const onCardClick = (r) => navigate(`/restaurant/${r.slug}`)
 
   return (
@@ -613,12 +472,11 @@ export default function HomeFeedV4() {
         /* Grid layout: mobile single-column, desktop 2-col con chat sticky a destra */
         .hfv4-main {
           display: grid;
-          grid-template-areas: "a" "b" "c";
+          grid-template-areas: "a" "b";
           grid-template-columns: 1fr;
         }
         .hfv4-zone-a { grid-area: a; }
         .hfv4-zone-b { grid-area: b; }
-        .hfv4-zone-c { grid-area: c; }
 
         @media (min-width: 1024px) {
           .hfv4-root { padding-bottom: 0; }
@@ -626,8 +484,8 @@ export default function HomeFeedV4() {
           .hfv4-main {
             max-width: 1240px;
             margin: 0 auto;
-            padding: 20px 40px 80px;
-            grid-template-areas: "a b" "c b";
+            padding: 20px 40px 60px;
+            grid-template-areas: "a b";
             grid-template-columns: 1fr 360px;
             column-gap: 40px;
             row-gap: 0;
@@ -654,9 +512,6 @@ export default function HomeFeedV4() {
             gap: 16px !important;
           }
           .hfv4-lcard, .hfv4-results-more { flex: unset !important; min-height: 0 !important; }
-          .hfv4-mapcta-wrap, .hfv4-consiglio-wrap, .hfv4-suggest-wrap {
-            padding-left: 0 !important; padding-right: 0 !important;
-          }
 
           /* === Banner sponsor full-width === */
           .hfv4-spon-outer {
@@ -706,6 +561,63 @@ export default function HomeFeedV4() {
             gap: 10px !important;
             padding: 12px 18px !important;
             border-radius: 999px !important;
+          }
+
+          /* === SuggestCard full-width e grande === */
+          .hfv4-suggest-outer {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 40px 60px;
+          }
+          .hfv4-suggest-outer .hfv4-suggest-wrap { padding: 0 !important; }
+          .hfv4-suggest {
+            padding: 48px 56px !important;
+            border-radius: 28px !important;
+          }
+          .hfv4-suggest-title {
+            font-size: 36px !important;
+            max-width: none !important;
+            letter-spacing: -.02em !important;
+            line-height: 1.05 !important;
+          }
+          .hfv4-suggest-sub {
+            font-size: 15px !important;
+            max-width: 520px !important;
+            margin-top: 10px !important;
+          }
+          .hfv4-suggest-cta {
+            padding: 16px 28px !important;
+            font-size: 14px !important;
+          }
+
+          /* === Footer 2-col: logo sx, link dx, copyright sotto === */
+          .hfv4-foot {
+            text-align: left !important;
+            padding: 40px 40px 30px !important;
+          }
+          .hfv4-foot-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            display: grid !important;
+            grid-template-columns: auto 1fr !important;
+            grid-template-rows: auto auto;
+            column-gap: 40px !important;
+            row-gap: 16px !important;
+            align-items: start !important;
+          }
+          .hfv4-foot-wordmark {
+            grid-column: 1; grid-row: 1;
+            align-items: flex-start !important;
+          }
+          .hfv4-foot-links {
+            grid-column: 2; grid-row: 1;
+            justify-content: flex-end !important;
+            align-items: center;
+            gap: 22px !important;
+            align-self: center;
+          }
+          .hfv4-foot-copy {
+            grid-column: 1 / -1; grid-row: 2;
           }
         }
       `}</style>
@@ -764,20 +676,17 @@ export default function HomeFeedV4() {
               toggleSave={toggleSave}
             />
           )}
-
-          <MapCta activeMoment={activeMoment} count={momentCount} />
         </div>
 
         {/* Zone B: chat AI (inline su mobile, sticky right col su desktop via CSS grid-area) */}
         <div className="hfv4-zone-b">
           <AskBiChat currentMoment={activeMoment} />
         </div>
+      </div>
 
-        {/* Zone C: Secondo Bi editorial + suggest (sotto chat su mobile, sotto zone-a su desktop) */}
-        <div className="hfv4-zone-c">
-          <CosaConsiglio restaurant={featuredForEditorial} />
-          <SuggestCard />
-        </div>
+      {/* SuggestCard full-width sotto la griglia */}
+      <div className="hfv4-suggest-outer">
+        <SuggestCard />
       </div>
 
       <footer className="hfv4-foot" style={{ padding: '40px 20px 30px', borderTop: '1px solid var(--color-ink-05)', marginTop: 20, textAlign: 'center' }}>
