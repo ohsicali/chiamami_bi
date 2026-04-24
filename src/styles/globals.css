@@ -83,6 +83,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+}
+
+/* Footer logo — smaller on mobile */
+.footer-logo-text { font-size: 15px; }
+.footer-logo-sub  { font-size: 8px; }
+
+@media (max-width: 767px) {
+  .footer-logo-text { font-size: 11px; }
+  .footer-logo-sub  { font-size: 7px; }
 }
 
 #root {

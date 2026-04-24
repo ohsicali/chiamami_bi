@@ -45,7 +45,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
     <div className="flex flex-col gap-3">
       {/* Momento row — gemello dei pill home, 5 momenti giornata */}
       <div
-        className="flex gap-2 overflow-x-auto -mx-1 px-1"
+        className="flex gap-2 overflow-x-auto"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         {MOMENT_KEYS.map((key) => {
@@ -78,7 +78,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
 
       {/* Category capsules — editorial pill style */}
       <div
-        className="flex gap-2 overflow-x-auto -mx-1 px-1"
+        className="flex gap-2 overflow-x-auto"
         style={{
           scrollbarWidth: 'none',
           WebkitOverflowScrolling: 'touch',
