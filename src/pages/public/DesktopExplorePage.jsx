@@ -9,7 +9,7 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg } from '../../lib/supabase'
 import FilterPillsRow from '../../components/Esplora/FilterPillsRow'
-import FilterSheet from '../../components/Esplora/FilterSheet'
+import FilterPopover from '../../components/Esplora/FilterPopover'
 import { useEsploraFilters, applyEsploraFilters } from '../../lib/hooks/useEsploraFilters'
 
 function slugify(name) {
@@ -512,8 +512,8 @@ export default function DesktopExplorePage() {
         )}
       </div>
 
-      {/* Filter sheet (desktop fallback — Step 8 lo sostituira' con popover 420px) */}
-      <FilterSheet
+      {/* Filter popover desktop (sotto la pill Filtri, 420×max600) */}
+      <FilterPopover
         open={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}
         filters={esplora.filters}
@@ -522,6 +522,7 @@ export default function DesktopExplorePage() {
         discountIds={discountRestaurantIds}
         focusSection={filterSheetFocus}
         onApply={esplora.applyBulk}
+        anchorStyle={{ top: 140, left: 24 }}
       />
     </div>
   )
