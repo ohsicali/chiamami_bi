@@ -4,12 +4,6 @@ import { supabase, proxyImg } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 
-const PROMPT_CHIPS = [
-  '✨ un cinese aperto stasera',
-  '✨ sotto i 20€',
-  '✨ brunch San Salvario',
-]
-
 /**
  * AskBiChat · chat AI "Chiedi a Bi".
  *  - Input libero + 3 chip suggeriti.
@@ -154,29 +148,11 @@ export default function AskBiChat({ currentMoment }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 14px', position: 'relative' }}>
-            {PROMPT_CHIPS.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => submit(chip)}
-                disabled={loading}
-                style={{
-                  padding: '7px 12px',
-                  background: 'var(--color-corallo-wash, #FDF2F0)',
-                  color: 'var(--color-corallo-ink, #C6372F)',
-                  borderRadius: 999,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  border: '1px solid rgba(232,69,60,.18)',
-                  cursor: loading ? 'default' : 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
+          <p style={{ fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.5, margin: '0 0 14px', position: 'relative' }}>
+            Scrivimi di cosa hai voglia.{' '}
+            <strong>Sushi? Pizza? Un piemontese economico in centro? Un locale per bere con gli amici?</strong>{' '}
+            Scrivi qua sotto e ti suggerisco i locali più adatti.
+          </p>
 
           <div style={{ position: 'relative', marginBottom: 12 }}>
             <textarea

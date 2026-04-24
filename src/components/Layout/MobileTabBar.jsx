@@ -238,8 +238,10 @@ export default function MobileTabBar() {
           aria-current={tab.active ? 'page' : undefined}
           title={tab.label}
         >
-          {tab.badge && <span className="nav-badge" aria-hidden="true" />}
-          <tab.Icon />
+          <span className="nav-icon-wrap">
+            <tab.Icon />
+            {tab.badge && <span className="nav-badge" aria-hidden="true" />}
+          </span>
           <span className="nav-label">{tab.label}</span>
         </button>
       ))}
