@@ -94,9 +94,16 @@
 .hfv4-cats-row,
 .hfv4-cards-row,
 .hfv4-results,
-.hfv4-results-row {
-  max-width: 100vw;
+.hfv4-results-row,
+.hfv4-moment-tabs {
+  max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Grid cell: min-width:auto di default espande la colonna 1fr oltre il viewport */
+.hfv4-zone-a,
+.hfv4-zone-b {
+  min-width: 0;
 }
 
 html {

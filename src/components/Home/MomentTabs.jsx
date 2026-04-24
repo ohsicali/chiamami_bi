@@ -57,6 +57,7 @@ export default function MomentTabs({ activeKey, onChange, className = '' }) {
           </button>
         )
       })}
+      <span className="hfv4-scroll-spacer" aria-hidden="true" />
     </div>
   )
 }
