@@ -207,6 +207,7 @@ function HeroPromo({ featured }) {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
             {chipLabel}
           </span>
+          {/* Desktop: titolo pre-line 30→72px */}
           <div
             className="hfv4-hero-title"
             style={{
@@ -216,6 +217,13 @@ function HeroPromo({ featured }) {
             }}
           >
             {featured.title}
+          </div>
+          {/* Mobile-only: sconto 42px + ristorante 24px separati */}
+          <div className="hfv4-mob-pct" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4 }}>
+            {featured.discountLabel}
+          </div>
+          <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 10, opacity: 0.95 }}>
+            da {featured.restaurantName}
           </div>
           {featured.restLine && (
             <div className="hfv4-hero-rest-line" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.9)', marginBottom: 6 }}>
@@ -227,6 +235,19 @@ function HeroPromo({ featured }) {
               {featured.subtitle}
             </div>
           )}
+          {/* Mobile-only: progress bar nel body */}
+          {maxQuantity != null && (
+            <div
+              className="hfv4-mob-progress"
+              style={{ display: 'none', alignItems: 'center', gap: 10, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 16, padding: '10px 12px', background: 'rgba(255,255,255,.08)', borderRadius: 10, border: '1px solid rgba(255,255,255,.1)' }}
+            >
+              <span>{claimedCount} riscatti</span>
+              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.15)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progressPct || 0}%`, background: '#fff', borderRadius: 999 }} />
+              </div>
+              <span style={{ color: '#fff' }}>{maxQuantity} posti</span>
+            </div>
+          )}
           <div className="hfv4-hero-ctas" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={() => navigate(featured.href)}
@@ -234,15 +255,24 @@ function HeroPromo({ featured }) {
             >
               {featured.cta} →
             </button>
+            {/* Desktop: bottone secondario con nome completo */}
             {featured.secondaryCta && (
               <button
-                className="hfv4-hero-cta-ghost"
+                className="hfv4-hero-cta-ghost hfv4-cta-desk"
                 onClick={() => navigate(featured.href)}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'rgba(255,255,255,.18)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
               >
                 {featured.secondaryCta}
               </button>
             )}
+            {/* Mobile-only: bottone secondario compatto */}
+            <button
+              className="hfv4-hero-cta-ghost hfv4-cta-mob"
+              onClick={() => navigate(featured.href)}
+              style={{ display: 'none', alignItems: 'center', justifyContent: 'center', padding: '12px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,.25)', color: '#fff', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Scopri
+            </button>
           </div>
         </div>
 
@@ -477,6 +507,8 @@ export default function HomeFeedV4() {
     const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
     return {
       title: `${label}\nda ${r.name}.`,
+      discountLabel: label,
+      restaurantName: r.name,
       restLine,
       subtitle: subtitleParts.join(' · '),
       cta: 'Vai al drop',
@@ -540,7 +572,7 @@ export default function HomeFeedV4() {
             height: 156px !important;
             min-height: 0 !important;
           }
-          .hfv4-hero-body { padding: 18px 20px !important; }
+          .hfv4-hero-body { padding: 18px 18px 18px !important; }
           .hfv4-hero-chip {
             position: absolute !important;
             top: 14px !important; left: 14px !important;
@@ -550,22 +582,19 @@ export default function HomeFeedV4() {
             -webkit-backdrop-filter: blur(10px) !important;
             margin-bottom: 0 !important;
           }
-          .hfv4-hero-title {
-            font-size: 42px !important;
-            line-height: 0.95 !important;
-            letter-spacing: -0.025em !important;
-            margin-bottom: 4px !important;
-          }
+          .hfv4-hero-title { display: none !important; }
+          .hfv4-mob-pct { display: block !important; }
+          .hfv4-mob-loc { display: block !important; }
+          .hfv4-hero-progress { display: none !important; }
+          .hfv4-mob-progress { display: flex !important; }
+          .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: unset !important; display: block !important; overflow: visible !important; }
           .hfv4-hero-ctas {
             display: grid !important;
             grid-template-columns: 1fr auto !important;
             gap: 8px !important;
           }
-          .hfv4-hero-cta-ghost {
-            background: transparent !important;
-            border: 1px solid rgba(255,255,255,.25) !important;
-            backdrop-filter: none !important;
-          }
+          .hfv4-cta-desk { display: none !important; }
+          .hfv4-cta-mob { display: inline-flex !important; }
           .hfv4-mob-countdown { display: inline-flex !important; }
           .hfv4-mob-cat { display: inline-flex !important; }
         }
