@@ -254,9 +254,15 @@ body {
 }
 
 /* ============================================================
-   v4 BOTTOM NAV — liquid glass WebGL pill (Neotaste-style)
-   Fallback: backdrop-filter blur/saturate when WebGL not available
+   v4 BOTTOM NAV — Liquid Glass pill
+   iOS Safari: pure CSS backdrop-filter (WebKit renders it natively,
+   identico a UIKit blur). Android/desktop: liquidGL WebGL sopra questo.
    ============================================================ */
+@keyframes nav-reveal {
+  from { opacity: 0; transform: translateY(18px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
 .bottom-nav {
   position: fixed;
   left: 14px;
@@ -264,6 +270,7 @@ body {
   bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   height: 68px;
   border-radius: 999px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -271,16 +278,35 @@ body {
   gap: 2px;
   z-index: 50;
 
-  /* Pre-init + no-WebGL fallback (liquidGL replaces the bg on init) */
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  /* Bordo "firma" — identico a quello dell'active pill */
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  /* Apple Liquid Glass — CSS nativo */
+  background: rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  border: 1px solid rgba(255, 255, 255, 0.52);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 2px 8px rgba(34, 24, 28, 0.06),
-    0 14px 32px rgba(34, 24, 28, 0.14);
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.05),
+    0 -2px 16px rgba(34, 24, 28, 0.06),
+    0 -10px 36px rgba(34, 24, 28, 0.12);
+
+  animation: nav-reveal 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation-delay: 0.12s;
+}
+
+/* Riflesso speculare diagonale — simula la luce che rimbalza sul vetro curvo */
+.bottom-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.30) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 @media (min-width: 768px) {
   .bottom-nav { display: none !important; }
@@ -343,10 +369,15 @@ body {
   font-weight: 800;
 }
 
+.bottom-nav .nav-item .nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .bottom-nav .nav-item .nav-badge {
   position: absolute;
-  top: 5px;
-  right: 10px;
+  top: -2px;
+  right: -3px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
