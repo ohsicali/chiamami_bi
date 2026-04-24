@@ -21,6 +21,7 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import FilterPillsRow from '../../components/Esplora/FilterPillsRow'
 import FloatingToggle from '../../components/Esplora/FloatingToggle'
+import EsploraListPanel from '../../components/Esplora/EsploraListPanel'
 import { useEsploraFilters, applyEsploraFilters } from '../../lib/hooks/useEsploraFilters'
 
 function slugify(name) {
@@ -375,10 +376,30 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ═══ MOBILE · VISTA LISTA (view=list) — panel full-screen sopra la mappa ═══ */}
+      {!isDesktop && esplora.filters.view === 'list' && (
+        <EsploraListPanel
+          restaurants={displayedRestaurants}
+          userPosition={position}
+          loading={loading}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          esplora={esplora}
+          discountIds={discountRestaurantIds}
+          discountLabels={discountLabelMap}
+          isSaved={isSaved}
+          onToggleSave={(id) => (user ? toggleSave(id) : navigate('/login'))}
+          onCardClick={handleCardClick}
+          onToggleView={() => esplora.setView('map')}
+          onOpenFilters={openSheet}
+          onOpenCategories={openSheet}
+        />
+      )}
+
       {/* ═══ MOBILE-ONLY OVERLAYS — renderizzati SOLO su mobile per evitare
            duplicazione delle card ristorante, degli effetti React e della sheet
            animata ═══ */}
-      {!isDesktop && (
+      {!isDesktop && esplora.filters.view !== 'list' && (
       <div>
 
         {/* === Esplora filter band (Filtri · Categorie · Sconti + count/Azzera) === */}
@@ -422,7 +443,7 @@ export default function HomePage() {
             {/* Floating toggle Mappa → Lista (pill ink, sopra il carousel) */}
             {viewportRestaurants.length > 0 && (
               <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 10px', pointerEvents: 'auto' }}>
-                <FloatingToggle view="map" onClick={openSheet} />
+                <FloatingToggle view="map" onClick={() => esplora.setView('list')} />
               </div>
             )}
 
