@@ -54,7 +54,7 @@ export default function RestaurantDrawer({ restaurantId, onClose, onSaved }) {
     ;(async () => {
       const { data, error } = await supabase
         .from('restaurants')
-        .select('*')
+        .select('*, restaurant_photos(photo_url, thumb_url, caption, sort_order)')
         .eq('id', restaurantId)
         .single()
       if (cancelled) return
@@ -119,6 +119,24 @@ export default function RestaurantDrawer({ restaurantId, onClose, onSaved }) {
         const payload = toDbPayload(form, alsoPublish)
         const { error } = await supabase.from('restaurants').update(payload).eq('id', restaurantId)
         if (error) throw error
+
+        // Save photos to restaurant_photos (delete + re-insert)
+        await supabase.from('restaurant_photos').delete().eq('restaurant_id', restaurantId)
+        if (form.photos?.length > 0) {
+          const photoRows = form.photos
+            .map((p, i) => ({
+              restaurant_id: restaurantId,
+              photo_url: p.url || p.photo_url || '',
+              thumb_url: p.thumb_url || null,
+              caption: p.caption || '',
+              sort_order: i,
+            }))
+            .filter((p) => p.photo_url)
+          if (photoRows.length > 0) {
+            await supabase.from('restaurant_photos').insert(photoRows)
+          }
+        }
+
         setDirty(false)
         setToast({ kind: 'ok', text: alsoPublish === true ? 'Salvato e pubblicato' : 'Salvato' })
         // refresh local state so subsequent edits start from persisted values
@@ -408,7 +426,20 @@ function toFormState(r) {
     cuisine_type: r.cuisine_type || '',
     price_range: r.price_range ?? 2,
     recommended_for: Array.isArray(r.recommended_for) ? r.recommended_for : [],
-    photos: Array.isArray(r.photos) ? r.photos : [],
+    latitude: r.latitude != null ? String(r.latitude) : '',
+    longitude: r.longitude != null ? String(r.longitude) : '',
+    photos: Array.isArray(r.restaurant_photos)
+      ? r.restaurant_photos
+          .slice()
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .map((p) => ({
+            url: p.photo_url || '',
+            photo_url: p.photo_url || '',
+            thumb_url: p.thumb_url || null,
+            caption: p.caption || '',
+            sort_order: p.sort_order ?? 0,
+          }))
+      : [],
     is_published: r.is_published !== false,
     is_disabled: r.is_disabled === true,
     verify_pin: r.verify_pin || '',
@@ -445,7 +476,8 @@ function toDbPayload(form, alsoPublish) {
     cuisine_type: form.cuisine_type || (form.category?.[0] ?? null),
     price_range: form.price_range ?? 2,
     recommended_for: form.recommended_for,
-    photos: form.photos,
+    latitude: form.latitude !== '' && form.latitude != null ? parseFloat(form.latitude) || null : null,
+    longitude: form.longitude !== '' && form.longitude != null ? parseFloat(form.longitude) || null : null,
     partner_email: form.partner_email || null,
     place_id: form.place_id || null,
     place_id_confidence: form.place_id_confidence,
