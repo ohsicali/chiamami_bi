@@ -1,16 +1,13 @@
 import DesktopExplorePage from './DesktopExplorePage'
-import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { useDrag } from '@use-gesture/react'
 import MapView from '../../components/Map/MapView'
 import SearchBar from '../../components/Layout/SearchBar'
 import FilterChips from '../../components/Layout/FilterChips'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
-import SaveButton from '../../components/Restaurant/SaveButton'
+import MiniCard from '../../components/Restaurant/MiniCard'
 import Navbar from '../../components/Layout/Navbar'
-import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -19,8 +16,13 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
-import { proxyImg } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
+import FilterPillsRow from '../../components/Esplora/FilterPillsRow'
+import FloatingToggle from '../../components/Esplora/FloatingToggle'
+import EsploraListPanel from '../../components/Esplora/EsploraListPanel'
+import FilterSheet from '../../components/Esplora/FilterSheet'
+import { useEsploraFilters, applyEsploraFilters } from '../../lib/hooks/useEsploraFilters'
+import { groupByDistance } from '../../lib/utils/esploraGroups'
 
 function slugify(name) {
   return name
@@ -37,112 +39,11 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
-function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => getCategoryInfo(name))
-  const category = categories[0]
-  const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
-    ? restaurant.photos[0] : null
-  const photoUrl = proxyImg(firstPhoto
-    ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null)
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
-  const distance = userPosition && restaurant.latitude && restaurant.longitude
-    ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
-    : null
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onClick?.(restaurant)}
-      className="flex-shrink-0"
-      style={{
-        width: 260,
-        scrollSnapAlign: 'start',
-        borderRadius: 14,
-        background: '#FAF7F2',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        cursor: 'pointer',
-        WebkitTapHighlightColor: 'transparent',
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
-      <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
-        <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-          {photoUrl ? (
-            <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-              {category?.emoji || '🍽️'}
-            </div>
-          )}
-          {discountTitle && (
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: 'var(--color-corallo)', color: '#fff',
-              fontSize: 8, fontWeight: 700, textAlign: 'center',
-              padding: '2px 0',
-            }}>
-              {discountTitle}
-            </div>
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: 20 }}>
-          <div style={{
-            fontFamily: 'var(--font-sans)', fontWeight: 800,
-            fontSize: 15, letterSpacing: '-0.015em',
-            color: 'var(--color-ink)',
-            lineHeight: 1.15, marginBottom: 3,
-            whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-            overflow: 'hidden',
-          }}>
-            {restaurant.name}
-          </div>
-          {restaurant.tagline && (
-            <div style={{ fontSize: 9, color: '#8A8680', fontWeight: 500, marginBottom: 2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-              {restaurant.tagline}
-            </div>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-            {category && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 2,
-                backgroundColor: `${category.color}20`,
-                color: category.color,
-                fontSize: 9, fontWeight: 600,
-                padding: '1px 6px', borderRadius: 12,
-                whiteSpace: 'nowrap',
-              }}>
-                {category.emoji} {category.name}
-              </span>
-            )}
-            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
-          </div>
-          {distance != null && (
-            <div style={{ fontSize: 10, color: '#8A8680', fontWeight: 500 }}>
-              {formatDistance(distance)}
-            </div>
-          )}
-        </div>
-        {onSave && (
-          <div style={{ position: 'absolute', top: 6, right: 6 }}>
-            <SaveButton saved={saved} onClick={onSave} size="xs" />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 
 export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
     const prev = window.scrollY
@@ -177,13 +78,14 @@ export default function HomePage() {
     setSearchQuery,
   } = useRestaurants(position)
 
-  const [showDealsOnly, setShowDealsOnly] = useState(false)
-  const [sheetFiltersSticky, setSheetFiltersSticky] = useState(false)
-  const sheetFiltersRef = useRef(null)
-  const [activeCatFilter, setActiveCatFilter] = useState(null)
-  const displayedRestaurants = showDealsOnly
-    ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
-    : restaurants
+  // Esplora filter state (URL query params)
+  const esplora = useEsploraFilters()
+
+  // Multi-select price, diet, sconti toggle, area → applyEsploraFilters (oltre al base useRestaurants)
+  const displayedRestaurants = useMemo(
+    () => applyEsploraFilters(restaurants, esplora.filters, position, discountRestaurantIds),
+    [restaurants, esplora.filters, position, discountRestaurantIds],
+  )
 
   const [selectedId, setSelectedId] = useState(null)
   const [visibleIds, setVisibleIds] = useState(null)
@@ -235,49 +137,21 @@ export default function HomePage() {
   const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
 
-  // Count per category from all restaurants (for filter chip counts)
-  const catCounts = useMemo(() => {
-    const counts = {}
-    allRestaurants.forEach(r => {
-      const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-      cats.forEach(c => { counts[c] = (counts[c] || 0) + 1 })
-    })
-    return counts
-  }, [allRestaurants])
-
-  // Top 6 categories by count
-  const topCats = useMemo(() => {
-    return Object.entries(catCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, count]) => ({ ...getCategoryInfo(name), name, count }))
-  }, [catCounts])
-
-  // --- Sheet ---
-  const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
-  const sheetY = useMotionValue(windowH)
-  const [isSheetActive, setIsSheetActive] = useState(false)
+  // Filter sheet (Step 6) — mobile: Filtri / Categorie pill lo aprono
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [filterSheetFocus, setFilterSheetFocus] = useState(null) // 'categories' | null
   const [showSuggest, setShowSuggest] = useState(false)
-  const sheetOpacity = useTransform(sheetY, [windowH, windowH * 0.4, 0], [0, 1, 1])
-  const hideBottomPanel = isSheetActive
 
-  const openSheet = useCallback(() => {
+  const openFilterSheet = useCallback((section = null) => {
+    setFilterSheetFocus(section)
+    setFilterSheetOpen(true)
+  }, [])
+  const closeFilterSheet = useCallback(() => setFilterSheetOpen(false), [])
 
-    setIsSheetActive(true)
-    animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
-  }, [sheetY])
-
-  const closeSheet = useCallback(() => {
-
-    animate(sheetY, windowH, { type: 'spring', stiffness: 300, damping: 35 })
-    setTimeout(() => setIsSheetActive(false), 500)
-  }, [sheetY, windowH])
-
-  // Open sheet with category pre-selected (from SavedPage navigation)
+  // Deep-link: category pre-selezionata (da SavedPage navigation) → setta URL cat
   useEffect(() => {
     if (location.state?.initialCategory) {
-      setFilters(f => ({ ...f, category: location.state.initialCategory }))
-      openSheet()
+      esplora.applyBulk({ cat: [location.state.initialCategory] })
       window.history.replaceState({}, '')
     }
     // Fly to city selected from another page's CityPickerSheet
@@ -288,89 +162,17 @@ export default function HomePage() {
     }
   }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // URL params ⟷ filters sync — coerenza con home (card "+" → /esplora?moment=…)
-  // Leggi all'avvio, poi aggiorna la URL quando cambiano i filtri.
+  // URL → useRestaurants.filters sync (one-way). useEsploraFilters è source of truth,
+  // useRestaurants riceve una forma "legacy" compat (category, priceRange, moment).
+  // sortBy resta gestito localmente (handleLocateMe lo imposta a 'distance').
   useEffect(() => {
-    const urlMoment = searchParams.get('moment')
-    const urlCategory = searchParams.get('category')
-    const urlPrice = searchParams.get('price')
-    const next = {}
-    if (urlMoment) next.moment = urlMoment
-    if (urlCategory) next.category = urlCategory
-    if (urlPrice) next.priceRange = Number(urlPrice) || null
-    if (Object.keys(next).length > 0) {
-      setFilters(f => ({ ...f, ...next }))
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // read once on mount
-
-  useEffect(() => {
-    const params = new URLSearchParams()
-    if (filters.moment) params.set('moment', filters.moment)
-    if (filters.category) {
-      const v = Array.isArray(filters.category) ? filters.category.join(',') : filters.category
-      if (v) params.set('category', v)
-    }
-    if (filters.priceRange) params.set('price', String(filters.priceRange))
-    const current = searchParams.toString()
-    const next = params.toString()
-    if (current !== next) setSearchParams(params, { replace: true })
-  }, [filters.moment, filters.category, filters.priceRange]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Scroll-based sticky detection for sheet filters
-  useEffect(() => {
-    const root = scrollRef.current
-    if (!root) return
-    let ticking = false
-    const onScroll = () => {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        setSheetFiltersSticky(root.scrollTop > 50)
-        ticking = false
-      })
-    }
-    root.addEventListener('scroll', onScroll, { passive: true })
-    return () => root.removeEventListener('scroll', onScroll)
-  }, [isSheetActive])
-
-  // Sheet handle drag: pull down to close
-  const handleBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active }) => {
-    if (active) {
-      sheetY.set(Math.max(0, my))
-    } else {
-      if (sheetY.get() > windowH * 0.2 || (vy > 0.3 && dy > 0)) {
-        closeSheet()
-      } else {
-        animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
-      }
-    }
-  }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
-
-  // Content drag: when scrolled to top and dragging down, dismiss the sheet
-  const scrollRef = useRef(null)
-  const isDismissing = useRef(false)
-  const [dismissing, setDismissing] = useState(false)
-  const contentBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
-    const atTop = !scrollRef.current || scrollRef.current.scrollTop <= 0
-    if (first) {
-      const shouldDismiss = atTop && dy > 0
-      isDismissing.current = shouldDismiss
-      if (shouldDismiss) setDismissing(true)
-    }
-    if (!isDismissing.current) return
-    if (active) {
-      sheetY.set(Math.max(0, my))
-    } else {
-      setDismissing(false)
-      isDismissing.current = false
-      if (sheetY.get() > windowH * 0.15 || (vy > 0.3 && dy > 0)) {
-        closeSheet()
-      } else {
-        animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
-      }
-    }
-  }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
+    setFilters(prev => ({
+      ...prev,
+      category: esplora.legacyFilters.category,
+      priceRange: esplora.legacyFilters.priceRange,
+      moment: esplora.legacyFilters.moment,
+    }))
+  }, [esplora.legacyFilters.category, esplora.legacyFilters.priceRange, esplora.legacyFilters.moment, setFilters])
 
   // ── Desktop: delegate entirely to split-view layout ──
   if (isDesktop) return <DesktopExplorePage />
@@ -392,8 +194,8 @@ export default function HomePage() {
           filters={filters}
           onFilterChange={setFilters}
           onNearbyClick={handleLocateMe}
-          showDealsOnly={showDealsOnly}
-          onToggleDeals={() => setShowDealsOnly((v) => !v)}
+          showDealsOnly={esplora.filters.disc}
+          onToggleDeals={esplora.toggleDisc}
           dealsCount={discountRestaurantIds.size}
         />
       </div>
@@ -462,8 +264,8 @@ export default function HomePage() {
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100dvh', overflow: 'hidden' }}>
       {/* Mobile Navbar (hidden on desktop) */}
       <Navbar
-        view={isSheetActive ? 'list' : 'map'}
-        onToggleView={() => isSheetActive ? closeSheet() : openSheet()}
+        view={esplora.filters.view}
+        onToggleView={() => esplora.setView(esplora.filters.view === 'list' ? 'map' : 'list')}
         restaurants={allRestaurants}
         onCityChange={handleCityChange}
         onLocateMe={handleLocateMe}
@@ -506,82 +308,105 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ═══ MOBILE · VISTA LISTA (view=list) — panel full-screen sopra la mappa ═══ */}
+      {!isDesktop && esplora.filters.view === 'list' && (
+        <EsploraListPanel
+          restaurants={displayedRestaurants}
+          userPosition={position}
+          loading={loading}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          esplora={esplora}
+          discountIds={discountRestaurantIds}
+          discountLabels={discountLabelMap}
+          isSaved={isSaved}
+          onToggleSave={(id) => (user ? toggleSave(id) : navigate('/login'))}
+          onCardClick={handleCardClick}
+          onToggleView={() => esplora.setView('map')}
+          onOpenFilters={() => openFilterSheet(null)}
+          onOpenCategories={() => openFilterSheet('categories')}
+          groups={groupByDistance(displayedRestaurants, position, esplora.filters.moment)}
+        />
+      )}
+
       {/* ═══ MOBILE-ONLY OVERLAYS — renderizzati SOLO su mobile per evitare
            duplicazione delle card ristorante, degli effetti React e della sheet
            animata ═══ */}
-      {!isDesktop && (
+      {!isDesktop && esplora.filters.view !== 'list' && (
       <div>
 
-        {/* === Floating category filter chips (esp-filters) === */}
-        {!hideBottomPanel && (
+        {/* === Esplora filter band (Filtri · Categorie · Sconti + count/Azzera) === */}
+        {(
           <div style={{
             position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 0px) + 68px)',
+            top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
             left: 0, right: 0,
             zIndex: 25,
-            display: 'flex', gap: 6, overflowX: 'auto',
-            padding: '0 20px',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
+            background: 'var(--color-page, #FAF7F2)',
           }}>
-            <style>{`.esp-filters-row::-webkit-scrollbar{display:none}`}</style>
-            {/* Tutti chip */}
-            <button
-              onClick={() => { setActiveCatFilter(null); setFilters(f => ({ ...f, category: null })) }}
-              style={{
-                flex: '0 0 auto',
-                background: activeCatFilter === null ? '#22181C' : 'rgba(255,255,255,.94)',
-                backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                borderRadius: 999, padding: '7px 12px',
-                fontSize: 12, fontWeight: 700,
-                color: activeCatFilter === null ? '#fff' : '#22181C',
-                boxShadow: '0 2px 8px rgba(34,24,28,.12)',
-                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-              }}
-            >
-              Tutti
-              <span style={{
-                fontSize: 9.5, fontWeight: 800,
-                background: activeCatFilter === null ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
-                color: activeCatFilter === null ? '#fff' : '#22181C',
-                padding: '1.5px 5px', borderRadius: 999,
-              }}>{allRestaurants.length}</span>
-            </button>
-            {topCats.map(cat => (
+            <FilterPillsRow
+              activeCount={esplora.activeCount}
+              activeFiltersTotal={
+                esplora.activeCount
+                + (esplora.filters.cat.length > 0 ? 1 : 0)
+                + (esplora.filters.disc ? 1 : 0)
+              }
+              discActive={esplora.filters.disc}
+              catActive={esplora.filters.cat.length > 0}
+              count={displayedRestaurants.length}
+              onOpenFilters={() => openFilterSheet(null)}
+              onOpenCategories={() => openFilterSheet('categories')}
+              onToggleDisc={esplora.toggleDisc}
+              onReset={esplora.reset}
+            />
+          </div>
+        )}
+
+        {/* === Empty state mappa · 0 risultati con filtri attivi === */}
+        {!loading && displayedRestaurants.length === 0 && (esplora.activeCount > 0 || esplora.filters.cat.length > 0 || esplora.filters.disc) && (
+          <div style={{
+            position: 'absolute', left: 0, right: 0,
+            bottom: TAB_BAR_HEIGHT + 24,
+            zIndex: 30, display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+          }}>
+            <div style={{
+              pointerEvents: 'auto',
+              width: 'calc(100% - 32px)', maxWidth: 360,
+              background: '#fff',
+              border: '1px solid rgba(34,24,28,0.08)',
+              borderRadius: 20,
+              boxShadow: '0 14px 32px rgba(34,24,28,0.12)',
+              padding: '18px 20px 16px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 32, lineHeight: 1 }}>🔍</div>
+              <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--color-ink)', margin: 0 }}>
+                Nessun posto con questi filtri
+              </p>
+              <p style={{ fontSize: 12.5, color: 'var(--color-ink-70)', margin: 0, lineHeight: 1.45 }}>
+                Prova a togliere una categoria o ad allargare la fascia prezzo.
+              </p>
               <button
-                key={cat.name}
-                onClick={() => {
-                  const next = activeCatFilter === cat.name ? null : cat.name
-                  setActiveCatFilter(next)
-                  setFilters(f => ({ ...f, category: next }))
-                }}
+                type="button"
+                onClick={esplora.reset}
                 style={{
-                  flex: '0 0 auto',
-                  background: activeCatFilter === cat.name ? '#22181C' : 'rgba(255,255,255,.94)',
-                  backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                  borderRadius: 999, padding: '7px 12px',
-                  fontSize: 12, fontWeight: 700,
-                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
-                  boxShadow: '0 2px 8px rgba(34,24,28,.12)',
-                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  marginTop: 6,
+                  padding: '10px 22px',
+                  background: 'var(--color-corallo, #E8453C)',
+                  color: '#fff', border: 'none', borderRadius: 999,
+                  fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                  boxShadow: '0 8px 18px rgba(232,69,60,0.28)',
                 }}
               >
-                {cat.emoji} {cat.name}
-                <span style={{
-                  fontSize: 9.5, fontWeight: 800,
-                  background: activeCatFilter === cat.name ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
-                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
-                  padding: '1.5px 5px', borderRadius: 999,
-                }}>{cat.count}</span>
+                Azzera filtri
               </button>
-            ))}
+            </div>
           </div>
         )}
 
         {/* === esp-bottom: Lista pill + carousel === */}
-        {!hideBottomPanel && (viewportRestaurants.length > 0 || carouselRestaurants.length > 0) && (
+        {(viewportRestaurants.length > 0 || carouselRestaurants.length > 0) && (
           <div
             style={{
               position: 'absolute', left: 0, right: 0,
@@ -589,30 +414,11 @@ export default function HomePage() {
               zIndex: 35, pointerEvents: 'none',
             }}
           >
-            {/* Lista pill */}
+            {/* Floating toggle Mappa → Lista (pill ink, sopra il carousel) */}
             {viewportRestaurants.length > 0 && (
-              <button
-                onClick={openSheet}
-                style={{
-                  display: 'flex', margin: '0 auto 10px', pointerEvents: 'auto',
-                  background: '#22181C', color: '#fff',
-                  fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em',
-                  padding: '10px 18px', borderRadius: 999, border: 0,
-                  cursor: 'pointer', boxShadow: '0 4px 16px rgba(34,24,28,.28)',
-                  alignItems: 'center', gap: 8,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
-                  <path d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-                Lista
-                <span style={{
-                  fontSize: 11, fontWeight: 700,
-                  background: 'rgba(255,255,255,.18)',
-                  padding: '2px 7px', borderRadius: 999, letterSpacing: '0.02em',
-                }}>{viewportRestaurants.length}</span>
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 10px', pointerEvents: 'auto' }}>
+                <FloatingToggle view="map" onClick={() => esplora.setView('list')} />
+              </div>
             )}
 
             {/* Carousel */}
@@ -645,75 +451,21 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* === SHEET — mobile only === */}
-        <motion.div
-          style={{
-            y: sheetY,
-            opacity: sheetOpacity,
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: isSheetActive ? 35 : -1,
-            background: '#FAF7F2',
-            display: 'flex', flexDirection: 'column',
-            pointerEvents: isSheetActive ? 'auto' : 'none',
-            willChange: 'transform',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Handle */}
-          <div style={{ flexShrink: 0, background: '#FAF7F2' }}>
-            <div
-              {...handleBind()}
-              style={{
-                paddingTop: 'max(env(safe-area-inset-top, 16px), 56px)',
-                paddingBottom: 10,
-                display: 'flex', justifyContent: 'center',
-                cursor: 'grab', touchAction: 'none',
-              }}
-            >
-              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.15)' }} />
-            </div>
-          </div>
-
-          {/* Scrollable content */}
-          <div
-            ref={scrollRef}
-            {...contentBind()}
-            style={{
-              flex: 1, overflowY: dismissing ? 'hidden' : 'auto',
-              overflowX: 'hidden',
-              WebkitOverflowScrolling: 'touch',
-              paddingBottom: TAB_BAR_HEIGHT + 70,
-              touchAction: 'pan-y',
-            }}
-          >
-            <div className="px-5">
-              <div ref={sheetFiltersRef}>
-                {listContent}
-              </div>
-            </div>
-          </div>
-
-          {/* "Vedi la mappa" */}
-          <button
-            onClick={closeSheet}
-            className="glass-pill-v4-dark"
-            style={{
-              position: 'absolute', bottom: TAB_BAR_HEIGHT + 16,
-              left: '50%', transform: 'translateX(-50%)', zIndex: 40,
-              fontSize: 14, fontWeight: 600, padding: '12px 28px',
-              borderRadius: 999, border: 'none',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-              <line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
-            </svg>
-            Vedi la mappa
-          </button>
-        </motion.div>
       </div>
+      )}
+
+      {/* === Filter sheet mobile (Step 6) === */}
+      {!isDesktop && (
+        <FilterSheet
+          open={filterSheetOpen}
+          onClose={closeFilterSheet}
+          filters={esplora.filters}
+          allRestaurants={allRestaurants}
+          userPosition={position}
+          discountIds={discountRestaurantIds}
+          focusSection={filterSheetFocus}
+          onApply={esplora.applyBulk}
+        />
       )}
 
       {/* Suggest restaurant sheet — works for logged-in and anonymous users */}
