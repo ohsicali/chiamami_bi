@@ -116,69 +116,66 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Wordmark — same as HomeFeedV4 TopBar */}
+          {/* Wordmark — mockup .logo-s: single line 14px, no tagline */}
           <Link
             to="/"
             style={{
-              display: 'flex', flexDirection: 'column', lineHeight: 0.92,
+              flex: '0 0 auto',
+              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+              fontSize: 14,
+              lineHeight: 1,
+              letterSpacing: '0.02em',
+              color: 'var(--color-corallo)',
               textDecoration: 'none',
             }}
           >
-            <span style={{
-              fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-              fontSize: 15,
-              letterSpacing: '0.02em',
-              color: 'var(--color-corallo)',
-            }}>LA GUIDA DI BI</span>
-            <span style={{
-              fontFamily: 'var(--font-sans)',
-              fontWeight: 700,
-              fontSize: 8,
-              letterSpacing: '0.15em',
-              color: 'rgba(34,24,28,.4)',
-              marginTop: 3,
-              textTransform: 'uppercase',
-            }}>by Chiamami Bi</span>
+            LA GUIDA DI BI
           </Link>
 
-          {/* City chip — same as HomeFeedV4 TopBar */}
+          {/* City chip — mockup .city-pill-s */}
           <button
             onClick={() => setCityPickerOpen(true)}
             style={{
               marginLeft: 'auto',
               display: 'inline-flex', alignItems: 'center', gap: 7,
-              padding: '8px 12px',
+              padding: '8px 13px 8px 11px',
               background: 'var(--color-ink-05, rgba(34,24,28,.06))',
+              border: '1px solid rgba(34,24,28,0.12)',
               borderRadius: 999,
               fontWeight: 700,
               fontSize: 13,
+              letterSpacing: '-0.01em',
               color: '#22181C',
-              border: 'none',
               cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)', flexShrink: 0 }} />
+            <span style={{
+              width: 7, height: 7, borderRadius: '50%',
+              background: 'var(--color-corallo)',
+              boxShadow: '0 0 0 3px rgba(232,69,60,0.15)',
+              flexShrink: 0,
+            }} />
             {selectedCity}
-            <svg viewBox="0 0 10 10" width="10" height="10">
-              <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            </svg>
+            <span style={{ fontSize: 9, color: 'rgba(34,24,28,0.4)', marginLeft: 2 }}>▾</span>
           </button>
 
           <div className="hidden md:block">
             <LanguageSwitcher />
           </div>
 
-          {/* GPS button — same as HomeFeedV4 TopBar */}
+          {/* GPS button — mockup .geo-btn 38x38 */}
           {onLocateMe && (
             <button
               onClick={onLocateMe}
               aria-label="La mia posizione"
               style={{
-                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
                 background: 'var(--color-ink-05, rgba(34,24,28,.06))',
+                border: '1px solid rgba(34,24,28,0.12)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer',
+                cursor: 'pointer',
+                color: '#22181C',
                 WebkitTapHighlightColor: 'transparent',
               }}
             >

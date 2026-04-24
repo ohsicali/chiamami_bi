@@ -16,7 +16,7 @@ import MiniCard from '../Restaurant/MiniCard'
 import FilterPillsRow from './FilterPillsRow'
 import FloatingToggle from './FloatingToggle'
 
-const NAVBAR_OFFSET = 'calc(env(safe-area-inset-top, 0px) + 58px)'
+const NAVBAR_OFFSET = 'calc(env(safe-area-inset-top, 0px) + 56px)'
 
 export default function EsploraListPanel({
   restaurants,

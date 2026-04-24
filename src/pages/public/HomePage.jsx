@@ -339,7 +339,7 @@ export default function HomePage() {
         {(
           <div style={{
             position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 0px) + 58px)',
+            top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
             left: 0, right: 0,
             zIndex: 25,
             background: 'var(--color-page, #FAF7F2)',
