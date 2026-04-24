@@ -186,72 +186,11 @@ function HeroPromo({ featured }) {
         style={{
           position: 'relative', background: 'var(--color-corallo)', borderRadius: 28,
           color: '#fff', overflow: 'hidden', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: 'column-reverse',
         }}
       >
-        {/* Photo: 156px, fallback gradient brand, foto con onerror */}
-        <div
-          className="hfv4-hero-photo"
-          style={{
-            position: 'relative', height: 156, flexShrink: 0, overflow: 'hidden',
-            background: 'linear-gradient(135deg, #C48745 0%, #7C4A20 55%, #3C2312 100%)',
-          }}
-        >
-          {featured.photo && (
-            <img
-              src={featured.photo}
-              alt=""
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => { e.currentTarget.style.display = 'none' }}
-            />
-          )}
-          <span aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(34,24,28,.75) 100%)' }} />
-          {/* "Drop live" pill top-left */}
-          <span
-            className="hfv4-hero-chip"
-            style={{
-              position: 'absolute', top: 14, left: 14, zIndex: 2,
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '5px 10px', background: 'rgba(0,0,0,.4)',
-              backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-              borderRadius: 999, fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-            }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
-            Drop live
-          </span>
-          {/* Countdown pill top-right */}
-          {countdownPill && (
-            <span
-              style={{
-                position: 'absolute', top: 14, right: 14, zIndex: 2,
-                padding: '6px 11px',
-                background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                borderRadius: 999, fontSize: 11, fontWeight: 800, color: '#fff',
-                border: '1px solid rgba(255,255,255,.15)',
-              }}
-            >
-              {countdownPill}
-            </span>
-          )}
-          {/* Categoria bottom-left */}
-          {(featured.catEmoji || featured.catName || featured.neighborhood) && (
-            <span
-              style={{
-                position: 'absolute', bottom: 14, left: 14, zIndex: 2,
-                fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: 'rgba(255,255,255,.85)',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-              }}
-            >
-              {featured.catEmoji && <span style={{ fontSize: 14, letterSpacing: 0 }}>{featured.catEmoji}</span>}
-              {[featured.catName, featured.neighborhood].filter(Boolean).join(' · ')}
-            </span>
-          )}
-        </div>
-
-        {/* Body sotto la foto */}
-        <div className="hfv4-hero-body" style={{ padding: '18px 18px 18px' }}>
+        {/* Body: DOM-primo → visual-secondo mobile (column-reverse); col 1 sx su desktop grid */}
+        <div className="hfv4-hero-body" style={{ padding: '18px 20px 18px' }}>
           <div
             className="hfv4-hero-title"
             style={{
@@ -279,7 +218,6 @@ function HeroPromo({ featured }) {
               {featured.conditions}
             </div>
           )}
-          {/* Progress bar visiva */}
           {maxQuantity != null && (
             <div
               className="hfv4-hero-progress"
@@ -297,7 +235,6 @@ function HeroPromo({ featured }) {
               <span style={{ color: '#fff' }}>{maxQuantity} posti</span>
             </div>
           )}
-          {/* CTAs */}
           <div className="hfv4-hero-ctas" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
             <button
               onClick={() => navigate(featured.href)}
@@ -324,6 +261,64 @@ function HeroPromo({ featured }) {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Photo: DOM-secondo → visual-primo mobile (column-reverse); col 2 dx su desktop grid */}
+        <div
+          className="hfv4-hero-photo"
+          style={{
+            position: 'relative', height: 156, flexShrink: 0, overflow: 'hidden',
+            background: 'linear-gradient(135deg, #C48745 0%, #7C4A20 55%, #3C2312 100%)',
+          }}
+        >
+          {featured.photo && (
+            <img
+              src={featured.photo}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          )}
+          <span aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(34,24,28,.75) 100%)' }} />
+          <span
+            className="hfv4-hero-chip"
+            style={{
+              position: 'absolute', top: 14, left: 14, zIndex: 2,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', background: 'rgba(0,0,0,.4)',
+              backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+              borderRadius: 999, fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
+            Drop live
+          </span>
+          {countdownPill && (
+            <span
+              style={{
+                position: 'absolute', top: 14, right: 14, zIndex: 2,
+                padding: '6px 11px',
+                background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                borderRadius: 999, fontSize: 11, fontWeight: 800, color: '#fff',
+                border: '1px solid rgba(255,255,255,.15)',
+              }}
+            >
+              {countdownPill}
+            </span>
+          )}
+          {(featured.catEmoji || featured.catName || featured.neighborhood) && (
+            <span
+              style={{
+                position: 'absolute', bottom: 14, left: 14, zIndex: 2,
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+                color: 'rgba(255,255,255,.85)',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              {featured.catEmoji && <span style={{ fontSize: 14, letterSpacing: 0 }}>{featured.catEmoji}</span>}
+              {[featured.catName, featured.neighborhood].filter(Boolean).join(' · ')}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -555,18 +550,15 @@ export default function HomeFeedV4() {
           .hfv4-hero-card {
             display: grid !important;
             grid-template-columns: 1.05fr .95fr !important;
-            grid-template-areas: "body photo" !important;
             min-height: 380px !important;
             padding: 0 !important;
             overflow: hidden !important;
-            flex-direction: unset !important;
           }
-          .hfv4-hero-photo { grid-area: photo !important; height: auto !important; }
-          .hfv4-hero-body { grid-area: body !important; padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
-          .hfv4-hero-chip { font-size: 12px !important; padding: 7px 13px !important; animation: drop-live-ring 2s ease-out infinite !important; }
+          .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
+          .hfv4-hero-chip { font-size: 12px !important; padding: 7px 13px !important; margin-bottom: 0 !important; animation: drop-live-ring 2s ease-out infinite !important; }
           .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
           .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
-          .hfv4-hero-progress { margin-bottom: 0 !important; }
+          .hfv4-hero-photo { height: auto !important; }
           .hfv4-cats-row {
             overflow-x: visible !important;
             flex-wrap: nowrap !important;
