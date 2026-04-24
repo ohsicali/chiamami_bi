@@ -171,12 +171,15 @@ function HeroPromo({ featured }) {
   }, [featured?.endsAt])
   if (!featured) return null
 
+  const chipLabel = countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'
   const claimedCount = featured.claimedCount || 0
   const maxQuantity = featured.maxQuantity || null
+  const expiresLabel = featured.expiresLabel || null
   const progressPct = maxQuantity ? Math.min(100, Math.round(claimedCount / maxQuantity * 100)) : null
-  const countdownPill = [
+  const showProgress = progressPct != null || !!countdown || !!expiresLabel
+  const mobCountdown = [
     maxQuantity != null ? `${claimedCount} / ${maxQuantity}` : null,
-    countdown || featured.expiresLabel,
+    countdown || expiresLabel,
   ].filter(Boolean).join(' · ')
 
   return (
@@ -185,57 +188,49 @@ function HeroPromo({ featured }) {
         className="hfv4-hero-card"
         style={{
           position: 'relative', background: 'var(--color-corallo)', borderRadius: 28,
+          padding: '22px', display: 'grid', gridTemplateColumns: '1fr 108px', gap: 14,
           color: '#fff', overflow: 'hidden', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
-          display: 'flex', flexDirection: 'column-reverse',
         }}
       >
-        {/* Body: DOM-primo → visual-secondo mobile (column-reverse); col 1 sx su desktop grid */}
-        <div className="hfv4-hero-body" style={{ padding: '18px 20px 18px' }}>
+        {/* Body: col sinistra desktop, sotto la foto su mobile */}
+        <div className="hfv4-hero-body">
+          <span
+            className="hfv4-hero-chip"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', background: 'rgba(255,255,255,.18)',
+              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+              borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
+              marginBottom: 10, width: 'fit-content',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
+            {chipLabel}
+          </span>
           <div
             className="hfv4-hero-title"
             style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 900,
-              fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4,
-              whiteSpace: 'pre-line',
+              fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 30,
+              lineHeight: 1.02, letterSpacing: '-0.02em', color: '#fff',
+              marginBottom: 8, whiteSpace: 'pre-line',
             }}
           >
             {featured.title}
           </div>
           {featured.restLine && (
-            <div className="hfv4-hero-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', lineHeight: 1.4, marginBottom: 4 }}>
+            <div className="hfv4-hero-rest-line" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.9)', marginBottom: 6 }}>
               {featured.restLine}
             </div>
           )}
-          {featured.conditions && (
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', marginBottom: 14 }}>
-              {featured.conditions}
+          {featured.subtitle && (
+            <div className="hfv4-hero-sub" style={{ fontSize: 13, color: 'rgba(255,255,255,.85)', lineHeight: 1.4, marginBottom: 14, maxWidth: 220, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {featured.subtitle}
             </div>
           )}
-          {maxQuantity != null && (
-            <div
-              className="hfv4-hero-progress"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.7)',
-                marginBottom: 16, padding: '10px 12px',
-                background: 'rgba(255,255,255,.08)', borderRadius: 10, border: '1px solid rgba(255,255,255,.1)',
-              }}
-            >
-              <span>{claimedCount} riscatti</span>
-              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.15)', borderRadius: 999, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${progressPct || 0}%`, background: '#fff', borderRadius: 999 }} />
-              </div>
-              <span style={{ color: '#fff' }}>{maxQuantity} posti</span>
-            </div>
-          )}
-          <div className="hfv4-hero-ctas" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+          <div className="hfv4-hero-ctas" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={() => navigate(featured.href)}
-              style={{
-                padding: '12px 14px', background: 'var(--color-ink)', color: '#fff',
-                borderRadius: 999, fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'var(--color-ink)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
             >
               {featured.cta} →
             </button>
@@ -243,12 +238,7 @@ function HeroPromo({ featured }) {
               <button
                 className="hfv4-hero-cta-ghost"
                 onClick={() => navigate(featured.href)}
-                style={{
-                  padding: '12px 16px', background: 'transparent',
-                  border: '1px solid rgba(255,255,255,.25)', color: '#fff',
-                  borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'rgba(255,255,255,.18)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
               >
                 {featured.secondaryCta}
               </button>
@@ -256,12 +246,13 @@ function HeroPromo({ featured }) {
           </div>
         </div>
 
-        {/* Photo: DOM-secondo → visual-primo mobile (column-reverse); col 2 dx su desktop grid */}
+        {/* Photo: col destra desktop (108px), sopra il body su mobile (order:-1) */}
         <div
           className="hfv4-hero-photo"
           style={{
-            position: 'relative', height: 156, flexShrink: 0, overflow: 'hidden',
+            position: 'relative', overflow: 'hidden',
             background: 'linear-gradient(135deg, #C48745 0%, #7C4A20 55%, #3C2312 100%)',
+            minHeight: 160,
           }}
         >
           {featured.photo && (
@@ -273,44 +264,52 @@ function HeroPromo({ featured }) {
             />
           )}
           <span aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(34,24,28,.75) 100%)' }} />
-          <span
-            className="hfv4-hero-chip"
-            style={{
-              position: 'absolute', top: 14, left: 14, zIndex: 2,
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '5px 10px', background: 'rgba(0,0,0,.4)',
-              backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-              borderRadius: 999, fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-            }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
-            Drop live
-          </span>
-          {countdownPill && (
+
+          {/* Mobile-only: countdown pill top-right */}
+          {mobCountdown && (
             <span
+              className="hfv4-mob-countdown"
               style={{
-                position: 'absolute', top: 14, right: 14, zIndex: 2,
-                padding: '6px 11px',
-                background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                display: 'none', position: 'absolute', top: 14, right: 14, zIndex: 2,
+                padding: '6px 11px', background: 'rgba(255,255,255,.15)',
+                backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
                 borderRadius: 999, fontSize: 11, fontWeight: 800, color: '#fff',
                 border: '1px solid rgba(255,255,255,.15)',
               }}
             >
-              {countdownPill}
+              {mobCountdown}
             </span>
           )}
+          {/* Mobile-only: categoria + zona bottom-left */}
           {(featured.catEmoji || featured.catName || featured.neighborhood) && (
             <span
+              className="hfv4-mob-cat"
               style={{
-                position: 'absolute', bottom: 14, left: 14, zIndex: 2,
+                display: 'none', position: 'absolute', bottom: 14, left: 14, zIndex: 2,
                 fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: 'rgba(255,255,255,.85)',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
+                color: 'rgba(255,255,255,.85)', alignItems: 'center', gap: 6,
               }}
             >
               {featured.catEmoji && <span style={{ fontSize: 14, letterSpacing: 0 }}>{featured.catEmoji}</span>}
               {[featured.catName, featured.neighborhood].filter(Boolean).join(' · ')}
             </span>
+          )}
+
+          {showProgress && (
+            <div
+              className="hfv4-hero-progress"
+              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 20px', background: 'linear-gradient(0deg, rgba(34,24,28,.7), transparent)', color: '#fff' }}
+            >
+              {progressPct != null && (
+                <div style={{ height: 6, background: 'rgba(255,255,255,.2)', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ height: '100%', width: `${progressPct}%`, background: '#fff', borderRadius: 999 }} />
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
+                <span>{maxQuantity ? `${claimedCount} / ${maxQuantity} sbloccati` : (countdown ? `Scade tra ${countdown}` : '')}</span>
+                {expiresLabel && <span>{expiresLabel}</span>}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -475,24 +474,22 @@ export default function HomeFeedV4() {
         }
       }
     }
+    const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
     return {
-      discountLabel: label,
-      restaurantName: r.name,
-      catEmoji: catInfo?.emoji || '',
-      catName: catInfo?.name || catName,
-      neighborhood,
       title: `${label}\nda ${r.name}.`,
       restLine,
-      subtitle: drop.description || drop.title || '',
-      conditions: drop.conditions || null,
+      subtitle: subtitleParts.join(' · '),
       cta: 'Vai al drop',
-      secondaryCta: 'Scopri',
+      secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
       photo,
       endsAt: drop.drop_ends_at || drop.ends_at || null,
       claimedCount,
       maxQuantity,
       expiresLabel,
+      catEmoji: catInfo?.emoji || '',
+      catName: catInfo?.name || catName,
+      neighborhood,
     }
   }, [discounts, restaurants])
 
@@ -530,6 +527,49 @@ export default function HomeFeedV4() {
           pointer-events: none;
         }
 
+        /* Mobile <1024px: hero stack verticale, foto sopra il body */
+        @media (max-width: 1023px) {
+          .hfv4-hero-card {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 0 !important;
+            gap: 0 !important;
+          }
+          .hfv4-hero-photo {
+            order: -1 !important;
+            height: 156px !important;
+            min-height: 0 !important;
+          }
+          .hfv4-hero-body { padding: 18px 20px !important; }
+          .hfv4-hero-chip {
+            position: absolute !important;
+            top: 14px !important; left: 14px !important;
+            z-index: 3 !important;
+            background: rgba(0,0,0,.4) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            margin-bottom: 0 !important;
+          }
+          .hfv4-hero-title {
+            font-size: 42px !important;
+            line-height: 0.95 !important;
+            letter-spacing: -0.025em !important;
+            margin-bottom: 4px !important;
+          }
+          .hfv4-hero-ctas {
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            gap: 8px !important;
+          }
+          .hfv4-hero-cta-ghost {
+            background: transparent !important;
+            border: 1px solid rgba(255,255,255,.25) !important;
+            backdrop-filter: none !important;
+          }
+          .hfv4-mob-countdown { display: inline-flex !important; }
+          .hfv4-mob-cat { display: inline-flex !important; }
+        }
+
         /* Desktop ≥1024px per sezioni originali (hero, cats, Ultimi aggiunti) */
         @media (min-width: 1024px) {
           .hfv4-section,
@@ -541,7 +581,6 @@ export default function HomeFeedV4() {
           }
           .hfv4-hero-wrap { padding-top: 16px !important; }
           .hfv4-hero-card {
-            display: grid !important;
             grid-template-columns: 1.05fr .95fr !important;
             min-height: 380px !important;
             padding: 0 !important;
@@ -551,9 +590,7 @@ export default function HomeFeedV4() {
           .hfv4-hero-chip { font-size: 12px !important; padding: 7px 13px !important; margin-bottom: 0 !important; animation: drop-live-ring 2s ease-out infinite !important; }
           .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; white-space: pre-line !important; }
           .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
-          .hfv4-hero-progress { display: none !important; }
-          .hfv4-hero-ctas { display: flex !important; gap: 10px !important; flex-wrap: wrap !important; }
-          .hfv4-hero-photo { height: auto !important; }
+          .hfv4-hero-photo { min-height: 0 !important; }
           .hfv4-cats-row {
             overflow-x: visible !important;
             flex-wrap: nowrap !important;
