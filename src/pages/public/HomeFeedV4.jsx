@@ -416,7 +416,7 @@ function SuggestCard() {
             Conosci un posto che manca?
           </div>
           <div className="hfv4-suggest-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.35, maxWidth: 240 }}>
-            Scrivici nome + zona. Bi ci va a mangiare. Se è buono, entra.
+            Scrivimi nome + zona. Se è buono, entra.
           </div>
         </div>
         <button
