@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-04-20
+Ultima modifica: 2026-04-24
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -16,6 +16,7 @@ dove siamo. Aggiorna a ogni step importante.
 | C1 — Google Places hours | #65 | ✅ Merged (bf538f8) | Env + SQL + backfill fatti in sessioni precedenti |
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
+| PR19 — Esplora redesign | draft | 🚧 In progress | Branch: `claude/esplora-redesign-implementation-7oq55`. 12 step completi (CP1+CP2). ⚠️ Migration pending: `tags_dietary` text[] su `restaurants` per abilitare filtro Dieta (oggi no-op). |
 | C3 — (TBD) | — | ⏳ Not started | |
 
 ## Env vars Vercel — già configurate
@@ -33,6 +34,13 @@ dove siamo. Aggiorna a ogni step importante.
 - `supabase/disable-user-reviews-2026-04-19.sql` ✓ (Track A)
 - `supabase/add-google-places-fields-2026-04-19.sql` ✓ (Track C1)
 - `supabase/add-email-notifications-log-2026-04-19.sql` ✓ (Track C2)
+
+### Migration PENDING (PR19 Esplora)
+
+- ⚠️ `ALTER TABLE restaurants ADD COLUMN tags_dietary text[] DEFAULT '{}';` —
+  serve per abilitare il filtro Dieta (vegan/vegetarian/healthy/gluten-free)
+  nel FilterSheet/FilterPopover. Senza questa colonna il filtro è UI-only
+  (nessun ristorante matcha).
 
 ## Resend
 
@@ -205,6 +213,111 @@ PR: #69 (draft). Branch: `v4/track-b-reskin`.
 - **Lighthouse ≥ 90** (Performance/A11y/BestPractices/SEO) — da misurare live
 - (opzionale) Route rename `/deals`→`/sconti`, `/saved`→`/salvati`, ecc. —
   SEO-risky, rimandato
+
+## PR19 — Esplora redesign (24/04/2026)
+
+Branch: `claude/esplora-redesign-implementation-7oq55`. PR #__ (draft).
+
+**Mockup canonici**:
+- `docs/mockups/v4-mobile-esplora-redesign.html` (3 frame)
+- `docs/mockups/v4-desktop-esplora-redesign.html` (split + header floating)
+
+**Scope ristretto**: SOLO pagina Esplora mobile + desktop + shared components
+strettamente necessari. NON toccati: Home, Sconti, Salvati, Profilo, Admin,
+MobileTabBar, Navbar mobile (wordmark + city pill + geo btn), DesktopNavbar.
+
+### Step completati (12/12)
+
+1. **Shared components** — `MiniCard` estratto da HomePage (stile live
+   invariato, vincolo Augusto), nuovi `FilterPill` (default/on/active-highlight)
+   e `CategoryBubble` (64px, grid 4-col).
+2. **SVG icon set** — `IconSliders/Grid/Tag/List/Map/Search/Geo/Close`
+   Lucide-style stroke 2 currentColor in `src/components/icons/index.jsx`.
+3. **Filter state URL** — `useEsploraFilters` hook: cat[], price[], moment,
+   diet[], disc, area, view sincronizzati con URL query params. Helpers
+   `applyEsploraFilters` + `countMatching` + `applyBulk` per update atomico.
+4. **Mobile map view** — `FilterPillsRow` + count bar + `FloatingToggle`
+   sopra mappa. Rimosso scroll-x category chips + bottone "Lista" vecchi.
+   Pin mappa rotondi invariati (MapView intatto).
+5. **Mobile list view** — `EsploraListPanel` full-screen su `?view=list`
+   con SearchBar + FilterPillsRow + MiniCard verticale + FloatingToggle
+   "Mappa". Rimosso sheet animato mobile (non più necessario).
+6. **Filter sheet mobile** — `FilterSheet` 92% viewport con 5 sezioni
+   (Categoria bubble grid, Orario, Dieta, Prezzo, Area slider) + CTA
+   sticky "Mostra N locali" (live count) e "Azzera filtri". Draft state
+   + commit atomico via `applyBulk`.
+7. **Desktop split + header** — Grid 540px + mappa. `DesktopExplorePage`
+   refactorato con useEsploraFilters + FilterPillsRow + count row + sort
+   "Distanza" inline. `AppHeaderFloating.jsx` re-export DesktopNavbar
+   (già montato globalmente come shared header).
+8. **Filter overlay desktop** — `FilterPopover` 420×max600 sotto la pill
+   Filtri con click-outside + Escape + animazione scale-y dall'alto.
+   Stesse 5 sezioni + CTA del FilterSheet mobile.
+9. **Categorie shortcut** — `focusSection` prop scrolla automaticamente
+   alla sezione scelta (categorie/moment/diet/price/area) all'apertura.
+10. **Sconti toggle** — già cablato in Step 3+4 (esplora.toggleDisc,
+    variant='active-highlight' corallo sulla pill, applyEsploraFilters
+    filtra per discountIds quando disc=true).
+11. **Group headers** — `groupByDistance()` separa in "Aperto per {moment}
+    · ora" (<500m con moment attivo) / "Vicino a te" (<500m senza moment)
+    e "Oltre i 500 metri" (>=500m). Cablato mobile list + desktop list.
+12. **Empty state** — banner flottante sulla mappa mobile + vista lista
+    mobile + list area desktop quando 0 risultati con filtri attivi:
+    "Nessun posto con questi filtri" + CTA "Azzera filtri".
+
+### File toccati
+
+**Nuovi**
+- `src/components/Restaurant/MiniCard.jsx` (estratto da HomePage)
+- `src/components/Esplora/FilterPill.jsx`
+- `src/components/Esplora/CategoryBubble.jsx`
+- `src/components/Esplora/FilterPillsRow.jsx`
+- `src/components/Esplora/FloatingToggle.jsx`
+- `src/components/Esplora/EsploraListPanel.jsx`
+- `src/components/Esplora/FilterSheet.jsx`
+- `src/components/Esplora/FilterPopover.jsx`
+- `src/components/icons/index.jsx`
+- `src/components/Layout/AppHeaderFloating.jsx` (re-export)
+- `src/lib/hooks/useEsploraFilters.js`
+- `src/lib/utils/esploraGroups.js`
+
+**Modificati**
+- `src/pages/public/HomePage.jsx` (mobile Esplora — shell + mappa + integrazione)
+- `src/pages/public/DesktopExplorePage.jsx` (split + pill row + popover)
+
+**NON toccati (vincolo scope)**
+- Home (`HomeFeedV4.jsx`), Sconti (`DealsPage.jsx`), Salvati (`SavedPage.jsx`),
+  Profilo (`ProfilePage.jsx`), Admin, RestaurantPage, RestaurantSheet,
+  DesktopNavbar, Navbar (mobile), MobileTabBar, MapView (pin mappa).
+
+### Blocker / migration
+
+⚠️ **tags_dietary assente nel DB**: il filtro Dieta del FilterSheet è cablato
+ma no-op finché Augusto non esegue: `ALTER TABLE restaurants ADD COLUMN
+tags_dietary text[] DEFAULT '{}';`. Gli altri filtri funzionano full-stack.
+
+### QA checklist da verificare
+
+Mobile (430×932):
+- [ ] Header logo + Torino + geo sempre (NO search in mappa)
+- [ ] 3 pill + count+Azzera sopra mappa/lista
+- [ ] Pin mappa rotondi (invariati)
+- [ ] Floating toggle Lista sopra mini-card in mappa / Mappa in basso in lista
+- [ ] Tap Filtri/Categorie apre sheet 92% con 5 sezioni + live count CTA
+- [ ] Group headers "Aperto per X · ora" / "Oltre i 500 metri" in lista
+- [ ] Empty state banner con Azzera su mappa/lista a 0 risultati
+
+Desktop (1440×900):
+- [ ] Header floating pill (DesktopNavbar) centrato
+- [ ] Split 540px lista + mappa
+- [ ] Tap Filtri apre popover 420×600 sotto la pill
+- [ ] Click card → hover popup mappa · click pin → scroll card in lista
+- [ ] Group headers in list area
+
+Sistema:
+- [ ] Deploy Vercel preview verde (12 function, underscore _rate-limit ignorato)
+- [ ] Deep link `/esplora?moment=aperitivo` applicato all'avvio
+- [ ] URL `?cat=Pizza,Asiatico&price=1,2&disc=1&area=1.5&view=list` deep-linkable
 
 ### ✅ Completato — sessione pomeriggio 2026-04-20 (continuazione)
 
