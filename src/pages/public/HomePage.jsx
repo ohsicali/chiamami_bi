@@ -343,8 +343,6 @@ export default function HomePage() {
             left: 0, right: 0,
             zIndex: 25,
             background: 'var(--color-page, #FAF7F2)',
-            paddingTop: 6,
-            paddingBottom: 10,
           }}>
             <FilterPillsRow
               activeCount={esplora.activeCount}

@@ -28,7 +28,7 @@ export default function FilterPillsRow({
         style={{
           display: 'flex',
           gap: 8,
-          padding: '0 16px',
+          padding: '0 16px 10px',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
@@ -66,7 +66,7 @@ export default function FilterPillsRow({
       {showCountBar && (
         <div
           style={{
-            padding: '10px 20px 0',
+            padding: '4px 20px 10px',
             display: 'flex',
             alignItems: 'baseline',
             justifyContent: 'space-between',

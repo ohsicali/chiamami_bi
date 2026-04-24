@@ -44,6 +44,10 @@ export default function FilterPill({
     color: 'var(--color-ink, #22181C)',
     borderColor: 'rgba(34,24,28,0.12)',
   }
+  if (variant === 'on') {
+    // mockup .fp.on: border-color ink opaco, color ink, bg white, font-weight 800
+    base.borderColor = 'var(--color-ink, #22181C)'
+  }
   if (variant === 'active-highlight') {
     base.background = 'var(--color-corallo-wash, #FDF2F0)'
     base.borderColor = 'var(--color-corallo, #E8453C)'
