@@ -135,7 +135,7 @@ function RestaurantVariant({ p }) {
   const ctaLabel = p.cta_label || (hasDiscount ? `Attiva sconto` : 'Scopri di più')
 
   return (
-    <div className="hfv4-spon-wrap" style={{ padding: '8px 16px 18px' }}>
+    <div className="hfv4-spon-wrap" style={{ padding: '8px 20px 18px' }}>
       <div
         className="hfv4-spon-banner"
         style={{
@@ -314,7 +314,7 @@ function BrandVariant({ p }) {
   const logo = p.logo_image_url
 
   return (
-    <div className="hfv4-spon-wrap" style={{ padding: '8px 16px 18px' }}>
+    <div className="hfv4-spon-wrap" style={{ padding: '8px 20px 18px' }}>
       <div
         style={{
           position: 'relative',

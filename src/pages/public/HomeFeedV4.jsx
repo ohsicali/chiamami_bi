@@ -405,7 +405,7 @@ function SuggestCard() {
   const [showSuggest, setShowSuggest] = useState(false)
   return (
     <>
-    <div className="hfv4-suggest-wrap" style={{ padding: '10px 16px 36px' }}>
+    <div className="hfv4-suggest-wrap" style={{ padding: '10px 20px 36px' }}>
       <div
         className="hfv4-suggest"
         style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-ink)', color: '#fff', borderRadius: 28, padding: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center' }}

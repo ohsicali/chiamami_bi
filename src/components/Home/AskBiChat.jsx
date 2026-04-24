@@ -66,7 +66,7 @@ export default function AskBiChat({ currentMoment }) {
         <span style={{ flex: 1, height: 1, background: 'var(--color-ink-15, rgba(34,24,28,.12))' }} />
       </div>
 
-      <div className="hfv4-ai-wrap" style={{ padding: '10px 16px 0' }}>
+      <div className="hfv4-ai-wrap" style={{ padding: '10px 20px 0' }}>
         <div
           className="hfv4-ai-card"
           style={{
@@ -275,7 +275,7 @@ function AiOutput({ response, isGuest }) {
   }, [results.map(r => r.restaurant_id).join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="hfv4-ai-output" style={{ padding: '4px 16px 22px' }}>
+    <div className="hfv4-ai-output" style={{ padding: '4px 20px 22px' }}>
       <div style={{ padding: '16px 4px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <div
           style={{
