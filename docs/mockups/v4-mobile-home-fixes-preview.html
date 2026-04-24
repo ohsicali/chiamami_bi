@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v4 · Mobile fixes preview (live home · full scroll)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA; --corallo-wash:#FDF2F0;
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954; --oro-soft:#F4E7CC;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --ff-hand:'Caveat',cursive;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+  --danger:#DC2626; --success:#16A34A;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{font-family:var(--ff-ui);background:#0f0f10;color:var(--ink)}
+body{min-height:100vh;padding:40px 20px 80px;display:flex;flex-direction:column;align-items:center;gap:40px;background:radial-gradient(900px 500px at 20% -10%,rgba(232,69,60,.12),transparent 60%),#0f0f10}
+
+.page-head{max-width:720px;text-align:center;color:#fff}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:rgba(232,69,60,.15);color:#FFAFA8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(232,69,60,.3)}
+.page-head h1{font-family:var(--ff-ui);font-weight:900;font-size:32px;letter-spacing:-.02em;margin:16px 0 10px;line-height:1.05;color:#fff}
+.page-head p{color:rgba(255,255,255,.65);font-size:14px;line-height:1.55;max-width:560px;margin:0 auto}
+.fixlist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+.fix-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(22,163,74,.12);color:#6FE59B;border:1px solid rgba(22,163,74,.3);border-radius:999px;font-size:11px;font-weight:700}
+.fix-chip::before{content:"✓";color:#6FE59B;font-weight:800}
+
+.frame-label{color:rgba(255,255,255,.55);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;text-align:center;margin-bottom:12px}
+.frame-label span{color:var(--corallo);font-family:var(--ff-mark);font-size:13px;letter-spacing:.04em;margin-right:8px;text-transform:none}
+.frame-label.bad span{color:#FF9A92}
+.frame-label.good span{color:#6FE59B}
+
+.phones-row{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:430px}
+
+/* Phone frame FULL SCROLL — altezza estesa per vedere tutto */
+.phone{width:430px;background:#000;border-radius:52px;padding:10px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(0,0,0,.4);position:relative}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:50;pointer-events:none}
+.screen{width:100%;background:var(--page);border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;font-size:13px;font-weight:700;background:var(--page)}
+
+/* Top bar */
+.topbar{padding:14px 20px 14px;display:flex;align-items:center;gap:10px}
+.topbar.bad-pad{padding:14px 16px 14px}
+.logo{flex:0 0 auto;display:flex;flex-direction:column;line-height:.92}
+.logo .l1{font-family:var(--ff-mark);font-size:15px;letter-spacing:.02em;color:var(--corallo)}
+.logo .l2{font-family:var(--ff-ui);font-weight:700;font-size:8px;letter-spacing:.15em;color:var(--ink-40);margin-top:3px;text-transform:uppercase}
+.city-pill{margin-left:auto;display:inline-flex;align-items:center;gap:9px;padding:10px 16px 10px 14px;background:var(--ink-05);border:1px solid var(--ink-15);border-radius:999px;font-weight:700;font-size:14px;letter-spacing:-.01em}
+.city-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 3px rgba(232,69,60,.15)}
+.city-pill .chev{font-size:10px;color:var(--ink-40)}
+.avatar-sm{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--corallo),var(--corallo-ink));color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:16px;box-shadow:0 6px 14px rgba(232,69,60,.3);border:2px solid #fff}
+
+/* =========== DROP BANNER BAD =========== */
+.drop-bad{margin:6px 20px 10px;background:var(--corallo);border-radius:var(--r-xl);padding:18px 18px;display:grid;grid-template-columns:1fr 150px;gap:12px;color:#fff;position:relative;overflow:hidden;min-height:270px}
+.drop-bad .lbl{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.06em;margin-bottom:10px}
+.drop-bad .lbl::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff}
+.drop-bad .pct{font-family:var(--ff-ui);font-weight:900;font-size:40px;line-height:.95;letter-spacing:-.02em;margin-bottom:10px}
+.drop-bad .meta{font-size:12px;color:rgba(255,255,255,.85);line-height:1.45;margin-bottom:10px}
+.drop-bad .sub{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:12px}
+.drop-bad .ctas{display:flex;gap:8px;flex-wrap:wrap}
+.drop-bad .c-dark{padding:9px 13px;background:var(--ink);color:#fff;border-radius:999px;font-size:11px;font-weight:800;text-decoration:none}
+.drop-bad .c-out{padding:9px 13px;background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;font-size:11px;font-weight:800;text-decoration:none}
+.drop-bad-photo{background:#000;border-radius:var(--r-lg);position:relative}
+.drop-bad-photo .countdown{position:absolute;left:6px;right:6px;bottom:12px;font-size:9px;font-weight:700;color:rgba(255,255,255,.55);line-height:1.4;padding:5px;background:rgba(0,0,0,.55);border-radius:6px;text-align:center}
+
+.annot{position:absolute;background:var(--danger);color:#fff;padding:4px 9px;border-radius:12px 12px 12px 3px;font-size:10px;font-weight:800;letter-spacing:.02em;z-index:5;box-shadow:0 4px 10px rgba(220,38,38,.4);white-space:nowrap}
+.annot.left{border-radius:12px 12px 3px 12px}
+.annot.good-a{background:var(--success);box-shadow:0 4px 10px rgba(22,163,74,.4)}
+
+/* =========== DROP BANNER GOOD =========== */
+.drop-good{margin:6px 20px 14px;background:var(--corallo);border-radius:var(--r-xl);color:#fff;position:relative;overflow:hidden;box-shadow:var(--shadow-md)}
+.drop-good-photo{height:156px;position:relative;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.75) 100%),linear-gradient(135deg,#C48745 0%,#7C4A20 55%,#3C2312 100%)}
+.drop-good-photo::after{content:"";position:absolute;inset:0;background:radial-gradient(400px 180px at 70% 30%,rgba(255,255,255,.14),transparent 60%)}
+.drop-good-lbl{position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.drop-good-lbl .bl{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.35}}
+.drop-good-category{position:absolute;bottom:14px;left:14px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-flex;align-items:center;gap:6px}
+.drop-good-category::before{content:"🥩";font-size:14px;letter-spacing:0}
+.drop-good-progress{position:absolute;top:14px;right:14px;padding:6px 11px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border-radius:999px;font-size:11px;font-weight:800;color:#fff;border:1px solid rgba(255,255,255,.15)}
+.drop-good-body{padding:18px 18px 18px}
+.drop-good-pct{font-family:var(--ff-ui);font-weight:900;font-size:42px;line-height:.95;letter-spacing:-.025em;margin-bottom:4px}
+.drop-good-loc{font-family:var(--ff-ui);font-weight:900;font-size:24px;line-height:1;letter-spacing:-.02em;margin-bottom:10px;opacity:.95}
+.drop-good-sub{font-size:12px;color:rgba(255,255,255,.8);line-height:1.4;margin-bottom:6px}
+.drop-good-conditions{font-size:11px;color:rgba(255,255,255,.65);margin-bottom:14px}
+.drop-good-meta{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:16px;padding:10px 12px;background:rgba(255,255,255,.08);border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.1)}
+.drop-good-meta .bar{flex:1;height:4px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden}
+.drop-good-meta .bar i{display:block;height:100%;width:0%;background:#fff;border-radius:999px}
+.drop-good-meta .t-b{color:#fff}
+.drop-good-ctas{display:grid;grid-template-columns:1fr auto;gap:8px}
+.drop-good-ctas .c1{padding:12px 14px;background:var(--ink);color:#fff;border-radius:999px;font-size:13px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.drop-good-ctas .c1::after{content:"→"}
+.drop-good-ctas .c2{padding:12px 16px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+
+/* Category pills */
+.cats-wrap{position:relative}
+.cats-wrap::after{content:"";position:absolute;right:0;top:0;bottom:20px;width:48px;background:linear-gradient(90deg,transparent 0%,var(--page) 90%);pointer-events:none}
+.cats{display:flex;gap:10px;overflow-x:auto;padding:6px 20px 20px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.cats::-webkit-scrollbar{display:none}
+.cat-b{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;scroll-snap-align:start}
+.cat-b .bubble{width:58px;height:58px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;font-size:26px}
+.cat-b.active .bubble{background:var(--corallo);box-shadow:0 6px 16px rgba(232,69,60,.35)}
+.cat-b .lbl{font-size:11px;font-weight:700;color:var(--ink)}
+
+.cats-bad{display:flex;gap:6px;overflow-x:hidden;padding:4px 8px 20px}
+.cats-bad .cb{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px}
+.cats-bad .cb .bubble{width:50px;height:50px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;font-size:22px}
+.cats-bad .cb .lbl{font-size:10px;font-weight:700}
+.cats-bad .cb.active .bubble{background:var(--corallo)}
+
+/* Section head */
+.sec-head{padding:0 20px 12px;display:flex;align-items:center;justify-content:space-between}
+.sec-head.bad{padding:0 8px 12px}
+.sec-head h2{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;line-height:1.1}
+.sec-head .all{width:32px;height:32px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;font-size:14px;text-decoration:none;color:var(--ink)}
+
+/* Ultimi aggiunti rows */
+.row-bad{display:flex;gap:12px;overflow-x:auto;padding:0 12px 16px}
+.row-bad::-webkit-scrollbar{display:none}
+.row-bad .rc{flex:0 0 95%;scroll-snap-align:start;background:#fff;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm)}
+
+.row-good{display:flex;gap:12px;overflow-x:auto;padding:0 20px 16px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.row-good::-webkit-scrollbar{display:none}
+.row-good .rc{flex:0 0 82%;scroll-snap-align:start;background:#fff;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm)}
+
+.rc .ph{aspect-ratio:16/11;background:linear-gradient(135deg,#E8CFA8,#8A5E2A);position:relative}
+.rc .ph.alt{background:linear-gradient(135deg,#C5A386,#5D3D24)}
+.rc .ph.alt2{background:linear-gradient(135deg,#D9A441,#8A5A1F)}
+.rc .ph .pill-new{position:absolute;top:10px;left:10px;background:var(--ink);color:#fff;font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px}
+.rc .ph .pill-d{position:absolute;top:10px;left:10px;background:var(--corallo);color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px}
+.rc .ph .heart{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.88);display:grid;place-items:center;font-size:14px}
+.rc .body{padding:12px 14px 14px}
+.rc .n{font-family:var(--ff-ui);font-weight:800;font-size:16px;margin-bottom:3px}
+.rc .m{font-size:11px;color:var(--ink-70);display:flex;gap:6px;align-items:center}
+.rc .m .tag{background:var(--corallo-soft);color:var(--corallo-ink);font-weight:700;font-size:10px;padding:3px 7px;border-radius:999px}
+
+/* =========== TIME HERO + MOMENTS (redesign preview) =========== */
+.time-hero{padding:22px 20px 12px;background:linear-gradient(180deg,var(--corallo-wash) 0%,transparent 100%);margin-bottom:4px}
+.time-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--white);color:var(--corallo-ink);border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.time-tag .pulse{width:6px;height:6px;border-radius:50%;background:var(--corallo);animation:blink 1.6s infinite}
+.time-clock{font-family:var(--ff-mark);font-size:84px;line-height:.92;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px;font-weight:400}
+.time-question{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em;line-height:1.1;color:var(--ink);max-width:300px;margin-bottom:6px}
+.time-sub{font-size:13px;color:var(--ink-70);line-height:1.4}
+
+.moment-tabs{display:flex;gap:8px;overflow-x:auto;padding:16px 20px 18px;-webkit-overflow-scrolling:touch}
+.moment-tabs::-webkit-scrollbar{display:none}
+.mtab{flex:0 0 auto;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px;border-radius:var(--r-md);background:var(--ink-05);color:var(--ink);text-decoration:none}
+.mtab .emoji{font-size:22px;line-height:1}
+.mtab .lbl{font-size:11px;font-weight:700;color:var(--ink-70);white-space:nowrap}
+.mtab.active{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(34,24,28,.18)}
+.mtab.active .lbl{color:rgba(255,255,255,.85)}
+
+/* Results moment cards */
+.mres-head{padding:4px 20px 10px;display:flex;align-items:baseline;justify-content:space-between}
+.mres-head h3{font-family:var(--ff-ui);font-weight:800;font-size:15px;letter-spacing:-.01em}
+.mres-head .count{font-size:11px;font-weight:700;color:var(--ink-40);letter-spacing:.04em}
+.mres-row{display:flex;gap:12px;overflow-x:auto;padding:0 20px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.mres-row::-webkit-scrollbar{display:none}
+.mres-row .mc{flex:0 0 72%;scroll-snap-align:start;background:#fff;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm);display:block;text-decoration:none;color:inherit}
+.mres-row .mc .ph{aspect-ratio:16/11;background:linear-gradient(135deg,#D9A441,#8A5A1F);position:relative}
+.mres-row .mc .ph.b{background:linear-gradient(135deg,#C5A386,#5D3D24)}
+.mres-row .mc .ph .openp{position:absolute;bottom:10px;left:10px;padding:5px 10px;background:rgba(255,255,255,.92);border-radius:999px;font-size:10px;font-weight:800;color:#137C3E;display:inline-flex;align-items:center;gap:5px}
+.mres-row .mc .ph .openp .od{width:5px;height:5px;border-radius:50%;background:#137C3E}
+.mres-row .mc .ph .heart{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.88);display:grid;place-items:center;font-size:14px}
+.mres-row .mc .body{padding:12px 14px 14px}
+.mres-row .mc .n{font-family:var(--ff-ui);font-weight:800;font-size:16px;margin-bottom:3px}
+.mres-row .mc .m{font-size:11px;color:var(--ink-70);display:flex;gap:6px;align-items:center}
+.mres-row .mc .m .tag{background:var(--corallo-soft);color:var(--corallo-ink);font-weight:700;font-size:10px;padding:3px 7px;border-radius:999px}
+.mres-row .mc.more{flex:0 0 56%;background:linear-gradient(135deg,var(--ink) 0%,#3d2f36 100%);color:#fff;border-color:rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 14px;text-align:center;min-height:200px}
+.mres-row .mc.more .plus{width:48px;height:48px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;font-size:24px;font-weight:700;color:#fff;box-shadow:0 8px 20px rgba(232,69,60,.4)}
+.mres-row .mc.more .t{font-family:var(--ff-ui);font-weight:800;font-size:14px;color:#fff;line-height:1.15}
+.mres-row .mc.more .s{font-size:11px;color:rgba(255,255,255,.5);font-weight:600}
+
+/* Map cta inline */
+.map-cta{margin:6px 20px 22px;position:relative;display:grid;grid-template-columns:50px 1fr auto;gap:12px;align-items:center;background:linear-gradient(135deg,#2C5E4A 0%,#173D30 100%);color:#fff;border-radius:var(--r-lg);padding:14px 16px;overflow:hidden;text-decoration:none}
+.map-cta::after{content:"";position:absolute;inset:0;background:radial-gradient(200px 80px at 80% 30%,rgba(255,255,255,.08),transparent 60%);pointer-events:none}
+.map-cta .pin-ic{width:50px;height:50px;border-radius:13px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:20px;position:relative;z-index:1}
+.map-cta .txt{position:relative;z-index:1}
+.map-cta .txt .t{font-family:var(--ff-ui);font-weight:800;font-size:13.5px;line-height:1.2;margin-bottom:2px}
+.map-cta .txt .s{font-size:11px;color:rgba(255,255,255,.72)}
+.map-cta .arr{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;background:var(--corallo);display:grid;place-items:center;font-size:15px;font-weight:800}
+
+.divider-badge{margin:22px 20px 2px;text-align:center;color:var(--ink-40);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.divider-badge::before,.divider-badge::after{content:"";flex:1;height:1px;background:var(--ink-15)}
+
+/* Sponsor banner */
+.sp-wrap{padding:14px 20px 0}
+.sp-wrap.bad{padding:8px 16px 0}
+.sp-card{position:relative;background:var(--ink);color:#fff;border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-md)}
+.sp-photo{height:170px;position:relative;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%),linear-gradient(135deg,#D4843A 0%,#8A4420 55%,#3A1D0F 100%)}
+.sp-photo::after{content:"";position:absolute;inset:0;background:radial-gradient(500px 200px at 20% 20%,rgba(255,255,255,.1),transparent 60%)}
+.sp-adlabel{position:absolute;top:12px;left:12px;padding:5px 10px;background:rgba(255,255,255,.16);backdrop-filter:blur(14px);color:rgba(255,255,255,.9);border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;border:1px solid rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:6px}
+.sp-adlabel::before{content:"✦";color:var(--oro)}
+.sp-save{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.4);backdrop-filter:blur(14px);display:grid;place-items:center;font-size:14px;color:#fff;border:1px solid rgba(255,255,255,.14)}
+.sp-cat{position:absolute;bottom:14px;left:14px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.85);display:inline-flex;align-items:center;gap:6px}
+.sp-cat .bub{width:5px;height:5px;border-radius:50%;background:var(--corallo)}
+.sp-body{padding:18px}
+.sp-title{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.02em;line-height:1.05;margin-bottom:8px}
+.sp-sub{font-size:12px;color:rgba(255,255,255,.6);line-height:1.45;margin-bottom:10px}
+.sp-meta{font-size:11px;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:14px}
+.sp-ctas{display:grid;grid-template-columns:1fr auto;gap:8px}
+.btn-d{padding:13px 14px;background:var(--corallo);color:#fff;border-radius:999px;font-size:13px;font-weight:800;text-align:center;text-decoration:none;box-shadow:0 8px 20px rgba(232,69,60,.35);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-d .p{background:rgba(255,255,255,.25);padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}
+.btn-e{padding:13px 16px;background:transparent;border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn-e::after{content:"→"}
+
+/* =========== AI CHAT · Chiedi a Bi =========== */
+.ai-wrap{padding:22px 20px 0}
+.ai-wrap.bad{padding:16px 16px 0}
+.ai-card{position:relative;background:var(--white);border:1px solid var(--ink-05);border-radius:var(--r-xl);padding:22px 20px 20px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.ai-card.bad{border-radius:var(--r-lg);padding:18px 18px 18px;box-shadow:none;border-color:rgba(34,24,28,.08)}
+.ai-card::before{content:"";position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(232,69,60,.1),transparent 60%);border-radius:50%}
+.ai-card.bad::before{display:none}
+.ai-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative}
+.ai-head.bad{gap:10px;margin-bottom:10px}
+.ai-bi-av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:22px;box-shadow:0 6px 16px rgba(232,69,60,.35);flex:0 0 48px;position:relative}
+.ai-bi-av.bad{width:38px;height:38px;font-size:18px;flex:0 0 38px;box-shadow:none}
+.ai-bi-av .spark{position:absolute;top:3px;right:3px;width:10px;height:10px;background:var(--oro);border-radius:50%;border:2px solid #fff}
+.ai-head .t{font-family:var(--ff-ui);font-weight:900;font-size:18px;letter-spacing:-.01em;line-height:1.1}
+.ai-head.bad .t{font-size:15px}
+.ai-head .s{font-size:12px;color:var(--ink-70);margin-top:3px;line-height:1.35}
+.ai-head.bad .s{font-size:11px}
+
+.ai-prompts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px;position:relative}
+.ai-chip{padding:7px 12px;background:var(--corallo-wash);color:var(--corallo-ink);border-radius:999px;font-size:11px;font-weight:700;border:1px solid rgba(232,69,60,.18)}
+.ai-chip.bad{padding:5px 10px;font-size:10px;border-radius:999px;background:rgba(232,69,60,.08);border:none;color:var(--corallo-ink)}
+
+.ai-input-wrap{margin-bottom:12px}
+.ai-input{width:100%;padding:14px 16px;border-radius:var(--r-md);background:var(--cream);border:1px solid var(--ink-15);font-family:var(--ff-ui);font-weight:500;font-size:14px;color:var(--ink);resize:none;min-height:80px;line-height:1.4}
+.ai-input.bad{min-height:56px;padding:10px 12px;background:transparent;border:1px solid var(--ink-05);font-size:12px}
+.ai-input::placeholder{color:var(--ink-40);font-style:italic}
+.ai-actions{display:flex;gap:8px;align-items:center}
+.ai-hint{flex:1;font-size:11px;color:var(--ink-40);font-weight:600}
+.ai-hint.bad{font-size:10px}
+.ai-submit{padding:11px 18px;background:var(--ink);color:#fff;border-radius:999px;font-size:13px;font-weight:800;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 6px 14px rgba(34,24,28,.2)}
+.ai-submit.bad{padding:8px 14px;font-size:11px;box-shadow:none}
+.ai-submit::after{content:"→"}
+
+/* =========== Conosci un posto · Suggerisci =========== */
+.suggest-wrap{padding:20px 20px 20px}
+.suggest-wrap.bad{padding:14px 16px 18px}
+.suggest{position:relative;overflow:hidden;background:var(--ink);color:#fff;border-radius:var(--r-xl);padding:22px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+.suggest.bad{border-radius:var(--r-lg);padding:18px 16px;grid-template-columns:1fr auto;gap:10px}
+.suggest::before{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(232,69,60,.25),transparent 70%);border-radius:50%}
+.suggest.bad::before{display:none}
+.suggest-body{position:relative;z-index:1}
+.suggest-title{font-family:var(--ff-ui);font-weight:900;font-size:18px;line-height:1.15;letter-spacing:-.01em;margin-bottom:6px;max-width:220px}
+.suggest.bad .suggest-title{font-size:15px}
+.suggest-sub{font-size:12px;color:rgba(255,255,255,.65);line-height:1.35;max-width:220px}
+.suggest.bad .suggest-sub{font-size:11px}
+.suggest-cta{padding:11px 14px;background:var(--corallo);color:#fff;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;position:relative;z-index:1}
+.suggest-cta::after{content:" →"}
+.suggest.bad .suggest-cta{padding:8px 12px;font-size:11px}
+
+/* =========== FOOTER =========== */
+.footer{padding:30px 20px 100px;text-align:center}
+.footer.bad{padding:18px 16px 100px;text-align:left}
+.footer-logo{margin-bottom:14px}
+.footer-logo.bad{margin-bottom:10px}
+.footer-logo .wm{font-family:var(--ff-mark);font-size:28px;color:var(--ink);letter-spacing:.01em;line-height:1}
+.footer-logo.bad .wm{font-size:20px}
+.footer-logo .by{font-size:10px;font-weight:700;letter-spacing:.2em;color:var(--ink-40);text-transform:uppercase;margin-top:4px}
+.footer-links{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:12px;font-weight:700;margin-bottom:14px}
+.footer-links.bad{gap:8px;justify-content:flex-start;font-size:10px;flex-wrap:wrap;margin-bottom:10px}
+.footer-links a{color:var(--ink-70);text-decoration:none}
+.footer-copy{font-size:11px;color:var(--ink-40)}
+.footer-copy.bad{font-size:10px;text-align:left}
+
+/* Nav bottom */
+.nav-b{position:absolute;left:14px;right:14px;bottom:18px;height:64px;border-radius:999px;display:flex;align-items:center;padding:6px;z-index:40;background:rgba(255,255,255,.8);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 14px 32px rgba(34,24,28,.14)}
+.nav-b a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#141414;text-decoration:none;padding:8px 4px;border-radius:28px;font-size:10px;font-weight:700}
+.nav-b a .ic{font-size:18px}
+.nav-b a.active{background:rgba(240,238,234,.92);border:1px solid rgba(34,24,28,.12)}
+
+/* Notes */
+.notes{max-width:1000px;color:#fff;margin:30px auto 0}
+.notes h3{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--corallo);margin-bottom:14px;text-align:center}
+.fix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.fix-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 20px}
+.fix-card .n{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--corallo);text-transform:uppercase;margin-bottom:6px}
+.fix-card h4{font-family:var(--ff-ui);font-weight:800;font-size:15px;color:#fff;margin-bottom:8px;line-height:1.3}
+.fix-card p{font-size:13px;color:rgba(255,255,255,.7);line-height:1.55}
+.fix-card p b{color:#fff}
+.fix-card code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;color:#FFE3A5}
+
+@media (max-width:960px){
+  .phone{transform:scale(.82);transform-origin:top center}
+}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="kick"><span>✦</span> Mobile fixes · home live · full scroll</div>
+  <h1>Home live · fix + redesign contestuale integrati</h1>
+  <p>A sinistra lo stato attuale della home chiamamibi.com mobile con i bug evidenziati. A destra la <b>home fixata + nuovo blocco orologio & momenti</b> inserito al posto giusto. È l'anteprima di come sarà la home finale con fix + redesign PR17 insieme.</p>
+  <div class="fixlist">
+    <span class="fix-chip">Drop foto fallback + countdown pill</span>
+    <span class="fix-chip">Peek 2ª card</span>
+    <span class="fix-chip">Padding 20px uniforme</span>
+    <span class="fix-chip">Category pills · fade gradient</span>
+    <span class="fix-chip">NEW · Orologio + 5 momenti</span>
+    <span class="fix-chip">NEW · Locali filtrati per ora</span>
+    <span class="fix-chip">Mappa CTA</span>
+    <span class="fix-chip">Chat AI · card arricchita</span>
+    <span class="fix-chip">Footer centrato + respiro</span>
+  </div>
+</div>
+
+<div class="phones-row">
+  <!-- ============= PHONE BAD ============= -->
+  <div class="phone-col">
+    <div class="frame-label bad"><span>✗ OGGI</span> chiamamibi.com live</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar"><span>18:42</span><span style="opacity:.4">·····</span></div>
+
+        <!-- Top bar -->
+        <div class="topbar bad-pad">
+          <div class="logo"><div class="l1">CHIAMAMI BI</div><div class="l2">la guida di bi</div></div>
+          <div class="city-pill"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+          <div class="avatar-sm">A</div>
+        </div>
+
+        <!-- Drop banner BAD -->
+        <div style="position:relative">
+          <div class="drop-bad">
+            <div>
+              <div class="lbl">DROP LIVE</div>
+              <div class="pct">-20%<br>da Al Brasà.</div>
+              <div class="meta">Barbecue · Via Saluzzo 77 · Ristorante di carne</div>
+              <div class="sub">20% sul totale · Valido solo in settimana</div>
+              <div class="ctas">
+                <a class="c-dark" href="#">Vai al drop →</a>
+                <a class="c-out" href="#">Scopri Al Brasà</a>
+              </div>
+            </div>
+            <div class="drop-bad-photo">
+              <div class="countdown">0 / 10 scadrà sbloccati il 30 apr</div>
+            </div>
+          </div>
+          <div class="annot" style="top:84px;right:2px">Foto vuota + countdown illeggibile</div>
+        </div>
+
+        <!-- Category pills BAD -->
+        <div style="position:relative">
+          <div class="cats-bad">
+            <div class="cb active"><div class="bubble">🥂</div><div class="lbl">Aperitivo</div></div>
+            <div class="cb"><div class="bubble">🍷</div><div class="lbl">Piemontese</div></div>
+            <div class="cb"><div class="bubble">🍕</div><div class="lbl">Pizza</div></div>
+            <div class="cb"><div class="bubble">🍣</div><div class="lbl">Giapponese</div></div>
+            <div class="cb"><div class="bubble">🐟</div><div class="lbl">Pesce</div></div>
+            <div class="cb"><div class="bubble">☕</div><div class="lbl">Colazione</div></div>
+            <div class="cb"><div class="bubble">🥩</div><div class="lbl">Carne</div></div>
+          </div>
+          <div class="annot left" style="top:10px;left:2px">Bubble strette + no fade hint</div>
+        </div>
+
+        <!-- Ultimi aggiunti BAD -->
+        <div style="position:relative">
+          <div class="sec-head bad">
+            <h2>Ultimi aggiunti</h2>
+            <a class="all" href="#">→</a>
+          </div>
+          <div class="row-bad">
+            <div class="rc">
+              <div class="ph"><div class="pill-new">NEW</div><div class="heart">♡</div></div>
+              <div class="body"><div class="n">Africai</div><div class="m"><span class="tag">AFRICANO</span>Corso Vigevano 52 · €€€</div></div>
+            </div>
+            <div class="rc">
+              <div class="ph alt"><div class="pill-d">-20%</div><div class="heart">♡</div></div>
+              <div class="body"><div class="n">Al Brasà</div><div class="m"><span class="tag">BARBECUE</span>Via Saluzzo</div></div>
+            </div>
+          </div>
+          <div class="annot left" style="top:40px;left:2px">Header attaccato al bordo · cards 95%</div>
+        </div>
+
+        <!-- Sponsor BAD (padding 16) -->
+        <div style="position:relative">
+          <div class="sp-wrap bad">
+            <div class="sp-card">
+              <div class="sp-photo">
+                <div class="sp-adlabel">Annuncio</div>
+                <div class="sp-save">♡</div>
+                <div class="sp-cat"><span class="bub"></span>Burger · Vanchiglia</div>
+              </div>
+              <div class="sp-body">
+                <div class="sp-title">Smashers</div>
+                <div class="sp-sub">Smash burger senza compromessi. Doppio con cheddar.</div>
+                <div class="sp-meta">€€ · Aperto ora · fino 23:30</div>
+                <div class="sp-ctas">
+                  <a class="btn-d" href="#">Attiva sconto<span class="p">-15%</span></a>
+                  <a class="btn-e" href="#">Scopri</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI chat BAD (card piccola, avatar piccolo, textarea minimale) -->
+        <div style="position:relative">
+          <div class="ai-wrap bad">
+            <div class="ai-card bad">
+              <div class="ai-head bad">
+                <div class="ai-bi-av bad">B</div>
+                <div>
+                  <div class="t">Chiedi a Bi</div>
+                  <div class="s">Dimmi cosa ti va, ti suggerisco io.</div>
+                </div>
+              </div>
+              <div class="ai-prompts">
+                <span class="ai-chip bad">✨ un cinese aperto stasera</span>
+                <span class="ai-chip bad">✨ sotto i 20€</span>
+                <span class="ai-chip bad">✨ brunch San Salvario</span>
+              </div>
+              <div class="ai-input-wrap">
+                <textarea class="ai-input bad" placeholder="es. un cinese aperto a cena che costi poco ma abbia una buona carta vini..."></textarea>
+              </div>
+              <div class="ai-actions">
+                <div class="ai-hint bad">Bi incrocia la tua voglia con la Guida</div>
+                <button class="ai-submit bad">Chiedi a Bi</button>
+              </div>
+            </div>
+          </div>
+          <div class="annot" style="top:30px;right:2px">Block schiacciato · avatar piccolo</div>
+        </div>
+
+        <!-- Suggest BAD -->
+        <div style="position:relative">
+          <div class="suggest-wrap bad">
+            <div class="suggest bad">
+              <div class="suggest-body">
+                <div class="suggest-title">Conosci un posto che manca?</div>
+                <div class="suggest-sub">Scrivici nome + zona. Se è buono, entra.</div>
+              </div>
+              <a class="suggest-cta" href="#">Suggerisci</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer BAD (left aligned + no respiro) -->
+        <div class="footer bad">
+          <div class="footer-logo bad">
+            <div class="wm">LA GUIDA DI BI</div>
+            <div class="by">BY CHIAMAMI BI</div>
+          </div>
+          <div class="footer-links bad">
+            <a href="#">Su di me</a>
+            <a href="#">Come scelgo</a>
+            <a href="#">Per i locali</a>
+            <a href="#">Privacy</a>
+            <a href="#">Termini</a>
+          </div>
+          <div class="footer-copy bad">© 2026 Chiamami Bi · Torino, Italia</div>
+        </div>
+
+        <div class="nav-b">
+          <a class="active" href="#"><span class="ic">🏠</span><span>Home</span></a>
+          <a href="#"><span class="ic">🗺️</span><span>Esplora</span></a>
+          <a href="#"><span class="ic">%</span><span>Sconti</span></a>
+          <a href="#"><span class="ic">♡</span><span>Salvati</span></a>
+          <a href="#"><span class="ic">○</span><span>Profilo</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============= PHONE GOOD ============= -->
+  <div class="phone-col">
+    <div class="frame-label good"><span>✓ FIXED</span> 6 fix chirurgici</div>
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar"><span>18:42</span><span style="opacity:.4">·····</span></div>
+
+        <!-- Top bar -->
+        <div class="topbar">
+          <div class="logo"><div class="l1">CHIAMAMI BI</div><div class="l2">la guida di bi</div></div>
+          <div class="city-pill"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+          <div class="avatar-sm">A</div>
+        </div>
+
+        <!-- Drop GOOD -->
+        <div style="position:relative">
+          <div class="drop-good">
+            <div class="drop-good-photo">
+              <div class="drop-good-lbl"><span class="bl"></span>Drop live</div>
+              <div class="drop-good-progress">0 / 10 · 2g 14h</div>
+              <div class="drop-good-category">Barbecue · San Salvario</div>
+            </div>
+            <div class="drop-good-body">
+              <div class="drop-good-pct">-20%</div>
+              <div class="drop-good-loc">da Al Brasà</div>
+              <div class="drop-good-sub">Via Saluzzo 77 · Ristorante di carne</div>
+              <div class="drop-good-conditions">Sconto sul totale · valido solo in settimana</div>
+              <div class="drop-good-meta">
+                <span>0 riscatti</span>
+                <div class="bar"><i></i></div>
+                <span class="t-b">10 posti</span>
+              </div>
+              <div class="drop-good-ctas">
+                <a class="c1" href="#">Vai al drop</a>
+                <a class="c2" href="#">Scopri</a>
+              </div>
+            </div>
+          </div>
+          <div class="annot good-a" style="top:14px;right:2px">Fallback gradient + countdown pill</div>
+        </div>
+
+        <!-- Category GOOD -->
+        <div class="cats-wrap">
+          <div class="cats">
+            <a class="cat-b active" href="#"><div class="bubble">🥂</div><div class="lbl">Aperitivo</div></a>
+            <a class="cat-b" href="#"><div class="bubble">🍷</div><div class="lbl">Piemontese</div></a>
+            <a class="cat-b" href="#"><div class="bubble">🍕</div><div class="lbl">Pizza</div></a>
+            <a class="cat-b" href="#"><div class="bubble">🍣</div><div class="lbl">Giapponese</div></a>
+            <a class="cat-b" href="#"><div class="bubble">🐟</div><div class="lbl">Pesce</div></a>
+            <a class="cat-b" href="#"><div class="bubble">☕</div><div class="lbl">Colazione</div></a>
+            <a class="cat-b" href="#"><div class="bubble">🥩</div><div class="lbl">Carne</div></a>
+          </div>
+        </div>
+
+        <!-- ============ NEW: ORA + MOMENTI (redesign) ============ -->
+        <div style="position:relative">
+          <div class="time-hero">
+            <div class="time-tag"><span class="pulse"></span>Aperitivo</div>
+            <div class="time-clock">18:42</div>
+            <div class="time-question">È l'ora dell'aperitivo. Ce l'hai un posto in mente?</div>
+            <div class="time-sub">Ti mostro dove andare ora, a Torino.</div>
+          </div>
+          <div class="moment-tabs">
+            <a class="mtab" href="#"><span class="emoji">🥐</span><span class="lbl">Colazione</span></a>
+            <a class="mtab" href="#"><span class="emoji">🍝</span><span class="lbl">Pranzo</span></a>
+            <a class="mtab active" href="#"><span class="emoji">🥂</span><span class="lbl">Aperitivo</span></a>
+            <a class="mtab" href="#"><span class="emoji">🍷</span><span class="lbl">Cena</span></a>
+            <a class="mtab" href="#"><span class="emoji">🍸</span><span class="lbl">Dopo cena</span></a>
+          </div>
+          <div class="mres-head">
+            <h3>Aperitivo ora · aperti fino dopo le 20</h3>
+            <span class="count">23 locali</span>
+          </div>
+          <div class="mres-row">
+            <a class="mc" href="#">
+              <div class="ph"><div class="heart">♡</div><div class="openp"><span class="od"></span>Aperto · fino 21:00</div></div>
+              <div class="body"><div class="n">Scaldapiatti</div><div class="m"><span class="tag">Aperitivo</span>·Quadrilatero · €€</div></div>
+            </a>
+            <a class="mc" href="#">
+              <div class="ph b"><div class="heart">♡</div><div class="openp"><span class="od"></span>Aperto · fino 23:00</div></div>
+              <div class="body"><div class="n">Banco Vini</div><div class="m"><span class="tag">Enoteca</span>·Vanchiglia · €€</div></div>
+            </a>
+            <a class="mc more" href="#">
+              <div class="plus">+</div>
+              <div class="t">Vedi altri 21</div>
+              <div class="s">Sulla mappa</div>
+            </a>
+          </div>
+          <a class="map-cta" href="#">
+            <div class="pin-ic">📍</div>
+            <div class="txt">
+              <div class="t">Mostrameli sulla mappa</div>
+              <div class="s">23 aperti per aperitivo, ora</div>
+            </div>
+            <div class="arr">→</div>
+          </a>
+          <div class="annot good-a" style="top:18px;right:2px">NEW · orologio + 5 momenti</div>
+        </div>
+
+        <div class="divider-badge">Le novità in Guida</div>
+
+        <!-- Ultimi aggiunti GOOD -->
+        <div style="position:relative">
+          <div class="sec-head">
+            <h2>Ultimi aggiunti</h2>
+            <a class="all" href="#">→</a>
+          </div>
+          <div class="row-good">
+            <div class="rc">
+              <div class="ph"><div class="pill-new">NEW</div><div class="heart">♡</div></div>
+              <div class="body"><div class="n">Africai</div><div class="m"><span class="tag">AFRICANO</span>Corso Vigevano 52 · €€€</div></div>
+            </div>
+            <div class="rc">
+              <div class="ph alt"><div class="pill-d">-20%</div><div class="heart">♡</div></div>
+              <div class="body"><div class="n">Al Brasà</div><div class="m"><span class="tag">BARBECUE</span>Via Saluzzo · €€</div></div>
+            </div>
+            <div class="rc">
+              <div class="ph alt2"><div class="heart">♡</div></div>
+              <div class="body"><div class="n">Smashers</div><div class="m"><span class="tag">BURGER</span>Vanchiglia · €€</div></div>
+            </div>
+          </div>
+          <div class="annot good-a" style="top:34px;right:2px">Peek 2ª card · baseline 20px</div>
+        </div>
+
+        <!-- Sponsor GOOD (padding 20) -->
+        <div class="sp-wrap">
+          <div class="sp-card">
+            <div class="sp-photo">
+              <div class="sp-adlabel">Annuncio</div>
+              <div class="sp-save">♡</div>
+              <div class="sp-cat"><span class="bub"></span>Burger · Vanchiglia</div>
+            </div>
+            <div class="sp-body">
+              <div class="sp-title">Smashers</div>
+              <div class="sp-sub">Smash burger senza compromessi. Doppio con cheddar, secondo me.</div>
+              <div class="sp-meta">€€ · Aperto ora · fino 23:30</div>
+              <div class="sp-ctas">
+                <a class="btn-d" href="#">Attiva sconto<span class="p">-15%</span></a>
+                <a class="btn-e" href="#">Scopri</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI chat GOOD -->
+        <div style="position:relative">
+          <div class="ai-wrap">
+            <div class="ai-card">
+              <div class="ai-head">
+                <div class="ai-bi-av" style="position:relative">B<span class="spark"></span></div>
+                <div>
+                  <div class="t">Chiedi a Bi</div>
+                  <div class="s">Dimmi cosa ti va, ti suggerisco io.</div>
+                </div>
+              </div>
+              <div class="ai-prompts">
+                <span class="ai-chip">✨ un cinese aperto stasera</span>
+                <span class="ai-chip">✨ sotto i 20€</span>
+                <span class="ai-chip">✨ brunch San Salvario</span>
+              </div>
+              <div class="ai-input-wrap">
+                <textarea class="ai-input" placeholder="es. un cinese aperto a cena che costi poco ma abbia una buona carta vini…"></textarea>
+              </div>
+              <div class="ai-actions">
+                <div class="ai-hint">Bi incrocia la tua voglia con la Guida</div>
+                <button class="ai-submit">Chiedi a Bi</button>
+              </div>
+            </div>
+          </div>
+          <div class="annot good-a" style="top:30px;right:2px">Card piena + avatar 48px con spark</div>
+        </div>
+
+        <!-- Suggest GOOD -->
+        <div class="suggest-wrap">
+          <div class="suggest">
+            <div class="suggest-body">
+              <div class="suggest-title">Conosci un posto che manca?</div>
+              <div class="suggest-sub">Scrivimi nome + zona. Se è buono, entra.</div>
+            </div>
+            <a class="suggest-cta" href="#">Suggerisci</a>
+          </div>
+        </div>
+
+        <!-- Footer GOOD (centered + respiro) -->
+        <div class="footer">
+          <div class="footer-logo">
+            <div class="wm">LA GUIDA DI BI</div>
+            <div class="by">BY CHIAMAMI BI</div>
+          </div>
+          <div class="footer-links">
+            <a href="#">Su di me</a>
+            <a href="#">Come scelgo</a>
+            <a href="#">Per i locali</a>
+            <a href="#">Privacy</a>
+            <a href="#">Termini</a>
+          </div>
+          <div class="footer-copy">© 2026 Chiamami Bi · Torino, Italia</div>
+        </div>
+
+        <div class="nav-b">
+          <a class="active" href="#"><span class="ic">🏠</span><span>Home</span></a>
+          <a href="#"><span class="ic">🗺️</span><span>Esplora</span></a>
+          <a href="#"><span class="ic">%</span><span>Sconti</span></a>
+          <a href="#"><span class="ic">♡</span><span>Salvati</span></a>
+          <a href="#"><span class="ic">○</span><span>Profilo</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== Fix descriptions ============== -->
+<div class="notes">
+  <h3>✦ 6 fix · da footer allo status bar</h3>
+  <div class="fix-grid">
+    <div class="fix-card">
+      <div class="n">Fix 01</div>
+      <h4>Drop banner · foto fallback + countdown pill</h4>
+      <p>Foto a <b>altezza fissa 156px</b> con gradient brand di fallback (se l'immagine manca/non carica). Countdown esce dalla foto e diventa <b>pill in alto a destra</b> con backdrop-blur. Progress bar visiva nel body (<code>0 riscatti / 10 posti</code>). Tutto leggibile anche con foto broken.</p>
+    </div>
+    <div class="fix-card">
+      <div class="n">Fix 02</div>
+      <h4>Ultimi aggiunti · peek della 2ª card</h4>
+      <p>Cards al <b>82% viewport</b> invece che 95%. Si vede un pezzo della seconda a destra → hint visivo "c'è altro da scrollare". Pattern Instagram/App Store. <code>scroll-snap-type: x mandatory</code>.</p>
+    </div>
+    <div class="fix-card">
+      <div class="n">Fix 03</div>
+      <h4>Padding sinistro uniformato a 20px</h4>
+      <p>Tutti gli header sezione (<code>h2</code>), banner, prime card, footer → <b>baseline 20px</b>. Niente più "Ultimi aggiunti" a 8px e "Drop live" a 20px. Colonna di allineamento coerente su tutto lo scroll.</p>
+    </div>
+    <div class="fix-card">
+      <div class="n">Fix 04</div>
+      <h4>Category pills · fade gradient + bubble +8px</h4>
+      <p>Bubble da 50px a <b>58px</b> (tap target più comodo). <b>Fade gradient</b> a destra che sfuma verso page color → "c'è da scorrere". Gap uniforme 10px. Label Poppins 700.</p>
+    </div>
+    <div class="fix-card">
+      <div class="n">Fix 05</div>
+      <h4>Chat "Chiedi a Bi" · block arricchito</h4>
+      <p>Avatar Bi da 38px a <b>48px</b>, gradient corallo con <b>spark oro</b>, glow radiale dentro la card, textarea più alta (56→80px), chip pill con bordo corallo leggero, CTA "Chiedi a Bi" con shadow. Il block smette di sembrare un footer-form e diventa un <b>protagonista</b> della home.</p>
+    </div>
+    <div class="fix-card">
+      <div class="n">Fix 06</div>
+      <h4>Footer · centrato + respiro</h4>
+      <p>Wordmark <b>Alfa Slab One 28px centrato</b> (prima era 20px in alto a sinistra schiacciato). Links Su di me/Come scelgo/Per i locali/Privacy/Termini in riga centrata con gap 14px. Copyright centrato. Padding 30px top. Non più "qualsiasi cosa attaccata a sinistra".</p>
+    </div>
+    <div class="fix-card" style="background:rgba(232,69,60,.06);border-color:rgba(232,69,60,.25)">
+      <div class="n" style="color:#FFAFA8">Bonus · copy</div>
+      <h4>"Scrivici" → "Scrivimi" nel suggerisci</h4>
+      <p>Il blocco "Conosci un posto che manca?" attualmente dice <b>"Scrivici nome + zona"</b> — plurale team. Ma il form è in voce Bi prima persona (come tutta la home utenti finali). Cambio a <b>"Scrivimi nome + zona. Se è buono, entra."</b> Coerente con manifesto voce Bi.</p>
+    </div>
+    <div class="fix-card" style="background:rgba(22,163,74,.06);border-color:rgba(22,163,74,.28)">
+      <div class="n" style="color:#6FE59B">NEW · PR17</div>
+      <h4>Orologio + 5 momenti giornata</h4>
+      <p>Dopo le pill categoria entra un blocco nuovo: tag <b>"Aperitivo"</b> pulsante, orologio <b>18:42 Alfa Slab One 84px</b>, domanda contestuale ("È l'ora dell'aperitivo. Ce l'hai un posto in mente?"), 5 pill momento in scroll-x (Colazione/Pranzo/Aperitivo/Cena/Dopo cena), con quella attiva ink-pieno. La domanda e l'active pill cambiano in base all'ora di sistema.</p>
+    </div>
+    <div class="fix-card" style="background:rgba(22,163,74,.06);border-color:rgba(22,163,74,.28)">
+      <div class="n" style="color:#6FE59B">NEW · PR17</div>
+      <h4>Locali filtrati per momento + card "+"</h4>
+      <p>Sotto l'orologio, header <b>"Aperitivo ora · aperti fino dopo le 20"</b> con 2 card locale scroll-x (pill "Aperto · fino 21:00") + card "+" finale scura con "Vedi altri 21 · Sulla mappa". Sotto, CTA verde "Mostrameli sulla mappa" che porta a Esplora pre-filtrato per momento. Divider editoriale <b>"Le novità in Guida"</b> separa questo blocco dalla sezione "Ultimi aggiunti" sotto (che resta come news editoriale distinta).</p>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px;margin:30px auto 0;text-align:center;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.1em">
+  v4 · Mobile fixes full scroll · 24/04/2026 · mini-PR indipendente da PR17
+</div>
+
+</body>
+</html>
