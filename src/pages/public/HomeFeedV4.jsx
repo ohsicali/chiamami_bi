@@ -72,7 +72,7 @@ function TopBar({ user }) {
             color: 'var(--color-corallo)',
           }}
         >
-          CHIAMAMI BI
+          LA GUIDA DI BI
         </span>
         <span
           style={{
@@ -85,7 +85,7 @@ function TopBar({ user }) {
             textTransform: 'uppercase',
           }}
         >
-          la guida di bi
+          by Chiamami Bi
         </span>
       </Link>
 
@@ -549,6 +549,17 @@ export default function HomeFeedV4() {
         .hfv4-moment-tabs::-webkit-scrollbar,
         .hfv4-cats-row::-webkit-scrollbar,
         .hfv4-cards-row::-webkit-scrollbar { display: none; }
+
+        /* iOS Safari ignora padding-left sui container overflow-x:auto.
+           Si usa margin-left sul primo figlio per garantire l'indentatura. */
+        @media (max-width: 1023px) {
+          .hfv4-cats-row,
+          .hfv4-cards-row,
+          .hfv4-results-row { padding-left: 0 !important; }
+          .hfv4-cats-row > *:first-child,
+          .hfv4-cards-row > *:first-child,
+          .hfv4-results-row > *:first-child { margin-left: 20px; }
+        }
         .hfv4-cats-wrap { position: relative; }
         .hfv4-cats-wrap::after {
           content: "";
