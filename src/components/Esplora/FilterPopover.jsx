@@ -41,6 +41,16 @@ export default function FilterPopover({
   useEffect(() => { if (open) setDraft(cloneFilters(filters)) // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  // Auto-scroll alla sezione focus (Step 9 categorie shortcut)
+  useEffect(() => {
+    if (!open || !focusSection) return
+    const t = setTimeout(() => {
+      const el = document.querySelector('[data-esplora-popover-section="' + focusSection + '"]')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 220)
+    return () => clearTimeout(t)
+  }, [open, focusSection])
+
   const liveCount = useMemo(() => {
     if (!open) return 0
     return countMatching(allRestaurants, draft, userPosition, discountIds)
@@ -122,7 +132,7 @@ export default function FilterPopover({
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 20px 12px', minHeight: 0 }}>
-          <Section title="Categoria" autoFocus={focusSection === 'categories'}>
+          <Section title="Categoria" sectionKey="categories">
             <div style={{
               display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '14px 6px', marginTop: 6,
@@ -139,7 +149,7 @@ export default function FilterPopover({
             </div>
           </Section>
 
-          <Section title="Fascia d'orario" autoFocus={focusSection === 'moment'}>
+          <Section title="Fascia d'orario" sectionKey="moment">
             <PillRow>
               {MOMENT_KEYS.map(k => {
                 const s = MOMENT_SLOTS[k]
@@ -153,7 +163,7 @@ export default function FilterPopover({
             </PillRow>
           </Section>
 
-          <Section title="Dieta e stile" autoFocus={focusSection === 'diet'}>
+          <Section title="Dieta e stile" sectionKey="diet">
             <PillRow>
               {DIETS.map(d => (
                 <ChipPill key={d.slug} on={draft.diet.includes(d.slug)} onClick={() => setDraft(x => toggleArr(x, 'diet', d.slug))}>
@@ -163,7 +173,7 @@ export default function FilterPopover({
             </PillRow>
           </Section>
 
-          <Section title="Fascia prezzo" autoFocus={focusSection === 'price'}>
+          <Section title="Fascia prezzo" sectionKey="price">
             <PillRow>
               {PRICES.map(p => (
                 <ChipPill key={p.n} on={draft.price.includes(p.n)} onClick={() => setDraft(x => toggleArr(x, 'price', p.n))}>
@@ -173,7 +183,7 @@ export default function FilterPopover({
             </PillRow>
           </Section>
 
-          <Section title="Area di ricerca" autoFocus={focusSection === 'area'}>
+          <Section title="Area di ricerca" sectionKey="area">
             <AreaSlider
               valueKm={draft.area ?? AREA_MAX + 1}
               onChange={(km) => setDraft(x => ({ ...x, area: km >= AREA_MAX + 0.001 ? null : km }))}
@@ -229,9 +239,12 @@ export default function FilterPopover({
   )
 }
 
-function Section({ title, children, autoFocus }) {
+function Section({ title, children, sectionKey }) {
   return (
-    <section style={{ marginBottom: 18, scrollMarginTop: 12 }} data-auto-focus={autoFocus || undefined}>
+    <section
+      style={{ marginBottom: 18, scrollMarginTop: 12 }}
+      data-esplora-popover-section={sectionKey || undefined}
+    >
       <h4 style={{
         fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 14,
         letterSpacing: '-0.01em', color: 'var(--color-ink, #22181C)',

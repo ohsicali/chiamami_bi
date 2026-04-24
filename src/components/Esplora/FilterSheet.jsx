@@ -50,6 +50,16 @@ export default function FilterSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  // Auto-scroll alla sezione focus (Step 9 categorie shortcut; estendibile a moment/price/area)
+  useEffect(() => {
+    if (!open || !focusSection) return
+    const t = setTimeout(() => {
+      const el = document.querySelector('[data-esplora-sheet-section="' + focusSection + '"]')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 280) // lascia tempo all'animazione sheet di completarsi
+    return () => clearTimeout(t)
+  }, [open, focusSection])
+
   // Live count
   const liveCount = useMemo(() => {
     if (!open) return 0
@@ -152,7 +162,7 @@ export default function FilterSheet({
             padding: '0 20px 160px',
           }}>
             {/* 1. Categoria */}
-            <Section title="Categoria" autoFocus={focusSection === 'categories'}>
+            <Section title="Categoria" sectionKey="categories">
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
@@ -172,7 +182,7 @@ export default function FilterSheet({
             </Section>
 
             {/* 2. Fascia d'orario (single-select) */}
-            <Section title="Fascia d'orario" autoFocus={focusSection === 'moment'}>
+            <Section title="Fascia d'orario" sectionKey="moment">
               <PillRow>
                 {MOMENT_KEYS.map(k => {
                   const s = MOMENT_SLOTS[k]
@@ -187,7 +197,7 @@ export default function FilterSheet({
             </Section>
 
             {/* 3. Dieta e stile (multi-select) */}
-            <Section title="Dieta e stile" autoFocus={focusSection === 'diet'}>
+            <Section title="Dieta e stile" sectionKey="diet">
               <PillRow>
                 {DIETS.map(d => (
                   <ChipPill
@@ -202,7 +212,7 @@ export default function FilterSheet({
             </Section>
 
             {/* 4. Fascia prezzo (multi-select) */}
-            <Section title="Fascia prezzo" autoFocus={focusSection === 'price'}>
+            <Section title="Fascia prezzo" sectionKey="price">
               <PillRow>
                 {PRICES.map(p => (
                   <ChipPill
@@ -217,7 +227,7 @@ export default function FilterSheet({
             </Section>
 
             {/* 5. Area di ricerca */}
-            <Section title="Area di ricerca" autoFocus={focusSection === 'area'}>
+            <Section title="Area di ricerca" sectionKey="area">
               <AreaSlider
                 valueKm={draft.area ?? AREA_MAX + 1}
                 onChange={(km) => setDraft(x => ({ ...x, area: km >= AREA_MAX + 0.001 ? null : km }))}
@@ -280,9 +290,12 @@ export default function FilterSheet({
   )
 }
 
-function Section({ title, children, autoFocus }) {
+function Section({ title, children, sectionKey }) {
   return (
-    <section style={{ marginBottom: 22, scrollMarginTop: 20 }} data-auto-focus={autoFocus || undefined}>
+    <section
+      style={{ marginBottom: 22, scrollMarginTop: 20 }}
+      data-esplora-sheet-section={sectionKey || undefined}
+    >
       <h3 style={{
         fontFamily: 'var(--font-sans)',
         fontWeight: 900,
