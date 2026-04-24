@@ -11,21 +11,22 @@ import { Link } from 'react-router-dom'
  *   se il token manca o l'URL fallisce, l'img si nasconde e vediamo il gradient.
  * - Overlay ink gradient al 55% sopra tutto per leggibilità del testo.
  */
-const TORINO_CENTER = [7.6869, 45.0703] // Piazza Castello
-const MAPBOX_STYLE = 'mapbox/streets-v12'
+const TORINO_CENTER = [45.0703, 7.6869] // lat, lng — Piazza Castello
+
+// OpenStreetMap static map — gratuito, nessun token richiesto
+function buildOsmUrl() {
+  const [lat, lng] = TORINO_CENTER
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=13&size=800x400&markers=${lat},${lng},red-pushpin`
+}
 
 export default function MapCta({ activeMoment, count }) {
   const [imgOk, setImgOk] = useState(true)
-  const token = import.meta.env.VITE_MAPBOX_TOKEN
 
   const label = activeMoment
     ? `${count} locali aperti per ${activeMoment} ora`
     : `${count} locali in guida · esplora sulla mappa`
 
-  const [lng, lat] = TORINO_CENTER
-  const staticUrl = token
-    ? `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE}/static/pin-s+EE5C55(${lng},${lat})/${lng},${lat},13,0/800x400@2x?access_token=${token}&logo=false&attribution=false`
-    : null
+  const staticUrl = buildOsmUrl()
 
   return (
     <div className="hfv4-mapcta-wrap" style={{ padding: '8px 16px 26px' }}>
@@ -45,8 +46,8 @@ export default function MapCta({ activeMoment, count }) {
           height: 160,
         }}
       >
-        {/* Layer 1: Mapbox img (nascosto se fallisce) */}
-        {staticUrl && imgOk && (
+        {/* Layer 1: OSM static map (fallback su verde se non carica) */}
+        {imgOk && (
           <img
             src={staticUrl}
             alt=""
@@ -62,8 +63,8 @@ export default function MapCta({ activeMoment, count }) {
           />
         )}
 
-        {/* Layer 2: pattern grid (solo in fallback, sopra verde ma sotto content) */}
-        {(!staticUrl || !imgOk) && (
+        {/* Layer 2: pattern grid (fallback se img non carica) */}
+        {!imgOk && (
           <span
             aria-hidden
             style={{
@@ -78,7 +79,7 @@ export default function MapCta({ activeMoment, count }) {
         )}
 
         {/* Layer 3: overlay ink sopra la mappa per leggibilità */}
-        {staticUrl && imgOk && (
+        {imgOk && (
           <span
             aria-hidden
             style={{
