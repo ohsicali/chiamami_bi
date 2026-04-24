@@ -19,8 +19,10 @@ function formatCountdown(endsAt) {
   const diff = new Date(endsAt).getTime() - Date.now()
   if (diff <= 0) return null
   const totalMinutes = Math.floor(diff / 60000)
-  const hours = Math.floor(totalMinutes / 60)
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
   const minutes = totalMinutes % 60
+  if (days > 0) return `${days}g ${hours}h`
   if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`
   return `${minutes}m`
 }
@@ -168,62 +170,178 @@ function HeroPromo({ featured }) {
     return () => clearInterval(id)
   }, [featured?.endsAt])
   if (!featured) return null
+
   const chipLabel = countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'
   const claimedCount = featured.claimedCount || 0
   const maxQuantity = featured.maxQuantity || null
   const expiresLabel = featured.expiresLabel || null
   const progressPct = maxQuantity ? Math.min(100, Math.round(claimedCount / maxQuantity * 100)) : null
   const showProgress = progressPct != null || !!countdown || !!expiresLabel
+  const mobCountdown = [
+    maxQuantity != null ? `${claimedCount} / ${maxQuantity}` : null,
+    countdown || expiresLabel,
+  ].filter(Boolean).join(' · ')
+
   return (
-    <div className="hfv4-hero-wrap" style={{ padding: '4px 16px 22px' }}>
-      <div className="hfv4-hero-card" style={{ position:'relative', background:'var(--color-corallo)', borderRadius:28, padding:'22px', display:'grid', gridTemplateColumns:'1fr 108px', gap:14, color:'#fff', overflow:'hidden', boxShadow:'0 8px 24px rgba(34,24,28,.08)' }}>
+    <div className="hfv4-hero-wrap" style={{ padding: '4px 20px 22px' }}>
+      <div
+        className="hfv4-hero-card"
+        style={{
+          position: 'relative', background: 'var(--color-corallo)', borderRadius: 28,
+          padding: '22px', display: 'grid', gridTemplateColumns: '1fr 108px', gap: 14,
+          color: '#fff', overflow: 'hidden', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
+        }}
+      >
+        {/* Body: col sinistra desktop, sotto la foto su mobile */}
         <div className="hfv4-hero-body">
-          <span className="hfv4-hero-chip" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 10px', background:'rgba(255,255,255,.18)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', borderRadius:999, fontSize:11, fontWeight:700, letterSpacing:'0.06em', marginBottom:10, width:'fit-content' }}>
-            <span style={{ width:6, height:6, borderRadius:'50%', background:'#fff', animation:'hero-pulse 1.4s infinite' }} />
+          <span
+            className="hfv4-hero-chip"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', background: 'rgba(255,255,255,.18)',
+              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+              borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
+              marginBottom: 10, width: 'fit-content',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'hero-pulse 1.4s infinite' }} />
             {chipLabel}
           </span>
-          <div className="hfv4-hero-title" style={{ fontFamily:'var(--font-sans)', fontWeight:900, fontSize:30, lineHeight:1.02, letterSpacing:'-0.02em', color:'#fff', marginBottom:8, whiteSpace:'pre-line' }}>
+          {/* Desktop: titolo pre-line 30→72px */}
+          <div
+            className="hfv4-hero-title"
+            style={{
+              fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 30,
+              lineHeight: 1.02, letterSpacing: '-0.02em', color: '#fff',
+              marginBottom: 8, whiteSpace: 'pre-line',
+            }}
+          >
             {featured.title}
           </div>
+          {/* Mobile-only: sconto 42px + ristorante 24px separati */}
+          <div className="hfv4-mob-pct" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4 }}>
+            {featured.discountLabel}
+          </div>
+          <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 10, opacity: 0.95 }}>
+            da {featured.restaurantName}
+          </div>
           {featured.restLine && (
-            <div className="hfv4-hero-rest-line" style={{ display:'flex', alignItems:'center', gap:10, fontSize:13, fontWeight:600, color:'rgba(255,255,255,.9)', marginBottom:6 }}>
+            <div className="hfv4-hero-rest-line" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.9)', marginBottom: 6 }}>
               {featured.restLine}
             </div>
           )}
           {featured.subtitle && (
-            <div className="hfv4-hero-sub" style={{ fontSize:13, color:'rgba(255,255,255,.85)', lineHeight:1.4, marginBottom:14, maxWidth:220, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>
+            <div className="hfv4-hero-sub" style={{ fontSize: 13, color: 'rgba(255,255,255,.85)', lineHeight: 1.4, marginBottom: 14, maxWidth: 220, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
               {featured.subtitle}
             </div>
           )}
-          <div className="hfv4-hero-ctas" style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-            <button onClick={() => navigate(featured.href)} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'10px 16px', background:'var(--color-ink)', color:'#fff', borderRadius:999, fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>
+          {/* Mobile-only: progress bar nel body */}
+          {maxQuantity != null && (
+            <div
+              className="hfv4-mob-progress"
+              style={{ display: 'none', alignItems: 'center', gap: 10, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 16, padding: '10px 12px', background: 'rgba(255,255,255,.08)', borderRadius: 10, border: '1px solid rgba(255,255,255,.1)' }}
+            >
+              <span>{claimedCount} riscatti</span>
+              <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.15)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progressPct || 0}%`, background: '#fff', borderRadius: 999 }} />
+              </div>
+              <span style={{ color: '#fff' }}>{maxQuantity} posti</span>
+            </div>
+          )}
+          <div className="hfv4-hero-ctas" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => navigate(featured.href)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'var(--color-ink)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
+            >
               {featured.cta} →
             </button>
+            {/* Desktop: bottone secondario con nome completo */}
             {featured.secondaryCta && (
-              <button className="hfv4-hero-cta-ghost" onClick={() => navigate(featured.href)} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'10px 16px', background:'rgba(255,255,255,.18)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', color:'#fff', borderRadius:999, fontSize:13, fontWeight:700, border:'none', cursor:'pointer' }}>
+              <button
+                className="hfv4-hero-cta-ghost hfv4-cta-desk"
+                onClick={() => navigate(featured.href)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'rgba(255,255,255,.18)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
+              >
                 {featured.secondaryCta}
               </button>
             )}
+            {/* Mobile-only: bottone secondario compatto */}
+            <button
+              className="hfv4-hero-cta-ghost hfv4-cta-mob"
+              onClick={() => navigate(featured.href)}
+              style={{ display: 'none', alignItems: 'center', justifyContent: 'center', padding: '12px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,.25)', color: '#fff', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Scopri
+            </button>
           </div>
         </div>
-        {featured.photo && (
-          <div className="hfv4-hero-photo" style={{ position:'relative', overflow:'hidden', background:'#333', minHeight:160 }}>
-            <img src={featured.photo} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-            {showProgress && (
-              <div className="hfv4-hero-progress" style={{ position:'absolute', bottom:0, left:0, right:0, padding:'16px 20px', background:'linear-gradient(0deg, rgba(34,24,28,.7), transparent)', color:'#fff' }}>
-                {progressPct != null && (
-                  <div style={{ height:6, background:'rgba(255,255,255,.2)', borderRadius:999, overflow:'hidden', marginBottom:8 }}>
-                    <div style={{ height:'100%', width:`${progressPct}%`, background:'#fff', borderRadius:999 }} />
-                  </div>
-                )}
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, fontWeight:700, letterSpacing:'.04em' }}>
-                  <span>{maxQuantity ? `${claimedCount} / ${maxQuantity} sbloccati` : (countdown ? `Scade tra ${countdown}` : '')}</span>
-                  {expiresLabel && <span>{expiresLabel}</span>}
+
+        {/* Photo: col destra desktop (108px), sopra il body su mobile (order:-1) */}
+        <div
+          className="hfv4-hero-photo"
+          style={{
+            position: 'relative', overflow: 'hidden',
+            background: 'linear-gradient(135deg, #C48745 0%, #7C4A20 55%, #3C2312 100%)',
+            minHeight: 160,
+          }}
+        >
+          {featured.photo && (
+            <img
+              src={featured.photo}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          )}
+          <span aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(34,24,28,.75) 100%)' }} />
+
+          {/* Mobile-only: countdown pill top-right */}
+          {mobCountdown && (
+            <span
+              className="hfv4-mob-countdown"
+              style={{
+                display: 'none', position: 'absolute', top: 14, right: 14, zIndex: 2,
+                padding: '6px 11px', background: 'rgba(255,255,255,.15)',
+                backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                borderRadius: 999, fontSize: 11, fontWeight: 800, color: '#fff',
+                border: '1px solid rgba(255,255,255,.15)',
+              }}
+            >
+              {mobCountdown}
+            </span>
+          )}
+          {/* Mobile-only: categoria + zona bottom-left */}
+          {(featured.catEmoji || featured.catName || featured.neighborhood) && (
+            <span
+              className="hfv4-mob-cat"
+              style={{
+                display: 'none', position: 'absolute', bottom: 14, left: 14, zIndex: 2,
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+                color: 'rgba(255,255,255,.85)', alignItems: 'center', gap: 6,
+              }}
+            >
+              {featured.catEmoji && <span style={{ fontSize: 14, letterSpacing: 0 }}>{featured.catEmoji}</span>}
+              {[featured.catName, featured.neighborhood].filter(Boolean).join(' · ')}
+            </span>
+          )}
+
+          {showProgress && (
+            <div
+              className="hfv4-hero-progress"
+              style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 20px', background: 'linear-gradient(0deg, rgba(34,24,28,.7), transparent)', color: '#fff' }}
+            >
+              {progressPct != null && (
+                <div style={{ height: 6, background: 'rgba(255,255,255,.2)', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ height: '100%', width: `${progressPct}%`, background: '#fff', borderRadius: 999 }} />
                 </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, letterSpacing: '.04em' }}>
+                <span>{maxQuantity ? `${claimedCount} / ${maxQuantity} sbloccati` : (countdown ? `Scade tra ${countdown}` : '')}</span>
+                {expiresLabel && <span>{expiresLabel}</span>}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -273,7 +391,7 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
     ? (discount.discount_type === 'percentage' ? `-${String(discount.discount_value).replace('%','')}%` : `-${discount.discount_value}€`)
     : null
   return (
-    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 70%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 82%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'#ddd', overflow:'hidden' }}>
         {photoUrl
           ? <img src={photoUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" />
@@ -304,7 +422,7 @@ function SuggestCard() {
   const [showSuggest, setShowSuggest] = useState(false)
   return (
     <>
-    <div className="hfv4-suggest-wrap" style={{ padding: '10px 16px 36px' }}>
+    <div className="hfv4-suggest-wrap" style={{ padding: '10px 20px 36px' }}>
       <div
         className="hfv4-suggest"
         style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-ink)', color: '#fff', borderRadius: 28, padding: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center' }}
@@ -315,7 +433,7 @@ function SuggestCard() {
             Conosci un posto che manca?
           </div>
           <div className="hfv4-suggest-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.35, maxWidth: 240 }}>
-            Scrivici nome + zona. Bi ci va a mangiare. Se è buono, entra.
+            Scrivimi nome + zona. Se è buono, entra.
           </div>
         </div>
         <button
@@ -389,6 +507,8 @@ export default function HomeFeedV4() {
     const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
     return {
       title: `${label}\nda ${r.name}.`,
+      discountLabel: label,
+      restaurantName: r.name,
       restLine,
       subtitle: subtitleParts.join(' · '),
       cta: 'Vai al drop',
@@ -399,6 +519,9 @@ export default function HomeFeedV4() {
       claimedCount,
       maxQuantity,
       expiresLabel,
+      catEmoji: catInfo?.emoji || '',
+      catName: catInfo?.name || catName,
+      neighborhood,
     }
   }, [discounts, restaurants])
 
@@ -426,6 +549,55 @@ export default function HomeFeedV4() {
         .hfv4-moment-tabs::-webkit-scrollbar,
         .hfv4-cats-row::-webkit-scrollbar,
         .hfv4-cards-row::-webkit-scrollbar { display: none; }
+        .hfv4-cats-wrap { position: relative; }
+        .hfv4-cats-wrap::after {
+          content: "";
+          position: absolute;
+          right: 0; top: 0; bottom: 20px;
+          width: 48px;
+          background: linear-gradient(90deg, transparent 0%, var(--color-page, #FAF7F2) 90%);
+          pointer-events: none;
+        }
+
+        /* Mobile <1024px: hero stack verticale, foto sopra il body */
+        @media (max-width: 1023px) {
+          .hfv4-hero-card {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 0 !important;
+            gap: 0 !important;
+          }
+          .hfv4-hero-photo {
+            order: -1 !important;
+            height: 156px !important;
+            min-height: 0 !important;
+          }
+          .hfv4-hero-body { padding: 18px 18px 18px !important; }
+          .hfv4-hero-chip {
+            position: absolute !important;
+            top: 14px !important; left: 14px !important;
+            z-index: 3 !important;
+            background: rgba(0,0,0,.4) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            margin-bottom: 0 !important;
+          }
+          .hfv4-hero-title { display: none !important; }
+          .hfv4-mob-pct { display: block !important; }
+          .hfv4-mob-loc { display: block !important; }
+          .hfv4-hero-progress { display: none !important; }
+          .hfv4-mob-progress { display: flex !important; }
+          .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: unset !important; display: block !important; overflow: visible !important; }
+          .hfv4-hero-ctas {
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            gap: 8px !important;
+          }
+          .hfv4-cta-desk { display: none !important; }
+          .hfv4-cta-mob { display: inline-flex !important; }
+          .hfv4-mob-countdown { display: inline-flex !important; }
+          .hfv4-mob-cat { display: inline-flex !important; }
+        }
 
         /* Desktop ≥1024px per sezioni originali (hero, cats, Ultimi aggiunti) */
         @media (min-width: 1024px) {
@@ -445,7 +617,7 @@ export default function HomeFeedV4() {
           }
           .hfv4-hero-body { padding: 52px 56px !important; display: flex; flex-direction: column; justify-content: center; gap: 18px !important; }
           .hfv4-hero-chip { font-size: 12px !important; padding: 7px 13px !important; margin-bottom: 0 !important; animation: drop-live-ring 2s ease-out infinite !important; }
-          .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; }
+          .hfv4-hero-title { font-size: 72px !important; line-height: .98 !important; letter-spacing: -.03em !important; margin-bottom: 0 !important; white-space: pre-line !important; }
           .hfv4-hero-sub { font-size: 15px !important; max-width: 340px !important; }
           .hfv4-hero-photo { min-height: 0 !important; }
           .hfv4-cats-row {
@@ -643,7 +815,7 @@ export default function HomeFeedV4() {
         {loading ? (
           <div style={{ padding: '0 20px', color: 'var(--color-ink-70)' }}>Caricamento...</div>
         ) : (
-          <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px', scrollSnapType:'x proximity', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
+          <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px', scrollSnapType:'x mandatory', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
             {recent.map((r) => (
               <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => toggleSave(r.id)} />
             ))}
@@ -689,20 +861,20 @@ export default function HomeFeedV4() {
         <SuggestCard />
       </div>
 
-      <footer className="hfv4-foot" style={{ padding: '40px 20px 30px', borderTop: '1px solid var(--color-ink-05)', marginTop: 20, textAlign: 'center' }}>
-        <div className="hfv4-foot-inner" style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center' }}>
-          <Link to="/" className="hfv4-foot-wordmark" style={{ textDecoration: 'none', display: 'inline-flex', flexDirection: 'column', lineHeight: 0.92, alignItems: 'center' }}>
-            <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', fontSize: 18, letterSpacing: '0.02em', color: 'var(--color-corallo)' }}>LA GUIDA DI BI</span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', color: 'var(--color-ink-40, rgba(34,24,28,.4))', marginTop: 4, textTransform: 'uppercase' }}>by Chiamami Bi</span>
+      <footer className="hfv4-foot" style={{ padding: '30px 20px 100px', borderTop: '1px solid var(--color-ink-05)', marginTop: 20, textAlign: 'center' }}>
+        <div className="hfv4-foot-inner" style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
+          <Link to="/" className="hfv4-foot-wordmark" style={{ textDecoration: 'none', display: 'inline-flex', flexDirection: 'column', lineHeight: 1, alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', fontSize: 28, letterSpacing: '0.01em', color: 'var(--color-ink)' }}>LA GUIDA DI BI</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 10, letterSpacing: '0.2em', color: 'var(--color-ink-40, rgba(34,24,28,.4))', marginTop: 4, textTransform: 'uppercase' }}>BY CHIAMAMI BI</span>
           </Link>
-          <nav className="hfv4-foot-links" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link to="/about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Su di me</Link>
-            <Link to="/about" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Come scelgo</Link>
-            <Link to="/partner" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Per i locali</Link>
-            <Link to="/privacy" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Privacy</Link>
-            <Link to="/terms" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Termini</Link>
+          <nav className="hfv4-foot-links" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/about" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Su di me</Link>
+            <Link to="/about" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Come scelgo</Link>
+            <Link to="/partner" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Per i locali</Link>
+            <Link to="/privacy" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Privacy</Link>
+            <Link to="/terms" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Termini</Link>
           </nav>
-          <div className="hfv4-foot-copy" style={{ fontSize: 12, color: 'var(--color-ink-40, rgba(34,24,28,.45))' }}>
+          <div className="hfv4-foot-copy" style={{ fontSize: 11, color: 'var(--color-ink-40, rgba(34,24,28,.45))' }}>
             © {new Date().getFullYear()} Chiamami Bi · Torino, Italia
           </div>
         </div>
