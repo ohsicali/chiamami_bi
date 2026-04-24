@@ -4,9 +4,15 @@ import { supabase, proxyImg } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 
+const PROMPT_CHIPS = [
+  '✨ un cinese aperto stasera',
+  '✨ sotto i 20€',
+  '✨ brunch San Salvario',
+]
+
 /**
  * AskBiChat · chat AI "Chiedi a Bi".
- *  - Input libero + 3 chip dinamici per momento.
+ *  - Input libero + 3 chip suggeriti.
  *  - POST /api/ai con conversation_id opzionale + current_moment.
  *  - Output: bolla con testo Bi + 2-3 result card + link "Scrivi a Bi per altri".
  */
@@ -55,9 +61,9 @@ export default function AskBiChat({ currentMoment }) {
   return (
     <div className="hfv4-ai">
       <div className="hfv4-ai-divider" style={dividerStyle}>
-        <span style={{ position: 'relative', zIndex: 1, background: 'var(--color-page)', padding: '0 12px' }}>
-          Oppure
-        </span>
+        <span style={{ flex: 1, height: 1, background: 'var(--color-ink-15, rgba(34,24,28,.12))' }} />
+        <span>Oppure</span>
+        <span style={{ flex: 1, height: 1, background: 'var(--color-ink-15, rgba(34,24,28,.12))' }} />
       </div>
 
       <div className="hfv4-ai-wrap" style={{ padding: '10px 16px 0' }}>
@@ -148,8 +154,28 @@ export default function AskBiChat({ currentMoment }) {
             </div>
           </div>
 
-          <div style={{ margin: '2px 0 14px', position: 'relative', fontSize: 13, color: 'var(--color-ink-70)', lineHeight: 1.5 }}>
-            Scrivimi di cosa hai voglia. <b style={{ color: 'var(--color-ink)' }}>Sushi? Pizza? Un piemontese economico in centro? Un locale per bere con gli amici?</b> Scrivi qua sotto e ti suggerisco i locali più adatti.
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 14px', position: 'relative' }}>
+            {PROMPT_CHIPS.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => submit(chip)}
+                disabled={loading}
+                style={{
+                  padding: '7px 12px',
+                  background: 'var(--color-corallo-wash, #FDF2F0)',
+                  color: 'var(--color-corallo-ink, #C6372F)',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  border: '1px solid rgba(232,69,60,.18)',
+                  cursor: loading ? 'default' : 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {chip}
+              </button>
+            ))}
           </div>
 
           <div style={{ position: 'relative', marginBottom: 12 }}>
@@ -368,12 +394,13 @@ function AiOutput({ response, isGuest }) {
 
 const dividerStyle = {
   margin: '20px 20px 4px',
-  textAlign: 'center',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
   color: 'var(--color-ink-40, rgba(34,24,28,.4))',
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: '0.16em',
   textTransform: 'uppercase',
   padding: '14px 0',
-  position: 'relative',
 }
