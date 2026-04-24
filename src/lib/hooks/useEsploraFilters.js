@@ -137,6 +137,30 @@ export function useEsploraFilters() {
     setSearchParams(next, { replace: true })
   }, [filters.view, setSearchParams])
 
+  // Applica un patch completo in un unico setSearchParams (usato dal filter sheet CTA).
+  // `patch` può contenere: cat[], price[], moment, diet[], disc, area.
+  const applyBulk = useCallback((patch) => {
+    const next = new URLSearchParams(searchParams)
+    const set = (k, v) => {
+      if (v == null || v === '' || (Array.isArray(v) && v.length === 0) || v === false) {
+        next.delete(k)
+      } else if (Array.isArray(v)) {
+        next.set(k, v.join(','))
+      } else if (v === true) {
+        next.set(k, '1')
+      } else {
+        next.set(k, String(v))
+      }
+    }
+    if ('cat' in patch) set('cat', patch.cat)
+    if ('price' in patch) set('price', patch.price)
+    if ('moment' in patch) set('moment', patch.moment)
+    if ('diet' in patch) set('diet', patch.diet)
+    if ('disc' in patch) set('disc', patch.disc)
+    if ('area' in patch) set('area', patch.area)
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
+
   return {
     filters,
     activeCount,
@@ -150,6 +174,7 @@ export function useEsploraFilters() {
     setArea,
     setView,
     reset,
+    applyBulk,
   }
 }
 
