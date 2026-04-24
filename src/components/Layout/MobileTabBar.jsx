@@ -5,33 +5,25 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 
 const TAB_BAR_HEIGHT = 68
 
-// Filled black SVG icons (fill: currentColor, stroke: none). Eccezione Sconti: stroke 2.4
-// Copiate 1:1 da docs/v4-COMPONENT-SPECS.md §10 NAV LIQUID GLASS / LIBRERIA SVG ICONE
+// Filled black SVG icons (fill: currentColor, stroke: none).
+// ExploreIcon e DealsIcon usano fillRule="evenodd" per bucare i cerchi interni.
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2V11z" />
   </svg>
 )
 
+// Il cerchio interno è "bucato" via fillRule evenodd — nessun fill="#fff" fisso
 const ExploreIcon = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z" />
-    <circle cx="12" cy="9" r="2.4" fill="#fff" />
+  <svg viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" clipRule="evenodd" aria-hidden="true">
+    <path d="M12 2c-4 0-7 3-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-4-3-7-7-7z M12 11.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8z" />
   </svg>
 )
 
+// Icona tag/etichetta filled — classica per "sconti/deals", con il buco in alto a sinistra
 const DealsIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.4"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <line x1="19" y1="5" x2="5" y2="19" />
-    <circle cx="6.5" cy="6.5" r="2.2" fill="currentColor" />
-    <circle cx="17.5" cy="17.5" r="2.2" fill="currentColor" />
+  <svg viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" clipRule="evenodd" aria-hidden="true">
+    <path d="M2 2h10l8.59 8.59a2 2 0 0 1 0 2.82l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2z M7 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" />
   </svg>
 )
 
