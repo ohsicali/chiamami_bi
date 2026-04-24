@@ -75,6 +75,20 @@
   --oro-deep: #8E6B3E;
 }
 
+/* Spaziatore fisico per scroll orizzontali — iOS Safari ignora padding/margin-left
+   sul primo figlio nei container overflow-x:auto. Un elemento DOM con width fissa è
+   l'unica soluzione garantita. Nascosto su desktop dove il layout è a griglia. */
+.hfv4-scroll-spacer {
+  display: block;
+  flex-shrink: 0;
+  width: 20px;
+  min-width: 20px;
+  pointer-events: none;
+}
+@media (min-width: 1024px) {
+  .hfv4-scroll-spacer { display: none !important; }
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg);
@@ -83,7 +97,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
 }
+
 
 #root {
   min-height: 100dvh;

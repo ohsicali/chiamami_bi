@@ -520,7 +520,7 @@ export default function HomePage() {
             left: 0, right: 0,
             zIndex: 25,
             display: 'flex', gap: 6, overflowX: 'auto',
-            padding: '0 12px',
+            padding: '0 20px',
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
           }}>
@@ -621,7 +621,7 @@ export default function HomePage() {
                 <div
                   style={{
                     display: 'flex', gap: 10, overflowX: 'auto',
-                    padding: '0 14px 6px',
+                    padding: '0 20px 6px',
                     WebkitOverflowScrolling: 'touch',
                     scrollSnapType: 'x mandatory',
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
@@ -680,6 +680,7 @@ export default function HomePage() {
             {...contentBind()}
             style={{
               flex: 1, overflowY: dismissing ? 'hidden' : 'auto',
+              overflowX: 'hidden',
               WebkitOverflowScrolling: 'touch',
               paddingBottom: TAB_BAR_HEIGHT + 70,
               touchAction: 'pan-y',
