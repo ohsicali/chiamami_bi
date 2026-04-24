@@ -22,6 +22,7 @@ import FloatingToggle from '../../components/Esplora/FloatingToggle'
 import EsploraListPanel from '../../components/Esplora/EsploraListPanel'
 import FilterSheet from '../../components/Esplora/FilterSheet'
 import { useEsploraFilters, applyEsploraFilters } from '../../lib/hooks/useEsploraFilters'
+import { groupByDistance } from '../../lib/utils/esploraGroups'
 
 function slugify(name) {
   return name
@@ -324,6 +325,7 @@ export default function HomePage() {
           onToggleView={() => esplora.setView('map')}
           onOpenFilters={() => openFilterSheet(null)}
           onOpenCategories={() => openFilterSheet('categories')}
+          groups={groupByDistance(displayedRestaurants, position, esplora.filters.moment)}
         />
       )}
 

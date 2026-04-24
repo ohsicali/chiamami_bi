@@ -11,6 +11,7 @@ import { proxyImg } from '../../lib/supabase'
 import FilterPillsRow from '../../components/Esplora/FilterPillsRow'
 import FilterPopover from '../../components/Esplora/FilterPopover'
 import { useEsploraFilters, applyEsploraFilters } from '../../lib/hooks/useEsploraFilters'
+import { groupByDistance } from '../../lib/utils/esploraGroups'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -403,20 +404,35 @@ export default function DesktopExplorePage() {
             scrollbarWidth: 'none',
           }}
         >
-          {filteredRestaurants.map(r => (
-            <div key={r.id} ref={el => { cardRefs.current[r.id] = el }}>
+          {(() => {
+            const groups = groupByDistance(filteredRestaurants, position, esplora.filters.moment)
+            const flatList = groups
+              ? groups.flatMap(g => [
+                  { __group: true, label: g.label, id: '__group:' + g.label },
+                  ...g.items,
+                ])
+              : filteredRestaurants
+            return flatList.map(item => item.__group ? (
+              <div key={item.id} style={{
+                fontSize: 11, fontWeight: 800, letterSpacing: '0.14em',
+                textTransform: 'uppercase', color: 'var(--color-ink-40, rgba(34,24,28,0.4))',
+                padding: '8px 2px 0',
+              }}>{item.label}</div>
+            ) : (
+            <div key={item.id} ref={el => { cardRefs.current[item.id] = el }}>
               <LCard
-                restaurant={r}
-                isActive={selectedId === r.id}
-                isSaved={savedIds.has(r.id)}
-                hasDiscount={discountRestaurantIds.has(r.id)}
-                discountLabel={discountLabelMap[r.id]}
+                restaurant={item}
+                isActive={selectedId === item.id}
+                isSaved={savedIds.has(item.id)}
+                hasDiscount={discountRestaurantIds.has(item.id)}
+                discountLabel={discountLabelMap[item.id]}
                 userPosition={position}
                 onSelect={handleCardSelect}
                 onSave={(id) => user ? toggleSave(id) : navigate('/login')}
               />
             </div>
-          ))}
+            ))
+          })()}
           {!loading && filteredRestaurants.length === 0 && (
             <div style={{
               padding: '40px 20px', textAlign: 'center',
