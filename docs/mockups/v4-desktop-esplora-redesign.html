@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v4 · Esplora desktop redesign · La Guida di Bi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA; --corallo-wash:#FDF2F0;
+  --ink:#22181C; --ink-2:#3d2f36; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954;
+  --line:#EAE3D7;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{font-family:var(--ff-ui);background:#0f0f10;color:var(--ink)}
+
+body{min-height:100vh;padding:60px 32px;display:flex;flex-direction:column;align-items:center;gap:50px;background:radial-gradient(900px 500px at 20% -10%,rgba(232,69,60,.12),transparent 60%),#0f0f10}
+
+.page-head{max-width:900px;text-align:center;color:#fff}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:rgba(232,69,60,.15);color:#FFAFA8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(232,69,60,.3)}
+.page-head h1{font-family:var(--ff-ui);font-weight:900;font-size:38px;letter-spacing:-.02em;margin:16px 0 10px;line-height:1.05}
+.page-head p{color:rgba(255,255,255,.65);font-size:14px;line-height:1.55;max-width:680px;margin:0 auto}
+
+.frame-label{color:rgba(255,255,255,.55);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px;text-align:left;padding-left:8px;max-width:1440px;width:100%}
+.frame-label span{color:var(--corallo);font-family:var(--ff-mark);font-size:13px;letter-spacing:.04em;margin-right:8px;text-transform:none}
+
+/* Laptop frame */
+.laptop{width:1440px;height:900px;background:#111;border-radius:18px 18px 6px 6px;padding:22px 16px 16px;box-shadow:0 40px 100px rgba(0,0,0,.5);position:relative;transform-origin:top center}
+.laptop::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:70px;height:6px;background:#222;border-radius:3px}
+.laptop .screen{width:100%;height:100%;border-radius:6px;overflow:hidden;background:var(--page);position:relative;display:flex;flex-direction:column}
+@media (max-width:1520px){.laptop{transform:scale(.88)}}
+@media (max-width:1360px){.laptop{transform:scale(.78)}}
+@media (max-width:1200px){.laptop{transform:scale(.68)}}
+@media (max-width:1040px){.laptop{transform:scale(.58)}}
+
+/* ============ TOP NAV FLOATING (come home) ============ */
+.nav-top{
+  position:absolute;top:20px;left:50%;transform:translateX(-50%);
+  width:calc(100% - 48px);max-width:1360px;
+  display:flex;align-items:center;gap:20px;
+  padding:12px 12px 12px 24px;
+  background:rgba(255,255,255,.82);backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(34,24,28,.06);
+  border-radius:999px;
+  box-shadow:0 14px 34px rgba(34,24,28,.14),inset 0 1px 0 rgba(255,255,255,.95);
+  z-index:30;
+}
+.nav-logo{display:flex;flex-direction:column;line-height:.92}
+.nav-logo .l1{font-family:var(--ff-mark);font-size:17px;letter-spacing:.02em;color:var(--corallo)}
+.nav-logo .l2{font-family:var(--ff-ui);font-weight:700;font-size:9px;letter-spacing:.15em;color:var(--ink-40);margin-top:3px;text-transform:uppercase}
+.nav-links{display:flex;gap:2px;margin-left:14px}
+.nav-links a{padding:8px 13px;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-70);text-decoration:none}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a.active{background:var(--ink-05);color:var(--ink)}
+
+.nav-search{flex:1;max-width:380px;margin-left:10px;display:flex;align-items:center;gap:10px;padding:9px 16px;background:#fff;border:1px solid rgba(34,24,28,.08);border-radius:999px;font-size:13px;color:var(--ink-40);font-weight:500}
+.nav-search svg{width:15px;height:15px;color:var(--ink-70);stroke-width:2.2}
+
+.nav-city{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 12px;background:rgba(34,24,28,.05);border:1px solid rgba(34,24,28,.1);border-radius:999px;font-weight:700;font-size:13px;letter-spacing:-.01em}
+.nav-city .dot{width:7px;height:7px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 2.5px rgba(232,69,60,.15)}
+.nav-city .chev{font-size:10px;color:var(--ink-40);margin-left:2px}
+.avatar-top{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:15px;box-shadow:0 6px 14px rgba(232,69,60,.3);border:2px solid #fff;cursor:pointer;flex:0 0 auto}
+
+/* ============ LAYOUT SPLIT ============ */
+.split{flex:1;display:grid;grid-template-columns:540px 1fr;gap:0;overflow:hidden;padding-top:96px}
+
+/* ============ LEFT COLUMN (filters + list) ============ */
+.left-col{background:var(--page);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+
+.filters-bar{padding:16px 20px 12px;background:var(--page);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px;z-index:10}
+.filters-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fp{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;background:var(--white);border:1.5px solid var(--ink-15);border-radius:999px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap;letter-spacing:-.01em;cursor:pointer}
+.fp:hover{border-color:var(--ink-40)}
+.fp.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 4px 10px rgba(34,24,28,.18)}
+.fp.on svg{color:#fff}
+.fp svg{width:15px;height:15px;stroke-width:2;color:var(--ink)}
+.fp .badge{background:var(--corallo);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;min-width:18px;text-align:center}
+.fp .chev{font-size:9px;opacity:.5}
+.reset-ink{font-size:12px;font-weight:700;color:var(--corallo);padding:6px 4px;text-decoration:none;margin-left:auto;cursor:pointer}
+
+/* Result count */
+.count-row{display:flex;align-items:baseline;justify-content:space-between;padding:6px 0 2px}
+.count-row .c{font-family:var(--ff-ui);font-weight:900;font-size:18px;letter-spacing:-.01em}
+.count-row .s{font-size:12px;color:var(--ink-70);font-weight:600}
+.sort-d{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink);background:var(--white);border:1px solid var(--ink-15);border-radius:999px;padding:6px 12px;text-decoration:none;cursor:pointer}
+.sort-d svg{width:12px;height:12px;stroke-width:2.2}
+
+/* List area scrollable */
+.list-area-d{flex:1;overflow-y:auto;padding:14px 20px 24px;display:flex;flex-direction:column;gap:10px}
+.list-area-d::-webkit-scrollbar{width:6px}
+.list-area-d::-webkit-scrollbar-thumb{background:var(--ink-15);border-radius:3px}
+.list-group-d{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-40);padding:4px 2px 2px}
+
+/* Mini-card desktop */
+.mini-d{background:#fff;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm);display:grid;grid-template-columns:132px 1fr;gap:0;text-decoration:none;color:inherit;transition:all .15s ease;cursor:pointer;width:100%}
+.mini-d:hover{border-color:var(--ink-15);box-shadow:0 8px 20px rgba(34,24,28,.1);transform:translateY(-1px)}
+.mini-d .ph{background:linear-gradient(135deg,#D8B88C,#8A5E2A);position:relative;min-height:116px;flex-shrink:0}
+.mini-d .ph.b{background:linear-gradient(135deg,#C5A386,#5D3D24)}
+.mini-d .ph.c{background:linear-gradient(135deg,#A89280,#604536)}
+.mini-d .ph.d{background:linear-gradient(135deg,#D9A441,#8A5A1F)}
+.mini-d .ph.e{background:linear-gradient(135deg,#B89376,#6A4A34)}
+.mini-d .rank{position:absolute;top:8px;left:8px;padding:3px 8px;background:var(--oro);color:#fff;font-size:10px;font-weight:800;border-radius:999px}
+.mini-d .disc-pill{position:absolute;bottom:8px;left:8px;padding:4px 9px;background:var(--corallo);color:#fff;font-size:10.5px;font-weight:800;border-radius:999px;display:inline-flex;align-items:center;gap:4px}
+.mini-d .heart{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;font-size:12px;backdrop-filter:blur(8px)}
+.mini-d .body{padding:14px 16px;display:flex;flex-direction:column;gap:4px;justify-content:center;min-width:0}
+.mini-d .name{font-family:var(--ff-ui);font-weight:900;font-size:16px;letter-spacing:-.01em;line-height:1.15;word-break:break-word}
+.mini-d .sub{font-size:12px;color:var(--ink-70);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mini-d .meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.mini-d .tag{background:var(--cream-deep);color:var(--ink);font-weight:700;font-size:10.5px;padding:3px 8px;border-radius:999px}
+.mini-d .price{font-size:11px;font-weight:700;color:var(--ink-40)}
+.mini-d .dist{font-size:10.5px;color:var(--ink-40)}
+
+/* ============ RIGHT COLUMN (MAP) ============ */
+.right-col{position:relative;background:#E8E4DC;overflow:hidden}
+.map-bg-d{position:absolute;inset:0;background:radial-gradient(460px 260px at 30% 40%,rgba(232,69,60,.08),transparent 60%),radial-gradient(460px 260px at 70% 65%,rgba(176,137,84,.08),transparent 60%),linear-gradient(135deg,#E8E4DC 0%,#D8D2C3 100%)}
+.map-bg-d::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.45) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.45) 1px,transparent 1px);background-size:48px 48px;opacity:.7}
+
+/* Pin rotondi (come live) */
+.pin-d{position:absolute;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:#fff;border:3px solid var(--ink);display:grid;place-items:center;font-size:24px;box-shadow:0 6px 18px rgba(0,0,0,.22);cursor:pointer;transition:transform .15s ease}
+.pin-d:hover{transform:translate(-50%,-50%) scale(1.08)}
+.pin-d.corallo{background:var(--corallo);border-color:#fff;color:#fff;box-shadow:0 6px 20px rgba(232,69,60,.45)}
+.pin-d.viola{background:#6E4B8E;border-color:#fff;color:#fff;box-shadow:0 6px 20px rgba(110,75,142,.45)}
+.pin-d.arancio{background:#F39C54;border-color:#fff;color:#fff;box-shadow:0 6px 20px rgba(243,156,84,.45)}
+.pin-d.blu{background:#2B7EC4;border-color:#fff;color:#fff;box-shadow:0 6px 20px rgba(43,126,196,.45)}
+.pin-d.selected{transform:translate(-50%,-50%) scale(1.15);border-width:4px;z-index:5}
+.cluster-d{position:absolute;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:#fff;border:2px solid var(--ink-15);display:grid;place-items:center;font-weight:800;font-size:16px;color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.18);cursor:pointer}
+
+.userloc-d{position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;background:#2B7EC4;border:4px solid #fff;box-shadow:0 0 0 8px rgba(43,126,196,.22),0 6px 14px rgba(43,126,196,.45)}
+
+/* Map controls */
+.map-controls{position:absolute;right:20px;top:20px;display:flex;flex-direction:column;gap:8px;z-index:20}
+.mctrl{width:44px;height:44px;border-radius:12px;background:#fff;border:1px solid var(--ink-15);display:grid;place-items:center;font-size:18px;color:var(--ink);box-shadow:0 4px 12px rgba(0,0,0,.15);cursor:pointer;text-decoration:none}
+.mctrl svg{width:18px;height:18px;stroke-width:2.2}
+
+/* Hover card map (quando hovera un pin) */
+.hover-card{position:absolute;bottom:20px;left:20px;width:320px;background:#fff;border-radius:var(--r-lg);border:1px solid var(--ink-05);box-shadow:var(--shadow-lg);overflow:hidden;display:grid;grid-template-columns:100px 1fr;gap:0;text-decoration:none;color:inherit;z-index:22}
+.hover-card .ph{background:linear-gradient(135deg,#D8B88C,#8A5E2A);min-height:100px;position:relative}
+.hover-card .ph .close{position:absolute;top:6px;right:6px;width:26px;height:26px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:14px;cursor:pointer}
+.hover-card .body{padding:14px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.hover-card .name{font-family:var(--ff-ui);font-weight:900;font-size:15px;letter-spacing:-.01em}
+.hover-card .sub{font-size:11.5px;color:var(--ink-70)}
+.hover-card .meta{display:flex;gap:6px;margin-top:3px;font-size:10.5px;font-weight:700;color:var(--ink)}
+.hover-card .meta .disc{background:var(--corallo);color:#fff;padding:2px 7px;border-radius:999px;font-size:10px}
+
+/* Geo button mappa */
+.geo-fab-d{position:absolute;right:20px;bottom:20px;width:52px;height:52px;border-radius:50%;background:#fff;border:1px solid var(--ink-15);display:grid;place-items:center;font-size:22px;color:var(--ink);box-shadow:0 6px 16px rgba(0,0,0,.2);cursor:pointer;text-decoration:none}
+
+/* ============ FILTER DROPDOWN (open) ============ */
+.fdrop{position:absolute;top:140px;left:24px;width:420px;max-height:600px;background:var(--white);border:1px solid var(--ink-05);border-radius:var(--r-xl);box-shadow:0 30px 70px rgba(0,0,0,.18);z-index:40;padding:16px 20px;display:none}
+.fdrop.open{display:flex;flex-direction:column;gap:16px}
+.fdrop-head{display:flex;align-items:baseline;justify-content:space-between}
+.fdrop-head h3{font-family:var(--ff-ui);font-weight:900;font-size:22px;letter-spacing:-.02em}
+.fdrop-head .close-x{width:28px;height:28px;border-radius:50%;background:var(--ink-05);display:grid;place-items:center;font-size:14px;color:var(--ink-70);cursor:pointer}
+
+/* ============ Notes side ============ */
+.notes{max-width:1440px;color:#fff;padding:0 8px;margin-top:10px}
+.notes h3{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--corallo);margin-bottom:14px;text-align:center}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.note{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 18px}
+.note .n{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--corallo);text-transform:uppercase;margin-bottom:4px}
+.note h4{font-family:var(--ff-ui);font-weight:800;font-size:14.5px;color:#fff;margin-bottom:6px;line-height:1.3}
+.note p{font-size:12.5px;color:rgba(255,255,255,.7);line-height:1.55}
+.note p b{color:#fff}
+.note code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;color:#FFE3A5}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="kick"><span>✦</span> v4 · Esplora desktop</div>
+  <h1>Esplora desktop · nav floating + split</h1>
+  <p><b>Nav floating pill</b> centrato in alto (stile home che ti piace, da usare in tutto il sito). Sotto: layout <b>mappa + lista affiancate</b>, colonna sinistra 480px con filtri + count + lista scrollabile, colonna destra mappa full-height con pin rotondi + hover card. Icone SVG premium identiche al mobile.</p>
+</div>
+
+<div class="frame-label"><span>01</span> Esplora desktop · mappa + lista split</div>
+<div class="laptop"><div class="screen">
+
+  <!-- TOP NAV -->
+  <div class="nav-top">
+    <div class="nav-logo"><div class="l1">CHIAMAMI BI</div><div class="l2">la guida di bi</div></div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a class="active" href="#">Esplora</a>
+      <a href="#">Sconti</a>
+      <a href="#">Salvati</a>
+    </nav>
+    <div class="nav-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      Cerca ristoranti, zone, piatti…
+    </div>
+    <div class="nav-city"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+    <div class="avatar-top">A</div>
+  </div>
+
+  <!-- SPLIT LAYOUT -->
+  <div class="split">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+      <!-- Filters bar -->
+      <div class="filters-bar">
+        <div class="filters-row">
+          <a class="fp on" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="20" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="4" y1="12" x2="7" y2="12"/><line x1="11" y1="12" x2="20" y2="12"/><circle cx="9" cy="12" r="2"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="16" cy="18" r="2"/></svg>
+            Filtri<span class="badge">2</span>
+          </a>
+          <a class="fp" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            Categorie<span class="chev">▾</span>
+          </a>
+          <a class="fp" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+            Sconti
+          </a>
+          <a class="reset-ink" href="#">Azzera</a>
+        </div>
+        <div class="count-row">
+          <div>
+            <div class="c">17 locali a Torino</div>
+            <div class="s">Aperitivo · Italiana · ordinati per distanza</div>
+          </div>
+          <a class="sort-d" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="15" y2="6"/><line x1="3" y1="12" x2="11" y2="12"/><line x1="3" y1="18" x2="7" y2="18"/><polyline points="17 10 21 6 17 2"/><line x1="21" y1="6" x2="17" y2="6" stroke-dasharray="1 0"/></svg>
+            Distanza
+          </a>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="list-area-d">
+        <div class="list-group-d">🥂 Aperto per aperitivo · ora</div>
+
+        <a class="mini-d" href="#">
+          <div class="ph"><div class="rank">#1</div><div class="disc-pill">−15%</div><div class="heart">♡</div></div>
+          <div class="body">
+            <div class="name">Bar Stampa</div>
+            <div class="sub">Tramezzini spaziali · fino 20:00</div>
+            <div class="meta"><span class="tag">🥪 Tramezzini</span><span class="price">€</span><span class="dist">· 320m</span></div>
+          </div>
+        </a>
+
+        <a class="mini-d" href="#">
+          <div class="ph b"><div class="heart">♡</div></div>
+          <div class="body">
+            <div class="name">Scaldapiatti</div>
+            <div class="sub">Aperitivo con tagliere abbondante · fino 21:00</div>
+            <div class="meta"><span class="tag">🥂 Aperitivo</span><span class="price">€€</span><span class="dist">· 540m</span></div>
+          </div>
+        </a>
+
+        <a class="mini-d" href="#">
+          <div class="ph c"><div class="disc-pill">−20%</div><div class="heart">♡</div></div>
+          <div class="body">
+            <div class="name">Banco Vini</div>
+            <div class="sub">Enoteca con cucina · fino 23:00</div>
+            <div class="meta"><span class="tag">🍷 Enoteca</span><span class="price">€€</span><span class="dist">· 820m</span></div>
+          </div>
+        </a>
+
+        <div class="list-group-d">Oltre i 500 metri</div>
+
+        <a class="mini-d" href="#">
+          <div class="ph d"><div class="heart">♡</div></div>
+          <div class="body">
+            <div class="name">Gaudenzio</div>
+            <div class="sub">Enoteca + piccolo menu molto scelto</div>
+            <div class="meta"><span class="tag">🍷 Enoteca</span><span class="price">€€</span><span class="dist">· 1.2 km</span></div>
+          </div>
+        </a>
+
+        <a class="mini-d" href="#">
+          <div class="ph e"><div class="heart">♡</div></div>
+          <div class="body">
+            <div class="name">Consorzio</div>
+            <div class="sub">Piola piemontese presa sul serio</div>
+            <div class="meta"><span class="tag">🍷 Piemontese</span><span class="price">€€€</span><span class="dist">· 1.4 km</span></div>
+          </div>
+        </a>
+
+        <a class="mini-d" href="#">
+          <div class="ph b"><div class="heart">♡</div></div>
+          <div class="body">
+            <div class="name">Perino Vesco</div>
+            <div class="sub">Lievito madre, ore 6</div>
+            <div class="meta"><span class="tag">🥐 Bakery</span><span class="price">€</span><span class="dist">· 1.6 km</span></div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN (MAP) -->
+    <div class="right-col">
+      <div class="map-bg-d"></div>
+
+      <!-- Pin rotondi -->
+      <div class="pin-d arancio" style="top:26%;left:30%"><i style="font-style:normal">🥂</i></div>
+      <div class="pin-d viola" style="top:38%;left:55%"><i style="font-style:normal">🍷</i></div>
+      <div class="pin-d corallo selected" style="top:48%;left:40%"><i style="font-style:normal">🥪</i></div>
+      <div class="pin-d blu" style="top:60%;left:65%"><i style="font-style:normal">🥡</i></div>
+      <div class="pin-d" style="top:72%;left:48%"><i style="font-style:normal">🍕</i></div>
+      <div class="cluster-d" style="top:30%;left:48%">4</div>
+      <div class="cluster-d" style="top:58%;left:38%">2</div>
+
+      <!-- User location -->
+      <div class="userloc-d" style="top:44%;left:42%"></div>
+
+      <!-- Hover card on selected pin -->
+      <a class="hover-card" href="#">
+        <div class="ph">
+          <div class="close">✕</div>
+        </div>
+        <div class="body">
+          <div class="name">Bar Stampa</div>
+          <div class="sub">Tramezzini spaziali · €</div>
+          <div class="meta"><span class="disc">−15%</span><span>320m · aperto fino 20:00</span></div>
+        </div>
+      </a>
+
+      <!-- Map controls right-top -->
+      <div class="map-controls">
+        <a class="mctrl" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></a>
+        <a class="mctrl" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></a>
+      </div>
+
+      <!-- Geo fab -->
+      <a class="geo-fab-d" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;stroke-width:2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></a>
+    </div>
+  </div>
+</div></div>
+
+<!-- NOTES -->
+<div class="notes">
+  <h3>✦ Scelte desktop</h3>
+  <div class="notes-grid">
+    <div class="note">
+      <div class="n">Layout 01</div>
+      <h4>Split 480px + resto mappa</h4>
+      <p>Pattern Airbnb/Booking classico per discovery geografica. Colonna sinistra fissa a <b>480px</b> con filtri sticky + lista scrollabile, mappa occupa il resto. Su schermi più larghi la mappa respira, la lista resta leggibile. Nessun toggle Mappa/Lista su desktop — si vedono entrambe contemporaneamente.</p>
+    </div>
+    <div class="note">
+      <div class="n">Top nav floating</div>
+      <h4>Header stile home · fluttuante centrato</h4>
+      <p>Pattern <b>floating pill</b> come nella home desktop: nav non attaccato ai bordi ma centrato con max-width 1360px, <b>backdrop blur 24px</b>, border rounded 999px, shadow decisa + inset white. Contenuto: logo + Home/Esplora/Sconti/Salvati + search globale + city Torino + avatar corallo. Questo è lo header "signature" di Bi — da usare in tutto il sito desktop (Home, Esplora, Sconti, ecc).</p>
+    </div>
+    <div class="note">
+      <div class="n">Filtri</div>
+      <h4>Stessi 3 pill del mobile + sort</h4>
+      <p><b>Filtri (badge N) · Categorie · Sconti</b> + "Azzera" inline. In aggiunta un piccolo <b>Sort dropdown</b> a destra del count (desktop ha lo spazio, utile per vedere: Distanza / Consigliati / Recenti). Tap filtri = stesso sheet pattern del mobile, ma qui come <b>dropdown overlay</b> 420px sotto la pill invece di fullscreen.</p>
+    </div>
+    <div class="note">
+      <div class="n">Mini-card</div>
+      <h4>Stesso layout, foto 120px</h4>
+      <p>Card foto+body come mobile ma foto un po' più grande (120px vs 96px). Hover: border più marcato + shadow + leggero lift. Click sulla card = centra il pin corrispondente + apre hover-card sulla mappa. Pattern "click list → highlight map" usato da Airbnb.</p>
+    </div>
+    <div class="note">
+      <div class="n">Mappa</div>
+      <h4>Pin rotondi grandi + hover card</h4>
+      <p>Pin rotondi 52px (più grandi del mobile 44px per usabilità mouse) con emoji categoria. Click su pin → apre <b>hover-card flottante</b> in basso-sinistra con foto + nome + meta + sconto. Click sulla card = vai alla scheda locale.</p>
+    </div>
+    <div class="note">
+      <div class="n">Map controls</div>
+      <h4>Zoom +/− + geo FAB</h4>
+      <p>Alto-destra: <b>+</b> / <b>−</b> zoom (Mapbox standard). Basso-destra: <b>geo-FAB</b> che centra sulla posizione utente. Niente layer/type selector (la mappa base Mapbox basta).</p>
+    </div>
+    <div class="note">
+      <div class="n">Coerenza</div>
+      <h4>Stesse icone SVG del mobile</h4>
+      <p>Tutte le icone (Filtri sliders, Categorie grid, Sconti tag, Search, Distanza sort) sono <b>SVG Lucide-style</b> stroke 2 identiche al mobile. Un solo pattern icon system, scala pulita a tutte le risoluzioni, editabile con CSS color.</p>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px;margin:30px auto 0;text-align:center;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.1em">
+  v4 · Esplora desktop redesign · 24/04/2026 · split map+list pattern
+</div>
+
+</body>
+</html>

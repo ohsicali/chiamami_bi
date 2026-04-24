@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v4 · Esplora mobile · pattern Neotaste adattato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --corallo:#E8453C; --corallo-ink:#C6372F; --corallo-soft:#FDEBEA; --corallo-wash:#FDF2F0;
+  --ink:#22181C; --ink-70:rgba(34,24,28,.7); --ink-40:rgba(34,24,28,.4); --ink-15:rgba(34,24,28,.12); --ink-05:rgba(34,24,28,.05);
+  --page:#FAF7F2; --cream:#F5F0E4; --cream-deep:#F1EBE0; --white:#FFFFFF;
+  --oro:#B08954;
+  --ff-ui:'Poppins',-apple-system,'Helvetica Neue',sans-serif;
+  --ff-mark:'Alfa Slab One',Georgia,serif;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+  --shadow-sm:0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04);
+  --shadow-md:0 8px 24px rgba(34,24,28,.08);
+  --shadow-lg:0 20px 60px rgba(34,24,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{font-family:var(--ff-ui);background:#0f0f10;color:var(--ink)}
+body{min-height:100vh;padding:40px 20px 80px;display:flex;flex-direction:column;align-items:center;gap:40px;background:radial-gradient(900px 500px at 20% -10%,rgba(232,69,60,.12),transparent 60%),#0f0f10}
+
+.page-head{max-width:760px;text-align:center;color:#fff}
+.page-head .kick{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;background:rgba(232,69,60,.15);color:#FFAFA8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(232,69,60,.3)}
+.page-head h1{font-family:var(--ff-ui);font-weight:900;font-size:32px;letter-spacing:-.02em;margin:16px 0 10px;line-height:1.05;color:#fff}
+.page-head p{color:rgba(255,255,255,.65);font-size:14px;line-height:1.55;max-width:600px;margin:0 auto}
+.kept{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.kk{display:inline-flex;gap:6px;align-items:center;padding:5px 10px;background:rgba(22,163,74,.1);color:#6FE59B;border:1px solid rgba(22,163,74,.3);border-radius:999px;font-size:11px;font-weight:700}
+
+.frame-label{color:rgba(255,255,255,.55);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-bottom:12px}
+.frame-label b{color:var(--corallo);font-family:var(--ff-mark);font-size:13px;letter-spacing:.04em;margin-right:8px;text-transform:none;font-weight:400}
+
+.phones-row{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:430px}
+
+.phone{width:390px;height:844px;background:#000;border-radius:52px;padding:10px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(0,0,0,.4);position:relative}
+.phone::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:50;pointer-events:none}
+.screen{width:100%;height:100%;background:var(--page);border-radius:44px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:14px 28px 0;font-size:13px;font-weight:700;background:var(--page);z-index:15;position:relative}
+
+/* ============== TOP BAR (logo + Torino + geo) ============== */
+.topbar{padding:10px 16px 8px;display:flex;align-items:center;gap:10px;background:var(--page);z-index:15;position:relative}
+.logo-s{flex:0 0 auto;font-family:var(--ff-mark);font-size:14px;letter-spacing:.02em;color:var(--corallo);line-height:1}
+.city-pill-s{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:8px 13px 8px 11px;background:var(--ink-05);border:1px solid var(--ink-15);border-radius:999px;font-weight:700;font-size:13px;letter-spacing:-.01em}
+.city-pill-s .dot{width:7px;height:7px;border-radius:50%;background:var(--corallo);box-shadow:0 0 0 3px rgba(232,69,60,.15)}
+.city-pill-s .chev{font-size:9px;color:var(--ink-40)}
+.geo-btn{width:38px;height:38px;border-radius:50%;background:var(--ink-05);border:1px solid var(--ink-15);display:grid;place-items:center;font-size:16px;color:var(--ink);flex:0 0 auto}
+
+/* ============== SEARCH BAR (Neotaste-style, sotto header) ============== */
+.search-wrap{padding:4px 16px 10px;background:var(--page);z-index:14;position:relative}
+.search{display:flex;align-items:center;gap:10px;padding:11px 18px;background:var(--white);border:1px solid var(--ink-15);border-radius:999px;font-size:13.5px;color:var(--ink-40);font-weight:500;box-shadow:var(--shadow-sm)}
+.search svg{width:15px;height:15px;stroke-width:2.2;color:var(--ink-70)}
+
+/* ============== FILTER PILLS (Filtri / Categorie / Orario) ============== */
+.fpills{display:flex;gap:8px;padding:0 16px 10px;background:var(--page);z-index:14;position:relative;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fpills::-webkit-scrollbar{display:none}
+.fp{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:9px 14px;background:var(--white);border:1.5px solid var(--ink-15);border-radius:999px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap;letter-spacing:-.01em}
+.fp .chev{font-size:9px;opacity:.5}
+.fp .badge{background:var(--corallo);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;min-width:18px;text-align:center;margin-left:-2px}
+.fp.on{border-color:var(--ink);color:var(--ink);background:var(--white);font-weight:800}
+.fp svg{width:15px;height:15px;stroke-width:2;color:var(--ink)}
+.fp.on svg{color:var(--ink)}
+.fp .sconto-ic{width:16px;height:16px;border-radius:4px;background:var(--corallo);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:900}
+
+/* ============== MAP ============== */
+.map-area{flex:1;position:relative;overflow:hidden;background:#E8E4DC}
+.map-bg{position:absolute;inset:0;background:radial-gradient(260px 160px at 30% 40%,rgba(232,69,60,.08),transparent 60%),radial-gradient(260px 160px at 70% 65%,rgba(176,137,84,.08),transparent 60%),linear-gradient(135deg,#E8E4DC 0%,#D8D2C3 100%)}
+.map-bg::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.45) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.45) 1px,transparent 1px);background-size:32px 32px;opacity:.7}
+.map-bg::after{content:"";position:absolute;top:20%;left:50%;width:4px;height:70%;background:linear-gradient(180deg,#B8D8E8,#95C0D8);opacity:.4;transform:rotate(3deg)}
+
+/* Pin ROTONDI (come live) */
+.pin{position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:#fff;border:2.5px solid var(--ink);display:grid;place-items:center;font-size:20px;box-shadow:0 4px 14px rgba(0,0,0,.22);font-style:normal;cursor:pointer}
+.pin.corallo{background:var(--corallo);border-color:#fff;color:#fff;box-shadow:0 4px 16px rgba(232,69,60,.4)}
+.pin.viola{background:#6E4B8E;border-color:#fff;color:#fff;box-shadow:0 4px 16px rgba(110,75,142,.4)}
+.pin.arancio{background:#F39C54;border-color:#fff;color:#fff;box-shadow:0 4px 16px rgba(243,156,84,.4)}
+.pin.blu{background:#2B7EC4;border-color:#fff;color:#fff;box-shadow:0 4px 16px rgba(43,126,196,.4)}
+.pin.selected{transform:translate(-50%,-50%) scale(1.2);border-width:3px;z-index:5}
+.cluster{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:#fff;border:2px solid var(--ink-15);display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--ink);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+
+/* User location pin blu glowing */
+.userloc{position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#2B7EC4;border:3px solid #fff;box-shadow:0 0 0 6px rgba(43,126,196,.2),0 4px 10px rgba(43,126,196,.4)}
+.userloc::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:rgba(43,126,196,.15);animation:ripple 2s infinite}
+@keyframes ripple{0%{transform:scale(.8);opacity:.8}100%{transform:scale(2);opacity:0}}
+
+/* GeoButton floating in basso-destra della mappa */
+.geo-fab{position:absolute;right:14px;bottom:280px;width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--ink-15);display:grid;place-items:center;font-size:18px;color:var(--ink);box-shadow:0 6px 14px rgba(0,0,0,.18);z-index:20;text-decoration:none}
+
+/* ============== CARD STACK MAPPA (stile live — horizontal scroll) ============== */
+.card-stack-wrap{position:absolute;left:0;right:0;bottom:94px;z-index:25;padding:0}
+.card-stack-h{display:flex;gap:10px;overflow-x:auto;padding:0 16px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
+.card-stack-h::-webkit-scrollbar{display:none}
+.card-stack-h .mini{flex:0 0 84%;scroll-snap-align:start;box-shadow:var(--shadow-md)}
+
+/* Mini-card (preservate) */
+.mini{background:#fff;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--ink-05);box-shadow:var(--shadow-sm);display:grid;grid-template-columns:96px 1fr;gap:0;text-decoration:none;color:inherit;min-height:96px}
+.mini .ph{background:linear-gradient(135deg,#D8B88C,#8A5E2A);position:relative}
+.mini .ph.b{background:linear-gradient(135deg,#C5A386,#5D3D24)}
+.mini .ph.c{background:linear-gradient(135deg,#A89280,#604536)}
+.mini .ph .rank{position:absolute;top:6px;left:6px;padding:3px 7px;background:var(--oro);color:#fff;font-size:10px;font-weight:800;border-radius:999px}
+.mini .heart{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.88);display:grid;place-items:center;font-size:12px}
+.mini .body{padding:12px 14px;display:flex;flex-direction:column;gap:3px;justify-content:center;min-width:0}
+.mini .name{font-family:var(--ff-ui);font-weight:900;font-size:15.5px;letter-spacing:-.01em;line-height:1.1}
+.mini .sub{font-size:11px;color:var(--ink-70);line-height:1.3}
+.mini .meta{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
+.mini .tag{background:var(--cream-deep);color:var(--ink);font-weight:700;font-size:10px;padding:3px 7px;border-radius:999px}
+.mini .price{font-size:10.5px;font-weight:700;color:var(--ink-40)}
+.mini .dist{font-size:10px;color:var(--ink-40)}
+
+/* ============== FLOATING TOGGLE MAP/LIST ============== */
+.float-toggle{position:absolute;left:50%;transform:translateX(-50%);z-index:26;padding:13px 22px;background:var(--ink);color:#fff;border-radius:999px;font-size:14px;font-weight:800;display:inline-flex;align-items:center;gap:9px;box-shadow:0 14px 30px rgba(34,24,28,.45),inset 0 1px 0 rgba(255,255,255,.18);text-decoration:none;white-space:nowrap;letter-spacing:-.01em}
+.float-toggle svg{width:17px;height:17px;stroke-width:2.2;color:#fff}
+.float-toggle.on-map{bottom:220px}
+.float-toggle.on-list{bottom:96px}
+
+/* ============== LIST VIEW ============== */
+.list-count-bar{padding:4px 20px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:var(--page)}
+.list-count-bar .c{font-family:var(--ff-ui);font-weight:800;font-size:14px;letter-spacing:-.01em;color:var(--ink)}
+.list-count-bar .reset-txt{font-size:12px;font-weight:700;color:var(--corallo);text-decoration:none}
+.list-area{flex:1;overflow-y:auto;padding:0 16px 120px;display:flex;flex-direction:column;gap:10px;background:var(--page)}
+.list-area::-webkit-scrollbar{display:none}
+.list-group{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-40);padding:8px 2px 4px}
+.list-area .mini{width:100%;min-height:100px}
+
+/* ============== NAV BOTTOM ============== */
+.nav-b{position:absolute;left:14px;right:14px;bottom:18px;height:62px;border-radius:999px;display:flex;align-items:center;padding:6px;z-index:40;background:rgba(255,255,255,.88);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,.08);box-shadow:0 14px 32px rgba(34,24,28,.14)}
+.nav-b a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#141414;text-decoration:none;padding:7px 4px;border-radius:28px;font-size:10px;font-weight:700}
+.nav-b a .ic{font-size:17px}
+.nav-b a.active{background:rgba(240,238,234,.92);border:1px solid rgba(34,24,28,.12)}
+
+/* ============== FILTER SHEET (big, Neotaste-style) ============== */
+.sheet-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:30;display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--page);border-radius:24px 24px 0 0;max-height:90%;display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.35)}
+.sheet-handle{width:42px;height:4px;background:var(--ink-15);border-radius:2px;margin:10px auto 10px}
+.sheet-head{padding:4px 20px 14px;display:flex;align-items:baseline;justify-content:space-between}
+.sheet-head h2{font-family:var(--ff-ui);font-weight:900;font-size:26px;letter-spacing:-.02em}
+.sheet-head .close{font-size:18px;color:var(--ink-70);cursor:pointer;padding:4px 8px;background:var(--ink-05);border-radius:50%;width:30px;height:30px;display:grid;place-items:center}
+.sheet-body{flex:1;overflow-y:auto;padding:0 20px 120px}
+.sheet-body::-webkit-scrollbar{display:none}
+
+.fsec{margin-bottom:22px}
+.fsec h3{font-family:var(--ff-ui);font-weight:900;font-size:15px;letter-spacing:-.01em;margin-bottom:10px}
+
+/* Segmented 3 options */
+.fseg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:var(--white);border:1px solid var(--ink-15);border-radius:14px;padding:4px}
+.fseg a{padding:12px 8px;text-align:center;border-radius:10px;font-size:13px;font-weight:700;color:var(--ink-70);text-decoration:none}
+.fseg a.on{background:var(--ink);color:#fff;box-shadow:0 4px 10px rgba(34,24,28,.18)}
+.fseg a small{display:block;font-size:10px;font-weight:600;opacity:.7;margin-top:2px}
+.fseg a.on small{color:rgba(255,255,255,.7)}
+
+/* Bubble tonde categorie · pre-v4 style (grid 4 col con emoji circle) */
+.cat-round-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;margin-top:6px}
+.cat-round{display:flex;flex-direction:column;align-items:center;gap:7px;text-decoration:none;color:inherit}
+.cat-round .bubble{width:64px;height:64px;border-radius:50%;background:var(--white);border:1.5px solid var(--ink-15);display:grid;place-items:center;font-size:28px;box-shadow:var(--shadow-sm);transition:all .15s ease}
+.cat-round.on .bubble{background:var(--corallo);border-color:var(--corallo);box-shadow:0 6px 16px rgba(232,69,60,.4);color:#fff}
+.cat-round .lbl{font-size:11.5px;font-weight:700;text-align:center;line-height:1.15;color:var(--ink);max-width:72px}
+.cat-round.on .lbl{color:var(--corallo-ink)}
+
+/* Orario pill chip */
+.orario-row{display:flex;gap:8px;flex-wrap:wrap}
+.or{padding:10px 14px;background:var(--white);border:1px solid var(--ink-15);border-radius:999px;font-size:13px;font-weight:700;color:var(--ink);display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.or.on{background:var(--corallo);color:#fff;border-color:var(--corallo);box-shadow:0 4px 10px rgba(232,69,60,.3)}
+
+/* Area ricerca slider */
+.area-row{display:flex;align-items:baseline;gap:10px;font-size:12.5px;margin-bottom:10px}
+.area-row .lb{color:var(--ink-70);font-weight:600}
+.area-row .v{margin-left:auto;font-weight:800;font-size:13px;padding:4px 10px;background:var(--white);border:1px solid var(--ink-15);border-radius:999px}
+.slider{position:relative;height:6px;background:var(--ink-05);border-radius:999px;margin:8px 0}
+.slider i{position:absolute;left:0;top:0;bottom:0;width:72%;background:var(--ink);border-radius:999px}
+.slider .thumb{position:absolute;top:50%;transform:translate(-50%,-50%);left:72%;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:0 4px 8px rgba(0,0,0,.2)}
+
+/* Sticky bottom cta */
+.sheet-cta{position:absolute;bottom:14px;left:16px;right:16px;display:flex;flex-direction:column;gap:8px}
+.cta-show{padding:16px;background:var(--corallo);color:#fff;border-radius:999px;font-size:14.5px;font-weight:900;text-align:center;text-decoration:none;box-shadow:0 12px 28px rgba(232,69,60,.4);letter-spacing:-.01em}
+.cta-reset{padding:14px;background:var(--white);border:1px solid var(--ink-15);color:var(--ink);border-radius:999px;font-size:13px;font-weight:700;text-align:center;text-decoration:none}
+
+/* ============== Notes ============== */
+.notes-wrap{max-width:1000px;color:#fff;margin:30px auto 0}
+.notes-wrap h3{font-family:var(--ff-ui);font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--corallo);margin-bottom:14px;text-align:center}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+.note{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 20px}
+.note .n{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--corallo);text-transform:uppercase;margin-bottom:6px}
+.note h4{font-family:var(--ff-ui);font-weight:800;font-size:15px;color:#fff;margin-bottom:8px;line-height:1.3}
+.note p{font-size:13px;color:rgba(255,255,255,.7);line-height:1.55}
+.note p b{color:#fff}
+.note code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;color:#FFE3A5}
+
+@media (max-width:1380px){.phone{transform:scale(.82);transform-origin:top center}}
+@media (max-width:900px){.phones-row{gap:10px}}
+</style>
+</head>
+<body>
+
+<!-- HEAD -->
+<div class="page-head">
+  <div class="kick"><span>✦</span> v4 · Esplora · pattern Neotaste in stile Bi</div>
+  <h1>Esplora, alla Neotaste.</h1>
+  <p>Search full-width + 3 pill (Filtri · Categorie · Sconti) + "Azzera" inline. Sheet filtri con categorie bubble tonde pre-v4 (ce ne stanno di più), fascia d'orario come sezione separata, dieta, prezzo, area di ricerca. Niente tipi di sconto — un unico toggle "Sconti" in top basta. Mappa con pin rotondi come live.</p>
+  <div class="kept">
+    <span class="kk">✓ Pin rotondi live-style</span>
+    <span class="kk">✓ Mini-card</span>
+    <span class="kk">✓ Toggle pill live</span>
+    <span class="kk">✓ Italiano + Poppins + corallo</span>
+  </div>
+</div>
+
+<div class="phones-row">
+
+  <!-- ============= PHONE 1: MAP DEFAULT ============= -->
+  <div class="phone-col">
+    <div class="frame-label"><b>01</b> Mappa · search + 3 pill</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>18:59</span><span style="opacity:.4">·····</span></div>
+
+      <!-- Top bar: logo + Torino + geo (anche in mappa) -->
+      <div class="topbar">
+        <div class="logo-s">LA GUIDA DI BI</div>
+        <div class="city-pill-s"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+        <div class="geo-btn">◎</div>
+      </div>
+
+      <!-- 3 filter pills · SVG icons premium (niente search in mappa) -->
+      <div class="fpills">
+        <a class="fp on" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="20" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="4" y1="12" x2="7" y2="12"/><line x1="11" y1="12" x2="20" y2="12"/><circle cx="9" cy="12" r="2"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="16" cy="18" r="2"/></svg>
+          Filtri<span class="badge">1</span>
+        </a>
+        <a class="fp" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Categorie<span class="chev">▾</span>
+        </a>
+        <a class="fp" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+          Sconti
+        </a>
+      </div>
+
+      <!-- Count + Azzera sopra la mappa (stesso pattern lista) -->
+      <div class="list-count-bar">
+        <span class="c">17 locali · 1 filtro attivo</span>
+        <a class="reset-txt" href="#">Azzera</a>
+      </div>
+
+      <!-- Map -->
+      <div class="map-area">
+        <div class="map-bg"></div>
+        <!-- Pin rotondi -->
+        <div class="pin arancio" style="top:28%;left:25%"><i>🥂</i></div>
+        <div class="pin viola" style="top:38%;left:62%"><i>🍷</i></div>
+        <div class="pin corallo selected" style="top:48%;left:42%"><i>🥪</i></div>
+        <div class="pin blu" style="top:58%;left:68%"><i>🥡</i></div>
+        <div class="cluster" style="top:35%;left:45%">4</div>
+        <div class="cluster" style="top:65%;left:38%">2</div>
+        <!-- User location -->
+        <div class="userloc" style="top:45%;left:45%"></div>
+
+        <a class="geo-fab" href="#" style="bottom:250px">⇱</a>
+
+        <!-- Floating toggle to List · SOPRA le mini-card -->
+        <a class="float-toggle on-map" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          Lista
+        </a>
+
+        <!-- Card stack horizontal scroll (stile live) -->
+        <div class="card-stack-wrap">
+          <div class="card-stack-h">
+            <a class="mini" href="#">
+              <div class="ph"><div class="rank">#1</div><div class="heart">♡</div></div>
+              <div class="body"><div class="name">Bar Stampa</div><div class="sub">Tramezzini spaziali</div><div class="meta"><span class="tag">🥪 Tramezzini</span><span class="price">€</span></div></div>
+            </a>
+            <a class="mini" href="#">
+              <div class="ph b"><div class="heart">♡</div></div>
+              <div class="body"><div class="name">DuCheng</div><div class="sub">Dim sum e anatra</div><div class="meta"><span class="tag">🥡 Asiatico</span><span class="price">€€€</span></div></div>
+            </a>
+            <a class="mini" href="#">
+              <div class="ph c"><div class="heart">♡</div></div>
+              <div class="body"><div class="name">Consorzio</div><div class="sub">Piola piemontese</div><div class="meta"><span class="tag">🍷 Piemontese</span><span class="price">€€€</span></div></div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-b">
+        <a href="#"><span class="ic">🏠</span><span>Home</span></a>
+        <a class="active" href="#"><span class="ic">📍</span><span>Esplora</span></a>
+        <a href="#"><span class="ic">%</span><span>Sconti</span></a>
+        <a href="#"><span class="ic">♡</span><span>Salvati</span></a>
+        <a href="#"><span class="ic">○</span><span>Profilo</span></a>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============= PHONE 2: LIST VIEW ============= -->
+  <div class="phone-col">
+    <div class="frame-label"><b>02</b> Lista · stessi filtri</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>18:59</span><span style="opacity:.4">·····</span></div>
+
+      <div class="search-wrap">
+        <div class="search">Cerca ristoranti, zone, piatti…<span class="geo">◎</span></div>
+      </div>
+
+      <div class="fpills">
+        <a class="fp on" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="20" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="4" y1="12" x2="7" y2="12"/><line x1="11" y1="12" x2="20" y2="12"/><circle cx="9" cy="12" r="2"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="16" cy="18" r="2"/></svg>
+          Filtri<span class="badge">2</span>
+        </a>
+        <a class="fp on" href="#">🥂 Aperitivo<span class="chev">▾</span></a>
+        <a class="fp on" href="#" style="border-color:var(--corallo);background:var(--corallo-wash);color:var(--corallo-ink)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+          Sconti
+        </a>
+      </div>
+
+      <div class="list-count-bar">
+        <span class="c">7 locali · 2 filtri attivi</span>
+        <a class="reset-txt" href="#">Azzera</a>
+      </div>
+
+      <div class="list-area">
+        <div class="list-group">🥂 Aperto per aperitivo · ora</div>
+        <a class="mini" href="#">
+          <div class="ph"><div class="rank">#1</div><div class="heart">♡</div></div>
+          <div class="body"><div class="name">Bar Stampa</div><div class="sub">Tramezzini spaziali · fino 20:00</div><div class="meta"><span class="tag">🥪 Tramezzini</span><span class="price">€</span><span class="dist">· 320m</span></div></div>
+        </a>
+        <a class="mini" href="#">
+          <div class="ph b"><div class="heart">♡</div></div>
+          <div class="body"><div class="name">Scaldapiatti</div><div class="sub">Aperitivo con tagliere · fino 21:00</div><div class="meta"><span class="tag">🥂 Aperitivo</span><span class="price">€€</span><span class="dist">· 540m</span></div></div>
+        </a>
+        <a class="mini" href="#">
+          <div class="ph c"><div class="heart">♡</div></div>
+          <div class="body"><div class="name">Banco Vini</div><div class="sub">Enoteca · fino 23:00</div><div class="meta"><span class="tag">🍷 Enoteca</span><span class="price">€€</span><span class="dist">· 820m</span></div></div>
+        </a>
+        <div class="list-group">Oltre i 500 metri</div>
+        <a class="mini" href="#">
+          <div class="ph" style="background:linear-gradient(135deg,#B89376,#6A4A34)"><div class="heart">♡</div></div>
+          <div class="body"><div class="name">Gaudenzio</div><div class="sub">Enoteca menu scelto</div><div class="meta"><span class="tag">🍷 Enoteca</span><span class="price">€€</span><span class="dist">· 1.2 km</span></div></div>
+        </a>
+      </div>
+
+      <!-- Floating toggle to Map · icona mappa stilizzata (stile Neotaste) -->
+      <a class="float-toggle on-list" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+        Mappa
+      </a>
+
+      <div class="nav-b">
+        <a href="#"><span class="ic">🏠</span><span>Home</span></a>
+        <a class="active" href="#"><span class="ic">📍</span><span>Esplora</span></a>
+        <a href="#"><span class="ic">%</span><span>Sconti</span></a>
+        <a href="#"><span class="ic">♡</span><span>Salvati</span></a>
+        <a href="#"><span class="ic">○</span><span>Profilo</span></a>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============= PHONE 3: FILTER SHEET OPEN ============= -->
+  <div class="phone-col">
+    <div class="frame-label"><b>03</b> Tap "Filtri" · sheet completo</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>18:59</span><span style="opacity:.4">·····</span></div>
+      <div class="topbar" style="opacity:.5">
+        <div class="logo-s">LA GUIDA DI BI</div>
+        <div class="city-pill-s"><span class="dot"></span>Torino<span class="chev">▾</span></div>
+        <div class="geo-btn">◎</div>
+      </div>
+      <div class="fpills" style="opacity:.5">
+        <a class="fp on" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="20" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="4" y1="12" x2="7" y2="12"/><line x1="11" y1="12" x2="20" y2="12"/><circle cx="9" cy="12" r="2"/><line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="16" cy="18" r="2"/></svg>
+          Filtri<span class="badge">1</span>
+        </a>
+        <a class="fp" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Categorie<span class="chev">▾</span>
+        </a>
+        <a class="fp" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+          Sconti
+        </a>
+      </div>
+      <div class="map-area" style="opacity:.3"><div class="map-bg"></div></div>
+
+      <!-- FILTER SHEET -->
+      <div class="sheet-overlay">
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-head">
+            <h2>Filtri</h2>
+            <div class="close">✕</div>
+          </div>
+          <div class="sheet-body">
+
+            <div class="fsec">
+              <h3>Categoria</h3>
+              <div class="cat-round-grid">
+                <a class="cat-round on" href="#"><div class="bubble">🍝</div><div class="lbl">Italiana</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🍷</div><div class="lbl">Piemontese</div></a>
+                <a class="cat-round" href="#"><div class="bubble">✨</div><div class="lbl">Fine dining</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🍕</div><div class="lbl">Pizza</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🥡</div><div class="lbl">Asiatico</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🐟</div><div class="lbl">Pesce</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🥩</div><div class="lbl">Carne</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🍔</div><div class="lbl">Burger</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🥪</div><div class="lbl">Tramezzini</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🍸</div><div class="lbl">Cocktail bar</div></a>
+                <a class="cat-round" href="#"><div class="bubble">☕</div><div class="lbl">Caffè</div></a>
+                <a class="cat-round" href="#"><div class="bubble">🔥</div><div class="lbl">BBQ</div></a>
+              </div>
+            </div>
+
+            <div class="fsec">
+              <h3>Fascia d'orario</h3>
+              <div class="orario-row">
+                <a class="or" href="#"><span>🥐</span>Colazione</a>
+                <a class="or" href="#"><span>🍝</span>Pranzo</a>
+                <a class="or on" href="#"><span>🥂</span>Aperitivo</a>
+                <a class="or" href="#"><span>🍷</span>Cena</a>
+                <a class="or" href="#"><span>🍸</span>Dopo cena</a>
+              </div>
+            </div>
+
+            <div class="fsec">
+              <h3>Dieta e stile</h3>
+              <div class="orario-row">
+                <a class="or" href="#"><span>🥦</span>Vegano</a>
+                <a class="or" href="#"><span>🫑</span>Vegetariano</a>
+                <a class="or" href="#"><span>🥗</span>Salutare</a>
+                <a class="or" href="#"><span>🌾</span>Senza glutine</a>
+              </div>
+            </div>
+
+            <div class="fsec">
+              <h3>Fascia prezzo</h3>
+              <div class="orario-row">
+                <a class="or" href="#">€</a>
+                <a class="or on" href="#">€€</a>
+                <a class="or" href="#">€€€</a>
+                <a class="or" href="#">€€€€</a>
+              </div>
+            </div>
+
+            <div class="fsec">
+              <h3>Area di ricerca</h3>
+              <div class="area-row">
+                <span class="lb">Dalla tua posizione</span>
+                <span class="v">1.2 km</span>
+              </div>
+              <div class="slider"><i></i><span class="thumb"></span></div>
+              <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-40);font-weight:700;margin-top:4px"><span>200 m</span><span>Senza limite</span></div>
+            </div>
+
+          </div>
+          <div class="sheet-cta">
+            <a class="cta-show" href="#">Mostra 17 locali</a>
+            <a class="cta-reset" href="#">Azzera filtri</a>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+<!-- NOTES -->
+<div class="notes-wrap">
+  <h3>✦ Cosa copiamo da Neotaste · cosa adattiamo a Bi</h3>
+  <div class="notes-grid">
+    <div class="note">
+      <div class="n">Copiato</div>
+      <h4>Search bar full-width + 3 pill filtro</h4>
+      <p>Search pill con icona lente, 3 pill sotto: <b>⚙ Filtri</b> (badge numerico), <b>Categorie</b> (shortcut al tab categorie del sheet), <b>Sconti</b> (toggle binario — mostra solo locali con sconto attivo). Niente "Orario" pill: è dentro il sheet come sezione. "Ora aperti" toggle rimosso — si filtra da dentro il sheet.</p>
+    </div>
+    <div class="note">
+      <div class="n">Copiato</div>
+      <h4>Filter sheet modal al 90% viewport</h4>
+      <p>Tap <b>Filtri</b> → sheet con <b>5 sezioni</b>: Categoria · Fascia d'orario · Dieta e stile · Fascia prezzo · Area di ricerca. CTA corallo sticky "Mostra 17 locali" + "Azzera filtri" outline sotto. <b>Niente Sort by</b>. <b>Niente Tipo offerta</b> (scelta Augusto: lo sconto si filtra con la pill top "Sconti" senza sottocategorie).</p>
+    </div>
+    <div class="note">
+      <div class="n">Pre-v4 restored</div>
+      <h4>Categorie = bubble tonde grid 4-col</h4>
+      <p>Pattern pre-v4 che ti piaceva: <b>bubble rotonde</b> 64px con emoji grande + label sotto, grid 4 colonne. Ce ne stanno <b>12 visibili</b> senza "Mostra altre" (Italiana, Piemontese, Fine dining, Pizza, Asiatico, Pesce, Carne, Burger, Tramezzini, Cocktail bar, Caffè, BBQ). Attiva = bubble corallo con shadow.</p>
+    </div>
+    <div class="note">
+      <div class="n">Nuovo</div>
+      <h4>Fascia d'orario sezione a sé</h4>
+      <p>Sotto la griglia categorie, sezione <b>Fascia d'orario</b> con 5 pill colorate: 🥐 Colazione · 🍝 Pranzo · 🥂 Aperitivo · 🍷 Cena · 🍸 Dopo cena. Selezione multipla o singola (da decidere). Stesso set di momenti usato nella home (coerenza).</p>
+    </div>
+    <div class="note">
+      <div class="n">Diverso da Neotaste</div>
+      <h4>Pin mappa rotondi (stile nostro)</h4>
+      <p>Neotaste usa pin teardrop, noi teniamo <b>pin rotondi</b> colorati con emoji categoria — come già nel live. Cluster bianco rotondo con numero. User location dot blu pulsante. No cambi al pattern mappa che funziona.</p>
+    </div>
+    <div class="note">
+      <div class="n">Diverso da Neotaste</div>
+      <h4>Corallo invece del verde Neotaste</h4>
+      <p>Tutti gli stati <b>attivi/selezionati</b> in corallo (CTA, pill active con badge, pin selected). Il verde di Neotaste non è nostro — teniamo ink per attivo principale, corallo per CTA + badge, oro per rank #1.</p>
+    </div>
+    <div class="note">
+      <div class="n">Diverso da Neotaste</div>
+      <h4>Bottom sheet trascinabile + mini-card editoriali</h4>
+      <p>Il bottom sheet in mappa parte basso ("peek") con count "17 locali a Torino" + prime 2 card, trascinando sale fino al 90% mostrando tutta la lista. Mini-card nostre con foto 96px + nome Poppins 900 + tag categoria emoji + prezzo + distanza. Niente card spoglie come Neotaste.</p>
+    </div>
+    <div class="note" style="background:rgba(22,163,74,.06);border-color:rgba(22,163,74,.28)">
+      <div class="n" style="color:#6FE59B">Tieni dal live</div>
+      <h4>Toggle Mappa/Lista pill ink floating</h4>
+      <p>Come nel live, il toggle è una <b>pill scura floating</b>: sopra le card in mappa dice "☰ Lista", in vista lista dice "📍 Mappa" in basso. Pattern già noto ai tuoi utenti, non si cambia.</p>
+    </div>
+    <div class="note">
+      <div class="n">Azzera filtri · 3 modi</div>
+      <h4>Come si azzerano i filtri comodamente</h4>
+      <p>Tre entry point per reset: <b>(1)</b> link "Azzera" inline a destra della riga pill (appare solo quando filtri attivi, corallo), tap singolo resetta tutto. <b>(2)</b> Dentro ogni pill di filtro attivo c'è un ✕ per rimuovere quello solo. <b>(3)</b> Nel filter sheet, bottone "Azzera filtri" outline sotto la CTA "Mostra N locali". Feedback: il count si aggiorna live mentre resetti. Tutti e 3 i pattern convivono senza conflitto.</p>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px;margin:30px auto 0;text-align:center;color:rgba(255,255,255,.4);font-size:11px;letter-spacing:.1em">
+  v4 · Esplora redesign · 24/04/2026 · pattern Neotaste adattato stile Bi
+</div>
+
+</body>
+</html>
