@@ -108,7 +108,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
           top: 0,
           padding: '0 20px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-          paddingBottom: '14px',
+          paddingBottom: '8px',
           background: 'rgba(250, 247, 242, 0.94)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
