@@ -1,6 +1,6 @@
 import DesktopExplorePage from './DesktopExplorePage'
-import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
@@ -19,6 +19,9 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
+import FilterPillsRow from '../../components/Esplora/FilterPillsRow'
+import FloatingToggle from '../../components/Esplora/FloatingToggle'
+import { useEsploraFilters, applyEsploraFilters } from '../../lib/hooks/useEsploraFilters'
 
 function slugify(name) {
   return name
@@ -40,7 +43,6 @@ export default function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
     const prev = window.scrollY
@@ -75,13 +77,17 @@ export default function HomePage() {
     setSearchQuery,
   } = useRestaurants(position)
 
-  const [showDealsOnly, setShowDealsOnly] = useState(false)
+  // Esplora filter state (URL query params)
+  const esplora = useEsploraFilters()
+
   const [sheetFiltersSticky, setSheetFiltersSticky] = useState(false)
   const sheetFiltersRef = useRef(null)
-  const [activeCatFilter, setActiveCatFilter] = useState(null)
-  const displayedRestaurants = showDealsOnly
-    ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
-    : restaurants
+
+  // Multi-select price, diet, sconti toggle, area → applyEsploraFilters (oltre al base useRestaurants)
+  const displayedRestaurants = useMemo(
+    () => applyEsploraFilters(restaurants, esplora.filters, position, discountRestaurantIds),
+    [restaurants, esplora.filters, position, discountRestaurantIds],
+  )
 
   const [selectedId, setSelectedId] = useState(null)
   const [visibleIds, setVisibleIds] = useState(null)
@@ -133,24 +139,6 @@ export default function HomePage() {
   const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
 
-  // Count per category from all restaurants (for filter chip counts)
-  const catCounts = useMemo(() => {
-    const counts = {}
-    allRestaurants.forEach(r => {
-      const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-      cats.forEach(c => { counts[c] = (counts[c] || 0) + 1 })
-    })
-    return counts
-  }, [allRestaurants])
-
-  // Top 6 categories by count
-  const topCats = useMemo(() => {
-    return Object.entries(catCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, count]) => ({ ...getCategoryInfo(name), name, count }))
-  }, [catCounts])
-
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
   const sheetY = useMotionValue(windowH)
@@ -186,34 +174,17 @@ export default function HomePage() {
     }
   }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // URL params ⟷ filters sync — coerenza con home (card "+" → /esplora?moment=…)
-  // Leggi all'avvio, poi aggiorna la URL quando cambiano i filtri.
+  // URL → useRestaurants.filters sync (one-way). useEsploraFilters è source of truth,
+  // useRestaurants riceve una forma "legacy" compat (category, priceRange, moment).
+  // sortBy resta gestito localmente (handleLocateMe lo imposta a 'distance').
   useEffect(() => {
-    const urlMoment = searchParams.get('moment')
-    const urlCategory = searchParams.get('category')
-    const urlPrice = searchParams.get('price')
-    const next = {}
-    if (urlMoment) next.moment = urlMoment
-    if (urlCategory) next.category = urlCategory
-    if (urlPrice) next.priceRange = Number(urlPrice) || null
-    if (Object.keys(next).length > 0) {
-      setFilters(f => ({ ...f, ...next }))
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // read once on mount
-
-  useEffect(() => {
-    const params = new URLSearchParams()
-    if (filters.moment) params.set('moment', filters.moment)
-    if (filters.category) {
-      const v = Array.isArray(filters.category) ? filters.category.join(',') : filters.category
-      if (v) params.set('category', v)
-    }
-    if (filters.priceRange) params.set('price', String(filters.priceRange))
-    const current = searchParams.toString()
-    const next = params.toString()
-    if (current !== next) setSearchParams(params, { replace: true })
-  }, [filters.moment, filters.category, filters.priceRange]) // eslint-disable-line react-hooks/exhaustive-deps
+    setFilters(prev => ({
+      ...prev,
+      category: esplora.legacyFilters.category,
+      priceRange: esplora.legacyFilters.priceRange,
+      moment: esplora.legacyFilters.moment,
+    }))
+  }, [esplora.legacyFilters.category, esplora.legacyFilters.priceRange, esplora.legacyFilters.moment, setFilters])
 
   // Scroll-based sticky detection for sheet filters
   useEffect(() => {
@@ -410,71 +381,32 @@ export default function HomePage() {
       {!isDesktop && (
       <div>
 
-        {/* === Floating category filter chips (esp-filters) === */}
+        {/* === Esplora filter band (Filtri · Categorie · Sconti + count/Azzera) === */}
         {!hideBottomPanel && (
           <div style={{
             position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 0px) + 68px)',
+            top: 'calc(env(safe-area-inset-top, 0px) + 64px)',
             left: 0, right: 0,
             zIndex: 25,
-            display: 'flex', gap: 6, overflowX: 'auto',
-            padding: '0 20px',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
+            background: 'var(--color-page, #FAF7F2)',
+            paddingTop: 6,
+            paddingBottom: 10,
           }}>
-            <style>{`.esp-filters-row::-webkit-scrollbar{display:none}`}</style>
-            {/* Tutti chip */}
-            <button
-              onClick={() => { setActiveCatFilter(null); setFilters(f => ({ ...f, category: null })) }}
-              style={{
-                flex: '0 0 auto',
-                background: activeCatFilter === null ? '#22181C' : 'rgba(255,255,255,.94)',
-                backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                borderRadius: 999, padding: '7px 12px',
-                fontSize: 12, fontWeight: 700,
-                color: activeCatFilter === null ? '#fff' : '#22181C',
-                boxShadow: '0 2px 8px rgba(34,24,28,.12)',
-                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-              }}
-            >
-              Tutti
-              <span style={{
-                fontSize: 9.5, fontWeight: 800,
-                background: activeCatFilter === null ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
-                color: activeCatFilter === null ? '#fff' : '#22181C',
-                padding: '1.5px 5px', borderRadius: 999,
-              }}>{allRestaurants.length}</span>
-            </button>
-            {topCats.map(cat => (
-              <button
-                key={cat.name}
-                onClick={() => {
-                  const next = activeCatFilter === cat.name ? null : cat.name
-                  setActiveCatFilter(next)
-                  setFilters(f => ({ ...f, category: next }))
-                }}
-                style={{
-                  flex: '0 0 auto',
-                  background: activeCatFilter === cat.name ? '#22181C' : 'rgba(255,255,255,.94)',
-                  backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                  borderRadius: 999, padding: '7px 12px',
-                  fontSize: 12, fontWeight: 700,
-                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
-                  boxShadow: '0 2px 8px rgba(34,24,28,.12)',
-                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                }}
-              >
-                {cat.emoji} {cat.name}
-                <span style={{
-                  fontSize: 9.5, fontWeight: 800,
-                  background: activeCatFilter === cat.name ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
-                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
-                  padding: '1.5px 5px', borderRadius: 999,
-                }}>{cat.count}</span>
-              </button>
-            ))}
+            <FilterPillsRow
+              activeCount={esplora.activeCount}
+              activeFiltersTotal={
+                esplora.activeCount
+                + (esplora.filters.cat.length > 0 ? 1 : 0)
+                + (esplora.filters.disc ? 1 : 0)
+              }
+              discActive={esplora.filters.disc}
+              catActive={esplora.filters.cat.length > 0}
+              count={displayedRestaurants.length}
+              onOpenFilters={openSheet}
+              onOpenCategories={openSheet}
+              onToggleDisc={esplora.toggleDisc}
+              onReset={esplora.reset}
+            />
           </div>
         )}
 
@@ -487,30 +419,11 @@ export default function HomePage() {
               zIndex: 35, pointerEvents: 'none',
             }}
           >
-            {/* Lista pill */}
+            {/* Floating toggle Mappa → Lista (pill ink, sopra il carousel) */}
             {viewportRestaurants.length > 0 && (
-              <button
-                onClick={openSheet}
-                style={{
-                  display: 'flex', margin: '0 auto 10px', pointerEvents: 'auto',
-                  background: '#22181C', color: '#fff',
-                  fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em',
-                  padding: '10px 18px', borderRadius: 999, border: 0,
-                  cursor: 'pointer', boxShadow: '0 4px 16px rgba(34,24,28,.28)',
-                  alignItems: 'center', gap: 8,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
-                  <path d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-                Lista
-                <span style={{
-                  fontSize: 11, fontWeight: 700,
-                  background: 'rgba(255,255,255,.18)',
-                  padding: '2px 7px', borderRadius: 999, letterSpacing: '0.02em',
-                }}>{viewportRestaurants.length}</span>
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 10px', pointerEvents: 'auto' }}>
+                <FloatingToggle view="map" onClick={openSheet} />
+              </div>
             )}
 
             {/* Carousel */}
