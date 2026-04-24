@@ -364,6 +364,49 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* === Empty state mappa · 0 risultati con filtri attivi === */}
+        {!loading && displayedRestaurants.length === 0 && (esplora.activeCount > 0 || esplora.filters.cat.length > 0 || esplora.filters.disc) && (
+          <div style={{
+            position: 'absolute', left: 0, right: 0,
+            bottom: TAB_BAR_HEIGHT + 24,
+            zIndex: 30, display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+          }}>
+            <div style={{
+              pointerEvents: 'auto',
+              width: 'calc(100% - 32px)', maxWidth: 360,
+              background: '#fff',
+              border: '1px solid rgba(34,24,28,0.08)',
+              borderRadius: 20,
+              boxShadow: '0 14px 32px rgba(34,24,28,0.12)',
+              padding: '18px 20px 16px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 32, lineHeight: 1 }}>🔍</div>
+              <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--color-ink)', margin: 0 }}>
+                Nessun posto con questi filtri
+              </p>
+              <p style={{ fontSize: 12.5, color: 'var(--color-ink-70)', margin: 0, lineHeight: 1.45 }}>
+                Prova a togliere una categoria o ad allargare la fascia prezzo.
+              </p>
+              <button
+                type="button"
+                onClick={esplora.reset}
+                style={{
+                  marginTop: 6,
+                  padding: '10px 22px',
+                  background: 'var(--color-corallo, #E8453C)',
+                  color: '#fff', border: 'none', borderRadius: 999,
+                  fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                  boxShadow: '0 8px 18px rgba(232,69,60,0.28)',
+                }}
+              >
+                Azzera filtri
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* === esp-bottom: Lista pill + carousel === */}
         {(viewportRestaurants.length > 0 || carouselRestaurants.length > 0) && (
           <div
