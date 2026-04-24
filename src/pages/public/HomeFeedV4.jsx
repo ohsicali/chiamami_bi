@@ -532,6 +532,15 @@ export default function HomeFeedV4() {
         .hfv4-moment-tabs::-webkit-scrollbar,
         .hfv4-cats-row::-webkit-scrollbar,
         .hfv4-cards-row::-webkit-scrollbar { display: none; }
+        .hfv4-cats-wrap { position: relative; }
+        .hfv4-cats-wrap::after {
+          content: "";
+          position: absolute;
+          right: 0; top: 0; bottom: 20px;
+          width: 48px;
+          background: linear-gradient(90deg, transparent 0%, var(--color-page, #FAF7F2) 90%);
+          pointer-events: none;
+        }
 
         /* Desktop ≥1024px per sezioni originali (hero, cats, Ultimi aggiunti) */
         @media (min-width: 1024px) {
