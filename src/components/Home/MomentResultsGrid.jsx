@@ -81,7 +81,8 @@ export default function MomentResultsGrid({
           scrollbarWidth: 'none',
         }}
       >
-        {visibleCards.map(({ r, match }, i) => (
+        <span className="hfv4-scroll-spacer" aria-hidden="true" />
+        {visibleCards.map(({ r, match }) => (
           <Lcard
             key={r.id}
             r={r}
@@ -89,7 +90,6 @@ export default function MomentResultsGrid({
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
             onToggleSave={toggleSave ? () => toggleSave(r.id) : undefined}
-            extraStyle={i === 0 ? { marginLeft: 20 } : undefined}
           />
         ))}
 
@@ -157,7 +157,7 @@ export default function MomentResultsGrid({
   )
 }
 
-function Lcard({ r, closesAt, onClick, saved, onToggleSave, extraStyle }) {
+function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
@@ -183,7 +183,6 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave, extraStyle }) {
         color: 'inherit',
         boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
         display: 'block',
-        ...extraStyle,
       }}
     >
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background: `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.15) 100%)`, overflow:'hidden' }}>
