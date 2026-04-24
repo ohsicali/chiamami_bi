@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useCategories } from '../../../lib/hooks/useCategories'
 import FGroup from './_FGroup'
 import { FField, FInput, FTextarea, FSelect, FRow } from './_Fields'
 import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
 import GoogleMapsImportBlock from '../GoogleMapsImportBlock'
 import GooglePlacesBlock from '../GooglePlacesBlock'
+import { geocodeAddress } from '../../../lib/utils/geocoding'
 
 /**
  * DettagliTab — scope ridotto alla parte testuale (no cover-grid).
@@ -13,6 +15,21 @@ import GooglePlacesBlock from '../GooglePlacesBlock'
 export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
   const { categories } = useCategories()
   const ai = useAiCorrect()
+  const [geocoding, setGeocoding] = useState(false)
+
+  async function runGeocode() {
+    if (!form.address?.trim()) return
+    setGeocoding(true)
+    const fullAddress = `${form.address}, ${form.city || 'Torino'}`
+    const result = await geocodeAddress(fullAddress)
+    if (result) onChange({ latitude: String(result.latitude), longitude: String(result.longitude) })
+    setGeocoding(false)
+  }
+
+  function handleAddressBlur() {
+    const hasCoords = form.latitude && form.longitude
+    if (!hasCoords) runGeocode()
+  }
 
   return (
     <div>
@@ -52,7 +69,7 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
         </FRow>
         <FRow>
           <FField label="Indirizzo">
-            <FInput value={form.address} onChange={(v) => onChange({ address: v })} placeholder="Via Monte di Pietà 23, Torino" />
+            <FInput value={form.address} onChange={(v) => onChange({ address: v })} onBlur={handleAddressBlur} placeholder="Via Monte di Pietà 23, Torino" />
           </FField>
           <FField label="Fascia prezzo">
             <FSelect value={String(form.price_range ?? 2)} onChange={(v) => onChange({ price_range: parseInt(v, 10) || 2 })}>
@@ -63,6 +80,39 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             </FSelect>
           </FField>
         </FRow>
+        <FRow>
+          <FField label="Latitudine" hint="Pin sulla mappa">
+            <FInput value={String(form.latitude ?? '')} onChange={(v) => onChange({ latitude: v })} placeholder="45.0703" />
+          </FField>
+          <FField label="Longitudine">
+            <FInput value={String(form.longitude ?? '')} onChange={(v) => onChange({ longitude: v })} placeholder="7.6869" />
+          </FField>
+        </FRow>
+        <div style={{ marginBottom: 10 }}>
+          <button
+            type="button"
+            onClick={runGeocode}
+            disabled={geocoding || !form.address?.trim()}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-corallo, #E8453C)',
+              color: 'var(--color-corallo, #E8453C)',
+              padding: '7px 14px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.05em',
+              cursor: geocoding ? 'wait' : 'pointer',
+              fontFamily: 'var(--font-sans)',
+              opacity: (!form.address?.trim() || geocoding) ? 0.5 : 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            {geocoding ? '⏳ Cerco coordinate…' : '📍 Trova coordinate da indirizzo'}
+          </button>
+        </div>
         <FRow>
           <FField label="Telefono">
             <FInput value={form.phone} onChange={(v) => onChange({ phone: v })} placeholder="+39 011 276 7661" />
