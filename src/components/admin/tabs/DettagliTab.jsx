@@ -1,21 +1,39 @@
 import { useState } from 'react'
 import { useCategories } from '../../../lib/hooks/useCategories'
 import FGroup from './_FGroup'
-import { FField, FInput, FTextarea, FSelect, FRow } from './_Fields'
+import { FField, FInput, FTextarea, FRow } from './_Fields'
 import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
 import GoogleMapsImportBlock from '../GoogleMapsImportBlock'
 import GooglePlacesBlock from '../GooglePlacesBlock'
 import { geocodeAddress } from '../../../lib/utils/geocoding'
 
-/**
- * DettagliTab — scope ridotto alla parte testuale (no cover-grid).
- * Contains: Anagrafica + Voce di Bi. Foto e piatti vivono negli altri tab.
- * Credenziali PIN: info box che rimanda al tab "Credenziali" (evita duplicazione).
- */
+const PRICE_LEVELS = [
+  { value: 1, label: '€', desc: 'economico' },
+  { value: 2, label: '€€', desc: 'medio' },
+  { value: 3, label: '€€€', desc: '30–50€' },
+  { value: 4, label: '€€€€', desc: 'alto' },
+]
+
+const RECOMMENDED_FOR_OPTIONS = [
+  'Cena romantica',
+  'Famiglia',
+  'Pranzo di lavoro',
+  'Aperitivo',
+  'Brunch',
+  'Appuntamento',
+  'Tradizione',
+  'Esperienza unica',
+  'Vegetariano',
+  'Gruppo di amici',
+  'Vista panoramica',
+  'Prezzo accessibile',
+]
+
 export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
   const { categories } = useCategories()
   const ai = useAiCorrect()
   const [geocoding, setGeocoding] = useState(false)
+  const [customTag, setCustomTag] = useState('')
 
   async function runGeocode() {
     if (!form.address?.trim()) return
@@ -27,13 +45,32 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
   }
 
   function handleAddressBlur() {
-    const hasCoords = form.latitude && form.longitude
-    if (!hasCoords) runGeocode()
+    if (!form.latitude && !form.longitude) runGeocode()
   }
+
+  function toggleRecommended(tag) {
+    const current = Array.isArray(form.recommended_for) ? form.recommended_for : []
+    onChange({
+      recommended_for: current.includes(tag)
+        ? current.filter((t) => t !== tag)
+        : [...current, tag],
+    })
+  }
+
+  function addCustomTag() {
+    const tag = customTag.trim()
+    if (!tag) return
+    const current = Array.isArray(form.recommended_for) ? form.recommended_for : []
+    if (!current.includes(tag)) onChange({ recommended_for: [...current, tag] })
+    setCustomTag('')
+  }
+
+  const recommended = Array.isArray(form.recommended_for) ? form.recommended_for : []
+  const customTags = recommended.filter((t) => !RECOMMENDED_FOR_OPTIONS.includes(t))
 
   return (
     <div>
-      {/* Google Maps import — banner (espanso) su nuovo ristorante, compact su edit */}
+      {/* Google Maps import */}
       <GoogleMapsImportBlock
         variant={isNew ? 'banner' : 'compact'}
         onApply={(patch) => onChange(patch)}
@@ -54,41 +91,65 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             <FInput value={form.slug} onChange={(v) => onChange({ slug: slugify(v) })} placeholder="consorzio" />
           </FField>
         </FRow>
+
+        {/* Categoria — visual chips */}
+        <FField label="Categoria principale">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+            {categories.map((c) => {
+              const active = form.cuisine_type === c.name
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => onChange({ cuisine_type: c.name, category: [c.name] })}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: `1.5px solid ${active ? c.color || 'var(--color-corallo, #E8453C)' : 'var(--color-line, #EAE3D7)'}`,
+                    background: active ? (c.color || 'var(--color-corallo, #E8453C)') : '#fff',
+                    color: active ? '#fff' : 'var(--color-ink, #22181C)',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {c.emoji && <span>{c.emoji}</span>}
+                  {c.name}
+                </button>
+              )
+            })}
+          </div>
+        </FField>
+
         <FRow>
-          <FField label="Categoria principale">
-            <FSelect value={form.cuisine_type} onChange={(v) => onChange({ cuisine_type: v, category: v ? [v] : [] })}>
-              <option value="">—</option>
-              {categories.map((c) => (
-                <option key={c.name} value={c.name}>{c.name}</option>
-              ))}
-            </FSelect>
-          </FField>
           <FField label="Zona · città">
             <FInput value={form.city} onChange={(v) => onChange({ city: v })} placeholder="San Salvario" />
           </FField>
-        </FRow>
-        <FRow>
           <FField label="Indirizzo">
-            <FInput value={form.address} onChange={(v) => onChange({ address: v })} onBlur={handleAddressBlur} placeholder="Via Monte di Pietà 23, Torino" />
-          </FField>
-          <FField label="Fascia prezzo">
-            <FSelect value={String(form.price_range ?? 2)} onChange={(v) => onChange({ price_range: parseInt(v, 10) || 2 })}>
-              <option value="1">€ · economico</option>
-              <option value="2">€€ · medio</option>
-              <option value="3">€€€ · 30–50€</option>
-              <option value="4">€€€€ · alto</option>
-            </FSelect>
+            <FInput
+              value={form.address}
+              onChange={(v) => onChange({ address: v })}
+              onBlur={handleAddressBlur}
+              placeholder="Via Monte di Pietà 23, Torino"
+            />
           </FField>
         </FRow>
+
+        {/* Coordinate */}
         <FRow>
-          <FField label="Latitudine" hint="Pin sulla mappa">
+          <FField label="Latitudine" hint="Pin sulla mappa · auto-calcolata dall'indirizzo">
             <FInput value={String(form.latitude ?? '')} onChange={(v) => onChange({ latitude: v })} placeholder="45.0703" />
           </FField>
           <FField label="Longitudine">
             <FInput value={String(form.longitude ?? '')} onChange={(v) => onChange({ longitude: v })} placeholder="7.6869" />
           </FField>
         </FRow>
-        <div style={{ marginBottom: 10 }}>
+        <div style={{ marginBottom: 14 }}>
           <button
             type="button"
             onClick={runGeocode}
@@ -113,6 +174,39 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             {geocoding ? '⏳ Cerco coordinate…' : '📍 Trova coordinate da indirizzo'}
           </button>
         </div>
+
+        {/* Fascia prezzo — bottoni */}
+        <FField label="Fascia prezzo">
+          <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+            {PRICE_LEVELS.map(({ value, label, desc }) => {
+              const active = (form.price_range ?? 2) === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onChange({ price_range: value })}
+                  title={desc}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 10,
+                    border: `1.5px solid ${active ? 'var(--color-corallo, #E8453C)' : 'var(--color-line, #EAE3D7)'}`,
+                    background: active ? 'var(--color-corallo, #E8453C)' : '#fff',
+                    color: active ? '#fff' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    transition: 'all 0.12s',
+                    minWidth: 52,
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </FField>
+
         <FRow>
           <FField label="Telefono">
             <FInput value={form.phone} onChange={(v) => onChange({ phone: v })} placeholder="+39 011 276 7661" />
@@ -128,6 +222,106 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
         </FRow>
       </FGroup>
 
+      {/* Consigliato per */}
+      <FGroup title="Consigliato per" count="seleziona tutti quelli che si applicano">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+          {RECOMMENDED_FOR_OPTIONS.map((tag) => {
+            const active = recommended.includes(tag)
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleRecommended(tag)}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  border: `1.5px solid ${active ? 'var(--color-corallo, #E8453C)' : 'var(--color-line, #EAE3D7)'}`,
+                  background: active ? 'var(--color-corallo, #E8453C)' : '#fff',
+                  color: active ? '#fff' : 'var(--color-ink, #22181C)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  transition: 'all 0.12s',
+                }}
+              >
+                {tag}
+              </button>
+            )
+          })}
+        </div>
+        {/* Custom tag input */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            value={customTag}
+            onChange={(e) => setCustomTag(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
+            placeholder="Aggiungi tag personalizzato…"
+            style={{
+              flex: 1,
+              border: '1px solid var(--color-line, #EAE3D7)',
+              borderRadius: 10,
+              padding: '9px 12px',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--color-ink, #22181C)',
+              background: '#fff',
+              outline: 'none',
+            }}
+          />
+          <button
+            type="button"
+            onClick={addCustomTag}
+            style={{
+              background: 'var(--color-ink, #22181C)',
+              color: '#fff',
+              border: 0,
+              padding: '9px 16px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Aggiungi
+          </button>
+        </div>
+        {customTags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            {customTags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  background: 'rgba(232,69,60,0.1)',
+                  color: 'var(--color-corallo, #E8453C)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => toggleRecommended(tag)}
+                  style={{ background: 'none', border: 0, cursor: 'pointer', padding: 0, color: 'inherit', lineHeight: 1, fontSize: 11 }}
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </FGroup>
+
       {/* Voce di Bi */}
       <FGroup title="La voce di Bi" count="il cuore della scheda">
         <FRow one>
@@ -135,12 +329,7 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             label={
               <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                 <span>Occhiello (una riga)</span>
-                <AiCorrectButton
-                  ai={ai}
-                  field="tagline"
-                  getText={() => form.tagline}
-                  context="restaurant tip"
-                />
+                <AiCorrectButton ai={ai} field="tagline" getText={() => form.tagline} context="restaurant tip" />
               </span>
             }
           >
@@ -158,12 +347,7 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             label={
               <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                 <span>Racconto completo</span>
-                <AiCorrectButton
-                  ai={ai}
-                  field="our_review"
-                  getText={() => form.our_review}
-                  context="restaurant review"
-                />
+                <AiCorrectButton ai={ai} field="our_review" getText={() => form.our_review} context="restaurant review" />
               </span>
             }
           >
