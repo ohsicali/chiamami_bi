@@ -592,7 +592,7 @@ export default function HomePage() {
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
-                  {carouselRestaurants.map((r, idx) => (
+                  {carouselRestaurants.map((r) => (
                     <MiniCard
                       key={r.id}
                       restaurant={r}
@@ -601,10 +601,6 @@ export default function HomePage() {
                       saved={isSaved(r.id)}
                       onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                       onClick={handleCardClick}
-                      style={{
-                        marginLeft: idx === 0 ? 20 : 0,
-                        marginRight: idx === carouselRestaurants.length - 1 ? 20 : 0,
-                      }}
                     />
                   ))}
                 </div>
