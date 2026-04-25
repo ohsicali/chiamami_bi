@@ -35,7 +35,8 @@ function slugify(name) {
 }
 
 
-const CAROUSEL_MAX = 4
+const CAROUSEL_INITIAL = 4
+const CAROUSEL_STEP = 4
 
 function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick, style }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
@@ -256,7 +257,10 @@ export default function HomePage() {
   }, [])
 
   const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
-  const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
+  const [carouselLimit, setCarouselLimit] = useState(CAROUSEL_INITIAL)
+  useEffect(() => { setCarouselLimit(CAROUSEL_INITIAL) }, [filters, showDealsOnly])
+  const carouselRestaurants = viewportRestaurants.slice(0, carouselLimit)
+  const hasMoreCarousel = viewportRestaurants.length > carouselLimit
 
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -603,6 +607,33 @@ export default function HomePage() {
                       onClick={handleCardClick}
                     />
                   ))}
+                  {hasMoreCarousel && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setCarouselLimit(c => c + CAROUSEL_STEP) }}
+                      className="flex-shrink-0"
+                      style={{
+                        width: 110, scrollSnapAlign: 'start',
+                        borderRadius: 14,
+                        background: '#FAF7F2',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                        border: '1.5px dashed rgba(34,24,28,0.18)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                        gap: 6, cursor: 'pointer',
+                        WebkitTapHighlightColor: 'transparent',
+                        fontFamily: 'inherit', color: '#22181C',
+                      }}
+                    >
+                      <span style={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: '#22181C', color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 22, fontWeight: 700, lineHeight: 1,
+                      }}>+</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '-0.01em' }}>Altro</span>
+                    </button>
+                  )}
                 </div>
               </>
             )}
