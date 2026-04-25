@@ -545,7 +545,7 @@ export default function HomePage() {
             style={{
               position: 'absolute', left: 0, right: 0,
               bottom: TAB_BAR_HEIGHT + 24,
-              zIndex: 35, pointerEvents: 'none',
+              zIndex: 55, pointerEvents: 'none',
             }}
           >
             {/* Lista pill */}
