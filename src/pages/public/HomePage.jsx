@@ -382,13 +382,13 @@ export default function HomePage() {
   /* Shared list content — used by mobile sheet */
   const listContent = (
     <>
-      <div style={{ marginBottom: 14 }}>
+      <div style={{ marginBottom: 4 }}>
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
-        padding: '12px 0',
+        padding: '4px 0 12px',
         margin: '0 -20px', paddingLeft: 20, paddingRight: 20,
         background: '#FAF7F2',
       }}>
@@ -524,7 +524,7 @@ export default function HomePage() {
             top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
             left: 0, right: 0,
             zIndex: 25,
-            padding: '14px 16px',
+            padding: '10px 16px',
             background: '#FAF7F2',
           }}>
             <MobileFilterBar
@@ -655,14 +655,16 @@ export default function HomePage() {
           {/* "Vedi la mappa" */}
           <button
             onClick={closeSheet}
-            className="glass-pill-v4-dark"
             style={{
               position: 'absolute',
               bottom: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT + 28}px)`,
               left: '50%', transform: 'translateX(-50%)', zIndex: 40,
-              fontSize: 14, fontWeight: 600, padding: '12px 28px',
+              background: '#22181C', color: '#fff',
+              fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em',
+              padding: '10px 22px',
               borderRadius: 999, border: 'none',
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              boxShadow: '0 4px 16px rgba(34,24,28,.28)',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
