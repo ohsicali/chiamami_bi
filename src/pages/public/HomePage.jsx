@@ -37,7 +37,7 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
-function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
+function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick, marginLeft }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
   const category = categories[0]
@@ -63,6 +63,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         borderRadius: 14,
         background: '#FAF7F2',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        marginLeft: marginLeft || 0,
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
@@ -587,9 +588,7 @@ export default function HomePage() {
                   }}
                 >
                   <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}`}</style>
-                  {/* Spacer per allineare la prima card alla navbar — paddingLeft non funziona su Safari overflow */}
-                  <div style={{ flexShrink: 0, width: 20 }} />
-                  {carouselRestaurants.map((r) => (
+                  {carouselRestaurants.map((r, idx) => (
                     <MiniCard
                       key={r.id}
                       restaurant={r}
@@ -598,6 +597,7 @@ export default function HomePage() {
                       saved={isSaved(r.id)}
                       onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                       onClick={handleCardClick}
+                      marginLeft={idx === 0 ? 20 : 0}
                     />
                   ))}
                 </div>
