@@ -13,6 +13,7 @@ import TimeContextHero from '../../components/Home/TimeContextHero'
 import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
+import CityPickerSheet from '../../components/UI/CityPickerSheet'
 
 function formatCountdown(endsAt) {
   if (!endsAt) return null
@@ -44,6 +45,8 @@ function TopBar({ user }) {
   const initials = user
     ? (user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase()
     : null
+  const [cityPickerOpen, setCityPickerOpen] = useState(false)
+  const [selectedCity, setSelectedCity] = useState('Torino')
   return (
     <div
       className="hfv4-topbar"
@@ -89,34 +92,38 @@ function TopBar({ user }) {
         </span>
       </Link>
 
-      <div
+      <button
+        type="button"
+        onClick={() => setCityPickerOpen(true)}
         className="hfv4-city-pill"
         style={{
           marginLeft: 'auto',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 9,
-          padding: '10px 16px 10px 14px',
-          background: 'var(--color-ink-05)',
-          border: '1px solid var(--color-ink-15, rgba(34,24,28,.12))',
+          gap: 7,
+          padding: '8px 12px',
+          background: 'var(--color-ink-05, rgba(34,24,28,.06))',
+          border: 'none',
           borderRadius: 999,
           fontWeight: 700,
-          fontSize: 14,
-          letterSpacing: '-0.01em',
+          fontSize: 13,
+          color: '#22181C',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          WebkitTapHighlightColor: 'transparent',
         }}
       >
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: 'var(--color-corallo)',
-            boxShadow: '0 0 0 3px rgba(232,69,60,.15)',
-          }}
-        />
-        Torino
-        <span style={{ fontSize: 10, color: 'var(--color-ink-40, rgba(34,24,28,.4))', marginLeft: 2 }}>▾</span>
-      </div>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)', flexShrink: 0 }} />
+        {selectedCity}
+        <svg viewBox="0 0 10 10" width="10" height="10">
+          <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        </svg>
+      </button>
+      <CityPickerSheet
+        open={cityPickerOpen}
+        onClose={() => setCityPickerOpen(false)}
+        onCityChange={({ name }) => { setSelectedCity(name); setCityPickerOpen(false) }}
+      />
 
       {user ? (
         <Link
