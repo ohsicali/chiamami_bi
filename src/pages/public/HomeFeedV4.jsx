@@ -550,8 +550,6 @@ export default function HomeFeedV4() {
         .hfv4-cats-row::-webkit-scrollbar,
         .hfv4-cards-row::-webkit-scrollbar { display: none; }
 
-        .hfv4-scroll-spacer { flex: 0 0 20px; align-self: stretch; }
-
         .hfv4-cats-wrap { position: relative; }
         .hfv4-cats-wrap::after {
           content: "";
