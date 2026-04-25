@@ -224,6 +224,11 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
         >
           {r.name}
         </div>
+        {r.tagline && (
+          <div style={{ fontSize: 12, color: 'var(--color-ink-70)', marginTop: 3, lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {r.tagline}
+          </div>
+        )}
         <div
           style={{
             display: 'flex',
