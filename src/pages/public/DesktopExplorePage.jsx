@@ -95,29 +95,41 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
       </div>
 
       {/* Info */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0, paddingTop: 2 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 1 }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '3px 8px', background: 'var(--color-corallo-soft)', color: 'var(--color-corallo-ink)',
-            borderRadius: 999, fontSize: 10.5, fontWeight: 800,
-          }}>{catInfo.emoji} {catInfo.name}</span>
-          {priceStr && <span style={{ fontWeight: 800, fontSize: 10.5, color: 'var(--color-ink-70)', padding: '0 2px' }}>{priceStr}</span>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, paddingTop: 2 }}>
+        {/* Nome + distanza */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <div style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 17,
+            letterSpacing: '-0.025em', lineHeight: 1.15, color: 'var(--color-ink)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+          }}>{restaurant.name}</div>
           {dist != null && (
             <span style={{
               fontSize: 10.5, fontWeight: 700, color: 'var(--color-ink-70)',
               padding: '3px 7px', background: 'var(--color-ink-05)', borderRadius: 999,
-              display: 'inline-flex', alignItems: 'center', gap: 3,
+              display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0,
             }}>
               {PIN_SVG}{formatDistance(dist)}
             </span>
           )}
         </div>
-        <div style={{
-          fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18,
-          letterSpacing: '-0.025em', lineHeight: 1.15, color: 'var(--color-ink)',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>{restaurant.name}</div>
+        {/* Breve descrizione */}
+        {restaurant.tagline && (
+          <div style={{
+            fontSize: 11.5, color: 'var(--color-ink-70)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{restaurant.tagline}</div>
+        )}
+        {/* Categoria colorata + prezzo */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '3px 8px', borderRadius: 999, fontSize: 10.5, fontWeight: 800,
+            background: `${catInfo.color}20`, color: catInfo.color,
+          }}>{catInfo.emoji} {catInfo.name}</span>
+          {priceStr && <span style={{ fontWeight: 800, fontSize: 10.5, color: 'var(--color-ink-70)' }}>{priceStr}</span>}
+        </div>
+        {/* Via */}
         <div style={{
           fontSize: 11.5, color: 'var(--color-ink-70)',
           display: 'flex', alignItems: 'center', gap: 5,
@@ -300,7 +312,7 @@ export default function DesktopExplorePage() {
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         {/* Filter bar — same as mobile */}
-        <div style={{ padding: '18px 22px 0', flexShrink: 0 }}>
+        <div style={{ padding: '28px 22px 0', flexShrink: 0 }}>
           <MobileFilterBar
             filters={filters}
             onFilterChange={(next) => {

@@ -105,11 +105,12 @@ function createPinEl(restaurant, isSaved, discountValue) {
   const inner = document.createElement('div')
   inner.className = 'cb-inner cb-inner--bounce'
   inner.style.cssText = `
-    width:44px;height:44px;border-radius:50%;
-    background:${pinColor};opacity:0.85;
+    width:44px;height:44px;border-radius:50%;box-sizing:border-box;
+    background:${pinColor};
+    border:3px solid #fff;
     display:flex;align-items:center;justify-content:center;
     font-size:18px;position:relative;user-select:none;
-    box-shadow:0 4px 16px rgba(${rgb},0.4), 0 0 0 3px rgba(${rgb},0.15);
+    box-shadow:0 4px 16px rgba(${rgb},0.45), 0 1px 4px rgba(0,0,0,0.18);
   `
   inner.innerHTML = `<span style="line-height:1;pointer-events:none">${emoji}</span>`
 
