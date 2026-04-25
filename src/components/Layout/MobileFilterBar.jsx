@@ -315,8 +315,8 @@ export default function MobileFilterBar({
             onClick={() => setFiltersOpen(true)}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '12px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `2px solid ${INK}`,
+              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
+              border: `1.5px solid ${activeCount > 0 ? INK : BORDER}`,
               background: activeCount > 0 ? INK : '#fff',
               color: activeCount > 0 ? '#FAF7F2' : INK,
               fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
@@ -343,8 +343,8 @@ export default function MobileFilterBar({
             onClick={() => setCategoriesOpen(true)}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              padding: '12px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `2px solid ${INK}`,
+              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
+              border: `1.5px solid ${catActive ? INK : BORDER}`,
               background: catActive ? INK : '#fff',
               color: catActive ? '#FAF7F2' : INK,
               fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em', overflow: 'hidden',
@@ -370,8 +370,8 @@ export default function MobileFilterBar({
             onClick={onToggleDeals}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              padding: '12px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `2px solid ${showDealsOnly ? CORALLO : INK}`,
+              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
+              border: `1.5px solid ${showDealsOnly ? CORALLO : BORDER}`,
               background: '#fff',
               color: showDealsOnly ? CORALLO : INK,
               fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
