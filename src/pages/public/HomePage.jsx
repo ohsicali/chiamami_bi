@@ -526,7 +526,6 @@ export default function HomePage() {
             zIndex: 25,
             padding: '12px 16px 14px',
             background: '#FAF7F2',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
           }}>
             <MobileFilterBar
               filters={filters}

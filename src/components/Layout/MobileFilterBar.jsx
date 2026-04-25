@@ -322,8 +322,11 @@ export default function MobileFilterBar({
               fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M4 6h16M6 12h12M8 18h8" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/>
+              <line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/>
+              <line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/>
             </svg>
             Filtri
             {activeCount > 0 && (
@@ -371,9 +374,9 @@ export default function MobileFilterBar({
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
               padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `1.5px solid ${showDealsOnly ? CORALLO : BORDER}`,
-              background: '#fff',
-              color: showDealsOnly ? CORALLO : INK,
+              border: `1.5px solid ${showDealsOnly ? INK : BORDER}`,
+              background: showDealsOnly ? INK : '#fff',
+              color: showDealsOnly ? '#FAF7F2' : INK,
               fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
             }}
           >
@@ -389,7 +392,7 @@ export default function MobileFilterBar({
         {(activeCount > 0 || showDealsOnly) && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginTop: 10,
+            marginTop: 10, padding: '0 2px',
           }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: INK }}>
               {restaurantCount} local{restaurantCount === 1 ? 'e' : 'i'}
