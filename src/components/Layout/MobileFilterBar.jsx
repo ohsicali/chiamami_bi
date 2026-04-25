@@ -314,12 +314,12 @@ export default function MobileFilterBar({
             type="button"
             onClick={() => setFiltersOpen(true)}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '9px 14px', borderRadius: 999, cursor: 'pointer',
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
               border: `1.5px solid ${activeCount > 0 ? INK : BORDER}`,
               background: activeCount > 0 ? INK : '#fff',
               color: activeCount > 0 ? '#FAF7F2' : INK,
-              fontSize: 13, fontWeight: 700, flexShrink: 0,
+              fontSize: 13, fontWeight: 700,
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -342,16 +342,15 @@ export default function MobileFilterBar({
             type="button"
             onClick={() => setCategoriesOpen(true)}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '9px 14px', borderRadius: 999, cursor: 'pointer',
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
               border: `1.5px solid ${catActive ? INK : BORDER}`,
               background: catActive ? INK : '#fff',
               color: catActive ? '#FAF7F2' : INK,
-              fontSize: 13, fontWeight: 700, flexShrink: 0,
-              maxWidth: 160, overflow: 'hidden',
+              fontSize: 13, fontWeight: 700, overflow: 'hidden',
             }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="3" width="7" height="7" rx="1.5" />
               <rect x="14" y="3" width="7" height="7" rx="1.5" />
               <rect x="3" y="14" width="7" height="7" rx="1.5" />
@@ -360,7 +359,7 @@ export default function MobileFilterBar({
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {catLabel}
             </span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{ flexShrink: 0 }}>
               <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
@@ -370,12 +369,12 @@ export default function MobileFilterBar({
             type="button"
             onClick={onToggleDeals}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '9px 14px', borderRadius: 999, cursor: 'pointer',
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
               border: `1.5px solid ${showDealsOnly ? CORALLO : BORDER}`,
               background: '#fff',
               color: showDealsOnly ? CORALLO : INK,
-              fontSize: 13, fontWeight: 700, flexShrink: 0,
+              fontSize: 13, fontWeight: 700,
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
