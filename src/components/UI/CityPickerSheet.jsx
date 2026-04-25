@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useCity } from '../../lib/CityContext'
 
@@ -13,43 +13,23 @@ const SearchIcon = () => (
   </svg>
 )
 
+const POPULAR_CITIES = [
+  { name: 'Torino',   lng: 7.6869,  lat: 45.0703 },
+  { name: 'Milano',   lng: 9.1900,  lat: 45.4642 },
+  { name: 'Roma',     lng: 12.4964, lat: 41.9028 },
+  { name: 'Firenze',  lng: 11.2558, lat: 43.7696 },
+  { name: 'Bologna',  lng: 11.3426, lat: 44.4949 },
+  { name: 'Napoli',   lng: 14.2681, lat: 40.8518 },
+  { name: 'Venezia',  lng: 12.3155, lat: 45.4408 },
+  { name: 'Genova',   lng: 8.9463,  lat: 44.4056 },
+  { name: 'Verona',   lng: 10.9916, lat: 45.4384 },
+  { name: 'Palermo',  lng: 13.3614, lat: 38.1157 },
+]
+
 function countRestaurantsInCity(cityName, restaurants) {
   if (!restaurants?.length || !cityName) return 0
   const lower = cityName.toLowerCase()
   return restaurants.filter(r => r.city?.toLowerCase() === lower).length
-}
-
-function CityRow({ name, count, onSelect }) {
-  const [loading, setLoading] = useState(false)
-
-  async function handleClick() {
-    if (!MAPBOX_TOKEN) return
-    setLoading(true)
-    try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(name)}.json?access_token=${MAPBOX_TOKEN}&country=it&types=place,locality&language=it&limit=1`
-      const res = await fetch(url)
-      const data = await res.json()
-      if (data.features?.[0]) {
-        const [lng, lat] = data.features[0].center
-        onSelect(name, lng, lat)
-      }
-    } catch {} finally { setLoading(false) }
-  }
-
-  return (
-    <button onClick={handleClick} disabled={loading} className="flex items-center justify-between w-full" style={{
-      padding: '12px 14px', borderRadius: 14, background: '#fff', border: '1.5px solid #E8E5DE',
-      cursor: 'pointer', opacity: loading ? 0.6 : 1,
-    }}>
-      <div className="flex items-center gap-3">
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ddd' }} />
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#22181C' }}>{name}</span>
-      </div>
-      <span style={{ fontSize: 11, fontWeight: 600, color: '#22181C', background: 'rgba(0,0,0,0.05)', padding: '3px 8px', borderRadius: 10 }}>
-        {count} locali
-      </span>
-    </button>
-  )
 }
 
 /**
@@ -65,7 +45,6 @@ function CityRow({ name, count, onSelect }) {
  */
 export default function CityPickerSheet({ open, onClose, onCityChange, restaurants: propRestaurants }) {
   const navigate = useNavigate()
-  const location = useLocation()
   const { city: currentCity, selectCity } = useCity()
   const selectedCity = currentCity.name
   const [query, setQuery] = useState('')
@@ -243,14 +222,35 @@ export default function CityPickerSheet({ open, onClose, onCityChange, restauran
             <div style={{ textAlign: 'center', padding: '16px 0', color: '#8A8680', fontSize: 13 }}>Nessun risultato per "{query}"</div>
           )}
 
-          {/* Other cities with restaurants */}
-          {showPopular && Object.keys(cities).filter(c => c !== selectedCity).length > 0 && (
+          {/* Popular Italian cities */}
+          {showPopular && (
             <div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>Altre città</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#8A8680', textTransform: 'uppercase', letterSpacing: 1 }}>Città popolari</span>
               <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {Object.entries(cities).filter(([c]) => c !== selectedCity).map(([cityName, count]) => (
-                  <CityRow key={cityName} name={cityName} count={count} onSelect={handleCitySelect} />
-                ))}
+                {POPULAR_CITIES.filter(c => c.name !== selectedCity).map((c) => {
+                  const count = countRestaurantsInCity(c.name, restaurants)
+                  return (
+                    <button
+                      key={c.name}
+                      onClick={() => handleCitySelect(c.name, c.lng, c.lat)}
+                      className="flex items-center justify-between w-full"
+                      style={{
+                        padding: '12px 14px', borderRadius: 14, background: '#fff',
+                        border: '1.5px solid #E8E5DE', cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: count > 0 ? '#4ade80' : '#ddd' }} />
+                        <span style={{ fontSize: 15, fontWeight: 600, color: '#22181C' }}>{c.name}</span>
+                      </div>
+                      {count > 0 && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#22181C', background: 'rgba(0,0,0,0.05)', padding: '3px 8px', borderRadius: 10 }}>
+                          {count} locali
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
