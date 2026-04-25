@@ -6,12 +6,12 @@ import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 import MapView from '../../components/Map/MapView'
 import SearchBar from '../../components/Layout/SearchBar'
-import FilterChips from '../../components/Layout/FilterChips'
+import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import Navbar from '../../components/Layout/Navbar'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
-import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
+import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -178,12 +178,34 @@ export default function HomePage() {
   } = useRestaurants(position)
 
   const [showDealsOnly, setShowDealsOnly] = useState(false)
+  const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
   const [sheetFiltersSticky, setSheetFiltersSticky] = useState(false)
   const sheetFiltersRef = useRef(null)
-  const [activeCatFilter, setActiveCatFilter] = useState(null)
-  const displayedRestaurants = showDealsOnly
-    ? restaurants.filter((r) => discountRestaurantIds.has(r.id))
-    : restaurants
+
+  const displayedRestaurants = useMemo(() => {
+    let result = showDealsOnly
+      ? restaurants.filter(r => discountRestaurantIds.has(r.id))
+      : restaurants
+
+    if (extraFilters.dietary?.length > 0) {
+      const fieldMap = {
+        vegano: 'is_vegan', vegetariano: 'is_vegetarian',
+        salutare: 'is_healthy', senza_glutine: 'is_gluten_free',
+      }
+      result = result.filter(r =>
+        extraFilters.dietary.every(key => r[fieldMap[key]] === true)
+      )
+    }
+
+    if (extraFilters.radiusKm !== null && position) {
+      result = result.filter(r => {
+        if (!r.latitude || !r.longitude) return true
+        return getDistance(position.lat, position.lng, r.latitude, r.longitude) <= extraFilters.radiusKm
+      })
+    }
+
+    return result
+  }, [restaurants, showDealsOnly, extraFilters, position, discountRestaurantIds])
 
   const [selectedId, setSelectedId] = useState(null)
   const [visibleIds, setVisibleIds] = useState(null)
@@ -234,24 +256,6 @@ export default function HomePage() {
 
   const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const carouselRestaurants = viewportRestaurants.slice(0, CAROUSEL_MAX)
-
-  // Count per category from all restaurants (for filter chip counts)
-  const catCounts = useMemo(() => {
-    const counts = {}
-    allRestaurants.forEach(r => {
-      const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-      cats.forEach(c => { counts[c] = (counts[c] || 0) + 1 })
-    })
-    return counts
-  }, [allRestaurants])
-
-  // Top 6 categories by count
-  const topCats = useMemo(() => {
-    return Object.entries(catCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([name, count]) => ({ ...getCategoryInfo(name), name, count }))
-  }, [catCounts])
 
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -378,23 +382,24 @@ export default function HomePage() {
   /* Shared list content — used by mobile sheet */
   const listContent = (
     <>
-      <div className="md:hidden" style={{ marginBottom: 14 }}>
+      <div style={{ marginBottom: 14 }}>
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
-        padding: '14px 0',
+        padding: '12px 0',
         margin: '0 -20px', paddingLeft: 20, paddingRight: 20,
         background: '#FAF7F2',
       }}>
-        <FilterChips
+        <MobileFilterBar
           filters={filters}
           onFilterChange={setFilters}
-          onNearbyClick={handleLocateMe}
           showDealsOnly={showDealsOnly}
-          onToggleDeals={() => setShowDealsOnly((v) => !v)}
-          dealsCount={discountRestaurantIds.size}
+          onToggleDeals={() => setShowDealsOnly(v => !v)}
+          restaurantCount={viewportRestaurants.length}
+          extraFilters={extraFilters}
+          onExtraFilterChange={setExtraFilters}
         />
       </div>
 
@@ -512,71 +517,24 @@ export default function HomePage() {
       {!isDesktop && (
       <div>
 
-        {/* === Floating category filter chips (esp-filters) === */}
+        {/* ─ Filter bar sopra la mappa ─ */}
         {!hideBottomPanel && (
           <div style={{
             position: 'absolute',
             top: 'calc(env(safe-area-inset-top, 0px) + 68px)',
             left: 0, right: 0,
             zIndex: 25,
-            display: 'flex', gap: 6, overflowX: 'auto',
-            padding: '0 20px',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
+            padding: '10px 16px',
           }}>
-            <style>{`.esp-filters-row::-webkit-scrollbar{display:none}`}</style>
-            {/* Tutti chip */}
-            <button
-              onClick={() => { setActiveCatFilter(null); setFilters(f => ({ ...f, category: null })) }}
-              style={{
-                flex: '0 0 auto',
-                background: activeCatFilter === null ? '#22181C' : 'rgba(255,255,255,.94)',
-                backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                borderRadius: 999, padding: '7px 12px',
-                fontSize: 12, fontWeight: 700,
-                color: activeCatFilter === null ? '#fff' : '#22181C',
-                boxShadow: '0 2px 8px rgba(34,24,28,.12)',
-                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-              }}
-            >
-              Tutti
-              <span style={{
-                fontSize: 9.5, fontWeight: 800,
-                background: activeCatFilter === null ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
-                color: activeCatFilter === null ? '#fff' : '#22181C',
-                padding: '1.5px 5px', borderRadius: 999,
-              }}>{allRestaurants.length}</span>
-            </button>
-            {topCats.map(cat => (
-              <button
-                key={cat.name}
-                onClick={() => {
-                  const next = activeCatFilter === cat.name ? null : cat.name
-                  setActiveCatFilter(next)
-                  setFilters(f => ({ ...f, category: next }))
-                }}
-                style={{
-                  flex: '0 0 auto',
-                  background: activeCatFilter === cat.name ? '#22181C' : 'rgba(255,255,255,.94)',
-                  backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                  borderRadius: 999, padding: '7px 12px',
-                  fontSize: 12, fontWeight: 700,
-                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
-                  boxShadow: '0 2px 8px rgba(34,24,28,.12)',
-                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                }}
-              >
-                {cat.emoji} {cat.name}
-                <span style={{
-                  fontSize: 9.5, fontWeight: 800,
-                  background: activeCatFilter === cat.name ? 'rgba(255,255,255,.22)' : 'rgba(34,24,28,.05)',
-                  color: activeCatFilter === cat.name ? '#fff' : '#22181C',
-                  padding: '1.5px 5px', borderRadius: 999,
-                }}>{cat.count}</span>
-              </button>
-            ))}
+            <MobileFilterBar
+              filters={filters}
+              onFilterChange={setFilters}
+              showDealsOnly={showDealsOnly}
+              onToggleDeals={() => setShowDealsOnly(v => !v)}
+              restaurantCount={displayedRestaurants.length}
+              extraFilters={extraFilters}
+              onExtraFilterChange={setExtraFilters}
+            />
           </div>
         )}
 
