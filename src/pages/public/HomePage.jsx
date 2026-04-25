@@ -521,7 +521,7 @@ export default function HomePage() {
         {!hideBottomPanel && (
           <div style={{
             position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
+            top: 'calc(env(safe-area-inset-top, 0px) + 64px)',
             left: 0, right: 0,
             zIndex: 25,
             padding: '10px 16px',
