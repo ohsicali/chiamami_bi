@@ -37,7 +37,7 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
-function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
+function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick, style }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
   const category = categories[0]
@@ -68,6 +68,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
         position: 'relative',
+        ...style,
       }}
     >
       <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
@@ -577,7 +578,7 @@ export default function HomePage() {
             {/* Carousel */}
             {carouselRestaurants.length > 0 && (
               <>
-                <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}.esp-caro-scroll>*:first-child{margin-left:20px}.esp-caro-scroll>*:last-child{margin-right:20px}`}</style>
+                <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}`}</style>
                 <div
                   className="esp-caro-scroll"
                   style={{
@@ -589,7 +590,7 @@ export default function HomePage() {
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
-                  {carouselRestaurants.map((r) => (
+                  {carouselRestaurants.map((r, idx) => (
                     <MiniCard
                       key={r.id}
                       restaurant={r}
@@ -598,6 +599,10 @@ export default function HomePage() {
                       saved={isSaved(r.id)}
                       onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                       onClick={handleCardClick}
+                      style={{
+                        marginLeft: idx === 0 ? 20 : 0,
+                        marginRight: idx === carouselRestaurants.length - 1 ? 20 : 0,
+                      }}
                     />
                   ))}
                 </div>
