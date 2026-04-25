@@ -121,10 +121,10 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       {discountValue && (
         <div style={{
           position: 'absolute', top: 16, left: 16, zIndex: 3,
-          background: '#E8453C', color: '#fff',
-          fontSize: 11, fontWeight: 700,
+          background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+          fontSize: 11, fontWeight: 800,
           padding: '5px 12px', borderRadius: 10,
-          boxShadow: '0 2px 10px rgba(232, 69, 60,0.4)',
+          boxShadow: '0 2px 10px rgba(74,222,128,0.35)',
         }}>
           -{discountValue}%
         </div>
@@ -248,10 +248,10 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
         {discountValue && (
           <div style={{
             position: 'absolute', top: 6, left: 6,
-            background: '#E8453C', color: '#fff',
-            fontSize: 9, fontWeight: 700,
+            background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+            fontSize: 9, fontWeight: 800,
             padding: '2px 7px', borderRadius: 6,
-            boxShadow: '0 2px 6px rgba(232, 69, 60,0.3)',
+            boxShadow: '0 2px 6px rgba(74,222,128,0.3)',
           }}>
             -{discountValue}%
           </div>
@@ -442,35 +442,19 @@ export default function ListView() {
           <>
             {/* Featured / Hero card */}
             {featuredRestaurant && (
-              <>
-                <div style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: 2,
-                  textTransform: 'uppercase', color: '#8A8680',
-                  marginBottom: 14, paddingLeft: 6,
-                }}>
-                  In evidenza
-                </div>
-                <HeroCard
-                  restaurant={featuredRestaurant}
-                  userPosition={position}
-                  discountValue={discountValueMap[featuredRestaurant.id]}
-                  saved={isSaved(featuredRestaurant.id)}
-                  onSave={() => handleSave(featuredRestaurant.id)}
-                  onClick={handleCardClick}
-                />
-              </>
+              <HeroCard
+                restaurant={featuredRestaurant}
+                userPosition={position}
+                discountValue={discountValueMap[featuredRestaurant.id]}
+                saved={isSaved(featuredRestaurant.id)}
+                onSave={() => handleSave(featuredRestaurant.id)}
+                onClick={handleCardClick}
+              />
             )}
 
             {/* All restaurants */}
             {otherRestaurants.length > 0 && (
               <>
-                <div style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: 2,
-                  textTransform: 'uppercase', color: '#8A8680',
-                  marginBottom: 14, paddingLeft: 6,
-                }}>
-                  Tutti i ristoranti
-                </div>
                 {otherRestaurants.map((restaurant) => (
                   <HorizontalCard
                     key={restaurant.id}

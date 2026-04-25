@@ -398,7 +398,7 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
     ? (discount.discount_type === 'percentage' ? `-${String(discount.discount_value).replace('%','')}%` : `-${discount.discount_value}€`)
     : null
   return (
-    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 82%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'#ddd', overflow:'hidden' }}>
         {photoUrl
           ? <img src={photoUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" />
@@ -412,12 +412,16 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
         </div>
       </div>
       <div style={{ padding:'10px 14px 14px' }}>
-        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)' }}>{restaurant.name}</div>
-        <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--color-ink-70)', marginTop:4, flexWrap:'wrap' }}>
+        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{restaurant.name}</div>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:6 }}>
           {cat?.name && <span style={{ background:`${cat.color || '#E8453C'}20`, color:cat.color || '#E8453C', fontWeight:800, fontSize:10, padding:'3px 7px', borderRadius:999, letterSpacing:'0.02em', textTransform:'uppercase' }}>{cat.emoji} {cat.name}</span>}
-          {restaurant.address && <span>{restaurant.address.split(',')[0]}</span>}
-          {priceStr && <><span style={{ color:'var(--color-ink-40)' }}>·</span><span>{priceStr}</span></>}
+          {priceStr && <span style={{ fontSize:11, fontWeight:700, color:'var(--color-ink-70)' }}>{priceStr}</span>}
         </div>
+        {restaurant.address && (
+          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+            {restaurant.address.split(',')[0]}
+          </div>
+        )}
       </div>
     </button>
   )
