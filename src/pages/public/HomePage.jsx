@@ -657,7 +657,8 @@ export default function HomePage() {
             onClick={closeSheet}
             className="glass-pill-v4-dark"
             style={{
-              position: 'absolute', bottom: TAB_BAR_HEIGHT + 16,
+              position: 'absolute',
+              bottom: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT + 28}px)`,
               left: '50%', transform: 'translateX(-50%)', zIndex: 40,
               fontSize: 14, fontWeight: 600, padding: '12px 28px',
               borderRadius: 999, border: 'none',
