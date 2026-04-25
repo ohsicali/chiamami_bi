@@ -95,7 +95,7 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
       </div>
 
       {/* Info */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, paddingTop: 2 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, justifyContent: 'center' }}>
         {/* Nome + distanza */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
           <div style={{
