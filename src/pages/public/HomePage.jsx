@@ -517,14 +517,16 @@ export default function HomePage() {
       {!isDesktop && (
       <div>
 
-        {/* ─ Filter bar sopra la mappa ─ */}
+        {/* ─ Filter bar sopra la mappa (panel crema) ─ */}
         {!hideBottomPanel && (
           <div style={{
             position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 0px) + 68px)',
+            top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
             left: 0, right: 0,
             zIndex: 25,
-            padding: '10px 16px',
+            padding: '12px 16px 14px',
+            background: '#FAF7F2',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
           }}>
             <MobileFilterBar
               filters={filters}
@@ -543,7 +545,7 @@ export default function HomePage() {
           <div
             style={{
               position: 'absolute', left: 0, right: 0,
-              bottom: TAB_BAR_HEIGHT + 8,
+              bottom: TAB_BAR_HEIGHT + 24,
               zIndex: 35, pointerEvents: 'none',
             }}
           >

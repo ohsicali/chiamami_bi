@@ -315,11 +315,11 @@ export default function MobileFilterBar({
             onClick={() => setFiltersOpen(true)}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `1.5px solid ${activeCount > 0 ? INK : BORDER}`,
+              padding: '12px 10px', borderRadius: 999, cursor: 'pointer',
+              border: `2px solid ${INK}`,
               background: activeCount > 0 ? INK : '#fff',
               color: activeCount > 0 ? '#FAF7F2' : INK,
-              fontSize: 13, fontWeight: 700,
+              fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -343,11 +343,11 @@ export default function MobileFilterBar({
             onClick={() => setCategoriesOpen(true)}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `1.5px solid ${catActive ? INK : BORDER}`,
+              padding: '12px 10px', borderRadius: 999, cursor: 'pointer',
+              border: `2px solid ${INK}`,
               background: catActive ? INK : '#fff',
               color: catActive ? '#FAF7F2' : INK,
-              fontSize: 13, fontWeight: 700, overflow: 'hidden',
+              fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em', overflow: 'hidden',
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}>
@@ -370,11 +370,11 @@ export default function MobileFilterBar({
             onClick={onToggleDeals}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              padding: '11px 10px', borderRadius: 999, cursor: 'pointer',
-              border: `1.5px solid ${showDealsOnly ? CORALLO : BORDER}`,
+              padding: '12px 10px', borderRadius: 999, cursor: 'pointer',
+              border: `2px solid ${showDealsOnly ? CORALLO : INK}`,
               background: '#fff',
               color: showDealsOnly ? CORALLO : INK,
-              fontSize: 13, fontWeight: 700,
+              fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em',
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
