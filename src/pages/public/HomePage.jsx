@@ -37,7 +37,7 @@ function slugify(name) {
 
 const CAROUSEL_MAX = 4
 
-function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick, marginLeft }) {
+function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
   const category = categories[0]
@@ -63,7 +63,6 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
         borderRadius: 14,
         background: '#FAF7F2',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        marginLeft: marginLeft || 0,
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         overflow: 'hidden',
@@ -577,9 +576,12 @@ export default function HomePage() {
 
             {/* Carousel */}
             {carouselRestaurants.length > 0 && (
-              <div style={{ pointerEvents: 'auto' }}>
+              <>
+                <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}.esp-caro-scroll>*:first-child{margin-left:20px}.esp-caro-scroll>*:last-child{margin-right:20px}`}</style>
                 <div
+                  className="esp-caro-scroll"
                   style={{
+                    pointerEvents: 'auto',
                     display: 'flex', gap: 10, overflowX: 'auto',
                     paddingBottom: 6,
                     WebkitOverflowScrolling: 'touch',
@@ -587,8 +589,7 @@ export default function HomePage() {
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
-                  <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}`}</style>
-                  {carouselRestaurants.map((r, idx) => (
+                  {carouselRestaurants.map((r) => (
                     <MiniCard
                       key={r.id}
                       restaurant={r}
@@ -597,11 +598,10 @@ export default function HomePage() {
                       saved={isSaved(r.id)}
                       onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
                       onClick={handleCardClick}
-                      marginLeft={idx === 0 ? 20 : 0}
                     />
                   ))}
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}
