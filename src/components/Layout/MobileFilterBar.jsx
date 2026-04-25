@@ -452,14 +452,31 @@ export default function MobileFilterBar({
                   type="button"
                   onClick={() => setCatsExpanded(v => !v)}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    background: 'none', border: 'none', padding: 0,
-                    fontSize: 13, fontWeight: 600, color: MUTED, cursor: 'pointer',
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    padding: '11px 0',
+                    background: 'none',
+                    border: `1.5px dashed ${BORDER}`,
+                    borderRadius: 14,
+                    fontSize: 13, fontWeight: 700, color: MUTED, cursor: 'pointer',
+                    marginTop: 4,
                   }}
                 >
-                  {catsExpanded
-                    ? 'Meno categorie ▴'
-                    : `Altro (${remainingCats.length}) ▾`}
+                  {catsExpanded ? (
+                    <>
+                      Mostra meno
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 15l-6-6-6 6"/></svg>
+                    </>
+                  ) : (
+                    <>
+                      Tutte le categorie
+                      <span style={{
+                        background: BORDER, color: INK,
+                        fontSize: 11, fontWeight: 700,
+                        padding: '1px 7px', borderRadius: 999,
+                      }}>{remainingCats.length}</span>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </>
+                  )}
                 </button>
               )}
             </section>
