@@ -58,7 +58,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       onClick={() => onClick?.(restaurant)}
       className="flex-shrink-0"
       style={{
-        width: 230,
+        width: 250,
         scrollSnapAlign: 'start',
         borderRadius: 14,
         background: '#FAF7F2',
@@ -525,7 +525,7 @@ export default function HomePage() {
             top: 'calc(env(safe-area-inset-top, 0px) + 64px)',
             left: 0, right: 0,
             zIndex: 25,
-            padding: '10px 16px',
+            padding: '10px 16px 0',
             background: '#FAF7F2',
           }}>
             <MobileFilterBar
