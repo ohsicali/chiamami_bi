@@ -75,14 +75,13 @@ export default function MomentResultsGrid({
           display: 'flex',
           gap: 12,
           overflowX: 'auto',
-          padding: '0 20px 12px 0',
+          padding: '0 20px 12px 20px',
           scrollSnapType: 'x mandatory',
           scrollPaddingLeft: 20,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
         }}
       >
-        <span className="hfv4-scroll-spacer" aria-hidden="true" />
         {visibleCards.map(({ r, match }) => (
           <Lcard
             key={r.id}
