@@ -278,7 +278,7 @@ export default function RestaurantCard({
         {/* Name */}
         <h3 className="rcard-name" style={{
           fontFamily: "var(--font-sans)", fontWeight: 800,
-          fontSize: 14, fontWeight: 600, color: '#22181C',
+          fontSize: 14, color: '#22181C',
           lineHeight: 1.5, marginBottom: 3,
         }}>
           {restaurant.name}
