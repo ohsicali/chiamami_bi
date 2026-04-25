@@ -55,6 +55,12 @@ function TopBar({ user }) {
         display: 'flex',
         alignItems: 'center',
         gap: 10,
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'var(--color-page, #FAF7F2)',
+        backdropFilter: 'saturate(180%) blur(12px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(12px)',
       }}
     >
       <Link
