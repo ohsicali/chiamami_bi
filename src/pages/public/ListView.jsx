@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SearchBar from '../../components/Layout/SearchBar'
-import FilterChips from '../../components/Layout/FilterChips'
+import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import Navbar from '../../components/Layout/Navbar'
 import MobileTabBar from '../../components/Layout/MobileTabBar'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
@@ -328,6 +328,9 @@ export default function ListView() {
     setSearchQuery,
   } = useRestaurants(position)
 
+  const [showDealsOnly, setShowDealsOnly] = useState(false)
+  const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
+
   const { discounts: activeDiscounts, allFeatured: featuredDiscounts } = useActiveDiscounts()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
@@ -354,15 +357,41 @@ export default function ListView() {
     toggleSave(id)
   }, [user, navigate, toggleSave])
 
+  // Apply extra client-side filters (deals, dietary, radius)
+  const displayedRestaurants = useMemo(() => {
+    let result = showDealsOnly
+      ? restaurants.filter(r => discountValueMap[r.id])
+      : restaurants
+
+    if (extraFilters.dietary?.length > 0) {
+      const fieldMap = {
+        vegano: 'is_vegan', vegetariano: 'is_vegetarian',
+        salutare: 'is_healthy', senza_glutine: 'is_gluten_free',
+      }
+      result = result.filter(r =>
+        extraFilters.dietary.every(key => r[fieldMap[key]] === true)
+      )
+    }
+
+    if (extraFilters.radiusKm !== null && position) {
+      result = result.filter(r => {
+        if (!r.latitude || !r.longitude) return true
+        return getDistance(position.lat, position.lng, r.latitude, r.longitude) <= extraFilters.radiusKm
+      })
+    }
+
+    return result
+  }, [restaurants, showDealsOnly, extraFilters, position, discountValueMap])
+
   // Random restaurant with discount as hero — excludes restaurants with featured discounts
   // (those are shown in DealsPage "In evidenza") so the two pages differ
   const [heroSeed] = useState(() => Math.floor(Math.random() * 1000))
   const featuredDiscountRestaurantIds = new Set((featuredDiscounts || []).map(d => d.restaurant_id))
-  const restaurantsWithDiscount = restaurants.filter(r => discountValueMap[r.id] && !featuredDiscountRestaurantIds.has(r.id))
+  const restaurantsWithDiscount = displayedRestaurants.filter(r => discountValueMap[r.id] && !featuredDiscountRestaurantIds.has(r.id))
   const featuredRestaurant = restaurantsWithDiscount.length > 0
     ? restaurantsWithDiscount[heroSeed % restaurantsWithDiscount.length]
-    : restaurants.filter(r => !featuredDiscountRestaurantIds.has(r.id))[0] || restaurants[0]
-  const otherRestaurants = restaurants.filter(r => r.id !== featuredRestaurant?.id)
+    : displayedRestaurants.filter(r => !featuredDiscountRestaurantIds.has(r.id))[0] || displayedRestaurants[0]
+  const otherRestaurants = displayedRestaurants.filter(r => r.id !== featuredRestaurant?.id)
 
   return (
     <div
@@ -384,19 +413,16 @@ export default function ListView() {
         </div>
 
         {/* Filters */}
-        <div style={{ marginBottom: 12 }}>
-          <FilterChips filters={filters} onFilterChange={setFilters} />
-        </div>
-
-        {/* Results count */}
-        <div style={{ marginBottom: 14, paddingLeft: 6 }}>
-          {loading ? (
-            <div style={{ width: 100, height: 14, borderRadius: 6, background: '#E8E5DE' }} />
-          ) : (
-            <span style={{ fontSize: 12, color: '#8A8680', fontWeight: 500 }}>
-              <b style={{ color: '#22181C', fontWeight: 700 }}>{restaurants.length}</b> ristoranti
-            </span>
-          )}
+        <div style={{ marginBottom: 16 }}>
+          <MobileFilterBar
+            filters={filters}
+            onFilterChange={setFilters}
+            showDealsOnly={showDealsOnly}
+            onToggleDeals={() => setShowDealsOnly(v => !v)}
+            restaurantCount={displayedRestaurants.length}
+            extraFilters={extraFilters}
+            onExtraFilterChange={setExtraFilters}
+          />
         </div>
 
         {/* Restaurant list */}
