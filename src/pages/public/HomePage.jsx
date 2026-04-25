@@ -584,9 +584,11 @@ export default function HomePage() {
                   style={{
                     pointerEvents: 'auto',
                     display: 'flex', gap: 10, overflowX: 'auto',
-                    paddingBottom: 6,
+                    padding: '0 20px 6px 20px',
                     WebkitOverflowScrolling: 'touch',
                     scrollSnapType: 'x mandatory',
+                    scrollPaddingLeft: 20,
+                    scrollPaddingRight: 20,
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
