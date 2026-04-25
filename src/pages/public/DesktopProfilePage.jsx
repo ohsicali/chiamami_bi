@@ -5,12 +5,70 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 
-const COG_SVG = (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-  </svg>
-)
+const STROKE = '1.6'
+
+const Icon = {
+  Settings: ({ size = 18, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ),
+  About: ({ size = 18, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  ),
+  Store: ({ size = 18, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l1-5h16l1 5" />
+      <path d="M5 9v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
+      <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
+    </svg>
+  ),
+  Plus: ({ size = 18, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  ),
+  Arrow: ({ size = 14, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
+  ),
+  Share: ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  ),
+  Logout: ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  ),
+  Instagram: ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  ),
+  TikTok: ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+      <path d="M19.6 6.3a4.85 4.85 0 0 1-3-1.5 4.85 4.85 0 0 1-1.4-3H12v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .6 0 .8.1V8.5a5.8 5.8 0 0 0-.8 0 5.7 5.7 0 1 0 5.7 5.7V8.7a7.9 7.9 0 0 0 4.5 1.4V6.9c-.1 0-.1 0 0-.6z" />
+    </svg>
+  ),
+}
 
 export default function DesktopProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -82,122 +140,121 @@ export default function DesktopProfilePage() {
   ]
 
   const actions = [
-    { icon: '⚙️', title: 'Impostazioni', sub: 'Preferenze, notifiche, città', href: '/settings' },
-    { icon: '👋', title: 'Chi è Bi', sub: 'La mia storia, la guida', href: '/about' },
-    { icon: '🏪', title: 'Per i ristoratori', sub: 'Candida il tuo locale', href: '/partner' },
-    { icon: '✨', title: 'Consiglia un locale', sub: 'Un posto che amo a Torino', onClick: () => setShowSuggest(true), coral: true },
+    { Icon: Icon.Settings, title: 'Impostazioni', sub: 'Preferenze, notifiche, città', href: '/settings' },
+    { Icon: Icon.About, title: 'Chi è Bi', sub: 'La storia, la guida', href: '/about' },
+    { Icon: Icon.Store, title: 'Per i ristoratori', sub: 'Candida il tuo locale', href: '/partner' },
+    { Icon: Icon.Plus, title: 'Suggerisci un locale', sub: 'Un posto che ami a Torino', onClick: () => setShowSuggest(true), accent: true },
   ]
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 40px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px 60px' }}>
 
-        {/* ── Hero corallo ── */}
+        {/* ── Hero — minimal ink monochrome ── */}
         <div style={{
-          background: 'linear-gradient(135deg,var(--color-corallo) 0%,#C6372F 100%)',
-          color: '#fff', borderRadius: 28, padding: '36px 44px', marginBottom: 28,
+          background: '#22181C', color: '#fff',
+          borderRadius: 20, padding: '40px 44px', marginBottom: 32,
           display: 'flex', gap: 28, alignItems: 'center', position: 'relative', overflow: 'hidden',
         }}>
-          {/* Decorative circle */}
+          {/* Avatar — minimale, no shadow drammatico */}
           <div style={{
-            position: 'absolute', bottom: -60, right: -60,
-            width: 360, height: 360, borderRadius: '50%',
-            background: 'rgba(255,255,255,.08)',
-            pointerEvents: 'none',
-          }} />
-
-          {/* Avatar */}
-          <div style={{
-            width: 92, height: 92, borderRadius: '50%', background: '#fff',
-            color: 'var(--color-corallo)',
-            fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            display: 'grid', placeItems: 'center', fontSize: 40, flexShrink: 0,
-            boxShadow: '0 8px 24px rgba(34,24,28,.08)', position: 'relative', zIndex: 1,
+            width: 76, height: 76, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)',
+            color: '#fff',
+            display: 'grid', placeItems: 'center', flexShrink: 0,
+            fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+            fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em',
           }}>
             {initial}
           </div>
 
           {/* Info */}
-          <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
-            <div style={{ fontWeight: 900, fontSize: 34, letterSpacing: '-0.025em', lineHeight: 1.05 }}>
-              Ciao, {displayName || 'Amico'}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+              Profilo · Amico di Bi
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, flexWrap: 'wrap' }}>
-              <span style={{ padding: '5px 11px', background: 'rgba(255,255,255,.22)', borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: '.02em' }}>
-                Amico di Bi
-              </span>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,.82)' }}>
-                da {memberSince} · Torino
-              </span>
+            <div style={{ fontWeight: 800, fontSize: 30, letterSpacing: '-0.025em', lineHeight: 1.05 }}>
+              {displayName || 'Amico'}
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>
+              Iscritto da {memberSince} · Torino
             </div>
           </div>
 
-          {/* Cog button → settings */}
+          {/* Settings link — ghost button */}
           <button
             onClick={() => navigate('/settings')}
+            aria-label="Impostazioni"
             style={{
-              position: 'absolute', top: 28, right: 32,
-              width: 42, height: 42, borderRadius: '50%',
-              background: 'rgba(255,255,255,.18)', border: 0,
-              display: 'grid', placeItems: 'center', cursor: 'pointer', zIndex: 2,
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              display: 'grid', placeItems: 'center', cursor: 'pointer',
+              color: '#fff', flexShrink: 0,
             }}
-          >{COG_SVG}</button>
+          >
+            <Icon.Settings size={16} color="#fff" />
+          </button>
         </div>
 
         {/* ── 2 columns ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
 
           {/* LEFT — Stats */}
           <div>
-            <h3 style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--color-ink-70)', marginBottom: 12 }}>
-              Le tue statistiche
+            <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-ink-70)', marginBottom: 14, marginTop: 0 }}>
+              Statistiche
             </h3>
 
             {/* 3 stat tiles */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 18 }}>
               {stats.map(s => (
                 <div key={s.lbl} style={{
-                  background: '#fff', border: '1px solid var(--color-ink-05)', borderRadius: 16,
-                  padding: '16px 14px', textAlign: 'center',
+                  background: '#fff', border: '1px solid var(--color-ink-05)', borderRadius: 14,
+                  padding: '20px 14px', textAlign: 'center',
                 }}>
-                  <div style={{ fontWeight: 900, fontSize: 28, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>{s.num}</div>
-                  <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 4, fontWeight: 700 }}>{s.lbl}</div>
+                  <div style={{ fontWeight: 700, fontSize: 32, letterSpacing: '-0.03em', color: 'var(--color-ink)', lineHeight: 1 }}>{s.num}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 8, fontWeight: 600, letterSpacing: '0.02em' }}>{s.lbl}</div>
                 </div>
               ))}
             </div>
 
             {/* Invite card */}
             <div style={{
-              background: 'var(--color-ink)', color: '#fff',
-              borderRadius: 18, padding: '22px 24px',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20,
+              background: '#fff', border: '1px solid var(--color-ink-05)',
+              borderRadius: 14, padding: '20px 22px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18,
             }}>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: 17, letterSpacing: '-0.01em' }}>Invita un amico</div>
-                <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.7)', marginTop: 4 }}>
-                  Condividi La Guida di Bi con chi sa dove si mangia
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>Invita un amico</div>
+                <div style={{ fontSize: 12, color: 'var(--color-ink-70)', marginTop: 4, lineHeight: 1.4 }}>
+                  Condividi La Guida di Bi
                 </div>
               </div>
               <button
                 onClick={handleShare}
                 style={{
-                  padding: '10px 18px', background: '#fff', color: 'var(--color-ink)',
-                  borderRadius: 999, fontWeight: 800, fontSize: 12.5, border: 0, cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '10px 16px', background: 'var(--color-ink)', color: '#fff',
+                  borderRadius: 999, fontWeight: 700, fontSize: 12.5, border: 0, cursor: 'pointer', fontFamily: 'inherit',
                   whiteSpace: 'nowrap',
                 }}
-              >Condividi</button>
+              >
+                <Icon.Share size={14} color="#fff" />
+                Condividi
+              </button>
             </div>
 
             {/* Newsletter toggle */}
             <div style={{
-              marginTop: 16, background: '#fff', border: '1px solid var(--color-ink-05)',
-              borderRadius: 16, padding: '16px 20px',
+              marginTop: 12, background: '#fff', border: '1px solid var(--color-ink-05)',
+              borderRadius: 14, padding: '18px 22px',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 14 }}>Newsletter di Bi</div>
-                <div style={{ fontSize: 11.5, color: 'var(--color-ink-70)', marginTop: 3 }}>
-                  Novità, locali nuovi, drop esclusivi — una mail al mese.
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>Newsletter</div>
+                <div style={{ fontSize: 12, color: 'var(--color-ink-70)', marginTop: 4, lineHeight: 1.4 }}>
+                  Una mail al mese — locali nuovi, drop esclusivi
                 </div>
               </div>
               <button
@@ -205,18 +262,18 @@ export default function DesktopProfilePage() {
                 disabled={loadingNewsletter}
                 aria-label={newsletterEnabled ? 'Disattiva newsletter' : 'Attiva newsletter'}
                 style={{
-                  width: 44, height: 26, borderRadius: 999,
-                  background: newsletterEnabled ? 'var(--color-corallo)' : 'var(--color-ink-15)',
+                  width: 42, height: 24, borderRadius: 999,
+                  background: newsletterEnabled ? 'var(--color-ink)' : 'var(--color-ink-15)',
                   border: 0, cursor: 'pointer', position: 'relative', flexShrink: 0,
                   transition: 'background .2s',
                 }}
               >
                 <span style={{
                   position: 'absolute', top: 2,
-                  left: newsletterEnabled ? 'calc(100% - 24px)' : 2,
-                  width: 22, height: 22, borderRadius: '50%', background: '#fff',
+                  left: newsletterEnabled ? 'calc(100% - 22px)' : 2,
+                  width: 20, height: 20, borderRadius: '50%', background: '#fff',
                   transition: 'left .2s',
-                  boxShadow: '0 1px 4px rgba(0,0,0,.15)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,.18)',
                 }} />
               </button>
             </div>
@@ -224,38 +281,48 @@ export default function DesktopProfilePage() {
 
           {/* RIGHT — Actions */}
           <div>
-            <h3 style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--color-ink-70)', marginBottom: 12 }}>
-              Azioni rapide
+            <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-ink-70)', marginBottom: 14, marginTop: 0 }}>
+              Azioni
             </h3>
 
             {/* 2×2 action grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {actions.map(a => (
-                <div
-                  key={a.title}
-                  role="button"
-                  tabIndex={0}
-                  onClick={a.onClick ? a.onClick : () => navigate(a.href)}
-                  onKeyDown={e => e.key === 'Enter' && (a.onClick ? a.onClick() : navigate(a.href))}
-                  style={{
-                    background: a.coral ? 'var(--color-corallo)' : '#fff',
-                    color: a.coral ? '#fff' : 'var(--color-ink)',
-                    border: `1px solid ${a.coral ? 'var(--color-corallo)' : 'var(--color-ink-05)'}`,
-                    borderRadius: 16, padding: '18px', cursor: 'pointer',
-                    transition: 'all .2s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = a.coral ? 'var(--color-corallo)' : 'var(--color-ink-15)' }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.borderColor = a.coral ? 'var(--color-corallo)' : 'var(--color-ink-05)' }}
-                >
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, marginBottom: 10, fontSize: 18,
-                    background: a.coral ? 'rgba(255,255,255,.22)' : 'var(--color-corallo-soft)',
-                    display: 'grid', placeItems: 'center',
-                  }}>{a.icon}</div>
-                  <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: '-0.01em' }}>{a.title}</div>
-                  <div style={{ fontSize: 11.5, marginTop: 3, color: a.coral ? 'rgba(255,255,255,.82)' : 'var(--color-ink-70)' }}>{a.sub}</div>
-                </div>
-              ))}
+              {actions.map(a => {
+                const I = a.Icon
+                return (
+                  <div
+                    key={a.title}
+                    role="button"
+                    tabIndex={0}
+                    onClick={a.onClick ? a.onClick : () => navigate(a.href)}
+                    onKeyDown={e => e.key === 'Enter' && (a.onClick ? a.onClick() : navigate(a.href))}
+                    style={{
+                      background: '#fff',
+                      color: 'var(--color-ink)',
+                      border: '1px solid var(--color-ink-05)',
+                      borderRadius: 14, padding: '20px',
+                      cursor: 'pointer',
+                      transition: 'border-color .15s, transform .15s',
+                      display: 'flex', flexDirection: 'column', gap: 14,
+                      minHeight: 130,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-ink-15)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-ink-05)'; e.currentTarget.style.transform = '' }}
+                  >
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      color: 'var(--color-ink)',
+                    }}>
+                      <I size={18} color="var(--color-ink)" />
+                      <Icon.Arrow size={14} color="var(--color-ink-40)" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>{a.title}</div>
+                      <div style={{ fontSize: 12, marginTop: 4, color: 'var(--color-ink-70)', lineHeight: 1.4 }}>{a.sub}</div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             {/* Social buttons */}
@@ -263,45 +330,64 @@ export default function DesktopProfilePage() {
               <button
                 onClick={() => window.open('https://instagram.com/chiamamibi', '_blank')}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '14px 16px', borderRadius: 14, border: 0,
-                  background: 'linear-gradient(135deg,#F09433,#E6683C 25%,#DC2743 50%,#CC2366 75%,#BC1888)',
-                  color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                  padding: '13px 16px', borderRadius: 12,
+                  background: '#fff', border: '1px solid var(--color-ink-05)',
+                  color: 'var(--color-ink)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'border-color .15s',
                 }}
-              >📷 Instagram</button>
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-ink-15)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-ink-05)' }}
+              >
+                <Icon.Instagram size={15} color="var(--color-ink)" />
+                Instagram
+              </button>
               <button
                 onClick={() => window.open('https://tiktok.com/@chiamamibi', '_blank')}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '14px 16px', borderRadius: 14, border: 0,
-                  background: 'var(--color-ink)', color: '#fff',
-                  fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                  padding: '13px 16px', borderRadius: 12,
+                  background: '#fff', border: '1px solid var(--color-ink-05)',
+                  color: 'var(--color-ink)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'border-color .15s',
                 }}
-              >🎵 TikTok</button>
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-ink-15)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-ink-05)' }}
+              >
+                <Icon.TikTok size={15} color="var(--color-ink)" />
+                TikTok
+              </button>
             </div>
 
             {/* Logout */}
             <button
               onClick={handleLogout}
               style={{
-                marginTop: 14, width: '100%', padding: '14px 18px',
-                background: '#fff', border: '1px solid var(--color-ink-15)', borderRadius: 14,
-                color: 'var(--color-corallo-ink)', fontWeight: 800, fontSize: 13.5,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                marginTop: 12, width: '100%', padding: '14px 18px',
+                background: '#fff', border: '1px solid var(--color-ink-05)', borderRadius: 12,
+                color: 'var(--color-ink-70)', fontWeight: 600, fontSize: 13,
                 cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'border-color .15s, color .15s',
               }}
-            >Esci dall'account</button>
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-ink-15)'; e.currentTarget.style.color = 'var(--color-ink)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-ink-05)'; e.currentTarget.style.color = 'var(--color-ink-70)' }}
+            >
+              <Icon.Logout size={14} color="currentColor" />
+              Esci dall'account
+            </button>
           </div>
         </div>
       </div>
 
       {/* Footer */}
       <div style={{
-        padding: '30px 40px', borderTop: '1px solid var(--color-ink-05)',
+        padding: '24px 40px', borderTop: '1px solid var(--color-ink-05)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         fontSize: 12, color: 'var(--color-ink-70)', flexWrap: 'wrap', gap: 18,
-        maxWidth: 1280, margin: '60px auto 0',
+        maxWidth: 1100, margin: '40px auto 0',
       }}>
-        <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', color: 'var(--color-corallo)', fontSize: 16, letterSpacing: '.02em' }}>
+        <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', color: 'var(--color-ink)', fontSize: 14, letterSpacing: '0.04em' }}>
           CHIAMAMI BI
         </span>
         <nav style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
