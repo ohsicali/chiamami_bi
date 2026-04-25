@@ -6,9 +6,9 @@ import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
-import { useCategories } from '../../lib/hooks/useCategories'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg } from '../../lib/supabase'
+import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -209,7 +209,6 @@ export default function DesktopExplorePage() {
   const { user } = useAuth()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
-  const { categories } = useCategories()
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
@@ -230,6 +229,8 @@ export default function DesktopExplorePage() {
 
   const [activeCat, setActiveCat] = useState(() => location.state?.initialCategory || null)
   const [selectedId, setSelectedId] = useState(null)
+  const [showDealsOnly, setShowDealsOnly] = useState(false)
+  const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
 
   // Clear location state so refreshing doesn't re-apply the filter
   useEffect(() => {
@@ -239,12 +240,15 @@ export default function DesktopExplorePage() {
   const listRef = useRef(null)
   const cardRefs = useRef({})
 
-  const filteredRestaurants = activeCat
+  let filteredRestaurants = activeCat
     ? restaurants.filter(r => {
         const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
         return cats.some(c => c.toLowerCase().includes(activeCat.toLowerCase()))
       })
     : restaurants
+  if (showDealsOnly) {
+    filteredRestaurants = filteredRestaurants.filter(r => discountRestaurantIds.has(r.id))
+  }
 
   const selectedRestaurant = selectedId ? allRestaurants.find(r => r.id === selectedId) : null
 
@@ -274,8 +278,6 @@ export default function DesktopExplorePage() {
     if (position) mapRef.current?.flyToUser(position)
   }, [position])
 
-  const listCategories = categories.slice(0, 8)
-
   return (
     <div style={{
       display: 'none',
@@ -297,54 +299,50 @@ export default function DesktopExplorePage() {
         borderRight: '1px solid var(--color-ink-05)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
-        {/* Header */}
-        <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--color-ink-05)', flexShrink: 0 }}>
-          <h2 style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>
-            {loading ? '…' : `${filteredRestaurants.length} locali a Torino`}
-          </h2>
-          <div style={{ color: 'var(--color-ink-70)', fontSize: 12.5, marginTop: 4 }}>
-            Ordinati per distanza · mostra su mappa →
-          </div>
+        {/* Filter bar — same as mobile */}
+        <div style={{ padding: '18px 22px 0', flexShrink: 0 }}>
+          <MobileFilterBar
+            filters={filters}
+            onFilterChange={(next) => {
+              setFilters(next)
+              setActiveCat(null)
+            }}
+            showDealsOnly={showDealsOnly}
+            onToggleDeals={() => setShowDealsOnly(v => !v)}
+            restaurantCount={filteredRestaurants.length}
+            extraFilters={extraFilters}
+            onExtraFilterChange={setExtraFilters}
+          />
         </div>
 
-        {/* Category filters */}
+        {/* Count + sort row */}
         <div style={{
-          padding: '14px 22px', display: 'flex', gap: 8, overflowX: 'auto',
-          borderBottom: '1px solid var(--color-ink-05)', flexShrink: 0,
-          scrollbarWidth: 'none',
+          padding: '8px 22px 14px', borderBottom: '1px solid var(--color-ink-05)', flexShrink: 0,
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
         }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>
+              {loading ? '…' : `${filteredRestaurants.length} locali a Torino`}
+            </h2>
+            <div style={{ color: 'var(--color-ink-70)', fontSize: 12.5, marginTop: 4 }}>
+              Ordinati per distanza
+            </div>
+          </div>
           <button
-            onClick={() => { setActiveCat(null); setFilters(f => ({ ...f, category: null })) }}
+            type="button"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '8px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700,
-              color: !activeCat ? '#fff' : 'var(--color-ink)',
-              background: !activeCat ? 'var(--color-ink)' : '#fff',
-              border: `1px solid ${!activeCat ? 'var(--color-ink)' : 'var(--color-ink-15)'}`,
-              whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit',
+              padding: '8px 14px', borderRadius: 999,
+              border: '1px solid var(--color-ink-15)', background: '#fff',
+              fontSize: 12.5, fontWeight: 700, color: 'var(--color-ink)',
+              cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
             }}
           >
-            Tutti <span style={{ opacity: .6, fontWeight: 800, fontSize: 11 }}>{restaurants.length}</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18M7 12h14M11 18h10" />
+            </svg>
+            Distanza
           </button>
-          {listCategories.map(cat => {
-            const isActive = activeCat === cat.name
-            return (
-              <button
-                key={cat.name}
-                onClick={() => setActiveCat(isActive ? null : cat.name)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '8px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700,
-                  color: isActive ? '#fff' : 'var(--color-ink)',
-                  background: isActive ? 'var(--color-ink)' : '#fff',
-                  border: `1px solid ${isActive ? 'var(--color-ink)' : 'var(--color-ink-15)'}`,
-                  whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                {cat.emoji} {cat.name}
-              </button>
-            )
-          })}
         </div>
 
         {/* Scrollable list */}
