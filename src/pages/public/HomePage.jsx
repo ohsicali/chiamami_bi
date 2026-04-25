@@ -524,7 +524,7 @@ export default function HomePage() {
             top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
             left: 0, right: 0,
             zIndex: 25,
-            padding: '12px 16px',
+            padding: '14px 16px',
             background: '#FAF7F2',
           }}>
             <MobileFilterBar
