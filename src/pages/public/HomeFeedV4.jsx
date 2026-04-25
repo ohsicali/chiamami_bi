@@ -397,10 +397,9 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
           ? <img src={photoUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" />
           : <div style={{ width:'100%', height:'100%', display:'grid', placeItems:'center', fontSize:28 }}>{cat?.emoji || '🍽️'}</div>
         }
-        {discLabel
-          ? <span style={{ position:'absolute', top:10, left:10, background:'var(--color-corallo)', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 9px', borderRadius:999, letterSpacing:'0.02em' }}>{discLabel}</span>
-          : <span style={{ position:'absolute', top:10, left:10, background:'var(--color-ink)', color:'#fff', fontSize:10, fontWeight:700, padding:'4px 9px', borderRadius:999, letterSpacing:'0.04em' }}>NEW</span>
-        }
+        {discLabel && (
+          <span style={{ position:'absolute', top:10, left:10, background:'linear-gradient(135deg, #A3E635, #4ADE80)', color:'#1a4731', fontSize:11, fontWeight:800, padding:'4px 9px', borderRadius:999, letterSpacing:'0.02em' }}>{discLabel}</span>
+        )}
         <div style={{ position:'absolute', top:10, right:10 }}>
           <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
         </div>
@@ -408,7 +407,7 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
       <div style={{ padding:'10px 14px 14px' }}>
         <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)' }}>{restaurant.name}</div>
         <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--color-ink-70)', marginTop:4, flexWrap:'wrap' }}>
-          {cat?.name && <span style={{ background:'var(--color-corallo-soft)', color:'var(--color-corallo-ink)', fontWeight:700, fontSize:10, padding:'3px 7px', borderRadius:999, letterSpacing:'0.02em', textTransform:'uppercase' }}>{cat.name}</span>}
+          {cat?.name && <span style={{ background:`${cat.color || '#E8453C'}20`, color:cat.color || '#E8453C', fontWeight:800, fontSize:10, padding:'3px 7px', borderRadius:999, letterSpacing:'0.02em', textTransform:'uppercase' }}>{cat.emoji} {cat.name}</span>}
           {restaurant.address && <span>{restaurant.address.split(',')[0]}</span>}
           {priceStr && <><span style={{ color:'var(--color-ink-40)' }}>·</span><span>{priceStr}</span></>}
         </div>

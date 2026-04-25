@@ -689,15 +689,6 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* ── Hours pill — sotto chips, sopra CTA ── */}
-              {restaurant.hours_cache && (
-                <motion.div variants={itemVariants} style={{
-                  display: 'flex', justifyContent: 'center', marginBottom: 16,
-                }}>
-                  <HoursPill hours={restaurant.hours_cache} />
-                </motion.div>
-              )}
-
               {/* Divider */}
               <div className="sec-divider" style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />
 
