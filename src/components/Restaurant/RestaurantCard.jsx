@@ -98,22 +98,12 @@ export default function RestaurantCard({
           )}
         </div>
 
-        {/* Top left badges: In evidenza + Discount */}
+        {/* Top left badges: Discount only (TOP badge removed) */}
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'var(--color-oro)', color: '#fff',
-            fontSize: 11, fontWeight: 700, letterSpacing: 1,
-            textTransform: 'uppercase',
-            padding: '5px 12px', borderRadius: 10,
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />
-            In evidenza
-          </div>
           {hasDiscount && discountTitle && (
             <div style={{
-              background: 'var(--color-corallo)', color: '#fff',
-              fontSize: 11, fontWeight: 700,
+              background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+              fontSize: 11, fontWeight: 800,
               padding: '5px 12px', borderRadius: 10,
             }}>
               {discountTitle}
@@ -235,12 +225,12 @@ export default function RestaurantCard({
         </div>
       )}
 
-      {/* Discount strip on top (v4: coral-soft → corallo gradient) */}
+      {/* Discount strip on top (verde sfumato) */}
       {hasDiscount && discountTitle && (
         <div className="rcard-discount-strip" style={{
-          background: 'var(--color-corallo)',
-          color: '#22181C',
-          fontSize: 10, fontWeight: 700,
+          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+          color: '#1a4731',
+          fontSize: 10, fontWeight: 800,
           padding: '5px 10px',
           textAlign: 'center',
           letterSpacing: 0.5,
@@ -269,12 +259,12 @@ export default function RestaurantCard({
             {category?.emoji || '🍽️'}
           </div>
         )}
-        {/* Desktop-only discount badge on photo (v4: corallo pill) */}
+        {/* Desktop-only discount badge on photo (verde sfumato) */}
         {hasDiscount && discountTitle && (
           <div className="rcard-photo-badge hidden md:block" style={{
             position: 'absolute', top: 6, left: 6,
-            background: '#E8453C', color: '#fff',
-            fontSize: 9, fontWeight: 700,
+            background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+            fontSize: 9, fontWeight: 800,
             padding: '3px 8px', borderRadius: 999,
             letterSpacing: 0.3,
           }}>
