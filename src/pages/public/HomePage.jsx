@@ -58,7 +58,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       onClick={() => onClick?.(restaurant)}
       className="flex-shrink-0"
       style={{
-        width: 260,
+        width: 230,
         scrollSnapAlign: 'start',
         borderRadius: 14,
         background: '#FAF7F2',
@@ -580,7 +580,7 @@ export default function HomePage() {
                 <div
                   style={{
                     display: 'flex', gap: 10, overflowX: 'auto',
-                    padding: '0 20px 6px',
+                    paddingLeft: 20, paddingRight: 20, paddingBottom: 6,
                     WebkitOverflowScrolling: 'touch',
                     scrollSnapType: 'x mandatory',
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
