@@ -31,7 +31,37 @@ const MUTED = '#8A8680'
 
 /* ── Shared sub-components ─────────────────────────────────────────────── */
 
+function ModalHeader({ title, onClose }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '18px 24px 14px', flexShrink: 0,
+      borderBottom: `1px solid ${BORDER}`,
+    }}>
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: INK, margin: 0, letterSpacing: '-0.025em' }}>
+        {title}
+      </h2>
+      <button
+        type="button"
+        onClick={onClose}
+        style={{
+          width: 34, height: 34, borderRadius: '50%',
+          background: 'rgba(0,0,0,0.06)', border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', flexShrink: 0,
+        }}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2.5" strokeLinecap="round">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
 function SheetModal({ open, onClose, title, children, footer }) {
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
+
   return (
     <AnimatePresence>
       {open && (
@@ -41,69 +71,100 @@ function SheetModal({ open, onClose, title, children, footer }) {
           exit={{ opacity: 0 }}
           style={{
             position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(0,0,0,0.42)', backdropFilter: 'blur(4px)',
+            background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: isDesktop ? 'center' : 'flex-end',
+            justifyContent: 'center',
           }}
           onClick={onClose}
         >
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-            onClick={e => e.stopPropagation()}
-            style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
-              maxHeight: '90vh',
-              background: CREAM,
-              borderRadius: '24px 24px 0 0',
-              display: 'flex', flexDirection: 'column',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Drag handle */}
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
-              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.16)' }} />
-            </div>
-
-            {/* Header */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '10px 20px 16px', flexShrink: 0,
-            }}>
-              <h2 style={{ fontSize: 26, fontWeight: 800, color: INK, margin: 0, letterSpacing: '-0.025em' }}>
-                {title}
-              </h2>
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.06)', border: 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', flexShrink: 0,
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Scrollable content */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px', WebkitOverflowScrolling: 'touch' }}>
-              {children}
-            </div>
-
-            {/* Footer */}
-            {footer && (
-              <div style={{
-                padding: '14px 20px 28px', flexShrink: 0,
-                borderTop: `1px solid ${BORDER}`, background: CREAM,
-              }}>
-                {footer}
+          {isDesktop ? (
+            /* ── Desktop: popup centrato ── */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 12 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%', maxWidth: 560,
+                maxHeight: '82vh',
+                background: CREAM,
+                borderRadius: 24,
+                display: 'flex', flexDirection: 'column',
+                overflow: 'hidden',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.1)',
+                margin: '0 24px',
+              }}
+            >
+              <ModalHeader title={title} onClose={onClose} />
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+                {children}
               </div>
-            )}
-          </motion.div>
+              {footer && (
+                <div style={{
+                  padding: '14px 24px 24px', flexShrink: 0,
+                  borderTop: `1px solid ${BORDER}`, background: CREAM,
+                }}>
+                  {footer}
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            /* ── Mobile: bottom sheet ── */
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 38 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxHeight: '90vh',
+                background: CREAM,
+                borderRadius: '24px 24px 0 0',
+                display: 'flex', flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Drag handle */}
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.16)' }} />
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 20px 16px', flexShrink: 0,
+              }}>
+                <h2 style={{ fontSize: 26, fontWeight: 800, color: INK, margin: 0, letterSpacing: '-0.025em' }}>
+                  {title}
+                </h2>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.06)', border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px', WebkitOverflowScrolling: 'touch' }}>
+                {children}
+              </div>
+              {footer && (
+                <div style={{
+                  padding: '14px 20px 28px', flexShrink: 0,
+                  borderTop: `1px solid ${BORDER}`, background: CREAM,
+                }}>
+                  {footer}
+                </div>
+              )}
+            </motion.div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

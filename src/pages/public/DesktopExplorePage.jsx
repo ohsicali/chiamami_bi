@@ -327,34 +327,14 @@ export default function DesktopExplorePage() {
           />
         </div>
 
-        {/* Count + sort row */}
-        <div style={{
-          padding: '8px 22px 14px', borderBottom: '1px solid var(--color-ink-05)', flexShrink: 0,
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
-        }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <h2 style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>
-              {loading ? '…' : `${filteredRestaurants.length} locali a Torino`}
-            </h2>
-            <div style={{ color: 'var(--color-ink-70)', fontSize: 12.5, marginTop: 4 }}>
-              Ordinati per distanza
-            </div>
+        {/* Count row */}
+        <div style={{ padding: '8px 22px 14px', borderBottom: '1px solid var(--color-ink-05)', flexShrink: 0 }}>
+          <h2 style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>
+            {loading ? '…' : `${filteredRestaurants.length} locali a Torino`}
+          </h2>
+          <div style={{ color: 'var(--color-ink-70)', fontSize: 12.5, marginTop: 4 }}>
+            Ordinati per distanza
           </div>
-          <button
-            type="button"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', borderRadius: 999,
-              border: '1px solid var(--color-ink-15)', background: '#fff',
-              fontSize: 12.5, fontWeight: 700, color: 'var(--color-ink)',
-              cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18M7 12h14M11 18h10" />
-            </svg>
-            Distanza
-          </button>
         </div>
 
         {/* Scrollable list */}
@@ -432,8 +412,12 @@ export default function DesktopExplorePage() {
               cursor: 'pointer', boxShadow: '0 2px 8px rgba(34,24,28,.08)',
             }}
           >
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="9" /><path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="4" />
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
           </button>
         </div>
