@@ -580,13 +580,15 @@ export default function HomePage() {
                 <div
                   style={{
                     display: 'flex', gap: 10, overflowX: 'auto',
-                    paddingLeft: 20, paddingRight: 20, paddingBottom: 6,
+                    paddingBottom: 6,
                     WebkitOverflowScrolling: 'touch',
                     scrollSnapType: 'x mandatory',
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
                   <style>{`.esp-caro-scroll::-webkit-scrollbar{display:none}`}</style>
+                  {/* Spacer per allineare la prima card alla navbar — paddingLeft non funziona su Safari overflow */}
+                  <div style={{ flexShrink: 0, width: 20 }} />
                   {carouselRestaurants.map((r) => (
                     <MiniCard
                       key={r.id}
