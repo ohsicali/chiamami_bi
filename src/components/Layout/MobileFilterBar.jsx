@@ -250,6 +250,7 @@ export default function MobileFilterBar({
   function handleReset() {
     onFilterChange?.({ ...filters, category: null, priceRange: null, moment: null })
     onExtraFilterChange?.({ dietary: [], radiusKm: null })
+    if (showDealsOnly) onToggleDeals?.()
     setCatsExpanded(false)
   }
 
