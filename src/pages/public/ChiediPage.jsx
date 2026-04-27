@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
+import BiLogoMark from '../../components/UI/BiLogoMark'
 import './ChiediPage.css'
 
 /**
@@ -208,6 +209,10 @@ export default function ChiediPage() {
         </button>
       </form>
 
+      {/* Striscia opaca sotto al tab bar mobile, blocca lo scroll-through
+         nella safe-area sotto al tab bar floating. */}
+      <div className="cp-bottom-strip" aria-hidden="true" />
+
       {showAuthGate && (
         <AuthGate
           pendingMessage={pendingMessage}
@@ -237,7 +242,7 @@ function ChiediHeader({ hasConversation, onNewChat }) {
       </button>
 
       <div className="cp-h-title">
-        <div className="cp-h-mark">B</div>
+        <div className="cp-h-mark"><BiLogoMark style={{ width: '78%', height: '78%' }} /></div>
         <div className="cp-h-text">
           <strong>Chiedi a Bi</strong>
           <small><span className="cp-dot" />in linea · ti rispondo in 3 secondi</small>
@@ -285,7 +290,7 @@ function EmptyState({ onPromptClick }) {
     <>
       <div className="cp-hero">
         <div className="cp-av-iconic">
-          B
+          <BiLogoMark style={{ width: '70%', height: '70%' }} />
           <span className="cp-sp" aria-hidden="true">✦</span>
           <span className="cp-ring" aria-hidden="true" />
         </div>
@@ -394,7 +399,7 @@ function Conversation({ messages, loading }) {
         return (
           <div key={i}>
             <div className="cp-bi-row">
-              <div className="cp-av-mini">B</div>
+              <div className="cp-av-mini"><BiLogoMark style={{ width: '78%', height: '78%' }} /></div>
               <div className={`cp-bubble cp-bi${m.error ? ' cp-error' : ''}`}>
                 {m.content}
               </div>
@@ -416,7 +421,7 @@ function Conversation({ messages, loading }) {
 
       {loading && (
         <div className="cp-typing">
-          <div className="cp-av-mini">B</div>
+          <div className="cp-av-mini"><BiLogoMark style={{ width: '78%', height: '78%' }} /></div>
           <div className="cp-bub">
             <span className="cp-tdot" />
             <span className="cp-tdot" />
@@ -475,8 +480,8 @@ function AuthGate({ pendingMessage, onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="cp-auth-gate-card">
-        <div className="cp-av-iconic" style={{ width: 70, height: 70, fontSize: 30, marginBottom: 4 }}>
-          B
+        <div className="cp-av-iconic" style={{ width: 70, height: 70, marginBottom: 4 }}>
+          <BiLogoMark style={{ width: '70%', height: '70%' }} />
           <span className="cp-sp" aria-hidden="true" style={{ width: 18, height: 18, fontSize: 9 }}>✦</span>
         </div>
         <h3 id="cp-auth-gate-title">Accedi per chattare con me</h3>

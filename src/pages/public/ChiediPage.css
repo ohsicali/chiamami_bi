@@ -133,8 +133,8 @@
 .cp-body {
   flex: 1;
   overflow-y: auto;
-  /* padding-bottom mobile: input area (~70) + deck-extension (104+safe) + breathing */
-  padding: 24px 18px calc(200px + env(safe-area-inset-bottom));
+  /* padding-bottom mobile: tab bar (86+safe) + input bar (~64) + breathing */
+  padding: 24px 18px calc(170px + env(safe-area-inset-bottom));
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
@@ -615,11 +615,12 @@
 }
 
 /* ========================= INPUT BAR ========================= */
-/* Su mobile la barra è una "deck" opaca che parte da bottom: 0 e si
-   estende verso l'alto: input al top, e una zona solid color sotto che
-   copre l'area del tab bar floating — così nessuna trasparenza dietro
-   né l'ombra del tab bar che invade. Su desktop niente tab bar, la
-   barra è classica centrata con sfumatura. */
+/* Mobile: barra fissa sopra il tab bar floating (bottom 18+safe + height 68
+   = 86+safe). z-index 60 > tab bar 50 così l'ombra upward del tab bar non
+   invade la barra. Tra input e tab bar resta un piccolo gap dove il tab
+   bar conserva il suo liquid glass (contenuto scrolla dietro). Sotto il
+   tab bar usiamo una `cp-bottom-strip` opaca per bloccare lo scroll-
+   through nella safe-area. */
 .cp-input-bar {
   position: fixed;
   left: 0;
@@ -630,13 +631,13 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  z-index: 30;
+  z-index: 60;
 }
 @media (max-width: 767px) {
   .cp-input-bar {
-    /* padding-bottom così generoso copre l'intero spazio dove il tab bar
-       floating si trova (height 68 + bottom 18 + breathing 18) + safe area */
-    padding: 12px 14px calc(104px + env(safe-area-inset-bottom));
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    padding: 12px 14px 14px;
+    border-bottom: 1px solid var(--cp-line);
   }
 }
 @media (min-width: 768px) {
@@ -645,6 +646,27 @@
     border-top: 0;
     padding: 30px 24px 24px;
     justify-content: center;
+  }
+}
+
+/* Striscia opaca SOTTO il tab bar (solo mobile) — copre la safe-area
+   bianca e impedisce al contenuto di passare sotto al tab bar quando
+   scrolla. Il tab bar (z 50) galleggia tra input bar (z 60, sopra)
+   e questa strip (z 25, sotto). */
+.cp-bottom-strip {
+  display: none;
+}
+@media (max-width: 767px) {
+  .cp-bottom-strip {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(18px + env(safe-area-inset-bottom));
+    background: var(--cp-page);
+    z-index: 25;
+    pointer-events: none;
   }
 }
 

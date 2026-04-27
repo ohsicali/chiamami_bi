@@ -12,7 +12,7 @@
 export default function BiLogoMark({ style, className, title }) {
   return (
     <svg
-      viewBox="170 130 690 670"
+      viewBox="120 295 540 540"
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       role={title ? 'img' : undefined}
