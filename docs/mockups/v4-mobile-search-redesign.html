@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>v4 mobile — /chiedi (Chiedi a Bi v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2;
+  --paper:#FFFFFF;
+  --ink:#22181C;
+  --ink-2:#5C4F54;
+  --ink-3:#9A8E94;
+  --line:#EFE7DD;
+  --line-2:#E5DBCE;
+  --corallo:#E8453C;
+  --corallo-soft:#FCE7E5;
+  --corallo-ink:#B92E26;
+  --oro:#B08954;
+  --oro-soft:#F0E4D2;
+  --verde:#3F6B4A;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 0 80px}
+
+/* gallery layout */
+.gallery{max-width:1280px;margin:0 auto;padding:0 28px}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+.frames{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;align-items:start}
+.frame{background:#000;border-radius:42px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.screen{background:var(--page);border-radius:34px;overflow:hidden;height:780px;position:relative;display:flex;flex-direction:column}
+.label{color:#fff;text-align:center;font-size:13px;letter-spacing:.4px;margin-top:18px;font-weight:500}
+.label small{color:#8e7e6e;font-size:11px;display:block;margin-top:4px;letter-spacing:.3px}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+
+/* ============= COMMON: site header ============= */
+.site-header{
+  position:relative;z-index:20;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:46px 16px 12px;background:var(--page);
+  border-bottom:1px solid var(--line);
+}
+.site-header .h-back{
+  width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+  background:var(--paper);display:grid;place-items:center;flex-shrink:0;
+}
+.site-header .h-title{
+  display:flex;align-items:center;gap:10px;
+}
+.site-header .h-mark{
+  width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);color:#fff;font-family:var(--ff-mark);font-size:14px;display:grid;place-items:center;
+  position:relative;
+  box-shadow:0 4px 12px rgba(232,69,60,.3);
+}
+.site-header .h-mark::after{
+  content:'';position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--oro);border-radius:50%;border:2px solid var(--page);
+}
+.site-header .h-text{display:flex;flex-direction:column;line-height:1.1}
+.site-header .h-text strong{font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--ink)}
+.site-header .h-text small{font-size:11px;color:var(--ink-3);font-weight:500;display:flex;align-items:center;gap:5px}
+.site-header .h-text small .dot{width:6px;height:6px;background:#3FB955;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(63,185,85,.18)}
+.site-header .h-actions{display:flex;align-items:center;gap:6px}
+.site-header .h-iconbtn{
+  width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;flex-shrink:0;
+}
+
+/* ============= STATE 1: empty hero ============= */
+.body{flex:1;overflow-y:auto;padding:28px 18px 110px}
+
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 4px 26px}
+.av-iconic{
+  width:100px;height:100px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;display:grid;place-items:center;
+  font-family:var(--ff-mark);font-size:44px;
+  box-shadow:0 18px 44px rgba(232,69,60,.45),inset 0 2px 0 rgba(255,255,255,.18);
+  position:relative;margin-bottom:18px;
+}
+.av-iconic .sp{
+  position:absolute;top:6px;right:6px;width:24px;height:24px;background:var(--oro);border-radius:50%;border:3px solid var(--page);display:grid;place-items:center;
+  font-size:11px;color:#fff;animation:tw 2.4s infinite;
+}
+.av-iconic .ring{
+  position:absolute;inset:-12px;border-radius:50%;border:1.5px dashed rgba(232,69,60,.35);
+  animation:rot 30s linear infinite;
+}
+@keyframes tw{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.7}}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+.hero h1{
+  font-family:var(--ff-mark);font-size:30px;letter-spacing:.3px;line-height:1.1;color:var(--ink);
+  margin-bottom:8px;
+}
+.hero .sub{
+  font-family:var(--ff-hand);font-size:23px;color:var(--corallo);
+  margin-bottom:6px;line-height:1.15;
+}
+.hero p{
+  font-size:13px;color:var(--ink-2);line-height:1.55;max-width:280px;margin:0 auto;
+}
+
+.section-hint{
+  display:flex;align-items:center;gap:10px;margin:30px 4px 14px;
+}
+.section-hint .ln{flex:1;height:1px;background:var(--line)}
+.section-hint span{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1.6px;font-weight:600}
+
+.prompts{display:flex;flex-direction:column;gap:10px}
+.p-card{
+  background:var(--paper);border:1px solid var(--line);border-radius:18px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;
+  transition:all .18s ease;width:100%;
+}
+.p-card:hover{border-color:var(--corallo);transform:translateY(-1px);box-shadow:0 8px 22px rgba(232,69,60,.08)}
+.p-card .ic{
+  width:38px;height:38px;border-radius:12px;background:var(--corallo-soft);color:var(--corallo-ink);
+  display:grid;place-items:center;font-size:18px;flex-shrink:0;
+}
+.p-card .tx{flex:1;min-width:0}
+.p-card .tx strong{display:block;font-size:14px;font-weight:600;color:var(--ink);line-height:1.25;margin-bottom:2px}
+.p-card .tx small{display:block;font-size:11px;color:var(--ink-3);font-weight:500}
+.p-card .ar{color:var(--ink-3);flex-shrink:0}
+
+.bi-tip{
+  margin-top:22px;padding:14px 16px;background:var(--oro-soft);border:1px dashed var(--oro);border-radius:14px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.bi-tip .ic{font-size:16px;flex-shrink:0}
+.bi-tip p{font-family:var(--ff-hand);font-size:17px;color:#7a5f33;line-height:1.25}
+
+/* ============= STATE 2: conversation ============= */
+.conv{display:flex;flex-direction:column;gap:14px;padding-top:6px}
+
+.bubble{max-width:88%;padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.5;animation:fadeIn .3s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.bubble.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:6px}
+.bubble.bi{align-self:flex-start;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:6px}
+.bubble.bi strong{font-weight:600}
+
+.bi-row{display:flex;align-items:flex-end;gap:8px;align-self:flex-start;max-width:92%}
+.bi-row .av-mini{
+  width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;font-family:var(--ff-mark);font-size:12px;display:grid;place-items:center;flex-shrink:0;
+}
+.bi-row .bubble{max-width:none}
+
+.results{display:flex;flex-direction:column;gap:10px;margin:4px 0 4px 36px}
+.r-card{
+  background:var(--paper);border:1px solid var(--line);border-radius:16px;
+  padding:10px;display:flex;gap:10px;align-items:stretch;cursor:pointer;
+  transition:all .18s ease;
+}
+.r-card:hover{border-color:var(--corallo)}
+.r-card .ph{
+  width:84px;height:84px;flex-shrink:0;border-radius:12px;overflow:hidden;background:#dcd0c0;
+}
+.r-card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.r-card .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;padding:2px 0}
+.r-card .info h4{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:1px;line-height:1.2;letter-spacing:-.2px}
+.r-card .info .meta{font-size:11px;color:var(--ink-3);font-weight:500;line-height:1.3;margin-bottom:5px}
+.r-card .why{font-family:var(--ff-hand);font-size:15px;color:var(--corallo);line-height:1.2}
+.r-card .badge-mini{display:inline-block;background:var(--corallo);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:6px;vertical-align:middle;text-transform:uppercase;letter-spacing:.5px}
+
+.followup{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0 36px}
+.followup .chip{
+  background:var(--paper);border:1px solid var(--line-2);border-radius:99px;
+  padding:6px 12px;font-size:12px;color:var(--ink-2);cursor:pointer;font-weight:500;
+}
+.followup .chip:hover{border-color:var(--corallo);color:var(--corallo)}
+
+.typing{display:flex;align-items:center;gap:8px;align-self:flex-start;margin-top:4px}
+.typing .av-mini{
+  width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;font-family:var(--ff-mark);font-size:12px;display:grid;place-items:center;flex-shrink:0;
+}
+.typing .bub{
+  background:var(--paper);border:1px solid var(--line);border-radius:18px;border-bottom-left-radius:6px;
+  padding:12px 16px;display:flex;align-items:center;gap:5px;
+}
+.typing .dot{width:7px;height:7px;background:var(--ink-3);border-radius:50%;animation:pulse 1.2s infinite}
+.typing .dot:nth-child(2){animation-delay:.15s}
+.typing .dot:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* ============= INPUT BAR ============= */
+.input-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  background:var(--page);
+  border-top:1px solid var(--line);
+  padding:12px 14px 22px;
+  display:flex;align-items:flex-end;gap:8px;z-index:30;
+}
+.input-bar .fld{
+  flex:1;background:var(--paper);border:1px solid var(--line);border-radius:22px;
+  padding:10px 14px;display:flex;align-items:center;
+  min-height:44px;
+}
+.input-bar .fld textarea{
+  flex:1;border:none;outline:none;background:transparent;resize:none;
+  font-family:var(--ff-ui);font-size:14px;color:var(--ink);line-height:1.4;max-height:80px;
+}
+.input-bar .fld textarea::placeholder{color:var(--ink-3)}
+.input-bar .send{
+  width:44px;height:44px;border-radius:50%;background:var(--corallo);color:#fff;
+  border:none;display:grid;place-items:center;cursor:pointer;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(232,69,60,.3);
+}
+.input-bar .send:disabled{background:#d8c8b8;box-shadow:none;cursor:not-allowed}
+
+svg{display:block}
+
+/* notes */
+.notes{
+  margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto;
+}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+.notes .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
+@media (max-width:780px){.notes .grid{grid-template-columns:1fr}.frames{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR20 · Chiedi a Bi v1 — pagina /chiedi</span>
+    <h1>Chiedi a Bi</h1>
+    <p>Pagina dedicata, non modal. Chat conversazionale, voce Bi prima persona. Risposte oneste sui dati che ho davvero (cucina, zona, momento, orari, sconti, e i piatti che scrivo io nel "Bi consiglia"). Quando non so qualcosa lo dico — e propongo l'alternativa più vicina.</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============================ FRAME 1: Empty state hero ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <button class="h-back" aria-label="Indietro">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="h-title">
+            <div class="h-mark">B</div>
+            <div class="h-text">
+              <strong>Chiedi a Bi</strong>
+              <small><span class="dot"></span>in linea · ti rispondo in 3 secondi</small>
+            </div>
+          </div>
+          <div class="h-actions">
+            <button class="h-iconbtn" aria-label="Cronologia">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="hero">
+            <div class="av-iconic">
+              B
+              <span class="sp">✦</span>
+              <span class="ring"></span>
+            </div>
+            <h1>Ciao, sono Bi.</h1>
+            <div class="sub">Dimmi che voglia hai…</div>
+            <p>Ti consiglio dove andare tra i locali che ho selezionato io a Torino. Cucina, zona, momento, piatto. Quello che vuoi.</p>
+          </div>
+
+          <div class="section-hint"><div class="ln"></div><span>prova a chiedermi</span><div class="ln"></div></div>
+
+          <div class="prompts">
+            <button class="p-card">
+              <div class="ic">🥂</div>
+              <div class="tx">
+                <strong>Aperitivo a Vanchiglia</strong>
+                <small>cocktail bar, locali con buon tagliere</small>
+              </div>
+              <svg class="ar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <button class="p-card">
+              <div class="ic">🍣</div>
+              <div class="tx">
+                <strong>Giapponese aperto stasera</strong>
+                <small>solo locali con orario verificato</small>
+              </div>
+              <svg class="ar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <button class="p-card">
+              <div class="ic">🍕</div>
+              <div class="tx">
+                <strong>Pizza in centro la domenica</strong>
+                <small>quartiere + giorno + cucina</small>
+              </div>
+              <svg class="ar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <button class="p-card">
+              <div class="ic">🐟</div>
+              <div class="tx">
+                <strong>Pesce a San Salvario</strong>
+                <small>cucina + zona</small>
+              </div>
+              <svg class="ar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <button class="p-card">
+              <div class="ic">🥟</div>
+              <div class="tx">
+                <strong>Locali che fanno gli agnolotti</strong>
+                <small>piatto specifico — cerco nel "Bi consiglia"</small>
+              </div>
+              <svg class="ar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <button class="p-card">
+              <div class="ic">🏷️</div>
+              <div class="tx">
+                <strong>Sconti attivi stasera vicino a me</strong>
+                <small>chi ha sconto + è aperto adesso</small>
+              </div>
+              <svg class="ar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <div class="bi-tip">
+            <div class="ic">💡</div>
+            <p>Sono trasparente: se non ho la risposta te lo dico subito e ti propongo l'alternativa più vicina. Mai un nome di locale che non ho validato io.</p>
+          </div>
+        </div>
+
+        <div class="input-bar">
+          <div class="fld">
+            <textarea rows="1" placeholder="Scrivi qui che voglia hai…"></textarea>
+          </div>
+          <button class="send" disabled aria-label="Invia">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div></div>
+      <div class="label">Empty state — hero<small>avatar iconic + 6 prompt onesti</small></div>
+    </div>
+
+    <!-- ============================ FRAME 2: Conversation w/ result ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <button class="h-back" aria-label="Indietro">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="h-title">
+            <div class="h-mark">B</div>
+            <div class="h-text">
+              <strong>Chiedi a Bi</strong>
+              <small><span class="dot"></span>in linea</small>
+            </div>
+          </div>
+          <div class="h-actions">
+            <button class="h-iconbtn" aria-label="Nuova chat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="conv">
+
+            <div class="bubble user">
+              Aperitivo a Vanchiglia, qualcosa di carino dove si beve bene
+            </div>
+
+            <div class="bi-row">
+              <div class="av-mini">B</div>
+              <div class="bubble bi">
+                Allora a Vanchiglia ci sei nel posto giusto. Te ne dico tre che mi piacciono per l'aperitivo. Vai sul sicuro:
+              </div>
+            </div>
+
+            <div class="results">
+              <div class="r-card">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <div>
+                    <h4>Bar Cavour <span class="badge-mini">−15%</span></h4>
+                    <div class="meta">Cocktail bar · Vanchiglia · aperto fino a 1:00</div>
+                  </div>
+                  <div class="why">"l'Old Fashioned è da urlo"</div>
+                </div>
+              </div>
+
+              <div class="r-card">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <div>
+                    <h4>Officina del Gusto</h4>
+                    <div class="meta">Bistrot · Vanchiglia · aperto fino a 23:00</div>
+                  </div>
+                  <div class="why">"il tagliere lo fanno serio"</div>
+                </div>
+              </div>
+
+              <div class="r-card">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <div>
+                    <h4>Tre Galletti</h4>
+                    <div class="meta">Cocktail bar · Vanchiglia · aperto fino a 2:00</div>
+                  </div>
+                  <div class="why">"i miscelati con il vermouth"</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="followup">
+              <button class="chip">↻ con la terrazza</button>
+              <button class="chip">↻ aperti dopo le 23</button>
+              <button class="chip">↻ no cocktail bar</button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="input-bar">
+          <div class="fld">
+            <textarea rows="1" placeholder="Continua a chiedermi…"></textarea>
+          </div>
+          <button class="send" disabled aria-label="Invia">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div></div>
+      <div class="label">Conversazione + risultati<small>bubble + result-card + "perché" Caveat + chip follow-up</small></div>
+    </div>
+
+    <!-- ============================ FRAME 3: Graceful degradation ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <button class="h-back" aria-label="Indietro">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="h-title">
+            <div class="h-mark">B</div>
+            <div class="h-text">
+              <strong>Chiedi a Bi</strong>
+              <small><span class="dot"></span>in linea</small>
+            </div>
+          </div>
+          <div class="h-actions">
+            <button class="h-iconbtn" aria-label="Nuova chat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22181C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="conv">
+
+            <div class="bubble user">
+              Cinese a Vanchiglia, tipo tradizionale buono
+            </div>
+
+            <div class="bi-row">
+              <div class="av-mini">B</div>
+              <div class="bubble bi">
+                A Vanchiglia di cinese non ne ho, te lo dico subito. È un quartiere più da italiano e da bistrot.<br><br>
+                Però <strong>a 5 minuti di tram hai Mo Sarpi</strong> — cinese vero, di quelli buoni. Ti va se ti propongo lì?
+              </div>
+            </div>
+
+            <div class="followup">
+              <button class="chip">✓ sì, dimmi Mo Sarpi</button>
+              <button class="chip">↻ resta a Vanchiglia, altro tipo</button>
+            </div>
+
+            <div class="bubble user">
+              sì dai dimmi Mo Sarpi
+            </div>
+
+            <div class="bi-row">
+              <div class="av-mini">B</div>
+              <div class="bubble bi">
+                Allora questo è il pezzo forte:
+              </div>
+            </div>
+
+            <div class="results">
+              <div class="r-card">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <div>
+                    <h4>Mo Sarpi</h4>
+                    <div class="meta">Cinese · Aurora · aperto fino a 23:00</div>
+                  </div>
+                  <div class="why">"i ravioli al vapore e il jiaozi al maiale"</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="typing">
+              <div class="av-mini">B</div>
+              <div class="bub"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="input-bar">
+          <div class="fld">
+            <textarea rows="1" placeholder="Continua a chiedermi…"></textarea>
+          </div>
+          <button class="send" disabled aria-label="Invia">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div></div>
+      <div class="label">Graceful degradation<small>"non ho X, ma a 5 min hai Y" + Bi sta scrivendo</small></div>
+    </div>
+
+  </div>
+
+  <!-- design notes -->
+  <div class="notes">
+    <h2>Note di design — PR20 mobile</h2>
+    <p>La lente nel tab bar mobile non porta più a /list (browse filtrato), porta a <code>/chiedi</code>. Lo stesso route, lo stesso URL, dal desktop e dal mobile. È una destinazione, non un popup.</p>
+
+    <div class="grid">
+      <div>
+        <h3>Cosa Bi sa</h3>
+        <ul>
+          <li>Filtri strutturati: cucina, zona, momento, orari (Google), sconto attivo</li>
+          <li>Full-text su due campi editoriali: <code>secondoBi</code> + <code>bi_consiglia</code> (i piatti che Augusto già scrive nella scheda)</li>
+          <li>Selezione Bi: tutti validati a monte, regola implicita</li>
+        </ul>
+
+        <h3>Cosa Bi NON sa</h3>
+        <ul>
+          <li>Prezzo / fascia €€€ — non c'è in DB, niente Google live</li>
+          <li>Rating utenti / stelle — regola dura: MAI</li>
+          <li>Nomi di locali fuori dal DB — anche se Claude li conoscesse: regola dura</li>
+          <li>Menu specifici aggiornati — niente scraping</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Pattern fallback "Bi umana"</h3>
+        <ul>
+          <li>Riconosce subito il limite: "a Mirafiori di pesce non ho, te lo dico subito"</li>
+          <li>Propone next-best onesto: "ma a 5 minuti hai…"</li>
+          <li>Caveat handwriting opzionale per il "perché"</li>
+          <li>Non si scusa, dirige</li>
+          <li>Niente "Nessun risultato trovato"</li>
+        </ul>
+
+        <h3>Pattern "miglior X"</h3>
+        <ul>
+          <li>Bi NON usa "il migliore" (implica rating)</li>
+          <li>Risposta corretta: "tra i miei locali la lingua la fanno A, B. Da A in particolare in salsa verde, dice il Bi consiglia"</li>
+          <li>Promessa coerente: io ti seleziono, non classifico</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:24px">Stack tecnico (riusa già esistente)</h3>
+    <ul>
+      <li>Endpoint <code>/api/ai-search</code> già attivo da PR17</li>
+      <li>Tabelle <code>ai_conversations</code> + <code>ai_messages</code> già attive</li>
+      <li>Modello: <code>claude-haiku-4-5-20251001</code></li>
+      <li>Function calling: tool <code>search_restaurants(filters, search_text)</code></li>
+      <li>URL persistente: <code>/chiedi/[conversation_id]</code> per condivisione</li>
+      <li>Costo: ~€0.001/query Haiku — sostenibile</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
