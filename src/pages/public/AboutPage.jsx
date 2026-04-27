@@ -53,7 +53,7 @@ export default function AboutPage() {
   const [showSuggest, setShowSuggest] = useState(false)
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-ink)' }}>
+    <div className="flex flex-col min-h-dvh md:min-h-[calc(100dvh-80px)]" style={{ background: 'var(--color-ink)' }}>
       {/* ─── STICKY HEADER (mobile only) ─── */}
       <header className="md:hidden" style={{
         position: 'sticky',

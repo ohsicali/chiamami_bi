@@ -126,7 +126,7 @@ export default function Navbar({ view = "map", onToggleView, city = "Torino", on
           >
             <span style={{
               fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-              fontSize: 15,
+              fontSize: 18,
               letterSpacing: '0.02em',
               color: 'var(--color-corallo)',
             }}>LA GUIDA DI BI</span>

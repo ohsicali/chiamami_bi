@@ -177,7 +177,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex flex-col min-h-dvh"
+      className="flex flex-col min-h-dvh md:min-h-[calc(100dvh-80px)]"
       style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}
     >
       {/* ─── HEADER — logo + Esplora la mappa (mobile only) ─── */}

@@ -276,11 +276,13 @@ export default function ProfilePage() {
 
         {/* ── Versione ── */}
         <div style={{
-          textAlign: 'center', padding: `18px 18px ${TAB_BAR_HEIGHT + 16}px`,
+          textAlign: 'center', padding: '18px 18px',
           fontSize: 10, color: 'rgba(34,24,28,.4)', letterSpacing: '.06em',
         }}>
           v4.0 · La Guida di Bi
         </div>
+
+        <Footer />
 
         {showSuggest && (
           <SuggestRestaurantSheet userId={user?.id} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />
@@ -729,8 +731,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Desktop full footer */}
-      <div className="hidden md:block"><Footer /></div>
+      <Footer />
 
       {/* ── SUGGEST RESTAURANT SHEET ── */}
       {showSuggest && (
