@@ -133,22 +133,59 @@ function TopBar() {
             width: 32,
             height: 32,
             borderRadius: '50%',
-            // Espanso: cerchio bianco. Sticky: trasparente → mostra il coral della pill.
-            background: scrolled ? 'transparent' : '#fff',
-            // Espanso: B coral. Sticky: B bianco.
-            color: scrolled ? '#fff' : 'var(--color-corallo, #E8453C)',
             display: 'grid',
             placeItems: 'center',
-            fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            fontSize: 16,
             flexShrink: 0,
-            transition: 'background .35s cubic-bezier(.4,0,.2,1), color .35s cubic-bezier(.4,0,.2,1)',
           }}
         >
-          B
+          {/* clipper: cerchio che contiene + maschera i due loghi PNG */}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: scrolled ? 'transparent' : '#fff',
+              transition: 'background .35s cubic-bezier(.4,0,.2,1)',
+            }}
+          >
+            <img
+              src="/logo_bi_corallo.png"
+              alt=""
+              draggable={false}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '155%',
+                height: '155%',
+                transform: 'translate(-50%, -50%)',
+                objectFit: 'contain',
+                opacity: scrolled ? 0 : 1,
+                transition: 'opacity .35s cubic-bezier(.4,0,.2,1)',
+              }}
+            />
+            <img
+              src="/logo_bi_bianco.png"
+              alt=""
+              draggable={false}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '155%',
+                height: '155%',
+                transform: 'translate(-50%, -50%)',
+                objectFit: 'contain',
+                opacity: scrolled ? 1 : 0,
+                transition: 'opacity .35s cubic-bezier(.4,0,.2,1)',
+              }}
+            />
+          </span>
           {/* sparkle oro: SOPRA il bordo bianco della pill in entrambi gli
              stati. Border bianco per fondersi col bordo della pill, z-index
-             per stare sopra. */}
+             per stare sopra. Fuori dal clipper così non viene tagliato. */}
           <span
             aria-hidden="true"
             style={{
