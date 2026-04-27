@@ -148,7 +148,7 @@ export default function DesktopProfilePage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: 'calc(100vh - 80px)', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, maxWidth: 1100, width: '100%', margin: '0 auto', padding: '40px 32px 0' }}>
 
         {/* ── Hero — minimal ink monochrome ── */}

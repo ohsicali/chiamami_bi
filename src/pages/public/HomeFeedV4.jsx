@@ -552,7 +552,7 @@ export default function HomeFeedV4() {
       className="hfv4-root"
       style={{
         background: 'var(--color-page)',
-        minHeight: '100dvh',
+        minHeight: 'calc(100dvh - 80px)',
         paddingBottom: 100,
         display: 'flex',
         flexDirection: 'column',
