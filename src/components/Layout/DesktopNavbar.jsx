@@ -156,16 +156,38 @@ export default function DesktopNavbar() {
                 height: 30,
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #B92E26) 100%)',
-                color: '#fff',
                 display: 'grid',
                 placeItems: 'center',
-                fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-                fontSize: 14,
                 boxShadow: '0 4px 10px rgba(232,69,60,.3)',
                 flexShrink: 0,
+                overflow: 'visible',
               }}
             >
-              B
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                }}
+              >
+                <img
+                  src="/bi_logo.svg"
+                  alt=""
+                  draggable={false}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: '155%',
+                    height: '155%',
+                    transform: 'translate(-50%, -50%)',
+                    objectFit: 'contain',
+                    filter: 'brightness(0) invert(1)',
+                  }}
+                />
+              </span>
               <span
                 aria-hidden="true"
                 style={{
@@ -183,6 +205,7 @@ export default function DesktopNavbar() {
                   color: '#fff',
                   fontWeight: 700,
                   lineHeight: 1,
+                  zIndex: 2,
                 }}
               >
                 ✦
