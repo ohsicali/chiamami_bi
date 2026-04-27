@@ -553,7 +553,6 @@ export default function HomeFeedV4() {
       style={{
         background: 'var(--color-page)',
         minHeight: '100dvh',
-        paddingBottom: 100,
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -674,7 +673,7 @@ export default function HomeFeedV4() {
         .hfv4-zone-b { grid-area: b; }
 
         @media (min-width: 1024px) {
-          .hfv4-root { padding-bottom: 0 !important; min-height: calc(100dvh - 80px) !important; }
+          .hfv4-root { min-height: calc(100dvh - 80px) !important; }
           .hfv4-topbar { display: none !important; }
           .hfv4-main {
             max-width: 1240px;

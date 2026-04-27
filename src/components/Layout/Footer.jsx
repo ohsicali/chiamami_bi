@@ -34,7 +34,7 @@ export default function Footer() {
               className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-900 hover:text-white transition-colors"
               aria-label="TikTok">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48V13a8.28 8.28 0 005.58 2.17v-3.44a4.85 4.85 0 01-3.77-1.64V6.69h3.77z"/>
+                <path d="M19.321 5.562a5.124 5.124 0 0 1-3.414-1.267 5.124 5.124 0 0 1-1.537-2.723L14.348 1h-3.142v13.443a3.083 3.083 0 0 1-3.087 3.083 3.083 3.083 0 0 1-3.087-3.083 3.083 3.083 0 0 1 3.087-3.087c.297 0 .593.044.879.131v-3.197a6.249 6.249 0 0 0-.879-.063A6.243 6.243 0 0 0 1.876 14.47a6.243 6.243 0 0 0 6.243 6.243 6.243 6.243 0 0 0 6.243-6.243V8.094a8.221 8.221 0 0 0 4.959 1.652V6.604c0-.346-.345-1.042-.345-1.042z"/>
               </svg>
             </a>
             <a href="https://www.instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer"
