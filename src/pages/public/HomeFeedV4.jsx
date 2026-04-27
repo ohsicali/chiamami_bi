@@ -125,7 +125,7 @@ function TopBar() {
           border: '2px solid #fff',
           flexShrink: 0,
           transition: 'gap .3s cubic-bezier(.4,0,.2,1), padding .3s cubic-bezier(.4,0,.2,1)',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         <span
@@ -147,23 +147,28 @@ function TopBar() {
           }}
         >
           B
+          {/* sparkle oro: SOPRA il bordo bianco della pill in entrambi gli
+             stati. Border bianco per fondersi col bordo della pill, z-index
+             per stare sopra. */}
           <span
             aria-hidden="true"
             style={{
               position: 'absolute',
-              top: -5,
-              right: -5,
+              top: -9,
+              right: -9,
               width: 14,
               height: 14,
               background: 'var(--color-oro, #B08954)',
               borderRadius: '50%',
-              border: '2px solid var(--color-corallo, #E8453C)',
+              border: '2px solid #fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,.18)',
               display: 'grid',
               placeItems: 'center',
               fontSize: 7,
               color: '#fff',
               fontWeight: 700,
               lineHeight: 1,
+              zIndex: 2,
             }}
           >
             ✦
@@ -176,6 +181,8 @@ function TopBar() {
             fontSize: 13.5,
             letterSpacing: '-0.01em',
             whiteSpace: 'nowrap',
+            display: 'inline-block',
+            overflow: 'hidden',
             maxWidth: scrolled ? 0 : 120,
             opacity: scrolled ? 0 : 1,
             transition: 'max-width .3s cubic-bezier(.4,0,.2,1), opacity .25s ease',
