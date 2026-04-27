@@ -21,7 +21,7 @@ export function LogoLoader({ size = 48, className = '' }) {
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <img
-        src="/logo-bi.svg"
+        src="/logo_bi.png"
         alt="Caricamento..."
         width={size}
         height={size}
