@@ -219,10 +219,11 @@
 }
 
 /* ============= drop card ============= */
-/* MOBILE: layout orizzontale stile "Esplora elenco" — foto 88×88 a sx,
-   body a dx con badge inline. DESKTOP: layout colonna (mockup originale). */
+/* Drop card: layout column-flex con foto top + body bottom (mockup
+   originale). Mobile e desktop stessa struttura, foto più alta su mobile
+   per ridurre il crop verticale dovuto a object-fit:cover. */
 .sc-drop {
-  flex: 0 0 86%;
+  flex: 0 0 78%;
   scroll-snap-align: start;
   background: var(--sc-corallo);
   color: #fff;
@@ -230,122 +231,104 @@
   border-radius: 18px;
   overflow: hidden;
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 12px;
-  padding: 12px;
+  flex-direction: column;
   box-shadow: 0 8px 24px rgba(34, 24, 28, 0.08);
 }
 @media (min-width: 768px) {
-  .sc-drop {
-    flex: 1 1 auto;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 0;
-  }
+  .sc-drop { flex: 1 1 auto; }
 }
 .sc-drop .sc-ph {
   position: relative;
-  width: 88px;
-  height: 88px;
-  flex-shrink: 0;
+  /* aspect-ratio mantiene la foto in proporzione naturale 4:3
+     (foto ristoranti tipiche). Niente più troppo zoom/crop. */
+  aspect-ratio: 4 / 3;
+  width: 100%;
   background: #dcd0c0;
   overflow: hidden;
-  border-radius: 14px;
 }
 .sc-drop .sc-ph img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 @media (min-width: 768px) {
-  .sc-drop .sc-ph { width: auto; height: 200px; border-radius: 0; }
+  .sc-drop .sc-ph { aspect-ratio: auto; height: 200px; }
 }
 .sc-badge-pct {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 10px;
+  left: 10px;
   background: #fff;
   color: var(--sc-corallo-ink);
   font-family: var(--sc-ff-mark);
-  font-size: 13px;
-  padding: 3px 8px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(34, 24, 28, 0.18);
+  font-size: 17px;
+  padding: 5px 11px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(34, 24, 28, 0.18);
 }
 @media (min-width: 768px) {
   .sc-drop .sc-badge-pct { top: 12px; left: 12px; font-size: 22px; padding: 8px 14px; border-radius: 12px; letter-spacing: -0.4px; }
 }
 .sc-badge-time {
-  /* Su mobile: inline nel body, non sulla foto (la foto è troppo piccola).
-     Su desktop: in alto a destra sopra la foto. */
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 99px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 99px;
   backdrop-filter: blur(6px);
-  margin-left: 6px;
-  white-space: nowrap;
 }
 .sc-badge-time::before { content: '⏱'; font-size: 11px; }
 @media (min-width: 768px) {
-  .sc-drop .sc-badge-time {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    background: rgba(0, 0, 0, 0.65);
-    margin-left: 0;
-  }
+  .sc-drop .sc-badge-time { top: 14px; right: 14px; padding: 5px 11px; font-size: 11px; }
+  .sc-drop .sc-badge-time::before { font-size: 13px; }
 }
 .sc-badge-live {
-  /* Mobile: nascosto, l'intera card già corallo è "viva". Desktop: visibile. */
-  display: none;
+  position: absolute;
+  bottom: 9px;
+  left: 9px;
+  background: #ff3a3a;
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sc-badge-live::before {
+  content: '';
+  width: 5.5px;
+  height: 5.5px;
+  background: #fff;
+  border-radius: 50%;
+  animation: scBlink 1.2s infinite;
 }
 @media (min-width: 768px) {
-  .sc-drop .sc-badge-live {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    background: #ff3a3a;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 99px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  .sc-drop .sc-badge-live::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    background: #fff;
-    border-radius: 50%;
-    animation: scBlink 1.2s infinite;
-  }
+  .sc-drop .sc-badge-live { bottom: 12px; left: 12px; font-size: 10px; padding: 4px 10px; }
+  .sc-drop .sc-badge-live::before { width: 7px; height: 7px; }
 }
 @keyframes scBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
 .sc-drop .sc-body-c {
-  padding: 0;
+  padding: 11px 13px 13px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   flex: 1;
-  min-width: 0;
-  justify-content: center;
 }
 @media (min-width: 768px) {
   .sc-drop .sc-body-c { padding: 16px 18px 18px; gap: 8px; }
@@ -394,37 +377,28 @@
   .sc-drop .sc-progress { margin-top: 3px; font-size: 11px; }
   .sc-drop .sc-progress .sc-bar { height: 5px; }
 }
-/* CTA dentro la drop card. Mobile: compatta inline. Desktop: full-width
-   pill ink come nei mockup banner home. */
 .sc-cta {
-  margin-top: 4px;
-  align-self: flex-start;
+  margin-top: 8px;
   background: var(--sc-ink);
   color: #fff;
   border: 0;
-  padding: 7px 12px;
+  padding: 9px 14px;
   border-radius: 99px;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   transition: transform 0.15s ease, background 0.15s ease;
-  white-space: nowrap;
 }
-.sc-cta::after { content: '→'; font-size: 12px; }
+.sc-cta::after { content: '→'; font-size: 13px; }
 .sc-cta:hover:not(:disabled) { transform: translateY(-1px); }
 .sc-cta:disabled { opacity: 0.6; cursor: not-allowed; }
 @media (min-width: 768px) {
-  .sc-cta {
-    align-self: stretch;
-    margin-top: auto;
-    padding: 12px 20px;
-    font-size: 13px;
-  }
+  .sc-cta { margin-top: auto; padding: 12px 20px; font-size: 13px; }
   .sc-cta::after { font-size: 16px; }
 }
 
