@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Footer from '../../components/Layout/Footer'
+import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -497,7 +498,9 @@ export default function AboutPage() {
         <SuggestRestaurantSheet userId={user?.id} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />
       )}
 
-      <Footer />
+      <div style={{ paddingBottom: TAB_BAR_HEIGHT }} className="md:!pb-0">
+        <Footer />
+      </div>
     </div>
   )
 }

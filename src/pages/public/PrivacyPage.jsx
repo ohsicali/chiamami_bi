@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { LogoFull } from '../../components/UI/Logo'
 import Footer from '../../components/Layout/Footer'
+import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 
 export default function PrivacyPage() {
   return (
@@ -104,7 +105,9 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      <Footer />
+      <div style={{ paddingBottom: TAB_BAR_HEIGHT }} className="md:!pb-0">
+        <Footer />
+      </div>
     </div>
   )
 }

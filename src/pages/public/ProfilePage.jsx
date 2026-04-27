@@ -729,7 +729,9 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      <Footer />
+      <div style={{ paddingBottom: TAB_BAR_HEIGHT }} className="md:!pb-0">
+        <Footer />
+      </div>
 
       {/* ── SUGGEST RESTAURANT SHEET ── */}
       {showSuggest && (
