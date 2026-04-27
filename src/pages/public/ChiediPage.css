@@ -682,10 +682,12 @@
     background: #fff;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border: 1px solid var(--cp-line);
+    border: 1px solid rgba(34, 24, 28, 0.10);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.6),
-      0 -2px 12px rgba(34, 24, 28, 0.04);
+      inset 0 1px 0 rgba(255, 255, 255, 0.88),
+      0 2px 6px rgba(34, 24, 28, 0.05),
+      0 -2px 16px rgba(34, 24, 28, 0.06),
+      0 -10px 36px rgba(34, 24, 28, 0.10);
   }
   /* Riflesso speculare interno disattivato qui — non serve senza vetro */
   body.is-chiedi-page .bottom-nav::before {
