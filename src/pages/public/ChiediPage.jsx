@@ -32,6 +32,12 @@ export default function ChiediPage() {
 
   const isEmpty = messages.length === 0 && !loading
 
+  /* ---- Body class: tab bar mobile va resa solid (no glass) qui ---- */
+  useEffect(() => {
+    document.body.classList.add('is-chiedi-page')
+    return () => document.body.classList.remove('is-chiedi-page')
+  }, [])
+
   /* ---- Scroll to bottom on new content ---- */
   useEffect(() => {
     if (isEmpty) return

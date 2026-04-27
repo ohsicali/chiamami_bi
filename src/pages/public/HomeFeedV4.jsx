@@ -139,7 +139,9 @@ function TopBar() {
             flexShrink: 0,
           }}
         >
-          {/* clipper: cerchio (sfondo + colore Bi animati) */}
+          {/* Due "frame" sovrapposti, ognuno coerente al 100% (bg + colore SVG
+             matchano sempre). Crossfade solo via opacity → niente più colore
+             intermedio mismatched durante la transizione. */}
           <span
             aria-hidden="true"
             style={{
@@ -149,9 +151,27 @@ function TopBar() {
               overflow: 'hidden',
               display: 'grid',
               placeItems: 'center',
-              background: scrolled ? 'transparent' : '#fff',
-              color: scrolled ? '#fff' : 'var(--color-corallo, #E8453C)',
-              transition: 'background .35s cubic-bezier(.4,0,.2,1), color .35s cubic-bezier(.4,0,.2,1)',
+              background: '#fff',
+              color: 'var(--color-corallo, #E8453C)',
+              opacity: scrolled ? 0 : 1,
+              transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
+            }}
+          >
+            <BiLogoMark style={{ width: '78%', height: '78%' }} />
+          </span>
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              display: 'grid',
+              placeItems: 'center',
+              background: 'transparent',
+              color: '#fff',
+              opacity: scrolled ? 1 : 0,
+              transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
             }}
           >
             <BiLogoMark style={{ width: '78%', height: '78%' }} />

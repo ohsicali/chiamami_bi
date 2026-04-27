@@ -670,6 +670,29 @@
   }
 }
 
+/* ============================================================
+   Tab bar override SOLO su /chiedi mobile.
+   La classe 'is-chiedi-page' viene messa su body da ChiediPage
+   con un useEffect. Qui togliamo il liquid glass e mettiamo lo
+   stesso fondo solid della input bar (--color-page) così le due
+   barre formano una "sezione" continua.
+   ============================================================ */
+@media (max-width: 767px) {
+  body.is-chiedi-page .bottom-nav {
+    background: var(--color-page, #FAF7F2);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid var(--cp-line);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 -2px 12px rgba(34, 24, 28, 0.04);
+  }
+  /* Riflesso speculare interno disattivato qui — non serve senza vetro */
+  body.is-chiedi-page .bottom-nav::before {
+    display: none;
+  }
+}
+
 .cp-input-wrap {
   flex: 1;
   background: var(--cp-paper);
