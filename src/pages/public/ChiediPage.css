@@ -628,9 +628,6 @@
   bottom: 0;
   background: var(--cp-page);
   border-top: 1px solid var(--cp-line);
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
   z-index: 60;
 }
 @media (max-width: 767px) {
@@ -645,7 +642,21 @@
     border-top: 0;
     /* horizontal padding identico alla DesktopNavbar (0 40px) */
     padding: 30px 40px 24px;
-    justify-content: center;
+  }
+}
+
+/* Riga interna: contiene input wrap + send button. Cap a 1240px e
+   centrato per allinearsi pixel-perfect alla nav pill in alto. */
+.cp-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .cp-input-row {
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
   }
 }
 
@@ -710,9 +721,8 @@
 }
 @media (min-width: 768px) {
   .cp-input-wrap {
-    /* width allineato al pill della DesktopNavbar (max 1240, margin auto) */
-    width: 100%;
-    max-width: 1240px;
+    /* il cap di larghezza vive sul .cp-input-row che contiene
+       wrap + send: qui il wrap occupa tutto lo spazio rimanente. */
     border-radius: 24px;
     padding: 8px 8px 8px 18px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);

@@ -190,29 +190,31 @@ export default function ChiediPage() {
       </div>
 
       <form className="cp-input-bar" onSubmit={handleSubmit}>
-        <div className="cp-input-wrap">
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isEmpty ? 'Scrivi qui che voglia hai…' : 'Continua a chiedermi…'}
-            aria-label="Scrivi a Bi"
-            disabled={loading}
-          />
+        <div className="cp-input-row">
+          <div className="cp-input-wrap">
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isEmpty ? 'Scrivi qui che voglia hai…' : 'Continua a chiedermi…'}
+              aria-label="Scrivi a Bi"
+              disabled={loading}
+            />
+          </div>
+          <button
+            type="submit"
+            className="cp-send"
+            disabled={loading || !input.trim()}
+            aria-label="Invia"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
         </div>
-        <button
-          type="submit"
-          className="cp-send"
-          disabled={loading || !input.trim()}
-          aria-label="Invia"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-        </button>
       </form>
 
       {/* Striscia opaca sotto al tab bar mobile, blocca lo scroll-through
