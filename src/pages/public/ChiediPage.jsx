@@ -261,8 +261,8 @@ function ChiediHeader({ hasConversation, onNewChat }) {
         type="button"
         className="cp-h-iconbtn"
         aria-label={hasConversation ? 'Nuova chat' : 'Cronologia'}
-        onClick={hasConversation ? onNewChat : undefined}
-        title={hasConversation ? 'Nuova chat' : 'Cronologia (presto)'}
+        onClick={hasConversation ? onNewChat : () => navigate('/profile/chat')}
+        title={hasConversation ? 'Nuova chat' : 'Cronologia'}
       >
         {hasConversation ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
