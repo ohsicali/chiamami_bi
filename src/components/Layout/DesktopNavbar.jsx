@@ -122,7 +122,9 @@ export default function DesktopNavbar() {
         {/* RIGHT: Search + City pill + Avatar */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
-            onClick={() => navigate('/list')}
+            onClick={() => navigate('/chiedi')}
+            aria-label="Chiedi a Bi"
+            title="Chiedi a Bi"
             style={{
               width: 40,
               height: 40,

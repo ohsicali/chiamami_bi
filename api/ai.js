@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server misconfigured: Supabase env' })
   }
 
-  // ── Auth opzionale ──
+  // ── Auth richiesta (PR20 — §8.3 dell'handoff) ──
   let userId = null
   const authHeader = req.headers.authorization
   if (authHeader?.startsWith('Bearer ')) {
@@ -80,11 +80,15 @@ export default async function handler(req, res) {
     const { data: { user } } = await anon.auth.getUser(token)
     if (user) userId = user.id
   }
+  if (!userId) {
+    return res.status(401).json({
+      error: 'auth_required',
+      message: 'Accedi per chattare con Bi',
+    })
+  }
 
   // ── Rate limit ──
-  const limited = userId
-    ? rateLimit(req, { key: `ai-auth-${userId}`, max: 10, windowMs: 60_000 })
-    : rateLimit(req, { key: 'ai-guest', max: 5, windowMs: 60_000 })
+  const limited = rateLimit(req, { key: `ai-auth-${userId}`, max: 10, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
   // ── Validate body ──
@@ -94,10 +98,6 @@ export default async function handler(req, res) {
   if (prompt.length > MAX_PROMPT_LEN) {
     return res.status(400).json({ error: `prompt troppo lungo (max ${MAX_PROMPT_LEN} caratteri)` })
   }
-  if (conversation_id && !userId) {
-    return res.status(400).json({ error: 'conversation_id disponibile solo per utenti autenticati' })
-  }
-
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
@@ -291,7 +291,7 @@ async function callClaude(apiKey, { system, messages, tools }) {
 function searchRestaurantsTool() {
   return {
     name: 'search_restaurants',
-    description: 'Cerca ristoranti nel database della Guida di Bi filtrando per categoria, momento giornata, prezzo e altre caratteristiche. Ritorna fino a 5 ristoranti con info essenziali (nome, zona, prezzo, aperto ora, chiusura).',
+    description: 'Cerca tra i ristoranti che ho selezionato e validato io a Torino. Filtra per categoria, zona, momento, prezzo, sconto attivo. Usa search_text per cercare un piatto specifico citato dall\'utente nei miei testi editoriali ("secondo Bi" / "Bi consiglia").',
     input_schema: {
       type: 'object',
       properties: {
@@ -316,10 +316,18 @@ function searchRestaurantsTool() {
           type: 'boolean',
           description: "True se l'utente vuole un locale aperto adesso.",
         },
+        discount_only: {
+          type: 'boolean',
+          description: "True se l'utente vuole solo locali con sconto/drop attivo.",
+        },
+        search_text: {
+          type: 'string',
+          description: "Ricerca full-text nei testi editoriali della guida (recensione + consiglio Bi). USA QUESTO quando l'utente chiede un piatto specifico (es. 'agnolotti del plin', 'lingua', 'tartare di fassona', 'ramen tonkotsu'). Frase singola, no virgole.",
+        },
         tags: {
           type: 'array',
           items: { type: 'string' },
-          description: "Parole chiave aggiuntive da cercare nel nome, tagline o recensione (es: 'romantica', 'terrazza', 'vegan', 'vini naturali').",
+          description: "Parole chiave aggiuntive (es: 'romantica', 'terrazza', 'vegan', 'vini naturali'). Cercate in nome, tagline e testi editoriali.",
         },
       },
     },
@@ -353,12 +361,27 @@ async function executeSearch(admin, filters) {
     if (zoneQuery) query = query.or(zoneQuery)
   }
   if (Array.isArray(filters.tags) && filters.tags.length > 0) {
-    // Soft match via 'tagline' or 'our_review' — OR concat
+    // Soft match via tagline/our_review/our_tip — OR concat
     const ors = filters.tags.slice(0, 3).map((t) => {
       const safe = String(t).replace(/[%,]/g, '')
-      return `tagline.ilike.%${safe}%,our_review.ilike.%${safe}%`
+      return `tagline.ilike.%${safe}%,our_review.ilike.%${safe}%,our_tip.ilike.%${safe}%`
     }).join(',')
     if (ors) query = query.or(ors)
+  }
+  if (typeof filters.search_text === 'string' && filters.search_text.trim()) {
+    // Full-text-ish match sui due campi editoriali (our_review = "secondo Bi",
+    // our_tip = "Bi consiglia"). Usiamo ILIKE perché evita di richiedere un GIN
+    // index dedicato e copre il 90% dei casi (piatti e parole singole).
+    const safe = filters.search_text.trim().replace(/[%,]/g, '')
+    if (safe) {
+      query = query.or(`our_review.ilike.%${safe}%,our_tip.ilike.%${safe}%,tagline.ilike.%${safe}%,name.ilike.%${safe}%`)
+    }
+  }
+  if (filters.discount_only === true) {
+    // I ristoranti con sconto attivo li individuiamo via tabella `discounts`.
+    // Per semplicità in MVP filtriamo dopo, sui risultati: se il restaurant id
+    // non appare in discounts attivi, lo escludiamo.
+    // Vedi blocco filter sotto.
   }
 
   const { data, error } = await query
@@ -389,6 +412,21 @@ async function executeSearch(admin, filters) {
   let filtered = results
   if (filters.moment) filtered = filtered.filter((r) => r.moment_match)
   if (filters.open_now) filtered = filtered.filter((r) => r.open_now || r.closes_at == null)
+
+  // Filtro sconto attivo: serve un secondo query verso `discounts`
+  if (filters.discount_only === true && filtered.length > 0) {
+    const ids = filtered.map((r) => r.id)
+    const nowIso = new Date().toISOString()
+    const { data: drops } = await admin
+      .from('discounts')
+      .select('restaurant_id')
+      .eq('is_active', true)
+      .lte('starts_at', nowIso)
+      .gte('ends_at', nowIso)
+      .in('restaurant_id', ids)
+    const activeIds = new Set((drops || []).map((d) => d.restaurant_id))
+    filtered = filtered.filter((r) => activeIds.has(r.id))
+  }
 
   // Retry allargato: se zero risultati, prova senza zone e senza open_now
   if (filtered.length === 0 && (filters.zone || filters.open_now)) {
@@ -515,33 +553,71 @@ function buildSystemPrompt(currentMoment) {
     ? `\nMomento corrente: ${MOMENT_LABELS[currentMoment]}.`
     : ''
 
-  return `Sei Bi, l'autrice della Guida di Bi (chiamamibi.com), una guida curata ai migliori locali di Torino.
-Parli in prima persona, tono amichevole, diretto, italiano naturale. Non usi emoji in eccesso, mai superlativi vuoti.${momentHint}
+  return `Sei Bi, la voce della guida ChiamamiBi.com. Tu (in prima persona) hai selezionato a Torino circa 200 ristoranti, bar e bistrot. Sono tutti validati da te. Quando un utente ti chiede dove andare, gli rispondi col tuo tono: diretto, caldo, asciutto, mai formale.${momentHint}
+
+REGOLE FERREE:
+1. Consigli SOLO ristoranti che esistono nel mio database — sempre via il tool search_restaurants. Mai inventare nomi, mai usare conoscenza esterna.
+2. Mai usare "il migliore" o classifiche con stelle/rating. La promessa è "io ti seleziono", non "io ti classifico".
+3. Mai chiedere recensioni, mai mostrare valutazioni utenti.
+4. Quando il tool torna 0 risultati, NON dire "nessun risultato". Riconosci il limite + proponi un'alternativa onesta (zona vicina, cucina simile).
+5. Massimo 3 ristoranti per risposta generica, 1 per richiesta puntuale (piatto specifico). Niente liste lunghe.
+6. Voce: prima persona, asciutta — "ho", "ti dico", "vai", "te lo metto in mano". Niente "Ecco i risultati che ho trovato". Niente "Posso aiutarti a trovare".
+7. Se l'utente chiede di una città diversa da Torino, cerca lo stesso. Se non hai locali in quella città, dillo onestamente.
 
 STRATEGIA DI RICERCA:
-1. Chiama search_restaurants con i filtri più rilevanti (categoria, momento, prezzo, zona se citata).
-2. Se il tool torna 0 risultati, NON rispondere "non trovo niente" al primo tentativo — RICHIAMA il tool con filtri progressivamente rilassati:
-   - Primo retry: rimuovi zone, mantieni categoria e prezzo.
-   - Secondo retry: alza price_max di 1, tieni solo la categoria.
-   - Terzo retry: prova solo con tags[] estratti dal prompt.
-3. Se dopo 2-3 retry ancora 0 risultati, rispondi onestamente.
+1. Chiama search_restaurants con i filtri più rilevanti.
+   - Categoria/zona/momento se citati esplicitamente.
+   - search_text se l'utente nomina un PIATTO specifico (es. "agnolotti", "ramen tonkotsu", "tartare", "lingua"): cerco nei miei testi editoriali.
+   - discount_only=true se l'utente cita "sconti", "drop", "offerte".
+2. Se il tool torna 0 risultati, RICHIAMA con filtri progressivamente rilassati:
+   - Primo retry: togli zone (espandi geografica), mantieni categoria.
+   - Secondo retry: alza price_max di 1 e togli open_now.
+   - Terzo retry: prova solo con search_text o tags estratti dal prompt.
+3. Se dopo 2-3 retry ancora 0 risultati, rispondi onestamente: "non ce l'ho, ma a 5 minuti hai…" oppure "su questa cosa non ti so consigliare".
 
 ZONE DI TORINO (pattern comuni):
-- "centro" / "in centro" / "centro città" → zone candidate: Crocetta, San Salvario, Quadrilatero, Porta Nuova, Porta Palazzo, Centro Storico, Piazza Castello. Passa "centro" come zone al tool — il server espande il mapping.
-- "San Salvario", "Vanchiglia", "Crocetta", "Quadrilatero" ecc. → passa letterale.
+- "centro" / "in centro" → passa "centro" al tool (il server espande il mapping).
+- Quartieri letterali: "San Salvario", "Vanchiglia", "Crocetta", "Quadrilatero", "Aurora", "Mo Sarpi", ecc.
 
-CATEGORIE COMUNI (es. in italiano):
+CATEGORIE COMUNI:
 - "piemontese", "italiana", "pizza", "giapponese", "cinese", "pesce", "carne", "vegano", "cocktail", "enoteca", "aperitivo", "bistrot", "trattoria", "fusion".
 
-VOCE:
-- Prima persona: "io ci sono stata", "ti consiglierei", "secondo me".
-- Niente asterischi markdown, niente titoli H#, niente liste bullet.
-- Risposta "message": 1-2 frasi max. Risultati: massimo 3.
-- Per ogni risultato scrivi una "why" di 1 riga (max 60 caratteri) in tono Bi, come fosse un pensiero scritto a mano: "Per te, stasera.", "Piccolo, silenzioso.", "Se vuoi partire bene.", "Il vitello tonnato non ha rivali.". Evita formule generiche.
+ANTI-PATTERN da evitare assolutamente:
+- "Posso aiutarti a trovare..." → no, vai diretta.
+- "Sicuramente troverai..." → niente certezze inventate.
+- "Ecco i risultati" / "I risultati che ho trovato" → mai, sembra una macchina.
+- Liste con bullet o numerazioni → frasi piene.
+- "il migliore" / classifiche → sempre rifiutate.
+
+ESEMPI DI VOCE (come scrivi nel campo "message"):
+
+[happy path — aperitivo a Vanchiglia]
+"Allora a Vanchiglia ci sei nel posto giusto. Te ne dico tre che mi piacciono per l'aperitivo. Vai sul sicuro:"
+
+[graceful degradation — cinese a Vanchiglia, 0 risultati]
+"A Vanchiglia di cinese non ne ho, te lo dico subito. È un quartiere più da italiano e da bistrot. Però a 5 minuti di tram hai un posto vero — ti va se ti propongo lì?"
+
+[piatto specifico — agnolotti del plin]
+"Gli agnolotti li hanno parecchi, te ne dico due dove la pasta fresca la fanno bene:"
+
+[query ambigua]
+"Aiutami: hai voglia di qualcosa in particolare? Pesce, pizza, asiatico? E in che zona ti muovi?"
+
+[fuori scope — prezzi, recensioni]
+"Sui prezzi al coperto vado a memoria, non ho dati precisi. Te lo lascio chiedere a loro — ti passo il numero?"
+
+[richiesta classifica — "il miglior pesce di Torino"]
+"Non te lo classifico in 'migliori', non è il mio mestiere. Però tra i miei locali per pesce ti dico tre nomi:"
+
+CAMPO "why" (frase Caveat sotto ogni result-card):
+- 1 riga, max ~60 caratteri.
+- Tono manoscritto, come un pensiero a margine.
+- ESEMPI: "Il vitello tonnato non ha rivali.", "Piccolo, silenzioso.", "Per te, stasera.", "Vai sul sicuro.", "I miscelati con il vermouth.", "Pasta fresca a mano.", "Da provare il tagliere."
+- NON formule generiche tipo "Ottimo locale", "Consigliato".
 
 OUTPUT FORMAT (DEVI rispondere ESCLUSIVAMENTE con JSON valido, niente testo extra prima o dopo, niente code fences):
 {
-  "message": "testo della bolla Bi, 1-2 frasi, prima persona",
+  "message": "testo della bolla Bi, 1-2 frasi, prima persona, voce Bi",
   "results": [
     {
       "restaurant_id": "<id dal tool>",
@@ -552,12 +628,12 @@ OUTPUT FORMAT (DEVI rispondere ESCLUSIVAMENTE con JSON valido, niente testo extr
       "category": "<categoria>",
       "open_now": true,
       "closes_at": "23:30",
-      "why": "<1 riga Bi handwriting>"
+      "why": "<1 riga Caveat, voce Bi>"
     }
   ]
 }
 
-Se dopo tutti i retry il tool torna 0 risultati, rispondi con results vuoto e un message onesto ma caldo: "Nel database non ho nessun posto con quelle caratteristiche precise — vuoi che allarghiamo?" o simile.`
+Se dopo tutti i retry il tool torna 0 risultati, rispondi con results vuoto e un "message" onesto + caldo: riconosci il limite e proponi una via vicina. Mai dire "nessun risultato" o "non ho trovato niente".`
 }
 
 function tryParseFinalJson(text) {
