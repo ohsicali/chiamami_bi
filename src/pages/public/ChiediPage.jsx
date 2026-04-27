@@ -248,7 +248,7 @@ function ChiediHeader({ hasConversation, onNewChat }) {
       </button>
 
       <div className="cp-h-title">
-        <div className="cp-h-mark"><BiLogoMark style={{ width: '78%', height: '78%' }} /></div>
+        <div className="cp-h-mark"><BiLogoMark style={{ width: '60%', height: '60%' }} /></div>
         <div className="cp-h-text">
           <strong>Chiedi a Bi</strong>
           <small><span className="cp-dot" />in linea · ti rispondo in 3 secondi</small>
@@ -296,7 +296,7 @@ function EmptyState({ onPromptClick }) {
     <>
       <div className="cp-hero">
         <div className="cp-av-iconic">
-          <BiLogoMark style={{ width: '70%', height: '70%' }} />
+          <BiLogoMark style={{ width: '60%', height: '60%' }} />
           <span className="cp-sp" aria-hidden="true">✦</span>
           <span className="cp-ring" aria-hidden="true" />
         </div>
@@ -405,7 +405,7 @@ function Conversation({ messages, loading }) {
         return (
           <div key={i}>
             <div className="cp-bi-row">
-              <div className="cp-av-mini"><BiLogoMark style={{ width: '78%', height: '78%' }} /></div>
+              <div className="cp-av-mini"><BiLogoMark style={{ width: '60%', height: '60%' }} /></div>
               <div className={`cp-bubble cp-bi${m.error ? ' cp-error' : ''}`}>
                 {m.content}
               </div>
@@ -427,7 +427,7 @@ function Conversation({ messages, loading }) {
 
       {loading && (
         <div className="cp-typing">
-          <div className="cp-av-mini"><BiLogoMark style={{ width: '78%', height: '78%' }} /></div>
+          <div className="cp-av-mini"><BiLogoMark style={{ width: '60%', height: '60%' }} /></div>
           <div className="cp-bub">
             <span className="cp-tdot" />
             <span className="cp-tdot" />
@@ -487,7 +487,7 @@ function AuthGate({ pendingMessage, onClose }) {
     >
       <div className="cp-auth-gate-card">
         <div className="cp-av-iconic" style={{ width: 70, height: 70, marginBottom: 4 }}>
-          <BiLogoMark style={{ width: '70%', height: '70%' }} />
+          <BiLogoMark style={{ width: '60%', height: '60%' }} />
           <span className="cp-sp" aria-hidden="true" style={{ width: 18, height: 18, fontSize: 9 }}>✦</span>
         </div>
         <h3 id="cp-auth-gate-title">Accedi per chattare con me</h3>
