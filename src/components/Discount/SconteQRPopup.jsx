@@ -59,7 +59,7 @@ export default function SconteQRPopup({
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) throw new Error('not_authenticated')
-      const res = await fetch(`/api/discount/pdf/${redemptionId}`, {
+      const res = await fetch(`/api/discount-pdf?id=${encodeURIComponent(redemptionId)}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
       const ctype = res.headers.get('content-type') || ''
