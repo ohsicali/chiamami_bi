@@ -9,15 +9,6 @@ const NAV_ITEMS = [
   { to: '/saved', label: 'Salvati', match: (p) => p === '/saved', requiresAuth: true },
 ]
 
-const GLASS_PILL = {
-  background: 'rgba(255,255,255,.66)',
-  backdropFilter: 'blur(22px) saturate(160%)',
-  WebkitBackdropFilter: 'blur(22px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,.5)',
-  borderRadius: 999,
-  boxShadow: '0 8px 24px rgba(34,24,28,.08)',
-}
-
 export default function DesktopNavbar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -38,18 +29,25 @@ export default function DesktopNavbar() {
         padding: '0 40px',
       }}
     >
-      <div
+      <nav
         style={{
           maxWidth: 1240,
           margin: '0 auto',
           height: 68,
+          background: 'rgba(255,255,255,.66)',
+          backdropFilter: 'blur(22px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+          border: '1px solid rgba(255,255,255,.5)',
+          borderRadius: 999,
+          boxShadow: '0 8px 24px rgba(34,24,28,.08)',
           display: 'grid',
           gridTemplateColumns: 'auto 1fr auto',
           alignItems: 'center',
           gap: 18,
+          padding: '0 10px 0 22px',
         }}
       >
-        {/* LEFT: Wordmark — fuori dalle pill, all'estrema sinistra */}
+        {/* LEFT: Logo */}
         <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.92, textDecoration: 'none' }}>
           <span
             style={{
@@ -76,85 +74,71 @@ export default function DesktopNavbar() {
           </span>
         </Link>
 
-        {/* CENTER: due pill insieme — nav principale + Chiedi a Bi */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            justifySelf: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {/* Pill 1 — nav principale invariata */}
-          <nav
-            style={{
-              ...GLASS_PILL,
-              display: 'flex',
-              gap: 2,
-              padding: '6px 8px',
-              alignItems: 'center',
-            }}
-            aria-label="Navigazione principale"
-          >
-            {NAV_ITEMS.map((item) => {
-              const active = item.match(location.pathname)
-              const showDot = item.hasDot && hasDeals
-              return (
-                <button
-                  key={item.to}
-                  onClick={() => {
-                    if (item.requiresAuth && !user) navigate('/login')
-                    else navigate(item.to)
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '10px 16px',
-                    borderRadius: 999,
-                    border: 'none',
-                    background: active ? 'var(--color-ink-05)' : 'transparent',
-                    color: active ? 'var(--color-ink)' : 'rgba(34,24,28,.7)',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    position: 'relative',
-                    transition: 'color .2s, background .2s',
-                  }}
-                >
-                  {item.label}
-                  {showDot && (
-                    <span style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: 'var(--color-corallo)',
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                    }} />
-                  )}
-                </button>
-              )
-            })}
-          </nav>
+        {/* CENTER: Navigation links */}
+        <div style={{ display: 'flex', gap: 2, justifySelf: 'center' }}>
+          {NAV_ITEMS.map((item) => {
+            const active = item.match(location.pathname)
+            const showDot = item.hasDot && hasDeals
+            return (
+              <button
+                key={item.to}
+                onClick={() => {
+                  if (item.requiresAuth && !user) navigate('/login')
+                  else navigate(item.to)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '10px 16px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: active ? 'var(--color-ink-05)' : 'transparent',
+                  color: active ? 'var(--color-ink)' : 'rgba(34,24,28,.7)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  position: 'relative',
+                  transition: 'color .2s, background .2s',
+                }}
+              >
+                {item.label}
+                {showDot && (
+                  <span style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: 'var(--color-corallo)',
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                  }} />
+                )}
+              </button>
+            )
+          })}
+        </div>
 
-          {/* Pill 2 — Chiedi a Bi (PR20b §2). Sostituisce la vecchia lente. */}
+        {/* RIGHT: Chiedi a Bi + City pill + Avatar */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* PR20b §2 — bottone "Chiedi a Bi" al posto della vecchia lente */}
           <button
             type="button"
             onClick={() => navigate('/chiedi')}
             aria-label="Chiedi a Bi"
+            title="Chiedi a Bi"
             style={{
-              ...GLASS_PILL,
-              border: `1px solid ${isChiediActive ? 'var(--color-corallo)' : 'rgba(232,69,60,.25)'}`,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              padding: '6px 16px 6px 6px',
+              padding: '5px 14px 5px 5px',
+              borderRadius: 999,
+              border: `1px solid ${isChiediActive ? 'var(--color-corallo)' : 'rgba(232,69,60,.22)'}`,
+              background: isChiediActive ? 'rgba(232,69,60,.08)' : 'var(--color-ink-05)',
               cursor: 'pointer',
               fontFamily: 'inherit',
-              transition: 'transform .2s ease, border-color .2s ease',
+              transition: 'transform .15s ease, border-color .15s ease, background .15s ease',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
@@ -171,7 +155,7 @@ export default function DesktopNavbar() {
                 placeItems: 'center',
                 fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
                 fontSize: 14,
-                boxShadow: '0 4px 10px rgba(232,69,60,.32)',
+                boxShadow: '0 4px 10px rgba(232,69,60,.3)',
                 flexShrink: 0,
               }}
             >
@@ -198,28 +182,19 @@ export default function DesktopNavbar() {
                 ✦
               </span>
             </span>
-            <span style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: 13.5,
-              fontWeight: 700,
-              color: 'var(--color-ink)',
-              whiteSpace: 'nowrap',
-            }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'var(--color-ink)',
+                whiteSpace: 'nowrap',
+              }}
+            >
               Chiedi a Bi
             </span>
           </button>
-        </div>
 
-        {/* RIGHT: City pill + Avatar — invariati. Lente generica RIMOSSA (§2). */}
-        <div
-          style={{
-            ...GLASS_PILL,
-            display: 'inline-flex',
-            gap: 8,
-            alignItems: 'center',
-            padding: '6px 6px 6px 6px',
-          }}
-        >
           <div
             style={{
               display: 'inline-flex',
@@ -253,6 +228,7 @@ export default function DesktopNavbar() {
                 fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
                 fontSize: 18,
                 textDecoration: 'none',
+                marginLeft: 2,
               }}
             >
               {initials}
@@ -274,7 +250,7 @@ export default function DesktopNavbar() {
             </Link>
           )}
         </div>
-      </div>
+      </nav>
     </div>
   )
 }
