@@ -76,7 +76,7 @@ function TopBar({ user }) {
         <span
           style={{
             fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            fontSize: 15,
+            fontSize: 18,
             letterSpacing: '0.02em',
             color: 'var(--color-corallo)',
           }}
