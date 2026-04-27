@@ -176,7 +176,7 @@ export default function DesktopNavbar() {
                   color: '#fff',
                 }}
               >
-                <BiLogoMark style={{ width: '60%', height: '60%' }} />
+                <BiLogoMark style={{ width: '75%', height: '75%' }} />
               </span>
               <span
                 aria-hidden="true"
