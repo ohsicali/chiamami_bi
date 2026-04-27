@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
+import Footer from '../../components/Layout/Footer'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -380,25 +381,7 @@ export default function DesktopProfilePage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{
-        padding: '24px 40px', borderTop: '1px solid var(--color-ink-05)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: 12, color: 'var(--color-ink-70)', flexWrap: 'wrap', gap: 18,
-        maxWidth: 1100, margin: '40px auto 0',
-      }}>
-        <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', color: 'var(--color-ink)', fontSize: 14, letterSpacing: '0.04em' }}>
-          CHIAMAMI BI
-        </span>
-        <nav style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          <Link to="/about" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Chi è Bi</Link>
-          <Link to="/deals" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Sconti</Link>
-          <Link to="/partner" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Per i ristoratori</Link>
-          <Link to="/privacy" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Privacy</Link>
-          <Link to="/terms" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Termini</Link>
-        </nav>
-        <span>© 2026 · v1.0</span>
-      </div>
+      <Footer />
 
       {showSuggest && <SuggestRestaurantSheet userId={user?.id ?? null} userEmail={user?.email ?? null} userName={user?.user_metadata?.full_name ?? null} onClose={() => setShowSuggest(false)} />}
     </div>

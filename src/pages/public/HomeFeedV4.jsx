@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -782,35 +783,6 @@ export default function HomeFeedV4() {
             font-size: 14px !important;
           }
 
-          /* === Footer 2-col: logo sx, link dx, copyright sotto === */
-          .hfv4-foot {
-            text-align: left !important;
-            padding: 40px 40px 30px !important;
-          }
-          .hfv4-foot-inner {
-            max-width: 1240px;
-            margin: 0 auto;
-            display: grid !important;
-            grid-template-columns: auto 1fr !important;
-            grid-template-rows: auto auto;
-            column-gap: 40px !important;
-            row-gap: 16px !important;
-            align-items: start !important;
-          }
-          .hfv4-foot-wordmark {
-            grid-column: 1; grid-row: 1;
-            align-items: flex-start !important;
-          }
-          .hfv4-foot-links {
-            grid-column: 2; grid-row: 1;
-            justify-content: flex-end !important;
-            align-items: center;
-            gap: 22px !important;
-            align-self: center;
-          }
-          .hfv4-foot-copy {
-            grid-column: 1 / -1; grid-row: 2;
-          }
         }
       `}</style>
 
@@ -881,24 +853,7 @@ export default function HomeFeedV4() {
         <SuggestCard />
       </div>
 
-      <footer className="hfv4-foot" style={{ padding: '30px 20px 100px', borderTop: '1px solid var(--color-ink-05)', marginTop: 20, textAlign: 'center' }}>
-        <div className="hfv4-foot-inner" style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
-          <Link to="/" className="hfv4-foot-wordmark" style={{ textDecoration: 'none', display: 'inline-flex', flexDirection: 'column', lineHeight: 1, alignItems: 'center' }}>
-            <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', fontSize: 28, letterSpacing: '0.01em', color: 'var(--color-ink)' }}>LA GUIDA DI BI</span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 10, letterSpacing: '0.2em', color: 'var(--color-ink-40, rgba(34,24,28,.4))', marginTop: 4, textTransform: 'uppercase' }}>BY CHIAMAMI BI</span>
-          </Link>
-          <nav className="hfv4-foot-links" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link to="/about" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Su di me</Link>
-            <Link to="/about" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Come scelgo</Link>
-            <Link to="/partner" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Per i locali</Link>
-            <Link to="/privacy" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Privacy</Link>
-            <Link to="/terms" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-ink-70)', textDecoration: 'none' }}>Termini</Link>
-          </nav>
-          <div className="hfv4-foot-copy" style={{ fontSize: 11, color: 'var(--color-ink-40, rgba(34,24,28,.45))' }}>
-            © {new Date().getFullYear()} Chiamami Bi · Torino, Italia
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

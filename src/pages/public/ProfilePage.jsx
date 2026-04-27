@@ -729,8 +729,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Desktop full footer */}
-      <div className="hidden md:block"><Footer /></div>
+      <Footer />
 
       {/* ── SUGGEST RESTAURANT SHEET ── */}
       {showSuggest && (

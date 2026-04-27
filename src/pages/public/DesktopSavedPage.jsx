@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, Link, Navigate } from 'react-router-dom'
+import Footer from '../../components/Layout/Footer'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
@@ -293,25 +294,7 @@ export default function DesktopSavedPage() {
         )}
       </div>
 
-      {/* Footer */}
-      <div style={{
-        padding: '30px 40px', borderTop: '1px solid var(--color-ink-05)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: 12, color: 'var(--color-ink-70)', flexWrap: 'wrap', gap: 18,
-        maxWidth: 1280, margin: '60px auto 0',
-      }}>
-        <span style={{ fontFamily: 'var(--font-mark, "Alfa Slab One", serif)', color: 'var(--color-corallo)', fontSize: 16, letterSpacing: '.02em' }}>
-          CHIAMAMI BI
-        </span>
-        <nav style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          <Link to="/about" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Chi è Bi</Link>
-          <Link to="/deals" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Sconti</Link>
-          <Link to="/partner" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Per i ristoratori</Link>
-          <Link to="/privacy" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Privacy</Link>
-          <Link to="/terms" style={{ color: 'var(--color-ink-70)', textDecoration: 'none' }}>Termini</Link>
-        </nav>
-        <span>© 2026 · v1.0</span>
-      </div>
+      <Footer />
     </div>
   )
 }
