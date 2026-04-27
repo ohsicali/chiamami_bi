@@ -53,7 +53,7 @@ const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
 const MyChatPage = lazy(() => import('./pages/public/MyChatPage'))
 const ChiediPage = lazy(() => import('./pages/public/ChiediPage'))
-const DealsPage = lazy(() => import('./pages/public/DealsPage'))
+const DealsPage = lazy(() => import('./pages/public/SconteRedesignPage'))
 const SavedPage = lazy(() => import('./pages/public/SavedPage'))
 const VerifyPage = lazy(() => import('./pages/public/VerifyPage'))
 const DiscountManager = lazy(() => import('./pages/admin/DiscountManager'))
@@ -156,7 +156,7 @@ export default function App() {
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/partner" element={<PartnerLandingPage />} />
           <Route path="/deals" element={<DealsPage />} />
-          <Route path="/sconti" element={<Navigate to="/deals" replace />} />
+          <Route path="/sconti" element={<DealsPage />} />
           <Route path="/saved" element={<SavedPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/verify" element={<VerifyPage />} />
