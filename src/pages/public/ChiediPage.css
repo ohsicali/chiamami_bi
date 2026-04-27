@@ -649,10 +649,11 @@
   }
 }
 
-/* Striscia opaca SOTTO il tab bar (solo mobile) — copre la safe-area
-   bianca e impedisce al contenuto di passare sotto al tab bar quando
-   scrolla. Il tab bar (z 50) galleggia tra input bar (z 60, sopra)
-   e questa strip (z 25, sotto). */
+/* Pannello cream opaco DIETRO al tab bar (solo mobile) — copre tutta
+   l'area sotto la input bar (gap laterali del tab bar floating + safe
+   area). Il tab bar (z 50, white pill) galleggia sopra questo pannello;
+   la input bar (z 60) sta sopra a tutto. Risultato: una "sezione" unica
+   cream dall'input bar fino in fondo, con il tab bar bianco al centro. */
 .cp-bottom-strip {
   display: none;
 }
@@ -663,9 +664,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(18px + env(safe-area-inset-bottom));
+    /* fino al top del tab bar floating: bottom 18 + height 68 = 86 */
+    height: calc(86px + env(safe-area-inset-bottom));
     background: var(--cp-page);
-    z-index: 25;
+    z-index: 40;
     pointer-events: none;
   }
 }
