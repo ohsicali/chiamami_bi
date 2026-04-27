@@ -679,7 +679,7 @@
    ============================================================ */
 @media (max-width: 767px) {
   body.is-chiedi-page .bottom-nav {
-    background: var(--color-page, #FAF7F2);
+    background: #fff;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border: 1px solid var(--cp-line);
