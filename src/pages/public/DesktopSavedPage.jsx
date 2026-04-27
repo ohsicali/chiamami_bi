@@ -156,7 +156,7 @@ export default function DesktopSavedPage() {
 
   return (
     <div style={{ background: 'var(--color-bg)' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 40px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 0' }}>
 
         {/* Header */}
         <div style={{ marginBottom: 18 }}>

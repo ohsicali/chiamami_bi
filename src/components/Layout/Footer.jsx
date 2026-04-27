@@ -16,7 +16,7 @@ export default function Footer() {
   const tabBarVisible = !isAdmin && !isRestaurantDetail && !isPartner
 
   return (
-    <footer className="border-t border-gray-100 md:mt-12">
+    <footer className="border-t border-gray-100 md:mt-8">
 
       {/* ── MOBILE ── */}
       <div className={`md:hidden px-5 pt-10 pb-10${tabBarVisible ? ' footer-tab-offset' : ''}`}>
@@ -61,7 +61,7 @@ export default function Footer() {
 
       {/* ── DESKTOP ── */}
       <div className="hidden md:flex" style={{
-        padding: '30px 40px',
+        padding: '24px 40px',
         justifyContent: 'space-between', alignItems: 'center',
         fontSize: 12, color: 'var(--color-ink-70)', flexWrap: 'wrap', gap: 18,
         maxWidth: 1280, margin: '0 auto',
