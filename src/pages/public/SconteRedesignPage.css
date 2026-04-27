@@ -11,7 +11,9 @@
 .sc-shell-desktop {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 32px 60px;
+  /* 30px top così il segment a destra del head-row resta sotto la navbar
+     sticky (top:16 + height:68 = ~84px). */
+  padding: 30px 32px 60px;
   width: 100%;
   flex: 1;
 }
@@ -69,7 +71,8 @@
   margin: 0;
 }
 @media (min-width: 768px) {
-  .sc-page-head { padding: 22px 0 0; }
+  /* Padding-top ora è sul wrapper .sc-shell-desktop. */
+  .sc-page-head { padding: 0; }
   .sc-page-head h1 { font-size: 40px; line-height: 1; letter-spacing: 0.4px; }
   .sc-page-head p { font-size: 14px; max-width: 520px; }
 }
