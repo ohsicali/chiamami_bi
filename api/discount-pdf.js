@@ -265,17 +265,26 @@ export default async function handler(req, res) {
   }
   const html = buildHtml(template, ctx)
 
-  // 5) Render con puppeteer-core + @sparticuz/chromium.
+  // 5) Render con puppeteer-core + @sparticuz/chromium-min.
+  // chromium-min NON include il binario nel bundle (≈100MB di librerie +
+  // chromium): lo scarica da GitHub releases al primo cold-start, lo cacha
+  // in /tmp. Il fork "chromium" pieno aveva bug di shared libraries
+  // mancanti su Vercel ("libnss3.so: No such file or directory").
   let browser
   try {
     const [chromiumMod, puppeteerMod] = await Promise.all([
-      import('@sparticuz/chromium'),
+      import('@sparticuz/chromium-min'),
       import('puppeteer-core'),
     ])
     const chromium = chromiumMod.default || chromiumMod
     const puppeteer = puppeteerMod.default || puppeteerMod
 
-    const executablePath = await chromium.executablePath()
+    // URL del bundle chromium pre-built dalla release ufficiale Sparticuz.
+    // Versione allineata alla libreria (131.0.1).
+    const CHROMIUM_PACK_URL = process.env.CHROMIUM_PACK_URL
+      || 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+
+    const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL)
     console.log('[pdf] launching chromium:', { executablePath, argsCount: chromium.args?.length })
 
     browser = await puppeteer.launch({
