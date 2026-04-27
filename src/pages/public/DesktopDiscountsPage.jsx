@@ -206,7 +206,7 @@ export default function DesktopDiscountsPage() {
     : null
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
+    <div style={{ background: 'var(--color-bg)' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 40px' }}>
 
         {/* Header */}
