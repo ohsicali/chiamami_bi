@@ -605,7 +605,27 @@
   flex-wrap: wrap;
 }
 @media (min-width: 768px) {
-  .sc-mine-row .sc-badge-row { display: contents; }
+  /* Su desktop: nome + meta a sinistra, badges in colonna destra accanto al
+     bottone QR. Usiamo grid sull'info così i badge non vengono stretched
+     dal column-flex e mantengono la loro larghezza naturale. */
+  .sc-mine-row .sc-info {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name   badges"
+      "meta   badges";
+    gap: 3px 16px;
+    align-items: center;
+  }
+  .sc-mine-row .sc-info h4 { grid-area: name; }
+  .sc-mine-row .sc-info .sc-meta { grid-area: meta; }
+  .sc-mine-row .sc-info .sc-badge-row {
+    grid-area: badges;
+    margin-top: 0;
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
 }
 .sc-mine-row .sc-badge-pct {
   position: static;
