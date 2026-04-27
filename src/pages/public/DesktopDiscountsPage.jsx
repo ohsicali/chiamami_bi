@@ -206,8 +206,8 @@ export default function DesktopDiscountsPage() {
     : null
 
   return (
-    <div style={{ background: 'var(--color-bg)' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 40px 0' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, maxWidth: 1280, width: '100%', margin: '0 auto', padding: '24px 40px 0' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>

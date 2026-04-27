@@ -554,6 +554,8 @@ export default function HomeFeedV4() {
         background: 'var(--color-page)',
         minHeight: '100dvh',
         paddingBottom: 100,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <style>{`
@@ -853,7 +855,9 @@ export default function HomeFeedV4() {
         <SuggestCard />
       </div>
 
-      <Footer />
+      <div style={{ marginTop: 'auto' }}>
+        <Footer />
+      </div>
     </div>
   )
 }
