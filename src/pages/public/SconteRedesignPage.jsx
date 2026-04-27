@@ -355,6 +355,7 @@ function SconteRedesignPageInner() {
 
       {qrPopup && (
         <SconteQRPopup
+          redemptionId={qrPopup.redemption.id}
           qrCode={qrPopup.redemption.qr_code}
           qrPayload={`${window.location.origin}/verify?code=${qrPopup.redemption.qr_code}`}
           restaurantName={qrPopup.deal?.restaurant?.name || 'Ristorante'}
@@ -366,7 +367,6 @@ function SconteRedesignPageInner() {
           discountValue={dealBadgeText(qrPopup.deal) || freebieLabel(qrPopup.deal)}
           discountTitle={qrPopup.deal?.title}
           expiresLabel={shortExpiryLine(qrPopup.deal)}
-          expiresAt={qrPopup.deal?.drop_ends_at || qrPopup.deal?.valid_until}
           onClose={() => setQrPopup(null)}
         />
       )}

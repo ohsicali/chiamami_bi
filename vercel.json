@@ -10,6 +10,11 @@
     },
     "api/img.js": {
       "maxDuration": 10
+    },
+    "api/discount/pdf/[id].js": {
+      "maxDuration": 30,
+      "memory": 1024,
+      "includeFiles": "docs/templates/pdf-coupon-template.html"
     }
   },
   "headers": [
@@ -33,6 +38,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/verify-recovery-otp", "destination": "/api/recovery-otp" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }

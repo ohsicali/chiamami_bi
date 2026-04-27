@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>PDF coupon template — ChiamamiBi (A6 verticale)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+@page {
+  size: A6 portrait;
+  margin: 0;
+}
+
+:root{
+  --page:#FAF7F2;
+  --paper:#FFFFFF;
+  --ink:#22181C;
+  --ink-2:#5C4F54;
+  --ink-3:#9A8E94;
+  --line:#EFE7DD;
+  --line-2:#E5DBCE;
+  --corallo:#E8453C;
+  --corallo-light:#FF5757;
+  --corallo-soft:#FCE7E5;
+  --corallo-ink:#B92E26;
+  --oro:#B08954;
+  --oro-soft:#F0E4D2;
+  --ff-ui:'Poppins', system-ui, sans-serif;
+  --ff-hand:'Caveat', cursive;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #2a2522;
+  font-family: var(--ff-ui);
+  color: var(--ink);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 30px;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.coupon {
+  width: 105mm;
+  height: 148mm;
+  background: var(--page);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+@media print {
+  html, body { background: white; padding: 0; gap: 0; }
+  .coupon { box-shadow: none; }
+  .notes { display: none; }
+}
+
+.cp-header {
+  padding: 7mm 8mm 4mm;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1mm;
+}
+
+.cp-logo-wordmark {
+  height: 8mm;
+  width: auto;
+  display: block;
+}
+
+.cp-tagline {
+  font-family: var(--ff-ui);
+  font-size: 2mm;
+  font-weight: 700;
+  color: var(--ink-3);
+  letter-spacing: 0.6mm;
+  margin-left: 0.5mm;
+}
+
+.cp-divider {
+  height: 0.2mm;
+  background: var(--line);
+  margin: 0 8mm;
+  flex-shrink: 0;
+}
+
+.cp-photo {
+  margin: 4mm 8mm 0;
+  height: 32mm;
+  border-radius: 2.5mm;
+  overflow: hidden;
+  background: #dcd0c0;
+  flex-shrink: 0;
+}
+.cp-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cp-info {
+  padding: 4mm 8mm 0;
+  flex-shrink: 0;
+}
+.cp-locale-name {
+  font-family: var(--ff-ui);
+  font-size: 6mm;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.05;
+  letter-spacing: -0.2mm;
+  margin-bottom: 1mm;
+}
+.cp-locale-meta {
+  font-family: var(--ff-ui);
+  font-size: 2.6mm;
+  font-weight: 500;
+  color: var(--ink-2);
+  line-height: 1.3;
+}
+
+.cp-pct-row {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  padding: 4mm 8mm 0;
+  flex-shrink: 0;
+}
+.cp-pct {
+  background: linear-gradient(135deg, var(--corallo) 0%, var(--corallo-ink) 100%);
+  color: #fff;
+  font-family: var(--ff-ui);
+  font-size: 7mm;
+  font-weight: 800;
+  padding: 2mm 4mm;
+  border-radius: 2mm;
+  letter-spacing: -0.4mm;
+  line-height: 1;
+}
+.cp-pct-claim {
+  flex: 1;
+  font-family: var(--ff-ui);
+  font-size: 2.6mm;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.cp-pct-claim small {
+  display: block;
+  font-size: 2mm;
+  font-weight: 700;
+  color: var(--ink-3);
+  letter-spacing: 0.3mm;
+  margin-bottom: 0.8mm;
+  text-transform: uppercase;
+}
+
+.cp-qr-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4mm 8mm 0;
+}
+.cp-qr {
+  width: 50mm;
+  height: 50mm;
+  background: #fff;
+  border: 0.6mm solid var(--ink);
+  border-radius: 3mm;
+  padding: 3mm;
+}
+.cp-qr img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cp-qr-placeholder {
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='25' height='25' fill='%23000'/><rect x='10' y='10' width='15' height='15' fill='%23fff'/><rect x='14' y='14' width='7' height='7' fill='%23000'/><rect x='70' y='5' width='25' height='25' fill='%23000'/><rect x='75' y='10' width='15' height='15' fill='%23fff'/><rect x='79' y='14' width='7' height='7' fill='%23000'/><rect x='5' y='70' width='25' height='25' fill='%23000'/><rect x='10' y='75' width='15' height='15' fill='%23fff'/><rect x='14' y='79' width='7' height='7' fill='%23000'/><rect x='40' y='5' width='5' height='5' fill='%23000'/><rect x='50' y='5' width='5' height='5' fill='%23000'/><rect x='60' y='15' width='5' height='5' fill='%23000'/><rect x='5' y='40' width='5' height='5' fill='%23000'/><rect x='15' y='50' width='5' height='5' fill='%23000'/><rect x='40' y='40' width='15' height='15' fill='%23000'/><rect x='65' y='45' width='5' height='5' fill='%23000'/><rect x='80' y='45' width='5' height='5' fill='%23000'/><rect x='40' y='65' width='5' height='5' fill='%23000'/><rect x='50' y='75' width='5' height='5' fill='%23000'/><rect x='60' y='65' width='5' height='5' fill='%23000'/><rect x='75' y='65' width='5' height='5' fill='%23000'/><rect x='90' y='80' width='5' height='5' fill='%23000'/></svg>");
+  background-size: cover;
+}
+
+.cp-qr-hint {
+  font-family: var(--ff-hand);
+  font-size: 6mm;
+  color: var(--corallo);
+  margin-top: 2mm;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.cp-code-text {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 2.3mm;
+  color: var(--ink-3);
+  letter-spacing: 0.6mm;
+  margin-top: 1.5mm;
+}
+
+.cp-scad {
+  background: var(--oro-soft);
+  color: var(--oro);
+  font-family: var(--ff-ui);
+  font-size: 2.4mm;
+  font-weight: 700;
+  padding: 1.5mm 4mm;
+  border-radius: 99mm;
+  margin-top: 2mm;
+  letter-spacing: 0.1mm;
+}
+
+.cp-footer {
+  text-align: center;
+  padding: 3mm 8mm 5mm;
+  flex-shrink: 0;
+  border-top: 0.2mm solid var(--line);
+  margin: 3mm 8mm 0;
+  padding-top: 2.5mm;
+}
+.cp-footer .url {
+  font-family: var(--ff-ui);
+  font-size: 2.4mm;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.2mm;
+}
+.cp-footer .disclaimer {
+  font-family: var(--ff-ui);
+  font-size: 1.9mm;
+  color: var(--ink-3);
+  margin-top: 0.8mm;
+  letter-spacing: 0.1mm;
+}
+
+.notes {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 22px 26px;
+  color: #cdb89f;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 105mm;
+  width: 100%;
+}
+.notes h3 {
+  color: #fff;
+  font-family: var(--ff-ui);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+.notes h3:not(:first-child) { margin-top: 16px; }
+.notes ul {
+  list-style: none;
+  padding-left: 0;
+}
+.notes li {
+  padding-left: 14px;
+  position: relative;
+  margin-bottom: 4px;
+  font-size: 12.5px;
+}
+.notes li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: var(--corallo);
+}
+.notes code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #ffb1ab;
+}
+</style>
+</head>
+<body>
+
+<div class="coupon">
+
+  <header class="cp-header">
+    <img class="cp-logo-wordmark" src="/logo-guida-bi.svg" alt="LA GUIDA DI BI">
+    <div class="cp-tagline">BY CHIAMAMI BI</div>
+  </header>
+
+  <div class="cp-divider"></div>
+
+  <div class="cp-photo">
+    <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=600&q=80" alt="{{locale_nome}}">
+  </div>
+
+  <div class="cp-info">
+    <h1 class="cp-locale-name">{{locale_nome}}</h1>
+    <div class="cp-locale-meta">{{locale_categoria}} · {{locale_indirizzo}}</div>
+  </div>
+
+  <div class="cp-pct-row">
+    <div class="cp-pct">{{percentuale}}</div>
+    <div class="cp-pct-claim">
+      <small>SCONTO RISERVATO</small>
+      {{descrizione_sconto}}
+    </div>
+  </div>
+
+  <div class="cp-qr-wrap">
+    <div class="cp-qr">
+      <div class="cp-qr-placeholder"></div>
+    </div>
+    <div class="cp-qr-hint">Mostra al ristoratore</div>
+    <div class="cp-code-text">{{codice_testuale}}</div>
+    <div class="cp-scad">⏱ Scade {{scadenza}}</div>
+  </div>
+
+  <footer class="cp-footer">
+    <div class="url">chiamamibi.com</div>
+    <div class="disclaimer">Codice valido una sola volta · La guida di Bi</div>
+  </footer>
+
+</div>
+
+<div class="notes">
+  <h3>Come usare questo template</h3>
+  <ul>
+    <li>Apri il file in Chrome → vedi esattamente come deve apparire il PDF</li>
+    <li>Print preview (Ctrl/Cmd+P) → "Save as PDF" → render finale</li>
+    <li>Le variabili <code>{{...}}</code> vanno sostituite a runtime con dati reali</li>
+    <li>Il logo wordmark è caricato da <code>/logo-guida-bi.svg</code> (esistente nel repo public/)</li>
+  </ul>
+
+  <h3>Variabili disponibili</h3>
+  <ul>
+    <li><code>{{locale_nome}}</code> · stringa, es. "Mo Sarpi Torino"</li>
+    <li><code>{{locale_categoria}}</code> · es. "Asiatico", "Pizzeria", "Bistrot"</li>
+    <li><code>{{locale_indirizzo}}</code> · stringa</li>
+    <li><code>{{locale_foto}}</code> · URL foto principale dal DB (sostituisce src della .cp-photo img)</li>
+    <li><code>{{percentuale}}</code> · es. "−20%" o "Baozi 1,50€"</li>
+    <li><code>{{descrizione_sconto}}</code> · es. "Per cena, valido una sola volta"</li>
+    <li><code>{{codice_testuale}}</code> · es. "ABC-123-XYZ" (backup se QR illeggibile)</li>
+    <li><code>{{qr_payload}}</code> · stringa per generare QR (stesso payload del sistema scan esistente)</li>
+    <li><code>{{scadenza}}</code> · es. "tra 2 giorni · 14h" — se assente, nascondere il blocco scad</li>
+  </ul>
+
+  <h3>Brand assets usati</h3>
+  <ul>
+    <li>Logo wordmark: <code>/logo-guida-bi.svg</code> (rosso brand #ff5757)</li>
+    <li>Tagline: testo "BY CHIAMAMI BI" in Poppins 700, letter-spacing</li>
+    <li>Font UI: Poppins (Google Fonts, già usato nel sito)</li>
+    <li>Font handwriting: Caveat (Google Fonts, già usato nel sito)</li>
+    <li>Box percentuale: gradient corallo brand <code>#E8453C → #B92E26</code></li>
+    <li>Pill scadenza: oro soft <code>#F0E4D2</code> + oro <code>#B08954</code></li>
+  </ul>
+
+  <h3>Generazione runtime (per Claude Code)</h3>
+  <ul>
+    <li>Suggerito: <code>puppeteer-core + @sparticuz/chromium</code> per render HTML→PDF</li>
+    <li>O alternativa: <code>@react-pdf/renderer</code> ricreando la stessa identica struttura</li>
+    <li>QR: lib <code>qrcode</code> Node, sostituire <code>.cp-qr-placeholder</code> con <code>&lt;img src="data:image/png;base64,..." &gt;</code></li>
+    <li>Per puppeteer: il logo SVG va caricato come URL assoluto pubblico (es. <code>https://chiamamibi.com/logo-guida-bi.svg</code>) o inline come <code>data:image/svg+xml;base64,...</code></li>
+  </ul>
+</div>
+
+</body>
+</html>

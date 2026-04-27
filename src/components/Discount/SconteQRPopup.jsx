@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
-import { generateDiscountPdf } from '../../lib/discountPdf'
+import { supabase } from '../../lib/supabase'
 
 function QRCanvas({ value, size }) {
   const ref = useRef(null)
@@ -15,7 +15,15 @@ function QRCanvas({ value, size }) {
   return <canvas ref={ref} />
 }
 
+function slugify(name) {
+  return (name || 'sconto').toLowerCase()
+    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
+    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sconto'
+}
+
 export default function SconteQRPopup({
+  redemptionId,
   qrCode,
   qrPayload,
   restaurantName,
@@ -24,7 +32,6 @@ export default function SconteQRPopup({
   discountValue,
   discountTitle,
   expiresLabel,
-  expiresAt,
   onClose,
 }) {
   const [pdfBusy, setPdfBusy] = useState(false)
@@ -43,21 +50,30 @@ export default function SconteQRPopup({
 
   async function handleDownload() {
     if (pdfBusy) return
+    if (!redemptionId) {
+      setPdfError('Non riesco a identificare lo sconto, ricarica la pagina.')
+      return
+    }
     setPdfBusy(true)
     setPdfError(null)
     try {
-      await generateDiscountPdf({
-        qrCode,
-        qrPayload,
-        restaurantName,
-        restaurantSubtitle,
-        photoUrl,
-        discountValue,
-        discountTitle,
-        expiresAt,
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('not_authenticated')
+      const res = await fetch(`/api/discount/pdf/${redemptionId}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
       })
+      if (!res.ok) throw new Error(`pdf_${res.status}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `sconto-${slugify(restaurantName)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('PDF generation failed:', err)
+      console.error('PDF download failed:', err)
       setPdfError('Non sono riuscito a generare il PDF, riprova.')
     } finally {
       setPdfBusy(false)

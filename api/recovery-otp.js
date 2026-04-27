@@ -1,6 +1,19 @@
 /**
- * Vercel Serverless Function — Send OTP to recovery email or reset password via recovery email
- * Used when user can't access their primary email
+ * Vercel Serverless Function — Recovery OTP (request + verify in single file)
+ *
+ * Consolidato 2026-04-27 (PR21): la verifica OTP è stata accorpata qui dal
+ * vecchio /api/verify-recovery-otp per restare entro il cap 12 funzioni
+ * Vercel Hobby quando si è aggiunto /api/discount/pdf/[id].
+ *
+ * Dispatch by request body:
+ *   - body.otp presente → step "verify": valida OTP + esegue azione
+ *     (reset_password o verify_recovery con eventuale new_email/new_password)
+ *   - altrimenti → step "request": genera OTP, lo salva in
+ *     auth_recovery_tokens, lo manda via Resend all'email di recupero
+ *
+ * Compatibilità:
+ *   - Vecchi client che chiamano /api/verify-recovery-otp continuano a
+ *     funzionare grazie al rewrite in vercel.json.
  */
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
@@ -13,12 +26,34 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // Rate-limit per-IP to prevent OTP flooding / email-bombing.
+  const body = req.body || {}
+  const isVerify = !!body.otp
+
+  // Rate-limit separato per i due step. Verify ha quota più alta perché
+  // l'utente potrebbe sbagliare a digitare il codice.
   maybeCleanup()
-  const limited = rateLimit(req, { key: 'recovery-otp', max: 5, windowMs: 60_000 })
+  const limited = isVerify
+    ? rateLimit(req, { key: 'verify-recovery-otp', max: 10, windowMs: 60_000 })
+    : rateLimit(req, { key: 'recovery-otp', max: 5, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
-  const { email, action } = req.body || {}
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) {
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  return isVerify
+    ? handleVerify({ adminClient, body, res })
+    : handleRequest({ adminClient, body, res })
+}
+
+/* ===================== STEP "request" ===================== */
+async function handleRequest({ adminClient, body, res }) {
+  const { email, action } = body
   // email = the primary email of the account
   // action = 'verify_recovery' | 'reset_password'
 
@@ -26,20 +61,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email and action required' })
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const resendKey = process.env.RESEND_API_KEY
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    return res.status(500).json({ error: 'Server configuration error' })
-  }
-
-  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
-
   try {
-    // Find user by primary email and get their recovery email
     const { data: profile, error: profileErr } = await adminClient
       .from('profiles')
       .select('id, recovery_email, full_name')
@@ -47,7 +71,6 @@ export default async function handler(req, res) {
       .single()
 
     if (profileErr || !profile) {
-      // Don't reveal if account exists — generic message
       return res.status(200).json({ success: true, message: 'Se l\'account esiste e ha un\'email di recupero, riceverai un codice.' })
     }
 
@@ -55,12 +78,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: false, no_recovery: true, message: 'Nessuna email di recupero configurata. Contatta supporto@chiamamibi.com' })
     }
 
-    // Generate a 6-digit OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000))
-
-    // Store OTP in the locked-down `auth_recovery_tokens` table (service-role
-    // only — no public RLS policy). Previously lived in profiles columns but
-    // those were publicly readable via PostgREST (BUG 2 hotfix 2026-04-15).
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
     const { error: upsertErr } = await adminClient
       .from('auth_recovery_tokens')
@@ -76,15 +94,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Internal error' })
     }
 
-    // Send OTP via Resend
     if (!resendKey) {
       return res.status(500).json({ error: 'Email service not configured' })
     }
 
     const firstName = (profile.full_name || '').split(' ')[0] || 'Utente'
-    const actionText = action === 'reset_password'
-      ? 'reimpostare la password'
-      : 'cambiare l\'email'
+    const actionText = action === 'reset_password' ? 'reimpostare la password' : 'cambiare l\'email'
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -106,11 +121,87 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to send recovery email' })
     }
 
-    // Mask recovery email for display
     const masked = maskEmail(profile.recovery_email)
     return res.status(200).json({ success: true, masked_email: masked })
   } catch (err) {
     console.error('Recovery OTP error:', err)
+    return res.status(500).json({ error: 'Internal error' })
+  }
+}
+
+/* ===================== STEP "verify" ===================== */
+async function handleVerify({ adminClient, body, res }) {
+  const { email, otp, new_email, new_password } = body
+
+  if (!email || !otp) {
+    return res.status(400).json({ error: 'Email and OTP required' })
+  }
+
+  try {
+    const { data: profile, error: profileErr } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single()
+
+    if (profileErr || !profile) {
+      return res.status(400).json({ error: 'Account non trovato' })
+    }
+
+    const { data: token, error: tokenErr } = await adminClient
+      .from('auth_recovery_tokens')
+      .select('otp, expires_at, action')
+      .eq('user_id', profile.id)
+      .single()
+
+    if (tokenErr || !token) {
+      return res.status(400).json({ error: 'Codice non valido' })
+    }
+
+    if (!token.otp || token.otp !== otp.trim()) {
+      return res.status(400).json({ error: 'Codice non valido' })
+    }
+
+    if (new Date(token.expires_at) < new Date()) {
+      await adminClient
+        .from('auth_recovery_tokens')
+        .delete()
+        .eq('user_id', profile.id)
+      return res.status(400).json({ error: 'Codice scaduto. Richiedine uno nuovo.' })
+    }
+
+    const action = token.action
+
+    // One-time use: pulisci subito.
+    await adminClient
+      .from('auth_recovery_tokens')
+      .delete()
+      .eq('user_id', profile.id)
+
+    if (action === 'reset_password' && new_password) {
+      const { error: updateErr } = await adminClient.auth.admin.updateUserById(profile.id, {
+        password: new_password,
+      })
+      if (updateErr) {
+        return res.status(500).json({ error: `Errore: ${updateErr.message}` })
+      }
+      return res.status(200).json({ success: true, action: 'password_reset' })
+    }
+
+    if (action === 'verify_recovery' && new_email) {
+      const { error: updateErr } = await adminClient.auth.admin.updateUserById(profile.id, {
+        email: new_email,
+      })
+      if (updateErr) {
+        return res.status(500).json({ error: `Errore: ${updateErr.message}` })
+      }
+      await adminClient.from('profiles').update({ email: new_email }).eq('id', profile.id)
+      return res.status(200).json({ success: true, action: 'email_changed' })
+    }
+
+    return res.status(200).json({ success: true, action: 'verified' })
+  } catch (err) {
+    console.error('Verify recovery OTP error:', err)
     return res.status(500).json({ error: 'Internal error' })
   }
 }
