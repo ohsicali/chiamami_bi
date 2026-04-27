@@ -311,6 +311,22 @@ Mentre il QR popup è aperto, se il ristoratore scansiona dal suo dispositivo:
 
 ## 5. Generazione PDF — endpoint nuovo
 
+### 5.0 Template di riferimento — DA SEGUIRE 1:1
+
+**File template ufficiale**: `docs/templates/pdf-coupon-template.html`
+
+Aprilo nel browser per vedere ESATTAMENTE come deve apparire il PDF generato. Tutte le dimensioni, colori, font, spacing, posizioni sono già definiti. Il template usa:
+- Logo SVG ufficiale `/logo-guida-bi.svg` (esistente in `public/`)
+- Tagline "BY CHIAMAMI BI" in Poppins 700
+- Font Google Fonts: Poppins (UI) + Caveat (hint "Mostra al ristoratore")
+- Colori brand: corallo #E8453C, ink #22181C, page #FAF7F2, oro #B08954
+- Layout A6 verticale (105×148mm)
+- Variabili `{{...}}` da sostituire a runtime
+
+**Strategia di generazione consigliata**: `puppeteer-core` + `@sparticuz/chromium` (insieme ~50MB, sotto cap Vercel). Carichi `pdf-coupon-template.html`, fai `page.setContent()` con HTML processato (variabili sostituite + QR base64 inline), poi `page.pdf({format: 'A6', printBackground: true})`.
+
+Alternative leggere accettabili: `@react-pdf/renderer` o `pdfkit` ma DEVONO produrre output visivamente identico al template HTML.
+
 ### 5.1 Endpoint
 
 ```
@@ -328,65 +344,76 @@ const saved = await db.userDiscounts.findFirst({
 if (!saved) return res.status(404).end();
 ```
 
-### 5.3 Layout PDF (A6 verticale, ~105×148mm)
-
-Implementa con `pdfkit` (libreria node leggera). Esempio struttura:
+### 5.3 Implementazione consigliata — puppeteer + template HTML
 
 ```js
-import PDFDocument from 'pdfkit';
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
+import fs from 'fs/promises';
+import QRCode from 'qrcode';
+import path from 'path';
 
-const doc = new PDFDocument({ size: 'A6', margin: 24 });
-res.setHeader('Content-Type', 'application/pdf');
-res.setHeader('Content-Disposition', `attachment; filename="sconto-${slug}.pdf"`);
-doc.pipe(res);
-
-// LOGO + brand top
-doc.font('AlfaSlabOne').fontSize(14).fillColor('#E8453C');
-doc.text('LA GUIDA DI BI', 24, 24);
-doc.font('Poppins-Bold').fontSize(8).fillColor('#9A8E94');
-doc.text('BY CHIAMAMI BI', 24, 42);
-
-// Photo locale (small ~80px)
-if (locale.photo) {
-  doc.image(localePhotoBuffer, 24, 64, { width: 80, height: 80 });
+export default async function handler(req, res) {
+  const { id } = req.query;
+  
+  const userId = await getUserFromAuth(req);
+  const saved = await db.userDiscounts.findFirst({
+    where: { id, user_id: userId },
+    include: { discount: { include: { locale: true } } }
+  });
+  if (!saved) return res.status(404).end();
+  
+  const templatePath = path.join(process.cwd(), 'docs/templates/pdf-coupon-template.html');
+  let html = await fs.readFile(templatePath, 'utf-8');
+  
+  const qrDataUrl = await QRCode.toDataURL(saved.qr_token, { width: 400, margin: 0 });
+  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://chiamamibi.com';
+  
+  html = html
+    .replace(/\{\{locale_nome\}\}/g, saved.discount.locale.nome)
+    .replace(/\{\{locale_categoria\}\}/g, saved.discount.locale.categoria)
+    .replace(/\{\{locale_indirizzo\}\}/g, saved.discount.locale.indirizzo)
+    .replace(/\{\{percentuale\}\}/g, saved.discount.percentuale)
+    .replace(/\{\{descrizione_sconto\}\}/g, saved.discount.descrizione || 'Valido una sola volta')
+    .replace(/\{\{codice_testuale\}\}/g, `Codice: ${saved.qr_token.slice(0, 12).toUpperCase()}`)
+    .replace(/\{\{scadenza\}\}/g, formatScadenza(saved.discount.expires_at))
+    .replace(/src="\/logo-guida-bi\.svg"/g, `src="${baseUrl}/logo-guida-bi.svg"`)
+    .replace(/<div class="cp-qr-placeholder"><\/div>/, `<img src="${qrDataUrl}" alt="QR">`)
+    .replace(/(<div class="cp-photo">\s*<img src=")[^"]+(")/, `$1${saved.discount.locale.photo}$2`);
+  
+  if (!saved.discount.expires_at) {
+    html = html.replace(/<div class="cp-scad">[^<]*<\/div>/, '');
+  }
+  
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'networkidle0' });
+  
+  const pdf = await page.pdf({
+    format: 'A6',
+    printBackground: true,
+    margin: { top: 0, right: 0, bottom: 0, left: 0 }
+  });
+  
+  await browser.close();
+  
+  const slug = saved.discount.locale.slug || 'sconto';
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="sconto-${slug}.pdf"`);
+  res.send(pdf);
 }
-
-// Nome locale grande
-doc.font('Poppins-Bold').fontSize(22).fillColor('#22181C');
-doc.text(locale.nome, 24, 156);
-
-// Tipo + indirizzo
-doc.font('Poppins').fontSize(11).fillColor('#5C4F54');
-doc.text(`${locale.tipo} · ${locale.indirizzo}`, 24, 184);
-
-// Percentuale evidenziata
-doc.rect(24, 210, 80, 36).fill('#E8453C');
-doc.font('AlfaSlabOne').fontSize(20).fillColor('#FFFFFF');
-doc.text(discount.percentuale, 24, 220, { width: 80, align: 'center' });
-
-// QR code centrale grande
-const qrPng = await QRCode.toBuffer(discount.qr_payload, { width: 240 });
-doc.image(qrPng, 60, 260, { width: 220, height: 220 });
-
-// Hint sotto QR
-doc.font('Caveat').fontSize(20).fillColor('#E8453C');
-doc.text('Mostra al ristoratore', 0, 510, { align: 'center', width: 297 });
-
-// Codice testuale fallback (in caso QR non leggibile)
-doc.font('Poppins').fontSize(9).fillColor('#9A8E94');
-doc.text(`Codice: ${discount.code_text}`, 0, 540, { align: 'center', width: 297 });
-
-// Scadenza (se applicabile)
-if (discount.expires_at) {
-  doc.text(`Scade ${formatDate(discount.expires_at)}`, 0, 560, { align: 'center', width: 297 });
-}
-
-// Footer
-doc.font('Poppins').fontSize(7).fillColor('#9A8E94');
-doc.text('Codice valido una sola volta · chiamamibi.com', 0, 580, { align: 'center', width: 297 });
-
-doc.end();
 ```
+
+**Vincoli importanti**:
+- `puppeteer-core + @sparticuz/chromium` insieme ~50MB → sotto cap Vercel Hobby function size 250MB
+- Function timeout 10s default → se serve più, configurare in `vercel.json` (max 60s su Hobby)
+- Cold start può essere 3-5s la prima volta dopo deploy, poi <1s in warm
+- Il logo SVG va caricato via URL pubblico assoluto (relative path non funziona dentro puppeteer headless senza base href)
 
 ### 5.4 Vincolo Vercel Hobby
 
@@ -616,11 +643,13 @@ PR21 è done quando:
 
 - Mockup mobile: `docs/mockups/v4-mobile-sconti-redesign.html`
 - Mockup desktop: `docs/mockups/v4-desktop-sconti-redesign.html`
+- **Template PDF coupon (DA SEGUIRE 1:1)**: `docs/templates/pdf-coupon-template.html`
+- Logo brand: `public/logo-guida-bi.svg` (esistente, NON modificare)
 - Pattern AuthGate da copiare: PR20b → `src/components/AuthGate.jsx`
 - Sistema QR scan esistente: `/api/discount/scan` o equivalente (NON toccare)
 - Tabella `user_discounts` Supabase (verifica schema, eventualmente add colonne)
 - Memoria architettura: `project_pr20_chiedi_a_bi.md` (per pattern AuthGate)
-- Design tokens v4 esistenti (corallo, ink, oro, Poppins, Alfa Slab, Caveat)
+- Design tokens v4 esistenti (corallo, ink, oro, Poppins, Caveat)
 
 ---
 
