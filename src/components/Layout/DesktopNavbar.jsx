@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import BiLogoMark from '../UI/BiLogoMark'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', match: (p) => p === '/' },
@@ -170,22 +171,12 @@ export default function DesktopNavbar() {
                   inset: 0,
                   borderRadius: '50%',
                   overflow: 'hidden',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
                 }}
               >
-                <img
-                  src="/logo_bi_bianco.png"
-                  alt=""
-                  draggable={false}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    width: '200%',
-                    height: '200%',
-                    transform: 'translate(-50%, -50%)',
-                    objectFit: 'contain',
-                  }}
-                />
+                <BiLogoMark style={{ width: '78%', height: '78%' }} />
               </span>
               <span
                 aria-hidden="true"
