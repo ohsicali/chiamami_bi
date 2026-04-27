@@ -650,9 +650,7 @@ export default function SavedPage() {
         )}
       </div>
 
-      <div style={{ paddingBottom: TAB_BAR_HEIGHT }}>
-        <Footer />
-      </div>
+      <Footer />
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
     </div>
