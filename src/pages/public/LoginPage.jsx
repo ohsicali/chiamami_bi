@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
@@ -31,9 +31,23 @@ const inputStyle = {
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, signIn, signUp, signInWithGoogle, resetPasswordForEmail } = useAuth()
 
-  const [mode, setMode] = useState('login') // 'login', 'register', 'forgot', 'recovery_forgot', 'recovery_otp', 'recovery_newpwd'
+  // Continuità "Chiedi a Bi" (PR20 §8.2): se atterriamo qui da AuthGate
+  // o dalla Home con uno state, dopo login portiamo l'utente a returnTo
+  // mantenendo il messaggio iniziale.
+  const returnTo = location.state?.returnTo || '/'
+  const pendingInitialMessage = location.state?.initialMessage || null
+  const redirectAfterAuth = () => {
+    if (returnTo && returnTo !== '/') {
+      navigate(returnTo, { replace: true, state: pendingInitialMessage ? { initialMessage: pendingInitialMessage } : undefined })
+    } else {
+      navigate('/', { replace: true })
+    }
+  }
+
+  const [mode, setMode] = useState(() => location.state?.mode === 'register' ? 'register' : 'login') // 'login', 'register', 'forgot', 'recovery_forgot', 'recovery_otp', 'recovery_newpwd'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -49,8 +63,9 @@ export default function LoginPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) navigate('/', { replace: true })
-  }, [user, navigate])
+    if (user) redirectAfterAuth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -113,7 +128,7 @@ export default function LoginPage() {
         }
       } else if (mode === 'login') {
         await signIn(email, password)
-        navigate('/', { replace: true })
+        redirectAfterAuth()
       } else {
         await signUp(email, password, fullName)
         setSuccess('Registrazione completata! Controlla la tua email per confermare.')

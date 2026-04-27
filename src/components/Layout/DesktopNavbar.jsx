@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import BiLogoMark from '../UI/BiLogoMark'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', match: (p) => p === '/' },
@@ -17,6 +18,13 @@ export default function DesktopNavbar() {
 
   const hasDeals = (discounts?.length || 0) > 0
   const initials = user ? (user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase() : null
+  const isChiediActive = location.pathname === '/chiedi' || location.pathname.startsWith('/chiedi/')
+  // City pill: solo nelle pagine Esplora (mappa + scheda ristorante). Altrove
+  // non porta valore — la guida è Torino-only oggi.
+  const showCityPill =
+    location.pathname === '/esplora' ||
+    location.pathname === '/list' ||
+    location.pathname.startsWith('/restaurant/')
 
   return (
     <div
@@ -119,45 +127,113 @@ export default function DesktopNavbar() {
           })}
         </div>
 
-        {/* RIGHT: Search + City pill + Avatar */}
+        {/* RIGHT: Chiedi a Bi + City pill + Avatar */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* PR20b §2 — bottone "Chiedi a Bi" al posto della vecchia lente */}
           <button
-            onClick={() => navigate('/list')}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'var(--color-ink-05)',
-              display: 'grid',
-              placeItems: 'center',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </button>
-
-          <div
+            type="button"
+            onClick={() => navigate('/chiedi')}
+            aria-label="Chiedi a Bi"
+            title="Chiedi a Bi"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 7,
-              padding: '9px 14px',
-              background: 'var(--color-ink-05)',
+              gap: 8,
+              padding: '5px 14px 5px 5px',
               borderRadius: 999,
-              fontWeight: 700,
-              fontSize: 13,
+              border: `1px solid ${isChiediActive ? 'var(--color-corallo)' : 'rgba(232,69,60,.22)'}`,
+              background: isChiediActive ? 'rgba(232,69,60,.08)' : 'var(--color-ink-05)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'transform .15s ease, border-color .15s ease, background .15s ease',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
           >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)' }} />
-            Torino
-            <svg viewBox="0 0 10 10" width="10" height="10">
-              <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </svg>
-          </div>
+            <span
+              style={{
+                position: 'relative',
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #B92E26) 100%)',
+                display: 'grid',
+                placeItems: 'center',
+                boxShadow: '0 4px 10px rgba(232,69,60,.3)',
+                flexShrink: 0,
+                overflow: 'visible',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#fff',
+                }}
+              >
+                <BiLogoMark style={{ width: '88%', height: '88%' }} />
+              </span>
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: -3,
+                  right: -3,
+                  width: 11,
+                  height: 11,
+                  background: 'var(--color-oro, #B08954)',
+                  borderRadius: '50%',
+                  border: '1.5px solid #fff',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 6,
+                  color: '#fff',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  zIndex: 2,
+                }}
+              >
+                ✦
+              </span>
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'var(--color-ink)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Chiedi a Bi
+            </span>
+          </button>
+
+          {showCityPill && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '9px 14px',
+                background: 'var(--color-ink-05)',
+                borderRadius: 999,
+                fontWeight: 700,
+                fontSize: 13,
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)' }} />
+              Torino
+              <svg viewBox="0 0 10 10" width="10" height="10">
+                <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
 
           {user ? (
             <Link

@@ -14,7 +14,7 @@ import TimeContextHero from '../../components/Home/TimeContextHero'
 import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
-import CityPickerSheet from '../../components/UI/CityPickerSheet'
+import BiLogoMark from '../../components/UI/BiLogoMark'
 
 function formatCountdown(endsAt) {
   if (!endsAt) return null
@@ -42,12 +42,17 @@ const CATEGORIES = [
   { key: 'cocktail', emoji: '🍸', label: 'Cocktail' },
 ]
 
-function TopBar({ user }) {
-  const initials = user
-    ? (user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase()
-    : null
-  const [cityPickerOpen, setCityPickerOpen] = useState(false)
-  const [selectedCity, setSelectedCity] = useState('Torino')
+function TopBar() {
+  // Scroll-aware: la pill destra parte espansa "Chiedi a Bi" e si comprime
+  // sul B circolare appena l'utente scrolla (header diventa sticky).
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <div
       className="hfv4-topbar"
@@ -99,77 +104,122 @@ function TopBar({ user }) {
         </span>
       </Link>
 
-      <button
-        type="button"
-        onClick={() => setCityPickerOpen(true)}
-        className="hfv4-city-pill"
+      {/* PR20b §1 — pill "Chiedi a Bi" coral. Espansa a top, si comprime
+         in solo cerchio B quando l'utente scrolla (header sticky).
+         Cerchio interno: bianco/B-coral espanso → coral/B-bianco sticky. */}
+      <Link
+        to="/chiedi"
+        aria-label="Chiedi a Bi"
         style={{
           marginLeft: 'auto',
+          position: 'relative',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 7,
-          padding: '8px 12px',
-          background: 'var(--color-ink-05, rgba(34,24,28,.06))',
-          border: 'none',
+          gap: scrolled ? 0 : 8,
+          padding: scrolled ? 5 : '5px 16px 5px 5px',
           borderRadius: 999,
-          fontWeight: 700,
-          fontSize: 13,
-          color: '#22181C',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          WebkitTapHighlightColor: 'transparent',
+          background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #C6372F) 100%)',
+          color: '#fff',
+          textDecoration: 'none',
+          boxShadow: '0 6px 14px rgba(232,69,60,.35)',
+          border: '2px solid #fff',
+          flexShrink: 0,
+          transition: 'gap .3s cubic-bezier(.4,0,.2,1), padding .3s cubic-bezier(.4,0,.2,1)',
+          overflow: 'visible',
         }}
       >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)', flexShrink: 0 }} />
-        {selectedCity}
-        <svg viewBox="0 0 10 10" width="10" height="10">
-          <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        </svg>
-      </button>
-      <CityPickerSheet
-        open={cityPickerOpen}
-        onClose={() => setCityPickerOpen(false)}
-        onCityChange={({ name }) => { setSelectedCity(name); setCityPickerOpen(false) }}
-      />
-
-      {user ? (
-        <Link
-          to="/profile"
-          aria-label="Profilo"
+        <span
           style={{
-            width: 42,
-            height: 42,
+            position: 'relative',
+            width: 32,
+            height: 32,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #C6372F) 100%)',
-            color: '#fff',
             display: 'grid',
             placeItems: 'center',
-            fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            fontSize: 16,
-            boxShadow: '0 6px 14px rgba(232,69,60,.3)',
-            border: '2px solid #fff',
-            textDecoration: 'none',
+            flexShrink: 0,
           }}
         >
-          {initials}
-        </Link>
-      ) : (
-        <Link
-          to="/login"
+          {/* Due "frame" sovrapposti, ognuno coerente al 100% (bg + colore SVG
+             matchano sempre). Crossfade solo via opacity → niente più colore
+             intermedio mismatched durante la transizione. */}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              display: 'grid',
+              placeItems: 'center',
+              background: '#fff',
+              color: 'var(--color-corallo, #E8453C)',
+              opacity: scrolled ? 0 : 1,
+              transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
+            }}
+          >
+            <BiLogoMark style={{ width: '88%', height: '88%' }} />
+          </span>
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              display: 'grid',
+              placeItems: 'center',
+              background: 'transparent',
+              color: '#fff',
+              opacity: scrolled ? 1 : 0,
+              transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
+            }}
+          >
+            <BiLogoMark style={{ width: '88%', height: '88%' }} />
+          </span>
+          {/* sparkle oro: SOPRA il bordo bianco della pill in entrambi gli
+             stati. Border bianco per fondersi col bordo della pill, z-index
+             per stare sopra. Fuori dal clipper così non viene tagliato. */}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: -9,
+              right: -9,
+              width: 14,
+              height: 14,
+              background: 'var(--color-oro, #B08954)',
+              borderRadius: '50%',
+              border: '2px solid #fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,.18)',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: 7,
+              color: '#fff',
+              fontWeight: 700,
+              lineHeight: 1,
+              zIndex: 2,
+            }}
+          >
+            ✦
+          </span>
+        </span>
+        <span
           style={{
-            padding: '10px 16px',
-            background: 'var(--color-ink)',
-            color: '#fff',
-            borderRadius: 999,
-            fontSize: 12,
-            fontWeight: 700,
-            textDecoration: 'none',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 800,
+            fontSize: 13.5,
+            letterSpacing: '-0.01em',
             whiteSpace: 'nowrap',
+            display: 'inline-block',
+            overflow: 'hidden',
+            maxWidth: scrolled ? 0 : 120,
+            opacity: scrolled ? 0 : 1,
+            transition: 'max-width .3s cubic-bezier(.4,0,.2,1), opacity .25s ease',
           }}
         >
-          Accedi
-        </Link>
-      )}
+          Chiedi a Bi
+        </span>
+      </Link>
     </div>
   )
 }
@@ -787,7 +837,7 @@ export default function HomeFeedV4() {
         }
       `}</style>
 
-      <TopBar user={user} />
+      <TopBar />
 
       <HeroPromo featured={featuredDrop} />
 

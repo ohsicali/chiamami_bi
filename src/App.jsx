@@ -52,6 +52,7 @@ const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
 const MyChatPage = lazy(() => import('./pages/public/MyChatPage'))
+const ChiediPage = lazy(() => import('./pages/public/ChiediPage'))
 const DealsPage = lazy(() => import('./pages/public/DealsPage'))
 const SavedPage = lazy(() => import('./pages/public/SavedPage'))
 const VerifyPage = lazy(() => import('./pages/public/VerifyPage'))
@@ -131,6 +132,8 @@ export default function App() {
         <div className={!isAdmin ? 'desktop-nav-offset' : undefined}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<HomeFeedV4 />} />
+          <Route path="/chiedi" element={<ChiediPage />} />
+          <Route path="/chiedi/:conversationId" element={<ChiediPage />} />
           <Route path="/list" element={<ListView />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
