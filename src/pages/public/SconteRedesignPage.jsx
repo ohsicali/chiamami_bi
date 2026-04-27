@@ -132,7 +132,7 @@ function SconteRedesignPageInner() {
     setSearchParams(sp, { replace: false })
   }, [searchParams, setSearchParams])
 
-  const { activeDrops: allActiveDrops, featured: allFeatured, regular: allRegular, loading } =
+  const { discounts: allRaw, activeDrops: allActiveDrops, featured: allFeatured, regular: allRegular, loading } =
     useActiveDiscounts()
   const { active: allMyActive, used: allMyUsed, loading: myLoading } = useMyDiscounts(user?.id)
 
@@ -145,11 +145,29 @@ function SconteRedesignPageInner() {
     return r.discount?.restaurant?.city?.toLowerCase() === currentCity.name.toLowerCase()
   }, [currentCity?.name])
 
-  const drops = useMemo(() => allActiveDrops.filter(cityFilter), [allActiveDrops, cityFilter])
-  const conv = useMemo(
-    () => [...(allFeatured || []), ...(allRegular || [])].filter(cityFilter),
-    [allFeatured, allRegular, cityFilter]
-  )
+  // Allineato alla logica della home: tutti gli sconti is_drop (non esauriti)
+  // sono drop. La spec §2.1 dice di nasconderli solo se sold-out (presi==totali).
+  // Non richiediamo drop_starts_at perché molti drop sul DB lo hanno null.
+  const allDropsLocal = useMemo(() => {
+    return (allRaw || []).filter((d) => {
+      if (!d.is_drop) return false
+      const claimed = d.claimed_count || d.total_redeemed || 0
+      const max = d.max_quantity || d.max_redemptions || 0
+      if (max > 0 && claimed >= max) return false
+      // se è già scaduto come timestamp, lo escludiamo
+      const end = d.drop_ends_at || d.valid_until
+      if (end && new Date(end).getTime() < Date.now()) return false
+      return true
+    })
+  }, [allRaw])
+  const allConvLocal = useMemo(() => {
+    return (allRaw || []).filter((d) => !d.is_drop)
+  }, [allRaw])
+
+  const drops = useMemo(() => allDropsLocal.filter(cityFilter), [allDropsLocal, cityFilter])
+  const conv = useMemo(() => allConvLocal.filter(cityFilter), [allConvLocal, cityFilter])
+  // Backward-compat per auto-claim post login
+  void allActiveDrops; void allFeatured; void allRegular
   const myActive = useMemo(() => allMyActive.filter(myFilter), [allMyActive, myFilter])
   const myUsed = useMemo(() => allMyUsed.filter(myFilter), [allMyUsed, myFilter])
 
@@ -195,7 +213,7 @@ function SconteRedesignPageInner() {
     const pending = readAndClearPendingDiscountId()
     if (!pending) { setAutoClaimed(true); return }
     setAutoClaimed(true)
-    const all = [...allActiveDrops, ...(allFeatured || []), ...(allRegular || [])]
+    const all = allRaw || []
     const deal = all.find((d) => d.id === pending)
     if (deal) {
       // small delay so the page mounts first
@@ -204,7 +222,7 @@ function SconteRedesignPageInner() {
     // ensure we're in "miei" tab afterwards
     setTab('miei')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading, myLoading, allActiveDrops, allFeatured, allRegular])
+  }, [user, loading, myLoading, allRaw])
 
   const goTo = (r) => {
     if (!r) return
