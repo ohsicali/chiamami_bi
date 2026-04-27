@@ -180,8 +180,8 @@ export default function DesktopNavbar() {
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    width: '155%',
-                    height: '155%',
+                    width: '200%',
+                    height: '200%',
                     transform: 'translate(-50%, -50%)',
                     objectFit: 'contain',
                   }}
