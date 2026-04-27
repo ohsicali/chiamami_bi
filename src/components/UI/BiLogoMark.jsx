@@ -5,14 +5,14 @@
  * via la prop `color` o tramite il CSS `color` del genitore. Comodo per
  * animare il colore e fare crossfade fra stati senza usare due asset.
  *
- * viewBox è ritagliato sul glifo (rotato -10°, traslato), per minimizzare
- * il whitespace intorno e far riempire bene il container quando renderizzi
- * a width/height 100%.
+ * Coordinate prese da public/bi_logo_def_centrato.svg — il file è già
+ * posizionato in modo che il glifo sia visivamente al centro del
+ * canvas 1000x1000, quindi usiamo viewBox 0 0 1000 1000.
  */
 export default function BiLogoMark({ style, className, title }) {
   return (
     <svg
-      viewBox="146 180 640 640"
+      viewBox="126 136 680 680"
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid meet"
       role={title ? 'img' : undefined}
@@ -22,9 +22,9 @@ export default function BiLogoMark({ style, className, title }) {
       className={className}
     >
       <text
-        transform="matrix(0.984982 -0.172655 0.172655 0.984982 -82.538356 94.072986)"
+        transform="matrix(0.984982 -0.172655 0.172655 0.984982 -78.912597 93.757615)"
         x="194.83"
-        y="713"
+        y="692"
         fontFamily='"Alfa Slab One", serif'
         fontSize="540"
         fill="currentColor"
