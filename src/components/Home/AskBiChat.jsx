@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, proxyImg } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -17,6 +17,35 @@ export default function AskBiChat({ currentMoment }) {
   const [error, setError] = useState(null)
   const [response, setResponse] = useState(null)
   const [conversationId, setConversationId] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const cardRef = useRef(null)
+  const autoSubmittedRef = useRef(false)
+
+  // Allow other parts of the app (e.g. UnifiedSearch) to deep-link into Bi
+  // via /?ask=<query> (auto-submit) or /?focus=bi (just scroll + focus).
+  useEffect(() => {
+    const askParam = searchParams.get('ask')
+    const focusParam = searchParams.get('focus')
+    if (!askParam && focusParam !== 'bi') return
+
+    // Scroll the card into view on next frame so layout has settled.
+    requestAnimationFrame(() => {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+
+    if (askParam && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true
+      setInput(askParam)
+      // Submit after a tick so the input is mounted with the value.
+      setTimeout(() => { submit(askParam) }, 80)
+    }
+
+    // Clear params so reload/back doesn't re-trigger.
+    const next = new URLSearchParams(searchParams)
+    next.delete('ask')
+    next.delete('focus')
+    setSearchParams(next, { replace: true })
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = async (promptText) => {
     const text = (promptText ?? input).trim()
@@ -53,7 +82,7 @@ export default function AskBiChat({ currentMoment }) {
   }
 
   return (
-    <div className="hfv4-ai">
+    <div className="hfv4-ai" ref={cardRef}>
       <div className="hfv4-ai-divider" style={dividerStyle}>
         <span style={{ flex: 1, height: 1, background: 'var(--color-ink-15, rgba(34,24,28,.12))' }} />
         <span>Oppure</span>

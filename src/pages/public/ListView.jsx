@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import SearchBar from '../../components/Layout/SearchBar'
+import UnifiedSearch from '../../components/Layout/UnifiedSearch'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import Navbar from '../../components/Layout/Navbar'
 import MobileTabBar from '../../components/Layout/MobileTabBar'
@@ -321,6 +321,7 @@ export default function ListView() {
   const { position } = useGeolocation()
   const {
     restaurants,
+    allRestaurants,
     loading,
     filters,
     setFilters,
@@ -409,7 +410,7 @@ export default function ListView() {
       <div style={{ flex: 1, paddingTop: 100, paddingLeft: 16, paddingRight: 16, maxWidth: 600, margin: '0 auto', width: '100%' }}>
         {/* Search */}
         <div style={{ marginBottom: 12 }}>
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          <UnifiedSearch value={searchQuery} onChange={setSearchQuery} restaurants={allRestaurants} />
         </div>
 
         {/* Filters */}
