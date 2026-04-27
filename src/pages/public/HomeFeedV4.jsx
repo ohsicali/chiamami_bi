@@ -151,7 +151,7 @@ function TopBar() {
             }}
           >
             <img
-              src="/bi_logo.svg"
+              src="/logo_bi_corallo.png"
               alt=""
               draggable={false}
               style={{
@@ -167,7 +167,7 @@ function TopBar() {
               }}
             />
             <img
-              src="/bi_logo.svg"
+              src="/logo_bi_bianco.png"
               alt=""
               draggable={false}
               style={{
@@ -178,7 +178,6 @@ function TopBar() {
                 height: '155%',
                 transform: 'translate(-50%, -50%)',
                 objectFit: 'contain',
-                filter: 'brightness(0) invert(1)',
                 opacity: scrolled ? 1 : 0,
                 transition: 'opacity .35s cubic-bezier(.4,0,.2,1)',
               }}
