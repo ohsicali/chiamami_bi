@@ -16,7 +16,7 @@ export default function Footer() {
   const tabBarVisible = !isAdmin && !isRestaurantDetail && !isPartner
 
   return (
-    <footer className="border-t border-gray-100 bg-white md:mt-12">
+    <footer className="border-t border-gray-100 md:mt-12">
 
       {/* ── MOBILE ── */}
       <div className={`md:hidden px-5 pt-10 pb-10${tabBarVisible ? ' footer-tab-offset' : ''}`}>

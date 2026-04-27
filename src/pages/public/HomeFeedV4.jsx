@@ -672,7 +672,7 @@ export default function HomeFeedV4() {
         .hfv4-zone-b { grid-area: b; }
 
         @media (min-width: 1024px) {
-          .hfv4-root { padding-bottom: 0; }
+          .hfv4-root { padding-bottom: 0 !important; }
           .hfv4-topbar { display: none !important; }
           .hfv4-main {
             max-width: 1240px;
