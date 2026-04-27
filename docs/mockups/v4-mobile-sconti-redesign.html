@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>v4 mobile — /sconti redesign (Disponibili / I miei sconti)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2;
+  --paper:#FFFFFF;
+  --ink:#22181C;
+  --ink-2:#5C4F54;
+  --ink-3:#9A8E94;
+  --line:#EFE7DD;
+  --line-2:#E5DBCE;
+  --corallo:#E8453C;
+  --corallo-soft:#FCE7E5;
+  --corallo-ink:#B92E26;
+  --oro:#B08954;
+  --oro-soft:#F0E4D2;
+  --verde:#3F6B4A;
+  --verde-soft:#E8F4E5;
+  --grigio-bg:#F1ECE3;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 0 80px}
+
+.gallery{max-width:1280px;margin:0 auto;padding:0 28px}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+.frames{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;align-items:start}
+.frame{background:#000;border-radius:42px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.screen{background:var(--page);border-radius:34px;overflow:hidden;height:780px;position:relative;display:flex;flex-direction:column}
+.label{color:#fff;text-align:center;font-size:12px;letter-spacing:.4px;margin-top:18px;font-weight:500}
+.label small{color:#8e7e6e;font-size:10.5px;display:block;margin-top:4px;letter-spacing:.3px}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+
+/* ============= site header ============= */
+.site-header{
+  position:relative;z-index:20;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:46px 14px 12px;background:var(--page);
+}
+.site-header .h-mark{display:flex;flex-direction:column;line-height:1.1}
+.site-header .h-mark strong{font-family:var(--ff-mark);font-size:13px;color:var(--corallo);letter-spacing:.4px}
+.site-header .h-mark small{font-size:7px;font-weight:600;color:var(--ink-3);letter-spacing:1.1px;margin-top:2px}
+.site-header .h-actions{display:flex;align-items:center;gap:6px}
+.site-header .h-city{
+  display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:5px 9px 5px 7px;font-size:10.5px;font-weight:700;color:var(--ink);
+}
+.site-header .h-city::before{content:'';width:5px;height:5px;background:var(--corallo);border-radius:50%}
+.site-header .h-bi{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;display:grid;place-items:center;
+  font-family:var(--ff-mark);font-size:13px;
+  box-shadow:0 4px 12px rgba(232,69,60,.35);
+  position:relative;
+}
+.site-header .h-bi::after{
+  content:'✦';position:absolute;top:-3px;right:-3px;width:12px;height:12px;background:var(--oro);border-radius:50%;border:2px solid var(--page);font-size:5.5px;display:grid;place-items:center;color:#fff;font-weight:700;
+}
+
+/* ============= page header ============= */
+.page-head{padding:18px 16px 8px;flex-shrink:0}
+.page-head h1{font-family:var(--ff-mark);font-size:28px;line-height:1.05;color:var(--ink);letter-spacing:.3px;margin-bottom:6px}
+.page-head p{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+
+/* ============= segment LIVELLO 1 (2 tab) ============= */
+.segment{
+  display:flex;background:var(--grigio-bg);border-radius:99px;padding:4px;
+  margin:14px 16px 0;flex-shrink:0;
+}
+.segment .seg{
+  flex:1;text-align:center;padding:11px 8px;border-radius:99px;
+  font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.segment .seg.active{
+  background:var(--ink);color:#fff;box-shadow:0 2px 8px rgba(34,24,28,.18);
+}
+.segment .seg .ct{
+  background:rgba(232,69,60,.15);color:var(--corallo-ink);
+  font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;
+}
+.segment .seg.active .ct{background:rgba(255,255,255,.18);color:#fff}
+
+/* ============= sub-segment LIVELLO 2 ============= */
+.sub-segment{
+  display:flex;gap:6px;
+  padding:14px 16px 4px;flex-shrink:0;
+}
+.sub-segment .sub{
+  font-size:12px;font-weight:600;color:var(--ink-3);
+  padding:7px 14px;border-radius:99px;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);
+  display:flex;align-items:center;gap:5px;
+}
+.sub-segment .sub.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.sub-segment .sub .ct{
+  background:rgba(232,69,60,.18);color:var(--corallo-ink);
+  font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px;
+}
+.sub-segment .sub.active .ct{background:rgba(255,255,255,.2);color:#fff}
+
+/* ============= body scroll ============= */
+.body{flex:1;overflow-y:auto;padding-bottom:90px}
+
+/* ============= drop carousel ============= */
+.section-c{padding:18px 0 8px}
+.section-c .head{padding:0 16px 12px;display:flex;align-items:baseline;justify-content:space-between}
+.section-c .head strong{font-family:var(--ff-mark);font-size:17px;color:var(--ink);letter-spacing:.3px}
+.section-c .head small{font-size:10.5px;color:var(--ink-3);font-weight:500}
+
+.drop-track{
+  display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+}
+.drop-track::-webkit-scrollbar{display:none}
+.drop-card{
+  flex:0 0 78%;scroll-snap-align:start;
+  background:var(--paper);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 4px 16px rgba(34,24,28,.04);
+}
+.drop-card .ph{position:relative;height:130px;background:#dcd0c0;overflow:hidden}
+.drop-card .ph img{width:100%;height:100%;object-fit:cover}
+.drop-card .ph .badge-pct{
+  position:absolute;top:10px;left:10px;background:var(--corallo);color:#fff;
+  font-family:var(--ff-mark);font-size:17px;padding:5px 11px;border-radius:8px;
+}
+.drop-card .ph .badge-time{
+  position:absolute;top:11px;right:11px;background:rgba(0,0,0,.65);color:#fff;
+  font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px;
+  display:flex;align-items:center;gap:4px;backdrop-filter:blur(6px);
+}
+.drop-card .ph .badge-time::before{content:'⏱';font-size:11px}
+.drop-card .ph .badge-live{
+  position:absolute;bottom:9px;left:9px;background:#ff3a3a;color:#fff;
+  font-size:8.5px;font-weight:700;padding:3px 8px;border-radius:99px;
+  letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:4px;
+}
+.drop-card .ph .badge-live::before{content:'';width:5.5px;height:5.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.drop-card .body-c{padding:11px 13px 13px;display:flex;flex-direction:column;gap:5px;flex:1}
+.drop-card h4{font-size:14px;font-weight:700;letter-spacing:-.2px;color:var(--ink);line-height:1.2}
+.drop-card .meta{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.drop-card .progress{display:flex;align-items:center;gap:7px;font-size:9.5px;color:var(--ink-3);font-weight:600;margin-top:3px}
+.drop-card .progress .bar{flex:1;height:5px;background:var(--line);border-radius:99px;overflow:hidden}
+.drop-card .progress .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px}
+.drop-card .cta{
+  margin-top:8px;background:var(--ink);color:#fff;border:none;
+  padding:9px 12px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:11.5px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.drop-card .cta::after{content:'→';font-size:13px}
+
+/* ============= conv list ============= */
+.conv-list{display:flex;flex-direction:column;gap:10px;padding:0 16px}
+.conv-card{
+  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;display:flex;flex-direction:column;
+}
+.conv-card .ph{position:relative;height:108px;background:#dcd0c0;overflow:hidden}
+.conv-card .ph img{width:100%;height:100%;object-fit:cover}
+.conv-card .ph .badge-pct{
+  position:absolute;top:9px;left:9px;background:rgba(63,107,74,.95);color:#fff;
+  font-family:var(--ff-ui);font-weight:700;font-size:12px;padding:5px 11px;border-radius:7px;backdrop-filter:blur(6px);
+}
+.conv-card .ph .badge-pct.coral{background:rgba(232,69,60,.95)}
+.conv-card .body-c{padding:11px 13px;display:flex;align-items:center;gap:10px}
+.conv-card .info{flex:1;min-width:0}
+.conv-card h4{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:2px;letter-spacing:-.2px}
+.conv-card .meta{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.conv-card .meta .cat{display:inline-block;background:var(--corallo-soft);color:var(--corallo-ink);font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;letter-spacing:.3px;margin-right:3px}
+.conv-card .cta-mini{
+  background:var(--ink);color:#fff;border:none;
+  padding:8px 14px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:11.5px;font-weight:700;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;
+}
+
+/* ============= I miei → DISPONIBILI (presi, da usare) — list with QR button ============= */
+.mine-list{display:flex;flex-direction:column;gap:10px;padding:0 16px}
+.mine-row{
+  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  display:flex;align-items:center;gap:11px;padding:11px;
+  position:relative;overflow:hidden;
+}
+.mine-row .ph-mini{
+  width:54px;height:54px;border-radius:11px;background:#dcd0c0;overflow:hidden;flex-shrink:0;
+}
+.mine-row .ph-mini img{width:100%;height:100%;object-fit:cover}
+.mine-row .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mine-row .info h4{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.2;letter-spacing:-.2px}
+.mine-row .info .meta{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.mine-row .info .badge-row{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.mine-row .info .badge-pct{
+  background:var(--corallo);color:#fff;font-family:var(--ff-ui);font-weight:700;
+  font-size:10px;padding:2px 8px;border-radius:99px;letter-spacing:.2px;
+}
+.mine-row .info .scad{
+  background:var(--oro-soft);color:var(--oro);font-size:9.5px;font-weight:700;
+  padding:2px 7px;border-radius:99px;display:flex;align-items:center;gap:3px;
+}
+.mine-row .info .scad::before{content:'⏱';font-size:10px}
+.mine-row .qr-btn{
+  background:var(--ink);color:#fff;border:none;
+  padding:9px 13px 9px 11px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:11px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.mine-row .qr-btn::before{
+  content:'';display:inline-block;width:13px;height:13px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'><path d='M3 3h7v7H3zm2 2v3h3V5zm9-2h7v7h-7zm2 2v3h3V5zM3 14h7v7H3zm2 2v3h3v-3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm0 3h-3v2h3zm-2-6h2v2h-2zm-2 0v2h-2v-2z'/></svg>");
+  background-size:contain;
+}
+
+/* ============= I miei → UTILIZZATI ============= */
+.used-list{
+  margin:0 16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+}
+.used-row{display:flex;align-items:center;gap:11px;padding:11px 13px}
+.used-row + .used-row{border-top:1px solid var(--line)}
+.used-row .ph-mini{width:42px;height:42px;border-radius:9px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.used-row .ph-mini img{width:100%;height:100%;object-fit:cover}
+.used-row .info{flex:1;min-width:0}
+.used-row .info h4{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:2px}
+.used-row .info .sub{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.2}
+.used-row .info .sub strong{color:var(--corallo);font-weight:700}
+.used-row .when{font-size:10px;color:var(--ink-3);text-align:right;flex-shrink:0;line-height:1.3}
+.used-row .when strong{display:block;color:var(--ink);font-size:11px;font-weight:600}
+
+.empty{text-align:center;padding:50px 24px;color:var(--ink-3)}
+.empty .ic{font-size:36px;margin-bottom:12px;opacity:.4}
+.empty strong{display:block;font-family:var(--ff-mark);font-size:17px;color:var(--ink);margin-bottom:6px;letter-spacing:.2px}
+.empty p{font-size:12.5px;line-height:1.5;max-width:230px;margin:0 auto}
+
+/* ============= QR popup ============= */
+.qr-overlay{
+  position:absolute;inset:0;background:rgba(34,24,28,.65);backdrop-filter:blur(6px);
+  z-index:100;display:flex;align-items:flex-end;justify-content:center;
+  padding:0;
+}
+.qr-sheet{
+  width:100%;background:var(--paper);
+  border-radius:24px 24px 0 0;
+  padding:18px 18px 30px;
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.qr-sheet .grip{
+  width:44px;height:4px;background:var(--line-2);border-radius:99px;margin-bottom:12px;
+}
+.qr-sheet .close{
+  position:absolute;top:14px;right:14px;
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper);
+  display:grid;place-items:center;cursor:pointer;font-size:14px;color:var(--ink-2);
+}
+.qr-sheet .place-info{display:flex;align-items:center;gap:10px;margin-bottom:14px;width:100%}
+.qr-sheet .place-info .ph{width:42px;height:42px;border-radius:10px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.qr-sheet .place-info .ph img{width:100%;height:100%;object-fit:cover}
+.qr-sheet .place-info .info-x{flex:1}
+.qr-sheet .place-info h3{font-size:14px;font-weight:700;color:var(--ink);line-height:1.2;letter-spacing:-.2px}
+.qr-sheet .place-info .meta{font-size:11px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.qr-sheet .pct-big{
+  font-family:var(--ff-mark);font-size:30px;color:var(--corallo);letter-spacing:-.4px;
+  margin:6px 0 14px;line-height:1;
+}
+.qr-sheet .qr-block{
+  background:#fff;border:2px solid var(--ink);border-radius:14px;
+  padding:14px;margin-bottom:12px;
+}
+.qr-sheet .qr-block .qr{
+  width:170px;height:170px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='25' height='25' fill='%23000'/><rect x='10' y='10' width='15' height='15' fill='%23fff'/><rect x='14' y='14' width='7' height='7' fill='%23000'/><rect x='70' y='5' width='25' height='25' fill='%23000'/><rect x='75' y='10' width='15' height='15' fill='%23fff'/><rect x='79' y='14' width='7' height='7' fill='%23000'/><rect x='5' y='70' width='25' height='25' fill='%23000'/><rect x='10' y='75' width='15' height='15' fill='%23fff'/><rect x='14' y='79' width='7' height='7' fill='%23000'/><rect x='40' y='5' width='5' height='5' fill='%23000'/><rect x='50' y='5' width='5' height='5' fill='%23000'/><rect x='60' y='15' width='5' height='5' fill='%23000'/><rect x='5' y='40' width='5' height='5' fill='%23000'/><rect x='15' y='50' width='5' height='5' fill='%23000'/><rect x='40' y='40' width='15' height='15' fill='%23000'/><rect x='65' y='45' width='5' height='5' fill='%23000'/><rect x='80' y='45' width='5' height='5' fill='%23000'/><rect x='40' y='65' width='5' height='5' fill='%23000'/><rect x='50' y='75' width='5' height='5' fill='%23000'/><rect x='60' y='65' width='5' height='5' fill='%23000'/><rect x='75' y='65' width='5' height='5' fill='%23000'/><rect x='90' y='80' width='5' height='5' fill='%23000'/></svg>");
+  background-size:cover;
+}
+.qr-sheet .qr-hint{
+  font-family:var(--ff-hand);font-size:18px;color:var(--corallo);text-align:center;margin-bottom:6px;
+}
+.qr-sheet .small-info{font-size:11px;color:var(--ink-2);text-align:center;line-height:1.4;max-width:260px}
+.qr-sheet .small-info strong{color:var(--ink);font-weight:700}
+.qr-sheet .scad-line{
+  margin-top:10px;background:var(--oro-soft);color:var(--oro);
+  font-size:11px;font-weight:700;padding:6px 14px;border-radius:99px;
+  display:flex;align-items:center;gap:6px;
+}
+.qr-sheet .scad-line::before{content:'⏱';font-size:13px}
+
+.qr-sheet .qr-actions{width:100%;margin-top:14px}
+.qr-sheet .action-btn{
+  width:100%;background:var(--paper);border:1px solid var(--line-2);
+  padding:13px 14px;border-radius:14px;cursor:pointer;
+  font-family:var(--ff-ui);font-size:13px;font-weight:700;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .18s ease;
+}
+.qr-sheet .action-btn:hover{border-color:var(--corallo);color:var(--corallo)}
+.qr-sheet .action-btn .ic{font-size:18px;line-height:1}
+.qr-sheet .action-btn small{font-size:11px;color:var(--ink-3);font-weight:500;letter-spacing:.2px;margin-left:4px}
+
+/* ============= tabbar ============= */
+.tabbar{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,.5);border-radius:99px;padding:5px 6px;gap:1px;z-index:30;
+  box-shadow:0 8px 30px rgba(34,24,28,.10);
+}
+.tabbar .tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6px 11px;font-size:8.5px;font-weight:600;color:var(--ink-2);gap:2px;
+  border-radius:99px;cursor:pointer;
+}
+.tabbar .tab.active{background:rgba(34,24,28,.06);color:var(--ink)}
+.tabbar .tab svg{width:18px;height:18px}
+
+svg{display:block}
+
+.notes{
+  margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto;
+}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+.notes .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
+@media (max-width:980px){.frames{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:780px){.notes .grid{grid-template-columns:1fr}.frames{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR21 · Sconti redesign — struttura gerarchica</span>
+    <h1>Sconti redesign mobile</h1>
+    <p>Due tab principali: Disponibili (catalogo) · I miei sconti. Dentro "I miei sconti" due sub-tab: Disponibili (presi, da usare con QR popup) · Utilizzati (storico). Pattern QR popup riusa quello già in produzione, abbellito.</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- ============================ FRAME 1: Disponibili (catalogo) ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions">
+            <div class="h-city">Torino ▾</div>
+            <div class="h-bi">B</div>
+          </div>
+        </header>
+
+        <div class="page-head">
+          <h1>Sconti</h1>
+          <p>Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+        </div>
+
+        <div class="segment">
+          <div class="seg active">Disponibili <span class="ct">7</span></div>
+          <div class="seg">I miei sconti <span class="ct">7</span></div>
+        </div>
+
+        <div class="body">
+          <section class="section-c">
+            <div class="head"><strong>Drop a tempo</strong><small>3 attivi · scorri →</small></div>
+            <div class="drop-track">
+              <div class="drop-card">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80" alt="">
+                  <span class="badge-pct">−20%</span>
+                  <span class="badge-time">2g 14h</span>
+                  <span class="badge-live">live</span>
+                </div>
+                <div class="body-c">
+                  <h4>Al Brasà</h4>
+                  <div class="meta">Barbecue · Via Saluzzo 77</div>
+                  <div class="progress"><div class="bar"><i style="width:20%"></i></div><span>2/10 presi</span></div>
+                  <button class="cta">Prendi sconto</button>
+                </div>
+              </div>
+              <div class="drop-card">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80" alt="">
+                  <span class="badge-pct">−15%</span>
+                  <span class="badge-time">5h</span>
+                  <span class="badge-live">live</span>
+                </div>
+                <div class="body-c">
+                  <h4>Smashers</h4>
+                  <div class="meta">Panineria · Via Maria Vittoria 37</div>
+                  <div class="progress"><div class="bar"><i style="width:80%"></i></div><span>8/10 presi</span></div>
+                  <button class="cta">Prendi sconto</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-c">
+            <div class="head"><strong>Convenzioni</strong><small>4 sempre valide</small></div>
+            <div class="conv-list">
+              <div class="conv-card">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80" alt="">
+                  <span class="badge-pct">Baozi 1,50€</span>
+                </div>
+                <div class="body-c">
+                  <div class="info">
+                    <h4>Mo Sarpi Torino</h4>
+                    <div class="meta"><span class="cat">🥟 Asiatico</span>Per due persone min.</div>
+                  </div>
+                  <button class="cta-mini">Prendi</button>
+                </div>
+              </div>
+              <div class="conv-card">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80" alt="">
+                  <span class="badge-pct coral">−10%</span>
+                </div>
+                <div class="body-c">
+                  <div class="info">
+                    <h4>Kintsugi tea & cakes</h4>
+                    <div class="meta"><span class="cat">🍵 Matcha</span>Mar–ven</div>
+                  </div>
+                  <button class="cta-mini">Prendi</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V11z"/></svg>Home</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="11" r="3"/><path d="M12 22s-7-7-7-13a7 7 0 0 1 14 0c0 6-7 13-7 13z"/></svg>Esplora</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7l-9-4-9 4 9 4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Sconti</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-1.4-1.3C5.4 14.9 2 11.8 2 8c0-3 2.4-5.5 5.5-5.5 1.7 0 3.4 .8 4.5 2 1.1-1.2 2.8-2 4.5-2C19.6 2.5 22 5 22 8c0 3.8-3.4 6.9-8.6 11.7L12 21z"/></svg>Salvati</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M3 22q0-6 9-6t9 6"/></svg>Profilo</div>
+        </div>
+      </div></div>
+      <div class="label">Disponibili — catalogo<small>tab principale 1: drop carousel + convenzioni · CTA "Prendi sconto"</small></div>
+    </div>
+
+    <!-- ============================ FRAME 2: I miei sconti → Disponibili (presi) ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions">
+            <div class="h-city">Torino ▾</div>
+            <div class="h-bi">B</div>
+          </div>
+        </header>
+
+        <div class="page-head">
+          <h1>Sconti</h1>
+          <p>Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+        </div>
+
+        <div class="segment">
+          <div class="seg">Disponibili <span class="ct">7</span></div>
+          <div class="seg active">I miei sconti <span class="ct">7</span></div>
+        </div>
+
+        <div class="sub-segment">
+          <div class="sub active">Disponibili <span class="ct">2</span></div>
+          <div class="sub">Utilizzati <span class="ct">5</span></div>
+        </div>
+
+        <div class="body" style="padding-top:8px">
+          <section class="section-c" style="padding:8px 0 8px">
+            <div class="head" style="padding:0 16px 10px">
+              <strong>Pronti da usare</strong>
+              <small>tap sul QR per mostrarlo al locale</small>
+            </div>
+            <div class="mine-list">
+              <div class="mine-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Al Brasà</h4>
+                  <div class="meta">Barbecue · Via Saluzzo 77</div>
+                  <div class="badge-row">
+                    <span class="badge-pct">−20%</span>
+                    <span class="scad">2g 14h</span>
+                  </div>
+                </div>
+                <button class="qr-btn">Apri QR</button>
+              </div>
+
+              <div class="mine-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Kintsugi tea & cakes</h4>
+                  <div class="meta">Matcha · Mar–ven</div>
+                  <div class="badge-row">
+                    <span class="badge-pct">−10%</span>
+                  </div>
+                </div>
+                <button class="qr-btn">Apri QR</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V11z"/></svg>Home</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="11" r="3"/><path d="M12 22s-7-7-7-13a7 7 0 0 1 14 0c0 6-7 13-7 13z"/></svg>Esplora</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7l-9-4-9 4 9 4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Sconti</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-1.4-1.3C5.4 14.9 2 11.8 2 8c0-3 2.4-5.5 5.5-5.5 1.7 0 3.4 .8 4.5 2 1.1-1.2 2.8-2 4.5-2C19.6 2.5 22 5 22 8c0 3.8-3.4 6.9-8.6 11.7L12 21z"/></svg>Salvati</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M3 22q0-6 9-6t9 6"/></svg>Profilo</div>
+        </div>
+      </div></div>
+      <div class="label">I miei sconti → Disponibili<small>lista compatta · bottone "Apri QR" → popup</small></div>
+    </div>
+
+    <!-- ============================ FRAME 3: QR popup ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header" style="opacity:.6">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions">
+            <div class="h-city">Torino ▾</div>
+            <div class="h-bi">B</div>
+          </div>
+        </header>
+
+        <div class="page-head" style="opacity:.4">
+          <h1>Sconti</h1>
+          <p>Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+        </div>
+
+        <div class="segment" style="opacity:.4">
+          <div class="seg">Disponibili <span class="ct">7</span></div>
+          <div class="seg active">I miei sconti <span class="ct">7</span></div>
+        </div>
+
+        <div class="sub-segment" style="opacity:.4">
+          <div class="sub active">Disponibili <span class="ct">2</span></div>
+          <div class="sub">Utilizzati <span class="ct">5</span></div>
+        </div>
+
+        <!-- QR popup overlay -->
+        <div class="qr-overlay">
+          <div class="qr-sheet">
+            <div class="grip"></div>
+            <button class="close" aria-label="Chiudi">✕</button>
+
+            <div class="place-info">
+              <div class="ph"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80" alt=""></div>
+              <div class="info-x">
+                <h3>Al Brasà</h3>
+                <div class="meta">Barbecue · Via Saluzzo 77</div>
+              </div>
+            </div>
+
+            <div class="pct-big">−20%</div>
+
+            <div class="qr-block">
+              <div class="qr"></div>
+            </div>
+
+            <div class="qr-hint">Mostra al ristoratore</div>
+            <div class="small-info">
+              Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br>
+              Codice valido una sola volta.
+            </div>
+
+            <div class="scad-line">Scade tra 2 giorni · 14h</div>
+
+            <div class="qr-actions">
+              <button class="action-btn">
+                <span class="ic">⬇</span>
+                Scarica PDF
+                <small>stampa o salva sul telefono</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">QR popup + scarica PDF<small>bottom sheet · QR scansionabile + bottone PDF</small></div>
+    </div>
+
+    <!-- ============================ FRAME 4: I miei sconti → Utilizzati ============================ -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions">
+            <div class="h-city">Torino ▾</div>
+            <div class="h-bi">B</div>
+          </div>
+        </header>
+
+        <div class="page-head">
+          <h1>Sconti</h1>
+          <p>Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+        </div>
+
+        <div class="segment">
+          <div class="seg">Disponibili <span class="ct">7</span></div>
+          <div class="seg active">I miei sconti <span class="ct">7</span></div>
+        </div>
+
+        <div class="sub-segment">
+          <div class="sub">Disponibili <span class="ct">2</span></div>
+          <div class="sub active">Utilizzati <span class="ct">5</span></div>
+        </div>
+
+        <div class="body" style="padding-top:8px">
+          <section class="section-c" style="padding:8px 0 8px">
+            <div class="head" style="padding:0 16px 10px">
+              <strong>Storico</strong>
+              <small>già usati · per riusarli prendili dai Disponibili</small>
+            </div>
+
+            <div class="used-list">
+              <div class="used-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Bar Cavour</h4>
+                  <div class="sub">Cocktail · <strong>−15%</strong></div>
+                </div>
+                <div class="when"><strong>26 apr</strong>2026</div>
+              </div>
+              <div class="used-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Officina del Gusto</h4>
+                  <div class="sub">Bistrot · <strong>Aperitivo 8€</strong></div>
+                </div>
+                <div class="when"><strong>22 apr</strong>2026</div>
+              </div>
+              <div class="used-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Smashers</h4>
+                  <div class="sub">Panineria · <strong>−15%</strong></div>
+                </div>
+                <div class="when"><strong>15 apr</strong>2026</div>
+              </div>
+              <div class="used-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Mo Sarpi</h4>
+                  <div class="sub">Asiatico · <strong>Baozi 1,50€</strong></div>
+                </div>
+                <div class="when"><strong>8 apr</strong>2026</div>
+              </div>
+              <div class="used-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Tre Galletti</h4>
+                  <div class="sub">Cocktail · <strong>−10%</strong></div>
+                </div>
+                <div class="when"><strong>2 apr</strong>2026</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V11z"/></svg>Home</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="11" r="3"/><path d="M12 22s-7-7-7-13a7 7 0 0 1 14 0c0 6-7 13-7 13z"/></svg>Esplora</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7l-9-4-9 4 9 4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Sconti</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-1.4-1.3C5.4 14.9 2 11.8 2 8c0-3 2.4-5.5 5.5-5.5 1.7 0 3.4 .8 4.5 2 1.1-1.2 2.8-2 4.5-2C19.6 2.5 22 5 22 8c0 3.8-3.4 6.9-8.6 11.7L12 21z"/></svg>Salvati</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M3 22q0-6 9-6t9 6"/></svg>Profilo</div>
+        </div>
+      </div></div>
+      <div class="label">I miei sconti → Utilizzati<small>storico compatto · foto + locale + sconto + data</small></div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>Note di design — struttura gerarchica</h2>
+    <p>Tab principale a 2 voci: <strong>Disponibili</strong> (catalogo, di tutti) vs <strong>I miei sconti</strong> (storia personale). Dentro "I miei sconti" sub-segment a 2: <strong>Disponibili</strong> (presi, da usare) vs <strong>Utilizzati</strong> (già usati). Counter sui livelli ("I miei sconti 7" = 2 da usare + 5 utilizzati).</p>
+
+    <div class="grid">
+      <div>
+        <h3>Tab principale 1 — Disponibili</h3>
+        <ul>
+          <li>Sezione "Drop a tempo" → carousel con countdown + barra "X/Y presi"</li>
+          <li>Sezione "Convenzioni" → lista verticale</li>
+          <li>CTA principale: "Prendi sconto" / "Prendi"</li>
+          <li>Click sulla card → scheda ristorante (come live)</li>
+        </ul>
+
+        <h3>Tab principale 2 → Disponibili (presi)</h3>
+        <ul>
+          <li>Lista compatta con foto 54px + nome + meta + badge percentuale + eventuale scadenza</li>
+          <li>Bottone "Apri QR" a destra (corallo? ink? — ink, più discreto)</li>
+          <li>Tap → bottom sheet con QR scansionabile</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>QR popup (bottom sheet mobile)</h3>
+        <ul>
+          <li>Sliding up dal basso, backdrop scuro con blur</li>
+          <li>Foto + nome locale + percentuale grande</li>
+          <li>QR centrale 170px con bordo nero spesso</li>
+          <li>Caption Caveat "Mostra al ristoratore" + spiegazione</li>
+          <li>Banda scadenza in fondo solo se applicabile</li>
+          <li>Quando il ristoratore scansiona → automatic spostamento in "Utilizzati" (logica già live)</li>
+        </ul>
+
+        <h3>Tab principale 2 → Utilizzati</h3>
+        <ul>
+          <li>Lista compatta con foto piccola 42px + nome + tipo sconto + data</li>
+          <li>Niente totale risparmiato (dato non disponibile)</li>
+          <li>Hint sotto: "per riusarli prendili dai Disponibili"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

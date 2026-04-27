@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v4 desktop — /sconti redesign (Disponibili / I miei sconti)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2;
+  --paper:#FFFFFF;
+  --ink:#22181C;
+  --ink-2:#5C4F54;
+  --ink-3:#9A8E94;
+  --line:#EFE7DD;
+  --line-2:#E5DBCE;
+  --corallo:#E8453C;
+  --corallo-soft:#FCE7E5;
+  --corallo-ink:#B92E26;
+  --oro:#B08954;
+  --oro-soft:#F0E4D2;
+  --verde:#3F6B4A;
+  --grigio-bg:#F1ECE3;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 20px 80px}
+
+.gallery{max-width:1280px;margin:0 auto}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+
+.desktop-frames{display:flex;flex-direction:column;gap:36px}
+.dframe{
+  background:#1a1612;border-radius:14px;padding:8px;
+  box-shadow:0 30px 60px rgba(0,0,0,.5);position:relative;
+}
+.dframe::before{
+  content:'';position:absolute;top:8px;left:8px;right:8px;height:30px;
+  background:linear-gradient(180deg,#2a221e 0%,#1f1916 100%);
+  border-radius:8px 8px 0 0;display:flex;align-items:center;padding:0 12px;z-index:5;
+}
+.dframe::after{content:'● ● ●';position:absolute;top:8px;left:14px;height:30px;display:flex;align-items:center;color:#544037;font-size:11px;letter-spacing:5px;z-index:6}
+.dscreen{background:var(--page);border-radius:6px;overflow:hidden;margin-top:30px;position:relative}
+.dlabel{color:#fff;text-align:center;font-size:14px;letter-spacing:.4px;margin-top:14px;font-weight:500}
+.dlabel small{color:#8e7e6e;font-size:12px;display:block;margin-top:4px;letter-spacing:.3px}
+
+/* ============= Desktop nav (post-PR20b) ============= */
+.dnav-wrapper{
+  position:relative;height:100px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:24px 32px;
+}
+.dnav-logo{display:flex;flex-direction:column;line-height:1.1}
+.dnav-logo strong{font-family:var(--ff-mark);font-size:20px;color:var(--corallo);letter-spacing:.4px}
+.dnav-logo small{font-size:9px;font-weight:600;color:var(--ink-3);letter-spacing:1.4px;margin-top:2px}
+
+.dnav-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:10px;
+}
+.dnav-pill{
+  background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(255,255,255,.6);border-radius:99px;padding:7px 9px;
+  display:flex;align-items:center;gap:2px;
+  box-shadow:0 8px 30px rgba(34,24,28,.10),inset 0 1px 0 rgba(255,255,255,.7);
+}
+.dnav-pill .item{padding:9px 18px;font-size:13.5px;font-weight:500;color:var(--ink-2);border-radius:99px;cursor:pointer}
+.dnav-pill .item:hover{background:rgba(34,24,28,.05);color:var(--ink)}
+.dnav-pill .item.active{background:#22181C;color:#fff;font-weight:600}
+.dnav-bi{
+  background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(232,69,60,.25);border-radius:99px;padding:7px 18px 7px 7px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 30px rgba(34,24,28,.10),inset 0 1px 0 rgba(255,255,255,.7);cursor:pointer;
+}
+.dnav-bi .av{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;font-family:var(--ff-mark);font-size:13px;display:grid;place-items:center;position:relative;flex-shrink:0;
+}
+.dnav-bi .av::after{
+  content:'✦';position:absolute;top:-3px;right:-3px;width:13px;height:13px;background:var(--oro);border-radius:50%;border:2px solid var(--paper);font-size:6px;display:grid;place-items:center;color:#fff;font-weight:700;
+}
+.dnav-bi .lbl{font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+
+.dnav-right{display:flex;align-items:center;gap:10px}
+.dnav-city{display:flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:8px 14px 8px 12px;font-size:12.5px;font-weight:700;color:var(--ink)}
+.dnav-city::before{content:'';width:7px;height:7px;background:var(--corallo);border-radius:50%}
+.dnav-profile{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13.5px}
+
+/* ============= page ============= */
+.dpage{max-width:1100px;margin:0 auto;padding:30px 32px 60px}
+.dpage-head{display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:18px}
+.dpage-head h1{font-family:var(--ff-mark);font-size:46px;line-height:1;color:var(--ink);letter-spacing:.4px;margin-bottom:8px}
+.dpage-head .desc{font-size:14px;color:var(--ink-2);line-height:1.5;max-width:520px}
+
+/* segment LIVELLO 1 */
+.dpage-head .seg-d{display:flex;background:var(--grigio-bg);border-radius:99px;padding:5px;flex-shrink:0}
+.dpage-head .seg-d .seg{
+  padding:11px 22px;border-radius:99px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+}
+.dpage-head .seg-d .seg.active{background:var(--ink);color:#fff;box-shadow:0 4px 12px rgba(34,24,28,.18)}
+.dpage-head .seg-d .seg .ct{background:rgba(232,69,60,.15);color:var(--corallo-ink);font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px}
+.dpage-head .seg-d .seg.active .ct{background:rgba(255,255,255,.18);color:#fff}
+
+/* sub-segment LIVELLO 2 */
+.dsub-segment{display:flex;gap:8px;margin:10px 0 20px}
+.dsub-segment .sub{
+  font-size:12.5px;font-weight:600;color:var(--ink-3);
+  padding:8px 16px;border-radius:99px;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);
+  display:flex;align-items:center;gap:6px;
+}
+.dsub-segment .sub.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.dsub-segment .sub .ct{background:rgba(232,69,60,.18);color:var(--corallo-ink);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px}
+.dsub-segment .sub.active .ct{background:rgba(255,255,255,.2);color:#fff}
+
+/* ============= sections common ============= */
+.dsection{margin-bottom:36px}
+.dsection .head-d{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.dsection .head-d strong{font-family:var(--ff-mark);font-size:22px;color:var(--ink);letter-spacing:.3px}
+.dsection .head-d small{font-size:12px;color:var(--ink-3);font-weight:500}
+
+/* drop grid */
+.ddrop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.ddrop{
+  background:var(--paper);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 4px 16px rgba(34,24,28,.04);
+}
+.ddrop .ph{position:relative;height:200px;background:#dcd0c0;overflow:hidden}
+.ddrop .ph img{width:100%;height:100%;object-fit:cover}
+.ddrop .ph .badge-pct{
+  position:absolute;top:12px;left:12px;background:var(--corallo);color:#fff;
+  font-family:var(--ff-mark);font-size:22px;padding:8px 14px;border-radius:10px;letter-spacing:-.4px;
+}
+.ddrop .ph .badge-time{
+  position:absolute;top:14px;right:14px;background:rgba(0,0,0,.65);color:#fff;
+  font-size:11px;font-weight:600;padding:5px 11px;border-radius:99px;backdrop-filter:blur(6px);display:flex;align-items:center;gap:5px;
+}
+.ddrop .ph .badge-time::before{content:'⏱';font-size:13px}
+.ddrop .ph .badge-live{
+  position:absolute;bottom:12px;left:12px;background:#ff3a3a;color:#fff;
+  font-size:10px;font-weight:700;padding:4px 10px;border-radius:99px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:5px;
+}
+.ddrop .ph .badge-live::before{content:'';width:7px;height:7px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.ddrop .body-d{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.ddrop h4{font-size:17px;font-weight:700;letter-spacing:-.3px;color:var(--ink);line-height:1.2}
+.ddrop .meta{font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.ddrop .progress{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--ink-3);font-weight:600;margin-top:2px}
+.ddrop .progress .bar{flex:1;height:5px;background:var(--line);border-radius:99px;overflow:hidden}
+.ddrop .progress .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px}
+.ddrop .cta{
+  margin-top:auto;background:var(--ink);color:#fff;border:none;padding:12px 18px;
+  border-radius:99px;font-family:var(--ff-ui);font-size:13px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.ddrop .cta::after{content:'→';font-size:16px}
+
+/* convenzioni */
+.dconv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.dconv{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:all .2s ease}
+.dconv:hover{transform:translateY(-2px);border-color:var(--corallo);box-shadow:0 12px 30px rgba(232,69,60,.08)}
+.dconv .ph{position:relative;height:160px;background:#dcd0c0;overflow:hidden}
+.dconv .ph img{width:100%;height:100%;object-fit:cover}
+.dconv .ph .badge-pct{position:absolute;top:12px;left:12px;background:rgba(63,107,74,.95);color:#fff;font-family:var(--ff-ui);font-weight:700;font-size:14px;padding:7px 14px;border-radius:8px;backdrop-filter:blur(6px)}
+.dconv .ph .badge-pct.coral{background:rgba(232,69,60,.95)}
+.dconv .body-d{padding:14px 16px 16px;display:flex;align-items:flex-end;gap:12px;flex:1}
+.dconv .info{flex:1;min-width:0}
+.dconv h4{font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--ink);line-height:1.2;margin-bottom:4px}
+.dconv .meta{font-size:11.5px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.dconv .meta .cat{display:inline-block;background:var(--corallo-soft);color:var(--corallo-ink);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.3px;margin-right:4px}
+.dconv .cta-mini{background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:99px;font-family:var(--ff-ui);font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+/* ============= I miei → Disponibili LIST ============= */
+.dmine-list{display:flex;flex-direction:column;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.dmine-row{display:flex;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dmine-row:last-child{border-bottom:0}
+.dmine-row .ph-mini{width:60px;height:60px;border-radius:12px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.dmine-row .ph-mini img{width:100%;height:100%;object-fit:cover}
+.dmine-row .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dmine-row .info h4{font-size:15.5px;font-weight:700;color:var(--ink);line-height:1.2;letter-spacing:-.2px}
+.dmine-row .info .meta{font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.dmine-row .badge-pct{
+  background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:14px;
+  padding:6px 12px;border-radius:8px;letter-spacing:-.3px;flex-shrink:0;
+}
+.dmine-row .scad{
+  background:var(--oro-soft);color:var(--oro);font-size:11.5px;font-weight:700;
+  padding:5px 11px;border-radius:99px;display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.dmine-row .scad::before{content:'⏱';font-size:13px}
+.dmine-row .qr-btn{
+  background:var(--ink);color:#fff;border:none;padding:11px 18px 11px 16px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:13px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+}
+.dmine-row .qr-btn::before{
+  content:'';display:inline-block;width:15px;height:15px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'><path d='M3 3h7v7H3zm2 2v3h3V5zm9-2h7v7h-7zm2 2v3h3V5zM3 14h7v7H3zm2 2v3h3v-3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm0 3h-3v2h3zm-2-6h2v2h-2zm-2 0v2h-2v-2z'/></svg>");
+  background-size:contain;
+}
+
+/* ============= Utilizzati ============= */
+.dused-list{background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.dused-row{display:flex;align-items:center;gap:16px;padding:14px 20px;transition:background .15s}
+.dused-row + .dused-row{border-top:1px solid var(--line)}
+.dused-row:hover{background:#fafafa}
+.dused-row .ph-mini{width:52px;height:52px;border-radius:10px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.dused-row .ph-mini img{width:100%;height:100%;object-fit:cover}
+.dused-row .info{flex:1;min-width:0}
+.dused-row .info h4{font-size:15px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:3px;letter-spacing:-.2px}
+.dused-row .info .sub{font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.3}
+.dused-row .info .sub strong{color:var(--corallo);font-weight:700}
+.dused-row .when{font-size:11.5px;color:var(--ink-3);text-align:right;flex-shrink:0;line-height:1.3}
+.dused-row .when strong{display:block;color:var(--ink);font-size:13.5px;font-weight:600;margin-bottom:2px}
+
+/* ============= QR popup desktop (centered modal) ============= */
+.qr-modal-overlay{
+  position:absolute;inset:0;background:rgba(34,24,28,.65);backdrop-filter:blur(6px);
+  z-index:100;display:flex;align-items:center;justify-content:center;padding:30px;
+}
+.qr-modal{
+  width:480px;max-width:100%;background:var(--paper);border-radius:24px;
+  padding:30px 36px 32px;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;align-items:center;
+}
+.qr-modal .close{
+  position:absolute;top:18px;right:18px;
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--paper);
+  display:grid;place-items:center;cursor:pointer;font-size:15px;color:var(--ink-2);
+}
+.qr-modal .place-info{display:flex;align-items:center;gap:14px;width:100%;margin-bottom:18px}
+.qr-modal .place-info .ph{width:54px;height:54px;border-radius:12px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.qr-modal .place-info .ph img{width:100%;height:100%;object-fit:cover}
+.qr-modal .place-info .info-x{flex:1}
+.qr-modal .place-info h3{font-size:17px;font-weight:700;color:var(--ink);line-height:1.2;letter-spacing:-.2px}
+.qr-modal .place-info .meta{font-size:12px;color:var(--ink-3);font-weight:500;margin-top:3px}
+.qr-modal .place-info .badge-pct{
+  background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:18px;padding:6px 14px;border-radius:10px;letter-spacing:-.3px;
+}
+
+.qr-modal .qr-block{
+  background:#fff;border:2px solid var(--ink);border-radius:16px;padding:20px;margin-bottom:14px;
+}
+.qr-modal .qr-block .qr{
+  width:200px;height:200px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='25' height='25' fill='%23000'/><rect x='10' y='10' width='15' height='15' fill='%23fff'/><rect x='14' y='14' width='7' height='7' fill='%23000'/><rect x='70' y='5' width='25' height='25' fill='%23000'/><rect x='75' y='10' width='15' height='15' fill='%23fff'/><rect x='79' y='14' width='7' height='7' fill='%23000'/><rect x='5' y='70' width='25' height='25' fill='%23000'/><rect x='10' y='75' width='15' height='15' fill='%23fff'/><rect x='14' y='79' width='7' height='7' fill='%23000'/><rect x='40' y='5' width='5' height='5' fill='%23000'/><rect x='50' y='5' width='5' height='5' fill='%23000'/><rect x='60' y='15' width='5' height='5' fill='%23000'/><rect x='5' y='40' width='5' height='5' fill='%23000'/><rect x='15' y='50' width='5' height='5' fill='%23000'/><rect x='40' y='40' width='15' height='15' fill='%23000'/><rect x='65' y='45' width='5' height='5' fill='%23000'/><rect x='80' y='45' width='5' height='5' fill='%23000'/><rect x='40' y='65' width='5' height='5' fill='%23000'/><rect x='50' y='75' width='5' height='5' fill='%23000'/><rect x='60' y='65' width='5' height='5' fill='%23000'/><rect x='75' y='65' width='5' height='5' fill='%23000'/><rect x='90' y='80' width='5' height='5' fill='%23000'/></svg>");
+  background-size:cover;
+}
+.qr-modal .qr-hint{font-family:var(--ff-hand);font-size:22px;color:var(--corallo);text-align:center;margin-bottom:8px;line-height:1.1}
+.qr-modal .small-info{font-size:12.5px;color:var(--ink-2);text-align:center;line-height:1.5;max-width:340px;margin-bottom:14px}
+.qr-modal .small-info strong{color:var(--ink);font-weight:700}
+.qr-modal .scad-line{
+  margin-top:6px;background:var(--oro-soft);color:var(--oro);
+  font-size:12px;font-weight:700;padding:7px 16px;border-radius:99px;
+  display:flex;align-items:center;gap:7px;
+}
+.qr-modal .scad-line::before{content:'⏱';font-size:14px}
+
+.qr-modal .qr-actions{width:100%;margin-top:18px}
+.qr-modal .action-btn{
+  width:100%;background:var(--paper);border:1px solid var(--line-2);
+  padding:14px 16px;border-radius:14px;cursor:pointer;
+  font-family:var(--ff-ui);font-size:14px;font-weight:700;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .18s ease;
+}
+.qr-modal .action-btn:hover{border-color:var(--corallo);color:var(--corallo);transform:translateY(-1px)}
+.qr-modal .action-btn .ic{font-size:20px;line-height:1}
+.qr-modal .action-btn small{font-size:12px;color:var(--ink-3);font-weight:500;letter-spacing:.2px;margin-left:4px}
+
+svg{display:block}
+.notes{
+  margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto;
+}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+.notes .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
+@media (max-width:780px){.notes .grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR21 · Sconti redesign desktop — 2 livelli + popup</span>
+    <h1>Sconti redesign desktop</h1>
+    <p>Tab principale a 2: Disponibili (catalogo) · I miei sconti. Dentro "I miei sconti" sub-tab Disponibili (presi, da usare con QR) e Utilizzati (storico).</p>
+  </div>
+
+  <div class="desktop-frames">
+
+    <!-- ======== FRAME 1: Disponibili (catalogo) ======== -->
+    <div>
+      <div class="dframe"><div class="dscreen">
+        <div class="dnav-wrapper">
+          <div class="dnav-logo"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="dnav-center">
+            <div class="dnav-pill">
+              <div class="item">Home</div><div class="item">Esplora</div>
+              <div class="item active">Sconti</div><div class="item">Salvati</div>
+            </div>
+            <div class="dnav-bi"><div class="av">B</div><div class="lbl">Chiedi a Bi</div></div>
+          </div>
+          <div class="dnav-right">
+            <div class="dnav-city">Torino ▾</div>
+            <div class="dnav-profile">A</div>
+          </div>
+        </div>
+
+        <div class="dpage">
+          <div class="dpage-head">
+            <div>
+              <h1>Sconti</h1>
+              <p class="desc">Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+            </div>
+            <div class="seg-d">
+              <div class="seg active">Disponibili <span class="ct">7</span></div>
+              <div class="seg">I miei sconti <span class="ct">7</span></div>
+            </div>
+          </div>
+
+          <section class="dsection">
+            <div class="head-d"><strong>Drop a tempo</strong><small>3 attivi · scadono presto</small></div>
+            <div class="ddrop-grid">
+              <div class="ddrop">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80" alt="">
+                  <span class="badge-pct">−20%</span>
+                  <span class="badge-time">2g 14h</span>
+                  <span class="badge-live">live</span>
+                </div>
+                <div class="body-d">
+                  <h4>Al Brasà</h4>
+                  <div class="meta">Barbecue · Via Saluzzo 77</div>
+                  <div class="progress"><div class="bar"><i style="width:20%"></i></div><span>2/10 presi</span></div>
+                  <button class="cta">Prendi sconto</button>
+                </div>
+              </div>
+              <div class="ddrop">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80" alt="">
+                  <span class="badge-pct">−15%</span>
+                  <span class="badge-time">5h 22m</span>
+                  <span class="badge-live">live</span>
+                </div>
+                <div class="body-d">
+                  <h4>Smashers</h4>
+                  <div class="meta">Panineria · Via Maria Vittoria 37</div>
+                  <div class="progress"><div class="bar"><i style="width:80%"></i></div><span>8/10 presi</span></div>
+                  <button class="cta">Prendi sconto</button>
+                </div>
+              </div>
+              <div class="ddrop">
+                <div class="ph">
+                  <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600&q=80" alt="">
+                  <span class="badge-pct">−25%</span>
+                  <span class="badge-time">1g 6h</span>
+                  <span class="badge-live">live</span>
+                </div>
+                <div class="body-d">
+                  <h4>Da Cianci</h4>
+                  <div class="meta">Trattoria · Via Cesare Battisti 4</div>
+                  <div class="progress"><div class="bar"><i style="width:50%"></i></div><span>5/10 presi</span></div>
+                  <button class="cta">Prendi sconto</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="dsection">
+            <div class="head-d"><strong>Convenzioni</strong><small>4 sempre valide</small></div>
+            <div class="dconv-grid">
+              <div class="dconv">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80" alt=""><span class="badge-pct">Baozi 1,50€</span></div>
+                <div class="body-d"><div class="info"><h4>Mo Sarpi Torino</h4><div class="meta"><span class="cat">🥟 Asiatico</span>Per due persone</div></div><button class="cta-mini">Prendi</button></div>
+              </div>
+              <div class="dconv">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80" alt=""><span class="badge-pct coral">−10%</span></div>
+                <div class="body-d"><div class="info"><h4>Kintsugi tea & cakes</h4><div class="meta"><span class="cat">🍵 Matcha</span>Mar–ven</div></div><button class="cta-mini">Prendi</button></div>
+              </div>
+              <div class="dconv">
+                <div class="ph"><img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=600&q=80" alt=""><span class="badge-pct">−10%</span></div>
+                <div class="body-d"><div class="info"><h4>Orma</h4><div class="meta"><span class="cat">🥂 Aperitivo</span>Solo settimana</div></div><button class="cta-mini">Prendi</button></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div></div>
+      <div class="dlabel">Tab 1 — Disponibili (catalogo)<small>drop in griglia 3-col + convenzioni 3-col · CTA "Prendi sconto"</small></div>
+    </div>
+
+    <!-- ======== FRAME 2: I miei sconti → Disponibili (presi) ======== -->
+    <div>
+      <div class="dframe"><div class="dscreen">
+        <div class="dnav-wrapper">
+          <div class="dnav-logo"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="dnav-center">
+            <div class="dnav-pill">
+              <div class="item">Home</div><div class="item">Esplora</div>
+              <div class="item active">Sconti</div><div class="item">Salvati</div>
+            </div>
+            <div class="dnav-bi"><div class="av">B</div><div class="lbl">Chiedi a Bi</div></div>
+          </div>
+          <div class="dnav-right">
+            <div class="dnav-city">Torino ▾</div>
+            <div class="dnav-profile">A</div>
+          </div>
+        </div>
+
+        <div class="dpage">
+          <div class="dpage-head">
+            <div>
+              <h1>Sconti</h1>
+              <p class="desc">Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+            </div>
+            <div class="seg-d">
+              <div class="seg">Disponibili <span class="ct">7</span></div>
+              <div class="seg active">I miei sconti <span class="ct">7</span></div>
+            </div>
+          </div>
+
+          <div class="dsub-segment">
+            <div class="sub active">Disponibili <span class="ct">2</span></div>
+            <div class="sub">Utilizzati <span class="ct">5</span></div>
+          </div>
+
+          <section class="dsection">
+            <div class="head-d"><strong>Pronti da usare</strong><small>tap "Apri QR" per mostrarlo al locale</small></div>
+
+            <div class="dmine-list">
+              <div class="dmine-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Al Brasà</h4>
+                  <div class="meta">Barbecue · Via Saluzzo 77</div>
+                </div>
+                <div class="badge-pct">−20%</div>
+                <div class="scad">2g 14h</div>
+                <button class="qr-btn">Apri QR</button>
+              </div>
+
+              <div class="dmine-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Kintsugi tea & cakes</h4>
+                  <div class="meta">Matcha · Da martedì a venerdì</div>
+                </div>
+                <div class="badge-pct">−10%</div>
+                <button class="qr-btn">Apri QR</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div></div>
+      <div class="dlabel">Tab 2 → Disponibili (presi)<small>lista compatta full-width · bottone "Apri QR" → modal centrato</small></div>
+    </div>
+
+    <!-- ======== FRAME 3: QR modal aperto ======== -->
+    <div>
+      <div class="dframe"><div class="dscreen">
+        <div class="dnav-wrapper" style="opacity:.55">
+          <div class="dnav-logo"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="dnav-center">
+            <div class="dnav-pill">
+              <div class="item">Home</div><div class="item">Esplora</div>
+              <div class="item active">Sconti</div><div class="item">Salvati</div>
+            </div>
+            <div class="dnav-bi"><div class="av">B</div><div class="lbl">Chiedi a Bi</div></div>
+          </div>
+          <div class="dnav-right">
+            <div class="dnav-city">Torino ▾</div>
+            <div class="dnav-profile">A</div>
+          </div>
+        </div>
+
+        <div class="dpage" style="opacity:.4">
+          <div class="dpage-head">
+            <div>
+              <h1>Sconti</h1>
+              <p class="desc">Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+            </div>
+            <div class="seg-d">
+              <div class="seg">Disponibili <span class="ct">7</span></div>
+              <div class="seg active">I miei sconti <span class="ct">7</span></div>
+            </div>
+          </div>
+          <div class="dsub-segment">
+            <div class="sub active">Disponibili <span class="ct">2</span></div>
+            <div class="sub">Utilizzati <span class="ct">5</span></div>
+          </div>
+        </div>
+
+        <!-- QR modal -->
+        <div class="qr-modal-overlay">
+          <div class="qr-modal">
+            <button class="close" aria-label="Chiudi">✕</button>
+
+            <div class="place-info">
+              <div class="ph"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80" alt=""></div>
+              <div class="info-x">
+                <h3>Al Brasà</h3>
+                <div class="meta">Barbecue · Via Saluzzo 77</div>
+              </div>
+              <div class="badge-pct">−20%</div>
+            </div>
+
+            <div class="qr-block"><div class="qr"></div></div>
+
+            <div class="qr-hint">Mostra al ristoratore</div>
+            <div class="small-info">
+              Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br>
+              Codice valido una sola volta.
+            </div>
+
+            <div class="scad-line">Scade tra 2 giorni · 14h</div>
+
+            <div class="qr-actions">
+              <button class="action-btn">
+                <span class="ic">⬇</span>
+                Scarica PDF
+                <small>stampa o salva sul telefono</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="dlabel">QR modal — desktop + scarica PDF<small>centrato 480px · QR + bottone PDF · stessi elementi del bottom sheet mobile</small></div>
+    </div>
+
+    <!-- ======== FRAME 4: I miei sconti → Utilizzati ======== -->
+    <div>
+      <div class="dframe"><div class="dscreen">
+        <div class="dnav-wrapper">
+          <div class="dnav-logo"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="dnav-center">
+            <div class="dnav-pill">
+              <div class="item">Home</div><div class="item">Esplora</div>
+              <div class="item active">Sconti</div><div class="item">Salvati</div>
+            </div>
+            <div class="dnav-bi"><div class="av">B</div><div class="lbl">Chiedi a Bi</div></div>
+          </div>
+          <div class="dnav-right">
+            <div class="dnav-city">Torino ▾</div>
+            <div class="dnav-profile">A</div>
+          </div>
+        </div>
+
+        <div class="dpage">
+          <div class="dpage-head">
+            <div>
+              <h1>Sconti</h1>
+              <p class="desc">Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+            </div>
+            <div class="seg-d">
+              <div class="seg">Disponibili <span class="ct">7</span></div>
+              <div class="seg active">I miei sconti <span class="ct">7</span></div>
+            </div>
+          </div>
+
+          <div class="dsub-segment">
+            <div class="sub">Disponibili <span class="ct">2</span></div>
+            <div class="sub active">Utilizzati <span class="ct">5</span></div>
+          </div>
+
+          <section class="dsection">
+            <div class="head-d"><strong>Storico</strong><small>già usati · per riusarli prendili dai Disponibili</small></div>
+
+            <div class="dused-list">
+              <div class="dused-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Bar Cavour</h4>
+                  <div class="sub">Cocktail bar · Vanchiglia · sconto <strong>−15%</strong></div>
+                </div>
+                <div class="when"><strong>26 aprile 2026</strong>4 giorni fa</div>
+              </div>
+              <div class="dused-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Officina del Gusto</h4>
+                  <div class="sub">Bistrot · Vanchiglia · <strong>Aperitivo 8€</strong></div>
+                </div>
+                <div class="when"><strong>22 aprile 2026</strong>1 settimana fa</div>
+              </div>
+              <div class="dused-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Smashers</h4>
+                  <div class="sub">Panineria · Centro · sconto <strong>−15%</strong></div>
+                </div>
+                <div class="when"><strong>15 aprile 2026</strong>2 settimane fa</div>
+              </div>
+              <div class="dused-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Mo Sarpi</h4>
+                  <div class="sub">Asiatico · Aurora · convenzione <strong>Baozi 1,50€</strong></div>
+                </div>
+                <div class="when"><strong>8 aprile 2026</strong>3 settimane fa</div>
+              </div>
+              <div class="dused-row">
+                <div class="ph-mini"><img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h4>Tre Galletti</h4>
+                  <div class="sub">Cocktail bar · Vanchiglia · sconto <strong>−10%</strong></div>
+                </div>
+                <div class="when"><strong>2 aprile 2026</strong>4 settimane fa</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div></div>
+      <div class="dlabel">Tab 2 → Utilizzati<small>lista compatta full-width · foto + locale + tipo sconto + data</small></div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>Note di design — desktop</h2>
+    <p>Stessa logica gerarchica del mobile, layout largo. Segment principale in alto a destra dell'header pagina, sub-segment sotto. Lista compatta full-width per "I miei sconti / Disponibili" con bottone "Apri QR" che apre modal centrato 480px.</p>
+
+    <div class="grid">
+      <div>
+        <h3>Differenze vs mobile</h3>
+        <ul>
+          <li>Drop in griglia 3-col vs carousel</li>
+          <li>Convenzioni 3-col vs lista verticale</li>
+          <li>"I miei → Disponibili": lista full-width invece che strette</li>
+          <li>QR popup = modal centrato 480px (vs bottom sheet mobile)</li>
+          <li>Hover state sulle card</li>
+        </ul>
+
+        <h3>Riuso elementi esistenti</h3>
+        <ul>
+          <li>Sistema QR scan ristoratore già live (sposta automatico in Utilizzati)</li>
+          <li>Card drop = stessa estetica banner home</li>
+          <li>Card convenzione = simile a card live attuale</li>
+          <li><code>AuthGate</code> di PR20b per "Prendi sconto" se anonimo</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Stati DB per ogni sconto</h3>
+        <ul>
+          <li>NULL (nessuna riga) = disponibile (catalogo)</li>
+          <li><code>saved</code> = preso, da usare</li>
+          <li><code>used</code> = scansionato dal ristoratore</li>
+          <li>Counter "I miei sconti" = COUNT WHERE user_id=$ AND status IN ('saved','used')</li>
+        </ul>
+
+        <h3>Edge cases</h3>
+        <ul>
+          <li>Sconto scaduto in "I miei → Disponibili": badge "scaduto", bottone QR disabilitato, copy "non più valido"</li>
+          <li>Drop esaurito (10/10 presi) prima del salvataggio: scompare da Disponibili catalogo, non disponibile</li>
+          <li>Anonimo che clicca "Prendi sconto": AuthGate stesso pattern PR20b</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
