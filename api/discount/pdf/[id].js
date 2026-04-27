@@ -268,36 +268,53 @@ export default async function handler(req, res) {
   // 5) Render con puppeteer-core + @sparticuz/chromium.
   let browser
   try {
-    const [{ default: chromium }, puppeteer] = await Promise.all([
+    const [chromiumMod, puppeteerMod] = await Promise.all([
       import('@sparticuz/chromium'),
       import('puppeteer-core'),
     ])
+    const chromium = chromiumMod.default || chromiumMod
+    const puppeteer = puppeteerMod.default || puppeteerMod
+
+    const executablePath = await chromium.executablePath()
+    console.log('[pdf] launching chromium:', { executablePath, argsCount: chromium.args?.length })
 
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: chromium.headless,
     })
 
     const page = await browser.newPage()
-    // Aspetta i font Google e le immagini esterne (logo, foto).
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 25_000 })
-    const pdfBuffer = await page.pdf({
+    // domcontentloaded è più robusto su serverless di networkidle0 (che
+    // può hangare se Google Fonts impiega troppo). Diamo poi un piccolo
+    // wait esplicito ai font.
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 20_000 })
+    try { await page.evaluateHandle('document.fonts.ready') } catch { /* font opzionali */ }
+
+    const pdfBytes = await page.pdf({
       format: 'A6',
       printBackground: true,
       preferCSSPageSize: true,
       margin: { top: 0, right: 0, bottom: 0, left: 0 },
     })
+    // page.pdf() può ritornare Uint8Array in puppeteer-core v23: convertiamo
+    // sempre a Buffer prima di scrivere così Vercel non corrompe i byte.
+    const pdfBuffer = Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes)
 
     const filename = `sconto-${slugify(restaurant.name)}.pdf`
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.setHeader('Content-Length', pdfBuffer.length)
     res.setHeader('Cache-Control', 'private, no-store')
-    res.status(200).send(pdfBuffer)
+    res.status(200).end(pdfBuffer)
   } catch (err) {
-    console.error('PDF render failed:', err)
-    res.status(500).json({ error: 'PDF render failed' })
+    console.error('[pdf] render failed:', err && err.stack ? err.stack : err)
+    if (!res.headersSent) {
+      res.status(500).json({ error: `PDF render failed: ${err?.message || 'unknown'}` })
+    } else {
+      try { res.end() } catch { /* ignore */ }
+    }
   } finally {
     if (browser) {
       try { await browser.close() } catch { /* ignore */ }

@@ -62,7 +62,23 @@ export default function SconteQRPopup({
       const res = await fetch(`/api/discount/pdf/${redemptionId}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
-      if (!res.ok) throw new Error(`pdf_${res.status}`)
+      const ctype = res.headers.get('content-type') || ''
+      if (!res.ok || !ctype.includes('application/pdf')) {
+        // Server probabilmente ha risposto JSON di errore. Estraiamo il
+        // messaggio così l'utente sa cosa è andato storto.
+        let detail = `HTTP ${res.status}`
+        try {
+          if (ctype.includes('application/json')) {
+            const j = await res.json()
+            detail = j?.error || detail
+          } else {
+            const t = await res.text()
+            if (t) detail = t.slice(0, 240)
+          }
+        } catch { /* ignore */ }
+        console.error('PDF endpoint returned non-PDF:', res.status, ctype, detail)
+        throw new Error(detail)
+      }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -74,7 +90,10 @@ export default function SconteQRPopup({
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error('PDF download failed:', err)
-      setPdfError('Non sono riuscito a generare il PDF, riprova.')
+      const msg = err?.message && err.message !== 'not_authenticated'
+        ? `Errore: ${err.message}`
+        : 'Non sono riuscito a generare il PDF, riprova.'
+      setPdfError(msg)
     } finally {
       setPdfBusy(false)
     }
