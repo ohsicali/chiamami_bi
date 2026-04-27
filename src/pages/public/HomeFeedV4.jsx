@@ -132,10 +132,34 @@ function TopBar({ user }) {
         onCityChange={({ name }) => { setSelectedCity(name); setCityPickerOpen(false) }}
       />
 
+      {/* Mobile: lente di ricerca al posto del profilo */}
+      <Link
+        to="/list?search=open"
+        aria-label="Cerca"
+        className="hfv4-search-mob"
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: '50%',
+          background: 'var(--color-ink-05, rgba(34,24,28,.06))',
+          color: 'var(--color-ink)',
+          display: 'none',
+          placeItems: 'center',
+          textDecoration: 'none',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </Link>
+
+      {/* Desktop: avatar profilo o pulsante Accedi */}
       {user ? (
         <Link
           to="/profile"
           aria-label="Profilo"
+          className="hfv4-profile-desk"
           style={{
             width: 42,
             height: 42,
@@ -156,6 +180,7 @@ function TopBar({ user }) {
       ) : (
         <Link
           to="/login"
+          className="hfv4-profile-desk"
           style={{
             padding: '10px 16px',
             background: 'var(--color-ink)',
@@ -619,6 +644,8 @@ export default function HomeFeedV4() {
           .hfv4-cta-mob { display: inline-flex !important; }
           .hfv4-mob-countdown { display: inline-flex !important; }
           .hfv4-mob-cat { display: inline-flex !important; }
+          .hfv4-profile-desk { display: none !important; }
+          .hfv4-search-mob { display: grid !important; }
         }
 
         /* Desktop ≥1024px per sezioni originali (hero, cats, Ultimi aggiunti) */
