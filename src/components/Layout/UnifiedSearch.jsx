@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { tokenizeQuery, matchesQuery, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -49,13 +49,28 @@ export default function UnifiedSearch({ value, onChange, restaurants = [] }) {
   const navigate = useNavigate()
   const isDesktop = useIsDesktop()
   const { categories } = useCategories()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(false)
   const inputRef = useRef(null)
   const overlayRef = useRef(null)
   const wrapRef = useRef(null)
+  const autoOpenedRef = useRef(false)
 
   const tokens = useMemo(() => tokenizeQuery(value || ''), [value])
+
+  // Allow other parts of the app (Navbar magnifier icon) to deep-link into
+  // the search via /<page>?search=open and have the overlay open + focused.
+  useEffect(() => {
+    if (autoOpenedRef.current) return
+    if (searchParams.get('search') !== 'open') return
+    autoOpenedRef.current = true
+    setOpen(true)
+    requestAnimationFrame(() => inputRef.current?.focus())
+    const next = new URLSearchParams(searchParams)
+    next.delete('search')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   function closeOverlay() {
     setOpen(false)
