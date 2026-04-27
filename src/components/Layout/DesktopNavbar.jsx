@@ -9,6 +9,15 @@ const NAV_ITEMS = [
   { to: '/saved', label: 'Salvati', match: (p) => p === '/saved', requiresAuth: true },
 ]
 
+const GLASS_PILL = {
+  background: 'rgba(255,255,255,.66)',
+  backdropFilter: 'blur(22px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+  border: '1px solid rgba(255,255,255,.5)',
+  borderRadius: 999,
+  boxShadow: '0 8px 24px rgba(34,24,28,.08)',
+}
+
 export default function DesktopNavbar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -17,6 +26,7 @@ export default function DesktopNavbar() {
 
   const hasDeals = (discounts?.length || 0) > 0
   const initials = user ? (user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase() : null
+  const isChiediActive = location.pathname === '/chiedi' || location.pathname.startsWith('/chiedi/')
 
   return (
     <div
@@ -28,25 +38,18 @@ export default function DesktopNavbar() {
         padding: '0 40px',
       }}
     >
-      <nav
+      <div
         style={{
           maxWidth: 1240,
           margin: '0 auto',
           height: 68,
-          background: 'rgba(255,255,255,.66)',
-          backdropFilter: 'blur(22px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(22px) saturate(160%)',
-          border: '1px solid rgba(255,255,255,.5)',
-          borderRadius: 999,
-          boxShadow: '0 8px 24px rgba(34,24,28,.08)',
           display: 'grid',
           gridTemplateColumns: 'auto 1fr auto',
           alignItems: 'center',
           gap: 18,
-          padding: '0 10px 0 22px',
         }}
       >
-        {/* LEFT: Logo */}
+        {/* LEFT: Wordmark — fuori dalle pill, all'estrema sinistra */}
         <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.92, textDecoration: 'none' }}>
           <span
             style={{
@@ -73,75 +76,150 @@ export default function DesktopNavbar() {
           </span>
         </Link>
 
-        {/* CENTER: Navigation links */}
-        <div style={{ display: 'flex', gap: 2, justifySelf: 'center' }}>
-          {NAV_ITEMS.map((item) => {
-            const active = item.match(location.pathname)
-            const showDot = item.hasDot && hasDeals
-            return (
-              <button
-                key={item.to}
-                onClick={() => {
-                  if (item.requiresAuth && !user) navigate('/login')
-                  else navigate(item.to)
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '10px 16px',
-                  borderRadius: 999,
-                  border: 'none',
-                  background: active ? 'var(--color-ink-05)' : 'transparent',
-                  color: active ? 'var(--color-ink)' : 'rgba(34,24,28,.7)',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  position: 'relative',
-                  transition: 'color .2s, background .2s',
-                }}
-              >
-                {item.label}
-                {showDot && (
-                  <span style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: 'var(--color-corallo)',
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                  }} />
-                )}
-              </button>
-            )
-          })}
-        </div>
+        {/* CENTER: due pill insieme — nav principale + Chiedi a Bi */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            justifySelf: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {/* Pill 1 — nav principale invariata */}
+          <nav
+            style={{
+              ...GLASS_PILL,
+              display: 'flex',
+              gap: 2,
+              padding: '6px 8px',
+              alignItems: 'center',
+            }}
+            aria-label="Navigazione principale"
+          >
+            {NAV_ITEMS.map((item) => {
+              const active = item.match(location.pathname)
+              const showDot = item.hasDot && hasDeals
+              return (
+                <button
+                  key={item.to}
+                  onClick={() => {
+                    if (item.requiresAuth && !user) navigate('/login')
+                    else navigate(item.to)
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '10px 16px',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: active ? 'var(--color-ink-05)' : 'transparent',
+                    color: active ? 'var(--color-ink)' : 'rgba(34,24,28,.7)',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    position: 'relative',
+                    transition: 'color .2s, background .2s',
+                  }}
+                >
+                  {item.label}
+                  {showDot && (
+                    <span style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: 'var(--color-corallo)',
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                    }} />
+                  )}
+                </button>
+              )
+            })}
+          </nav>
 
-        {/* RIGHT: Search + City pill + Avatar */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Pill 2 — Chiedi a Bi (PR20b §2). Sostituisce la vecchia lente. */}
           <button
+            type="button"
             onClick={() => navigate('/chiedi')}
             aria-label="Chiedi a Bi"
-            title="Chiedi a Bi"
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'var(--color-ink-05)',
-              display: 'grid',
-              placeItems: 'center',
-              border: 'none',
+              ...GLASS_PILL,
+              border: `1px solid ${isChiediActive ? 'var(--color-corallo)' : 'rgba(232,69,60,.25)'}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 16px 6px 6px',
               cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'transform .2s ease, border-color .2s ease',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink)" strokeWidth="2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <span
+              style={{
+                position: 'relative',
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #B92E26) 100%)',
+                color: '#fff',
+                display: 'grid',
+                placeItems: 'center',
+                fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+                fontSize: 14,
+                boxShadow: '0 4px 10px rgba(232,69,60,.32)',
+                flexShrink: 0,
+              }}
+            >
+              B
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: -3,
+                  right: -3,
+                  width: 11,
+                  height: 11,
+                  background: 'var(--color-oro, #B08954)',
+                  borderRadius: '50%',
+                  border: '1.5px solid #fff',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 6,
+                  color: '#fff',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                ✦
+              </span>
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 13.5,
+              fontWeight: 700,
+              color: 'var(--color-ink)',
+              whiteSpace: 'nowrap',
+            }}>
+              Chiedi a Bi
+            </span>
           </button>
+        </div>
 
+        {/* RIGHT: City pill + Avatar — invariati. Lente generica RIMOSSA (§2). */}
+        <div
+          style={{
+            ...GLASS_PILL,
+            display: 'inline-flex',
+            gap: 8,
+            alignItems: 'center',
+            padding: '6px 6px 6px 6px',
+          }}
+        >
           <div
             style={{
               display: 'inline-flex',
@@ -175,7 +253,6 @@ export default function DesktopNavbar() {
                 fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
                 fontSize: 18,
                 textDecoration: 'none',
-                marginLeft: 2,
               }}
             >
               {initials}
@@ -197,7 +274,7 @@ export default function DesktopNavbar() {
             </Link>
           )}
         </div>
-      </nav>
+      </div>
     </div>
   )
 }

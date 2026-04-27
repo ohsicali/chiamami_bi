@@ -42,10 +42,7 @@ const CATEGORIES = [
   { key: 'cocktail', emoji: '🍸', label: 'Cocktail' },
 ]
 
-function TopBar({ user }) {
-  const initials = user
-    ? (user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase()
-    : null
+function TopBar() {
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [selectedCity, setSelectedCity] = useState('Torino')
   return (
@@ -132,44 +129,52 @@ function TopBar({ user }) {
         onCityChange={({ name }) => { setSelectedCity(name); setCityPickerOpen(false) }}
       />
 
-      {user ? (
-        <Link
-          to="/profile"
-          aria-label="Profilo"
+      {/* PR20b §1 — accesso a "Chiedi a Bi" dall'header mobile.
+         L'avatar profilo viene rimosso da qui (resta accessibile dal tab "Profilo").
+         L'icona B con sparkle oro porta a /chiedi. */}
+      <Link
+        to="/chiedi"
+        aria-label="Chiedi a Bi"
+        style={{
+          position: 'relative',
+          width: 42,
+          height: 42,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #C6372F) 100%)',
+          color: '#fff',
+          display: 'grid',
+          placeItems: 'center',
+          fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+          fontSize: 18,
+          boxShadow: '0 6px 14px rgba(232,69,60,.35)',
+          border: '2px solid #fff',
+          textDecoration: 'none',
+          flexShrink: 0,
+        }}
+      >
+        B
+        <span
+          aria-hidden="true"
           style={{
-            width: 42,
-            height: 42,
+            position: 'absolute',
+            top: -4,
+            right: -4,
+            width: 16,
+            height: 16,
+            background: 'var(--color-oro, #B08954)',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #C6372F) 100%)',
-            color: '#fff',
+            border: '2px solid var(--color-page, #FAF7F2)',
             display: 'grid',
             placeItems: 'center',
-            fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-            fontSize: 16,
-            boxShadow: '0 6px 14px rgba(232,69,60,.3)',
-            border: '2px solid #fff',
-            textDecoration: 'none',
-          }}
-        >
-          {initials}
-        </Link>
-      ) : (
-        <Link
-          to="/login"
-          style={{
-            padding: '10px 16px',
-            background: 'var(--color-ink)',
+            fontSize: 8,
             color: '#fff',
-            borderRadius: 999,
-            fontSize: 12,
             fontWeight: 700,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
+            lineHeight: 1,
           }}
         >
-          Accedi
-        </Link>
-      )}
+          ✦
+        </span>
+      </Link>
     </div>
   )
 }
@@ -787,7 +792,7 @@ export default function HomeFeedV4() {
         }
       `}</style>
 
-      <TopBar user={user} />
+      <TopBar />
 
       <HeroPromo featured={featuredDrop} />
 
