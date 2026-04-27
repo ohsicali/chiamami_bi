@@ -392,7 +392,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-page)' }}>
+    <div className="flex flex-col min-h-dvh md:min-h-[calc(100dvh-80px)]" style={{ background: 'var(--color-page)' }}>
       {/* ── STICKY HEADER (mobile only) ── */}
       <div className="md:hidden" style={{
         position: 'sticky', top: 0, zIndex: 50,

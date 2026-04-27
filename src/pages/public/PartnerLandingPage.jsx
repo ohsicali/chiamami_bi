@@ -208,7 +208,7 @@ export default function PartnerLandingPage() {
   /* ── Success state ── */
   if (submitted) {
     return (
-      <div style={{ minHeight: '100dvh', background: 'var(--color-page)', display: 'flex', flexDirection: 'column' }}>
+      <div className="min-h-dvh md:min-h-[calc(100dvh-80px)]" style={{ background: 'var(--color-page)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 22px', textAlign: 'center' }}>
           <motion.div
             initial={{ scale: 0.6, opacity: 0 }}
@@ -263,7 +263,7 @@ export default function PartnerLandingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-ink)', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-dvh md:min-h-[calc(100dvh-80px)]" style={{ background: 'var(--color-ink)', display: 'flex', flexDirection: 'column' }}>
       {/* ─── STICKY HEADER (mobile only) ─── */}
       <header className="md:hidden" style={{
         position: 'sticky',
