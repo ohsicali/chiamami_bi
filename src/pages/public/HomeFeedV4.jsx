@@ -104,7 +104,8 @@ function TopBar() {
       </Link>
 
       {/* PR20b §1 — pill "Chiedi a Bi" coral. Espansa a top, si comprime
-         in solo cerchio B quando l'utente scrolla (header sticky). */}
+         in solo cerchio B quando l'utente scrolla (header sticky).
+         Cerchio interno: bianco/B-coral espanso → coral/B-bianco sticky. */}
       <Link
         to="/chiedi"
         aria-label="Chiedi a Bi"
@@ -123,7 +124,7 @@ function TopBar() {
           boxShadow: '0 6px 14px rgba(232,69,60,.35)',
           border: '2px solid #fff',
           flexShrink: 0,
-          transition: 'gap .25s ease, padding .25s ease',
+          transition: 'gap .3s cubic-bezier(.4,0,.2,1), padding .3s cubic-bezier(.4,0,.2,1)',
           overflow: 'hidden',
         }}
       >
@@ -133,11 +134,16 @@ function TopBar() {
             width: 32,
             height: 32,
             borderRadius: '50%',
+            // Espanso: cerchio bianco. Sticky: trasparente → mostra il coral della pill.
+            background: scrolled ? 'transparent' : '#fff',
+            // Espanso: B coral. Sticky: B bianco.
+            color: scrolled ? '#fff' : 'var(--color-corallo, #E8453C)',
             display: 'grid',
             placeItems: 'center',
             fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
             fontSize: 16,
             flexShrink: 0,
+            transition: 'background .35s cubic-bezier(.4,0,.2,1), color .35s cubic-bezier(.4,0,.2,1)',
           }}
         >
           B
@@ -172,7 +178,7 @@ function TopBar() {
             whiteSpace: 'nowrap',
             maxWidth: scrolled ? 0 : 120,
             opacity: scrolled ? 0 : 1,
-            transition: 'max-width .25s ease, opacity .2s ease',
+            transition: 'max-width .3s cubic-bezier(.4,0,.2,1), opacity .25s ease',
           }}
         >
           Chiedi a Bi
