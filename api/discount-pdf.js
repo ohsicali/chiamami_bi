@@ -1,50 +1,65 @@
 /**
- * GET /api/discount/pdf/[id] — generate the discount coupon PDF.
+ * GET /api/discount-pdf?id=<savedDiscountId>
  *
- * Renders the official template at docs/templates/pdf-coupon-template.html
- * with puppeteer-core + @sparticuz/chromium (50MB chromium binary, well
- * under the 250MB Vercel function size cap).
+ * Genera il PDF coupon allineato visualmente al template ufficiale
+ * docs/templates/pdf-coupon-template.html.
  *
- * Auth: requires the user's Supabase access token in `Authorization: Bearer`
- * header. Only the owner of the redemption can download.
+ * Implementazione: @react-pdf/renderer (puro Node, no chromium binary).
+ * Scelta dopo che puppeteer-core + @sparticuz/chromium fallivano su Vercel
+ * con `libnss3.so: cannot open shared object file` indipendentemente dalla
+ * versione (full o min). React-PDF è 100% JS, zero dipendenze native.
  *
- * Variables substituted in the template:
- *   {{locale_nome}}, {{locale_categoria}}, {{locale_indirizzo}},
- *   {{percentuale}}, {{descrizione_sconto}}, {{codice_testuale}},
- *   {{scadenza}}.
- *
- * Special replacements:
- *   - .cp-qr-placeholder div → <img src="data:image/png;base64,..."> from QR
- *   - logo /logo-guida-bi.svg → absolute URL (puppeteer can't load relative)
- *   - .cp-photo placeholder unsplash src → real restaurant photo URL
+ * Auth: header `Authorization: Bearer <supabase_access_token>`. Solo il
+ * proprietario della redemption può scaricare.
  */
 
 import { createClient } from '@supabase/supabase-js'
 import QRCode from 'qrcode'
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
+import {
+  Document,
+  Page,
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  pdf,
+} from '@react-pdf/renderer'
+import React from 'react'
 
-export const config = {
-  // Serverless function (default Node.js runtime). The chromium binary is
-  // included via @sparticuz/chromium and unpacked at /tmp at runtime.
-  maxDuration: 30,
+export const config = { maxDuration: 30 }
+
+/* ============================================================================
+   Token brand (matching template HTML)
+   ============================================================================ */
+const C = {
+  page: '#FAF7F2',
+  paper: '#FFFFFF',
+  ink: '#22181C',
+  ink2: '#5C4F54',
+  ink3: '#9A8E94',
+  line: '#EFE7DD',
+  corallo: '#E8453C',
+  coralloDark: '#B92E26',
+  oro: '#B08954',
+  oroSoft: '#F0E4D2',
 }
 
+/* ============================================================================
+   Font: usiamo solo i built-in di react-pdf (Helvetica) per evitare la
+   dipendenza da CDN esterni che possono dare 404 e bloccare il render.
+   Il design del template usa Poppins (bold/extrabold) → Helvetica-Bold è
+   visivamente vicino. La caption "Mostra al ristoratore" che nel template
+   è in Caveat, qui usa Helvetica-BoldOblique color corallo come fallback.
+   ============================================================================ */
+
+/* ============================================================================
+   Helpers
+   ============================================================================ */
 function slugify(name) {
   return (name || 'sconto').toLowerCase()
     .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
     .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sconto'
-}
-
-function escapeHtml(s) {
-  if (s == null) return ''
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 function compactCountdown(targetIso) {
@@ -55,11 +70,10 @@ function compactCountdown(targetIso) {
   const h = Math.floor((diff % 86400000) / 3600000)
   if (d > 0) return `tra ${d}g ${h}h`
   if (h > 0) return `tra ${h}h`
-  const m = Math.floor((diff % 3600000) / 60000)
-  return `tra ${m} min`
+  return `tra ${Math.floor((diff % 3600000) / 60000)} min`
 }
 
-function formatExpiry(deal) {
+function formatExpiryLabel(deal) {
   if (!deal) return null
   const isDrop = !!deal.is_drop
   const end = deal.drop_ends_at || deal.valid_until
@@ -67,7 +81,6 @@ function formatExpiry(deal) {
   if (isDrop) return compactCountdown(end)
   const d = new Date(end)
   if (d.getTime() < Date.now()) return null
-  // Far-future "evergreen" valid_until → don't render scad
   const diffDays = (d.getTime() - Date.now()) / 86400000
   if (diffDays > 365) return null
   return `il ${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
@@ -77,8 +90,8 @@ function pctText(deal) {
   if (!deal) return ''
   if (deal.discount_type === 'freebie') return deal.title || deal.discount_value || ''
   const v = String(deal.discount_value || '').replace(/[%€]/g, '').trim()
-  if (deal.discount_type === 'percentage') return `−${v}%`
-  if (deal.discount_type === 'fixed') return `−${v}€`
+  if (deal.discount_type === 'percentage') return `-${v}%`
+  if (deal.discount_type === 'fixed') return `-${v}€`
   return deal.discount_value || deal.title || ''
 }
 
@@ -92,78 +105,197 @@ function getMainPhoto(restaurant) {
   return p?.photo_url || p?.thumb_url || null
 }
 
-let templateCache = null
-async function loadTemplate() {
-  if (templateCache) return templateCache
-  // includeFiles in vercel.json puts this file relative to project root.
-  const filePath = path.join(process.cwd(), 'docs/templates/pdf-coupon-template.html')
-  templateCache = await readFile(filePath, 'utf8')
-  return templateCache
-}
+/* ============================================================================
+   Stili — replica del template HTML pdf-coupon-template.html
+   A6 = 105 × 148 mm = 297.6 × 419.5 pt (1mm ≈ 2.835pt).
+   ============================================================================ */
+const styles = StyleSheet.create({
+  page: { backgroundColor: C.page, color: C.ink, padding: 0, flexDirection: 'column' },
+  /* Header */
+  header: { paddingTop: 18, paddingBottom: 8, paddingHorizontal: 22 },
+  logoText: {
+    fontFamily: 'Helvetica-Bold', fontSize: 18, color: C.corallo,
+    letterSpacing: 0.5, lineHeight: 1.05,
+  },
+  tagline: {
+    fontFamily: 'Helvetica-Bold', fontSize: 6, color: C.ink3,
+    letterSpacing: 1.7, marginTop: 3, marginLeft: 1,
+  },
+  divider: { height: 0.5, backgroundColor: C.line, marginHorizontal: 22, marginTop: 4 },
+  /* Photo */
+  photoWrap: {
+    marginHorizontal: 22, marginTop: 11, height: 90,
+    borderRadius: 7, overflow: 'hidden', backgroundColor: '#dcd0c0',
+  },
+  photo: { width: '100%', height: '100%', objectFit: 'cover' },
+  /* Info locale */
+  info: { paddingHorizontal: 22, paddingTop: 11 },
+  localeName: {
+    fontFamily: 'Helvetica-Bold', fontSize: 17, color: C.ink,
+    lineHeight: 1.05, letterSpacing: -0.3,
+  },
+  localeMeta: {
+    fontFamily: 'Helvetica', fontSize: 7.5, color: C.ink2,
+    lineHeight: 1.3, marginTop: 3,
+  },
+  /* Pct row */
+  pctRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 22, paddingTop: 11, gap: 9,
+  },
+  pctBadge: {
+    backgroundColor: C.corallo, color: '#fff', fontFamily: 'Helvetica-Bold',
+    fontSize: 20, paddingVertical: 5, paddingHorizontal: 11,
+    borderRadius: 6, letterSpacing: -0.6,
+  },
+  pctClaim: { flex: 1, flexDirection: 'column' },
+  pctClaimLabel: {
+    fontFamily: 'Helvetica-Bold', fontSize: 6, color: C.ink3,
+    letterSpacing: 0.8, marginBottom: 2,
+  },
+  pctClaimText: {
+    fontFamily: 'Helvetica', fontSize: 7.5, color: C.ink, lineHeight: 1.25,
+  },
+  /* QR */
+  qrWrap: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 22, paddingTop: 11,
+  },
+  qrBox: {
+    width: 142, height: 142, backgroundColor: '#fff',
+    borderWidth: 1.5, borderColor: C.ink, borderRadius: 8, padding: 8,
+  },
+  qrImage: { width: '100%', height: '100%' },
+  qrHint: {
+    fontFamily: 'Helvetica-BoldOblique', fontSize: 16, color: C.corallo,
+    marginTop: 7, lineHeight: 1,
+  },
+  codeText: {
+    fontFamily: 'Courier', fontSize: 7, color: C.ink3, letterSpacing: 1.5, marginTop: 5,
+  },
+  scadPill: {
+    backgroundColor: C.oroSoft, color: C.oro, fontFamily: 'Helvetica-Bold',
+    fontSize: 7, paddingVertical: 4, paddingHorizontal: 12,
+    borderRadius: 100, marginTop: 6, letterSpacing: 0.3,
+  },
+  /* Footer */
+  footer: {
+    borderTopWidth: 0.5, borderTopColor: C.line,
+    marginHorizontal: 22, marginTop: 9, paddingTop: 7, paddingBottom: 14,
+    alignItems: 'center',
+  },
+  footerUrl: {
+    fontFamily: 'Helvetica-Bold', fontSize: 7, color: C.ink, letterSpacing: 0.5,
+  },
+  footerDisclaimer: {
+    fontFamily: 'Helvetica', fontSize: 5.5, color: C.ink3, marginTop: 2, letterSpacing: 0.3,
+  },
+})
 
-function buildHtml(template, ctx) {
-  let html = template
-
-  // Substitute the {{...}} placeholders.
-  const repl = {
-    '{{locale_nome}}': escapeHtml(ctx.locale_nome),
-    '{{locale_categoria}}': escapeHtml(ctx.locale_categoria),
-    '{{locale_indirizzo}}': escapeHtml(ctx.locale_indirizzo),
-    '{{percentuale}}': escapeHtml(ctx.percentuale),
-    '{{descrizione_sconto}}': escapeHtml(ctx.descrizione_sconto),
-    '{{codice_testuale}}': escapeHtml(ctx.codice_testuale),
-    '{{scadenza}}': escapeHtml(ctx.scadenza),
-  }
-  for (const [k, v] of Object.entries(repl)) {
-    html = html.split(k).join(v)
-  }
-
-  // Logo: convert relative path to absolute URL so puppeteer headless can
-  // load it (the rendering happens off the live site).
-  if (ctx.site_url) {
-    html = html.replace('src="/logo-guida-bi.svg"', `src="${ctx.site_url}/logo-guida-bi.svg"`)
-  }
-
-  // Photo placeholder (unsplash demo URL) → real restaurant photo, or fallback.
-  if (ctx.locale_foto) {
-    html = html.replace(
-      /<img src="https:\/\/images\.unsplash\.com[^"]*" alt="\{\{locale_nome\}\}">/,
-      `<img src="${ctx.locale_foto}" alt="${escapeHtml(ctx.locale_nome)}">`
+/* ============================================================================
+   Doc component
+   ============================================================================ */
+function CouponDocument({ ctx }) {
+  return React.createElement(
+    Document,
+    null,
+    React.createElement(
+      Page,
+      // A6 = 105 × 148 mm
+      { size: { width: 297.6, height: 419.5 }, style: styles.page },
+      // HEADER
+      React.createElement(
+        View,
+        { style: styles.header },
+        React.createElement(Text, { style: styles.logoText }, 'LA GUIDA DI BI'),
+        React.createElement(Text, { style: styles.tagline }, 'BY CHIAMAMI BI')
+      ),
+      React.createElement(View, { style: styles.divider }),
+      // PHOTO
+      ctx.photoBuffer
+        ? React.createElement(
+            View,
+            { style: styles.photoWrap },
+            React.createElement(Image, { src: ctx.photoBuffer, style: styles.photo })
+          )
+        : React.createElement(View, { style: styles.photoWrap }),
+      // NOME + META
+      React.createElement(
+        View,
+        { style: styles.info },
+        React.createElement(Text, { style: styles.localeName }, ctx.locale_nome),
+        React.createElement(
+          Text,
+          { style: styles.localeMeta },
+          [ctx.locale_categoria, ctx.locale_indirizzo].filter(Boolean).join(' · ')
+        )
+      ),
+      // PERCENTUALE
+      React.createElement(
+        View,
+        { style: styles.pctRow },
+        React.createElement(Text, { style: styles.pctBadge }, ctx.percentuale || '—'),
+        React.createElement(
+          View,
+          { style: styles.pctClaim },
+          React.createElement(Text, { style: styles.pctClaimLabel }, 'SCONTO RISERVATO'),
+          React.createElement(Text, { style: styles.pctClaimText }, ctx.descrizione_sconto)
+        )
+      ),
+      // QR
+      React.createElement(
+        View,
+        { style: styles.qrWrap },
+        React.createElement(
+          View,
+          { style: styles.qrBox },
+          React.createElement(Image, { src: ctx.qr_data_url, style: styles.qrImage })
+        ),
+        React.createElement(Text, { style: styles.qrHint }, 'Mostra al ristoratore'),
+        React.createElement(Text, { style: styles.codeText }, ctx.codice_testuale),
+        ctx.scadenza
+          ? React.createElement(Text, { style: styles.scadPill }, `Scade ${ctx.scadenza}`)
+          : null
+      ),
+      // FOOTER
+      React.createElement(
+        View,
+        { style: styles.footer },
+        React.createElement(Text, { style: styles.footerUrl }, 'chiamamibi.com'),
+        React.createElement(
+          Text,
+          { style: styles.footerDisclaimer },
+          'Codice valido una sola volta · La guida di Bi'
+        )
+      )
     )
-    // Above won't match if {{locale_nome}} was already substituted — fall back:
-    html = html.replace(
-      /<img src="https:\/\/images\.unsplash\.com[^"]*"[^>]*>/,
-      `<img src="${ctx.locale_foto}" alt="">`
-    )
-  } else {
-    // Replace with a soft tinted placeholder instead of unsplash demo.
-    html = html.replace(
-      /<img src="https:\/\/images\.unsplash\.com[^"]*"[^>]*>/,
-      ''
-    )
-  }
-
-  // QR placeholder div → real QR png as data URL.
-  html = html.replace(
-    '<div class="cp-qr-placeholder"></div>',
-    `<img src="${ctx.qr_data_url}" alt="QR sconto">`
   )
-
-  // Hide scadenza block if no expiry.
-  if (!ctx.scadenza) {
-    html = html.replace(
-      /<div class="cp-scad">[^<]*<\/div>/,
-      ''
-    )
-  }
-
-  // Hide the "notes" instruction block (visible only when previewing the
-  // template in Chrome — not part of the PDF output).
-  html = html.replace(/<div class="notes">[\s\S]*?<\/div>\s*<\/body>/, '</body>')
-
-  return html
 }
 
+/* ============================================================================
+   Helpers binari
+   ============================================================================ */
+async function fetchImageBuffer(url) {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const ab = await res.arrayBuffer()
+    return Buffer.from(ab)
+  } catch {
+    return null
+  }
+}
+
+async function streamToBuffer(stream) {
+  const chunks = []
+  for await (const c of stream) chunks.push(typeof c === 'string' ? Buffer.from(c) : c)
+  return Buffer.concat(chunks)
+}
+
+/* ============================================================================
+   Handler
+   ============================================================================ */
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' })
@@ -177,7 +309,6 @@ export default async function handler(req, res) {
     return
   }
 
-  // 1) Auth: prendiamo il token dall'header Authorization.
   const auth = req.headers.authorization || ''
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null
   if (!token) {
@@ -196,7 +327,6 @@ export default async function handler(req, res) {
   }
   const userId = userData.user.id
 
-  // 2) Lookup redemption — solo se appartiene all'utente.
   const redemptionId = req.query?.id
   if (!redemptionId) {
     res.status(400).json({ error: 'Missing id' })
@@ -232,101 +362,50 @@ export default async function handler(req, res) {
     return
   }
 
-  // 3) Costruisci il payload del template.
+  // Costruiamo il context per il component PDF.
   const cuisine = restaurant.cuisine_type || (Array.isArray(restaurant.category) ? restaurant.category[0] : null) || 'Locale'
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://chiamamibi.com').replace(/\/$/, '')
+
   const ctx = {
     locale_nome: restaurant.name || 'Ristorante',
     locale_categoria: cuisine,
     locale_indirizzo: shortAddress(restaurant.address),
-    locale_foto: getMainPhoto(restaurant),
     percentuale: pctText(deal),
     descrizione_sconto: deal.title || deal.description || 'Valido alla cassa',
     codice_testuale: redemption.qr_code,
-    scadenza: formatExpiry(deal),
-    site_url: (process.env.NEXT_PUBLIC_SITE_URL || 'https://chiamamibi.com').replace(/\/$/, ''),
+    scadenza: formatExpiryLabel(deal),
   }
 
-  // QR payload identico al sistema scan ristoratore esistente.
-  const qrPayload = `${ctx.site_url}/verify?code=${redemption.qr_code}`
+  // QR data URL — payload identico al sistema scan ristoratore.
+  const qrPayload = `${siteUrl}/verify?code=${redemption.qr_code}`
   ctx.qr_data_url = await QRCode.toDataURL(qrPayload, {
     width: 600,
     margin: 1,
     color: { dark: '#000000', light: '#FFFFFF' },
   })
 
-  // 4) Carica template + sostituisci placeholders.
-  let template
+  // Foto: react-pdf legge URL ma su serverless con CORS può fallire. Fetch
+  // server-side e passiamo il Buffer.
+  const photoUrl = getMainPhoto(restaurant)
+  ctx.photoBuffer = await fetchImageBuffer(photoUrl)
+
   try {
-    template = await loadTemplate()
-  } catch (err) {
-    console.error('Cannot load template:', err)
-    res.status(500).json({ error: 'Template not available' })
-    return
-  }
-  const html = buildHtml(template, ctx)
-
-  // 5) Render con puppeteer-core + @sparticuz/chromium-min.
-  // chromium-min NON include il binario nel bundle (≈100MB di librerie +
-  // chromium): lo scarica da GitHub releases al primo cold-start, lo cacha
-  // in /tmp. Il fork "chromium" pieno aveva bug di shared libraries
-  // mancanti su Vercel ("libnss3.so: No such file or directory").
-  let browser
-  try {
-    const [chromiumMod, puppeteerMod] = await Promise.all([
-      import('@sparticuz/chromium-min'),
-      import('puppeteer-core'),
-    ])
-    const chromium = chromiumMod.default || chromiumMod
-    const puppeteer = puppeteerMod.default || puppeteerMod
-
-    // URL del bundle chromium pre-built dalla release ufficiale Sparticuz.
-    // Versione allineata alla libreria (131.0.1).
-    const CHROMIUM_PACK_URL = process.env.CHROMIUM_PACK_URL
-      || 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
-
-    const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL)
-    console.log('[pdf] launching chromium:', { executablePath, argsCount: chromium.args?.length })
-
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
-      headless: chromium.headless,
-    })
-
-    const page = await browser.newPage()
-    // domcontentloaded è più robusto su serverless di networkidle0 (che
-    // può hangare se Google Fonts impiega troppo). Diamo poi un piccolo
-    // wait esplicito ai font.
-    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 20_000 })
-    try { await page.evaluateHandle('document.fonts.ready') } catch { /* font opzionali */ }
-
-    const pdfBytes = await page.pdf({
-      format: 'A6',
-      printBackground: true,
-      preferCSSPageSize: true,
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    })
-    // page.pdf() può ritornare Uint8Array in puppeteer-core v23: convertiamo
-    // sempre a Buffer prima di scrivere così Vercel non corrompe i byte.
-    const pdfBuffer = Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes)
+    const doc = React.createElement(CouponDocument, { ctx })
+    const stream = await pdf(doc).toBuffer()
+    const buffer = Buffer.isBuffer(stream) ? stream : await streamToBuffer(stream)
 
     const filename = `sconto-${slugify(restaurant.name)}.pdf`
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    res.setHeader('Content-Length', pdfBuffer.length)
+    res.setHeader('Content-Length', buffer.length)
     res.setHeader('Cache-Control', 'private, no-store')
-    res.status(200).end(pdfBuffer)
+    res.status(200).end(buffer)
   } catch (err) {
-    console.error('[pdf] render failed:', err && err.stack ? err.stack : err)
+    console.error('[pdf] react-pdf render failed:', err && err.stack ? err.stack : err)
     if (!res.headersSent) {
       res.status(500).json({ error: `PDF render failed: ${err?.message || 'unknown'}` })
     } else {
       try { res.end() } catch { /* ignore */ }
-    }
-  } finally {
-    if (browser) {
-      try { await browser.close() } catch { /* ignore */ }
     }
   }
 }

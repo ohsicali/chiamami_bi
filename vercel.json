@@ -12,9 +12,7 @@
       "maxDuration": 10
     },
     "api/discount-pdf.js": {
-      "maxDuration": 30,
-      "memory": 1024,
-      "includeFiles": "docs/templates/pdf-coupon-template.html"
+      "maxDuration": 30
     }
   },
   "headers": [
