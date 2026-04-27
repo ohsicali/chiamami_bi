@@ -239,9 +239,9 @@
 }
 .sc-drop .sc-ph {
   position: relative;
-  /* aspect-ratio mantiene la foto in proporzione naturale 4:3
-     (foto ristoranti tipiche). Niente più troppo zoom/crop. */
-  aspect-ratio: 4 / 3;
+  /* aspect-ratio panoramica 16:9 → card più compatta su mobile,
+     niente più zoom/crop verticale fastidioso. */
+  aspect-ratio: 16 / 9;
   width: 100%;
   background: #dcd0c0;
   overflow: hidden;
@@ -411,9 +411,11 @@
 }
 @media (min-width: 768px) {
   .sc-conv-list {
+    /* 2-col grid; ogni card è orizzontale con foto a sinistra come
+       l'elenco mobile (richiesta utente). */
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
     padding: 0;
   }
 }
@@ -431,11 +433,13 @@
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 @media (min-width: 768px) {
+  /* Desktop: orizzontale come mobile, foto 110×110 a sx, body + bottone
+     a destra. Nessun cambio struttura tra mobile e desktop. */
   .sc-conv {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
-    padding: 0;
-    gap: 0;
+    padding: 14px;
+    gap: 14px;
     border-radius: 16px;
   }
   .sc-conv:hover {
@@ -461,9 +465,9 @@
 }
 @media (min-width: 768px) {
   .sc-conv .sc-ph {
-    width: auto;
-    height: 160px;
-    border-radius: 0;
+    width: 110px;
+    height: 110px;
+    border-radius: 14px;
   }
 }
 .sc-conv .sc-badge-pct {
@@ -482,10 +486,10 @@
 }
 @media (min-width: 768px) {
   .sc-conv .sc-badge-pct {
-    top: 12px;
-    left: 12px;
-    font-size: 14px;
-    padding: 7px 14px;
+    top: 6px;
+    left: 6px;
+    font-size: 11px;
+    padding: 4px 9px;
     border-radius: 999px;
   }
 }
@@ -504,7 +508,7 @@
   min-width: 0;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-body-c { padding: 14px 16px 16px; align-items: flex-end; gap: 12px; flex: 1; }
+  .sc-conv .sc-body-c { padding: 0; align-items: center; gap: 12px; flex: 1; }
 }
 .sc-conv .sc-info {
   flex: 1;
