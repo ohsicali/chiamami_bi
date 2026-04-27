@@ -157,7 +157,7 @@ function TopBar() {
               transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
             }}
           >
-            <BiLogoMark style={{ width: '75%', height: '75%' }} />
+            <BiLogoMark style={{ width: '88%', height: '88%' }} />
           </span>
           <span
             aria-hidden="true"
@@ -174,7 +174,7 @@ function TopBar() {
               transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
             }}
           >
-            <BiLogoMark style={{ width: '75%', height: '75%' }} />
+            <BiLogoMark style={{ width: '88%', height: '88%' }} />
           </span>
           {/* sparkle oro: SOPRA il bordo bianco della pill in entrambi gli
              stati. Border bianco per fondersi col bordo della pill, z-index
