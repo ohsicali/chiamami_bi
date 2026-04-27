@@ -18,6 +18,12 @@ export default function DesktopNavbar() {
   const hasDeals = (discounts?.length || 0) > 0
   const initials = user ? (user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase() : null
   const isChiediActive = location.pathname === '/chiedi' || location.pathname.startsWith('/chiedi/')
+  // City pill: solo nelle pagine Esplora (mappa + scheda ristorante). Altrove
+  // non porta valore — la guida è Torino-only oggi.
+  const showCityPill =
+    location.pathname === '/esplora' ||
+    location.pathname === '/list' ||
+    location.pathname.startsWith('/restaurant/')
 
   return (
     <div
@@ -195,24 +201,26 @@ export default function DesktopNavbar() {
             </span>
           </button>
 
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 7,
-              padding: '9px 14px',
-              background: 'var(--color-ink-05)',
-              borderRadius: 999,
-              fontWeight: 700,
-              fontSize: 13,
-            }}
-          >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)' }} />
-            Torino
-            <svg viewBox="0 0 10 10" width="10" height="10">
-              <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </svg>
-          </div>
+          {showCityPill && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '9px 14px',
+                background: 'var(--color-ink-05)',
+                borderRadius: 999,
+                fontWeight: 700,
+                fontSize: 13,
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)' }} />
+              Torino
+              <svg viewBox="0 0 10 10" width="10" height="10">
+                <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
 
           {user ? (
             <Link

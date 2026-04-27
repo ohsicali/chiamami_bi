@@ -14,7 +14,6 @@ import TimeContextHero from '../../components/Home/TimeContextHero'
 import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
-import CityPickerSheet from '../../components/UI/CityPickerSheet'
 
 function formatCountdown(endsAt) {
   if (!endsAt) return null
@@ -43,8 +42,16 @@ const CATEGORIES = [
 ]
 
 function TopBar() {
-  const [cityPickerOpen, setCityPickerOpen] = useState(false)
-  const [selectedCity, setSelectedCity] = useState('Torino')
+  // Scroll-aware: la pill destra parte espansa "Chiedi a Bi" e si comprime
+  // sul B circolare appena l'utente scrolla (header diventa sticky).
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <div
       className="hfv4-topbar"
@@ -96,83 +103,79 @@ function TopBar() {
         </span>
       </Link>
 
-      <button
-        type="button"
-        onClick={() => setCityPickerOpen(true)}
-        className="hfv4-city-pill"
-        style={{
-          marginLeft: 'auto',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 7,
-          padding: '8px 12px',
-          background: 'var(--color-ink-05, rgba(34,24,28,.06))',
-          border: 'none',
-          borderRadius: 999,
-          fontWeight: 700,
-          fontSize: 13,
-          color: '#22181C',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-      >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-corallo)', flexShrink: 0 }} />
-        {selectedCity}
-        <svg viewBox="0 0 10 10" width="10" height="10">
-          <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        </svg>
-      </button>
-      <CityPickerSheet
-        open={cityPickerOpen}
-        onClose={() => setCityPickerOpen(false)}
-        onCityChange={({ name }) => { setSelectedCity(name); setCityPickerOpen(false) }}
-      />
-
-      {/* PR20b §1 — accesso a "Chiedi a Bi" dall'header mobile.
-         L'avatar profilo viene rimosso da qui (resta accessibile dal tab "Profilo").
-         L'icona B con sparkle oro porta a /chiedi. */}
+      {/* PR20b §1 — pill "Chiedi a Bi" coral. Espansa a top, si comprime
+         in solo cerchio B quando l'utente scrolla (header sticky). */}
       <Link
         to="/chiedi"
         aria-label="Chiedi a Bi"
         style={{
+          marginLeft: 'auto',
           position: 'relative',
-          width: 42,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: scrolled ? 0 : 8,
+          padding: scrolled ? 5 : '5px 16px 5px 5px',
           height: 42,
-          borderRadius: '50%',
+          borderRadius: 999,
           background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #C6372F) 100%)',
           color: '#fff',
-          display: 'grid',
-          placeItems: 'center',
-          fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-          fontSize: 18,
+          textDecoration: 'none',
           boxShadow: '0 6px 14px rgba(232,69,60,.35)',
           border: '2px solid #fff',
-          textDecoration: 'none',
           flexShrink: 0,
+          transition: 'gap .25s ease, padding .25s ease',
+          overflow: 'hidden',
         }}
       >
-        B
         <span
-          aria-hidden="true"
           style={{
-            position: 'absolute',
-            top: -4,
-            right: -4,
-            width: 16,
-            height: 16,
-            background: 'var(--color-oro, #B08954)',
+            position: 'relative',
+            width: 32,
+            height: 32,
             borderRadius: '50%',
-            border: '2px solid var(--color-page, #FAF7F2)',
             display: 'grid',
             placeItems: 'center',
-            fontSize: 8,
-            color: '#fff',
-            fontWeight: 700,
-            lineHeight: 1,
+            fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+            fontSize: 16,
+            flexShrink: 0,
           }}
         >
-          ✦
+          B
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: -5,
+              right: -5,
+              width: 14,
+              height: 14,
+              background: 'var(--color-oro, #B08954)',
+              borderRadius: '50%',
+              border: '2px solid var(--color-corallo, #E8453C)',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: 7,
+              color: '#fff',
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            ✦
+          </span>
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 800,
+            fontSize: 13.5,
+            letterSpacing: '-0.01em',
+            whiteSpace: 'nowrap',
+            maxWidth: scrolled ? 0 : 120,
+            opacity: scrolled ? 0 : 1,
+            transition: 'max-width .25s ease, opacity .2s ease',
+          }}
+        >
+          Chiedi a Bi
         </span>
       </Link>
     </div>
