@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 import MapView from '../../components/Map/MapView'
-import SearchBar from '../../components/Layout/SearchBar'
+import UnifiedSearch from '../../components/Layout/UnifiedSearch'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SaveButton from '../../components/Restaurant/SaveButton'
@@ -388,7 +388,7 @@ export default function HomePage() {
   const listContent = (
     <>
       <div style={{ marginBottom: 4 }}>
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <UnifiedSearch value={searchQuery} onChange={setSearchQuery} restaurants={allRestaurants} />
       </div>
 
       <div style={{

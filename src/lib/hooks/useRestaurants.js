@@ -8,6 +8,54 @@ export { getCategoryInfo, DEFAULT_CATEGORIES as CUISINE_CATEGORIES, useCategorie
 
 export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 
+// Italian + English fillers users naturally type but that shouldn't gate matches.
+// e.g. "ristorante giapponese" → token "giapponese" matches `cuisine_type: 'Giapponese'`.
+const SEARCH_STOPWORDS = new Set([
+  'ristorante', 'ristoranti', 'ristorantino',
+  'cucina', 'cucine',
+  'locale', 'locali', 'posto', 'posti',
+  'restaurant', 'restaurants',
+  'il', 'lo', 'la', 'i', 'gli', 'le',
+  'un', 'uno', 'una',
+  'di', 'da', 'a', 'in', 'con', 'per', 'su', 'tra', 'fra',
+  'del', 'della', 'dei', 'delle', 'degli',
+  'al', 'allo', 'alla', 'agli', 'alle',
+  'che', 'e', 'o',
+])
+
+// Diacritic-fold + lowercase — "Caffè" matches "caffe", "Pò" matches "po".
+function normalizeSearchText(s) {
+  return String(s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+}
+
+export function tokenizeQuery(q) {
+  return normalizeSearchText(q)
+    .split(/[\s,/.;:|·]+/)
+    .map(t => t.trim())
+    .filter(t => t.length >= 2 && !SEARCH_STOPWORDS.has(t))
+}
+
+function restaurantHaystack(r) {
+  return normalizeSearchText([
+    r.name,
+    r.cuisine_type,
+    ...(r.category || []),
+    ...(r.recommended_for || []),
+    r.address,
+    r.city,
+    r.tagline,
+  ].filter(Boolean).join(' '))
+}
+
+export function matchesQuery(restaurant, tokens) {
+  if (!tokens || tokens.length === 0) return true
+  const haystack = restaurantHaystack(restaurant)
+  return tokens.every(t => haystack.includes(t))
+}
+
 const MOCK_RESTAURANTS = [
   {
     id: '1',
@@ -398,15 +446,11 @@ export function useRestaurants(userPosition = null) {
     // Filter out unpublished for public view
     result = result.filter(r => r.is_published)
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      result = result.filter(r =>
-        r.name.toLowerCase().includes(q) ||
-        r.cuisine_type?.toLowerCase().includes(q) ||
-        (r.category || []).some(c => c.toLowerCase().includes(q)) ||
-        (r.recommended_for || []).some(tag => tag.toLowerCase().includes(q))
-      )
+    // Search filter — tokenized + diacritic-folded so "ristorante giapponese"
+    // matches `cuisine_type: 'Giapponese'` and "caffe" matches "Caffè".
+    const tokens = tokenizeQuery(searchQuery)
+    if (tokens.length > 0) {
+      result = result.filter(r => matchesQuery(r, tokens))
     }
 
     if (filters.category) {
