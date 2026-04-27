@@ -153,21 +153,24 @@ function SconteRedesignPageInner() {
   const myActive = useMemo(() => allMyActive.filter(myFilter), [allMyActive, myFilter])
   const myUsed = useMemo(() => allMyUsed.filter(myFilter), [allMyUsed, myFilter])
 
-  // exclude already-saved/used from catalogo so non li vedi 2 volte
-  const claimedIds = useMemo(() => {
-    const set = new Set()
-    allMyActive.forEach((r) => set.add(r.discount_id))
-    allMyUsed.forEach((r) => set.add(r.discount_id))
-    return set
+  // Index of redemptions by discount_id so the catalogue can show dynamic CTA
+  // ("Apri QR" / "Già usato") instead of hiding entries the user already took.
+  const redemptionByDealId = useMemo(() => {
+    const map = new Map()
+    allMyActive.forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'generated' }))
+    allMyUsed.forEach((r) => {
+      // Used wins over generated when both exist (shouldn't happen, defensive)
+      map.set(r.discount_id, { ...r, status: r.status || 'redeemed' })
+    })
+    return map
   }, [allMyActive, allMyUsed])
 
-  const dropsAvailable = useMemo(
-    () => drops.filter((d) => !claimedIds.has(d.id)),
-    [drops, claimedIds]
-  )
+  // Drop sempre visibili nel catalogo (anche se già presi) — la card cambia CTA.
+  // Convenzioni: si nascondono quando già prese (sono tante, eviterebbe duplicazioni).
+  const dropsAvailable = drops
   const convAvailable = useMemo(
-    () => conv.filter((d) => !claimedIds.has(d.id)),
-    [conv, claimedIds]
+    () => conv.filter((d) => !redemptionByDealId.has(d.id)),
+    [conv, redemptionByDealId]
   )
 
   const countDisponibili = dropsAvailable.length + convAvailable.length
@@ -303,7 +306,9 @@ function SconteRedesignPageInner() {
               drops={dropsAvailable}
               conv={convAvailable}
               claiming={claiming}
+              redemptionByDealId={redemptionByDealId}
               onClaim={claimDeal}
+              onOpenQR={openMyQR}
               onCardClick={goTo}
             />
           )}
@@ -413,7 +418,7 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
   )
 }
 
-function CatalogoView({ loading, drops, conv, claiming, onClaim, onCardClick }) {
+function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick }) {
   if (loading) {
     return (
       <div style={{ padding: '24px 16px' }}>
@@ -446,15 +451,20 @@ function CatalogoView({ loading, drops, conv, claiming, onClaim, onCardClick }) 
             <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'} · scorri →</small>
           </div>
           <div className="sc-drop-track">
-            {drops.map((d) => (
-              <DropCard
-                key={d.id}
-                deal={d}
-                claiming={claiming === d.id}
-                onClaim={() => onClaim(d)}
-                onClick={() => onCardClick(d.restaurant)}
-              />
-            ))}
+            {drops.map((d) => {
+              const redemption = redemptionByDealId?.get(d.id) || null
+              return (
+                <DropCard
+                  key={d.id}
+                  deal={d}
+                  redemption={redemption}
+                  claiming={claiming === d.id}
+                  onClaim={() => onClaim(d)}
+                  onOpenQR={() => onOpenQR({ ...redemption, discount: d })}
+                  onClick={() => onCardClick(d.restaurant)}
+                />
+              )
+            })}
           </div>
         </section>
       )}
@@ -482,7 +492,7 @@ function CatalogoView({ loading, drops, conv, claiming, onClaim, onCardClick }) 
   )
 }
 
-function DropCard({ deal, claiming, onClaim, onClick }) {
+function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const time = expiryLabel(deal)
@@ -492,6 +502,17 @@ function DropCard({ deal, claiming, onClaim, onClick }) {
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' · ')
 
+  const status = redemption?.status
+  const isSaved = status === 'generated'
+  const isUsed = status === 'redeemed'
+
+  let ctaLabel = 'Prendi sconto'
+  let ctaOnClick = onClaim
+  let ctaDisabled = !!claiming
+  if (claiming) ctaLabel = 'Un attimo…'
+  else if (isUsed) { ctaLabel = 'Già usato'; ctaDisabled = true; ctaOnClick = () => {} }
+  else if (isSaved) { ctaLabel = 'Apri QR'; ctaOnClick = onOpenQR }
+
   return (
     <div
       className="sc-drop"
@@ -499,6 +520,7 @@ function DropCard({ deal, claiming, onClaim, onClick }) {
       tabIndex={0}
       onClick={(e) => { if (!e.defaultPrevented) onClick() }}
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
+      style={isUsed ? { opacity: 0.55 } : undefined}
     >
       <div className="sc-ph">
         {photo ? (
@@ -525,10 +547,10 @@ function DropCard({ deal, claiming, onClaim, onClick }) {
         <button
           type="button"
           className="sc-cta"
-          disabled={!!claiming}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+          disabled={ctaDisabled}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
         >
-          {claiming ? 'Un attimo…' : 'Prendi sconto'}
+          {ctaLabel}
         </button>
       </div>
     </div>
