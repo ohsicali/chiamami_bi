@@ -114,11 +114,8 @@ function TopBar() {
           position: 'relative',
           display: 'inline-flex',
           alignItems: 'center',
-          justifyContent: scrolled ? 'center' : 'flex-start',
           gap: scrolled ? 0 : 8,
           padding: scrolled ? 5 : '5px 16px 5px 5px',
-          height: 42,
-          width: scrolled ? 42 : 'auto',
           borderRadius: 999,
           background: 'linear-gradient(135deg, var(--color-corallo) 0%, var(--color-corallo-ink, #C6372F) 100%)',
           color: '#fff',
@@ -126,7 +123,7 @@ function TopBar() {
           boxShadow: '0 6px 14px rgba(232,69,60,.35)',
           border: '2px solid #fff',
           flexShrink: 0,
-          transition: 'gap .3s cubic-bezier(.4,0,.2,1), padding .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1)',
+          transition: 'gap .3s cubic-bezier(.4,0,.2,1), padding .3s cubic-bezier(.4,0,.2,1)',
           overflow: 'visible',
         }}
       >
