@@ -643,7 +643,8 @@
   .cp-input-bar {
     background: linear-gradient(180deg, rgba(250, 247, 242, 0) 0%, var(--cp-page) 28%);
     border-top: 0;
-    padding: 30px 24px 24px;
+    /* horizontal padding identico alla DesktopNavbar (0 40px) */
+    padding: 30px 40px 24px;
     justify-content: center;
   }
 }
@@ -709,8 +710,9 @@
 }
 @media (min-width: 768px) {
   .cp-input-wrap {
-    width: 760px;
-    max-width: 100%;
+    /* width allineato al pill della DesktopNavbar (max 1240, margin auto) */
+    width: 100%;
+    max-width: 1240px;
     border-radius: 24px;
     padding: 8px 8px 8px 18px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
