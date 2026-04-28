@@ -495,22 +495,22 @@ function SuggestCard() {
     <div className="hfv4-suggest-wrap" style={{ padding: '10px 20px 36px' }}>
       <div
         className="hfv4-suggest"
-        style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-ink)', color: '#fff', borderRadius: 28, padding: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center' }}
+        style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-ink)', color: '#fff', borderRadius: 28, padding: 22, display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}
       >
         <span aria-hidden style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, background: 'radial-gradient(circle, rgba(232,69,60,.25), transparent 70%)', borderRadius: '50%' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div className="hfv4-suggest-title" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, lineHeight: 1.15, letterSpacing: '-0.01em', marginBottom: 6, maxWidth: 220 }}>
+          <div className="hfv4-suggest-title" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, lineHeight: 1.15, letterSpacing: '-0.01em', marginBottom: 6 }}>
             Conosci un posto che manca?
           </div>
-          <div className="hfv4-suggest-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.35, maxWidth: 240 }}>
-            Scrivimi nome + zona. Se è buono, entra.
+          <div className="hfv4-suggest-sub" style={{ fontSize: 12.5, color: 'rgba(255,255,255,.65)', lineHeight: 1.4 }}>
+            Scrivimi nome + zona. Se è buono, entra nella guida.
           </div>
         </div>
         <button
           type="button"
           onClick={() => setShowSuggest(true)}
           className="hfv4-suggest-cta"
-          style={{ padding: '11px 14px', background: 'var(--color-corallo)', color: '#fff', borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', position: 'relative', zIndex: 1, border: 'none', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '12px 16px', background: 'var(--color-corallo)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', position: 'relative', zIndex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 14px rgba(232,69,60,.35)' }}
         >
           Suggerisci →
         </button>
