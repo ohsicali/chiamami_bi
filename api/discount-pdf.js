@@ -153,6 +153,25 @@ async function fetchImageBuffer(url, { siteUrl, debug } = {}) {
     : url
   if (debug) debug.fetchUrl = fetchUrl
   console.log('[pdf] photo source:', { original: url, fetch: fetchUrl, viaProxy: fetchUrl !== url })
+
+  // Helper: una volta scaricati i byte, convertiamo SEMPRE in JPEG con
+  // sharp. react-pdf supporta solo PNG/JPEG (no WebP/HEIC/AVIF) — le foto
+  // dei ristoranti sono salvate in WebP, quindi senza conversione il PDF
+  // riceveva un Buffer "accettato" ma non renderizzato (fail silente).
+  const convertToJpeg = async (buf, ctype) => {
+    try {
+      const { default: sharp } = await import('sharp')
+      const out = await sharp(buf).rotate().jpeg({ quality: 80 }).toBuffer()
+      if (debug) debug.status = `ok-${out.length}b-from-${ctype || 'unknown'}`
+      console.log('[pdf] photo converted bytes:', out.length, 'from', ctype)
+      return out
+    } catch (err) {
+      console.warn('[pdf] sharp conversion failed:', err.message)
+      if (debug) debug.status = `convert-failed-${err.message}`
+      return null
+    }
+  }
+
   try {
     const res = await fetch(fetchUrl, {
       headers: {
@@ -169,20 +188,14 @@ async function fetchImageBuffer(url, { siteUrl, debug } = {}) {
         const r2 = await fetch(url, { signal: AbortSignal.timeout(15_000) })
         if (r2.ok) {
           const ab = await r2.arrayBuffer()
-          const buf = Buffer.from(ab)
-          if (debug) debug.status = `ok-direct-${buf.length}b`
-          console.log('[pdf] photo direct OK bytes:', buf.length)
-          return buf
+          return convertToJpeg(Buffer.from(ab), r2.headers.get('content-type'))
         }
         if (debug) debug.status += `,retry-direct-${r2.status}`
       }
       return null
     }
     const ab = await res.arrayBuffer()
-    const buf = Buffer.from(ab)
-    if (debug) debug.status = `ok-${buf.length}b-${res.headers.get('content-type') || ''}`
-    console.log('[pdf] photo OK bytes:', buf.length, 'content-type:', res.headers.get('content-type'))
-    return buf
+    return convertToJpeg(Buffer.from(ab), res.headers.get('content-type'))
   } catch (err) {
     console.warn('[pdf] photo fetch error:', err.message, fetchUrl)
     if (debug) debug.status = `error-${err.message}`

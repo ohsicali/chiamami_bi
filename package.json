@@ -34,6 +34,7 @@
     "react-is": "^19.2.5",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.8.0",
+    "sharp": "^0.34.5",
     "supercluster": "^8.0.1",
     "tailwindcss": "^4.2.2"
   },
