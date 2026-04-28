@@ -130,13 +130,12 @@ export default function DesktopSavedPage() {
       .from('restaurants')
       .select('*, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
       .in('id', ids)
-      .eq('is_published', true)
       .then(({ data, error }) => {
         if (error) console.error('[DesktopSavedPage] fetch error:', error)
         setRestaurants(data || [])
         setLoading(false)
       })
-  }, [user?.id, savedIds.size])
+  }, [user?.id, savedIds])
 
   const displayedRestaurants = useMemo(() => {
     let list = [...restaurants]
