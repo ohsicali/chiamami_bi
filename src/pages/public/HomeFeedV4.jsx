@@ -631,7 +631,6 @@ export default function HomeFeedV4() {
       }
     }
     const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
-    const tagline = r.tagline || ''
     const dropDescription = drop.description || drop.title || ''
     const priceLabel = r.price_range ? '€'.repeat(Math.max(1, Math.min(4, r.price_range))) : ''
     return {
