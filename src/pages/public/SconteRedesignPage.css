@@ -54,27 +54,28 @@
 
 /* ============= page header ============= */
 .sc-page-head {
-  padding: 18px 16px 6px;
+  padding: 10px 20px 14px;
 }
 .sc-page-head h1 {
-  font-family: var(--sc-ff-mark);
-  font-size: 28px;
-  line-height: 1.05;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1;
   color: var(--sc-ink);
-  letter-spacing: 0.3px;
-  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
 }
 .sc-page-head p {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--sc-ink-2);
-  line-height: 1.45;
+  line-height: 1.35;
   margin: 0;
 }
 @media (min-width: 768px) {
   /* Padding-top ora è sul wrapper .sc-shell-desktop. */
   .sc-page-head { padding: 0; }
-  .sc-page-head h1 { font-size: 40px; line-height: 1; letter-spacing: 0.4px; }
-  .sc-page-head p { font-size: 14px; max-width: 520px; }
+  .sc-page-head h1 { font-size: 26px; line-height: 1; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .sc-page-head p { font-size: 13px; max-width: 520px; }
 }
 
 /* ============= segment LIVELLO 1 ============= */

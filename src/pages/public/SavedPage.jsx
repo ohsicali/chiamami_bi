@@ -9,6 +9,7 @@ import { supabase, proxyImg } from '../../lib/supabase'
 import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
+import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
@@ -192,10 +193,10 @@ export default function SavedPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)' }}>
+      <MobileLogoHeader />
       {/* Sticky Header — v4 mobile topbar con dual ico-btn (mobile only) */}
       <div ref={headerRef} className="md:hidden" style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        padding: 'calc(env(safe-area-inset-top, 0px) + 10px) 20px 14px',
+        padding: '10px 20px 14px',
         background: 'var(--color-page)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -291,11 +292,11 @@ export default function SavedPage() {
         )}
       </div>
 
-      {/* Filter bar — CSS sticky, sticks below header naturally (hidden on desktop) */}
+      {/* Filter bar — CSS sticky, sticks sotto il logo header (hidden on desktop) */}
       {restaurants.length > 0 && (
         <div className="md:hidden" style={{
           position: 'sticky',
-          top: headerH,
+          top: 'calc(env(safe-area-inset-top, 0px) + 51px)',
           zIndex: 49,
           padding: '14px 16px 14px',
           background: 'rgba(250,247,242,0.75)',
