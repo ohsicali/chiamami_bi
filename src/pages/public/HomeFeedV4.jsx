@@ -657,22 +657,8 @@ export default function HomeFeedV4() {
             -webkit-backdrop-filter: blur(8px) !important;
           }
           .hfv4-hero-title { display: none !important; }
-          /* "-20% da El Brasa" tutto sulla stessa riga: stessi font-size,
-             inline-block così non vanno a capo. */
-          .hfv4-mob-pct {
-            display: inline !important;
-            font-size: 22px !important;
-            margin: 0 6px 6px 0 !important;
-            vertical-align: baseline !important;
-          }
-          .hfv4-mob-loc {
-            display: inline !important;
-            font-size: 22px !important;
-            margin: 0 0 6px 0 !important;
-            vertical-align: baseline !important;
-          }
-          /* break-line dopo la loc così il restLine/subtitle restano sotto. */
-          .hfv4-mob-loc::after { content: ''; display: block; }
+          .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
+          .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
           .hfv4-hero-progress { display: none !important; }
           .hfv4-mob-progress { display: flex !important; }
           .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: 2 !important; display: -webkit-box !important; overflow: hidden !important; }
