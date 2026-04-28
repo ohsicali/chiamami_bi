@@ -7,6 +7,7 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { proxyImg } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
+import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SconteQRPopup from '../../components/Discount/SconteQRPopup'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
@@ -294,11 +295,16 @@ function SconteRedesignPageInner() {
 
   return (
     <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : TAB_BAR_HEIGHT + 16 }}>
+      {!isDesktop && <MobileLogoHeader />}
       <div className={isDesktop ? 'sc-shell sc-shell-desktop' : 'sc-shell sc-shell-mobile'}>
         <div className="sc-head-row">
           <header className="sc-page-head">
             <h1>Sconti</h1>
-            <p>Drop a tempo, convenzioni sempre valide, e i tuoi sconti pronti da usare.</p>
+            <p>
+              {dropsAvailable.length} {dropsAvailable.length === 1 ? 'drop' : 'drop'}
+              {' · '}
+              {convAvailable.length} {convAvailable.length === 1 ? 'convenzione' : 'convenzioni'}
+            </p>
           </header>
           <Segment
             tab={tab}

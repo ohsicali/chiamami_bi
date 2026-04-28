@@ -7,6 +7,7 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
+import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
@@ -96,9 +97,10 @@ export default function ProfilePage() {
   if (!isDesktop) {
     return (
       <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}>
+        <MobileLogoHeader />
         {/* ── Top bar: titolo "Profilo" + ico-btn impostazioni ── */}
         <div style={{
-          padding: 'calc(env(safe-area-inset-top, 0px) + 10px) 20px 14px',
+          padding: '10px 20px 14px',
           display: 'flex', alignItems: 'center', gap: 10,
           background: 'var(--color-page)',
         }}>
