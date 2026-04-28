@@ -192,8 +192,15 @@ export default function DesktopSavedPage() {
 
         {/* Header */}
         <div style={{ marginBottom: 18 }}>
-          <h1 style={{ fontWeight: 900, fontSize: 32, letterSpacing: '-0.025em', margin: 0 }}>I miei salvati</h1>
-          <div style={{ color: 'var(--color-ink-70)', fontSize: 13.5, marginTop: 6 }}>
+          <h1 style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 26,
+            lineHeight: 1,
+            letterSpacing: '-0.02em',
+            margin: '0 0 4px',
+          }}>I miei salvati</h1>
+          <div style={{ color: 'var(--color-ink-70)', fontSize: 13 }}>
             {restaurants.length} {restaurants.length === 1 ? 'locale salvato' : 'locali salvati'}
           </div>
         </div>
