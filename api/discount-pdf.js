@@ -1,16 +1,16 @@
 /**
  * GET /api/discount-pdf?id=<savedDiscountId>
  *
- * Genera il PDF coupon allineato visualmente al template ufficiale
- * docs/templates/pdf-coupon-template.html.
+ * Genera il PDF coupon con @react-pdf/renderer (puro Node).
  *
- * Implementazione: @react-pdf/renderer (puro Node, no chromium binary).
- * Scelta dopo che puppeteer-core + @sparticuz/chromium fallivano su Vercel
- * con `libnss3.so: cannot open shared object file` indipendentemente dalla
- * versione (full o min). React-PDF è 100% JS, zero dipendenze native.
+ * - Logo: PNG bundlato (api/_assets/logo-guida-bi.png) renderizzato
+ *   come <Image>.
+ * - Font: Poppins (regular/bold/extrabold) + Caveat-Bold, file TTF
+ *   bundlati in api/_fonts/ — niente CDN runtime.
+ * - Foto ristorante: fetch server-side e passata come Buffer.
+ * - Layout: ~419pt totali per stare in singola pagina A6 (148mm).
  *
- * Auth: header `Authorization: Bearer <supabase_access_token>`. Solo il
- * proprietario della redemption può scaricare.
+ * Auth: header `Authorization: Bearer <supabase_access_token>`.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -23,13 +23,16 @@ import {
   Image,
   StyleSheet,
   pdf,
+  Font,
 } from '@react-pdf/renderer'
 import React from 'react'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 
 export const config = { maxDuration: 30 }
 
 /* ============================================================================
-   Token brand (matching template HTML)
+   Brand tokens (matching template HTML / app)
    ============================================================================ */
 const C = {
   page: '#FAF7F2',
@@ -45,12 +48,44 @@ const C = {
 }
 
 /* ============================================================================
-   Font: usiamo solo i built-in di react-pdf (Helvetica) per evitare la
-   dipendenza da CDN esterni che possono dare 404 e bloccare il render.
-   Il design del template usa Poppins (bold/extrabold) → Helvetica-Bold è
-   visivamente vicino. La caption "Mostra al ristoratore" che nel template
-   è in Caveat, qui usa Helvetica-BoldOblique color corallo come fallback.
+   Asset loading (lazy + cached per warm instance)
    ============================================================================ */
+const ROOT = process.cwd()
+const FONT_DIR = path.join(ROOT, 'api/_fonts')
+const ASSET_DIR = path.join(ROOT, 'api/_assets')
+
+let fontsRegistered = false
+async function registerFontsOnce() {
+  if (fontsRegistered) return
+  try {
+    Font.register({
+      family: 'Poppins',
+      fonts: [
+        { src: path.join(FONT_DIR, 'Poppins-Regular.ttf'), fontWeight: 400 },
+        { src: path.join(FONT_DIR, 'Poppins-Bold.ttf'), fontWeight: 700 },
+        { src: path.join(FONT_DIR, 'Poppins-ExtraBold.ttf'), fontWeight: 800 },
+      ],
+    })
+    Font.register({
+      family: 'Caveat',
+      fonts: [{ src: path.join(FONT_DIR, 'Caveat-Bold.ttf'), fontWeight: 700 }],
+    })
+    // Alfa Slab One — wordmark del brand "LA GUIDA DI BI"
+    // (header del sito live).
+    Font.register({
+      family: 'AlfaSlabOne',
+      fonts: [{ src: path.join(FONT_DIR, 'AlfaSlabOne-Regular.ttf'), fontWeight: 400 }],
+    })
+    Font.registerHyphenationCallback((w) => [w])
+    fontsRegistered = true
+  } catch (err) {
+    console.warn('[pdf] font registration failed:', err)
+  }
+}
+
+// Logo PNG legacy non più usato (il "vero" logo del sito è il wordmark
+// in Alfa Slab One renderizzato come testo). Mantengo l'asset bundlato
+// nel caso serva di nuovo in futuro, ma non lo carichiamo runtime.
 
 /* ============================================================================
    Helpers
@@ -100,155 +135,209 @@ function shortAddress(addr) {
   return addr.split(',')[0].trim()
 }
 
-function getMainPhoto(restaurant) {
+function getMainPhotoUrl(restaurant) {
   const p = restaurant?.photos?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
   return p?.photo_url || p?.thumb_url || null
 }
 
+async function fetchImageBuffer(url, { siteUrl, debug } = {}) {
+  if (!url) {
+    if (debug) debug.status = 'no-url'
+    console.warn('[pdf] photo: empty url')
+    return null
+  }
+  if (debug) debug.url = url
+  const isSupabaseStorage = /supabase\.co\/storage\//.test(url)
+  const fetchUrl = (isSupabaseStorage && siteUrl)
+    ? `${siteUrl}/api/img?url=${encodeURIComponent(url)}`
+    : url
+  if (debug) debug.fetchUrl = fetchUrl
+  console.log('[pdf] photo source:', { original: url, fetch: fetchUrl, viaProxy: fetchUrl !== url })
+
+  // Helper: una volta scaricati i byte, convertiamo SEMPRE in JPEG con
+  // sharp. react-pdf supporta solo PNG/JPEG (no WebP/HEIC/AVIF) — le foto
+  // dei ristoranti sono salvate in WebP, quindi senza conversione il PDF
+  // riceveva un Buffer "accettato" ma non renderizzato (fail silente).
+  const convertToJpeg = async (buf, ctype) => {
+    try {
+      const { default: sharp } = await import('sharp')
+      const out = await sharp(buf).rotate().jpeg({ quality: 80 }).toBuffer()
+      if (debug) debug.status = `ok-${out.length}b-from-${ctype || 'unknown'}`
+      console.log('[pdf] photo converted bytes:', out.length, 'from', ctype)
+      return out
+    } catch (err) {
+      console.warn('[pdf] sharp conversion failed:', err.message)
+      if (debug) debug.status = `convert-failed-${err.message}`
+      return null
+    }
+  }
+
+  try {
+    const res = await fetch(fetchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; ChiamamiBi-PDF/1.0)',
+        'Accept': 'image/*,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!res.ok) {
+      console.warn('[pdf] photo fetch non-200:', res.status, res.statusText, fetchUrl)
+      if (debug) debug.status = `non-200-${res.status}-via-${fetchUrl !== url ? 'proxy' : 'direct'}`
+      if (fetchUrl !== url) {
+        console.log('[pdf] photo retry direct:', url)
+        const r2 = await fetch(url, { signal: AbortSignal.timeout(15_000) })
+        if (r2.ok) {
+          const ab = await r2.arrayBuffer()
+          return convertToJpeg(Buffer.from(ab), r2.headers.get('content-type'))
+        }
+        if (debug) debug.status += `,retry-direct-${r2.status}`
+      }
+      return null
+    }
+    const ab = await res.arrayBuffer()
+    return convertToJpeg(Buffer.from(ab), res.headers.get('content-type'))
+  } catch (err) {
+    console.warn('[pdf] photo fetch error:', err.message, fetchUrl)
+    if (debug) debug.status = `error-${err.message}`
+    return null
+  }
+}
+
+async function streamToBuffer(stream) {
+  const chunks = []
+  for await (const c of stream) chunks.push(typeof c === 'string' ? Buffer.from(c) : c)
+  return Buffer.concat(chunks)
+}
+
 /* ============================================================================
-   Stili — replica del template HTML pdf-coupon-template.html
-   A6 = 105 × 148 mm = 297.6 × 419.5 pt (1mm ≈ 2.835pt).
+   Stili — A6 = 105 × 148 mm = 297.6 × 419.5 pt.
+   Ottimizzato per stare in 1 pagina.
    ============================================================================ */
 const styles = StyleSheet.create({
-  page: { backgroundColor: C.page, color: C.ink, padding: 0, flexDirection: 'column' },
-  /* Header */
-  header: { paddingTop: 18, paddingBottom: 8, paddingHorizontal: 22 },
+  page: { backgroundColor: C.page, fontFamily: 'Poppins', color: C.ink, padding: 0, flexDirection: 'column' },
+  /* Header — wordmark "LA GUIDA DI BI" in Alfa Slab One (come live) */
+  header: { paddingTop: 10, paddingBottom: 4, paddingHorizontal: 18, alignItems: 'flex-start' },
   logoText: {
-    fontFamily: 'Helvetica-Bold', fontSize: 18, color: C.corallo,
+    fontFamily: 'AlfaSlabOne', fontSize: 19, color: C.corallo,
     letterSpacing: 0.5, lineHeight: 1.05,
   },
   tagline: {
-    fontFamily: 'Helvetica-Bold', fontSize: 6, color: C.ink3,
-    letterSpacing: 1.7, marginTop: 3, marginLeft: 1,
+    fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.ink3,
+    letterSpacing: 1.5, marginTop: 2, marginLeft: 1,
   },
-  divider: { height: 0.5, backgroundColor: C.line, marginHorizontal: 22, marginTop: 4 },
+  divider: { height: 0.5, backgroundColor: C.line, marginHorizontal: 18, marginTop: 3 },
   /* Photo */
   photoWrap: {
-    marginHorizontal: 22, marginTop: 11, height: 90,
-    borderRadius: 7, overflow: 'hidden', backgroundColor: '#dcd0c0',
+    marginHorizontal: 18, marginTop: 7, height: 65,
+    borderRadius: 6, overflow: 'hidden', backgroundColor: '#dcd0c0',
   },
   photo: { width: '100%', height: '100%', objectFit: 'cover' },
+  photoFallback: {
+    width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#F1ECE3',
+  },
+  photoFallbackText: { fontSize: 24, color: '#dcd0c0' },
   /* Info locale */
-  info: { paddingHorizontal: 22, paddingTop: 11 },
+  info: { paddingHorizontal: 18, paddingTop: 7 },
   localeName: {
-    fontFamily: 'Helvetica-Bold', fontSize: 17, color: C.ink,
+    fontFamily: 'Poppins', fontWeight: 700, fontSize: 15, color: C.ink,
     lineHeight: 1.05, letterSpacing: -0.3,
   },
   localeMeta: {
-    fontFamily: 'Helvetica', fontSize: 7.5, color: C.ink2,
-    lineHeight: 1.3, marginTop: 3,
+    fontFamily: 'Poppins', fontWeight: 400, fontSize: 7.5, color: C.ink2,
+    lineHeight: 1.3, marginTop: 2,
   },
   /* Pct row */
   pctRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 22, paddingTop: 11, gap: 9,
+    paddingHorizontal: 18, paddingTop: 7, gap: 9,
   },
   pctBadge: {
-    backgroundColor: C.corallo, color: '#fff', fontFamily: 'Helvetica-Bold',
-    fontSize: 20, paddingVertical: 5, paddingHorizontal: 11,
-    borderRadius: 6, letterSpacing: -0.6,
+    backgroundColor: C.corallo, color: '#fff', fontFamily: 'Poppins', fontWeight: 800,
+    fontSize: 17, paddingTop: 4, paddingBottom: 3, paddingHorizontal: 10,
+    borderRadius: 5, letterSpacing: -0.6,
   },
-  pctClaim: { flex: 1, flexDirection: 'column' },
+  pctClaim: { flex: 1 },
   pctClaimLabel: {
-    fontFamily: 'Helvetica-Bold', fontSize: 6, color: C.ink3,
-    letterSpacing: 0.8, marginBottom: 2,
+    fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.ink3,
+    letterSpacing: 0.8, marginBottom: 1,
   },
-  pctClaimText: {
-    fontFamily: 'Helvetica', fontSize: 7.5, color: C.ink, lineHeight: 1.25,
-  },
+  pctClaimText: { fontFamily: 'Poppins', fontWeight: 400, fontSize: 7.5, color: C.ink, lineHeight: 1.2 },
   /* QR */
   qrWrap: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 22, paddingTop: 11,
+    paddingHorizontal: 18, paddingTop: 5,
   },
   qrBox: {
-    width: 142, height: 142, backgroundColor: '#fff',
-    borderWidth: 1.5, borderColor: C.ink, borderRadius: 8, padding: 8,
+    width: 110, height: 110, backgroundColor: '#fff',
+    borderWidth: 1.3, borderColor: C.ink, borderRadius: 7, padding: 5,
   },
   qrImage: { width: '100%', height: '100%' },
-  qrHint: {
-    fontFamily: 'Helvetica-BoldOblique', fontSize: 16, color: C.corallo,
-    marginTop: 7, lineHeight: 1,
-  },
-  codeText: {
-    fontFamily: 'Courier', fontSize: 7, color: C.ink3, letterSpacing: 1.5, marginTop: 5,
-  },
+  qrHint: { fontFamily: 'Caveat', fontWeight: 700, fontSize: 18, color: C.corallo, marginTop: 3, lineHeight: 1 },
+  codeText: { fontFamily: 'Courier', fontSize: 6.5, color: C.ink3, letterSpacing: 1.2, marginTop: 3 },
   scadPill: {
-    backgroundColor: C.oroSoft, color: C.oro, fontFamily: 'Helvetica-Bold',
-    fontSize: 7, paddingVertical: 4, paddingHorizontal: 12,
-    borderRadius: 100, marginTop: 6, letterSpacing: 0.3,
+    backgroundColor: C.oroSoft, color: C.oro, fontFamily: 'Poppins', fontWeight: 700,
+    fontSize: 7, paddingTop: 3, paddingBottom: 2, paddingHorizontal: 10,
+    borderRadius: 100, marginTop: 4, letterSpacing: 0.3,
   },
   /* Footer */
   footer: {
     borderTopWidth: 0.5, borderTopColor: C.line,
-    marginHorizontal: 22, marginTop: 9, paddingTop: 7, paddingBottom: 14,
+    marginHorizontal: 18, marginTop: 5, paddingTop: 5, paddingBottom: 7,
     alignItems: 'center',
   },
-  footerUrl: {
-    fontFamily: 'Helvetica-Bold', fontSize: 7, color: C.ink, letterSpacing: 0.5,
-  },
-  footerDisclaimer: {
-    fontFamily: 'Helvetica', fontSize: 5.5, color: C.ink3, marginTop: 2, letterSpacing: 0.3,
-  },
+  footerUrl: { fontFamily: 'Poppins', fontWeight: 700, fontSize: 7, color: C.ink, letterSpacing: 0.5 },
+  footerDisclaimer: { fontFamily: 'Poppins', fontWeight: 400, fontSize: 5.5, color: C.ink3, marginTop: 1.5, letterSpacing: 0.3 },
 })
 
 /* ============================================================================
-   Doc component
+   Document
    ============================================================================ */
 function CouponDocument({ ctx }) {
   return React.createElement(
-    Document,
-    null,
+    Document, null,
     React.createElement(
       Page,
-      // A6 = 105 × 148 mm
       { size: { width: 297.6, height: 419.5 }, style: styles.page },
-      // HEADER
+      // HEADER (wordmark Alfa Slab One + tagline)
       React.createElement(
-        View,
-        { style: styles.header },
+        View, { style: styles.header },
         React.createElement(Text, { style: styles.logoText }, 'LA GUIDA DI BI'),
         React.createElement(Text, { style: styles.tagline }, 'BY CHIAMAMI BI')
       ),
       React.createElement(View, { style: styles.divider }),
       // PHOTO
-      ctx.photoBuffer
-        ? React.createElement(
-            View,
-            { style: styles.photoWrap },
-            React.createElement(Image, { src: ctx.photoBuffer, style: styles.photo })
-          )
-        : React.createElement(View, { style: styles.photoWrap }),
+      React.createElement(
+        View, { style: styles.photoWrap },
+        ctx.photoBuffer
+          ? React.createElement(Image, { src: ctx.photoBuffer, style: styles.photo })
+          : React.createElement(View, { style: styles.photoFallback },
+              React.createElement(Text, { style: styles.photoFallbackText }, '🍽'))
+      ),
       // NOME + META
       React.createElement(
-        View,
-        { style: styles.info },
+        View, { style: styles.info },
         React.createElement(Text, { style: styles.localeName }, ctx.locale_nome),
         React.createElement(
-          Text,
-          { style: styles.localeMeta },
+          Text, { style: styles.localeMeta },
           [ctx.locale_categoria, ctx.locale_indirizzo].filter(Boolean).join(' · ')
         )
       ),
       // PERCENTUALE
       React.createElement(
-        View,
-        { style: styles.pctRow },
+        View, { style: styles.pctRow },
         React.createElement(Text, { style: styles.pctBadge }, ctx.percentuale || '—'),
         React.createElement(
-          View,
-          { style: styles.pctClaim },
+          View, { style: styles.pctClaim },
           React.createElement(Text, { style: styles.pctClaimLabel }, 'SCONTO RISERVATO'),
           React.createElement(Text, { style: styles.pctClaimText }, ctx.descrizione_sconto)
         )
       ),
       // QR
       React.createElement(
-        View,
-        { style: styles.qrWrap },
+        View, { style: styles.qrWrap },
         React.createElement(
-          View,
-          { style: styles.qrBox },
+          View, { style: styles.qrBox },
           React.createElement(Image, { src: ctx.qr_data_url, style: styles.qrImage })
         ),
         React.createElement(Text, { style: styles.qrHint }, 'Mostra al ristoratore'),
@@ -259,38 +348,13 @@ function CouponDocument({ ctx }) {
       ),
       // FOOTER
       React.createElement(
-        View,
-        { style: styles.footer },
+        View, { style: styles.footer },
         React.createElement(Text, { style: styles.footerUrl }, 'chiamamibi.com'),
-        React.createElement(
-          Text,
-          { style: styles.footerDisclaimer },
-          'Codice valido una sola volta · La guida di Bi'
-        )
+        React.createElement(Text, { style: styles.footerDisclaimer },
+          'Codice valido una sola volta · La guida di Bi')
       )
     )
   )
-}
-
-/* ============================================================================
-   Helpers binari
-   ============================================================================ */
-async function fetchImageBuffer(url) {
-  if (!url) return null
-  try {
-    const res = await fetch(url)
-    if (!res.ok) return null
-    const ab = await res.arrayBuffer()
-    return Buffer.from(ab)
-  } catch {
-    return null
-  }
-}
-
-async function streamToBuffer(stream) {
-  const chunks = []
-  for await (const c of stream) chunks.push(typeof c === 'string' ? Buffer.from(c) : c)
-  return Buffer.concat(chunks)
 }
 
 /* ============================================================================
@@ -341,8 +405,7 @@ export default async function handler(req, res) {
         id, title, description, discount_type, discount_value, conditions,
         valid_until, drop_ends_at, is_drop,
         restaurant:restaurants(
-          id, name, slug, address, cuisine_type, category,
-          photos:restaurant_photos(id, photo_url, thumb_url, sort_order)
+          id, name, slug, address, cuisine_type, category
         )
       )
     `)
@@ -362,8 +425,22 @@ export default async function handler(req, res) {
     return
   }
 
-  // Costruiamo il context per il component PDF.
-  const cuisine = restaurant.cuisine_type || (Array.isArray(restaurant.category) ? restaurant.category[0] : null) || 'Locale'
+  // Query separata per le foto: il join nidificato a 3 livelli
+  // (redemption → discount → restaurant → photos) a volte non popola
+  // `photos` in Supabase REST. Più affidabile fare una query diretta.
+  const { data: photos, error: photosErr } = await adminClient
+    .from('restaurant_photos')
+    .select('photo_url, thumb_url, sort_order')
+    .eq('restaurant_id', restaurant.id)
+    .order('sort_order', { ascending: true })
+    .limit(3)
+  if (photosErr) console.warn('[pdf] photos query err:', photosErr.message)
+  console.log('[pdf] photos rows:', photos?.length || 0, photos?.[0])
+  restaurant.photos = photos || []
+
+  const cuisine = restaurant.cuisine_type
+    || (Array.isArray(restaurant.category) ? restaurant.category[0] : null)
+    || 'Locale'
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://chiamamibi.com').replace(/\/$/, '')
 
   const ctx = {
@@ -376,29 +453,42 @@ export default async function handler(req, res) {
     scadenza: formatExpiryLabel(deal),
   }
 
-  // QR data URL — payload identico al sistema scan ristoratore.
+  // QR
   const qrPayload = `${siteUrl}/verify?code=${redemption.qr_code}`
   ctx.qr_data_url = await QRCode.toDataURL(qrPayload, {
-    width: 600,
-    margin: 1,
-    color: { dark: '#000000', light: '#FFFFFF' },
+    width: 600, margin: 1, color: { dark: '#000000', light: '#FFFFFF' },
   })
 
-  // Foto: react-pdf legge URL ma su serverless con CORS può fallire. Fetch
-  // server-side e passiamo il Buffer.
-  const photoUrl = getMainPhoto(restaurant)
-  ctx.photoBuffer = await fetchImageBuffer(photoUrl)
+  // Foto del ristorante (server-side fetch, eventualmente via /api/img).
+  // Determiniamo l'host della richiesta corrente per costruire il proxy
+  // URL: in preview Vercel diverso da prod.
+  const reqHost = req.headers['x-forwarded-host'] || req.headers.host
+  const reqProto = req.headers['x-forwarded-proto'] || 'https'
+  const apiBaseUrl = reqHost ? `${reqProto}://${reqHost}` : siteUrl
+
+  const photoUrl = getMainPhotoUrl(restaurant)
+  console.log('[pdf] photo url from DB:', photoUrl, 'apiBase:', apiBaseUrl)
+  const photoDebug = {}
+  ctx.photoBuffer = await fetchImageBuffer(photoUrl, { siteUrl: apiBaseUrl, debug: photoDebug })
+
+  // Font (registrazione lazy una sola volta per warm instance).
+  await registerFontsOnce()
 
   try {
     const doc = React.createElement(CouponDocument, { ctx })
-    const stream = await pdf(doc).toBuffer()
-    const buffer = Buffer.isBuffer(stream) ? stream : await streamToBuffer(stream)
+    const result = await pdf(doc).toBuffer()
+    const buffer = Buffer.isBuffer(result) ? result : await streamToBuffer(result)
 
     const filename = `sconto-${slugify(restaurant.name)}.pdf`
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', buffer.length)
     res.setHeader('Cache-Control', 'private, no-store')
+    // Debug: stato della foto leggibile da DevTools → Network → Response
+    // Headers, senza dover andare nei log Vercel.
+    res.setHeader('X-Photo-Status', photoDebug.status || 'unknown')
+    if (photoDebug.url) res.setHeader('X-Photo-Url', encodeURIComponent(photoDebug.url).slice(0, 800))
+    res.setHeader('X-Photos-Found', String(photos?.length || 0))
     res.status(200).end(buffer)
   } catch (err) {
     console.error('[pdf] react-pdf render failed:', err && err.stack ? err.stack : err)
