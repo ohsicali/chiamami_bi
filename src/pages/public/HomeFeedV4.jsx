@@ -631,35 +631,37 @@ export default function HomeFeedV4() {
           pointer-events: none;
         }
 
-        /* Mobile <1024px: hero stack verticale, foto sopra il body */
+        /* Mobile <1024px: hero compatto, foto quadrata a destra, body a sinistra. */
         @media (max-width: 1023px) {
           .hfv4-hero-card {
-            display: flex !important;
-            flex-direction: column !important;
-            padding: 0 !important;
-            gap: 0 !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 14px !important;
+            padding: 16px !important;
+            align-items: stretch !important;
           }
           .hfv4-hero-photo {
-            order: -1 !important;
-            height: 156px !important;
+            order: 0 !important;
+            width: 100% !important;
+            height: auto !important;
             min-height: 0 !important;
+            align-self: stretch !important;
+            border-radius: 14px !important;
           }
-          .hfv4-hero-body { padding: 18px 18px 18px !important; }
+          .hfv4-hero-body { padding: 0 !important; min-width: 0 !important; }
           .hfv4-hero-chip {
-            position: absolute !important;
-            top: 14px !important; left: 14px !important;
-            z-index: 3 !important;
-            background: rgba(0,0,0,.4) !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-            margin-bottom: 0 !important;
+            position: static !important;
+            margin-bottom: 8px !important;
+            background: rgba(255,255,255,.18) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
           }
           .hfv4-hero-title { display: none !important; }
-          .hfv4-mob-pct { display: block !important; }
-          .hfv4-mob-loc { display: block !important; }
+          .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
+          .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
           .hfv4-hero-progress { display: none !important; }
           .hfv4-mob-progress { display: flex !important; }
-          .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: unset !important; display: block !important; overflow: visible !important; }
+          .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: 2 !important; display: -webkit-box !important; overflow: hidden !important; }
           .hfv4-hero-ctas {
             display: grid !important;
             grid-template-columns: 1fr auto !important;
@@ -667,8 +669,9 @@ export default function HomeFeedV4() {
           }
           .hfv4-cta-desk { display: none !important; }
           .hfv4-cta-mob { display: inline-flex !important; }
-          .hfv4-mob-countdown { display: inline-flex !important; }
-          .hfv4-mob-cat { display: inline-flex !important; }
+          /* Sulla miniatura quadrata gli overlay non si leggono più, li nascondo. */
+          .hfv4-mob-countdown { display: none !important; }
+          .hfv4-mob-cat { display: none !important; }
         }
 
         /* Desktop ≥1024px per sezioni originali (hero, cats, Ultimi aggiunti) */
