@@ -128,10 +128,11 @@ export default function DesktopSavedPage() {
     const ids = [...savedIds]
     supabase
       .from('restaurants')
-      .select('id, name, slug, city, address, latitude, longitude, cuisine_type, category, price_range, hours_cache, is_vegan, is_vegetarian, is_healthy, is_gluten_free, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
+      .select('*, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
       .in('id', ids)
       .eq('is_published', true)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('[DesktopSavedPage] fetch error:', error)
         setRestaurants(data || [])
         setLoading(false)
       })
