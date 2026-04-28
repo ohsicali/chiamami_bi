@@ -497,15 +497,45 @@ function SuggestCard() {
         className="hfv4-suggest"
         style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-ink)', color: '#fff', borderRadius: 28, padding: 22, display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center' }}
       >
+        {/* Blob corallo top-right (mobile + desktop) */}
         <span aria-hidden style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, background: 'radial-gradient(circle, rgba(232,69,60,.25), transparent 70%)', borderRadius: '50%' }} />
+        {/* Blob oro bottom-left — desktop only */}
+        <span aria-hidden className="hfv4-suggest-blob-bl" style={{ display: 'none', position: 'absolute', bottom: -80, left: -60, width: 240, height: 240, background: 'radial-gradient(circle, rgba(176,137,84,.16), transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+
         <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Eyebrow corallo — desktop only */}
+          <div className="hfv4-suggest-eyebrow" style={{ display: 'none', fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-corallo)', marginBottom: 12 }}>
+            Scrivimi
+          </div>
           <div className="hfv4-suggest-title" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 18, lineHeight: 1.15, letterSpacing: '-0.01em', marginBottom: 6, maxWidth: 220 }}>
             Conosci un posto che manca?
           </div>
           <div className="hfv4-suggest-sub" style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.35, maxWidth: 240 }}>
             Scrivimi nome + zona. Se è buono, entra.
           </div>
+          {/* Signature Caveat — desktop only */}
+          <div className="hfv4-suggest-sig" style={{ display: 'none', fontFamily: 'var(--font-editorial, "Caveat", cursive)', fontSize: 24, color: 'rgba(255,255,255,.85)', marginTop: 16, lineHeight: 1 }}>
+            — Bi
+          </div>
+          {/* CTA row — desktop only (replaces single mobile CTA) */}
+          <div className="hfv4-suggest-ctas" style={{ display: 'none', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setShowSuggest(true)}
+              style={{ padding: '14px 24px', background: 'var(--color-corallo)', color: '#fff', borderRadius: 999, fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', boxShadow: '0 6px 14px rgba(232,69,60,.35)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              Suggerisci un posto →
+            </button>
+            <Link
+              to="/about"
+              style={{ padding: '14px 22px', background: 'transparent', border: '1px solid rgba(255,255,255,.20)', color: 'rgba(255,255,255,.85)', borderRadius: 999, fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'none' }}
+            >
+              Come scelgo i locali
+            </Link>
+          </div>
         </div>
+
+        {/* CTA mobile compatto — nascosto su desktop */}
         <button
           type="button"
           onClick={() => setShowSuggest(true)}
@@ -514,6 +544,19 @@ function SuggestCard() {
         >
           Suggerisci →
         </button>
+
+        {/* Photo Bi + sticky note Caveat — desktop only */}
+        <div className="hfv4-suggest-photo" style={{ display: 'none', position: 'relative', zIndex: 1 }}>
+          <span aria-hidden style={{ position: 'absolute', inset: -16, background: 'radial-gradient(circle, rgba(232,69,60,.32), transparent 70%)', borderRadius: '50%', filter: 'blur(12px)', pointerEvents: 'none' }} />
+          <img
+            src="/bi-photo.JPG"
+            alt="Bi"
+            style={{ position: 'relative', width: 200, height: 200, borderRadius: '50%', objectFit: 'cover', border: '4px solid rgba(255,255,255,.16)', boxShadow: '0 16px 40px rgba(0,0,0,.35)', display: 'block' }}
+          />
+          <span aria-hidden style={{ position: 'absolute', top: -10, right: -28, fontFamily: 'var(--font-editorial, "Caveat", cursive)', fontSize: 26, color: 'var(--color-corallo)', transform: 'rotate(-8deg)', whiteSpace: 'nowrap', textShadow: '0 1px 0 rgba(0,0,0,.2)' }}>
+            scrivimi! ✦
+          </span>
+        </div>
       </div>
     </div>
     {showSuggest && (
@@ -807,7 +850,7 @@ export default function HomeFeedV4() {
             border-radius: 999px !important;
           }
 
-          /* === SuggestCard full-width e grande === */
+          /* === SuggestCard desktop: 2-col editorial con foto Bi === */
           .hfv4-suggest-outer {
             max-width: 1240px;
             margin: 0 auto;
@@ -815,24 +858,36 @@ export default function HomeFeedV4() {
           }
           .hfv4-suggest-outer .hfv4-suggest-wrap { padding: 0 !important; }
           .hfv4-suggest {
-            padding: 48px 56px !important;
-            border-radius: 28px !important;
+            padding: 56px 64px !important;
+            border-radius: 32px !important;
+            grid-template-columns: 1fr 240px !important;
+            gap: 48px !important;
+            align-items: center !important;
           }
+          .hfv4-suggest-eyebrow { display: block !important; }
           .hfv4-suggest-title {
-            font-size: 36px !important;
+            font-size: 44px !important;
             max-width: none !important;
-            letter-spacing: -.02em !important;
+            letter-spacing: -.025em !important;
             line-height: 1.05 !important;
+            margin-bottom: 14px !important;
           }
           .hfv4-suggest-sub {
-            font-size: 15px !important;
+            font-size: 16px !important;
             max-width: 520px !important;
-            margin-top: 10px !important;
+            margin-top: 0 !important;
+            line-height: 1.5 !important;
+            color: rgba(255,255,255,.72) !important;
           }
-          .hfv4-suggest-cta {
-            padding: 16px 28px !important;
-            font-size: 14px !important;
+          .hfv4-suggest-sig { display: block !important; }
+          .hfv4-suggest-ctas { display: flex !important; }
+          .hfv4-suggest > .hfv4-suggest-cta { display: none !important; }
+          .hfv4-suggest-photo {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
           }
+          .hfv4-suggest-blob-bl { display: block !important; }
 
         }
       `}</style>
