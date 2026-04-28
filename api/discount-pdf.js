@@ -140,17 +140,18 @@ function getMainPhotoUrl(restaurant) {
   return p?.photo_url || p?.thumb_url || null
 }
 
-async function fetchImageBuffer(url, { siteUrl } = {}) {
+async function fetchImageBuffer(url, { siteUrl, debug } = {}) {
   if (!url) {
+    if (debug) debug.status = 'no-url'
     console.warn('[pdf] photo: empty url')
     return null
   }
-  // Se è uno storage Supabase, passiamo per il proxy /api/img che già
-  // gira in produzione (cache + headers giusti). Altrimenti fetch diretto.
+  if (debug) debug.url = url
   const isSupabaseStorage = /supabase\.co\/storage\//.test(url)
   const fetchUrl = (isSupabaseStorage && siteUrl)
     ? `${siteUrl}/api/img?url=${encodeURIComponent(url)}`
     : url
+  if (debug) debug.fetchUrl = fetchUrl
   console.log('[pdf] photo source:', { original: url, fetch: fetchUrl, viaProxy: fetchUrl !== url })
   try {
     const res = await fetch(fetchUrl, {
@@ -158,31 +159,33 @@ async function fetchImageBuffer(url, { siteUrl } = {}) {
         'User-Agent': 'Mozilla/5.0 (compatible; ChiamamiBi-PDF/1.0)',
         'Accept': 'image/*,*/*;q=0.8',
       },
-      // Vercel ha fetch global da Node 18+; il timeout di default è
-      // adeguato. Aborto manuale in caso di hang prolungato.
       signal: AbortSignal.timeout(15_000),
     })
     if (!res.ok) {
       console.warn('[pdf] photo fetch non-200:', res.status, res.statusText, fetchUrl)
-      // Se proxy fallisce, riprova diretto (best-effort)
+      if (debug) debug.status = `non-200-${res.status}-via-${fetchUrl !== url ? 'proxy' : 'direct'}`
       if (fetchUrl !== url) {
         console.log('[pdf] photo retry direct:', url)
         const r2 = await fetch(url, { signal: AbortSignal.timeout(15_000) })
         if (r2.ok) {
           const ab = await r2.arrayBuffer()
           const buf = Buffer.from(ab)
+          if (debug) debug.status = `ok-direct-${buf.length}b`
           console.log('[pdf] photo direct OK bytes:', buf.length)
           return buf
         }
+        if (debug) debug.status += `,retry-direct-${r2.status}`
       }
       return null
     }
     const ab = await res.arrayBuffer()
     const buf = Buffer.from(ab)
+    if (debug) debug.status = `ok-${buf.length}b-${res.headers.get('content-type') || ''}`
     console.log('[pdf] photo OK bytes:', buf.length, 'content-type:', res.headers.get('content-type'))
     return buf
   } catch (err) {
     console.warn('[pdf] photo fetch error:', err.message, fetchUrl)
+    if (debug) debug.status = `error-${err.message}`
     return null
   }
 }
@@ -389,8 +392,7 @@ export default async function handler(req, res) {
         id, title, description, discount_type, discount_value, conditions,
         valid_until, drop_ends_at, is_drop,
         restaurant:restaurants(
-          id, name, slug, address, cuisine_type, category,
-          photos:restaurant_photos(id, photo_url, thumb_url, sort_order)
+          id, name, slug, address, cuisine_type, category
         )
       )
     `)
@@ -409,6 +411,19 @@ export default async function handler(req, res) {
     res.status(404).json({ error: 'Dati sconto incompleti' })
     return
   }
+
+  // Query separata per le foto: il join nidificato a 3 livelli
+  // (redemption → discount → restaurant → photos) a volte non popola
+  // `photos` in Supabase REST. Più affidabile fare una query diretta.
+  const { data: photos, error: photosErr } = await adminClient
+    .from('restaurant_photos')
+    .select('photo_url, thumb_url, sort_order')
+    .eq('restaurant_id', restaurant.id)
+    .order('sort_order', { ascending: true })
+    .limit(3)
+  if (photosErr) console.warn('[pdf] photos query err:', photosErr.message)
+  console.log('[pdf] photos rows:', photos?.length || 0, photos?.[0])
+  restaurant.photos = photos || []
 
   const cuisine = restaurant.cuisine_type
     || (Array.isArray(restaurant.category) ? restaurant.category[0] : null)
@@ -440,7 +455,8 @@ export default async function handler(req, res) {
 
   const photoUrl = getMainPhotoUrl(restaurant)
   console.log('[pdf] photo url from DB:', photoUrl, 'apiBase:', apiBaseUrl)
-  ctx.photoBuffer = await fetchImageBuffer(photoUrl, { siteUrl: apiBaseUrl })
+  const photoDebug = {}
+  ctx.photoBuffer = await fetchImageBuffer(photoUrl, { siteUrl: apiBaseUrl, debug: photoDebug })
 
   // Font (registrazione lazy una sola volta per warm instance).
   await registerFontsOnce()
@@ -455,6 +471,11 @@ export default async function handler(req, res) {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', buffer.length)
     res.setHeader('Cache-Control', 'private, no-store')
+    // Debug: stato della foto leggibile da DevTools → Network → Response
+    // Headers, senza dover andare nei log Vercel.
+    res.setHeader('X-Photo-Status', photoDebug.status || 'unknown')
+    if (photoDebug.url) res.setHeader('X-Photo-Url', encodeURIComponent(photoDebug.url).slice(0, 800))
+    res.setHeader('X-Photos-Found', String(photos?.length || 0))
     res.status(200).end(buffer)
   } catch (err) {
     console.error('[pdf] react-pdf render failed:', err && err.stack ? err.stack : err)
