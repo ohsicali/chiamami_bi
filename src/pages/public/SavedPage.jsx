@@ -399,6 +399,7 @@ export default function SavedPage() {
                 const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
                 const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
                 const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
+                const neighborhood = r.address ? r.address.split(',')[0].trim() : null
                 return (
                   <div
                     key={r.id}
@@ -450,7 +451,7 @@ export default function SavedPage() {
                         fontSize: 10.5, color: 'var(--color-ink-70)', marginTop: 3,
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
-                        {r.neighborhood || r.city}
+                        {neighborhood || r.city}
                         {priceStr && <> · {priceStr}</>}
                       </div>
                     </div>
