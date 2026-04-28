@@ -546,7 +546,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
       style={isUsed ? { opacity: 0.55 } : undefined}
     >
-      <div className="sc-ph">
+      <div className="sc-ph" style={photo ? { '--ph-bg': `url("${photo.replace(/"/g, '\\"')}")` } : undefined}>
         {photo ? (
           <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
         ) : (
