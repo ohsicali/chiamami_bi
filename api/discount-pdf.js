@@ -70,6 +70,12 @@ async function registerFontsOnce() {
       family: 'Caveat',
       fonts: [{ src: path.join(FONT_DIR, 'Caveat-Bold.ttf'), fontWeight: 700 }],
     })
+    // Alfa Slab One — wordmark del brand "LA GUIDA DI BI"
+    // (header del sito live).
+    Font.register({
+      family: 'AlfaSlabOne',
+      fonts: [{ src: path.join(FONT_DIR, 'AlfaSlabOne-Regular.ttf'), fontWeight: 400 }],
+    })
     Font.registerHyphenationCallback((w) => [w])
     fontsRegistered = true
   } catch (err) {
@@ -77,17 +83,9 @@ async function registerFontsOnce() {
   }
 }
 
-let logoBuffer = null
-async function loadLogo() {
-  if (logoBuffer) return logoBuffer
-  try {
-    logoBuffer = await readFile(path.join(ASSET_DIR, 'logo-guida-bi.png'))
-    return logoBuffer
-  } catch (err) {
-    console.warn('[pdf] logo not loadable:', err.message)
-    return null
-  }
-}
+// Logo PNG legacy non più usato (il "vero" logo del sito è il wordmark
+// in Alfa Slab One renderizzato come testo). Mantengo l'asset bundlato
+// nel caso serva di nuovo in futuro, ma non lo carichiamo runtime.
 
 /* ============================================================================
    Helpers
@@ -142,26 +140,49 @@ function getMainPhotoUrl(restaurant) {
   return p?.photo_url || p?.thumb_url || null
 }
 
-async function fetchImageBuffer(url) {
-  if (!url) return null
+async function fetchImageBuffer(url, { siteUrl } = {}) {
+  if (!url) {
+    console.warn('[pdf] photo: empty url')
+    return null
+  }
+  // Se è uno storage Supabase, passiamo per il proxy /api/img che già
+  // gira in produzione (cache + headers giusti). Altrimenti fetch diretto.
+  const isSupabaseStorage = /supabase\.co\/storage\//.test(url)
+  const fetchUrl = (isSupabaseStorage && siteUrl)
+    ? `${siteUrl}/api/img?url=${encodeURIComponent(url)}`
+    : url
+  console.log('[pdf] photo source:', { original: url, fetch: fetchUrl, viaProxy: fetchUrl !== url })
   try {
-    const res = await fetch(url, {
+    const res = await fetch(fetchUrl, {
       headers: {
-        // Some buckets reject requests without UA.
         'User-Agent': 'Mozilla/5.0 (compatible; ChiamamiBi-PDF/1.0)',
-        'Accept': 'image/*',
+        'Accept': 'image/*,*/*;q=0.8',
       },
+      // Vercel ha fetch global da Node 18+; il timeout di default è
+      // adeguato. Aborto manuale in caso di hang prolungato.
+      signal: AbortSignal.timeout(15_000),
     })
     if (!res.ok) {
-      console.warn('[pdf] photo fetch non-200:', res.status, url)
+      console.warn('[pdf] photo fetch non-200:', res.status, res.statusText, fetchUrl)
+      // Se proxy fallisce, riprova diretto (best-effort)
+      if (fetchUrl !== url) {
+        console.log('[pdf] photo retry direct:', url)
+        const r2 = await fetch(url, { signal: AbortSignal.timeout(15_000) })
+        if (r2.ok) {
+          const ab = await r2.arrayBuffer()
+          const buf = Buffer.from(ab)
+          console.log('[pdf] photo direct OK bytes:', buf.length)
+          return buf
+        }
+      }
       return null
     }
     const ab = await res.arrayBuffer()
     const buf = Buffer.from(ab)
-    console.log('[pdf] photo fetched bytes:', buf.length)
+    console.log('[pdf] photo OK bytes:', buf.length, 'content-type:', res.headers.get('content-type'))
     return buf
   } catch (err) {
-    console.warn('[pdf] photo fetch error:', err.message, url)
+    console.warn('[pdf] photo fetch error:', err.message, fetchUrl)
     return null
   }
 }
@@ -178,9 +199,12 @@ async function streamToBuffer(stream) {
    ============================================================================ */
 const styles = StyleSheet.create({
   page: { backgroundColor: C.page, fontFamily: 'Poppins', color: C.ink, padding: 0, flexDirection: 'column' },
-  /* Header — compact */
+  /* Header — wordmark "LA GUIDA DI BI" in Alfa Slab One (come live) */
   header: { paddingTop: 10, paddingBottom: 4, paddingHorizontal: 18, alignItems: 'flex-start' },
-  logoImg: { height: 19, width: 'auto' },
+  logoText: {
+    fontFamily: 'AlfaSlabOne', fontSize: 19, color: C.corallo,
+    letterSpacing: 0.5, lineHeight: 1.05,
+  },
   tagline: {
     fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.ink3,
     letterSpacing: 1.5, marginTop: 2, marginLeft: 1,
@@ -259,14 +283,10 @@ function CouponDocument({ ctx }) {
     React.createElement(
       Page,
       { size: { width: 297.6, height: 419.5 }, style: styles.page },
-      // HEADER (logo PNG + tagline)
+      // HEADER (wordmark Alfa Slab One + tagline)
       React.createElement(
         View, { style: styles.header },
-        ctx.logoBuffer
-          ? React.createElement(Image, { src: ctx.logoBuffer, style: styles.logoImg })
-          : React.createElement(Text, {
-              style: { fontFamily: 'Poppins', fontWeight: 800, fontSize: 17, color: C.corallo, letterSpacing: 0.5 },
-            }, 'LA GUIDA DI BI'),
+        React.createElement(Text, { style: styles.logoText }, 'LA GUIDA DI BI'),
         React.createElement(Text, { style: styles.tagline }, 'BY CHIAMAMI BI')
       ),
       React.createElement(View, { style: styles.divider }),
@@ -411,13 +431,16 @@ export default async function handler(req, res) {
     width: 600, margin: 1, color: { dark: '#000000', light: '#FFFFFF' },
   })
 
-  // Foto del ristorante (server-side fetch).
-  const photoUrl = getMainPhotoUrl(restaurant)
-  console.log('[pdf] photo url:', photoUrl)
-  ctx.photoBuffer = await fetchImageBuffer(photoUrl)
+  // Foto del ristorante (server-side fetch, eventualmente via /api/img).
+  // Determiniamo l'host della richiesta corrente per costruire il proxy
+  // URL: in preview Vercel diverso da prod.
+  const reqHost = req.headers['x-forwarded-host'] || req.headers.host
+  const reqProto = req.headers['x-forwarded-proto'] || 'https'
+  const apiBaseUrl = reqHost ? `${reqProto}://${reqHost}` : siteUrl
 
-  // Logo PNG bundlato.
-  ctx.logoBuffer = await loadLogo()
+  const photoUrl = getMainPhotoUrl(restaurant)
+  console.log('[pdf] photo url from DB:', photoUrl, 'apiBase:', apiBaseUrl)
+  ctx.photoBuffer = await fetchImageBuffer(photoUrl, { siteUrl: apiBaseUrl })
 
   // Font (registrazione lazy una sola volta per warm instance).
   await registerFontsOnce()
