@@ -12,7 +12,8 @@
       "maxDuration": 10
     },
     "api/discount-pdf.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "api/_{fonts,assets}/**"
     }
   },
   "headers": [
