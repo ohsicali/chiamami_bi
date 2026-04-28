@@ -313,7 +313,8 @@ body {
   .footer-tab-offset { padding-bottom: 40px !important; }
 }
 @media (max-width: 767px) {
-  .footer-tab-offset { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 68px) !important; }
+  /* 18px (gap from screen bottom) + 68px (nav height) + 18px breathing room */
+  .footer-tab-offset { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 104px) !important; }
 }
 
 .bottom-nav .nav-item {
