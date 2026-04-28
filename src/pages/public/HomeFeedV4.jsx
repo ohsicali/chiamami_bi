@@ -287,33 +287,26 @@ function HeroPromo({ featured }) {
           <div className="hfv4-mob-pct" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4 }}>
             {featured.discountLabel}
           </div>
-          <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 10, opacity: 0.95 }}>
-            da {featured.restaurantName}
-          </div>
-          {/* Mobile-only: descrizione + città · sopra la categoria */}
-          {(featured.description || featured.city) && (
+          {/* Mobile-only: tagline del locale subito sotto allo sconto */}
+          {featured.tagline && (
             <div
-              className="hfv4-mob-desc-city"
-              style={{ display: 'none', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 12, color: 'rgba(255,255,255,.85)', lineHeight: 1.3, marginBottom: 8 }}
+              className="hfv4-mob-tagline"
+              style={{ display: 'none', fontSize: 12, color: 'rgba(255,255,255,.85)', lineHeight: 1.3, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
             >
-              {featured.description && (
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                  {featured.description}
-                </span>
-              )}
-              {featured.description && featured.city && (
-                <span aria-hidden style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,.5)', flex: '0 0 auto' }} />
-              )}
-              {featured.city && (
-                <span style={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>{featured.city}</span>
-              )}
+              {featured.tagline}
             </div>
           )}
+          <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 8, opacity: 0.95 }}>
+            <span>da {featured.restaurantName}</span>
+            {featured.city && (
+              <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.8, marginLeft: 8 }}>· {featured.city}</span>
+            )}
+          </div>
           {/* Mobile-only: badge categoria colorato + prezzo */}
           {(featured.catName || featured.priceLabel) && (
             <div
               className="hfv4-mob-cat-price"
-              style={{ display: 'none', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+              style={{ display: 'none', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}
             >
               {featured.catName && (
                 <span
@@ -333,6 +326,15 @@ function HeroPromo({ featured }) {
                   {featured.priceLabel}
                 </span>
               )}
+            </div>
+          )}
+          {/* Mobile-only: descrizione del drop ("20% sul totale") in fondo all'info */}
+          {featured.dropDescription && (
+            <div
+              className="hfv4-mob-drop-desc"
+              style={{ display: 'none', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)', lineHeight: 1.3 }}
+            >
+              {featured.dropDescription}
             </div>
           )}
           {featured.restLine && (
@@ -622,7 +624,8 @@ export default function HomeFeedV4() {
       }
     }
     const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
-    const description = drop.description || drop.title || ''
+    const tagline = r.tagline || ''
+    const dropDescription = drop.description || drop.title || ''
     const priceLabel = r.price_range ? '€'.repeat(Math.max(1, Math.min(4, r.price_range))) : ''
     return {
       title: `${label}\nda ${r.name}.`,
@@ -630,7 +633,8 @@ export default function HomeFeedV4() {
       restaurantName: r.name,
       restLine,
       subtitle: subtitleParts.join(' · '),
-      description,
+      tagline,
+      dropDescription,
       city: r.city || '',
       priceLabel,
       categoryColor: catInfo?.color || '#6B7280',
@@ -725,12 +729,13 @@ export default function HomeFeedV4() {
           .hfv4-hero-title { display: none !important; }
           .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
           .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
-          /* Su mobile rest-line e subtitle vengono sostituiti dai due
-             nuovi blocchi descrizione+città e categoria+prezzo. */
+          /* Su mobile rest-line e subtitle vengono sostituiti dai blocchi
+             tagline / loc+città / cat+prezzo / drop description. */
           .hfv4-hero-rest-line { display: none !important; }
           .hfv4-hero-sub { display: none !important; }
-          .hfv4-mob-desc-city { display: flex !important; }
+          .hfv4-mob-tagline { display: -webkit-box !important; }
           .hfv4-mob-cat-price { display: flex !important; }
+          .hfv4-mob-drop-desc { display: block !important; }
           .hfv4-hero-progress { display: none !important; }
           .hfv4-mob-progress {
             grid-area: progress !important;
