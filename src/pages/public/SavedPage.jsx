@@ -37,7 +37,6 @@ export default function SavedPage() {
   const [headerH, setHeaderH] = useState(0)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [sortMode, setSortMode] = useState('recent')
-  const [activeList, setActiveList] = useState('all')
   const { city: currentCity } = useCity()
   const isDesktop = useIsDesktop()
 
@@ -461,46 +460,6 @@ export default function SavedPage() {
               const sortSub = sortMode === 'recent' ? 'Ordinati per ultimo aggiunto' : sortMode === 'name' ? 'Ordine alfabetico' : 'Più vicini a te'
               return (
                 <>
-                  {/* sv-lists chips */}
-                  <div style={{
-                    display: 'flex', gap: 8, overflowX: 'auto',
-                    margin: '0 -16px 10px', padding: '0 16px 4px',
-                    WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none',
-                  }}>
-                    {[
-                      { key: 'all', label: 'Tutti', count: `${cityRestaurants.length} LOCALI` },
-                      { key: 'deals', label: 'Con sconto', count: dealsCount > 0 ? `${dealsCount} ATTIVI` : null },
-                    ].map(l => (
-                      <div
-                        key={l.key}
-                        onClick={() => {
-                          setActiveList(l.key)
-                          if (l.key === 'deals') { setShowDealsOnly(true) }
-                          else { setShowDealsOnly(false) }
-                        }}
-                        style={{
-                          flex: '0 0 auto', padding: '10px 14px',
-                          borderRadius: 14, minWidth: 130,
-                          background: activeList === l.key ? 'var(--color-ink)' : '#fff',
-                          border: '1px solid var(--color-ink-05)',
-                          display: 'flex', flexDirection: 'column', gap: 3, cursor: 'pointer',
-                        }}
-                      >
-                        <div style={{
-                          fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
-                          letterSpacing: '-0.01em',
-                          color: activeList === l.key ? '#fff' : 'var(--color-ink)',
-                        }}>{l.label}</div>
-                        {l.count && (
-                          <div style={{
-                            fontSize: 10, fontWeight: 700, letterSpacing: '.04em',
-                            color: activeList === l.key ? 'rgba(255,255,255,.55)' : 'var(--color-ink-40)',
-                          }}>{l.count}</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
                   {/* sv-head: title + subtitle + sort */}
                   <div style={{
                     padding: '4px 4px 10px',
