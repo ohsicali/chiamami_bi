@@ -287,20 +287,27 @@ function HeroPromo({ featured }) {
           <div className="hfv4-mob-pct" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4 }}>
             {featured.discountLabel}
           </div>
-          {/* Mobile-only: tagline del locale subito sotto allo sconto */}
-          {featured.tagline && (
+          {/* Mobile-only: tagline del locale + città subito sotto allo sconto */}
+          {(featured.tagline || featured.city) && (
             <div
               className="hfv4-mob-tagline"
-              style={{ display: 'none', fontSize: 12, color: 'rgba(255,255,255,.85)', lineHeight: 1.3, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+              style={{ display: 'none', alignItems: 'baseline', gap: 6, flexWrap: 'wrap', fontSize: 12, color: 'rgba(255,255,255,.85)', lineHeight: 1.3, marginBottom: 8 }}
             >
-              {featured.tagline}
+              {featured.tagline && (
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  {featured.tagline}
+                </span>
+              )}
+              {featured.tagline && featured.city && (
+                <span aria-hidden style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,.5)', flex: '0 0 auto' }} />
+              )}
+              {featured.city && (
+                <span style={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>{featured.city}</span>
+              )}
             </div>
           )}
           <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 8, opacity: 0.95 }}>
-            <span>da {featured.restaurantName}</span>
-            {featured.city && (
-              <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.8, marginLeft: 8 }}>· {featured.city}</span>
-            )}
+            da {featured.restaurantName}
           </div>
           {/* Mobile-only: badge categoria colorato + prezzo */}
           {(featured.catName || featured.priceLabel) && (
@@ -733,7 +740,7 @@ export default function HomeFeedV4() {
              tagline / loc+città / cat+prezzo / drop description. */
           .hfv4-hero-rest-line { display: none !important; }
           .hfv4-hero-sub { display: none !important; }
-          .hfv4-mob-tagline { display: -webkit-box !important; }
+          .hfv4-mob-tagline { display: flex !important; }
           .hfv4-mob-cat-price { display: flex !important; }
           .hfv4-mob-drop-desc { display: block !important; }
           .hfv4-hero-progress { display: none !important; }
