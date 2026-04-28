@@ -9,11 +9,10 @@
   padding-top: 0;
 }
 .sc-shell-desktop {
-  max-width: 1100px;
+  /* Allineato a DesktopSavedPage: max-width 1280, padding 24px 40px. */
+  max-width: 1280px;
   margin: 0 auto;
-  /* 30px top così il segment a destra del head-row resta sotto la navbar
-     sticky (top:16 + height:68 = ~84px). */
-  padding: 30px 32px 60px;
+  padding: 24px 40px 60px;
   width: 100%;
   flex: 1;
 }
