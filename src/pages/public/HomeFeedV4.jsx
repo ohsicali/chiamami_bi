@@ -287,7 +287,10 @@ function HeroPromo({ featured }) {
           <div className="hfv4-mob-pct" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 42, lineHeight: 0.95, letterSpacing: '-0.025em', marginBottom: 4 }}>
             {featured.discountLabel}
           </div>
-          {/* Mobile-only: tagline del locale + città subito sotto allo sconto */}
+          <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 6, opacity: 0.95 }}>
+            da {featured.restaurantName}
+          </div>
+          {/* Mobile-only: tagline del locale + città sotto al nome */}
           {(featured.tagline || featured.city) && (
             <div
               className="hfv4-mob-tagline"
@@ -306,9 +309,6 @@ function HeroPromo({ featured }) {
               )}
             </div>
           )}
-          <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 8, opacity: 0.95 }}>
-            da {featured.restaurantName}
-          </div>
           {/* Mobile-only: badge categoria colorato + prezzo */}
           {(featured.catName || featured.priceLabel) && (
             <div
@@ -333,15 +333,6 @@ function HeroPromo({ featured }) {
                   {featured.priceLabel}
                 </span>
               )}
-            </div>
-          )}
-          {/* Mobile-only: descrizione del drop ("20% sul totale") in fondo all'info */}
-          {featured.dropDescription && (
-            <div
-              className="hfv4-mob-drop-desc"
-              style={{ display: 'none', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.92)', lineHeight: 1.3 }}
-            >
-              {featured.dropDescription}
             </div>
           )}
           {featured.restLine && (
@@ -735,13 +726,18 @@ export default function HomeFeedV4() {
           .hfv4-hero-title { display: none !important; }
           .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
           .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
-          /* Su mobile rest-line e subtitle vengono sostituiti dai blocchi
-             tagline / loc+città / cat+prezzo / drop description. */
+          /* Su mobile rest-line è sostituito da tagline/cat+prezzo. La subtitle
+             (drop description · conditions) la mostro non grassetta come ultima riga. */
           .hfv4-hero-rest-line { display: none !important; }
-          .hfv4-hero-sub { display: none !important; }
+          .hfv4-hero-sub {
+            display: -webkit-box !important;
+            font-weight: 400 !important;
+            font-size: 12 !important;
+            margin-bottom: 0 !important;
+            max-width: none !important;
+          }
           .hfv4-mob-tagline { display: flex !important; }
           .hfv4-mob-cat-price { display: flex !important; }
-          .hfv4-mob-drop-desc { display: block !important; }
           .hfv4-hero-progress { display: none !important; }
           .hfv4-mob-progress {
             grid-area: progress !important;
