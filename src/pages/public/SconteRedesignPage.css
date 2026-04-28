@@ -239,42 +239,22 @@
 }
 .sc-drop .sc-ph {
   position: relative;
-  /* Mobile: aspect-ratio leggermente più piatta + object-fit:contain per
-     mostrare la foto intera senza crop verticale. La stessa foto sfocata
-     riempie i bordi laterali (vedi ::before) così la card resta piena
-     a livello visivo anche con foto verticali / quadrate. */
-  aspect-ratio: 17 / 9;
+  /* aspect-ratio panoramica 16:9 → card più compatta su mobile,
+     niente più zoom/crop verticale fastidioso. */
+  aspect-ratio: 16 / 9;
   width: 100%;
   background: #dcd0c0;
   overflow: hidden;
 }
-.sc-drop .sc-ph::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--ph-bg);
-  background-size: cover;
-  background-position: center;
-  filter: blur(20px) saturate(1.1);
-  transform: scale(1.15);
-  z-index: 0;
-}
 .sc-drop .sc-ph img {
-  position: relative;
-  z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
 }
-.sc-drop .sc-ph > .sc-badge-pct,
-.sc-drop .sc-ph > .sc-badge-time,
-.sc-drop .sc-ph > .sc-badge-live { z-index: 2; }
 @media (min-width: 768px) {
   .sc-drop .sc-ph { aspect-ratio: auto; height: 200px; }
-  .sc-drop .sc-ph img { object-fit: cover; }
-  .sc-drop .sc-ph::before { display: none; }
 }
 .sc-badge-pct {
   position: absolute;
