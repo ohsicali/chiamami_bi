@@ -109,7 +109,9 @@ export default function LoginPage() {
         } else if (newPassword !== confirmPassword) {
           setError('Le password non coincidono')
         } else {
-          const resp = await fetch('/api/verify-recovery-otp', {
+          // Endpoint consolidato in /api/recovery-otp (PR21): se body
+          // contiene `otp` esegue la verify, altrimenti il request.
+          const resp = await fetch('/api/recovery-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, otp: recoveryOtp, new_password: newPassword }),

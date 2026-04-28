@@ -10,6 +10,9 @@
     },
     "api/img.js": {
       "maxDuration": 10
+    },
+    "api/discount-pdf.js": {
+      "maxDuration": 30
     }
   },
   "headers": [
@@ -33,6 +36,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/api/verify-recovery-otp", "destination": "/api/recovery-otp" },
+    { "source": "/((?!api/).*)", "destination": "/" }
   ]
 }

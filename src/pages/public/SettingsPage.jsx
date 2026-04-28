@@ -265,7 +265,8 @@ export default function SettingsPage() {
     if (!otpCode.trim() || !newEmail.trim()) return
     setEmailLoading(true); setEmailStatus(null)
     try {
-      const resp = await fetch('/api/verify-recovery-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email, otp: otpCode, new_email: newEmail }) })
+      // Endpoint consolidato (PR21): /api/recovery-otp con `otp` nel body → verify
+      const resp = await fetch('/api/recovery-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email, otp: otpCode, new_email: newEmail }) })
       const data = await resp.json()
       if (data.success) { await supabase.auth.refreshSession(); refreshProfile?.(); setEmailStep('done'); setEmailStatus({ type: 'success', text: 'Email aggiornata con successo!' }) }
       else { setEmailStatus({ type: 'error', text: data.error || 'Codice non valido' }) }
