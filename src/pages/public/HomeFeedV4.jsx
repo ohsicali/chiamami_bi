@@ -258,6 +258,7 @@ function HeroPromo({ featured }) {
       >
         {/* Body: col sinistra desktop, sotto la foto su mobile */}
         <div className="hfv4-hero-body">
+          <div className="hfv4-hero-info">
           <span
             className="hfv4-hero-chip"
             style={{
@@ -299,6 +300,7 @@ function HeroPromo({ featured }) {
               {featured.subtitle}
             </div>
           )}
+          </div>
           {/* Mobile-only: progress bar nel body */}
           {maxQuantity != null && (
             <div
@@ -631,16 +633,30 @@ export default function HomeFeedV4() {
           pointer-events: none;
         }
 
-        /* Mobile <1024px: hero compatto, foto quadrata a destra, body a sinistra. */
+        /* Mobile <1024px: hero compatto, foto piena a destra, scritte a sinistra
+           (50/50), barra e bottoni full-width sotto. */
         @media (max-width: 1023px) {
           .hfv4-hero-card {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 14px !important;
+            grid-template-areas:
+              "info     photo"
+              "progress progress"
+              "ctas     ctas" !important;
+            column-gap: 14px !important;
+            row-gap: 12px !important;
             padding: 16px !important;
             align-items: stretch !important;
           }
+          .hfv4-hero-body { display: contents !important; }
+          .hfv4-hero-info {
+            grid-area: info !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-width: 0 !important;
+          }
           .hfv4-hero-photo {
+            grid-area: photo !important;
             order: 0 !important;
             width: 100% !important;
             height: auto !important;
@@ -648,7 +664,6 @@ export default function HomeFeedV4() {
             align-self: stretch !important;
             border-radius: 14px !important;
           }
-          .hfv4-hero-body { padding: 0 !important; min-width: 0 !important; }
           .hfv4-hero-chip {
             position: static !important;
             margin-bottom: 8px !important;
@@ -660,9 +675,14 @@ export default function HomeFeedV4() {
           .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
           .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
           .hfv4-hero-progress { display: none !important; }
-          .hfv4-mob-progress { display: flex !important; }
+          .hfv4-mob-progress {
+            grid-area: progress !important;
+            display: flex !important;
+            margin-bottom: 0 !important;
+          }
           .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: 2 !important; display: -webkit-box !important; overflow: hidden !important; }
           .hfv4-hero-ctas {
+            grid-area: ctas !important;
             display: grid !important;
             grid-template-columns: 1fr auto !important;
             gap: 8px !important;
