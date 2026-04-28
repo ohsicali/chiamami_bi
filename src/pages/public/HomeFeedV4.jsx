@@ -290,6 +290,51 @@ function HeroPromo({ featured }) {
           <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 10, opacity: 0.95 }}>
             da {featured.restaurantName}
           </div>
+          {/* Mobile-only: descrizione + città · sopra la categoria */}
+          {(featured.description || featured.city) && (
+            <div
+              className="hfv4-mob-desc-city"
+              style={{ display: 'none', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 12, color: 'rgba(255,255,255,.85)', lineHeight: 1.3, marginBottom: 8 }}
+            >
+              {featured.description && (
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  {featured.description}
+                </span>
+              )}
+              {featured.description && featured.city && (
+                <span aria-hidden style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,.5)', flex: '0 0 auto' }} />
+              )}
+              {featured.city && (
+                <span style={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>{featured.city}</span>
+              )}
+            </div>
+          )}
+          {/* Mobile-only: badge categoria colorato + prezzo */}
+          {(featured.catName || featured.priceLabel) && (
+            <div
+              className="hfv4-mob-cat-price"
+              style={{ display: 'none', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+            >
+              {featured.catName && (
+                <span
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    background: featured.categoryColor, color: '#fff',
+                    fontSize: 11, fontWeight: 700, letterSpacing: '0.02em',
+                    padding: '4px 9px', borderRadius: 999,
+                  }}
+                >
+                  {featured.catEmoji && <span style={{ fontSize: 12 }}>{featured.catEmoji}</span>}
+                  {featured.catName}
+                </span>
+              )}
+              {featured.priceLabel && (
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>
+                  {featured.priceLabel}
+                </span>
+              )}
+            </div>
+          )}
           {featured.restLine && (
             <div className="hfv4-hero-rest-line" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.9)', marginBottom: 6 }}>
               {featured.restLine}
@@ -577,12 +622,18 @@ export default function HomeFeedV4() {
       }
     }
     const subtitleParts = [drop.description || drop.title, drop.conditions].filter(Boolean)
+    const description = drop.description || drop.title || ''
+    const priceLabel = r.price_range ? '€'.repeat(Math.max(1, Math.min(4, r.price_range))) : ''
     return {
       title: `${label}\nda ${r.name}.`,
       discountLabel: label,
       restaurantName: r.name,
       restLine,
       subtitle: subtitleParts.join(' · '),
+      description,
+      city: r.city || '',
+      priceLabel,
+      categoryColor: catInfo?.color || '#6B7280',
       cta: 'Vai al drop',
       secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
@@ -674,6 +725,12 @@ export default function HomeFeedV4() {
           .hfv4-hero-title { display: none !important; }
           .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
           .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
+          /* Su mobile rest-line e subtitle vengono sostituiti dai due
+             nuovi blocchi descrizione+città e categoria+prezzo. */
+          .hfv4-hero-rest-line { display: none !important; }
+          .hfv4-hero-sub { display: none !important; }
+          .hfv4-mob-desc-city { display: flex !important; }
+          .hfv4-mob-cat-price { display: flex !important; }
           .hfv4-hero-progress { display: none !important; }
           .hfv4-mob-progress {
             grid-area: progress !important;
