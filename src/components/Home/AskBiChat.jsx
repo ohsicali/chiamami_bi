@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import BiLogoMark from '../UI/BiLogoMark'
 
 /**
  * AskBiChat · ingresso "Chiedi a Bi" sulla Home.
@@ -89,7 +90,7 @@ export default function AskBiChat({ currentMoment }) {
                 flex: '0 0 48px',
               }}
             >
-              B
+              <BiLogoMark style={{ width: '80%', height: '80%', color: '#fff' }} />
               <span
                 style={{
                   position: 'absolute',
