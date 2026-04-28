@@ -635,15 +635,15 @@ export default function HomeFeedV4() {
         @media (max-width: 1023px) {
           .hfv4-hero-card {
             display: grid !important;
-            grid-template-columns: 1fr 110px !important;
+            grid-template-columns: 1fr 150px !important;
             gap: 14px !important;
             padding: 16px !important;
             align-items: start !important;
           }
           .hfv4-hero-photo {
             order: 0 !important;
-            width: 110px !important;
-            height: 110px !important;
+            width: 150px !important;
+            height: 150px !important;
             min-height: 0 !important;
             border-radius: 14px !important;
           }
