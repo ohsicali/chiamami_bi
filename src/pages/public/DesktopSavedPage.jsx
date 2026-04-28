@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, Link, Navigate } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
+import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { useGeolocation } from '../../lib/hooks/useGeolocation'
+import { isOpenForMoment } from '../../lib/hours'
+import { getDistance } from '../../lib/utils/distance'
 import { supabase, proxyImg } from '../../lib/supabase'
-
-const LS_NOTE_KEY = 'chiamamibi_saved_note_tutti'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -99,14 +101,13 @@ export default function DesktopSavedPage() {
   const navigate = useNavigate()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
+  const { position } = useGeolocation()
 
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
-  const [note, setNote] = useState(() => {
-    try { return localStorage.getItem(LS_NOTE_KEY) || '' } catch { return '' }
-  })
-  const [isEditingNote, setIsEditingNote] = useState(false)
-  const noteRef = useRef(null)
+  const [filters, setFilters] = useState({ category: null, priceRange: null, moment: null, sortBy: null })
+  const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
+  const [showDealsOnly, setShowDealsOnly] = useState(false)
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
@@ -127,30 +128,61 @@ export default function DesktopSavedPage() {
     const ids = [...savedIds]
     supabase
       .from('restaurants')
-      .select('id, name, slug, city, address, latitude, longitude, cuisine_type, category, price_range, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
+      .select('*, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)')
       .in('id', ids)
-      .eq('is_published', true)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('[DesktopSavedPage] fetch error:', error)
         setRestaurants(data || [])
         setLoading(false)
       })
-  }, [user?.id, savedIds.size])
+  }, [user?.id, savedIds])
 
-  const handleNoteBlur = useCallback(() => {
-    setIsEditingNote(false)
-    try { localStorage.setItem(LS_NOTE_KEY, note) } catch {}
-  }, [note])
+  const displayedRestaurants = useMemo(() => {
+    let list = [...restaurants]
 
-  const handleNoteKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); noteRef.current?.blur() }
-    if (e.key === 'Escape') { noteRef.current?.blur() }
-  }, [])
+    if (filters.category) {
+      const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
+      list = list.filter(r => {
+        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
+        return selected.some(s => cats.includes(s))
+      })
+    }
+
+    if (filters.priceRange) {
+      list = list.filter(r => r.price_range === filters.priceRange)
+    }
+
+    if (filters.moment) {
+      list = list.filter(r => isOpenForMoment(r.hours_cache, filters.moment).match)
+    }
+
+    if (extraFilters.dietary?.length > 0) {
+      const fieldMap = {
+        vegano: 'is_vegan', vegetariano: 'is_vegetarian',
+        salutare: 'is_healthy', senza_glutine: 'is_gluten_free',
+      }
+      list = list.filter(r =>
+        extraFilters.dietary.every(key => r[fieldMap[key]] === true)
+      )
+    }
+
+    if (extraFilters.radiusKm !== null && position) {
+      list = list.filter(r => {
+        if (!r.latitude || !r.longitude) return true
+        return getDistance(position.lat, position.lng, r.latitude, r.longitude) <= extraFilters.radiusKm
+      })
+    }
+
+    if (showDealsOnly) {
+      list = list.filter(r => discountRestaurantIds.has(r.id))
+    }
+
+    return list
+  }, [restaurants, filters, extraFilters, showDealsOnly, position, discountRestaurantIds])
 
   const handleRestaurantClick = useCallback((r) => {
     navigate(`/restaurant/${r.slug || slugify(r.name)}`)
   }, [navigate])
-
-  const initial = (user?.user_metadata?.full_name || user?.email || 'U')[0].toUpperCase()
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
 
@@ -162,92 +194,22 @@ export default function DesktopSavedPage() {
         <div style={{ marginBottom: 18 }}>
           <h1 style={{ fontWeight: 900, fontSize: 32, letterSpacing: '-0.025em', margin: 0 }}>I miei salvati</h1>
           <div style={{ color: 'var(--color-ink-70)', fontSize: 13.5, marginTop: 6 }}>
-            {restaurants.length} locali · 1 lista
+            {restaurants.length} {restaurants.length === 1 ? 'locale salvato' : 'locali salvati'}
           </div>
         </div>
 
-        {/* List chips */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 22, scrollbarWidth: 'none' }}>
-          {/* Active "Tutti" chip */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '10px 16px', borderRadius: 999,
-            background: 'var(--color-ink)', color: '#fff',
-            border: '1px solid var(--color-ink)',
-            fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
-          }}>
-            Tutti <span style={{ opacity: .55, fontSize: 11.5, fontWeight: 800 }}>{restaurants.length}</span>
-          </div>
-          {/* New list chip */}
-          <div
-            role="button"
-            tabIndex={0}
-            title="Funzionalità in arrivo — le liste multiple richiedono un aggiornamento DB"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '10px 16px', borderRadius: 999,
-              background: 'transparent',
-              border: '1px dashed var(--color-corallo)',
-              color: 'var(--color-corallo-ink)',
-              fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', cursor: 'not-allowed',
-              opacity: .7,
-            }}
-          >
-            + Nuova lista
-          </div>
-        </div>
-
-        {/* Lista hero (note in Caveat) */}
+        {/* Filter bar — same as esplora */}
         {restaurants.length > 0 && (
-          <div style={{
-            background: '#fff', border: '1px solid var(--color-ink-05)', borderRadius: 20,
-            padding: '20px 22px', marginBottom: 22,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20,
-          }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em' }}>Tutti i salvati</div>
-              {isEditingNote ? (
-                <textarea
-                  ref={noteRef}
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
-                  onBlur={handleNoteBlur}
-                  onKeyDown={handleNoteKeyDown}
-                  autoFocus
-                  placeholder="Aggiungi una nota a questa lista…"
-                  style={{
-                    fontFamily: 'var(--font-editorial, "Caveat", cursive)',
-                    fontSize: 20, lineHeight: 1.3, color: 'var(--color-oro-deep, #8E6B3E)',
-                    marginTop: 6, maxWidth: 560, width: '100%',
-                    background: 'transparent', border: 'none', outline: 'none',
-                    resize: 'none', padding: 0, minHeight: 60,
-                  }}
-                  rows={2}
-                />
-              ) : (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setIsEditingNote(true)}
-                  onKeyDown={e => e.key === 'Enter' && setIsEditingNote(true)}
-                  style={{
-                    fontFamily: 'var(--font-editorial, "Caveat", cursive)',
-                    fontSize: 20, lineHeight: 1.3,
-                    color: note ? 'var(--color-oro-deep, #8E6B3E)' : 'var(--color-ink-40, rgba(34,24,28,.4))',
-                    marginTop: 6, maxWidth: 560, cursor: 'text',
-                    minHeight: 28,
-                  }}
-                >
-                  {note || 'Aggiungi una nota a questa lista…'}
-                </div>
-              )}
-            </div>
-            {/* Avatar */}
-            <div style={{
-              width: 48, height: 48, borderRadius: '50%', background: 'var(--color-corallo)',
-              color: '#fff', fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
-              display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0,
-            }}>{initial}</div>
+          <div style={{ marginBottom: 22, maxWidth: 560 }}>
+            <MobileFilterBar
+              filters={filters}
+              onFilterChange={setFilters}
+              showDealsOnly={showDealsOnly}
+              onToggleDeals={() => setShowDealsOnly(v => !v)}
+              restaurantCount={displayedRestaurants.length}
+              extraFilters={extraFilters}
+              onExtraFilterChange={setExtraFilters}
+            />
           </div>
         )}
 
@@ -277,9 +239,19 @@ export default function DesktopSavedPage() {
               }}
             >Esplora i locali →</Link>
           </div>
+        ) : displayedRestaurants.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontWeight: 900, fontSize: 20, letterSpacing: '-0.02em', marginBottom: 8 }}>
+              Nessun locale corrisponde ai filtri
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--color-ink-70)' }}>
+              Prova a rimuovere qualche filtro per vedere più risultati.
+            </div>
+          </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22 }}>
-            {restaurants.map(r => (
+            {displayedRestaurants.map(r => (
               <RestaurantCard
                 key={r.id}
                 restaurant={r}

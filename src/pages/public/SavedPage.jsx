@@ -11,7 +11,8 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import FilterChips from '../../components/Layout/FilterChips'
+import MobileFilterBar from '../../components/Layout/MobileFilterBar'
+import { isOpenForMoment } from '../../lib/hours'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 
 function slugify(name) {
@@ -27,7 +28,8 @@ export default function SavedPage() {
   const [restaurants, setRestaurants] = useState([])
   const [activeDiscounts, setActiveDiscounts] = useState({})
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({ category: null, priceRange: null, sortBy: null })
+  const [filters, setFilters] = useState({ category: null, priceRange: null, moment: null, sortBy: null })
+  const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
   const [filtersStuck, setFiltersStuck] = useState(false)
@@ -126,6 +128,27 @@ export default function SavedPage() {
       list = list.filter(r => r.price_range === filters.priceRange)
     }
 
+    if (filters.moment) {
+      list = list.filter(r => isOpenForMoment(r.hours_cache, filters.moment).match)
+    }
+
+    if (extraFilters.dietary?.length > 0) {
+      const fieldMap = {
+        vegano: 'is_vegan', vegetariano: 'is_vegetarian',
+        salutare: 'is_healthy', senza_glutine: 'is_gluten_free',
+      }
+      list = list.filter(r =>
+        extraFilters.dietary.every(key => r[fieldMap[key]] === true)
+      )
+    }
+
+    if (extraFilters.radiusKm !== null && userLocation) {
+      list = list.filter(r => {
+        if (!r.latitude || !r.longitude) return true
+        return getDistance(userLocation.lat, userLocation.lng, r.latitude, r.longitude) <= extraFilters.radiusKm
+      })
+    }
+
     if (showDealsOnly) {
       list = list.filter(r => activeDiscounts[r.id])
     }
@@ -139,7 +162,7 @@ export default function SavedPage() {
     }
 
     return list
-  }, [restaurants, filters, showDealsOnly, activeDiscounts, userLocation])
+  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
   if (isDesktop) return <DesktopSavedPage />
@@ -269,7 +292,7 @@ export default function SavedPage() {
         )}
       </div>
 
-      {/* FilterChips — CSS sticky, sticks below header naturally (hidden on desktop) */}
+      {/* Filter bar — CSS sticky, sticks below header naturally (hidden on desktop) */}
       {restaurants.length > 0 && (
         <div className="md:hidden" style={{
           position: 'sticky',
@@ -281,13 +304,14 @@ export default function SavedPage() {
           boxShadow: filtersStuck ? '0 1px 0 0 var(--color-bordo)' : 'none',
         }}>
           <div className="md:max-w-[940px] md:mx-auto">
-            <FilterChips
+            <MobileFilterBar
               filters={filters}
               onFilterChange={setFilters}
-              onNearbyClick={handleNearbyClick}
               showDealsOnly={showDealsOnly}
               onToggleDeals={() => setShowDealsOnly(v => !v)}
-              dealsCount={dealsCount}
+              restaurantCount={displayList.length}
+              extraFilters={extraFilters}
+              onExtraFilterChange={setExtraFilters}
             />
           </div>
         </div>
@@ -366,10 +390,8 @@ export default function SavedPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: sv-lists chips + sv-head + sv-grid split by sv-note */}
+            {/* Mobile: sv-lists chips + sv-head + sv-grid */}
             {!isDesktop && (() => {
-              const firstChunk = displayList.slice(0, 4)
-              const restChunk = displayList.slice(4)
               const renderSvCard = (r) => {
                 const discount = activeDiscounts[r.id]
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
@@ -477,20 +499,6 @@ export default function SavedPage() {
                         )}
                       </div>
                     ))}
-                    <div
-                      style={{
-                        flex: '0 0 auto', padding: '10px 14px',
-                        borderRadius: 14, minWidth: 100,
-                        background: 'transparent',
-                        border: '1px dashed var(--color-ink-15)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <div style={{
-                        fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
-                        color: 'var(--color-ink)',
-                      }}>+ Nuova lista</div>
-                    </div>
                   </div>
 
                   {/* sv-head: title + subtitle + sort */}
@@ -524,35 +532,10 @@ export default function SavedPage() {
                     </div>
                   </div>
 
-                  {/* First grid chunk */}
+                  {/* Grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    {firstChunk.map(renderSvCard)}
+                    {displayList.map(renderSvCard)}
                   </div>
-
-                  {/* sv-note tra le due griglie */}
-                  {displayList.length > 0 && (
-                    <div style={{
-                      margin: '14px 0 0',
-                      padding: 14,
-                      background: 'var(--color-oro-soft, #F4E7CC)',
-                      border: '1px solid rgba(176,137,84,.3)',
-                      borderRadius: 14,
-                      fontFamily: "'Caveat', cursive",
-                      fontSize: 17,
-                      lineHeight: 1.25,
-                      color: 'var(--color-ink)',
-                    }}>
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, letterSpacing: '.04em', color: 'var(--color-oro, #B08954)' }}>{'✏︎  '}</span>
-                      ricordati: aggiungi una nota ai tuoi salvati per non dimenticare perché li hai scelti, come il piatto preferito o il motivo giusto.
-                    </div>
-                  )}
-
-                  {/* Second grid chunk (if any) */}
-                  {restChunk.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-                      {restChunk.map(renderSvCard)}
-                    </div>
-                  )}
                 </>
               )
             })()}
