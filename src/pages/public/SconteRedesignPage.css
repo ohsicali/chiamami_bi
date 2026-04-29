@@ -812,6 +812,342 @@
 }
 .sc-info-actions .sc-btn-primary:hover { transform: translateY(-1px); }
 .sc-info-actions .sc-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ============================================================================
+   DropInfoSheet — design "live event":
+   hero ink scuro, badge LIVE pulse, countdown a unità, progress bar urgente.
+   ============================================================================ */
+.sc-drop-actions {
+  display: flex;
+  gap: 8px;
+}
+.sc-drop-actions .sc-cta-info {
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--sc-ink);
+  border: 1px solid var(--sc-line);
+  padding: 8px 14px;
+  border-radius: 99px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sc-drop-actions .sc-cta-info:hover {
+  border-color: var(--sc-ink-3);
+  background: #fff;
+}
+.sc-drop-actions .sc-cta { flex: 1; }
+
+.sc-drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 12, 16, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 110;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: scOverlayIn 0.22s ease;
+}
+@media (min-width: 768px) {
+  .sc-drop-overlay { align-items: center; padding: 30px; }
+}
+.sc-drop-sheet {
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--sc-paper);
+  border-radius: 28px 28px 0 0;
+  position: relative;
+  animation: scInfoSlide 0.32s cubic-bezier(.2,.8,.25,1);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 768px) {
+  .sc-drop-sheet {
+    width: 540px;
+    max-width: 100%;
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    max-height: 90dvh;
+    animation: scInfoFade 0.22s ease;
+  }
+}
+
+/* HERO drop: ink scuro su foto sfocata sotto */
+.sc-drop-hero {
+  position: relative;
+  height: 200px;
+  border-radius: 28px 28px 0 0;
+  overflow: hidden;
+  background: #1a0f12;
+}
+@media (min-width: 768px) {
+  .sc-drop-hero { height: 220px; border-radius: 24px 24px 0 0; }
+}
+.sc-drop-hero-img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  filter: brightness(0.55) saturate(1.2);
+}
+.sc-drop-hero-fallback {
+  width: 100%; height: 100%;
+  display: grid; place-items: center;
+  background: #2a1c20;
+  font-size: 64px;
+  filter: brightness(0.6);
+}
+.sc-drop-hero-overlay {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at top right, rgba(232, 69, 60, 0.25) 0%, transparent 60%),
+    linear-gradient(180deg,
+      rgba(20, 12, 16, 0.45) 0%,
+      rgba(20, 12, 16, 0.4) 40%,
+      rgba(20, 12, 16, 0.85) 80%,
+      rgba(20, 12, 16, 0.96) 100%
+    );
+  pointer-events: none;
+}
+.sc-drop-hero-live {
+  position: absolute;
+  top: 16px; left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sc-corallo);
+  color: #fff;
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 10.5px;
+  padding: 6px 12px 6px 11px;
+  border-radius: 99px;
+  letter-spacing: 1.2px;
+  box-shadow: 0 4px 16px rgba(232, 69, 60, 0.5);
+}
+.sc-drop-hero-live i {
+  width: 7px; height: 7px;
+  background: #fff;
+  border-radius: 99px;
+  animation: scPulse 1.3s ease-in-out infinite;
+}
+@keyframes scPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+}
+.sc-drop-hero-pct {
+  position: absolute;
+  top: 16px; right: 60px;
+  background: linear-gradient(135deg, #fff 0%, #FFE9E5 100%);
+  color: var(--sc-corallo-ink);
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 22px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  letter-spacing: -0.8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+.sc-drop-hero-id {
+  position: absolute;
+  left: 20px; right: 20px;
+  bottom: 16px;
+  color: #fff;
+  z-index: 2;
+}
+.sc-drop-hero-id h3 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  margin: 0 0 4px;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+.sc-drop-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 500;
+}
+.sc-drop-hero-cat {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* BODY */
+.sc-drop-body {
+  padding: 18px 20px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 768px) {
+  .sc-drop-body { padding: 22px 26px 10px; gap: 16px; }
+}
+
+/* COUNTDOWN: 4 unità */
+.sc-drop-countdown {
+  background: linear-gradient(135deg, #22181C 0%, #3a2229 100%);
+  color: #fff;
+  border-radius: 18px;
+  padding: 16px 18px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(34, 24, 28, 0.18);
+}
+.sc-drop-countdown.is-expired {
+  background: var(--sc-grigio-bg);
+  color: var(--sc-ink-3);
+  box-shadow: none;
+}
+.sc-drop-countdown-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sc-drop-countdown.is-expired .sc-drop-countdown-label {
+  color: var(--sc-ink-3);
+  margin: 0;
+}
+.sc-drop-countdown-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.sc-cd-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+}
+.sc-cd-num {
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(232, 69, 60, 0.3);
+}
+.sc-cd-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.sc-cd-sep {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 14px;
+}
+@media (min-width: 768px) {
+  .sc-cd-num { font-size: 30px; }
+  .sc-cd-unit { min-width: 60px; }
+}
+
+/* PROGRESS bar */
+.sc-drop-progress {
+  background: var(--sc-paper);
+  border: 1px solid var(--sc-line);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.sc-drop-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.sc-drop-progress-head strong {
+  color: var(--sc-ink);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.1px;
+}
+.sc-drop-progress-head span {
+  color: var(--sc-corallo-ink);
+  font-weight: 700;
+  font-size: 11px;
+  background: var(--sc-corallo-soft);
+  padding: 3px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.2px;
+}
+.sc-drop-progress-bar {
+  height: 8px;
+  background: var(--sc-grigio-bg);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.sc-drop-progress-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--sc-corallo) 0%, #FF6A60 100%);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+@media (min-width: 768px) {
+  .sc-drop-progress { padding: 16px 18px; border-radius: 18px; }
+  .sc-drop-progress-bar { height: 10px; }
+}
+
+/* CARD generica per cosa-ottieni / condizioni dentro drop sheet */
+.sc-drop-card {
+  background: #FAF7F2;
+  border: 1px solid var(--sc-line);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.sc-drop-card-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--sc-ink-3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.sc-drop-card-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--sc-ink);
+  letter-spacing: -0.2px;
+  line-height: 1.3;
+}
+.sc-drop-card-desc {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--sc-ink-2);
+  line-height: 1.5;
+}
+@media (min-width: 768px) {
+  .sc-drop-card { padding: 16px 18px; border-radius: 18px; }
+  .sc-drop-card-title { font-size: 15.5px; }
+  .sc-drop-card-desc { font-size: 13px; }
+}
 .sc-conv .sc-ph {
   position: relative;
   width: 88px;

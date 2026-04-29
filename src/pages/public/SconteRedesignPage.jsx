@@ -392,12 +392,21 @@ function SconteRedesignPageInner() {
       )}
 
       {infoDeal && (
-        <DealInfoSheet
-          deal={infoDeal}
-          claiming={claiming === infoDeal.id}
-          onClaim={() => { const d = infoDeal; setInfoDeal(null); claimDeal(d) }}
-          onClose={() => setInfoDeal(null)}
-        />
+        infoDeal.is_drop ? (
+          <DropInfoSheet
+            deal={infoDeal}
+            claiming={claiming === infoDeal.id}
+            onClaim={() => { const d = infoDeal; setInfoDeal(null); claimDeal(d) }}
+            onClose={() => setInfoDeal(null)}
+          />
+        ) : (
+          <DealInfoSheet
+            deal={infoDeal}
+            claiming={claiming === infoDeal.id}
+            onClaim={() => { const d = infoDeal; setInfoDeal(null); claimDeal(d) }}
+            onClose={() => setInfoDeal(null)}
+          />
+        )
       )}
 
       {toast && <div className="sc-toast" role="status">{toast}</div>}
@@ -502,6 +511,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
                   onClaim={() => onClaim(d)}
                   onOpenQR={() => onOpenQR({ ...redemption, discount: d })}
                   onClick={() => onCardClick(d.restaurant)}
+                  onInfo={() => onInfo(d)}
                 />
               )
             })}
@@ -533,7 +543,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
   )
 }
 
-function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
+function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const time = expiryLabel(deal)
@@ -585,14 +595,24 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
             <span>{claimed}/{max} presi</span>
           </div>
         )}
-        <button
-          type="button"
-          className="sc-cta"
-          disabled={ctaDisabled}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
-        >
-          {ctaLabel}
-        </button>
+        <div className="sc-drop-actions">
+          <button
+            type="button"
+            className="sc-cta-info"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
+            aria-label="Vedi dettagli drop"
+          >
+            Dettagli
+          </button>
+          <button
+            type="button"
+            className="sc-cta"
+            disabled={ctaDisabled}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
+          >
+            {ctaLabel}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -1006,3 +1026,176 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
     </div>
   )
 }
+
+
+/* ============================================================================
+   DropInfoSheet — sheet specifico per i drop a tempo:
+   countdown live, barra progresso disponibilità, hero ink.
+   ============================================================================ */
+function DropInfoSheet({ deal, claiming, onClaim, onClose }) {
+  const r = deal?.restaurant
+  const photo = getPhoto(r)
+  const cuisine = r?.cuisine_type || r?.category?.[0]
+  const badge = dealBadgeText(deal)
+  const dealTitle = deal?.title
+  const description = deal?.description
+  const conditionLines = (deal?.conditions || '')
+    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)
+  const claimed = deal?.claimed_count || deal?.total_redeemed || 0
+  const max = deal?.max_quantity || deal?.max_redemptions || 0
+  const remaining = max > 0 ? Math.max(0, max - claimed) : null
+  const progressPct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
+  const endIso = deal?.drop_ends_at || deal?.valid_until
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+
+  const remainingMs = endIso ? new Date(endIso).getTime() - now : null
+  const expired = remainingMs !== null && remainingMs <= 0
+  const cdParts = (() => {
+    if (remainingMs === null || remainingMs <= 0) return null
+    const totalS = Math.floor(remainingMs / 1000)
+    const days = Math.floor(totalS / 86400)
+    const hours = Math.floor((totalS % 86400) / 3600)
+    const mins = Math.floor((totalS % 3600) / 60)
+    const secs = totalS % 60
+    return { days, hours, mins, secs }
+  })()
+
+  return (
+    <div
+      className="sc-drop-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Dettagli drop"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="sc-drop-sheet">
+        <button type="button" className="sc-close" aria-label="Chiudi" onClick={onClose}>✕</button>
+
+        {/* HERO drop scuro con foto in fondo + live pulse */}
+        <div className="sc-drop-hero">
+          {photo ? (
+            <img className="sc-drop-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div className="sc-drop-hero-fallback">🍽️</div>
+          )}
+          <div className="sc-drop-hero-overlay" aria-hidden="true" />
+          <span className="sc-drop-hero-live"><i />LIVE</span>
+          <div className="sc-drop-hero-pct">{badge}</div>
+          <div className="sc-drop-hero-id">
+            <h3>{r?.name || dealTitle}</h3>
+            <div className="sc-drop-hero-meta">
+              {cuisine && <span className="sc-drop-hero-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {shortAddress(r?.address) && <span>{shortAddress(r?.address)}</span>}
+            </div>
+          </div>
+        </div>
+
+        <div className="sc-drop-body">
+          {/* COUNTDOWN: 4 unità (g · h · m · s) */}
+          {cdParts ? (
+            <div className="sc-drop-countdown">
+              <div className="sc-drop-countdown-label">Termina tra</div>
+              <div className="sc-drop-countdown-grid">
+                <CdUnit value={cdParts.days} label="giorni" />
+                <CdSep />
+                <CdUnit value={cdParts.hours} label="ore" />
+                <CdSep />
+                <CdUnit value={cdParts.mins} label="min" />
+                <CdSep />
+                <CdUnit value={cdParts.secs} label="sec" />
+              </div>
+            </div>
+          ) : expired ? (
+            <div className="sc-drop-countdown is-expired">
+              <div className="sc-drop-countdown-label">Drop scaduto</div>
+            </div>
+          ) : null}
+
+          {/* PROGRESS: presi / disponibili */}
+          {max > 0 && (
+            <div className="sc-drop-progress">
+              <div className="sc-drop-progress-head">
+                <strong>{claimed} di {max} presi</strong>
+                {remaining !== null && remaining > 0 && (
+                  <span>{remaining} {remaining === 1 ? 'rimasto' : 'rimasti'}</span>
+                )}
+              </div>
+              <div className="sc-drop-progress-bar">
+                <i style={{ width: `${progressPct}%` }} />
+              </div>
+            </div>
+          )}
+
+          {/* COSA OTTIENI */}
+          {(dealTitle || description) && (
+            <div className="sc-drop-card">
+              <div className="sc-drop-card-label">Cosa ottieni</div>
+              {dealTitle && <div className="sc-drop-card-title">{dealTitle}</div>}
+              {description && <p className="sc-drop-card-desc">{description}</p>}
+            </div>
+          )}
+
+          {/* CONDIZIONI */}
+          {conditionLines.length > 0 && (
+            <div className="sc-drop-card">
+              <div className="sc-drop-card-label">Condizioni</div>
+              <ul className="sc-info-checklist">
+                {conditionLines.map((c, i) => (
+                  <li key={i}>
+                    <span className="sc-info-check" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="sc-info-actions">
+          <button type="button" className="sc-btn-secondary" onClick={onClose}>
+            Chiudi
+          </button>
+          <button
+            type="button"
+            className="sc-btn-primary"
+            disabled={!!claiming || expired}
+            onClick={onClaim}
+          >
+            {expired ? 'Scaduto' : claiming ? 'Un attimo…' : 'Prendi sconto'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CdUnit({ value, label }) {
+  const v = String(value).padStart(2, '0')
+  return (
+    <div className="sc-cd-unit">
+      <div className="sc-cd-num">{v}</div>
+      <div className="sc-cd-lbl">{label}</div>
+    </div>
+  )
+}
+
+function CdSep() { return <div className="sc-cd-sep">:</div> }
+
