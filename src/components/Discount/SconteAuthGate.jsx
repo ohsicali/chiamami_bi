@@ -18,9 +18,9 @@ export default function SconteAuthGate({ pendingDiscountId, onClose }) {
           <BiLogoMark style={{ width: '88%', height: '88%' }} />
           <span aria-hidden="true">✦</span>
         </div>
-        <h3 id="sc-auth-gate-title">Entra nel Club di Bi per prenderlo</h3>
+        <h3 id="sc-auth-gate-title">Entra nel Club di Bi per sbloccare</h3>
         <p>
-          Per salvare il vantaggio e mostrarlo al ristoratore con il QR,
+          Per sbloccare il vantaggio e mostrarlo al ristoratore con il QR,
           ho bisogno che tu acceda. Ci metti 30 secondi.
         </p>
         <Link

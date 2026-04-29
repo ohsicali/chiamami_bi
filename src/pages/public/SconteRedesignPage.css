@@ -813,6 +813,10 @@
 .sc-info-actions .sc-btn-primary:hover { transform: translateY(-1px); }
 .sc-info-actions .sc-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
+/* PR23 — pill row sotto nome locale (additivo, non distruttivo) */
+.sc-pill-row { margin-top: 5px; }
+.sc-pill-row-mini { margin-top: 4px; }
+
 /* ============================================================================
    DropInfoSheet — design "live event":
    hero ink scuro, badge LIVE pulse, countdown a unità, progress bar urgente.

@@ -1,0 +1,49 @@
+/* ============================================================================
+   PR23 — Validity pill (3 stati: ok / soon / other)
+   ============================================================================ */
+:root {
+  --vp-verde: #3FB955;
+  --vp-verde-soft: #DDF4E0;
+  --vp-verde-ink: #1d6e30;
+  --vp-giallo: #E8A53C;
+  --vp-giallo-soft: #FBEDD0;
+  --vp-giallo-ink: #7a5a17;
+  --vp-line: #EFE7DD;
+  --vp-ink-2: #5C4F54;
+  --vp-ink-3: #9A8E94;
+}
+
+.vp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 10px 4px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  font-family: inherit;
+  line-height: 1.2;
+}
+.vp-dot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@keyframes vpBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.vp-ok    { background: var(--vp-verde-soft); color: var(--vp-verde-ink); }
+.vp-ok .vp-dot {
+  background: var(--vp-verde);
+  box-shadow: 0 0 0 3px rgba(63, 185, 85, 0.18);
+  animation: vpBlink 1.6s infinite;
+}
+
+.vp-soon  { background: var(--vp-giallo-soft); color: var(--vp-giallo-ink); }
+.vp-soon .vp-dot { background: var(--vp-giallo); }
+
+.vp-other { background: var(--vp-line); color: var(--vp-ink-2); }
+.vp-other .vp-dot { background: var(--vp-ink-3); }

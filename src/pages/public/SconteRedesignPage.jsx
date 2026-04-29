@@ -13,6 +13,10 @@ import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
 import MetaTags from '../../components/SEO/MetaTags'
 import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
+import ValidityPill from '../../components/Discount/ValidityPill'
+import QRBlockedView from '../../components/Discount/QRBlockedView'
+import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
+import { checkValidity, formatShortPill } from '../../lib/validity'
 import './SconteRedesignPage.css'
 
 /* ---------- helpers ---------- */
@@ -292,9 +296,61 @@ function SconteRedesignPageInner() {
     }
   }, [claiming, user])
 
+  const [qrBlocked, setQrBlocked] = useState(null) // deal | null
+
+  // Click "Apri QR" da I miei vantaggi: se non valid_now → blocked view,
+  // altrimenti popup QR normale (PR21 SconteQRPopup).
   const openMyQR = (redemption) => {
-    setQrPopup({ redemption, deal: redemption.discount })
+    const deal = redemption?.discount
+    if (deal && checkValidity(deal) !== 'valid_now') {
+      setQrBlocked(deal)
+      return
+    }
+    setQrPopup({ redemption, deal })
   }
+
+  // Wrapper per il claim usato dal nuovo DiscountDetailPopup.
+  // Ritorna { id, qr_code } | null se l'utente non è loggato (AuthGate aperto).
+  const claimFromPopup = useCallback(async (deal) => {
+    if (!user) {
+      setAuthGate(deal.id)
+      return null
+    }
+    setClaiming(deal.id)
+    try {
+      const { supabase } = await import('../../lib/supabase')
+      const { data: existing } = await supabase
+        .from('discount_redemptions')
+        .select('id, qr_code, status')
+        .eq('discount_id', deal.id)
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+      if (existing?.qr_code) return existing
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+      let code = 'BiSc-'
+      for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length))
+      let userName = null
+      try {
+        const { data: profile } = await supabase
+          .from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+        userName = profile?.full_name || null
+      } catch { /* best effort */ }
+      const { data, error } = await supabase
+        .from('discount_redemptions')
+        .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated', user_name: userName })
+        .select().single()
+      if (error) throw error
+      await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
+      return data
+    } catch (e) {
+      console.error('Claim failed:', e)
+      setToast('Non sono riuscito a salvare lo sconto. Riprova.')
+      return null
+    } finally {
+      setClaiming(null)
+    }
+  }, [user])
 
   return (
     <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : TAB_BAR_HEIGHT + 16 }}>
@@ -392,21 +448,33 @@ function SconteRedesignPageInner() {
       )}
 
       {infoDeal && (
-        infoDeal.is_drop ? (
-          <DropInfoSheet
-            deal={infoDeal}
-            claiming={claiming === infoDeal.id}
-            onClaim={() => { const d = infoDeal; setInfoDeal(null); claimDeal(d) }}
-            onClose={() => setInfoDeal(null)}
-          />
-        ) : (
-          <DealInfoSheet
-            deal={infoDeal}
-            claiming={claiming === infoDeal.id}
-            onClaim={() => { const d = infoDeal; setInfoDeal(null); claimDeal(d) }}
-            onClose={() => setInfoDeal(null)}
-          />
-        )
+        <DiscountDetailPopup
+          deal={infoDeal}
+          photoUrl={getPhoto(infoDeal.restaurant)}
+          restaurantUrl={infoDeal.restaurant?.slug
+            ? `/restaurant/${infoDeal.restaurant.slug}`
+            : `/restaurant/${slugify(infoDeal.restaurant?.name || '')}`}
+          claiming={claiming === infoDeal.id}
+          onClaim={async () => {
+            const result = await claimFromPopup(infoDeal)
+            return result
+          }}
+          onClose={() => setInfoDeal(null)}
+        />
+      )}
+
+      {qrBlocked && (
+        <QRBlockedView
+          deal={qrBlocked}
+          photoUrl={getPhoto(qrBlocked.restaurant)}
+          restaurantName={qrBlocked.restaurant?.name || qrBlocked.title}
+          restaurantSubtitle={[
+            qrBlocked.restaurant?.cuisine_type || qrBlocked.restaurant?.category?.[0],
+            shortAddress(qrBlocked.restaurant?.address),
+          ].filter(Boolean).join(' · ')}
+          discountValue={dealBadgeText(qrBlocked) || freebieLabel(qrBlocked)}
+          onClose={() => setQrBlocked(null)}
+        />
       )}
 
       {toast && <div className="sc-toast" role="status">{toast}</div>}
@@ -557,12 +625,14 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
   const isSaved = status === 'generated'
   const isUsed = status === 'redeemed'
 
-  let ctaLabel = 'Prendi sconto'
+  let ctaLabel = 'Sblocca sconto'
   let ctaOnClick = onClaim
   let ctaDisabled = !!claiming
   if (claiming) ctaLabel = 'Un attimo…'
   else if (isUsed) { ctaLabel = 'Già usato'; ctaDisabled = true; ctaOnClick = () => {} }
   else if (isSaved) { ctaLabel = 'Apri QR'; ctaOnClick = onOpenQR }
+  const validityStatus = checkValidity(deal)
+  const validityPill = formatShortPill(deal, validityStatus)
 
   return (
     <div
@@ -589,6 +659,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
       <div className="sc-body-c">
         <h4>{r?.name || deal.title}</h4>
         {meta && <div className="sc-meta">{meta}</div>}
+        <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} /></div>
         {max > 0 && (
           <div className="sc-progress">
             <div className="sc-bar"><i style={{ width: `${pct}%` }} /></div>
@@ -625,6 +696,8 @@ function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
   const isFreebie = deal?.discount_type === 'freebie'
   const badge = isFreebie ? (deal.title || deal.discount_value) : dealBadgeText(deal)
   const address = shortAddress(r?.address)
+  const validityStatus = checkValidity(deal)
+  const validityPill = formatShortPill(deal, validityStatus)
 
   // Riga "valore deal · condizione breve" sotto la cuisine: dà un'idea
   // immediata del cosa-ottieni senza aprire i dettagli.
@@ -660,6 +733,7 @@ function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
             {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
             {address}
           </div>
+          <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} /></div>
           {(dealLabel || firstCondition) && (
             <div className="sc-conv-line">
               {dealLabel && <strong>{dealLabel}</strong>}
@@ -683,7 +757,7 @@ function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
             disabled={!!claiming}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
           >
-            {claiming ? '…' : 'Prendi'}
+            {claiming ? '…' : 'Sblocca'}
           </button>
         </div>
       </div>
@@ -750,6 +824,8 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' · ')
   const expLbl = expired ? 'scaduto' : expiryLabel(deal)
+  const validityStatus = expired ? 'expired' : checkValidity(deal)
+  const validityPill = formatShortPill(deal, validityStatus)
 
   return (
     <div
@@ -776,14 +852,19 @@ function MineRow({ redemption, onOpenQR, onClick }) {
           <span className="sc-badge-pct">{dealBadgeText(deal) || freebieLabel(deal)}</span>
           {expLbl && <span className={`sc-scad ${expired ? 'is-expired' : ''}`}>{expLbl}</span>}
         </div>
+        <div className="sc-pill-row sc-pill-row-mini">
+          <ValidityPill status={validityStatus} text={validityPill} />
+        </div>
       </div>
+      {/* Bottone Apri QR SEMPRE attivo (anche fuori validità):
+          il click apre QRBlockedView se non valid_now. */}
       <button
         type="button"
         className="sc-qr-btn"
         disabled={expired}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!expired) onOpenQR() }}
       >
-        {expired ? 'Non valido' : 'Apri QR'}
+        {expired ? 'Scaduto' : 'Apri QR'}
       </button>
     </div>
   )
@@ -1179,7 +1260,7 @@ function DropInfoSheet({ deal, claiming, onClaim, onClose }) {
             disabled={!!claiming || expired}
             onClick={onClaim}
           >
-            {expired ? 'Scaduto' : claiming ? 'Un attimo…' : 'Prendi sconto'}
+            {expired ? 'Scaduto' : claiming ? 'Un attimo…' : 'Sblocca sconto'}
           </button>
         </div>
       </div>
