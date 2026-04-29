@@ -5,6 +5,7 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { LogoFull } from '../../components/UI/Logo'
+import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 
 const RESTAURANT_COLS = 'id, name, slug, address, city, category, cuisine_type, restaurant_photos(photo_url, thumb_url, sort_order)'
 
@@ -1050,7 +1051,7 @@ function VerifyTab({ restaurant }) {
         return
       }
 
-      setResult({ status: resp.status, data: normalized })
+      setResult({ status: resp.status, reason: resp.reason, data: normalized })
     } catch (err) {
       console.error('verify error:', err)
       setResult({
@@ -1651,6 +1652,10 @@ function VerifyResult({ result, onReset }) {
 
   if (status === 'success') {
     return <SuccessCelebration data={data} onReset={onReset} />
+  }
+
+  if (status === 'invalid_now') {
+    return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={onReset} />
   }
 
   if (status === 'already_redeemed') {
