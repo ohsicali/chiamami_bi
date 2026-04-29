@@ -478,7 +478,7 @@
   .sc-conv .sc-conv-line { font-size: 12px; margin-top: 5px; }
 }
 
-/* azioni: due bottoni in riga, allineati in basso */
+/* azioni: due bottoni in riga, allineati al centro verticale */
 .sc-conv .sc-conv-actions {
   display: flex;
   flex-direction: row;
@@ -486,7 +486,7 @@
   justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
-  align-self: flex-end;
+  align-self: center;
 }
 .sc-conv .sc-cta-info {
   background: transparent;
@@ -763,12 +763,12 @@
   padding: 0;
   display: flex;
   flex: 1;
-  align-items: stretch;
+  align-items: center;
   gap: 10px;
   min-width: 0;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-body-c { padding: 0; align-items: stretch; gap: 12px; flex: 1; }
+  .sc-conv .sc-body-c { padding: 0; align-items: center; gap: 12px; flex: 1; }
 }
 .sc-conv .sc-info {
   flex: 1;
