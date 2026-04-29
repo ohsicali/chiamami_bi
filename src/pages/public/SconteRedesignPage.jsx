@@ -201,6 +201,7 @@ function SconteRedesignPageInner() {
   const [qrPopup, setQrPopup] = useState(null) // { redemption, deal }
   const [authGate, setAuthGate] = useState(null) // pendingDiscountId | null
   const [toast, setToast] = useState(null)
+  const [infoDeal, setInfoDeal] = useState(null) // deal | null per dialog dettagli
 
   useEffect(() => {
     if (!toast) return
@@ -339,6 +340,7 @@ function SconteRedesignPageInner() {
               onClaim={claimDeal}
               onOpenQR={openMyQR}
               onCardClick={goTo}
+              onInfo={(d) => setInfoDeal(d)}
             />
           )}
           {tab === 'miei' && sub === 'disponibili' && (
@@ -386,6 +388,15 @@ function SconteRedesignPageInner() {
         <SconteAuthGate
           pendingDiscountId={authGate}
           onClose={() => setAuthGate(null)}
+        />
+      )}
+
+      {infoDeal && (
+        <DealInfoSheet
+          deal={infoDeal}
+          claiming={claiming === infoDeal.id}
+          onClaim={() => { const d = infoDeal; setInfoDeal(null); claimDeal(d) }}
+          onClose={() => setInfoDeal(null)}
         />
       )}
 
@@ -447,7 +458,7 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
   )
 }
 
-function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick }) {
+function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
   if (loading) {
     return (
       <div style={{ padding: '24px 16px' }}>
@@ -512,6 +523,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
                 claiming={claiming === d.id}
                 onClaim={() => onClaim(d)}
                 onClick={() => onCardClick(d.restaurant)}
+                onInfo={() => onInfo(d)}
               />
             ))}
           </div>
@@ -586,7 +598,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
   )
 }
 
-function ConvCard({ deal, claiming, onClaim, onClick }) {
+function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
@@ -594,32 +606,13 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
   const badge = isFreebie ? (deal.title || deal.discount_value) : dealBadgeText(deal)
   const address = shortAddress(r?.address)
 
-  // Per le convenzioni non-freebie il `title` è la descrizione corta (es.
-  // "Sconto del 10% sul menù"). Per i freebie il title finisce nel badge,
-  // quindi nel dettaglio mostriamo description (se c'è).
-  const dealHeading = isFreebie ? null : deal?.title
-  const dealDescription = deal?.description || (isFreebie ? null : null)
-
-  // Conditions: testo libero, può contenere righe separate da \n o "•".
-  // Le splittiamo in lista per leggibilità.
-  const conditionLines = (deal?.conditions || '')
-    .split(/\n+|•/g)
-    .map((s) => s.trim())
-    .filter(Boolean)
-
-  // Validità: mostriamo "Valido fino al X" SOLO se c'è una scadenza
-  // entro l'anno (le convenzioni "sempre valide" hanno valid_until lontano).
-  const validUntil = deal?.valid_until ? new Date(deal.valid_until) : null
-  const showValidity = validUntil
-    && (validUntil.getTime() - Date.now()) / 86400000 <= 365
-    && validUntil.getTime() > Date.now()
-  const validityLabel = showValidity
-    ? `Valido fino al ${validUntil.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
-    : null
-
-  const offerHeading = isFreebie ? (deal?.title || badge) : (dealHeading || dealBadgeText(deal))
-  const hasOfferBlock = !!(offerHeading || dealDescription)
-  const hasConditions = conditionLines.length > 0
+  // Riga "valore deal · condizione breve" sotto la cuisine: dà un'idea
+  // immediata del cosa-ottieni senza aprire i dettagli.
+  const dealLabel = isFreebie
+    ? (deal?.title || deal?.discount_value)
+    : (deal?.title || dealBadgeText(deal))
+  const firstCondition = (deal?.conditions || '')
+    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)[0]
 
   return (
     <div
@@ -629,59 +622,50 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
       onClick={(e) => { if (!e.defaultPrevented) onClick() }}
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
-      {/* Header: identità del locale */}
-      <div className="sc-conv-header">
-        <div className="sc-ph">
-          {photo ? (
-            <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-          ) : (
-            <div style={{
-              width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-              background: '#F1ECE3', fontSize: 28,
-            }}>{categoryEmoji(cuisine)}</div>
-          )}
-          <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
-        </div>
-        <div className="sc-conv-id">
+      <div className="sc-ph">
+        {photo ? (
+          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+        ) : (
+          <div style={{
+            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
+            background: '#F1ECE3', fontSize: 30,
+          }}>{categoryEmoji(cuisine)}</div>
+        )}
+        <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
+      </div>
+      <div className="sc-body-c">
+        <div className="sc-info">
           <h4>{r?.name || deal.title}</h4>
           <div className="sc-meta">
             {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
             {address}
           </div>
+          {(dealLabel || firstCondition) && (
+            <div className="sc-conv-line">
+              {dealLabel && <strong>{dealLabel}</strong>}
+              {dealLabel && firstCondition && <span className="sc-dot">·</span>}
+              {firstCondition && <span className="sc-cond">{firstCondition}</span>}
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Blocco offerta: il "cosa ottieni" */}
-      {hasOfferBlock && (
-        <div className="sc-conv-offer">
-          {offerHeading && <div className="sc-conv-offer-title">{offerHeading}</div>}
-          {dealDescription && <p className="sc-conv-offer-desc">{dealDescription}</p>}
+        <div className="sc-conv-actions">
+          <button
+            type="button"
+            className="sc-cta-info"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
+            aria-label="Vedi dettagli sconto"
+          >
+            + Info
+          </button>
+          <button
+            type="button"
+            className="sc-cta-mini"
+            disabled={!!claiming}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+          >
+            {claiming ? '…' : 'Prendi'}
+          </button>
         </div>
-      )}
-
-      {/* Condizioni */}
-      {hasConditions && (
-        <div className="sc-conv-section">
-          <div className="sc-conv-section-label">Condizioni</div>
-          <ul className="sc-conv-cond">
-            {conditionLines.map((c, i) => <li key={i}>{c}</li>)}
-          </ul>
-        </div>
-      )}
-
-      {/* Footer: validità + CTA */}
-      <div className="sc-conv-footer">
-        <div className="sc-conv-validity">
-          {validityLabel || 'Sempre valido'}
-        </div>
-        <button
-          type="button"
-          className="sc-cta-mini"
-          disabled={!!claiming}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
-        >
-          {claiming ? '…' : 'Prendi'}
-        </button>
       </div>
     </div>
   )
@@ -899,6 +883,107 @@ function UsedRow({ redemption, isDesktop, onClick }) {
           {isDesktop ? relativeDays(usedAtIso) : usedAtDate.getFullYear()}
         </div>
       )}
+    </div>
+  )
+}
+
+/* ============================================================================
+   DealInfoSheet — bottom sheet (mobile) / modal centrato (desktop)
+   con tutte le info dettagliate dello sconto.
+   ============================================================================ */
+function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
+  const r = deal?.restaurant
+  const photo = getPhoto(r)
+  const cuisine = r?.cuisine_type || r?.category?.[0]
+  const isFreebie = deal?.discount_type === 'freebie'
+  const badge = isFreebie ? (deal?.title || deal?.discount_value) : dealBadgeText(deal)
+  const dealTitle = deal?.title
+  const description = deal?.description
+  const conditionLines = (deal?.conditions || '')
+    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)
+  const validUntil = deal?.valid_until ? new Date(deal.valid_until) : null
+  const showValidity = validUntil
+    && (validUntil.getTime() - Date.now()) / 86400000 <= 365
+    && validUntil.getTime() > Date.now()
+  const validityLabel = showValidity
+    ? `Valido fino al ${validUntil.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
+    : 'Sempre valido'
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+
+  return (
+    <div
+      className="sc-info-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Dettagli sconto"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="sc-info-sheet">
+        <div className="sc-grip" aria-hidden="true" />
+        <button type="button" className="sc-close" aria-label="Chiudi" onClick={onClose}>✕</button>
+
+        <div className="sc-info-hero">
+          {photo && (
+            <div className="sc-info-photo">
+              <img src={photo} alt="" loading="lazy" decoding="async" />
+              <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
+            </div>
+          )}
+          <div className="sc-info-id">
+            <h3>{r?.name || dealTitle}</h3>
+            <div className="sc-meta">
+              {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {shortAddress(r?.address)}
+            </div>
+          </div>
+        </div>
+
+        {dealTitle && (
+          <div className="sc-info-section">
+            <div className="sc-info-label">Cosa ottieni</div>
+            <div className="sc-info-title">{dealTitle}</div>
+            {description && <p className="sc-info-desc">{description}</p>}
+          </div>
+        )}
+
+        {conditionLines.length > 0 && (
+          <div className="sc-info-section">
+            <div className="sc-info-label">Condizioni</div>
+            <ul className="sc-info-cond">
+              {conditionLines.map((c, i) => <li key={i}>{c}</li>)}
+            </ul>
+          </div>
+        )}
+
+        <div className="sc-info-section sc-info-validity">
+          <span className="sc-info-validity-ic" aria-hidden="true">⏱</span>
+          {validityLabel}
+        </div>
+
+        <div className="sc-info-actions">
+          <button type="button" className="sc-btn-secondary" onClick={onClose}>
+            Chiudi
+          </button>
+          <button
+            type="button"
+            className="sc-btn-primary"
+            disabled={!!claiming}
+            onClick={onClaim}
+          >
+            {claiming ? 'Un attimo…' : 'Prendi'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
