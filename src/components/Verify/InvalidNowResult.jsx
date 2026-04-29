@@ -1,5 +1,5 @@
 import { DAY_SHORT_LABELS, formatDays, formatSlots } from '../../lib/validity'
-import './InvalidNowResult.css'
+import './ScanResult.css'
 
 /**
  * Schermata fullscreen ristoratore — sconto valido in altri giorni o fasce.
