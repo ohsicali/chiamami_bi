@@ -329,7 +329,7 @@ function CouponDocument({ ctx }) {
         React.createElement(Text, { style: styles.pctBadge }, ctx.percentuale || '—'),
         React.createElement(
           View, { style: styles.pctClaim },
-          React.createElement(Text, { style: styles.pctClaimLabel }, 'SCONTO RISERVATO'),
+          React.createElement(Text, { style: styles.pctClaimLabel }, 'VANTAGGIO DEL CLUB'),
           React.createElement(Text, { style: styles.pctClaimText }, ctx.descrizione_sconto)
         )
       ),

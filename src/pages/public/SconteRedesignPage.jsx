@@ -11,6 +11,8 @@ import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SconteQRPopup from '../../components/Discount/SconteQRPopup'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
+import MetaTags from '../../components/SEO/MetaTags'
+import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
 import './SconteRedesignPage.css'
 
 /* ---------- helpers ---------- */
@@ -295,16 +297,19 @@ function SconteRedesignPageInner() {
 
   return (
     <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : TAB_BAR_HEIGHT + 16 }}>
+      <MetaTags
+        title="Sconti ristoranti Torino · Bi Club | ChiamamiBi"
+        description="Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club."
+        url="https://chiamamibi.com/sconti"
+      />
+      <SconteSchemaOrg drops={dropsAvailable} conv={convAvailable} />
       {!isDesktop && <MobileLogoHeader />}
       <div className={isDesktop ? 'sc-shell sc-shell-desktop' : 'sc-shell sc-shell-mobile'}>
         <div className="sc-head-row">
           <header className="sc-page-head">
-            <h1>Sconti</h1>
-            <p>
-              {dropsAvailable.length} {dropsAvailable.length === 1 ? 'drop' : 'drop'}
-              {' · '}
-              {convAvailable.length} {convAvailable.length === 1 ? 'convenzione' : 'convenzioni'}
-            </p>
+            <h1>Bi Club</h1>
+            <h2 className="sc-page-h2">Sconti e vantaggi nei ristoranti di Torino</h2>
+            <p>Drop a tempo, convenzioni sempre valide, e i vantaggi pronti da usare.</p>
           </header>
           <Segment
             tab={tab}
@@ -411,7 +416,7 @@ function Segment({ tab, countDisponibili, countTuttiIMiei, onChange }) {
         className={`sc-seg ${tab === 'miei' ? 'is-active' : ''}`}
         onClick={() => onChange('miei')}
       >
-        I miei sconti {countTuttiIMiei > 0 && <span className="sc-ct">{countTuttiIMiei}</span>}
+        I miei vantaggi {countTuttiIMiei > 0 && <span className="sc-ct">{countTuttiIMiei}</span>}
       </button>
     </div>
   )
@@ -530,7 +535,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
   const isSaved = status === 'generated'
   const isUsed = status === 'redeemed'
 
-  let ctaLabel = 'Prendi sconto'
+  let ctaLabel = 'Lo voglio'
   let ctaOnClick = onClaim
   let ctaDisabled = !!claiming
   if (claiming) ctaLabel = 'Un attimo…'
@@ -622,7 +627,7 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
           disabled={!!claiming}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
         >
-          {claiming ? '…' : 'Prendi'}
+          {claiming ? '…' : 'Lo voglio'}
         </button>
       </div>
     </div>

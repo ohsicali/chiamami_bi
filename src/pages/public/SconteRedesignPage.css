@@ -64,6 +64,15 @@
   letter-spacing: -0.02em;
   margin: 0 0 4px;
 }
+.sc-page-head .sc-page-h2 {
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--sc-ink-2);
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
 .sc-page-head p {
   font-size: 11px;
   color: var(--sc-ink-2);
@@ -74,6 +83,7 @@
   /* Padding-top ora è sul wrapper .sc-shell-desktop. */
   .sc-page-head { padding: 0; }
   .sc-page-head h1 { font-size: 26px; line-height: 1; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .sc-page-head .sc-page-h2 { font-size: 14px; margin-bottom: 6px; }
   .sc-page-head p { font-size: 13px; max-width: 520px; }
 }
 
