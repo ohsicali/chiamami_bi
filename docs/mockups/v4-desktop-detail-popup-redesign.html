@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v4 desktop — Popup dettagli sconto · Editorial finale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2;
+  --paper:#FFFFFF;
+  --ink:#22181C;
+  --ink-2:#5C4F54;
+  --ink-3:#9A8E94;
+  --line:#EFE7DD;
+  --line-2:#E5DBCE;
+  --corallo:#E8453C;
+  --corallo-light:#FF5757;
+  --corallo-soft:#FCE7E5;
+  --corallo-ink:#B92E26;
+  --oro:#B08954;
+  --oro-soft:#F0E4D2;
+  --crema:#F4EFE5;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 20px 80px}
+
+.gallery{max-width:1280px;margin:0 auto}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+
+.desktop-frames{display:flex;flex-direction:column;gap:36px}
+.dframe{background:#1a1612;border-radius:14px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5);position:relative}
+.dframe::before{content:'';position:absolute;top:8px;left:8px;right:8px;height:30px;background:linear-gradient(180deg,#2a221e 0%,#1f1916 100%);border-radius:8px 8px 0 0;display:flex;align-items:center;padding:0 12px;z-index:5}
+.dframe::after{content:'● ● ●';position:absolute;top:8px;left:14px;height:30px;display:flex;align-items:center;color:#544037;font-size:11px;letter-spacing:5px;z-index:6}
+.dscreen{background:var(--page);border-radius:6px;overflow:hidden;margin-top:30px;height:680px;position:relative;display:flex;flex-direction:column}
+.dlabel{color:#fff;text-align:center;font-size:14px;letter-spacing:.4px;margin-top:14px;font-weight:500}
+.dlabel small{color:#8e7e6e;font-size:12px;display:block;margin-top:4px;letter-spacing:.3px}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* faux background page (blurred behind modal) */
+.bg-mock-d{position:absolute;inset:0;padding:40px 80px;display:flex;flex-direction:column;gap:18px;opacity:.32}
+.bg-mock-d .h{height:46px;background:rgba(34,24,28,.18);border-radius:99px;width:520px;align-self:center}
+.bg-mock-d .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.bg-mock-d .card{height:240px;background:rgba(34,24,28,.18);border-radius:18px}
+
+.bg-blur-d{position:absolute;inset:0;background:rgba(34,24,28,.55);backdrop-filter:blur(8px);z-index:5}
+
+/* MODAL desktop */
+.modal{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:520px;max-width:calc(100% - 60px);
+  max-height:calc(100% - 60px);
+  background:var(--paper);border-radius:24px;
+  z-index:20;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+  animation:fadeIn .25s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
+
+.modal .ph{
+  position:relative;width:100%;aspect-ratio:16/9;background:#dcd0c0;overflow:hidden;
+  flex-shrink:0;
+}
+.modal .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.modal .ph .grad{
+  position:absolute;left:0;right:0;bottom:0;height:120px;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.6) 100%);
+}
+.modal .close{
+  position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+  display:grid;place-items:center;font-size:15px;color:var(--ink);border:none;cursor:pointer;
+}
+.modal .live-pill{
+  position:absolute;top:14px;left:14px;background:var(--corallo);color:#fff;
+  font-size:10px;font-weight:700;padding:5px 12px 5px 9px;border-radius:99px;
+  letter-spacing:.4px;text-transform:uppercase;display:flex;align-items:center;gap:5px;
+}
+.modal .live-pill::before{content:'';width:7px;height:7px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+
+.modal .pct-overlay{
+  position:absolute;left:18px;bottom:14px;color:#fff;
+}
+.modal .pct-overlay .num{
+  font-family:var(--ff-mark);font-size:54px;line-height:.85;letter-spacing:-1.6px;text-shadow:0 4px 18px rgba(0,0,0,.4);
+}
+.modal .pct-overlay .lbl{
+  font-family:var(--ff-hand);font-size:21px;color:rgba(255,255,255,.95);line-height:1;margin-top:3px;
+}
+
+.modal .body{padding:22px 28px 22px;overflow-y:auto;flex:1}
+
+.modal .meta{font-size:10.5px;font-weight:700;color:var(--corallo);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:6px}
+.modal h2{font-family:var(--ff-mark);font-size:30px;color:var(--ink);letter-spacing:.2px;line-height:1;margin-bottom:6px}
+.modal .where{font-size:13px;color:var(--ink-3);font-weight:500;margin-bottom:20px}
+
+.modal .countdown{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--ink);color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:14px;
+}
+.modal .countdown .left strong,
+.modal .countdown .right strong{display:block;font-size:9.5px;font-weight:700;letter-spacing:1.6px;color:rgba(255,255,255,.55);text-transform:uppercase;margin-bottom:4px}
+.modal .countdown .left .v{font-family:var(--ff-mark);font-size:24px;letter-spacing:.5px;color:var(--corallo-light);line-height:1}
+.modal .countdown .right{text-align:right}
+.modal .countdown .right .v{font-family:var(--ff-mark);font-size:20px;line-height:1;color:#fff}
+.modal .countdown .right .v small{font-size:11px;color:rgba(255,255,255,.5);font-weight:500;font-family:var(--ff-ui);margin-left:2px}
+
+.modal .progress-strip{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-3);font-weight:600;margin-bottom:18px}
+.modal .progress-strip .bar{flex:1;height:5px;background:var(--line);border-radius:99px;overflow:hidden}
+.modal .progress-strip .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px;width:20%}
+
+.modal .editorial{
+  background:var(--oro-soft);border-radius:14px;padding:16px 18px;margin-bottom:18px;
+  display:flex;gap:13px;align-items:flex-start;
+}
+.modal .editorial .av{
+  width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  display:grid;place-items:center;flex-shrink:0;position:relative;overflow:visible;
+}
+.modal .editorial .av .logo-img{width:30px;height:30px;display:block}
+.modal .editorial .av::after{
+  content:'✦';position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:var(--oro);border-radius:50%;border:1.5px solid var(--oro-soft);font-size:6.5px;display:grid;place-items:center;color:#fff;font-weight:700;
+}
+.modal .editorial .txt strong{display:block;font-size:10px;font-weight:700;color:var(--oro);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:4px}
+.modal .editorial .txt p{font-family:var(--ff-hand);font-size:20px;color:#7a5f33;line-height:1.2}
+
+.modal .specs{display:flex;flex-direction:column;gap:0}
+.modal .spec-row{
+  display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);
+}
+.modal .spec-row:last-child{border-bottom:0}
+.modal .spec-row .ic{
+  width:38px;height:38px;border-radius:11px;background:var(--corallo-soft);color:var(--corallo);
+  display:grid;place-items:center;flex-shrink:0;
+}
+.modal .spec-row .ic.gold{background:var(--oro-soft);color:var(--oro)}
+.modal .spec-row .info{flex:1}
+.modal .spec-row .info strong{display:block;font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:3px}
+.modal .spec-row .info .v{font-size:14px;color:var(--ink);font-weight:600;line-height:1.2}
+
+.modal .restaurant-link{
+  margin-top:18px;
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:var(--page);border:1px solid var(--line);border-radius:14px;
+  cursor:pointer;text-decoration:none;color:inherit;
+  transition:all .18s ease;
+}
+.modal .restaurant-link:hover{border-color:var(--corallo);transform:translateX(2px);box-shadow:0 8px 22px rgba(232,69,60,.08)}
+.modal .restaurant-link .thumb{
+  width:48px;height:48px;border-radius:11px;background:#dcd0c0;overflow:hidden;flex-shrink:0;
+}
+.modal .restaurant-link .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.modal .restaurant-link .info{flex:1;min-width:0}
+.modal .restaurant-link .info strong{display:block;font-size:10px;font-weight:700;color:var(--corallo);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:3px}
+.modal .restaurant-link .info .name{font-family:var(--ff-mark);font-size:15px;color:var(--ink);letter-spacing:.2px;line-height:1.05}
+.modal .restaurant-link .arrow{
+  width:34px;height:34px;border-radius:50%;background:var(--paper);border:1px solid var(--line);
+  display:grid;place-items:center;color:var(--ink);flex-shrink:0;
+}
+
+.modal .footer{
+  padding:16px 28px 22px;background:var(--paper);border-top:1px solid var(--line);
+}
+.modal .footer .cta{
+  width:100%;background:var(--corallo);color:#fff;border:none;padding:15px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:14.5px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 8px 22px rgba(232,69,60,.35);
+}
+.modal .footer .cta::after{content:'→';font-size:16px}
+
+.notes{margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR23 · Popup dettagli sconto · Desktop</span>
+    <h1>Popup dettagli — desktop</h1>
+    <p>Stesso markup del mobile, modal centrato 520px (vs bottom sheet mobile). Foto 16:9 cinemascope (più larga del 4:3 mobile per sfruttare la larghezza).</p>
+  </div>
+
+  <div class="desktop-frames">
+
+    <!-- DROP -->
+    <div>
+      <div class="dframe"><div class="dscreen">
+        <div class="bg-mock-d">
+          <div class="h"></div>
+          <div class="grid">
+            <div class="card"></div><div class="card"></div><div class="card"></div>
+          </div>
+        </div>
+        <div class="bg-blur-d"></div>
+
+        <div class="modal">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+            <div class="grad"></div>
+            <span class="live-pill">drop live</span>
+            <button class="close">✕</button>
+            <div class="pct-overlay">
+              <div class="num">−20%</div>
+              <div class="lbl">sul totale</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="meta">Barbecue · Via Saluzzo 77</div>
+            <h2>Al Brasà</h2>
+            <div class="where">Ristorante di carne · Saluzzo</div>
+
+            <div class="countdown">
+              <div class="left">
+                <strong>termina tra</strong>
+                <div class="v">10h 33m</div>
+              </div>
+              <div class="right">
+                <strong>posti</strong>
+                <div class="v">2<small>/10 presi</small></div>
+              </div>
+            </div>
+
+            <div class="progress-strip">
+              <div class="bar"><i></i></div>
+              <span>8 ancora liberi</span>
+            </div>
+
+            <div class="specs">
+              <div class="spec-row">
+                <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+                <div class="info">
+                  <strong>Validità</strong>
+                  <div class="v">Solo in settimana · Lun–Ven</div>
+                </div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7L9 18l-5-5"/></svg></div>
+                <div class="info">
+                  <strong>Cosa ottieni</strong>
+                  <div class="v">20% sul totale del conto</div>
+                </div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div>
+                <div class="info">
+                  <strong>Da sapere</strong>
+                  <div class="v">Codice valido una sola volta · Per persona</div>
+                </div>
+              </div>
+            </div>
+
+            <a class="restaurant-link" href="#">
+              <div class="thumb"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80" alt=""></div>
+              <div class="info">
+                <strong>Scopri il ristorante</strong>
+                <div class="name">Al Brasà</div>
+              </div>
+              <div class="arrow">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+            </a>
+
+            <div class="editorial" style="margin-top:18px;margin-bottom:0">
+              <div class="av"><img class="logo-img" src="https://chiamamibi.com/bi_logo_def_centrato.svg" alt="Bi"></div>
+              <div class="txt">
+                <strong>Secondo Bi</strong>
+                <p>Spiedo al barbecue cotto come si deve. Fidati: in settimana è meno affollato.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="footer">
+            <button class="cta">Lo voglio</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="dlabel">Drop · "Al Brasà" — desktop modal<small>520px centrato · backdrop blur · foto 16:9 · stesso pattern del mobile</small></div>
+    </div>
+
+    <!-- CONVENZIONE -->
+    <div>
+      <div class="dframe"><div class="dscreen">
+        <div class="bg-mock-d">
+          <div class="h"></div>
+          <div class="grid">
+            <div class="card"></div><div class="card"></div><div class="card"></div>
+          </div>
+        </div>
+        <div class="bg-blur-d"></div>
+
+        <div class="modal">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=900&q=85" alt="">
+            <div class="grad"></div>
+            <button class="close">✕</button>
+            <div class="pct-overlay">
+              <div class="num">−10%</div>
+              <div class="lbl">sul totale</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="meta">Matcha · Via Monte di Pietà 17</div>
+            <h2>Kintsugi tea & cakes</h2>
+            <div class="where">Cucina giapponese · Centro</div>
+
+            <div class="specs">
+              <div class="spec-row">
+                <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+                <div class="info">
+                  <strong>Quando</strong>
+                  <div class="v">Da martedì a venerdì</div>
+                </div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7L9 18l-5-5"/></svg></div>
+                <div class="info">
+                  <strong>Cosa ottieni</strong>
+                  <div class="v">10% sul totale del conto</div>
+                </div>
+              </div>
+              <div class="spec-row">
+                <div class="ic gold"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+                <div class="info">
+                  <strong>Scadenza</strong>
+                  <div class="v">Valido fino al 30 aprile 2026</div>
+                </div>
+              </div>
+            </div>
+
+            <a class="restaurant-link" href="#">
+              <div class="thumb"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt=""></div>
+              <div class="info">
+                <strong>Scopri il ristorante</strong>
+                <div class="name">Kintsugi tea & cakes</div>
+              </div>
+              <div class="arrow">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+            </a>
+
+            <div class="editorial" style="margin-top:18px;margin-bottom:0">
+              <div class="av"><img class="logo-img" src="https://chiamamibi.com/bi_logo_def_centrato.svg" alt="Bi"></div>
+              <div class="txt">
+                <strong>Secondo Bi</strong>
+                <p>Il matcha latte qui è quello vero. Vienici al mattino tardi se vuoi sederti senza coda.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="footer">
+            <button class="cta">Lo voglio</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="dlabel">Convenzione · "Kintsugi" — desktop modal<small>no countdown · scadenza in oro nelle specs</small></div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>Differenze desktop vs mobile</h2>
+    <ul>
+      <li>Modal centrato 520px (vs bottom sheet 100% width mobile)</li>
+      <li>Foto 16:9 (vs 4:3 mobile) — sfrutta meglio la larghezza desktop</li>
+      <li>Backdrop blur scuro 55% per isolare il modal dal background</li>
+      <li>Animazione fadeIn + scale (vs slideUp mobile)</li>
+      <li>ESC chiude · click su backdrop chiude · X chiude</li>
+      <li>Tipografia leggermente più grande (h2 30px vs 26px)</li>
+      <li>Stesso identico contenuto e pattern editoriale: foto + percentuale overlay + countdown (drop) + Secondo Bi + specs + Scopri ristorante + CTA</li>
+    </ul>
+
+    <h3>Markup riusabile</h3>
+    <ul>
+      <li>Stesso componente React <code>&lt;DiscountDetail&gt;</code> per mobile e desktop</li>
+      <li>Container responsive: bottom sheet su mobile, modal centrato su desktop (CSS-only via media query)</li>
+      <li>Animazione differente (slideUp vs fadeIn) gestita via CSS custom property</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>v4 mobile — Validità sconto · stati cliente + ristoratore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2; --paper:#FFFFFF; --ink:#22181C; --ink-2:#5C4F54; --ink-3:#9A8E94;
+  --line:#EFE7DD; --line-2:#E5DBCE;
+  --corallo:#E8453C; --corallo-light:#FF5757; --corallo-soft:#FCE7E5; --corallo-ink:#B92E26;
+  --oro:#B08954; --oro-soft:#F0E4D2; --crema:#F4EFE5;
+  --verde:#3FB955; --verde-soft:#DDF4E0; --verde-ink:#1d6e30;
+  --giallo:#E8A53C; --giallo-soft:#FBEDD0; --giallo-ink:#7a5a17;
+  --rosso:#E84141;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 0 80px}
+
+.gallery{max-width:1280px;margin:0 auto;padding:0 28px}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+
+.row-title{color:#fff;text-align:center;margin:60px 0 18px;font-family:var(--ff-mark);font-size:22px;letter-spacing:.4px}
+.row-title small{display:block;color:#cdb89f;font-size:12px;font-weight:500;font-family:var(--ff-ui);letter-spacing:.3px;margin-top:6px}
+
+.frames{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;align-items:start}
+.frame{background:#000;border-radius:42px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.screen{background:var(--page);border-radius:34px;overflow:hidden;height:780px;position:relative;display:flex;flex-direction:column}
+.label{color:#fff;text-align:center;font-size:13px;letter-spacing:.4px;margin-top:14px;font-weight:500}
+.label small{color:#8e7e6e;font-size:11px;display:block;margin-top:4px;letter-spacing:.3px}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(63,185,85,.5)}100%{box-shadow:0 0 0 12px rgba(63,185,85,0)}}
+
+/* ============ PILL stati ============ */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;letter-spacing:.2px}
+.pill .dot{width:6.5px;height:6.5px;border-radius:50%}
+.pill-ok{background:var(--verde-soft);color:var(--verde-ink)}
+.pill-ok .dot{background:var(--verde);box-shadow:0 0 0 3px rgba(63,185,85,.18);animation:blink 1.6s infinite}
+.pill-soon{background:var(--giallo-soft);color:var(--giallo-ink)}
+.pill-soon .dot{background:var(--giallo)}
+.pill-other{background:var(--line);color:var(--ink-2)}
+.pill-other .dot{background:var(--ink-3)}
+
+/* ============ POPUP DETAIL ============ */
+.bg-blur{position:absolute;inset:0;background:rgba(34,24,28,.5);backdrop-filter:blur(8px);z-index:5}
+.bg-mock{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:10px;opacity:.35}
+.bg-mock .h{height:46px;background:rgba(255,255,255,.4);border-radius:10px}
+.bg-mock .b{height:200px;background:rgba(255,255,255,.4);border-radius:14px}
+.bg-mock .c{height:100px;background:rgba(255,255,255,.4);border-radius:12px}
+
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:26px 26px 0 0;z-index:20;display:flex;flex-direction:column;max-height:88%;overflow:hidden}
+.sheet .grip{width:42px;height:4px;background:var(--line-2);border-radius:99px;margin:9px auto 6px}
+.sheet .ph{position:relative;width:100%;aspect-ratio:4/3;background:#dcd0c0;overflow:hidden}
+.sheet .ph img{width:100%;height:100%;object-fit:cover}
+.sheet .ph .pct-overlay{position:absolute;left:14px;bottom:14px;color:#fff}
+.sheet .ph .pct-overlay .num{font-family:var(--ff-mark);font-size:42px;line-height:.85;letter-spacing:-1.2px;text-shadow:0 4px 18px rgba(0,0,0,.4)}
+.sheet .ph .pct-overlay .lbl{font-family:var(--ff-hand);font-size:16px;color:rgba(255,255,255,.95);line-height:1;margin-top:2px}
+.sheet .close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;font-size:14px;color:var(--ink);border:none}
+
+.sheet .body{padding:16px 20px 20px;overflow-y:auto;flex:1}
+.sheet .meta{font-size:10px;font-weight:700;color:var(--corallo);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:5px}
+.sheet h2{font-family:var(--ff-mark);font-size:24px;color:var(--ink);letter-spacing:.2px;line-height:1;margin-bottom:5px}
+.sheet .where{font-size:12px;color:var(--ink-3);font-weight:500;margin-bottom:14px}
+
+.validity-block{
+  border-radius:14px;padding:12px 14px;margin-bottom:14px;
+  display:flex;align-items:center;gap:11px;
+}
+.validity-block.ok{background:var(--verde-soft)}
+.validity-block.warn{background:var(--giallo-soft)}
+.validity-block.bad{background:rgba(232,69,60,.1)}
+.validity-block .ic{
+  width:32px;height:32px;border-radius:50%;color:#fff;
+  display:grid;place-items:center;flex-shrink:0;
+}
+.validity-block.ok .ic{background:var(--verde)}
+.validity-block.warn .ic{background:var(--giallo)}
+.validity-block.bad .ic{background:var(--corallo)}
+.validity-block .ic svg{width:17px;height:17px;stroke-width:3}
+.validity-block .txt strong{display:block;font-size:13px;font-weight:700;line-height:1.1;margin-bottom:2px}
+.validity-block.ok .txt strong{color:var(--verde-ink)}
+.validity-block.warn .txt strong{color:var(--giallo-ink)}
+.validity-block.bad .txt strong{color:var(--corallo-ink)}
+.validity-block .txt p{font-size:11px;color:var(--ink-2);font-weight:500;line-height:1.3}
+
+.sheet .specs{display:flex;flex-direction:column;gap:0}
+.sheet .spec-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.sheet .spec-row:last-child{border-bottom:0}
+.sheet .spec-row .ic{width:34px;height:34px;border-radius:10px;background:var(--corallo-soft);color:var(--corallo);display:grid;place-items:center;flex-shrink:0}
+.sheet .spec-row .info strong{display:block;font-size:9.5px;font-weight:700;color:var(--ink-3);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:2px}
+.sheet .spec-row .info .v{font-size:13px;color:var(--ink);font-weight:600;line-height:1.2}
+
+.sheet .footer{padding:14px 20px 22px;background:var(--paper);border-top:1px solid var(--line)}
+.sheet .footer .cta{
+  width:100%;background:var(--corallo);color:#fff;border:none;padding:14px;border-radius:99px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 8px 22px rgba(232,69,60,.35);
+}
+.sheet .footer .cta svg{width:16px;height:16px}
+
+/* ============ I MIEI VANTAGGI ============ */
+.scC{padding:14px 14px 0;flex:1;overflow-y:auto}
+.mine-list{display:flex;flex-direction:column;gap:10px}
+.mine-row{
+  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:11px;display:flex;align-items:center;gap:11px;
+}
+.mine-row .ph-mini{width:50px;height:50px;border-radius:11px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.mine-row .ph-mini img{width:100%;height:100%;object-fit:cover}
+.mine-row .info{flex:1;min-width:0}
+.mine-row .info h4{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:2px}
+.mine-row .info .meta{font-size:10.5px;color:var(--ink-3);font-weight:500;margin-bottom:5px}
+.mine-row .info .pill-row-mini{display:flex;gap:5px;flex-wrap:wrap}
+.mine-row .qr-btn{
+  background:var(--ink);color:#fff;border:none;padding:9px 13px 9px 11px;border-radius:99px;
+  font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.mine-row .qr-btn svg{width:13px;height:13px}
+
+/* ============ POPUP QR — NON VALIDO OGGI (NEW) ============ */
+.sheet.qr-blocked .ph{display:none}
+.sheet.qr-blocked .body{padding:20px 22px}
+.qr-block-screen{
+  display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 0 4px;
+}
+.qr-block-screen .place-mini{
+  display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;padding:10px 12px;width:100%;margin-bottom:18px;
+}
+.qr-block-screen .place-mini .ph-thumb{width:42px;height:42px;border-radius:10px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.qr-block-screen .place-mini .ph-thumb img{width:100%;height:100%;object-fit:cover}
+.qr-block-screen .place-mini .info{flex:1;min-width:0;text-align:left}
+.qr-block-screen .place-mini h3{font-family:var(--ff-mark);font-size:15px;color:var(--ink);letter-spacing:.2px;line-height:1.05}
+.qr-block-screen .place-mini .meta{font-size:11px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.qr-block-screen .place-mini .pct{
+  background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:13px;
+  padding:5px 11px;border-radius:8px;letter-spacing:-.3px;
+}
+
+.qr-block-screen .lock-circle{
+  width:90px;height:90px;border-radius:50%;background:rgba(232,69,60,.12);
+  display:grid;place-items:center;margin-bottom:18px;color:var(--corallo);
+}
+.qr-block-screen .lock-circle svg{width:42px;height:42px;stroke-width:2.4}
+
+.qr-block-screen h3{
+  font-family:var(--ff-mark);font-size:22px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:6px;
+}
+.qr-block-screen p{
+  font-size:13px;color:var(--ink-2);font-weight:500;line-height:1.45;max-width:280px;margin-bottom:18px;
+}
+
+.day-strip-cli{
+  display:flex;gap:5px;background:var(--page);border-radius:99px;padding:5px;margin-bottom:18px;
+}
+.day-strip-cli .d{
+  width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:var(--ink-3);
+}
+.day-strip-cli .d.ok{background:var(--verde-soft);color:var(--verde-ink)}
+.day-strip-cli .d.today{background:var(--ink);color:#fff}
+
+.qr-block-screen .reminder{
+  background:var(--oro-soft);color:var(--giallo-ink);
+  font-family:var(--ff-hand);font-size:18px;font-weight:600;
+  padding:8px 14px;border-radius:99px;line-height:1;
+  display:inline-flex;align-items:center;gap:6px;
+}
+
+/* ============ POPUP QR — VALIDO (active state) ============ */
+.qr-active{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px}
+.qr-active .place-mini{
+  display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;padding:10px 12px;width:100%;margin-bottom:18px;
+}
+.qr-active .place-mini .ph-thumb{width:42px;height:42px;border-radius:10px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.qr-active .place-mini .ph-thumb img{width:100%;height:100%;object-fit:cover}
+.qr-active .place-mini .info{flex:1;text-align:left}
+.qr-active .place-mini h3{font-family:var(--ff-mark);font-size:15px;color:var(--ink);letter-spacing:.2px;line-height:1.05}
+.qr-active .place-mini .meta{font-size:11px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.qr-active .place-mini .pct{background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:13px;padding:5px 11px;border-radius:8px;letter-spacing:-.3px}
+.qr-active .qr-frame{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:14px;margin-bottom:8px}
+.qr-active .qr-img{width:170px;height:170px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='25' height='25' fill='%23000'/><rect x='10' y='10' width='15' height='15' fill='%23fff'/><rect x='14' y='14' width='7' height='7' fill='%23000'/><rect x='70' y='5' width='25' height='25' fill='%23000'/><rect x='75' y='10' width='15' height='15' fill='%23fff'/><rect x='79' y='14' width='7' height='7' fill='%23000'/><rect x='5' y='70' width='25' height='25' fill='%23000'/><rect x='10' y='75' width='15' height='15' fill='%23fff'/><rect x='14' y='79' width='7' height='7' fill='%23000'/><rect x='40' y='5' width='5' height='5' fill='%23000'/><rect x='50' y='5' width='5' height='5' fill='%23000'/><rect x='60' y='15' width='5' height='5' fill='%23000'/><rect x='5' y='40' width='5' height='5' fill='%23000'/><rect x='15' y='50' width='5' height='5' fill='%23000'/><rect x='40' y='40' width='15' height='15' fill='%23000'/><rect x='65' y='45' width='5' height='5' fill='%23000'/><rect x='80' y='45' width='5' height='5' fill='%23000'/><rect x='40' y='65' width='5' height='5' fill='%23000'/><rect x='50' y='75' width='5' height='5' fill='%23000'/><rect x='60' y='65' width='5' height='5' fill='%23000'/><rect x='75' y='65' width='5' height='5' fill='%23000'/><rect x='90' y='80' width='5' height='5' fill='%23000'/></svg>");background-size:cover}
+.qr-active .qr-hint{font-family:var(--ff-hand);font-size:21px;color:var(--corallo);font-weight:600;line-height:1;margin-top:4px}
+.qr-active .reassurance{margin-top:10px;padding:8px 14px;background:rgba(63,185,85,.12);color:var(--verde-ink);border-radius:99px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+.qr-active .reassurance svg{width:13px;height:13px;stroke-width:3}
+
+/* ============ RISTORATORE SCAN ============ */
+.scan-screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;color:#fff}
+.scan-screen.success{background:linear-gradient(180deg,#3FB955 0%,#1d6e30 100%)}
+.scan-screen.invalid{background:linear-gradient(180deg,#E84141 0%,#A12727 100%)}
+.scan-screen.used{background:linear-gradient(180deg,#5C4F54 0%,#22181C 100%)}
+.scan-icon{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;margin-bottom:30px;position:relative}
+.scan-screen.success .scan-icon{animation:pulse-ring 1.5s infinite}
+.scan-icon svg{width:60px;height:60px;stroke-width:3}
+.scan-screen .pct-banner{background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border-radius:18px;padding:14px 22px;margin-bottom:24px;display:flex;align-items:center;gap:14px}
+.scan-screen .pct-banner .pct-num{font-family:var(--ff-mark);font-size:32px;line-height:.9;letter-spacing:-.8px;color:#fff}
+.scan-screen .pct-banner .info{text-align:left}
+.scan-screen .pct-banner .info strong{display:block;font-family:var(--ff-mark);font-size:14px;letter-spacing:.2px;line-height:1.05}
+.scan-screen .pct-banner .info p{font-size:11px;color:rgba(255,255,255,.85);font-weight:500;margin-top:2px}
+.scan-screen h1{font-family:var(--ff-mark);font-size:32px;letter-spacing:.4px;line-height:1;margin-bottom:10px}
+.scan-screen p{font-size:14px;color:rgba(255,255,255,.9);font-weight:500;line-height:1.4;max-width:280px;margin-bottom:20px}
+.scan-screen .meta-line{font-size:11px;color:rgba(255,255,255,.7);font-weight:500;margin-bottom:30px;letter-spacing:.3px}
+.scan-screen .next-cta{background:#fff;color:var(--ink);border:none;padding:14px 28px;border-radius:99px;font-size:13.5px;font-weight:700;cursor:pointer}
+.scan-screen.success .next-cta{color:var(--verde-ink)}
+.scan-screen.invalid .next-cta{color:#A12727}
+.scan-screen .day-strip-rist{display:flex;gap:6px;margin-bottom:24px;background:rgba(0,0,0,.18);border-radius:99px;padding:5px}
+.scan-screen .day-strip-rist .d{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.55)}
+.scan-screen .day-strip-rist .d.ok{background:rgba(255,255,255,.95);color:var(--verde-ink)}
+.scan-screen .day-strip-rist .d.today{background:rgba(0,0,0,.4);color:#fff;outline:2px solid rgba(255,255,255,.4)}
+
+@media (max-width:980px){.frames{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:780px){.frames{grid-template-columns:1fr}}
+
+.notes{margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+.notes .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
+@media (max-width:780px){.notes .grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR24 · Validità sconto · cliente + ristoratore</span>
+    <h1>Validità giorno + fascia</h1>
+    <p>Card del sito attuali invariate, si aggiunge solo la pill di validità. Popup con block validità + CTA "Sblocca sconto" sempre uniforme. Quando l'utente apre QR in un giorno non valido → schermata informativa. Schermate ristoratore con 3 stati post-scan.</p>
+  </div>
+
+  <div class="row-title">CLIENTE — preview validità + popup<small>card del sito esistente · si aggiunge solo la pill</small></div>
+
+  <div class="frames">
+
+    <!-- 1. POPUP DETAIL — VALIDITY BLOCK con 3 stati -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="bg-mock"><div class="h"></div><div class="b"></div><div class="c"></div></div>
+        <div class="bg-blur"></div>
+
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=900&q=85" alt="">
+            <button class="close">✕</button>
+            <div class="pct-overlay">
+              <div class="num">−10%</div>
+              <div class="lbl">sul totale</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="meta">Matcha · Via Monte di Pietà 17</div>
+            <h2>Kintsugi tea & cakes</h2>
+            <div class="where">Cucina giapponese · Centro</div>
+
+            <div class="validity-block bad">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div>
+              <div class="txt">
+                <strong>Oggi non valido · Da martedì</strong>
+                <p>Si attiva da martedì a venerdì, fascia pranzo e pomeriggio.</p>
+              </div>
+            </div>
+
+            <div class="specs">
+              <div class="spec-row">
+                <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+                <div class="info"><strong>Quando</strong><div class="v">Mar · Mer · Gio · Ven</div></div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+                <div class="info"><strong>Fascia</strong><div class="v">Pranzo · Pomeriggio (9–18)</div></div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7L9 18l-5-5"/></svg></div>
+                <div class="info"><strong>Cosa ottieni</strong><div class="v">10% sul totale del conto</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <button class="cta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              Sblocca sconto
+            </button>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">1 · Popup dettagli<small>block "Oggi non valido" · CTA "Sblocca sconto" sempre uniforme</small></div>
+    </div>
+
+    <!-- 2. I MIEI VANTAGGI con pill validity -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div style="padding:46px 14px 12px;display:flex;justify-content:space-between;align-items:center;background:var(--page)">
+          <div style="display:flex;flex-direction:column;line-height:1.1">
+            <strong style="font-family:var(--ff-mark);font-size:13px;color:var(--corallo);letter-spacing:.4px">LA GUIDA DI BI</strong>
+            <small style="font-size:7px;font-weight:700;color:var(--ink-3);letter-spacing:1.1px;margin-top:2px">BY CHIAMAMI BI</small>
+          </div>
+        </div>
+        <div class="scC">
+          <div style="margin:6px 4px 14px">
+            <strong style="font-family:var(--ff-mark);font-size:21px;color:var(--ink)">I miei vantaggi</strong>
+            <p style="font-size:11px;color:var(--ink-3);margin-top:4px;font-weight:500">3 sbloccati · 1 utilizzabile ora</p>
+          </div>
+
+          <div class="mine-list">
+            <div class="mine-row">
+              <div class="ph-mini"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80" alt=""></div>
+              <div class="info">
+                <h4>Al Brasà · −20%</h4>
+                <div class="meta">Barbecue · Via Saluzzo 77</div>
+                <div class="pill-row-mini"><span class="pill pill-ok"><span class="dot"></span>Usalo ora</span></div>
+              </div>
+              <button class="qr-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                Apri QR
+              </button>
+            </div>
+
+            <div class="mine-row">
+              <div class="ph-mini"><img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80" alt=""></div>
+              <div class="info">
+                <h4>Bar Cavour · −15%</h4>
+                <div class="meta">Cocktail bar · Vanchiglia</div>
+                <div class="pill-row-mini"><span class="pill pill-soon"><span class="dot"></span>Da stasera · 19:00</span></div>
+              </div>
+              <button class="qr-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                Apri QR
+              </button>
+            </div>
+
+            <div class="mine-row">
+              <div class="ph-mini"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt=""></div>
+              <div class="info">
+                <h4>Kintsugi · −10%</h4>
+                <div class="meta">Matcha · Centro</div>
+                <div class="pill-row-mini"><span class="pill pill-other"><span class="dot"></span>Oggi no · da Mar</span></div>
+              </div>
+              <button class="qr-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                Apri QR
+              </button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">2 · I miei vantaggi<small>pill validità su ogni voce · "Apri QR" SEMPRE attivo</small></div>
+    </div>
+
+    <!-- 3. POPUP QR — NON VALIDO OGGI (NUOVO) -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="bg-mock"><div class="h"></div><div class="b"></div><div class="c"></div></div>
+        <div class="bg-blur"></div>
+
+        <div class="sheet qr-blocked">
+          <div class="grip"></div>
+          <button class="close" style="position:absolute;top:14px;right:14px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2)">✕</button>
+
+          <div class="body">
+            <div class="qr-block-screen">
+              <div class="place-mini">
+                <div class="ph-thumb"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt=""></div>
+                <div class="info">
+                  <h3>Kintsugi tea & cakes</h3>
+                  <div class="meta">Matcha · Centro</div>
+                </div>
+                <div class="pct">−10%</div>
+              </div>
+
+              <div class="lock-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="16" r="1"/></svg>
+              </div>
+
+              <h3>Oggi non puoi usarlo</h3>
+              <p>Questo vantaggio è valido <strong>da martedì a venerdì</strong>, fascia pranzo e pomeriggio. Oggi è sabato.</p>
+
+              <div class="day-strip-cli">
+                <div class="d">L</div>
+                <div class="d ok">M</div>
+                <div class="d ok">M</div>
+                <div class="d ok">G</div>
+                <div class="d ok">V</div>
+                <div class="d today">S</div>
+                <div class="d">D</div>
+              </div>
+
+              <div class="reminder">⏰ Te lo ricordo io martedì</div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <button class="cta" style="background:var(--ink);box-shadow:none">Capito</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">3 · Apri QR — non valido oggi<small>cliente apre QR sabato · vede schermata che spiega · day strip · "ti ricordo io martedì"</small></div>
+    </div>
+
+  </div>
+
+  <div class="row-title">RISTORATORE — schermo dopo lo scan<small>3 stati: success · non valido oggi · già usato</small></div>
+
+  <div class="frames">
+
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="scan-screen success">
+          <div class="scan-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <h1>Sconto attivato</h1>
+          <p>Applica il vantaggio al conto del cliente.</p>
+          <div class="pct-banner">
+            <div class="pct-num">−20%</div>
+            <div class="info">
+              <strong>Bi Club · Al Brasà</strong>
+              <p>Cliente: Augusto T. · 29 apr 2026, 19:42</p>
+            </div>
+          </div>
+          <button class="next-cta">Scansiona il prossimo →</button>
+        </div>
+      </div></div>
+      <div class="label" style="color:#a4f5b6">A · Success<small>verde · check pulsante · sconto da applicare al conto</small></div>
+    </div>
+
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="scan-screen invalid">
+          <div class="scan-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div>
+          <h1>Non valido oggi</h1>
+          <p>Questo vantaggio si attiva da martedì a venerdì.</p>
+          <div class="day-strip-rist">
+            <div class="d">L</div>
+            <div class="d ok">M</div>
+            <div class="d ok">M</div>
+            <div class="d ok">G</div>
+            <div class="d ok">V</div>
+            <div class="d today">S</div>
+            <div class="d">D</div>
+          </div>
+          <div class="meta-line">Kintsugi tea & cakes · Tentato sabato 02 maggio</div>
+          <button class="next-cta">Chiudi</button>
+        </div>
+      </div></div>
+      <div class="label" style="color:#ffb4b4">B · Non valido oggi<small>rosso · day strip mostra giorni validi · oggi outlined</small></div>
+    </div>
+
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="scan-screen used">
+          <div class="scan-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h1>Già utilizzato</h1>
+          <p>Questo codice è stato attivato il 15 aprile 2026 alle 20:14.</p>
+          <div class="pct-banner" style="opacity:.6">
+            <div class="pct-num" style="color:rgba(255,255,255,.6)">−20%</div>
+            <div class="info">
+              <strong>Al Brasà · usato</strong>
+              <p>15 apr 2026, 20:14</p>
+            </div>
+          </div>
+          <button class="next-cta">Chiudi</button>
+        </div>
+      </div></div>
+      <div class="label" style="color:#cdb89f">C · Già utilizzato<small>grigio scuro · data e ora del primo utilizzo</small></div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>Decisioni 29/04 — sintesi</h2>
+
+    <h3>Card sezione Bi Club (catalogo)</h3>
+    <ul>
+      <li><strong>NON modificare le card live attuali</strong></li>
+      <li>Aggiungere SOLO la pill di validità sotto il nome del locale</li>
+      <li>Pill stati: <code>pill-ok</code> "Valido ora" · <code>pill-soon</code> "Solo a cena · da 19:00" · <code>pill-other</code> "Oggi no · Mar–Ven"</li>
+    </ul>
+
+    <h3>Popup dettagli sconto</h3>
+    <ul>
+      <li>Block validità sopra le specs (verde / giallo / rosso)</li>
+      <li>CTA <strong>"Sblocca sconto"</strong> sempre uniforme — niente varianti tipo "sblocca lo stesso me lo tieni"</li>
+      <li>L'utente può sempre sbloccare. La validità si controlla quando apre il QR</li>
+    </ul>
+
+    <h3>I miei vantaggi (lista sbloccati)</h3>
+    <ul>
+      <li>Pill validità su ogni voce</li>
+      <li>Bottone <strong>"Apri QR" sempre attivo</strong> · niente disabilitazione</li>
+      <li>Se l'utente lo apre in un giorno non valido → schermata informativa che spiega</li>
+    </ul>
+
+    <h3>Popup "Apri QR" — NON valido oggi (NUOVO)</h3>
+    <ul>
+      <li>Place-mini header con nome locale + percentuale</li>
+      <li>Lucchetto grande corallo soft</li>
+      <li>Titolo "Oggi non puoi usarlo" + spiegazione "Da martedì a venerdì, fascia pranzo e pomeriggio. Oggi è sabato"</li>
+      <li>Day strip: 7 giorni con quelli validi verdi + oggi outlined ink</li>
+      <li>Reminder Caveat oro "⏰ Te lo ricordo io martedì"</li>
+      <li>CTA scuro "Capito"</li>
+    </ul>
+
+    <h3>Schermate ristoratore (post-scan, già funzionanti come pattern)</h3>
+    <ul>
+      <li>Success verde · check pulsante · banner percentuale + meta cliente</li>
+      <li>Non valido oggi rosso · ✕ · day strip con giorni validi + oggi outlined · meta tentativo</li>
+      <li>Già utilizzato grigio scuro · data + ora primo utilizzo</li>
+    </ul>
+
+    <div class="grid">
+      <div>
+        <h3>Modello dati DB (campi nuovi su discount)</h3>
+        <ul>
+          <li><code>valid_days</code>: int[] (1=Lun..7=Dom) o preset string</li>
+          <li><code>valid_meal_slot</code>: enum/array — pranzo|cena|aperitivo|brunch|sempre</li>
+          <li><code>valid_hours</code>: opzionale <code>{from,to}</code></li>
+          <li>Già esistenti: <code>valid_from_date</code>, <code>valid_until_date</code></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Helper runtime</h3>
+        <ul>
+          <li><code>checkValidity(discount, now)</code> ritorna 1 di 5: <code>valid_now</code> · <code>valid_today_later</code> · <code>valid_other_day</code> · <code>expired</code> · <code>used</code></li>
+          <li>Stesso codice usato lato cliente (UX) e lato ristoratore (validation scan)</li>
+          <li>Backend SCAN endpoint è autoritativo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
