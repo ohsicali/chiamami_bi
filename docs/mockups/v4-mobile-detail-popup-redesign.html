@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>v4 mobile — Popup dettagli sconto · Locked/Unlocked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2; --paper:#FFFFFF; --ink:#22181C; --ink-2:#5C4F54; --ink-3:#9A8E94;
+  --line:#EFE7DD; --line-2:#E5DBCE;
+  --corallo:#E8453C; --corallo-light:#FF5757; --corallo-soft:#FCE7E5; --corallo-ink:#B92E26;
+  --oro:#B08954; --oro-soft:#F0E4D2; --crema:#F4EFE5;
+  --verde:#3FB955;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 0 80px}
+
+.gallery{max-width:1280px;margin:0 auto;padding:0 28px}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+
+.frames{display:grid;grid-template-columns:repeat(2,1fr);gap:36px;align-items:start;max-width:780px;margin:0 auto}
+.frame{background:#000;border-radius:42px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.screen{background:var(--page);border-radius:34px;overflow:hidden;height:780px;position:relative;display:flex;flex-direction:column}
+.label{color:#fff;text-align:center;font-size:13px;letter-spacing:.4px;margin-top:18px;font-weight:500}
+.label small{color:#8e7e6e;font-size:11px;display:block;margin-top:4px;letter-spacing:.3px}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.bg-blur{position:absolute;inset:0;background:rgba(34,24,28,.5);backdrop-filter:blur(8px);z-index:5}
+.bg-mock{position:absolute;inset:0;padding:14px;display:flex;flex-direction:column;gap:10px;opacity:.35}
+.bg-mock .h{height:46px;background:rgba(255,255,255,.4);border-radius:10px}
+.bg-mock .b{height:200px;background:rgba(255,255,255,.4);border-radius:14px}
+.bg-mock .c{height:100px;background:rgba(255,255,255,.4);border-radius:12px}
+
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;
+  background:var(--paper);border-radius:26px 26px 0 0;
+  z-index:20;display:flex;flex-direction:column;
+  max-height:88%;overflow:hidden;animation:slideUp .35s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+.sheet .grip{width:42px;height:4px;background:var(--line-2);border-radius:99px;margin:9px auto 6px}
+
+.sheet .ph{position:relative;width:100%;aspect-ratio:4/3;background:#dcd0c0;overflow:hidden}
+.sheet .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.sheet .ph .grad{
+  position:absolute;left:0;right:0;bottom:0;height:90px;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.55) 100%);
+}
+.sheet .close{
+  position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+  display:grid;place-items:center;font-size:14px;color:var(--ink);border:none;
+}
+.sheet .live-pill{
+  position:absolute;top:14px;left:14px;background:var(--corallo);color:#fff;
+  font-size:9.5px;font-weight:700;padding:5px 11px 5px 9px;border-radius:99px;
+  letter-spacing:.4px;text-transform:uppercase;display:flex;align-items:center;gap:5px;
+}
+.sheet .live-pill::before{content:'';width:6.5px;height:6.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+.sheet .pct-overlay{position:absolute;left:14px;bottom:14px;color:#fff}
+.sheet .pct-overlay .num{font-family:var(--ff-mark);font-size:48px;line-height:.85;letter-spacing:-1.5px;text-shadow:0 4px 18px rgba(0,0,0,.4)}
+.sheet .pct-overlay .lbl{font-family:var(--ff-hand);font-size:18px;color:rgba(255,255,255,.95);line-height:1;margin-top:2px}
+
+.sheet .body{padding:18px 20px 20px;overflow-y:auto;flex:1}
+.sheet .meta{font-size:10px;font-weight:700;color:var(--corallo);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:5px}
+.sheet h2{font-family:var(--ff-mark);font-size:26px;color:var(--ink);letter-spacing:.2px;line-height:1;margin-bottom:5px}
+.sheet .where{font-size:12px;color:var(--ink-3);font-weight:500;margin-bottom:18px}
+
+.sheet .countdown{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--ink);color:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;
+}
+.sheet .countdown .left strong,
+.sheet .countdown .right strong{display:block;font-size:9px;font-weight:700;letter-spacing:1.6px;color:rgba(255,255,255,.55);text-transform:uppercase;margin-bottom:3px}
+.sheet .countdown .left .v{font-family:var(--ff-mark);font-size:22px;letter-spacing:.5px;color:var(--corallo-light);line-height:1}
+.sheet .countdown .right{text-align:right}
+.sheet .countdown .right .v{font-family:var(--ff-mark);font-size:18px;line-height:1;color:#fff}
+.sheet .countdown .right .v small{font-size:10px;color:rgba(255,255,255,.5);font-weight:500;font-family:var(--ff-ui);margin-left:2px}
+.sheet .progress-strip{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--ink-3);font-weight:600;margin-bottom:18px}
+.sheet .progress-strip .bar{flex:1;height:5px;background:var(--line);border-radius:99px;overflow:hidden}
+.sheet .progress-strip .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px;width:20%}
+
+.sheet .specs{display:flex;flex-direction:column;gap:0}
+.sheet .spec-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.sheet .spec-row:last-child{border-bottom:0}
+.sheet .spec-row .ic{width:36px;height:36px;border-radius:10px;background:var(--corallo-soft);color:var(--corallo);display:grid;place-items:center;flex-shrink:0}
+.sheet .spec-row .ic.gold{background:var(--oro-soft);color:var(--oro)}
+.sheet .spec-row .info{flex:1}
+.sheet .spec-row .info strong{display:block;font-size:9.5px;font-weight:700;color:var(--ink-3);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:2px}
+.sheet .spec-row .info .v{font-size:13.5px;color:var(--ink);font-weight:600;line-height:1.2}
+
+.sheet .restaurant-link{
+  margin-top:16px;display:flex;align-items:center;gap:14px;
+  padding:14px 16px;background:var(--page);border:1px solid var(--line);border-radius:14px;
+  cursor:pointer;text-decoration:none;color:inherit;transition:all .18s ease;
+}
+.sheet .restaurant-link:hover{border-color:var(--corallo);transform:translateX(2px)}
+.sheet .restaurant-link .thumb{width:44px;height:44px;border-radius:10px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.sheet .restaurant-link .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.sheet .restaurant-link .info{flex:1;min-width:0}
+.sheet .restaurant-link .info strong{display:block;font-size:9.5px;font-weight:700;color:var(--corallo);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:2px}
+.sheet .restaurant-link .info .name{font-family:var(--ff-mark);font-size:14px;color:var(--ink);letter-spacing:.2px;line-height:1.05}
+.sheet .restaurant-link .arrow{width:30px;height:30px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);flex-shrink:0}
+
+.sheet .editorial{
+  background:var(--oro-soft);border-radius:14px;padding:14px 16px;margin-top:16px;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.sheet .editorial .av{
+  width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  display:grid;place-items:center;flex-shrink:0;position:relative;overflow:visible;
+}
+.sheet .editorial .av .logo-img{width:26px;height:26px;display:block}
+.sheet .editorial .av::after{content:'✦';position:absolute;top:-3px;right:-3px;width:13px;height:13px;background:var(--oro);border-radius:50%;border:1.5px solid var(--oro-soft);font-size:6px;display:grid;place-items:center;color:#fff;font-weight:700}
+.sheet .editorial .txt strong{display:block;font-size:9.5px;font-weight:700;color:var(--oro);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:3px}
+.sheet .editorial .txt p{font-family:var(--ff-hand);font-size:18px;color:#7a5f33;line-height:1.2}
+
+.sheet .footer{padding:14px 20px 22px;background:var(--paper);border-top:1px solid var(--line)}
+.sheet .footer .cta{
+  width:100%;background:var(--corallo);color:#fff;border:none;padding:14px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:14px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 8px 22px rgba(232,69,60,.35);
+}
+.sheet .footer .cta svg{width:16px;height:16px}
+
+/* ====== UNLOCKED STATE ====== */
+.sheet.unlocked .ph{aspect-ratio:21/9;height:auto}
+.sheet .unlock-banner{
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;padding:14px 20px;
+  display:flex;align-items:center;gap:12px;
+}
+.sheet .unlock-banner .check{
+  width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);
+  display:grid;place-items:center;flex-shrink:0;
+}
+.sheet .unlock-banner .check svg{width:18px;height:18px;stroke-width:3}
+.sheet .unlock-banner .txt strong{display:block;font-family:var(--ff-mark);font-size:15px;letter-spacing:.2px;line-height:1.05;margin-bottom:2px}
+.sheet .unlock-banner .txt p{font-size:11px;color:rgba(255,255,255,.85);font-weight:500;line-height:1.3}
+
+.sheet .qr-section{
+  padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:var(--page);border-radius:0;
+}
+.sheet .qr-place{display:flex;align-items:center;gap:10px;align-self:flex-start;width:100%}
+.sheet .qr-place .ph-mini{width:42px;height:42px;border-radius:10px;background:#dcd0c0;overflow:hidden;flex-shrink:0}
+.sheet .qr-place .ph-mini img{width:100%;height:100%;object-fit:cover}
+.sheet .qr-place .info{flex:1}
+.sheet .qr-place .info h3{font-family:var(--ff-mark);font-size:15px;color:var(--ink);letter-spacing:.2px;line-height:1.05}
+.sheet .qr-place .info .meta{font-size:10.5px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.sheet .qr-place .pct-mini{
+  background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:13px;
+  padding:5px 11px;border-radius:8px;letter-spacing:-.3px;
+}
+
+.sheet .qr-frame{
+  background:#fff;border:2px solid var(--ink);border-radius:14px;padding:14px;
+  margin-top:6px;
+}
+.sheet .qr-img{
+  width:170px;height:170px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='5' y='5' width='25' height='25' fill='%23000'/><rect x='10' y='10' width='15' height='15' fill='%23fff'/><rect x='14' y='14' width='7' height='7' fill='%23000'/><rect x='70' y='5' width='25' height='25' fill='%23000'/><rect x='75' y='10' width='15' height='15' fill='%23fff'/><rect x='79' y='14' width='7' height='7' fill='%23000'/><rect x='5' y='70' width='25' height='25' fill='%23000'/><rect x='10' y='75' width='15' height='15' fill='%23fff'/><rect x='14' y='79' width='7' height='7' fill='%23000'/><rect x='40' y='5' width='5' height='5' fill='%23000'/><rect x='50' y='5' width='5' height='5' fill='%23000'/><rect x='60' y='15' width='5' height='5' fill='%23000'/><rect x='5' y='40' width='5' height='5' fill='%23000'/><rect x='15' y='50' width='5' height='5' fill='%23000'/><rect x='40' y='40' width='15' height='15' fill='%23000'/><rect x='65' y='45' width='5' height='5' fill='%23000'/><rect x='80' y='45' width='5' height='5' fill='%23000'/><rect x='40' y='65' width='5' height='5' fill='%23000'/><rect x='50' y='75' width='5' height='5' fill='%23000'/><rect x='60' y='65' width='5' height='5' fill='%23000'/><rect x='75' y='65' width='5' height='5' fill='%23000'/><rect x='90' y='80' width='5' height='5' fill='%23000'/></svg>");
+  background-size:cover;
+}
+.sheet .qr-hint{font-family:var(--ff-hand);font-size:21px;color:var(--corallo);font-weight:600;line-height:1;margin-top:4px}
+.sheet .qr-info{font-size:11px;color:var(--ink-2);text-align:center;line-height:1.4;max-width:280px}
+.sheet .qr-info strong{color:var(--ink);font-weight:700}
+
+.sheet .reassurance{
+  width:100%;margin-top:6px;padding:10px 14px;
+  background:rgba(63,185,85,.12);color:#1d6e30;
+  border-radius:99px;font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  letter-spacing:.1px;
+}
+.sheet .reassurance svg{width:13px;height:13px;stroke-width:3}
+
+.sheet .footer-actions{
+  padding:14px 20px 22px;background:var(--paper);border-top:1px solid var(--line);
+  display:flex;flex-direction:column;gap:10px;
+}
+.sheet .footer-actions .pdf-btn{
+  width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--line-2);
+  padding:13px;border-radius:99px;font-family:var(--ff-ui);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+}
+.sheet .footer-actions .pdf-btn svg{width:15px;height:15px;stroke-width:2.4}
+.sheet .footer-actions .pdf-btn small{font-weight:500;color:var(--ink-3);font-size:11px}
+.sheet .footer-actions .close-btn{
+  width:100%;background:transparent;color:var(--ink-2);border:none;
+  padding:6px;font-family:var(--ff-ui);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;
+}
+
+@media (max-width:780px){.frames{grid-template-columns:1fr}}
+
+.notes{margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR23 · Popup dettagli + sblocco · 2 stati</span>
+    <h1>Sblocca sconto + QR inline</h1>
+    <p>Stato 1: dettagli + CTA "Sblocca sconto" 🔒. Stato 2: dopo lo sblocco il popup transitions a QR inline + bottone PDF. Pattern membership Bi Club.</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- LOCKED -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="bg-mock"><div class="h"></div><div class="b"></div><div class="c"></div></div>
+        <div class="bg-blur"></div>
+
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+            <div class="grad"></div>
+            <span class="live-pill">drop live</span>
+            <button class="close">✕</button>
+            <div class="pct-overlay">
+              <div class="num">−20%</div>
+              <div class="lbl">sul totale</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="meta">Barbecue · Via Saluzzo 77</div>
+            <h2>Al Brasà</h2>
+            <div class="where">Ristorante di carne · Saluzzo</div>
+
+            <div class="countdown">
+              <div class="left">
+                <strong>termina tra</strong>
+                <div class="v">10h 33m</div>
+              </div>
+              <div class="right">
+                <strong>posti</strong>
+                <div class="v">2<small>/10 presi</small></div>
+              </div>
+            </div>
+
+            <div class="progress-strip">
+              <div class="bar"><i></i></div>
+              <span>8 ancora liberi</span>
+            </div>
+
+            <div class="specs">
+              <div class="spec-row">
+                <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+                <div class="info"><strong>Validità</strong><div class="v">Solo in settimana · Lun–Ven</div></div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7L9 18l-5-5"/></svg></div>
+                <div class="info"><strong>Cosa ottieni</strong><div class="v">20% sul totale del conto</div></div>
+              </div>
+              <div class="spec-row">
+                <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div>
+                <div class="info"><strong>Da sapere</strong><div class="v">Codice valido una sola volta · Per persona</div></div>
+              </div>
+            </div>
+
+            <a class="restaurant-link" href="#">
+              <div class="thumb"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80" alt=""></div>
+              <div class="info">
+                <strong>Scopri il ristorante</strong>
+                <div class="name">Al Brasà</div>
+              </div>
+              <div class="arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></div>
+            </a>
+
+            <div class="editorial">
+              <div class="av"><img class="logo-img" src="https://chiamamibi.com/bi_logo_def_centrato.svg" alt="Bi"></div>
+              <div class="txt">
+                <strong>Secondo Bi</strong>
+                <p>Spiedo al barbecue cotto come si deve. Fidati: in settimana è meno affollato.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <button class="cta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              Sblocca sconto
+            </button>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">1 · Locked<small>CTA "Sblocca sconto" 🔒 corallo · pattern membership Bi Club</small></div>
+    </div>
+
+    <!-- UNLOCKED — QR inline -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <div class="bg-mock"><div class="h"></div><div class="b"></div><div class="c"></div></div>
+        <div class="bg-blur"></div>
+
+        <div class="sheet unlocked">
+          <div class="grip"></div>
+
+          <div class="unlock-banner">
+            <div class="check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="txt">
+              <strong>Sbloccato!</strong>
+              <p>L'ho aggiunto ai tuoi vantaggi. Mostralo al ristoratore.</p>
+            </div>
+            <button class="close" style="background:rgba(255,255,255,.2);color:#fff;border:none">✕</button>
+          </div>
+
+          <div class="qr-section">
+            <div class="qr-place">
+              <div class="ph-mini"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80" alt=""></div>
+              <div class="info">
+                <h3>Al Brasà</h3>
+                <div class="meta">Barbecue · Via Saluzzo 77</div>
+              </div>
+              <div class="pct-mini">−20%</div>
+            </div>
+
+            <div class="qr-frame">
+              <div class="qr-img"></div>
+            </div>
+
+            <div class="qr-hint">Mostra al ristoratore</div>
+            <div class="qr-info">
+              Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br>
+              Codice valido una sola volta.
+            </div>
+
+            <div class="reassurance">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              Salvato in I miei vantaggi · Scade in 2g 14h
+            </div>
+          </div>
+
+          <div class="footer-actions">
+            <button class="pdf-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+              Scarica PDF <small>· stampa o salva</small>
+            </button>
+            <button class="close-btn">Chiudi</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">2 · Unlocked<small>banner success corallo · QR grande inline · PDF + chiudi</small></div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>Flusso "Sblocca sconto" 🔒 → QR inline</h2>
+
+    <h3>Stato 1 — Locked (popup dettagli)</h3>
+    <ul>
+      <li>Tutto come prima: foto + percentuale overlay + countdown + specs + Scopri ristorante + Secondo Bi</li>
+      <li>CTA principale: <code>"Sblocca sconto"</code> con icona lucchetto 🔒 a sinistra</li>
+      <li>Pattern Substack/Patreon/Resy: il vantaggio è "chiuso", il Club lo apre</li>
+      <li>Coerente col concept Bi Club come membership</li>
+    </ul>
+
+    <h3>Stato 2 — Unlocked (popup QR inline)</h3>
+    <ul>
+      <li>Banner corallo gradient in alto: "✓ Sbloccato! L'ho aggiunto ai tuoi vantaggi" — feedback chiaro</li>
+      <li>Mini info locale (foto + nome + categoria + percentuale piccola corallo)</li>
+      <li>QR grande 170px con bordo nero (riusa pattern del popup QR esistente)</li>
+      <li>Caption Caveat "Mostra al ristoratore"</li>
+      <li>Reassurance verde: "Salvato in I miei vantaggi · Scade in 2g 14h" → l'utente sa dove ritrovarlo</li>
+      <li>Bottone secondario "Scarica PDF"</li>
+      <li>Link testo "Chiudi" sotto</li>
+    </ul>
+
+    <h3>Animazione transizione</h3>
+    <ul>
+      <li>Click "Sblocca sconto" → loading 600-800ms (lucchetto si apre 🔓)</li>
+      <li>Sostituisci body popup con stato 2 con fade transition + scale leggera</li>
+      <li>Banner success appare con slideDown</li>
+      <li>QR appare con scale + opacity da 0 a 1</li>
+      <li>Sotto livello tecnico: stesso endpoint <code>/api/discount/save</code> → response → mostra QR</li>
+    </ul>
+
+    <h3>Vantaggi del pattern</h3>
+    <ul>
+      <li>"Magic moment" tipo Apple unboxing — più premium</li>
+      <li>Path ridotto: scopri → sblocco → mostra QR (no navigation)</li>
+      <li>Lo sconto è anche salvato in "I miei vantaggi" per poterlo ritrovare dopo</li>
+      <li>Coerente narrazione Bi Club: "sei dentro al Club, sblocchi i vantaggi"</li>
+    </ul>
+
+    <h3>Cambi a cascata in altri punti del sito</h3>
+    <ul>
+      <li>Card drop in catalogo: CTA "Lo voglio" → "Sblocca" 🔒</li>
+      <li>Card convenzione in catalogo: "Lo voglio" → "Sblocca"</li>
+      <li>Drop hero in home: "Lo voglio" → "Sblocca sconto" 🔒</li>
+      <li>I miei vantaggi → Disponibili: bottone "Apri QR" resta com'è (già sbloccato dalla prima volta)</li>
+      <li>AuthGate copy: "Entra nel Club di Bi per sbloccare" (più narrativo)</li>
+    </ul>
+
+    <h3>Implementazione tecnica</h3>
+    <ul>
+      <li>Stato React: <code>const [unlocked, setUnlocked] = useState(false)</code></li>
+      <li>Click sblocca → POST <code>/api/discount/save</code> → on success setUnlocked(true)</li>
+      <li>Conditional render: <code>{unlocked ? &lt;QRView/&gt; : &lt;DetailView/&gt;}</code></li>
+      <li>Genera QR client-side con <code>qrcode.react</code> usando il <code>qr_token</code> dalla response API</li>
+      <li>Bottone PDF: GET <code>/api/discount/pdf/[savedDiscountId]</code> (PR21)</li>
+      <li>Riusa AuthGate se anonimo (PR20b)</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
