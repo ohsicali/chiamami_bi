@@ -655,7 +655,7 @@ function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
             aria-label="Vedi dettagli sconto"
           >
-            + Info
+            Dettagli
           </button>
           <button
             type="button"
