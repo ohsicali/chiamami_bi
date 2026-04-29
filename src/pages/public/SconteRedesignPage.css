@@ -820,25 +820,39 @@
 .sc-drop-actions {
   display: flex;
   gap: 8px;
+  margin-top: 8px;
 }
+@media (min-width: 768px) {
+  .sc-drop-actions { margin-top: auto; }
+}
+/* Dettagli: stessa altezza/font del CTA primary, narrower, outline */
 .sc-drop-actions .sc-cta-info {
-  background: rgba(255, 255, 255, 0.7);
+  background: transparent;
   color: var(--sc-ink);
-  border: 1px solid var(--sc-line);
-  padding: 8px 14px;
+  border: 1.5px solid var(--sc-ink);
+  padding: 9px 14px;
   border-radius: 99px;
   font-family: inherit;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 .sc-drop-actions .sc-cta-info:hover {
-  border-color: var(--sc-ink-3);
-  background: #fff;
+  background: var(--sc-ink);
+  color: #fff;
+  transform: translateY(-1px);
 }
-.sc-drop-actions .sc-cta { flex: 1; }
+@media (min-width: 768px) {
+  .sc-drop-actions .sc-cta-info { padding: 12px 20px; font-size: 13px; }
+}
+/* CTA primary cresce a riempire, no margin-top per non duplicare */
+.sc-drop-actions .sc-cta { flex: 1; margin-top: 0; }
 
 .sc-drop-overlay {
   position: fixed;
