@@ -929,47 +929,66 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="sc-info-sheet">
-        <div className="sc-grip" aria-hidden="true" />
         <button type="button" className="sc-close" aria-label="Chiudi" onClick={onClose}>✕</button>
 
+        {/* HERO: foto full-width con overlay gradient + badge + identità locale */}
         <div className="sc-info-hero">
-          {photo && (
-            <div className="sc-info-photo">
-              <img src={photo} alt="" loading="lazy" decoding="async" />
-              <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
+          {photo ? (
+            <img className="sc-info-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div className="sc-info-hero-fallback">{categoryEmoji(cuisine)}</div>
+          )}
+          <div className="sc-info-hero-overlay" aria-hidden="true" />
+          <span className={`sc-info-hero-badge ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
+          <div className="sc-info-hero-id">
+            <h3>{r?.name || dealTitle}</h3>
+            <div className="sc-info-hero-meta">
+              {cuisine && <span className="sc-info-hero-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {shortAddress(r?.address) && (
+                <span className="sc-info-hero-addr">{shortAddress(r?.address)}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="sc-info-body">
+          {/* COSA OTTIENI: pannello accento corallo */}
+          {dealTitle && (
+            <div className="sc-info-card sc-info-card-offer">
+              <span className="sc-info-card-ic" aria-hidden="true">🎁</span>
+              <div className="sc-info-card-content">
+                <div className="sc-info-card-label">Cosa ottieni</div>
+                <div className="sc-info-card-title">{dealTitle}</div>
+                {description && <p className="sc-info-card-desc">{description}</p>}
+              </div>
             </div>
           )}
-          <div className="sc-info-id">
-            <h3>{r?.name || dealTitle}</h3>
-            <div className="sc-meta">
-              {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-              {shortAddress(r?.address)}
+
+          {/* CONDIZIONI: lista con check */}
+          {conditionLines.length > 0 && (
+            <div className="sc-info-block">
+              <div className="sc-info-block-label">Condizioni</div>
+              <ul className="sc-info-checklist">
+                {conditionLines.map((c, i) => (
+                  <li key={i}>
+                    <span className="sc-info-check" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
+
+          {/* VALIDITÀ: pill */}
+          <div className="sc-info-validity-pill">
+            <span aria-hidden="true">⏱</span>
+            {validityLabel}
           </div>
         </div>
 
-        {dealTitle && (
-          <div className="sc-info-section">
-            <div className="sc-info-label">Cosa ottieni</div>
-            <div className="sc-info-title">{dealTitle}</div>
-            {description && <p className="sc-info-desc">{description}</p>}
-          </div>
-        )}
-
-        {conditionLines.length > 0 && (
-          <div className="sc-info-section">
-            <div className="sc-info-label">Condizioni</div>
-            <ul className="sc-info-cond">
-              {conditionLines.map((c, i) => <li key={i}>{c}</li>)}
-            </ul>
-          </div>
-        )}
-
-        <div className="sc-info-section sc-info-validity">
-          <span className="sc-info-validity-ic" aria-hidden="true">⏱</span>
-          {validityLabel}
-        </div>
-
+        {/* AZIONI sticky in fondo */}
         <div className="sc-info-actions">
           <button type="button" className="sc-btn-secondary" onClick={onClose}>
             Chiudi
