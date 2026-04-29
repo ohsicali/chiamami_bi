@@ -129,7 +129,7 @@ export default function MobileTabBar() {
   const tabs = [
     { key: 'home', label: 'Home', Icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
     { key: 'explore', label: 'Esplora', Icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
-    { key: 'deals', label: 'Sconti', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
+    { key: 'deals', label: 'Club', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
     { key: 'saved', label: 'Salvati', Icon: SavedIcon, active: isSaved, onClick: () => navigate(user ? '/saved' : '/login') },
     { key: 'profile', label: 'Profilo', Icon: ProfileIcon, active: isProfile, onClick: () => navigate(user ? '/profile' : '/login') },
   ]

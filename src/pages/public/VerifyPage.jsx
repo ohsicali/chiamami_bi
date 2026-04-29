@@ -5,6 +5,9 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { LogoFull } from '../../components/UI/Logo'
+import InvalidNowResult from '../../components/Verify/InvalidNowResult'
+import SuccessResult from '../../components/Verify/SuccessResult'
+import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 
 const RESTAURANT_COLS = 'id, name, slug, address, city, category, cuisine_type, restaurant_photos(photo_url, thumb_url, sort_order)'
 
@@ -1050,7 +1053,7 @@ function VerifyTab({ restaurant }) {
         return
       }
 
-      setResult({ status: resp.status, data: normalized })
+      setResult({ status: resp.status, reason: resp.reason, data: normalized })
     } catch (err) {
       console.error('verify error:', err)
       setResult({
@@ -1650,32 +1653,15 @@ function VerifyResult({ result, onReset }) {
   const { status, data } = result
 
   if (status === 'success') {
-    return <SuccessCelebration data={data} onReset={onReset} />
+    return <SuccessResult data={data} onReset={onReset} />
+  }
+
+  if (status === 'invalid_now') {
+    return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={onReset} />
   }
 
   if (status === 'already_redeemed') {
-    const date = data.redeemed_at
-      ? new Date(data.redeemed_at).toLocaleString('it-IT', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : null
-    return (
-      <ResultCard
-        tone="warning"
-        icon="!"
-        title="Codice già utilizzato"
-        onReset={onReset}
-        resetLabel="Nuova verifica"
-      >
-        <ResultRow label="Sconto" value={data.discount?.title} />
-        {date && <ResultRow label="Usato il" value={date} />}
-        {data.user_name && <ResultRow label="Cliente" value={data.user_name} />}
-      </ResultCard>
-    )
+    return <AlreadyUsedResult data={data} onReset={onReset} />
   }
 
   if (status === 'expired') {
@@ -1730,173 +1716,6 @@ function VerifyResult({ result, onReset }) {
   )
 }
 
-/* ------------------------------------------------------------------ */
-/*  SuccessCelebration — full-screen green celebration on QR validation */
-/* ------------------------------------------------------------------ */
-function SuccessCelebration({ data, onReset }) {
-  // Burst phase: full green splash + huge check (~1.6s), then settle to
-  // the detailed summary card. Keep the state local so the component
-  // re-celebrates every time a new code is validated.
-  const [phase, setPhase] = useState('burst')
-
-  useEffect(() => {
-    const t = setTimeout(() => setPhase('settled'), 1600)
-    return () => clearTimeout(t)
-  }, [])
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {phase === 'burst' && <SuccessBurst />}
-      {phase === 'settled' && (
-        <div style={{ animation: 'verifySuccessSlide 0.35s ease-out both' }}>
-          <ResultCard
-            tone="success"
-            icon="✓"
-            title="Sconto validato!"
-            onReset={onReset}
-            resetLabel="Nuova verifica"
-          >
-            <ResultRow label="Sconto" value={data.discount?.title} />
-            <ResultRow label="Valore" value={formatDiscountValue(data.discount)} strong />
-            <ResultRow label="Cliente" value={data.user_name} />
-          </ResultCard>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SuccessBurst() {
-  // Confetti-like bits scattering outward
-  const confetti = Array.from({ length: 14 }, (_, i) => {
-    const angle = (i / 14) * Math.PI * 2
-    const dist = 120 + (i % 3) * 30
-    const dx = Math.cos(angle) * dist
-    const dy = Math.sin(angle) * dist
-    const rot = (i * 47) % 360
-    const colors = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#FBBF24', '#F87171']
-    const color = colors[i % colors.length]
-    const delay = (i % 5) * 30
-    return { i, dx, dy, rot, color, delay }
-  })
-
-  return (
-    <div
-      style={{
-        borderRadius: 18,
-        padding: '60px 24px',
-        background: '#10B981',
-        animation: 'verifySuccessBg 1.6s ease-out forwards',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 340,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Expanding ring pulses */}
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: 120,
-          height: 120,
-          marginLeft: -60,
-          marginTop: -60,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.35)',
-          animation: 'verifyRingPulse 1.1s ease-out forwards',
-        }}
-      />
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: 120,
-          height: 120,
-          marginLeft: -60,
-          marginTop: -60,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.25)',
-          animation: 'verifyRingPulse 1.3s 0.2s ease-out forwards',
-        }}
-      />
-
-      {/* Checkmark SVG with stroke-draw animation */}
-      <div
-        style={{
-          position: 'relative',
-          width: 120,
-          height: 120,
-          borderRadius: '50%',
-          background: 'var(--color-card)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          animation: 'verifyCheckPop 0.55s cubic-bezier(0.22, 1.2, 0.36, 1) both',
-          boxShadow: '0 20px 40px -10px rgba(0,0,0,0.25)',
-          zIndex: 2,
-        }}
-      >
-        <svg width="72" height="72" viewBox="0 0 64 64" fill="none">
-          <path
-            d="M14 33 L27 46 L50 21"
-            stroke="#10B981"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="60"
-            style={{ animation: 'verifyCheckDraw 0.45s 0.35s ease-out forwards' }}
-          />
-        </svg>
-      </div>
-
-      {/* Confetti bits */}
-      {confetti.map((c) => (
-        <span
-          key={c.i}
-          aria-hidden
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: 10,
-            height: 14,
-            marginLeft: -5,
-            marginTop: -7,
-            background: c.color,
-            borderRadius: 2,
-            animation: `verifyConfetti 1.1s ${c.delay}ms ease-out forwards`,
-            '--dx': `${c.dx}px`,
-            '--dy': `${c.dy}px`,
-            '--rot': `${c.rot}deg`,
-            zIndex: 1,
-          }}
-        />
-      ))}
-
-      <div
-        style={{
-          marginTop: 28,
-          fontSize: 20,
-          fontWeight: 800,
-          color: '#fff',
-          letterSpacing: 0.3,
-          animation: 'verifySuccessSlide 0.45s 0.3s ease-out both',
-          textShadow: '0 2px 12px rgba(0,0,0,0.15)',
-        }}
-      >
-        Sconto validato!
-      </div>
-    </div>
-  )
-}
 
 function formatDiscountValue(discount) {
   if (!discount) return ''

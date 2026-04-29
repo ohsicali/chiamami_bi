@@ -11,6 +11,12 @@ import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SconteQRPopup from '../../components/Discount/SconteQRPopup'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
+import MetaTags from '../../components/SEO/MetaTags'
+import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
+import ValidityPill from '../../components/Discount/ValidityPill'
+import QRBlockedView from '../../components/Discount/QRBlockedView'
+import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
+import { checkValidity, formatShortPill } from '../../lib/validity'
 import './SconteRedesignPage.css'
 
 /* ---------- helpers ---------- */
@@ -199,6 +205,7 @@ function SconteRedesignPageInner() {
   const [qrPopup, setQrPopup] = useState(null) // { redemption, deal }
   const [authGate, setAuthGate] = useState(null) // pendingDiscountId | null
   const [toast, setToast] = useState(null)
+  const [infoDeal, setInfoDeal] = useState(null) // deal | null per dialog dettagli
 
   useEffect(() => {
     if (!toast) return
@@ -289,22 +296,77 @@ function SconteRedesignPageInner() {
     }
   }, [claiming, user])
 
+  const [qrBlocked, setQrBlocked] = useState(null) // deal | null
+
+  // Click "Apri QR" da I miei vantaggi: se non valid_now → blocked view,
+  // altrimenti popup QR normale (PR21 SconteQRPopup).
   const openMyQR = (redemption) => {
-    setQrPopup({ redemption, deal: redemption.discount })
+    const deal = redemption?.discount
+    if (deal && checkValidity(deal) !== 'valid_now') {
+      setQrBlocked(deal)
+      return
+    }
+    setQrPopup({ redemption, deal })
   }
+
+  // Wrapper per il claim usato dal nuovo DiscountDetailPopup.
+  // Ritorna { id, qr_code } | null se l'utente non è loggato (AuthGate aperto).
+  const claimFromPopup = useCallback(async (deal) => {
+    if (!user) {
+      setAuthGate(deal.id)
+      return null
+    }
+    setClaiming(deal.id)
+    try {
+      const { supabase } = await import('../../lib/supabase')
+      const { data: existing } = await supabase
+        .from('discount_redemptions')
+        .select('id, qr_code, status')
+        .eq('discount_id', deal.id)
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+      if (existing?.qr_code) return existing
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+      let code = 'BiSc-'
+      for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length))
+      let userName = null
+      try {
+        const { data: profile } = await supabase
+          .from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+        userName = profile?.full_name || null
+      } catch { /* best effort */ }
+      const { data, error } = await supabase
+        .from('discount_redemptions')
+        .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated', user_name: userName })
+        .select().single()
+      if (error) throw error
+      await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
+      return data
+    } catch (e) {
+      console.error('Claim failed:', e)
+      setToast('Non sono riuscito a salvare lo sconto. Riprova.')
+      return null
+    } finally {
+      setClaiming(null)
+    }
+  }, [user])
 
   return (
     <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : TAB_BAR_HEIGHT + 16 }}>
+      <MetaTags
+        title="Sconti ristoranti Torino · Bi Club | ChiamamiBi"
+        description="Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club."
+        url="https://chiamamibi.com/sconti"
+      />
+      <SconteSchemaOrg drops={dropsAvailable} conv={convAvailable} />
       {!isDesktop && <MobileLogoHeader />}
       <div className={isDesktop ? 'sc-shell sc-shell-desktop' : 'sc-shell sc-shell-mobile'}>
         <div className="sc-head-row">
           <header className="sc-page-head">
-            <h1>Sconti</h1>
-            <p>
-              {dropsAvailable.length} {dropsAvailable.length === 1 ? 'drop' : 'drop'}
-              {' · '}
-              {convAvailable.length} {convAvailable.length === 1 ? 'convenzione' : 'convenzioni'}
-            </p>
+            <h1>Bi Club</h1>
+            <h2 className="sc-page-h2">Sconti e vantaggi nei ristoranti di Torino</h2>
+            <p>Drop a tempo, convenzioni sempre valide, e i vantaggi pronti da usare.</p>
           </header>
           <Segment
             tab={tab}
@@ -334,6 +396,7 @@ function SconteRedesignPageInner() {
               onClaim={claimDeal}
               onOpenQR={openMyQR}
               onCardClick={goTo}
+              onInfo={(d) => setInfoDeal(d)}
             />
           )}
           {tab === 'miei' && sub === 'disponibili' && (
@@ -384,6 +447,36 @@ function SconteRedesignPageInner() {
         />
       )}
 
+      {infoDeal && (
+        <DiscountDetailPopup
+          deal={infoDeal}
+          photoUrl={getPhoto(infoDeal.restaurant)}
+          restaurantUrl={infoDeal.restaurant?.slug
+            ? `/restaurant/${infoDeal.restaurant.slug}`
+            : `/restaurant/${slugify(infoDeal.restaurant?.name || '')}`}
+          claiming={claiming === infoDeal.id}
+          onClaim={async () => {
+            const result = await claimFromPopup(infoDeal)
+            return result
+          }}
+          onClose={() => setInfoDeal(null)}
+        />
+      )}
+
+      {qrBlocked && (
+        <QRBlockedView
+          deal={qrBlocked}
+          photoUrl={getPhoto(qrBlocked.restaurant)}
+          restaurantName={qrBlocked.restaurant?.name || qrBlocked.title}
+          restaurantSubtitle={[
+            qrBlocked.restaurant?.cuisine_type || qrBlocked.restaurant?.category?.[0],
+            shortAddress(qrBlocked.restaurant?.address),
+          ].filter(Boolean).join(' · ')}
+          discountValue={dealBadgeText(qrBlocked) || freebieLabel(qrBlocked)}
+          onClose={() => setQrBlocked(null)}
+        />
+      )}
+
       {toast && <div className="sc-toast" role="status">{toast}</div>}
     </div>
   )
@@ -411,7 +504,7 @@ function Segment({ tab, countDisponibili, countTuttiIMiei, onChange }) {
         className={`sc-seg ${tab === 'miei' ? 'is-active' : ''}`}
         onClick={() => onChange('miei')}
       >
-        I miei sconti {countTuttiIMiei > 0 && <span className="sc-ct">{countTuttiIMiei}</span>}
+        I miei vantaggi {countTuttiIMiei > 0 && <span className="sc-ct">{countTuttiIMiei}</span>}
       </button>
     </div>
   )
@@ -442,7 +535,7 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
   )
 }
 
-function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick }) {
+function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
   if (loading) {
     return (
       <div style={{ padding: '24px 16px' }}>
@@ -486,6 +579,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
                   onClaim={() => onClaim(d)}
                   onOpenQR={() => onOpenQR({ ...redemption, discount: d })}
                   onClick={() => onCardClick(d.restaurant)}
+                  onInfo={() => onInfo(d)}
                 />
               )
             })}
@@ -507,6 +601,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
                 claiming={claiming === d.id}
                 onClaim={() => onClaim(d)}
                 onClick={() => onCardClick(d.restaurant)}
+                onInfo={() => onInfo(d)}
               />
             ))}
           </div>
@@ -516,7 +611,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
   )
 }
 
-function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
+function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const time = expiryLabel(deal)
@@ -530,12 +625,14 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
   const isSaved = status === 'generated'
   const isUsed = status === 'redeemed'
 
-  let ctaLabel = 'Prendi sconto'
+  let ctaLabel = 'Sblocca sconto'
   let ctaOnClick = onClaim
   let ctaDisabled = !!claiming
   if (claiming) ctaLabel = 'Un attimo…'
   else if (isUsed) { ctaLabel = 'Già usato'; ctaDisabled = true; ctaOnClick = () => {} }
   else if (isSaved) { ctaLabel = 'Apri QR'; ctaOnClick = onOpenQR }
+  const validityStatus = checkValidity(deal)
+  const validityPill = formatShortPill(deal, validityStatus)
 
   return (
     <div
@@ -562,32 +659,53 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
       <div className="sc-body-c">
         <h4>{r?.name || deal.title}</h4>
         {meta && <div className="sc-meta">{meta}</div>}
+        <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} /></div>
         {max > 0 && (
           <div className="sc-progress">
             <div className="sc-bar"><i style={{ width: `${pct}%` }} /></div>
             <span>{claimed}/{max} presi</span>
           </div>
         )}
-        <button
-          type="button"
-          className="sc-cta"
-          disabled={ctaDisabled}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
-        >
-          {ctaLabel}
-        </button>
+        <div className="sc-drop-actions">
+          <button
+            type="button"
+            className="sc-cta-info"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
+            aria-label="Vedi dettagli drop"
+          >
+            Dettagli
+          </button>
+          <button
+            type="button"
+            className="sc-cta"
+            disabled={ctaDisabled}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
+          >
+            {ctaLabel}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-function ConvCard({ deal, claiming, onClaim, onClick }) {
+function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const isFreebie = deal?.discount_type === 'freebie'
   const badge = isFreebie ? (deal.title || deal.discount_value) : dealBadgeText(deal)
-  const conditionsLine = (deal.conditions || '').split('\n').filter(Boolean)[0]
+  const address = shortAddress(r?.address)
+  const validityStatus = checkValidity(deal)
+  const validityPill = formatShortPill(deal, validityStatus)
+
+  // Riga "valore deal · condizione breve" sotto la cuisine: dà un'idea
+  // immediata del cosa-ottieni senza aprire i dettagli.
+  const dealLabel = isFreebie
+    ? (deal?.title || deal?.discount_value)
+    : (deal?.title || dealBadgeText(deal))
+  const firstCondition = (deal?.conditions || '')
+    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)[0]
 
   return (
     <div
@@ -613,17 +731,35 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
           <h4>{r?.name || deal.title}</h4>
           <div className="sc-meta">
             {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-            {conditionsLine || shortAddress(r?.address)}
+            {address}
           </div>
+          <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} /></div>
+          {(dealLabel || firstCondition) && (
+            <div className="sc-conv-line">
+              {dealLabel && <strong>{dealLabel}</strong>}
+              {dealLabel && firstCondition && <span className="sc-dot">·</span>}
+              {firstCondition && <span className="sc-cond">{firstCondition}</span>}
+            </div>
+          )}
         </div>
-        <button
-          type="button"
-          className="sc-cta-mini"
-          disabled={!!claiming}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
-        >
-          {claiming ? '…' : 'Prendi'}
-        </button>
+        <div className="sc-conv-actions">
+          <button
+            type="button"
+            className="sc-cta-info"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
+            aria-label="Vedi dettagli sconto"
+          >
+            Dettagli
+          </button>
+          <button
+            type="button"
+            className="sc-cta-mini"
+            disabled={!!claiming}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+          >
+            {claiming ? '…' : 'Sblocca'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -688,6 +824,8 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' · ')
   const expLbl = expired ? 'scaduto' : expiryLabel(deal)
+  const validityStatus = expired ? 'expired' : checkValidity(deal)
+  const validityPill = formatShortPill(deal, validityStatus)
 
   return (
     <div
@@ -714,14 +852,19 @@ function MineRow({ redemption, onOpenQR, onClick }) {
           <span className="sc-badge-pct">{dealBadgeText(deal) || freebieLabel(deal)}</span>
           {expLbl && <span className={`sc-scad ${expired ? 'is-expired' : ''}`}>{expLbl}</span>}
         </div>
+        <div className="sc-pill-row sc-pill-row-mini">
+          <ValidityPill status={validityStatus} text={validityPill} />
+        </div>
       </div>
+      {/* Bottone Apri QR SEMPRE attivo (anche fuori validità):
+          il click apre QRBlockedView se non valid_now. */}
       <button
         type="button"
         className="sc-qr-btn"
         disabled={expired}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!expired) onOpenQR() }}
       >
-        {expired ? 'Non valido' : 'Apri QR'}
+        {expired ? 'Scaduto' : 'Apri QR'}
       </button>
     </div>
   )
@@ -844,3 +987,296 @@ function UsedRow({ redemption, isDesktop, onClick }) {
     </div>
   )
 }
+
+/* ============================================================================
+   DealInfoSheet — bottom sheet (mobile) / modal centrato (desktop)
+   con tutte le info dettagliate dello sconto.
+   ============================================================================ */
+function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
+  const r = deal?.restaurant
+  const photo = getPhoto(r)
+  const cuisine = r?.cuisine_type || r?.category?.[0]
+  const isFreebie = deal?.discount_type === 'freebie'
+  const badge = isFreebie ? (deal?.title || deal?.discount_value) : dealBadgeText(deal)
+  const dealTitle = deal?.title
+  const description = deal?.description
+  const conditionLines = (deal?.conditions || '')
+    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)
+  const validUntil = deal?.valid_until ? new Date(deal.valid_until) : null
+  const showValidity = validUntil
+    && (validUntil.getTime() - Date.now()) / 86400000 <= 365
+    && validUntil.getTime() > Date.now()
+  const validityLabel = showValidity
+    ? `Valido fino al ${validUntil.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
+    : 'Sempre valido'
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+
+  return (
+    <div
+      className="sc-info-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Dettagli sconto"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="sc-info-sheet">
+        <button type="button" className="sc-close" aria-label="Chiudi" onClick={onClose}>✕</button>
+
+        {/* HERO: foto full-width con overlay gradient + badge + identità locale */}
+        <div className="sc-info-hero">
+          {photo ? (
+            <img className="sc-info-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div className="sc-info-hero-fallback">{categoryEmoji(cuisine)}</div>
+          )}
+          <div className="sc-info-hero-overlay" aria-hidden="true" />
+          <span className={`sc-info-hero-badge ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
+          <div className="sc-info-hero-id">
+            <h3>{r?.name || dealTitle}</h3>
+            <div className="sc-info-hero-meta">
+              {cuisine && <span className="sc-info-hero-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {shortAddress(r?.address) && (
+                <span className="sc-info-hero-addr">{shortAddress(r?.address)}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="sc-info-body">
+          {/* COSA OTTIENI: pannello accento corallo */}
+          {dealTitle && (
+            <div className="sc-info-card sc-info-card-offer">
+              <span className="sc-info-card-ic" aria-hidden="true">🎁</span>
+              <div className="sc-info-card-content">
+                <div className="sc-info-card-label">Cosa ottieni</div>
+                <div className="sc-info-card-title">{dealTitle}</div>
+                {description && <p className="sc-info-card-desc">{description}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* CONDIZIONI: lista con check */}
+          {conditionLines.length > 0 && (
+            <div className="sc-info-block">
+              <div className="sc-info-block-label">Condizioni</div>
+              <ul className="sc-info-checklist">
+                {conditionLines.map((c, i) => (
+                  <li key={i}>
+                    <span className="sc-info-check" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* VALIDITÀ: pill */}
+          <div className="sc-info-validity-pill">
+            <span aria-hidden="true">⏱</span>
+            {validityLabel}
+          </div>
+        </div>
+
+        {/* AZIONI sticky in fondo */}
+        <div className="sc-info-actions">
+          <button type="button" className="sc-btn-secondary" onClick={onClose}>
+            Chiudi
+          </button>
+          <button
+            type="button"
+            className="sc-btn-primary"
+            disabled={!!claiming}
+            onClick={onClaim}
+          >
+            {claiming ? 'Un attimo…' : 'Prendi'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+/* ============================================================================
+   DropInfoSheet — sheet specifico per i drop a tempo:
+   countdown live, barra progresso disponibilità, hero ink.
+   ============================================================================ */
+function DropInfoSheet({ deal, claiming, onClaim, onClose }) {
+  const r = deal?.restaurant
+  const photo = getPhoto(r)
+  const cuisine = r?.cuisine_type || r?.category?.[0]
+  const badge = dealBadgeText(deal)
+  const dealTitle = deal?.title
+  const description = deal?.description
+  const conditionLines = (deal?.conditions || '')
+    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)
+  const claimed = deal?.claimed_count || deal?.total_redeemed || 0
+  const max = deal?.max_quantity || deal?.max_redemptions || 0
+  const remaining = max > 0 ? Math.max(0, max - claimed) : null
+  const progressPct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
+  const endIso = deal?.drop_ends_at || deal?.valid_until
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [onClose])
+
+  const remainingMs = endIso ? new Date(endIso).getTime() - now : null
+  const expired = remainingMs !== null && remainingMs <= 0
+  const cdParts = (() => {
+    if (remainingMs === null || remainingMs <= 0) return null
+    const totalS = Math.floor(remainingMs / 1000)
+    const days = Math.floor(totalS / 86400)
+    const hours = Math.floor((totalS % 86400) / 3600)
+    const mins = Math.floor((totalS % 3600) / 60)
+    const secs = totalS % 60
+    return { days, hours, mins, secs }
+  })()
+
+  return (
+    <div
+      className="sc-drop-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Dettagli drop"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="sc-drop-sheet">
+        <button type="button" className="sc-close" aria-label="Chiudi" onClick={onClose}>✕</button>
+
+        {/* HERO drop scuro con foto in fondo + live pulse */}
+        <div className="sc-drop-hero">
+          {photo ? (
+            <img className="sc-drop-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div className="sc-drop-hero-fallback">🍽️</div>
+          )}
+          <div className="sc-drop-hero-overlay" aria-hidden="true" />
+          <span className="sc-drop-hero-live"><i />LIVE</span>
+          <div className="sc-drop-hero-pct">{badge}</div>
+          <div className="sc-drop-hero-id">
+            <h3>{r?.name || dealTitle}</h3>
+            <div className="sc-drop-hero-meta">
+              {cuisine && <span className="sc-drop-hero-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {shortAddress(r?.address) && <span>{shortAddress(r?.address)}</span>}
+            </div>
+          </div>
+        </div>
+
+        <div className="sc-drop-body">
+          {/* COUNTDOWN: 4 unità (g · h · m · s) */}
+          {cdParts ? (
+            <div className="sc-drop-countdown">
+              <div className="sc-drop-countdown-label">Termina tra</div>
+              <div className="sc-drop-countdown-grid">
+                <CdUnit value={cdParts.days} label="giorni" />
+                <CdSep />
+                <CdUnit value={cdParts.hours} label="ore" />
+                <CdSep />
+                <CdUnit value={cdParts.mins} label="min" />
+                <CdSep />
+                <CdUnit value={cdParts.secs} label="sec" />
+              </div>
+            </div>
+          ) : expired ? (
+            <div className="sc-drop-countdown is-expired">
+              <div className="sc-drop-countdown-label">Drop scaduto</div>
+            </div>
+          ) : null}
+
+          {/* PROGRESS: presi / disponibili */}
+          {max > 0 && (
+            <div className="sc-drop-progress">
+              <div className="sc-drop-progress-head">
+                <strong>{claimed} di {max} presi</strong>
+                {remaining !== null && remaining > 0 && (
+                  <span>{remaining} {remaining === 1 ? 'rimasto' : 'rimasti'}</span>
+                )}
+              </div>
+              <div className="sc-drop-progress-bar">
+                <i style={{ width: `${progressPct}%` }} />
+              </div>
+            </div>
+          )}
+
+          {/* COSA OTTIENI */}
+          {(dealTitle || description) && (
+            <div className="sc-drop-card">
+              <div className="sc-drop-card-label">Cosa ottieni</div>
+              {dealTitle && <div className="sc-drop-card-title">{dealTitle}</div>}
+              {description && <p className="sc-drop-card-desc">{description}</p>}
+            </div>
+          )}
+
+          {/* CONDIZIONI */}
+          {conditionLines.length > 0 && (
+            <div className="sc-drop-card">
+              <div className="sc-drop-card-label">Condizioni</div>
+              <ul className="sc-info-checklist">
+                {conditionLines.map((c, i) => (
+                  <li key={i}>
+                    <span className="sc-info-check" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="sc-info-actions">
+          <button type="button" className="sc-btn-secondary" onClick={onClose}>
+            Chiudi
+          </button>
+          <button
+            type="button"
+            className="sc-btn-primary"
+            disabled={!!claiming || expired}
+            onClick={onClaim}
+          >
+            {expired ? 'Scaduto' : claiming ? 'Un attimo…' : 'Sblocca sconto'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CdUnit({ value, label }) {
+  const v = String(value).padStart(2, '0')
+  return (
+    <div className="sc-cd-unit">
+      <div className="sc-cd-num">{v}</div>
+      <div className="sc-cd-lbl">{label}</div>
+    </div>
+  )
+}
+
+function CdSep() { return <div className="sc-cd-sep">:</div> }
+

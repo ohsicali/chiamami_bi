@@ -6,7 +6,7 @@ import BiLogoMark from '../UI/BiLogoMark'
 const NAV_ITEMS = [
   { to: '/', label: 'Home', match: (p) => p === '/' },
   { to: '/esplora', label: 'Esplora', match: (p) => p === '/esplora' || p === '/list' || p.startsWith('/restaurant/') },
-  { to: '/deals', label: 'Sconti', match: (p) => p === '/deals', hasDot: true },
+  { to: '/deals', label: 'Club', match: (p) => p === '/deals', hasDot: true },
   { to: '/saved', label: 'Salvati', match: (p) => p === '/saved', requiresAuth: true },
 ]
 

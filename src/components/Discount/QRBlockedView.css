@@ -1,0 +1,215 @@
+/* ============================================================================
+   PR23 — QR bloccato (giorno/fascia non valida) — bottom sheet / modal.
+   ============================================================================ */
+.qrb-overlay {
+  position: fixed; inset: 0;
+  background: rgba(34, 24, 28, 0.7);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 120;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: qrbFadeIn 0.22s ease;
+}
+@keyframes qrbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 768px) {
+  .qrb-overlay { align-items: center; padding: 30px; }
+}
+
+.qrb-sheet {
+  width: 100%;
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 26px 26px 0 0;
+  display: flex; flex-direction: column;
+  position: relative;
+  animation: qrbSlide 0.32s cubic-bezier(.2,.8,.25,1);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.2);
+}
+@media (min-width: 768px) {
+  .qrb-sheet {
+    width: 460px; max-width: 100%;
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+    max-height: 90dvh;
+  }
+}
+@keyframes qrbSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.qrb-grip {
+  width: 42px; height: 4px;
+  background: #E5DBCE;
+  border-radius: 99px;
+  margin: 9px auto 6px;
+}
+@media (min-width: 768px) { .qrb-grip { display: none; } }
+
+.qrb-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(34, 24, 28, 0.06);
+  color: #22181C;
+  border: 0;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+.qrb-close:hover { background: rgba(34, 24, 28, 0.12); }
+
+.qrb-body {
+  padding: 14px 22px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.qrb-place {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: #FAF7F2;
+  border: 1px solid #EFE7DD;
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+.qrb-thumb {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  background: #dcd0c0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.qrb-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qrb-info { flex: 1; min-width: 0; }
+.qrb-info h3 {
+  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-size: 15px;
+  font-weight: 400;
+  color: #22181C;
+  letter-spacing: 0.2px;
+  line-height: 1.05;
+  margin: 0;
+}
+.qrb-info .qrb-meta {
+  font-size: 11px;
+  color: #9A8E94;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.qrb-pct {
+  background: #E8453C;
+  color: #fff;
+  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-size: 13px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+
+.qrb-lock-circle {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  background: rgba(232, 69, 60, 0.12);
+  display: grid;
+  place-items: center;
+  color: #E8453C;
+  margin-bottom: 18px;
+}
+
+.qrb-headline {
+  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: #22181C;
+  letter-spacing: 0.2px;
+  line-height: 1.05;
+  margin: 0 0 6px;
+}
+
+.qrb-desc {
+  font-size: 13px;
+  color: #5C4F54;
+  font-weight: 500;
+  line-height: 1.45;
+  max-width: 300px;
+  margin: 0 0 18px;
+}
+
+.qrb-day-strip {
+  display: flex;
+  gap: 5px;
+  background: #FAF7F2;
+  border-radius: 99px;
+  padding: 5px;
+  margin-bottom: 18px;
+}
+.qrb-day {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9A8E94;
+  background: transparent;
+  letter-spacing: 0;
+}
+.qrb-day.is-ok {
+  background: #DDF4E0;
+  color: #1d6e30;
+}
+.qrb-day.is-today {
+  background: #22181C;
+  color: #fff;
+}
+.qrb-day.is-today.is-ok {
+  background: #1d6e30;
+  color: #fff;
+}
+
+.qrb-countdown {
+  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: #E8453C;
+  letter-spacing: 0.2px;
+  margin-bottom: 18px;
+}
+
+.qrb-reminder {
+  background: #F0E4D2;
+  color: #7a5a17;
+  font-family: var(--font-hand, 'Caveat', cursive);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 99px;
+  line-height: 1;
+}
+
+.qrb-footer {
+  padding: 14px 20px 22px;
+  background: #fff;
+  border-top: 1px solid #EFE7DD;
+}
+.qrb-cta {
+  width: 100%;
+  background: #22181C;
+  color: #fff;
+  border: 0;
+  padding: 14px;
+  border-radius: 99px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.1px;
+}
+.qrb-cta:hover { background: #3a2229; }
