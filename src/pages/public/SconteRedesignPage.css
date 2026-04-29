@@ -432,23 +432,17 @@
 .sc-conv {
   background: var(--sc-paper);
   border: 1px solid var(--sc-line);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 12px;
-  padding: 12px;
+  flex-direction: column;
+  padding: 14px;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 @media (min-width: 768px) {
-  /* Stile identico a "Esplora elenco" (ListView card):
-     padding 14, gap 14, borderRadius 18, foto 88×88 a sx. */
   .sc-conv {
-    align-items: stretch;
-    padding: 14px;
-    gap: 14px;
+    padding: 16px;
     border-radius: 18px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   }
@@ -459,52 +453,112 @@
   }
 }
 
-/* ---- dettagli sconto (titolo deal, desc, condizioni, validità) ---- */
-.sc-conv .sc-conv-heading {
-  margin-top: 6px;
-  font-size: 12.5px;
+/* ---- header: foto + identità locale ---- */
+.sc-conv .sc-conv-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sc-conv .sc-conv-id { flex: 1; min-width: 0; }
+@media (min-width: 768px) {
+  .sc-conv .sc-conv-header { gap: 14px; }
+}
+
+/* ---- blocco offerta ("cosa ottieni") ---- */
+.sc-conv .sc-conv-offer {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--sc-corallo-soft);
+  border-radius: 10px;
+}
+.sc-conv .sc-conv-offer-title {
+  font-size: 13px;
   font-weight: 700;
-  color: var(--sc-ink);
+  color: var(--sc-corallo-ink);
   letter-spacing: -0.1px;
   line-height: 1.25;
 }
-.sc-conv .sc-conv-desc {
+.sc-conv .sc-conv-offer-desc {
   margin: 4px 0 0;
   font-size: 11.5px;
   color: var(--sc-ink-2);
   line-height: 1.4;
 }
+@media (min-width: 768px) {
+  .sc-conv .sc-conv-offer { margin-top: 14px; padding: 12px 14px; border-radius: 12px; }
+  .sc-conv .sc-conv-offer-title { font-size: 14px; }
+  .sc-conv .sc-conv-offer-desc { font-size: 12.5px; }
+}
+
+/* ---- sezione condizioni ---- */
+.sc-conv .sc-conv-section {
+  margin-top: 12px;
+}
+.sc-conv .sc-conv-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sc-ink-3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
 .sc-conv .sc-conv-cond {
   list-style: none;
-  margin: 6px 0 0;
+  margin: 0;
   padding: 0;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--sc-ink-2);
-  line-height: 1.4;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .sc-conv .sc-conv-cond li {
   position: relative;
-  padding-left: 12px;
+  padding-left: 14px;
 }
 .sc-conv .sc-conv-cond li::before {
   content: "•";
   position: absolute;
-  left: 0;
+  left: 2px;
+  top: 0;
   color: var(--sc-corallo);
   font-weight: 700;
-}
-.sc-conv .sc-conv-validity {
-  margin-top: 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--sc-oro);
-  letter-spacing: 0.2px;
+  line-height: 1.45;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-conv-heading { font-size: 13.5px; }
-  .sc-conv .sc-conv-desc { font-size: 12.5px; }
-  .sc-conv .sc-conv-cond { font-size: 12px; }
-  .sc-conv .sc-conv-validity { font-size: 11.5px; }
+  .sc-conv .sc-conv-section { margin-top: 14px; }
+  .sc-conv .sc-conv-section-label { font-size: 10.5px; }
+  .sc-conv .sc-conv-cond { font-size: 12.5px; }
+}
+
+/* ---- footer: validità + CTA ---- */
+.sc-conv .sc-conv-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sc-line);
+}
+.sc-conv .sc-conv-validity {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sc-ink-3);
+  letter-spacing: 0;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+}
+.sc-conv .sc-conv-validity::before {
+  content: "⏱ ";
+  color: var(--sc-oro);
+  margin-right: 2px;
+}
+@media (min-width: 768px) {
+  .sc-conv .sc-conv-footer { margin-top: 16px; padding-top: 14px; }
+  .sc-conv .sc-conv-validity { font-size: 12px; }
 }
 .sc-conv .sc-ph {
   position: relative;

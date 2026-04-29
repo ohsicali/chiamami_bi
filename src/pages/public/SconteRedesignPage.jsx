@@ -617,6 +617,10 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
     ? `Valido fino al ${validUntil.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
     : null
 
+  const offerHeading = isFreebie ? (deal?.title || badge) : (dealHeading || dealBadgeText(deal))
+  const hasOfferBlock = !!(offerHeading || dealDescription)
+  const hasConditions = conditionLines.length > 0
+
   return (
     <div
       className="sc-conv"
@@ -625,35 +629,51 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
       onClick={(e) => { if (!e.defaultPrevented) onClick() }}
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
-      <div className="sc-ph">
-        {photo ? (
-          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 30,
-          }}>{categoryEmoji(cuisine)}</div>
-        )}
-        <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
-      </div>
-
-      <div className="sc-body-c">
-        <div className="sc-info">
+      {/* Header: identità del locale */}
+      <div className="sc-conv-header">
+        <div className="sc-ph">
+          {photo ? (
+            <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div style={{
+              width: '100%', height: '100%', display: 'grid', placeItems: 'center',
+              background: '#F1ECE3', fontSize: 28,
+            }}>{categoryEmoji(cuisine)}</div>
+          )}
+          <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
+        </div>
+        <div className="sc-conv-id">
           <h4>{r?.name || deal.title}</h4>
           <div className="sc-meta">
             {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
             {address}
           </div>
-          {dealHeading && <div className="sc-conv-heading">{dealHeading}</div>}
-          {dealDescription && <p className="sc-conv-desc">{dealDescription}</p>}
-          {conditionLines.length > 0 && (
-            <ul className="sc-conv-cond">
-              {conditionLines.map((c, i) => <li key={i}>{c}</li>)}
-            </ul>
-          )}
-          {validityLabel && <div className="sc-conv-validity">{validityLabel}</div>}
         </div>
+      </div>
 
+      {/* Blocco offerta: il "cosa ottieni" */}
+      {hasOfferBlock && (
+        <div className="sc-conv-offer">
+          {offerHeading && <div className="sc-conv-offer-title">{offerHeading}</div>}
+          {dealDescription && <p className="sc-conv-offer-desc">{dealDescription}</p>}
+        </div>
+      )}
+
+      {/* Condizioni */}
+      {hasConditions && (
+        <div className="sc-conv-section">
+          <div className="sc-conv-section-label">Condizioni</div>
+          <ul className="sc-conv-cond">
+            {conditionLines.map((c, i) => <li key={i}>{c}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {/* Footer: validità + CTA */}
+      <div className="sc-conv-footer">
+        <div className="sc-conv-validity">
+          {validityLabel || 'Sempre valido'}
+        </div>
         <button
           type="button"
           className="sc-cta-mini"
