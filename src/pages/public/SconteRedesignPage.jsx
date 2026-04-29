@@ -535,7 +535,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick }) {
   const isSaved = status === 'generated'
   const isUsed = status === 'redeemed'
 
-  let ctaLabel = 'Lo voglio'
+  let ctaLabel = 'Prendi sconto'
   let ctaOnClick = onClaim
   let ctaDisabled = !!claiming
   if (claiming) ctaLabel = 'Un attimo…'
@@ -627,7 +627,7 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
           disabled={!!claiming}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
         >
-          {claiming ? '…' : 'Lo voglio'}
+          {claiming ? '…' : 'Prendi'}
         </button>
       </div>
     </div>
