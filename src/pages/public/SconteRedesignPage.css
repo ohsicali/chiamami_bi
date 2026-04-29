@@ -435,29 +435,88 @@
   border-radius: 14px;
   overflow: hidden;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: stretch;
-  gap: 12px;
+  gap: 0;
   padding: 12px;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.sc-conv .sc-conv-top {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
 }
 @media (min-width: 768px) {
   /* Stile identico a "Esplora elenco" (ListView card):
      padding 14, gap 14, borderRadius 18, foto 88×88 a sx. */
   .sc-conv {
-    flex-direction: row;
-    align-items: center;
     padding: 14px;
-    gap: 14px;
     border-radius: 18px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   }
+  .sc-conv .sc-conv-top { gap: 14px; align-items: center; }
   .sc-conv:hover {
     transform: translateY(-1px);
     border-color: var(--sc-corallo);
     box-shadow: 0 8px 24px rgba(34, 24, 28, 0.06);
   }
+}
+
+/* ---- details panel (titolo deal, descrizione, condizioni, validità) ---- */
+.sc-conv-details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--sc-line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sc-conv-details .sc-conv-heading {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--sc-ink);
+  letter-spacing: -0.1px;
+  line-height: 1.25;
+}
+.sc-conv-details .sc-conv-desc {
+  font-size: 11.5px;
+  color: var(--sc-ink-2);
+  line-height: 1.4;
+  margin: 0;
+}
+.sc-conv-details .sc-conv-cond {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--sc-ink-2);
+  line-height: 1.4;
+}
+.sc-conv-details .sc-conv-cond li {
+  position: relative;
+  padding-left: 12px;
+}
+.sc-conv-details .sc-conv-cond li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--sc-corallo);
+  font-weight: 700;
+}
+.sc-conv-details .sc-conv-validity {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--sc-oro);
+  letter-spacing: 0.2px;
+}
+@media (min-width: 768px) {
+  .sc-conv-details { margin-top: 14px; padding-top: 12px; gap: 7px; }
+  .sc-conv-details .sc-conv-heading { font-size: 13.5px; }
+  .sc-conv-details .sc-conv-desc { font-size: 12.5px; }
+  .sc-conv-details .sc-conv-cond { font-size: 12px; }
+  .sc-conv-details .sc-conv-validity { font-size: 11.5px; }
 }
 .sc-conv .sc-ph {
   position: relative;

@@ -592,44 +592,84 @@ function ConvCard({ deal, claiming, onClaim, onClick }) {
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const isFreebie = deal?.discount_type === 'freebie'
   const badge = isFreebie ? (deal.title || deal.discount_value) : dealBadgeText(deal)
-  const conditionsLine = (deal.conditions || '').split('\n').filter(Boolean)[0]
+  const address = shortAddress(r?.address)
+
+  // Per le convenzioni non-freebie il `title` è la descrizione corta (es.
+  // "Sconto del 10% sul menù"). Per i freebie il title finisce nel badge,
+  // quindi nel dettaglio mostriamo description (se c'è).
+  const dealHeading = isFreebie ? null : deal?.title
+  const dealDescription = deal?.description || (isFreebie ? null : null)
+
+  // Conditions: testo libero, può contenere righe separate da \n o "•".
+  // Le splittiamo in lista per leggibilità.
+  const conditionLines = (deal?.conditions || '')
+    .split(/\n+|•/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  // Validità: mostriamo "Valido fino al X" SOLO se c'è una scadenza
+  // entro l'anno (le convenzioni "sempre valide" hanno valid_until lontano).
+  const validUntil = deal?.valid_until ? new Date(deal.valid_until) : null
+  const showValidity = validUntil
+    && (validUntil.getTime() - Date.now()) / 86400000 <= 365
+    && validUntil.getTime() > Date.now()
+  const validityLabel = showValidity
+    ? `Valido fino al ${validUntil.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
+    : null
+
+  const hasDetails = !!(dealHeading || dealDescription || conditionLines.length || validityLabel)
 
   return (
     <div
-      className="sc-conv"
+      className={`sc-conv ${hasDetails ? 'has-details' : ''}`}
       role="button"
       tabIndex={0}
       onClick={(e) => { if (!e.defaultPrevented) onClick() }}
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
-      <div className="sc-ph">
-        {photo ? (
-          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 30,
-          }}>{categoryEmoji(cuisine)}</div>
-        )}
-        <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
-      </div>
-      <div className="sc-body-c">
-        <div className="sc-info">
-          <h4>{r?.name || deal.title}</h4>
-          <div className="sc-meta">
-            {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-            {conditionsLine || shortAddress(r?.address)}
-          </div>
+      <div className="sc-conv-top">
+        <div className="sc-ph">
+          {photo ? (
+            <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div style={{
+              width: '100%', height: '100%', display: 'grid', placeItems: 'center',
+              background: '#F1ECE3', fontSize: 30,
+            }}>{categoryEmoji(cuisine)}</div>
+          )}
+          <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
         </div>
-        <button
-          type="button"
-          className="sc-cta-mini"
-          disabled={!!claiming}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
-        >
-          {claiming ? '…' : 'Prendi'}
-        </button>
+        <div className="sc-body-c">
+          <div className="sc-info">
+            <h4>{r?.name || deal.title}</h4>
+            <div className="sc-meta">
+              {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {address}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="sc-cta-mini"
+            disabled={!!claiming}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+          >
+            {claiming ? '…' : 'Prendi'}
+          </button>
+        </div>
       </div>
+
+      {hasDetails && (
+        <div className="sc-conv-details">
+          {dealHeading && <div className="sc-conv-heading">{dealHeading}</div>}
+          {dealDescription && <p className="sc-conv-desc">{dealDescription}</p>}
+          {conditionLines.length > 0 && (
+            <ul className="sc-conv-cond">
+              {conditionLines.map((c, i) => <li key={i}>{c}</li>)}
+            </ul>
+          )}
+          {validityLabel && <div className="sc-conv-validity">{validityLabel}</div>}
+        </div>
+      )}
     </div>
   )
 }
