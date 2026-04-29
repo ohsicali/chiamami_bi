@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>v4 mobile — Drop hero, 4 varianti stile card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2;
+  --paper:#FFFFFF;
+  --ink:#22181C;
+  --ink-2:#5C4F54;
+  --ink-3:#9A8E94;
+  --line:#EFE7DD;
+  --line-2:#E5DBCE;
+  --corallo:#E8453C;
+  --corallo-light:#FF5757;
+  --corallo-soft:#FCE7E5;
+  --corallo-ink:#B92E26;
+  --oro:#B08954;
+  --oro-soft:#F0E4D2;
+  --grigio-bg:#F1ECE3;
+  --crema:#F4EFE5;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 0 80px}
+
+.gallery{max-width:1280px;margin:0 auto;padding:0 28px}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+.frames{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;align-items:start}
+.frame{background:#000;border-radius:42px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.screen{background:var(--page);border-radius:34px;overflow:hidden;height:780px;position:relative;display:flex;flex-direction:column}
+.label{color:#fff;text-align:center;font-size:13px;letter-spacing:.4px;margin-top:14px;font-weight:500}
+.label small{color:#8e7e6e;font-size:11px;display:block;margin-top:4px;letter-spacing:.3px}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+
+.site-header{
+  position:relative;z-index:20;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:46px 14px 12px;background:var(--page);
+}
+.site-header .h-mark{display:flex;flex-direction:column;line-height:1.1}
+.site-header .h-mark strong{font-family:var(--ff-mark);font-size:13px;color:var(--corallo);letter-spacing:.4px}
+.site-header .h-mark small{font-size:7px;font-weight:700;color:var(--ink-3);letter-spacing:1.1px;margin-top:2px}
+.site-header .h-actions{display:flex;align-items:center;gap:6px}
+.site-header .h-city{display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:5px 9px 5px 7px;font-size:10.5px;font-weight:700;color:var(--ink)}
+.site-header .h-city::before{content:'';width:5px;height:5px;background:var(--corallo);border-radius:50%}
+.site-header .h-bi{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--corallo) 0%,var(--corallo-ink) 100%);
+  color:#fff;display:grid;place-items:center;font-family:var(--ff-mark);font-size:13px;
+  box-shadow:0 4px 12px rgba(232,69,60,.35);position:relative;
+}
+.site-header .h-bi::after{content:'✦';position:absolute;top:-3px;right:-3px;width:12px;height:12px;background:var(--oro);border-radius:50%;border:2px solid var(--page);font-size:5.5px;display:grid;place-items:center;color:#fff;font-weight:700}
+
+.body-content{flex:1;overflow-y:auto;padding-bottom:90px}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* category bubbles */
+.cat-row{display:flex;gap:10px;padding:18px 14px 6px;overflow-x:auto;scrollbar-width:none}
+.cat-row::-webkit-scrollbar{display:none}
+.cat{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;width:60px}
+.cat .b{width:50px;height:50px;border-radius:50%;background:var(--paper);border:1px solid var(--line);display:grid;place-items:center;font-size:24px}
+.cat span{font-size:9.5px;font-weight:600;color:var(--ink)}
+
+/* tag drop section */
+.section-label{padding:14px 14px 4px;display:flex;align-items:center;justify-content:space-between}
+.section-label strong{font-family:var(--ff-mark);font-size:18px;letter-spacing:.3px;color:var(--ink)}
+.section-label small{font-family:var(--ff-hand);font-size:18px;color:var(--corallo);font-weight:600;line-height:1}
+
+/* ============ B1 — POLAROID EDITORIAL ============ */
+.b1{margin:6px 14px 0;background:var(--paper);border-radius:22px;padding:14px 14px 16px;border:1px solid var(--line);box-shadow:0 14px 36px rgba(34,24,28,.06)}
+.b1 .ph{
+  position:relative;width:100%;aspect-ratio:4/3;border-radius:14px;
+  background:#dcd0c0;overflow:hidden;
+}
+.b1 .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.b1 .ph .live{
+  position:absolute;top:10px;left:10px;background:var(--corallo);color:#fff;
+  font-size:9.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;
+  letter-spacing:.4px;text-transform:uppercase;display:flex;align-items:center;gap:5px;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.b1 .ph .live::before{content:'';width:6.5px;height:6.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+.b1 .ph .save{
+  position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+  display:grid;place-items:center;font-size:13px;color:var(--ink);border:none;
+}
+.b1 .ph .pct{
+  position:absolute;bottom:-18px;right:14px;
+  background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:30px;
+  padding:8px 16px;border-radius:14px;line-height:1;letter-spacing:-.7px;
+  box-shadow:0 8px 22px rgba(232,69,60,.45);
+  border:3px solid var(--paper);
+}
+.b1 .info{padding:24px 4px 0}
+.b1 .meta-top{font-size:10px;font-weight:700;color:var(--corallo);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:5px}
+.b1 .info h2{font-family:var(--ff-mark);font-size:23px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:4px}
+.b1 .info .where{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-bottom:14px}
+.b1 .progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.b1 .progress .bar{flex:1;height:4px;background:var(--line);border-radius:99px;overflow:hidden}
+.b1 .progress .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px;width:20%}
+.b1 .cta{
+  width:100%;background:var(--ink);color:#fff;border:none;
+  padding:13px;border-radius:99px;font-family:var(--ff-ui);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
+}
+.b1 .cta::after{content:'→';font-size:15px}
+
+/* ============ B2 — MAGAZINE COVER ============ */
+.b2{margin:6px 14px 0;background:var(--paper);border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:0 14px 36px rgba(34,24,28,.06)}
+.b2 .top{padding:14px 16px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.b2 .top-l{flex:1}
+.b2 .top-l .live{
+  display:inline-flex;align-items:center;gap:5px;background:var(--corallo);color:#fff;
+  font-size:9.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;
+}
+.b2 .top-l .live::before{content:'';width:6.5px;height:6.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+.b2 .top-l h2{font-family:var(--ff-mark);font-size:24px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:3px}
+.b2 .top-l .where{font-size:11px;color:var(--ink-3);font-weight:500}
+.b2 .top-r .pct{
+  font-family:var(--ff-mark);font-size:34px;color:var(--corallo);line-height:.9;letter-spacing:-1px;text-align:right;
+}
+.b2 .top-r .pct-sub{font-size:8.5px;font-weight:700;color:var(--ink-3);letter-spacing:1px;text-transform:uppercase;text-align:right;margin-top:2px}
+.b2 .ph{position:relative;width:100%;aspect-ratio:16/9;background:#dcd0c0;overflow:hidden}
+.b2 .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.b2 .ph .save{
+  position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);display:grid;place-items:center;font-size:13px;color:var(--ink);border:none;
+}
+.b2 .ph .countdown{
+  position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.65);color:#fff;backdrop-filter:blur(6px);
+  font-size:10.5px;font-weight:600;padding:5px 11px 5px 9px;border-radius:99px;display:flex;align-items:center;gap:5px;
+}
+.b2 .ph .countdown::before{content:'⏱';font-size:11px}
+.b2 .bottom{padding:12px 16px 16px}
+.b2 .progress{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.b2 .progress .bar{flex:1;height:4px;background:var(--line);border-radius:99px;overflow:hidden}
+.b2 .progress .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px;width:20%}
+.b2 .cta{
+  width:100%;background:var(--corallo);color:#fff;border:none;
+  padding:13px;border-radius:99px;font-family:var(--ff-ui);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
+  box-shadow:0 8px 18px rgba(232,69,60,.32);
+}
+.b2 .cta::after{content:'→';font-size:15px}
+
+/* ============ B3 — BENTO SPLIT ============ */
+.b3{margin:6px 14px 0;background:var(--paper);border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:0 14px 36px rgba(34,24,28,.06)}
+.b3 .ph{position:relative;width:100%;aspect-ratio:5/4;background:#dcd0c0;overflow:hidden}
+.b3 .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.b3 .ph .live{
+  position:absolute;top:10px;left:10px;background:var(--corallo);color:#fff;
+  font-size:9.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:5px;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+.b3 .ph .live::before{content:'';width:6.5px;height:6.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+.b3 .ph .save{
+  position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);display:grid;place-items:center;font-size:13px;color:var(--ink);border:none;
+}
+.b3 .pct-overlap{
+  margin:-30px 14px 0;background:var(--ink);color:#fff;border-radius:18px;
+  padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative;z-index:2;
+  box-shadow:0 14px 30px rgba(34,24,28,.25);
+}
+.b3 .pct-num{font-family:var(--ff-mark);font-size:34px;color:var(--corallo-light);line-height:.9;letter-spacing:-.8px}
+.b3 .pct-side{flex:1;font-size:10.5px;line-height:1.3;font-weight:500;color:rgba(255,255,255,.8)}
+.b3 .pct-side strong{display:block;font-family:var(--ff-ui);font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;letter-spacing:-.2px}
+.b3 .info{padding:14px 16px 16px}
+.b3 .info h2{font-family:var(--ff-mark);font-size:22px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:3px}
+.b3 .info .where{font-size:11px;color:var(--ink-3);font-weight:500;margin-bottom:12px}
+.b3 .progress{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.b3 .progress .bar{flex:1;height:4px;background:var(--line);border-radius:99px;overflow:hidden}
+.b3 .progress .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px;width:20%}
+.b3 .cta{
+  width:100%;background:var(--ink);color:#fff;border:none;
+  padding:13px;border-radius:99px;font-family:var(--ff-ui);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
+}
+.b3 .cta::after{content:'→';font-size:15px}
+
+/* ============ B4 — WARM CREMA ============ */
+.b4{margin:6px 14px 0;background:var(--crema);border-radius:24px;overflow:hidden;border:1px solid var(--line)}
+.b4 .ph-frame{padding:14px 14px 0}
+.b4 .ph{position:relative;width:100%;aspect-ratio:4/3;background:#dcd0c0;overflow:hidden;border-radius:16px}
+.b4 .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.b4 .ph .live{
+  position:absolute;top:10px;left:10px;background:var(--corallo);color:#fff;
+  font-size:9.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:5px;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+.b4 .ph .live::before{content:'';width:6.5px;height:6.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+.b4 .ph .save{
+  position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);display:grid;place-items:center;font-size:13px;color:var(--ink);border:none;
+}
+.b4 .body{padding:14px 18px 18px}
+.b4 .pct-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.b4 .pct-l{flex:1}
+.b4 .pct-l .meta-top{font-size:10px;font-weight:700;color:var(--corallo);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:4px}
+.b4 .pct-l h2{font-family:var(--ff-mark);font-size:23px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:3px}
+.b4 .pct-l .where{font-size:11px;color:var(--ink-3);font-weight:500}
+.b4 .pct-r{flex-shrink:0;text-align:right}
+.b4 .pct-num{font-family:var(--ff-mark);font-size:36px;color:var(--corallo);line-height:.85;letter-spacing:-1px}
+.b4 .pct-tag{font-family:var(--ff-hand);font-size:14px;color:var(--ink-2);margin-top:2px;line-height:1}
+.b4 .countdown{
+  display:inline-flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);
+  font-size:10.5px;font-weight:600;color:var(--ink-2);padding:5px 11px 5px 9px;border-radius:99px;margin-bottom:12px;
+}
+.b4 .countdown::before{content:'⏱';font-size:11px}
+.b4 .progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:10.5px;font-weight:600;color:var(--ink-2)}
+.b4 .progress .bar{flex:1;height:4px;background:var(--line);border-radius:99px;overflow:hidden}
+.b4 .progress .bar i{display:block;height:100%;background:var(--corallo);border-radius:99px;width:20%}
+.b4 .cta{
+  width:100%;background:var(--ink);color:#fff;border:none;
+  padding:13px;border-radius:99px;font-family:var(--ff-ui);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
+}
+.b4 .cta::after{content:'→';font-size:15px}
+
+@media (max-width:980px){.frames{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:780px){.frames{grid-template-columns:1fr}}
+
+.notes{margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">PR22 · Drop hero — 4 varianti stile B</span>
+    <h1>4 prove design stile card</h1>
+    <p>Tutte rispettano la natura della foto (aspect ratio nativo, niente taglio sui lati) e usano lo spazio in modi diversi. La direzione resta "card pulita" come la B che ti era piaciuta.</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- B1 — POLAROID EDITORIAL -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions"><div class="h-city">Torino ▾</div><div class="h-bi">B</div></div>
+        </header>
+        <div class="body-content">
+
+          <div class="section-label">
+            <strong>Drop di oggi</strong>
+            <small>scade in 2g 14h</small>
+          </div>
+
+          <div class="b1">
+            <div class="ph">
+              <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+              <span class="live">drop live</span>
+              <button class="save">♡</button>
+              <span class="pct">−20%</span>
+            </div>
+            <div class="info">
+              <div class="meta-top">Barbecue · Via Saluzzo 77</div>
+              <h2>Al Brasà</h2>
+              <div class="where">Ristorante di carne · solo in settimana</div>
+              <div class="progress">
+                <div class="bar"><i></i></div>
+                <span>2/10 presi</span>
+              </div>
+              <button class="cta">Lo voglio</button>
+            </div>
+          </div>
+
+          <div class="cat-row">
+            <div class="cat"><div class="b">🥂</div><span>Aperitivo</span></div>
+            <div class="cat"><div class="b">🍷</div><span>Piemontese</span></div>
+            <div class="cat"><div class="b">🍕</div><span>Pizza</span></div>
+            <div class="cat"><div class="b">🍣</div><span>Giapponese</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">B1 · Polaroid editorial<small>foto 4:3 + percentuale che esce dal frame come stamp</small></div>
+    </div>
+
+    <!-- B2 — MAGAZINE COVER -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions"><div class="h-city">Torino ▾</div><div class="h-bi">B</div></div>
+        </header>
+        <div class="body-content">
+
+          <div class="section-label">
+            <strong>Drop di oggi</strong>
+            <small>scade in 2g 14h</small>
+          </div>
+
+          <div class="b2">
+            <div class="top">
+              <div class="top-l">
+                <span class="live">drop live</span>
+                <h2>Al Brasà</h2>
+                <div class="where">Barbecue · Via Saluzzo 77</div>
+              </div>
+              <div class="top-r">
+                <div class="pct">−20%</div>
+                <div class="pct-sub">sul totale</div>
+              </div>
+            </div>
+            <div class="ph">
+              <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+              <button class="save">♡</button>
+              <span class="countdown">2g 14h</span>
+            </div>
+            <div class="bottom">
+              <div class="progress">
+                <div class="bar"><i></i></div>
+                <span>2/10 presi · solo in settimana</span>
+              </div>
+              <button class="cta">Lo voglio</button>
+            </div>
+          </div>
+
+          <div class="cat-row">
+            <div class="cat"><div class="b">🥂</div><span>Aperitivo</span></div>
+            <div class="cat"><div class="b">🍷</div><span>Piemontese</span></div>
+            <div class="cat"><div class="b">🍕</div><span>Pizza</span></div>
+            <div class="cat"><div class="b">🍣</div><span>Giapponese</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">B2 · Magazine cover<small>info top + foto 16:9 + CTA bottom · gerarchia editoriale</small></div>
+    </div>
+
+    <!-- B3 — BENTO SPLIT -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions"><div class="h-city">Torino ▾</div><div class="h-bi">B</div></div>
+        </header>
+        <div class="body-content">
+
+          <div class="section-label">
+            <strong>Drop di oggi</strong>
+            <small>scade in 2g 14h</small>
+          </div>
+
+          <div class="b3">
+            <div class="ph">
+              <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+              <span class="live">drop live</span>
+              <button class="save">♡</button>
+            </div>
+            <div class="pct-overlap">
+              <div class="pct-num">−20%</div>
+              <div class="pct-side">
+                <strong>Sconto sul totale</strong>
+                Solo in settimana
+              </div>
+            </div>
+            <div class="info">
+              <h2>Al Brasà</h2>
+              <div class="where">Barbecue · Via Saluzzo 77</div>
+              <div class="progress">
+                <div class="bar"><i></i></div>
+                <span>2/10 presi</span>
+              </div>
+              <button class="cta">Lo voglio</button>
+            </div>
+          </div>
+
+          <div class="cat-row">
+            <div class="cat"><div class="b">🥂</div><span>Aperitivo</span></div>
+            <div class="cat"><div class="b">🍷</div><span>Piemontese</span></div>
+            <div class="cat"><div class="b">🍕</div><span>Pizza</span></div>
+            <div class="cat"><div class="b">🍣</div><span>Giapponese</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">B3 · Bento split<small>foto 5:4 + box ink overlap con percentuale grossa</small></div>
+    </div>
+
+    <!-- B4 — WARM CREMA -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="h-actions"><div class="h-city">Torino ▾</div><div class="h-bi">B</div></div>
+        </header>
+        <div class="body-content">
+
+          <div class="section-label">
+            <strong>Drop di oggi</strong>
+            <small>scade in 2g 14h</small>
+          </div>
+
+          <div class="b4">
+            <div class="ph-frame">
+              <div class="ph">
+                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+                <span class="live">drop live</span>
+                <button class="save">♡</button>
+              </div>
+            </div>
+            <div class="body">
+              <div class="pct-row">
+                <div class="pct-l">
+                  <div class="meta-top">Barbecue · Via Saluzzo 77</div>
+                  <h2>Al Brasà</h2>
+                  <div class="where">solo in settimana</div>
+                </div>
+                <div class="pct-r">
+                  <div class="pct-num">−20%</div>
+                  <div class="pct-tag">sul totale</div>
+                </div>
+              </div>
+              <div class="countdown">scade in 2g 14h</div>
+              <div class="progress">
+                <div class="bar"><i></i></div>
+                <span>2/10 presi</span>
+              </div>
+              <button class="cta">Lo voglio</button>
+            </div>
+          </div>
+
+          <div class="cat-row">
+            <div class="cat"><div class="b">🥂</div><span>Aperitivo</span></div>
+            <div class="cat"><div class="b">🍷</div><span>Piemontese</span></div>
+            <div class="cat"><div class="b">🍕</div><span>Pizza</span></div>
+            <div class="cat"><div class="b">🍣</div><span>Giapponese</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="label">B4 · Warm crema<small>card sfondo crema + foto frame + Caveat hint sul prezzo</small></div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <h2>Le 4 varianti — confronto</h2>
+
+    <p>Tutte e 4 risolvono il problema "foto tagliata" usando <code>aspect-ratio</code> CSS invece di altezza fissa. La foto si scala alla larghezza disponibile mantenendo le proporzioni native, niente taglio brutto sui lati.</p>
+
+    <h3>B1 · Polaroid editorial</h3>
+    <ul>
+      <li>Foto 4:3 (proporzione classica fotografica)</li>
+      <li>Percentuale "−20%" come <strong>stamp che esce dal frame</strong> della foto in basso a destra (border bianco)</li>
+      <li>Pattern food magazine, look "selezione editoriale"</li>
+      <li>Ottimo se vuoi che la percentuale sia il punto focale visivo</li>
+    </ul>
+
+    <h3>B2 · Magazine cover</h3>
+    <ul>
+      <li>Info testuale <strong>sopra</strong> la foto (titolo + percentuale grande sx-dx)</li>
+      <li>Foto 16:9 cinemascope sotto, niente badge sopra solo countdown e save</li>
+      <li>CTA corallo full-width con shadow</li>
+      <li>Pattern editorial cover (Vogue, Domus)</li>
+      <li>Lavora bene perché percentuale e nome convivono nello stesso "header"</li>
+    </ul>
+
+    <h3>B3 · Bento split</h3>
+    <ul>
+      <li>Foto 5:4 in alto</li>
+      <li>Box <strong>ink scuro</strong> in overlap (-30px) con percentuale corallo bright a sinistra + claim a destra</li>
+      <li>Effetto "stratificato", dà profondità</li>
+      <li>Sotto info pulita + CTA ink</li>
+      <li>Pattern Apple Music featured, Bento UI moderno</li>
+    </ul>
+
+    <h3>B4 · Warm crema</h3>
+    <ul>
+      <li>Card con sfondo <code>--crema #F4EFE5</code> (più caldo del page)</li>
+      <li>Foto 4:3 in cornice interna</li>
+      <li>Layout 2-col: nome+meta sx + percentuale grossa dx</li>
+      <li><strong>Caveat hint "sul totale"</strong> sotto la percentuale → tocco editoriale Bi</li>
+      <li>Pattern Airbnb premium listing, look "tessera membership"</li>
+    </ul>
+
+    <h3>Cosa hanno in comune tutte e 4</h3>
+    <ul>
+      <li>Foto rispetta aspect ratio nativo (CSS <code>aspect-ratio: 4/3 | 5/4 | 16/9</code>)</li>
+      <li>1 solo bottone CTA "Prendi sconto" (non più i 2 che competono)</li>
+      <li>Heart in alto a destra per save</li>
+      <li>Live badge corallo con dot pulsante</li>
+      <li>Progress bar 2/10 presi</li>
+      <li>Sopra la card: section label "Drop di oggi" + Caveat scadenza</li>
+    </ul>
+
+    <h3>Mia raccomandazione</h3>
+    <ul>
+      <li><strong>B2 (Magazine cover)</strong> è la più "premium" — l'info gerarchica sopra fa "rivista" e la foto 16:9 cinemascope valorizza ogni scatto. CTA corallo con shadow è un magnete</li>
+      <li><strong>B4 (Warm crema)</strong> è il più "Bi" — il tocco Caveat sul prezzo, la cornice della foto, il colore caldo si allineano col tono della guida</li>
+      <li><strong>B3 (Bento)</strong> è il più "wow" tecnico — l'overlap ink con percentuale bright è memorabile</li>
+      <li><strong>B1 (Polaroid)</strong> è il più "classico card" ma la stamp è fica</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

@@ -9,6 +9,63 @@
 
 ---
 
+## 0bis. Naming "Bi Club" — separazione brand layer / SEO layer
+
+**Decisione 29/04**: la sezione precedentemente chiamata "Sconti" diventa **"Bi Club"** in UI. La parola "sconti" associava il brand al mondo Groupon e declassificava i ristoratori partner. Bi Club = pattern Eataly Club, premium, coerente col linguaggio già esistente (Chiedi a Bi, Secondo Bi, Bi consiglia).
+
+**Strategia operativa — separazione**:
+
+| Layer | Contenuto |
+|---|---|
+| URL (SEO, INVARIATO) | `/sconti` |
+| `<title>` page (SEO) | "Sconti ristoranti Torino · Bi Club \| ChiamamiBi" |
+| `<meta description>` (SEO) | "Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club." |
+| `<h1>` visibile (brand) | "Bi Club" |
+| `<h2>` visibile (mix brand+SEO) | "Sconti e vantaggi nei ristoranti di Torino" |
+| Tab nav globale (UI brand) | "Club" |
+| Body intro paragraph | usa naturalmente le parole "sconto", "promozione", "convenzione", "vantaggio", "drop" mescolate |
+| `<nav>` tag della tab bar | non ha peso SEO, può essere "Club" |
+
+**Mapping label UI**:
+
+| Prima | Dopo |
+|---|---|
+| Tab nav: "Sconti" | "Club" |
+| Pagina H1: "Sconti a Torino" | "Bi Club" + h2 "Sconti e vantaggi nei ristoranti di Torino" |
+| Segment level 1 destra: "I miei sconti" | "I miei vantaggi" |
+| Sub-section: "Drop a tempo" | invariato |
+| Sub-section: "Convenzioni" | invariato |
+| CTA card primary: "Prendi sconto" | **"Lo voglio"** |
+| CTA card mini convenzione: "Prendi" | "Lo voglio" (uniforme) |
+| Claim coupon PDF: "SCONTO RISERVATO" | "VANTAGGIO DEL CLUB" |
+| AuthGate copy: "Per prendere lo sconto, accedi" | "Entra nel Club di Bi per prenderlo" |
+| Tab bar mobile / nav floating desktop label | "Club" (sostituisce "Sconti") |
+
+**Schema.org strutturato — aggiungi alla pagina** per SEO local food:
+
+```jsx
+<script type="application/ld+json">{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Sconti e vantaggi nei ristoranti di Torino",
+  "description": "Drop a tempo, convenzioni e promozioni riservate ai membri del Bi Club",
+  "itemListElement": discounts.map((d, i) => ({
+    "@type": "Offer",
+    "position": i + 1,
+    "name": d.nome,
+    "description": d.descrizione,
+    "category": d.tipo,
+    "validFrom": d.created_at,
+    "validThrough": d.expires_at,
+    "areaServed": { "@type": "City", "name": "Torino" }
+  }))
+})}</script>
+```
+
+**NB importante**: l'URL `/sconti` resta invariato per non rompere link già condivisi e SEO indicizzato. Solo le label visibili cambiano.
+
+---
+
 ## 0. Regola d'oro: scope chirurgico
 
 Il sito live è in produzione, funziona. **NON modificare**:
