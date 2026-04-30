@@ -748,8 +748,8 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
             <h4>{r?.name || deal.title}</h4>
             <div className="sc-meta">
               {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-              {location && <span>{location}</span>}
-              {priceStr && <span>{priceStr}</span>}
+              {location && <><span style={{ opacity: 0.35 }}>|</span><span>{location}</span></>}
+              {priceStr && <><span style={{ opacity: 0.35 }}>|</span><span>{priceStr}</span></>}
             </div>
           </div>
           <div className="sc-left-info">
