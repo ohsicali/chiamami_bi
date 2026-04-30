@@ -402,18 +402,18 @@
 .sc-sep {
   opacity: 0.35;
 }
-.sc-drop .sc-pill-row { margin-bottom: 8px; }
+.sc-drop .sc-pill-row { margin-bottom: 10px; }
 .sc-drop .sc-progress {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-bottom: 10px;
+  gap: 7px;
+  margin-bottom: 12px;
 }
 .sc-progress-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 9.5px;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -422,25 +422,41 @@
   font-weight: 800;
 }
 .sc-drop .sc-progress .sc-bar {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.18);
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 99px;
   overflow: hidden;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  padding: 2px;
+  box-sizing: border-box;
 }
 @media (min-width: 768px) {
   .sc-drop-tagline { font-size: 11.5px; }
   .sc-drop .sc-meta { font-size: 11.5px; margin-bottom: 10px; }
-  .sc-drop .sc-pill-row { margin-bottom: 12px; }
-  .sc-drop .sc-progress { gap: 6px; margin-bottom: 14px; }
-  .sc-drop .sc-progress .sc-bar { height: 7px; }
+  .sc-drop .sc-pill-row { margin-bottom: 14px; }
+  .sc-drop .sc-progress { gap: 8px; margin-bottom: 16px; }
+  .sc-drop .sc-progress .sc-bar { height: 14px; }
   .sc-progress-labels { font-size: 11px; }
 }
 .sc-drop .sc-progress .sc-bar i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, rgba(255,255,255,0.75) 0%, #fff 100%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.6) 0%, #fff 60%, rgba(255,255,255,0.9) 100%);
   border-radius: 99px;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.sc-drop .sc-progress .sc-bar i::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: scShimmer 2.2s ease-in-out infinite;
+}
+@keyframes scShimmer {
+  0%   { left: -60%; }
+  100% { left: 120%; }
 }
 .sc-cta {
   background: var(--sc-ink);

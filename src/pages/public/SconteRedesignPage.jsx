@@ -661,7 +661,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
         <h4>{r?.name || deal.title}</h4>
         {r?.tagline && <div className="sc-drop-tagline">{r.tagline}</div>}
         <div className="sc-meta sc-drop-meta">
-          {cuisine && <span className="sc-cat sc-cat-drop">{categoryEmoji(cuisine)} {cuisine}</span>}
+          {cuisine && <span>{cuisine}</span>}
           {location && <><span className="sc-sep">|</span><span>{location}</span></>}
           {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
         </div>
