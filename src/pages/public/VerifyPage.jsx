@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import './VerifyPage.css'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
-import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { LogoFull } from '../../components/UI/Logo'
 import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 import SuccessResult from '../../components/Verify/SuccessResult'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
@@ -383,30 +381,42 @@ function PinView({
     const onKey = (e) => {
       if (isLocked || submitting) return
       if (/^[0-9]$/.test(e.key)) {
-        setPin(prev => {
-          const next = (prev + e.key).slice(0, PIN_LENGTH)
-          if (next.length === PIN_LENGTH) setTimeout(() => onSubmit(next), 0)
-          return next
-        })
+        setPin(prev => (prev + e.key).slice(0, PIN_LENGTH))
       } else if (e.key === 'Backspace') {
         setPin(prev => prev.slice(0, -1))
+      } else if (e.key === 'Enter') {
+        // Submit only when 6 digits entered; access via callback ref to current pin
+        // (handled by the dedicated submit button below; Enter mirrors that button)
+        const evt = new Event('verify-pin-submit')
+        window.dispatchEvent(evt)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [isLocked, submitting, setPin, onSubmit])
+  }, [isLocked, submitting, setPin])
+
+  // Submit when the dispatched event fires AND pin is complete
+  useEffect(() => {
+    const onSubmitEvent = () => {
+      if (isLocked || submitting) return
+      if (pin.length === PIN_LENGTH) onSubmit(pin)
+    }
+    window.addEventListener('verify-pin-submit', onSubmitEvent)
+    return () => window.removeEventListener('verify-pin-submit', onSubmitEvent)
+  }, [isLocked, submitting, pin, onSubmit])
 
   const onPad = (k) => {
     if (isLocked || submitting) return
     if (k === 'del') {
       setPin(p => p.slice(0, -1))
     } else {
-      setPin(p => {
-        const next = (p + k).slice(0, PIN_LENGTH)
-        if (next.length === PIN_LENGTH) setTimeout(() => onSubmit(next), 0)
-        return next
-      })
+      setPin(p => (p + k).slice(0, PIN_LENGTH))
     }
+  }
+
+  const handleSubmitClick = () => {
+    if (isLocked || submitting) return
+    if (pin.length === PIN_LENGTH) onSubmit(pin)
   }
 
   const mins = Math.floor(lockoutRemainingSec / 60)
@@ -589,6 +599,31 @@ function PinView({
         })}
       </div>
 
+      {/* Submit button — Accedi */}
+      <button
+        type="button"
+        onClick={handleSubmitClick}
+        disabled={pin.length !== PIN_LENGTH || submitting}
+        style={{
+          width: '100%',
+          marginTop: 14,
+          padding: '15px 16px',
+          border: 0,
+          borderRadius: 14,
+          background: pin.length === PIN_LENGTH && !submitting ? 'var(--color-corallo)' : 'var(--color-line)',
+          color: pin.length === PIN_LENGTH && !submitting ? '#fff' : 'var(--color-ink-55)',
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 800,
+          fontSize: 15,
+          letterSpacing: '-0.01em',
+          cursor: pin.length === PIN_LENGTH && !submitting ? 'pointer' : 'not-allowed',
+          boxShadow: pin.length === PIN_LENGTH && !submitting ? '0 8px 20px rgba(232,69,60,.28)' : 'none',
+          transition: 'all 0.15s',
+        }}
+      >
+        {submitting ? 'Verifica…' : 'Accedi'}
+      </button>
+
       {/* Footer */}
       <div style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600 }}>
         PIN dimenticato?{' '}
@@ -618,326 +653,1087 @@ function PinView({
 }
 
 /* ------------------------------------------------------------------ */
-/*  AuthedView — header ristorante + tab bar + corpo tab              */
+/*  AuthedView — shell mobile (v4-verify) + scanner overlay          */
 /* ------------------------------------------------------------------ */
 function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
-  const [tab, setTab] = useState('verify')
+  const [tab, setTab] = useState('dashboard')
+  const isDesktop = useIsDesktop()
+
+  // Quando l'utente chiude il scanner, torna alla dashboard
+  const closeScanner = () => setTab('dashboard')
+  const openScanner = () => setTab('scan')
+
+  if (isDesktop) {
+    return (
+      <DesktopShell
+        restaurant={restaurant}
+        onLogout={onLogout}
+        deviceToken={deviceToken}
+        onSessionExpired={onSessionExpired}
+        tab={tab}
+        onTabChange={setTab}
+        onOpenScanner={openScanner}
+        onCloseScanner={closeScanner}
+      />
+    )
+  }
+
+  // Quando si è nel tab Scansiona, mostra l'overlay full-bleed
+  if (tab === 'scan') {
+    return <ScannerOverlay restaurant={restaurant} onClose={closeScanner} />
+  }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-page)' }}>
-      <RestaurantHeader restaurant={restaurant} onLogout={onLogout} />
-      <TabBar tab={tab} onChange={setTab} />
-      <div style={{ padding: 0 }}>
-        {tab === 'verify' ? (
-          <VerifyTab restaurant={restaurant} />
-        ) : (
+    <div className="v4-shell">
+      <VerifyTopBar restaurant={restaurant} onLogout={onLogout} />
+      <VerifyPillTabs tab={tab} onChange={setTab} />
+      <div className="v4-content">
+        {tab === 'dashboard' && (
           <DashboardTab
             restaurant={restaurant}
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
+            onOpenScanner={openScanner}
+          />
+        )}
+        {tab === 'impostazioni' && (
+          <ImpostazioniTab
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onLogout={onLogout}
+            onSessionExpired={onSessionExpired}
           />
         )}
       </div>
+      {tab === 'dashboard' && <FloatingScanCTA onClick={openScanner} />}
     </div>
   )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Header ristorante (barra scura, mobile + desktop)                 */
-/* ------------------------------------------------------------------ */
-function RestaurantHeader({ restaurant, onLogout }) {
+/* Mobile top bar (cream) — wordmark + ristorante + avatar+esci */
+function VerifyTopBar({ restaurant, onLogout }) {
   const firstPhoto = restaurant?.photos?.[0]
   const photoUrl = firstPhoto
     ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url)
     : null
+  const initial = (restaurant?.name || 'B').trim().charAt(0).toUpperCase()
 
-  const categoryName = (() => {
-    const first = Array.isArray(restaurant?.category) && restaurant.category.length > 0
-      ? restaurant.category[0]
-      : restaurant?.cuisine_type
-    if (!first) return null
-    const info = getCategoryInfo(first)
-    return info?.name || first
-  })()
+  return (
+    <div className="v4-top">
+      <div className="v4-top-logo">
+        LA GUIDA DI BI
+        <small>{restaurant?.name || 'Area ristoratori'}</small>
+      </div>
+      <div className="v4-top-avgroup">
+        <div className="v4-top-av" aria-hidden="true">
+          {photoUrl ? <img src={photoUrl} alt="" loading="lazy" /> : initial}
+        </div>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="v4-top-exit"
+          aria-label="Esci"
+          title="Esci dall'area ristoratori"
+        >
+          Esci
+        </button>
+      </div>
+    </div>
+  )
+}
 
-  const subtitle = [categoryName, restaurant?.address].filter(Boolean).join(' · ')
-  const isDesktop = useIsDesktop()
+/* Camera icon (SVG) — usato in CTA, tab bar, e desktop sidebar */
+function CameraIcon({ size = 22, color = 'currentColor' }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  )
+}
+
+/* Pill tab bar — 3 tab (Dashboard / Scansiona / Impostazioni) */
+const V4_TABS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'scan', label: 'Scansiona' },
+  { key: 'impostazioni', label: 'Impostazioni' },
+]
+
+function VerifyPillTabs({ tab, onChange }) {
+  return (
+    <div className="v4-tabs" role="tablist">
+      {V4_TABS.map((t) => (
+        <button
+          key={t.key}
+          role="tab"
+          aria-selected={tab === t.key}
+          className={`v4-tab ${tab === t.key ? 'on' : ''}`}
+          onClick={() => onChange(t.key)}
+          type="button"
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* Floating scan CTA — corallo, fixed at bottom */
+function FloatingScanCTA({ onClick }) {
+  return (
+    <button
+      type="button"
+      className="v4-scan-cta"
+      onClick={onClick}
+      aria-label="Scansiona QR"
+    >
+      <span className="ic" aria-hidden="true">
+        <CameraIcon size={22} color="#fff" />
+      </span>
+      <span className="body">
+        <span className="t">Scansiona il QR</span>
+        <span className="s">Verifica lo sconto del cliente</span>
+      </span>
+      <span className="arr" aria-hidden="true">›</span>
+    </button>
+  )
+}
+
+/* Impostazioni — dati locale (email + orari), cambio PIN, contatto Bi, logout */
+function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }) {
+  const [email, setEmail] = useState('')
+  // hoursDays: { 0: [{open:'12:00', close:'14:30'}, ...], 1: [...], ... }
+  // 0=Domenica, 1=Lunedì, ..., 6=Sabato (convenzione JS Date / Google Places)
+  const [hoursDays, setHoursDays] = useState(() => emptyHoursDays())
+  const [savingMeta, setSavingMeta] = useState(false)
+  const [metaMsg, setMetaMsg] = useState(null) // { kind, text }
+  const [loadingMeta, setLoadingMeta] = useState(true)
+
+  const [pinCur, setPinCur] = useState('')
+  const [pinNew, setPinNew] = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
+  const [savingPin, setSavingPin] = useState(false)
+  const [pinMsg, setPinMsg] = useState(null) // { kind, text }
+
+  // Carica email + orari attuali
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('email, opening_hours, hours_cache, place_id_verified_at')
+          .eq('id', restaurant.id)
+          .maybeSingle()
+        if (cancelled) return
+        if (error) {
+          console.warn('load meta error', error)
+        }
+        setEmail(data?.email || '')
+        // Pre-popolazione orari, in ordine di priorità:
+        //   1) opening_hours già impostato manualmente
+        //   2) hours_cache da Google Places (se Place ID verificato)
+        //   3) default: tutti i giorni chiusi
+        let source = null
+        if (data?.opening_hours?.regularOpeningHours?.periods?.length) {
+          source = data.opening_hours
+        } else if (data?.hours_cache?.regularOpeningHours?.periods?.length && data?.place_id_verified_at) {
+          source = data.hours_cache
+        }
+        setHoursDays(periodsToHoursDays(source?.regularOpeningHours?.periods))
+      } catch (e) {
+        console.warn('load meta failed', e)
+      } finally {
+        if (!cancelled) setLoadingMeta(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [restaurant.id])
+
+  const handleSaveMeta = async () => {
+    setSavingMeta(true)
+    setMetaMsg(null)
+    try {
+      const openingHoursPayload = hoursDaysToPayload(hoursDays)
+      const { data, error } = await supabase.rpc('verify_update_restaurant_meta', {
+        p_device_token: deviceToken,
+        p_email: email || null,
+        p_opening_hours: openingHoursPayload,
+      })
+      if (error) {
+        if (String(error.message || '').match(/function .* does not exist/i)) {
+          setMetaMsg({ kind: 'warn', text: 'Funzione in arrivo: contatta Bi per aggiornare i dati.' })
+        } else {
+          setMetaMsg({ kind: 'err', text: error.message || 'Errore nel salvataggio' })
+        }
+        return
+      }
+      if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
+      if (data?.error) {
+        setMetaMsg({ kind: 'err', text: data.error })
+        return
+      }
+      setMetaMsg({ kind: 'ok', text: 'Modifiche salvate' })
+    } catch (e) {
+      console.error('save meta error', e)
+      setMetaMsg({ kind: 'err', text: e?.message || 'Errore di rete' })
+    } finally {
+      setSavingMeta(false)
+    }
+  }
+
+  const handleChangePin = async () => {
+    setPinMsg(null)
+    if (!/^\d{6}$/.test(pinCur)) {
+      setPinMsg({ kind: 'err', text: 'Il PIN attuale deve essere di 6 cifre' })
+      return
+    }
+    if (!/^\d{6}$/.test(pinNew)) {
+      setPinMsg({ kind: 'err', text: 'Il nuovo PIN deve essere di 6 cifre' })
+      return
+    }
+    if (pinNew !== pinConfirm) {
+      setPinMsg({ kind: 'err', text: 'Il nuovo PIN e la conferma non coincidono' })
+      return
+    }
+    if (pinNew === pinCur) {
+      setPinMsg({ kind: 'err', text: 'Il nuovo PIN deve essere diverso da quello attuale' })
+      return
+    }
+    setSavingPin(true)
+    try {
+      const { data, error } = await supabase.rpc('verify_change_pin', {
+        p_device_token: deviceToken,
+        p_current_pin: pinCur,
+        p_new_pin: pinNew,
+      })
+      if (error) {
+        if (String(error.message || '').match(/function .* does not exist/i)) {
+          setPinMsg({ kind: 'warn', text: 'Funzione in arrivo: contatta Bi per cambiare il PIN.' })
+        } else {
+          setPinMsg({ kind: 'err', text: error.message || 'Errore nel cambio PIN' })
+        }
+        return
+      }
+      if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
+      if (data?.error === 'wrong_pin') {
+        setPinMsg({ kind: 'err', text: 'Il PIN attuale non è corretto' })
+        return
+      }
+      if (data?.error) {
+        setPinMsg({ kind: 'err', text: data.error })
+        return
+      }
+      setPinMsg({ kind: 'ok', text: 'PIN aggiornato. Usalo dal prossimo accesso.' })
+      setPinCur(''); setPinNew(''); setPinConfirm('')
+    } catch (e) {
+      console.error('change pin error', e)
+      setPinMsg({ kind: 'err', text: e?.message || 'Errore di rete' })
+    } finally {
+      setSavingPin(false)
+    }
+  }
+
+  return (
+    <div style={{ paddingTop: 8 }}>
+      {/* Dati locale */}
+      <div className="v4-set-section">
+        <div className="v4-set-section-head">Dati locale</div>
+        <div className="v4-set-card v4-set-form">
+          <label className="v4-set-field">
+            <span className="lab">Nome</span>
+            <input className="inp" value={restaurant?.name || ''} disabled />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Indirizzo</span>
+            <input className="inp" value={restaurant?.address || ''} disabled />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Email del locale</span>
+            <input
+              className="inp"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="info@nomeristorante.it"
+              disabled={loadingMeta || savingMeta}
+            />
+          </label>
+          <div className="v4-set-field">
+            <span className="lab">Orari di apertura</span>
+            <OpeningHoursEditor
+              value={hoursDays}
+              onChange={setHoursDays}
+              disabled={loadingMeta || savingMeta}
+            />
+          </div>
+          {metaMsg && (
+            <div className={`v4-set-msg ${metaMsg.kind}`}>{metaMsg.text}</div>
+          )}
+          <button
+            type="button"
+            className="v4-set-save"
+            onClick={handleSaveMeta}
+            disabled={loadingMeta || savingMeta}
+          >
+            {savingMeta ? 'Salvataggio…' : 'Salva modifiche'}
+          </button>
+        </div>
+      </div>
+
+      {/* Cambio PIN */}
+      <div className="v4-set-section">
+        <div className="v4-set-section-head">Cambia il PIN di accesso</div>
+        <div className="v4-set-card v4-set-form">
+          <label className="v4-set-field">
+            <span className="lab">PIN attuale</span>
+            <input
+              className="inp v4-pin-inp"
+              type="password"
+              inputMode="numeric"
+              autoComplete="current-password"
+              maxLength={6}
+              value={pinCur}
+              onChange={(e) => setPinCur(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="••••••"
+            />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Nuovo PIN</span>
+            <input
+              className="inp v4-pin-inp"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={6}
+              value={pinNew}
+              onChange={(e) => setPinNew(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="6 cifre"
+            />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Conferma nuovo PIN</span>
+            <input
+              className="inp v4-pin-inp"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={6}
+              value={pinConfirm}
+              onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="ripeti il nuovo PIN"
+            />
+          </label>
+          {pinMsg && (
+            <div className={`v4-set-msg ${pinMsg.kind}`}>{pinMsg.text}</div>
+          )}
+          <button
+            type="button"
+            className="v4-set-save"
+            onClick={handleChangePin}
+            disabled={savingPin}
+          >
+            {savingPin ? 'Aggiornamento…' : 'Aggiorna PIN'}
+          </button>
+        </div>
+      </div>
+
+      {/* Contatto Bi */}
+      <div className="v4-set-section">
+        <div className="v4-set-section-head">Hai bisogno di aiuto?</div>
+        <div className="v4-set-card">
+          <a className="v4-set-row" href="mailto:info@chiamamibi.com">
+            <span className="ic">B</span>
+            <span className="body">
+              <span className="t">Bi · Augusto</span>
+              <span className="s">info@chiamamibi.com</span>
+            </span>
+            <span className="arr">›</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Esci */}
+      <div className="v4-set-section">
+        <div className="v4-set-card">
+          <button className="v4-set-row danger" type="button" onClick={onLogout}>
+            <span className="ic">⏻</span>
+            <span className="body">
+              <span className="t">Esci da quest&apos;area</span>
+              <span className="s">Dovrai re-inserire il PIN per rientrare</span>
+            </span>
+            <span className="arr">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+/* Stub Scanner overlay — wrappa VerifyTab in overlay nero con close.
+   Sostituito con versione full-bleed black + corner brackets nel commit successivo. */
+function ScannerOverlay({ restaurant, onClose }) {
+  const [mode, setMode] = useState('camera') // 'camera' | 'manual'
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null) // { status, reason, data }
+  const [camStatus, setCamStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
+  const [camError, setCamError] = useState(null)
+  const [torchOn, setTorchOn] = useState(false)
+  const videoRef = useRef(null)
+  const scannerRef = useRef(null)
+  const lastScanRef = useRef({ code: null, at: 0 })
+  const inputRef = useRef(null)
+
+  // Lock body scroll while overlay is open
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  const verifyCode = async (rawCode) => {
+    const trimmed = extractQrCode(rawCode)
+    if (!trimmed || loading) return
+    setLoading(true)
+    try {
+      const token = getCookie(COOKIE_NAME)
+      if (!token) {
+        setResult({ status: 'error', data: { message: 'Sessione scaduta, rientra con il PIN.' } })
+        return
+      }
+      const { data: resp, error: rpcErr } = await supabase.rpc('verify_redeem_qr', {
+        p_device_token: token,
+        p_qr_code: trimmed,
+      })
+      if (rpcErr || !resp) {
+        setResult({ status: 'error', data: { message: rpcErr?.message || 'Errore di rete, riprova' } })
+        return
+      }
+      const payload = resp.data || {}
+      const normalized = {
+        ...payload,
+        discount: {
+          title: payload.discount_title ?? null,
+          discount_value: payload.discount_value ?? null,
+          discount_type: payload.discount_type ?? null,
+        },
+      }
+      if (resp.status === 'success') {
+        try { navigator.vibrate?.([40, 60, 40]) } catch { /* no-op */ }
+      }
+      if (resp.status === 'unauthorized') {
+        deleteCookie(COOKIE_NAME)
+        setResult({ status: 'error', data: { message: 'Sessione non valida, rientra con il PIN.' } })
+        return
+      }
+      setResult({ status: resp.status, reason: resp.reason, data: normalized })
+    } catch (err) {
+      console.error('verify error:', err)
+      setResult({ status: 'error', data: { message: err?.message || 'Errore di rete, riprova' } })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Camera scanner setup — runs only when camera mode is active and no result is showing
+  useEffect(() => {
+    if (mode !== 'camera' || result) return undefined
+    let cancelled = false
+    let scanner = null
+
+    async function start() {
+      let QrScanner
+      try {
+        const mod = await import('qr-scanner')
+        QrScanner = mod.default
+      } catch (e) {
+        console.error('Failed to load qr-scanner', e)
+        if (!cancelled) {
+          setCamStatus('error')
+          setCamError('Impossibile caricare lo scanner')
+        }
+        return
+      }
+      if (cancelled || !videoRef.current) return
+
+      if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
+        try {
+          const perm = await navigator.permissions.query({ name: 'camera' })
+          if (!cancelled && perm.state === 'denied') {
+            setCamStatus('denied')
+            return
+          }
+        } catch { /* not supported, continue */ }
+      }
+      try {
+        const hasCamera = await QrScanner.hasCamera()
+        if (!hasCamera) { if (!cancelled) setCamStatus('no-camera'); return }
+      } catch { /* continue */ }
+
+      scanner = new QrScanner(
+        videoRef.current,
+        (res) => {
+          const scanned = typeof res === 'string' ? res : res?.data
+          if (!scanned) return
+          const now = Date.now()
+          if (lastScanRef.current.code === scanned && now - lastScanRef.current.at < 2500) return
+          lastScanRef.current = { code: scanned, at: now }
+          verifyCode(scanned)
+        },
+        { preferredCamera: 'environment', highlightScanRegion: false, highlightCodeOutline: false, maxScansPerSecond: 5 },
+      )
+      scannerRef.current = scanner
+      try {
+        await scanner.start()
+        if (!cancelled) setCamStatus('running')
+      } catch (e) {
+        console.error('Camera start failed', e)
+        if (cancelled) return
+        const msg = String(e?.message || e?.name || '').toLowerCase()
+        if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) setCamStatus('denied')
+        else if (msg.includes('notfound') || msg.includes('no camera')) setCamStatus('no-camera')
+        else { setCamStatus('error'); setCamError(e?.message || 'Impossibile avviare la fotocamera') }
+      }
+    }
+    start()
+    return () => {
+      cancelled = true
+      if (scannerRef.current) {
+        try { scannerRef.current.stop(); scannerRef.current.destroy() } catch { /* no-op */ }
+        scannerRef.current = null
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, result])
+
+  // Pause scanner during loading verify
+  useEffect(() => {
+    const s = scannerRef.current
+    if (!s) return
+    if (loading) {
+      try { s.stop() } catch { /* no-op */ }
+    } else if (camStatus === 'running' && mode === 'camera' && !result) {
+      s.start().catch(() => {})
+    }
+  }, [loading, camStatus, mode, result])
+
+  // Toggle torch (flashlight) — supported on mobile cameras with track capabilities
+  const toggleTorch = async () => {
+    const s = scannerRef.current
+    if (!s) return
+    try {
+      const next = !torchOn
+      if (s.hasFlash && (await s.hasFlash())) {
+        if (next) await s.turnFlashOn(); else await s.turnFlashOff()
+        setTorchOn(next)
+      }
+    } catch (e) {
+      console.warn('torch toggle failed', e)
+    }
+  }
+
+  // Auto-focus manual input when switching to manual mode
+  useEffect(() => {
+    if (mode === 'manual' && !result) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [mode, result])
+
+  const resetForNextScan = () => {
+    setCode('')
+    setResult(null)
+    lastScanRef.current = { code: null, at: 0 }
+    setMode('camera')
+  }
+
+  const handleManualSubmit = (e) => {
+    e?.preventDefault?.()
+    verifyCode(code)
+  }
+
+  // ============ RESULT MODE ============
+  if (result) {
+    return (
+      <div className="v4-scan-overlay" role="dialog" aria-label="Esito verifica">
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 5,
+          overflow: 'auto', padding: 0,
+        }}>
+          <ScanResultView
+            result={result}
+            onReset={resetForNextScan}
+            onClose={onClose}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ============ CAMERA / MANUAL MODE ============
+  return (
+    <div className="v4-scan-overlay" role="dialog" aria-label="Scansiona QR">
+      <div className="v4-scan-cam">
+        {mode === 'camera' && (camStatus === 'starting' || camStatus === 'running') && (
+          <video ref={videoRef} playsInline muted />
+        )}
+      </div>
+
+      {/* Top bar — close + title + flash */}
+      <div className="v4-scan-top">
+        <button
+          type="button"
+          className="v4-scan-icon-btn"
+          onClick={onClose}
+          aria-label="Chiudi scanner"
+        >
+          ✕
+        </button>
+        <div className="v4-scan-title">{mode === 'manual' ? 'Inserisci il codice' : 'Scansiona il QR'}</div>
+        {mode === 'camera' && camStatus === 'running' ? (
+          <button
+            type="button"
+            className={`v4-scan-icon-btn ${torchOn ? 'on' : ''}`}
+            onClick={toggleTorch}
+            aria-label="Torcia"
+          >
+            ⚡
+          </button>
+        ) : (
+          <span style={{ width: 40, height: 40, flex: '0 0 auto' }} aria-hidden="true" />
+        )}
+      </div>
+
+      {/* CAMERA mode: scan window + hint + bottom buttons */}
+      {mode === 'camera' && (
+        <>
+          {(camStatus === 'starting' || camStatus === 'running') && (
+            <>
+              <div className="v4-scan-window">
+                <div className="v4-scan-corner tl" />
+                <div className="v4-scan-corner tr" />
+                <div className="v4-scan-corner bl" />
+                <div className="v4-scan-corner br" />
+                <div className="v4-scan-line" />
+              </div>
+              <div className="v4-scan-hint">
+                <div className="h1">Inquadra il QR del cliente</div>
+                <div className="h2">Il codice è nella sua app, dentro la scheda del tuo ristorante</div>
+              </div>
+              <div className="v4-scan-bottom">
+                <button type="button" className="v4-scan-btn" onClick={() => setMode('manual')}>
+                  ⌨︎  Inserisci codice
+                </button>
+                <a className="v4-scan-btn" href="mailto:info@chiamamibi.com" style={{ textDecoration: 'none' }}>
+                  ?  Aiuto
+                </a>
+              </div>
+              {camStatus === 'starting' && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 4, background: 'rgba(0,0,0,0.4)', color: '#fff',
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: 28, height: 28, border: '3px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#fff', borderRadius: '50%', margin: '0 auto 8px',
+                      animation: 'verifySpin 0.8s linear infinite',
+                    }} />
+                    Avvio fotocamera…
+                  </div>
+                </div>
+              )}
+              {loading && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 4, background: 'rgba(0,0,0,0.65)', color: '#fff',
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: 28, height: 28, border: '3px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#fff', borderRadius: '50%', margin: '0 auto 10px',
+                      animation: 'verifySpin 0.8s linear infinite',
+                    }} />
+                    <div style={{ fontWeight: 700 }}>Verifica in corso…</div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Camera fallbacks: denied / no-camera / error */}
+          {(camStatus === 'denied' || camStatus === 'no-camera' || camStatus === 'error') && (
+            <div className="v4-scan-fallback">
+              <div className="ic">
+                {camStatus === 'denied' && '🚫'}
+                {camStatus === 'no-camera' && '📷'}
+                {camStatus === 'error' && '⚠️'}
+              </div>
+              <div className="t">
+                {camStatus === 'denied' && 'Fotocamera bloccata'}
+                {camStatus === 'no-camera' && 'Nessuna fotocamera'}
+                {camStatus === 'error' && 'Errore fotocamera'}
+              </div>
+              <div className="d">
+                {camStatus === 'denied' && 'Autorizza l\'accesso alla fotocamera nelle impostazioni del browser, oppure usa l\'inserimento manuale.'}
+                {camStatus === 'no-camera' && 'Questo dispositivo non espone una fotocamera utilizzabile. Inserisci il codice manualmente.'}
+                {camStatus === 'error' && (camError || 'Impossibile avviare la fotocamera. Usa l\'inserimento manuale.')}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMode('manual')}
+                style={{
+                  marginTop: 18, padding: '14px 22px', borderRadius: 14,
+                  background: 'var(--color-corallo)', color: '#fff', border: 0,
+                  fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 14,
+                  letterSpacing: '-0.01em', cursor: 'pointer',
+                }}
+              >
+                Inserisci codice manualmente
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* MANUAL mode: full-screen black input form */}
+      {mode === 'manual' && (
+        <form className="v4-scan-manual" onSubmit={handleManualSubmit}>
+          <h2>Inserisci il codice</h2>
+          <p>
+            Scrivi il codice{' '}
+            <code style={{ color: '#fff', fontWeight: 700 }}>BiSc-XXXXXXXX</code>
+            {' '}mostrato sotto il QR del cliente.
+          </p>
+          <input
+            ref={inputRef}
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="BiSc-XXXXXXXX"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            disabled={loading}
+          />
+          <button
+            type="submit"
+            className="submit"
+            disabled={!code.trim() || loading}
+          >
+            {loading ? 'Verifica…' : 'Verifica sconto'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setCode(''); setMode('camera') }}
+            style={{
+              marginTop: 14, padding: 12, background: 'transparent', border: 0,
+              color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            ← Torna alla fotocamera
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+/* ScanResultView — wrapper sui componenti Result esistenti, con close-on-success */
+function ScanResultView({ result, onReset, onClose }) {
+  const { status, data } = result
+  const handleReset = () => {
+    if (status === 'success') {
+      // Su successo, dopo "Fatto" chiudo direttamente l'overlay invece di tornare a scansionare
+      onClose?.()
+    } else {
+      onReset?.()
+    }
+  }
+  if (status === 'success') return <SuccessResult data={data} onReset={handleReset} />
+  if (status === 'invalid_now') return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={handleReset} />
+  if (status === 'already_redeemed') return <AlreadyUsedResult data={data} onReset={handleReset} />
+  if (status === 'expired') {
+    return <ResultCard tone="neutral" icon="⏱" title="Sconto scaduto"
+      description="La data di validità di questo sconto è passata."
+      onReset={handleReset} resetLabel="Nuova verifica" />
+  }
+  if (status === 'wrong_restaurant') {
+    return <ResultCard tone="error" icon="✕" title="Codice non valido per questo ristorante"
+      description="Questo QR appartiene a uno sconto di un altro locale."
+      onReset={handleReset} resetLabel="Nuova verifica" />
+  }
+  if (status === 'not_found') {
+    return <ResultCard tone="error" icon="✕" title="Codice non riconosciuto"
+      description="Controlla che il codice sia scritto correttamente."
+      onReset={handleReset} resetLabel="Riprova" />
+  }
+  return <ResultCard tone="error" icon="✕" title="Errore"
+    description={data?.message || 'Si è verificato un errore.'}
+    onReset={handleReset} resetLabel="Riprova" />
+}
+
+/* Desktop placeholder shell — usa la stessa struttura mobile per ora.
+   Sostituito con sidebar back-office nel commit successivo. */
+function DesktopShell({
+  restaurant, onLogout, deviceToken, onSessionExpired,
+  tab, onTabChange, onOpenScanner, onCloseScanner,
+}) {
+  const firstPhoto = restaurant?.photos?.[0]
+  const photoUrl = firstPhoto ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url) : null
+  const initial = (restaurant?.name || 'B').trim().charAt(0).toUpperCase()
+
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: '◈' },
+    { key: 'scan', label: 'Scansiona', iconNode: <CameraIcon size={16} />, action: onOpenScanner },
+    { key: 'impostazioni', label: 'Impostazioni', icon: '⚙' },
+  ]
+
+  return (
+    <div className="v4-dsk-shell">
+      <aside className="v4-dsk-side">
+        <div className="v4-dsk-wm">
+          LA GUIDA<br />DI BI
+          <small>Area ristoratori</small>
+        </div>
+        {navItems.map((n) => (
+          <button
+            key={n.key}
+            type="button"
+            className={`v4-dsk-ni ${tab === n.key ? 'on' : ''}`}
+            onClick={() => (n.action ? n.action() : onTabChange(n.key))}
+          >
+            <span className="ic">{n.iconNode || n.icon}</span>
+            <span>{n.label}</span>
+          </button>
+        ))}
+        <div className="v4-dsk-user">
+          <div className="av" aria-hidden="true">
+            {photoUrl ? <img src={photoUrl} alt="" loading="lazy" /> : initial}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="u" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {restaurant?.name || '—'}
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              style={{
+                background: 'transparent', border: 0, padding: 0, marginTop: 2,
+                color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 700,
+                cursor: 'pointer', textAlign: 'left', textDecoration: 'underline',
+              }}
+            >
+              Esci
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main className="v4-dsk-main">
+        {tab === 'dashboard' && (
+          <DesktopDashboard
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+            onOpenScanner={onOpenScanner}
+          />
+        )}
+        {tab === 'impostazioni' && (
+          <>
+            <div className="v4-dsk-crumb">{restaurant?.name || '—'}</div>
+            <h1 className="v4-dsk-title">Impostazioni</h1>
+            <div className="v4-dsk-sub">
+              <span className="meta">Dati locale, PIN, contatto Bi</span>
+            </div>
+            <div style={{ maxWidth: 560 }}>
+              <ImpostazioniTab
+                restaurant={restaurant}
+                deviceToken={deviceToken}
+                onLogout={onLogout}
+                onSessionExpired={onSessionExpired}
+              />
+            </div>
+          </>
+        )}
+      </main>
+
+      {tab === 'scan' && (
+        <ScannerOverlay restaurant={restaurant} onClose={onCloseScanner} />
+      )}
+    </div>
+  )
+}
+
+/* Desktop Dashboard — hero verde + scan tile + 4-col stats + storico expandable */
+function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner }) {
+  const [stats, setStats] = useState(null)
+  const [discount, setDiscount] = useState(null)
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [statsError, setStatsError] = useState(null)
+  const [range, setRange] = useState(defaultRange)
+  const [storicoOpen, setStoricoOpen] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const statsPromise = supabase.rpc('verify_dashboard_stats_range', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_from: range.from.toISOString(),
+          p_to: range.to.toISOString(),
+        })
+        const discountPromise = supabase
+          .from('discounts')
+          .select('id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions')
+          .eq('restaurant_id', restaurant.id)
+          .eq('is_active', true)
+          .gt('valid_until', new Date().toISOString())
+          .order('valid_until', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        const activityPromise = supabase.rpc('verify_activity_list', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_limit: 10,
+        })
+        const [statsRes, discountRes, activityRes] = await Promise.allSettled([
+          statsPromise, discountPromise, activityPromise,
+        ])
+        if (cancelled) return
+        const statsValue = statsRes.status === 'fulfilled' ? statsRes.value : null
+        if (statsValue?.data?.error === 'unauthorized') { onSessionExpired?.(); return }
+        if (statsRes.status === 'fulfilled' && !statsValue?.error && statsValue?.data) {
+          setStats(statsValue.data)
+        } else {
+          setStatsError('Statistiche non disponibili')
+          const actVal = activityRes.status === 'fulfilled' ? activityRes.value?.data : null
+          setStats(buildFallbackStats(actVal?.items || null, range))
+        }
+        setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
+        let activityRows = []
+        if (activityRes.status === 'fulfilled') {
+          const val = activityRes.value?.data
+          if (val?.error === 'unauthorized') { onSessionExpired?.(); return }
+          activityRows = Array.isArray(val?.items) ? val.items : []
+        }
+        if (!cancelled) setActivity(activityRows)
+      } catch (e) {
+        if (!cancelled) console.error('desktop dashboard load error', e)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurant.id, deviceToken, range])
+
+  if (loading) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
+        <div style={{
+          width: 36, height: 36,
+          border: '3px solid var(--color-line)', borderTopColor: 'var(--color-corallo)',
+          borderRadius: '50%', margin: '0 auto 14px',
+          animation: 'verifySpin 0.8s linear infinite',
+        }} />
+        Caricamento dashboard…
+      </div>
+    )
+  }
+
+  const discountValue = discount ? formatDiscountValue(discount) : null
+  const today = new Date()
+  const dayLabel = today.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const todayCount = (activity || []).filter((a) => {
+    if (a.status !== 'redeemed') return false
+    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
+    return ts >= startOfToday.getTime()
+  }).length
 
   return (
     <>
-      {/* Brand bar — ChiamamiBi logo, taller with centered mark on mobile.
-          Desktop already has DesktopNavbar (see App.jsx via desktop-nav-offset). */}
-      {!isDesktop && (
-      <div
-        style={{
-          background: 'var(--color-ink)',
-          padding: '20px 16px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <LogoFull height={28} />
+      <div className="v4-dsk-crumb">
+        {restaurant?.name || '—'}{restaurant?.address ? ` · ${restaurant.address}` : ''}
       </div>
+      <h1 className="v4-dsk-title">Ciao 👋</h1>
+      <div className="v4-dsk-sub">
+        <span>{dayLabel}</span>
+        <span className="dot" />
+        <span className="meta">
+          {todayCount} {todayCount === 1 ? 'verifica OK oggi' : 'verifiche OK oggi'}
+        </span>
+      </div>
+
+      <div style={{ maxWidth: 480, marginBottom: 18 }}>
+        <RangePicker range={range} onChange={setRange} />
+      </div>
+
+      {statsError && (
+        <div style={{
+          background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10,
+          padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#92400E',
+        }}>⚠ {statsError}</div>
       )}
 
-      {/* Mobile */}
-      {!isDesktop && (
-      <div
-        style={{
-          background: 'var(--color-ink)',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <RestaurantAvatar photoUrl={photoUrl} size={36} radius={10} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#fff',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {restaurant?.name}
+      <div className="v4-dsk-grid">
+        {discount ? (
+          <div className="v4-dsk-hero">
+            <div className="lab">● SCONTO ATTIVO</div>
+            <div className="val">{discountValue}</div>
+            <div className="cond">{[discount.title, discount.description].filter(Boolean).join(' · ')}</div>
           </div>
-          {subtitle && (
-            <div
-              style={{
-                fontSize: 9,
-                color: 'rgba(255,255,255,0.3)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                marginTop: 1,
-              }}
-            >
-              {subtitle}
-            </div>
-          )}
-        </div>
-        <GuideBadge compact />
-        <button
-          onClick={onLogout}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'rgba(255,255,255,0.35)',
-            fontSize: 10,
-            fontWeight: 500,
-            padding: 6,
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          Esci
+        ) : (
+          <div className="v4-dsk-hero" style={{ background: 'linear-gradient(135deg, var(--color-cream-deep), var(--color-cream))', color: 'var(--color-ink)' }}>
+            <div className="lab" style={{ color: 'var(--color-ink-55)' }}>● NESSUNO SCONTO ATTIVO</div>
+            <div className="val">—</div>
+            <div className="cond">Quando Bi attiva uno sconto sulla tua scheda lo vedi qui.</div>
+          </div>
+        )}
+
+        <button type="button" className="v4-dsk-scan-tile" onClick={onOpenScanner}>
+          <div className="l">Azione principale</div>
+          <h3>Scansiona il QR</h3>
+          <div className="p">Il cliente ti mostra il QR dalla sua app, tu lo scansioni dal tuo telefono.</div>
+          <div className="btn">Apri scanner →</div>
         </button>
       </div>
-      )}
 
-      {/* Desktop */}
-      {isDesktop && (
-      <div
-        className="desktop-nav-offset"
-        style={{
-          background: 'var(--color-ink)',
-          padding: '16px 32px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-        }}
-      >
-        <RestaurantAvatar photoUrl={photoUrl} size={48} radius={12} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 18,
-              color: '#fff',
-              fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
-            }}
-          >
-            {restaurant?.name}
-          </div>
-          {subtitle && (
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-              {subtitle}
-            </div>
-          )}
-        </div>
-        <GuideBadge />
-        <button
-          onClick={onLogout}
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: 12,
-            fontWeight: 500,
-            padding: '8px 16px',
-            borderRadius: 10,
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          Esci
-        </button>
-      </div>
-      )}
-    </>
-  )
-}
+      <Stats4 stats={stats} range={range} />
 
-function RestaurantAvatar({ photoUrl, size, radius }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: radius,
-        overflow: 'hidden',
-        flexShrink: 0,
-        background: 'rgba(255,255,255,0.06)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {photoUrl ? (
-        <img
-          src={photoUrl}
-          alt=""
-          loading="lazy"
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      ) : (
-        <span style={{ fontSize: size * 0.42 }}>🍽️</span>
-      )}
-    </div>
-  )
-}
-
-function GuideBadge({ compact }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 5,
-        background: 'rgba(74,222,128,0.12)',
-        color: 'var(--color-success)',
-        borderRadius: 999,
-        padding: compact ? '3px 8px' : '5px 12px',
-        fontSize: compact ? 8 : 10,
-        fontWeight: 700,
-        letterSpacing: 0.4,
-        textTransform: 'uppercase',
-        flexShrink: 0,
-      }}
-    >
-      <span
-        style={{
-          width: compact ? 4 : 6,
-          height: compact ? 4 : 6,
-          borderRadius: '50%',
-          background: 'var(--color-success)',
-        }}
-      />
-      Nella guida
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Tab bar (Verifica QR / Dashboard)                                 */
-/* ------------------------------------------------------------------ */
-const TABS = [
-  { key: 'verify', label: 'Verifica QR' },
-  { key: 'dashboard', label: 'Dashboard' },
-]
-
-function TabBar({ tab, onChange }) {
-  return (
-    <div
-      style={{
-        background: 'var(--color-ink)',
-        display: 'flex',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      {TABS.map((t) => {
-        const active = tab === t.key
-        return (
+      <div className="v4-dsk-card" style={{ marginTop: 8 }}>
+        <h4>
+          Ultime verifiche
           <button
-            key={t.key}
-            onClick={() => onChange(t.key)}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              padding: '14px 8px',
-              color: active ? '#fff' : 'rgba(255,255,255,0.35)',
-              fontSize: 13,
-              fontWeight: active ? 600 : 500,
-              cursor: 'pointer',
-              position: 'relative',
-              fontFamily: 'inherit',
-              transition: 'color 0.15s',
-            }}
+            type="button"
+            className="all"
+            onClick={() => setStoricoOpen((v) => !v)}
           >
-            {t.label}
-            {active && (
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  bottom: 0,
-                  width: 60,
-                  height: 3,
-                  background: 'var(--color-corallo)',
-                  borderRadius: '3px 3px 0 0',
-                }}
-              />
-            )}
+            {storicoOpen ? 'Riduci ↑' : 'Mostra tutto ↓'}
           </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Placeholder tab (rimpiazzati in Step 4 e 5)                       */
-/* ------------------------------------------------------------------ */
-function TabPlaceholder({ title, description }) {
-  return (
-    <div
-      style={{
-        padding: '40px 20px',
-        textAlign: 'center',
-        color: 'var(--color-ink-55)',
-        maxWidth: 480,
-        margin: '0 auto',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'var(--color-ink)',
-          marginBottom: 6,
-        }}
-      >
-        {title}
+        </h4>
+        {storicoOpen ? (
+          <ExpandableStorico
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+          />
+        ) : (
+          <V4ActivityLog items={(activity || []).slice(0, 6)} emptyLabel="Nessuna verifica ancora." />
+        )}
       </div>
-      <div style={{ fontSize: 12, lineHeight: 1.5 }}>{description}</div>
-    </div>
+    </>
   )
 }
 
@@ -972,751 +1768,6 @@ function extractQrCode(raw) {
   // Altrimenti assume che sia già il qr_code nudo (es. inserimento manuale)
   return trimmed
 }
-
-/* ------------------------------------------------------------------ */
-/*  Verifica QR tab — camera scanner (primary) + manual input fallback */
-/* ------------------------------------------------------------------ */
-function VerifyTab({ restaurant }) {
-  const [mode, setMode] = useState('camera') // 'camera' | 'manual'
-  const [code, setCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null) // { status, data }
-  const inputRef = useRef(null)
-
-  const reset = () => {
-    setCode('')
-    setResult(null)
-  }
-
-  // Extracted so it can be triggered by both the camera (on scan) and the
-  // manual-input submit form.
-  //
-  // SECURITY: All validation + redemption logic runs server-side in the
-  // SECURITY DEFINER RPC `verify_redeem_qr`, which:
-  //   • Authenticates the device via verify_device_token cookie
-  //   • Checks the QR belongs to *this* restaurant
-  //   • Atomically marks redeemed + increments counter
-  // The client only forwards the token and displays the outcome.
-  const verifyCode = async (rawCode) => {
-    const trimmed = extractQrCode(rawCode)
-    if (!trimmed || loading) return
-    setLoading(true)
-    try {
-      const token = getCookie(COOKIE_NAME)
-      if (!token) {
-        setResult({
-          status: 'error',
-          data: { message: 'Sessione scaduta, rientra con il PIN.' },
-        })
-        return
-      }
-
-      const { data: resp, error: rpcErr } = await supabase.rpc('verify_redeem_qr', {
-        p_device_token: token,
-        p_qr_code: trimmed,
-      })
-
-      if (rpcErr || !resp) {
-        setResult({
-          status: 'error',
-          data: { message: rpcErr?.message || 'Errore di rete, riprova' },
-        })
-        return
-      }
-
-      // Normalize RPC response to the shape VerifyResult expects:
-      //   { status, data: { ..., discount: { title, discount_value, discount_type } } }
-      const payload = resp.data || {}
-      const normalized = {
-        ...payload,
-        discount: {
-          title: payload.discount_title ?? null,
-          discount_value: payload.discount_value ?? null,
-          discount_type: payload.discount_type ?? null,
-        },
-      }
-
-      if (resp.status === 'success') {
-        try {
-          navigator.vibrate?.([40, 60, 40])
-        } catch {
-          /* no-op */
-        }
-      }
-
-      if (resp.status === 'unauthorized') {
-        deleteCookie(COOKIE_NAME)
-        setResult({
-          status: 'error',
-          data: { message: 'Sessione non valida, rientra con il PIN.' },
-        })
-        return
-      }
-
-      setResult({ status: resp.status, reason: resp.reason, data: normalized })
-    } catch (err) {
-      console.error('verify error:', err)
-      setResult({
-        status: 'error',
-        data: { message: err?.message || 'Errore di rete, riprova' },
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleManualSubmit = (e) => {
-    e?.preventDefault?.()
-    verifyCode(code)
-  }
-
-  // Focus input when switching to manual mode
-  useEffect(() => {
-    if (mode === 'manual' && !result) {
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-  }, [mode, result])
-
-  return (
-    <div style={{ padding: '24px 16px 80px', maxWidth: 520, margin: '0 auto' }}>
-      {!result && mode === 'camera' && (
-        <QrCameraScanner
-          loading={loading}
-          onScan={(scanned) => verifyCode(scanned)}
-          onSwitchToManual={() => setMode('manual')}
-        />
-      )}
-
-      {!result && mode === 'manual' && (
-        <form onSubmit={handleManualSubmit}>
-          <div
-            style={{
-              fontSize: 13,
-              color: 'var(--color-ink-55)',
-              marginBottom: 10,
-              textAlign: 'center',
-            }}
-          >
-            Inserisci il codice mostrato dal cliente
-          </div>
-
-          <input
-            ref={inputRef}
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="BiSc-XXXXXXXX"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '18px 16px',
-              fontSize: 18,
-              fontWeight: 600,
-              fontFamily: "'SF Mono', 'Menlo', monospace",
-              letterSpacing: 1.5,
-              textAlign: 'center',
-              border: '2px solid var(--color-line)',
-              borderRadius: 14,
-              background: 'var(--color-card)',
-              color: 'var(--color-ink)',
-              outline: 'none',
-              transition: 'border-color 0.15s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = 'var(--color-corallo)')}
-            onBlur={(e) => (e.target.style.borderColor = 'var(--color-line)')}
-          />
-
-          <button
-            type="submit"
-            disabled={!code.trim() || loading}
-            style={{
-              width: '100%',
-              marginTop: 14,
-              padding: '16px',
-              background: code.trim() && !loading ? 'var(--color-corallo)' : 'var(--color-line)',
-              color: code.trim() && !loading ? '#fff' : 'var(--color-ink-55)',
-              border: 'none',
-              borderRadius: 14,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: code.trim() && !loading ? 'pointer' : 'not-allowed',
-              letterSpacing: 0.3,
-              transition: 'all 0.15s',
-            }}
-          >
-            {loading ? 'Verifica in corso…' : 'Verifica sconto'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setCode('')
-              setMode('camera')
-            }}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: 14,
-              padding: '10px',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--color-ink)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            ← Usa la fotocamera
-          </button>
-
-          <p
-            style={{
-              marginTop: 16,
-              fontSize: 11,
-              color: 'var(--color-ink-55)',
-              textAlign: 'center',
-              lineHeight: 1.5,
-            }}
-          >
-            Il codice è nel formato <strong>BiSc-XXXXXXXX</strong> e si trova
-            sotto il QR mostrato dal cliente.
-          </p>
-        </form>
-      )}
-
-      {result && <VerifyResult result={result} onReset={reset} />}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  QrCameraScanner — camera preview + live QR detection              */
-/* ------------------------------------------------------------------ */
-function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
-  const videoRef = useRef(null)
-  const scannerRef = useRef(null)
-  const lastScanRef = useRef({ code: null, at: 0 })
-  const onScanRef = useRef(onScan)
-  // Start as 'running' when the browser has already granted camera permission
-  // for this origin — skips the "Avvio fotocamera…" flash on subsequent visits.
-  // Browsers persist mediaDevices permissions per-site automatically, so once
-  // granted the user won't be prompted again on return visits.
-  const [status, setStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
-  const [errorMsg, setErrorMsg] = useState(null)
-
-  // Keep the ref pointing at the latest onScan without retriggering setup
-  useEffect(() => {
-    onScanRef.current = onScan
-  }, [onScan])
-
-  // Pause the scanner while the verification request is in-flight to avoid
-  // re-triggering the same code multiple times.
-  useEffect(() => {
-    const s = scannerRef.current
-    if (!s) return
-    if (loading) {
-      try {
-        s.stop()
-      } catch {
-        // ignore
-      }
-    } else if (status === 'running') {
-      s.start().catch(() => {})
-    }
-  }, [loading, status])
-
-  useEffect(() => {
-    let cancelled = false
-    let scanner = null
-
-    async function start() {
-      // Dynamic import keeps the scanner code out of the main bundle
-      let QrScanner
-      try {
-        const mod = await import('qr-scanner')
-        QrScanner = mod.default
-      } catch (e) {
-        console.error('Failed to load qr-scanner', e)
-        if (!cancelled) {
-          setStatus('error')
-          setErrorMsg('Impossibile caricare lo scanner')
-        }
-        return
-      }
-
-      if (cancelled || !videoRef.current) return
-
-      // Pre-check permission state. When it's already 'denied' we can skip
-      // the failing getUserMedia attempt and show the fallback immediately.
-      // When it's 'granted' we know the camera will start instantly, so we
-      // don't need to show the spinner either. Not supported on Safari < 16,
-      // so we fall through to the normal flow on failure.
-      if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
-        try {
-          const perm = await navigator.permissions.query({ name: 'camera' })
-          if (!cancelled && perm.state === 'denied') {
-            setStatus('denied')
-            return
-          }
-        } catch {
-          // Not supported (e.g. older Safari) — proceed with normal flow
-        }
-      }
-
-      // Ensure a camera exists before asking for permission — nicer UX
-      try {
-        const hasCamera = await QrScanner.hasCamera()
-        if (!hasCamera) {
-          if (!cancelled) setStatus('no-camera')
-          return
-        }
-      } catch {
-        // hasCamera can throw on older browsers — proceed and let the real
-        // start call decide
-      }
-
-      scanner = new QrScanner(
-        videoRef.current,
-        (res) => {
-          const scanned = typeof res === 'string' ? res : res?.data
-          if (!scanned) return
-          // Debounce: ignore rapid-fire duplicates for 2.5s
-          const now = Date.now()
-          if (lastScanRef.current.code === scanned && now - lastScanRef.current.at < 2500) {
-            return
-          }
-          lastScanRef.current = { code: scanned, at: now }
-          onScanRef.current?.(scanned)
-        },
-        {
-          preferredCamera: 'environment',
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-          maxScansPerSecond: 5,
-        },
-      )
-      scannerRef.current = scanner
-
-      try {
-        await scanner.start()
-        if (!cancelled) setStatus('running')
-      } catch (e) {
-        console.error('Camera start failed', e)
-        if (cancelled) return
-        const msg = String(e?.message || e?.name || '').toLowerCase()
-        if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
-          setStatus('denied')
-        } else if (msg.includes('notfound') || msg.includes('no camera')) {
-          setStatus('no-camera')
-        } else {
-          setStatus('error')
-          setErrorMsg(e?.message || 'Impossibile avviare la fotocamera')
-        }
-      }
-    }
-
-    start()
-
-    return () => {
-      cancelled = true
-      if (scannerRef.current) {
-        try {
-          scannerRef.current.stop()
-          scannerRef.current.destroy()
-        } catch {
-          // ignore
-        }
-        scannerRef.current = null
-      }
-    }
-    // Run setup only once per mount — onScan is accessed via ref
-  }, [])
-
-  const canShowVideo = status === 'starting' || status === 'running'
-
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 13,
-          color: 'var(--color-ink-55)',
-          marginBottom: 10,
-          textAlign: 'center',
-        }}
-      >
-        Inquadra il QR code mostrato dal cliente
-      </div>
-
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '1 / 1',
-          background: 'var(--color-ink)',
-          borderRadius: 14,
-          overflow: 'hidden',
-          border: '2px solid var(--color-line)',
-        }}
-      >
-        {canShowVideo && (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-          />
-        )}
-
-        {status === 'starting' && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: 12,
-              background: 'rgba(34,24,28,0.85)',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  border: '3px solid rgba(255,255,255,0.2)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  margin: '0 auto 8px',
-                  animation: 'verifySpin 0.8s linear infinite',
-                }}
-              />
-              Avvio fotocamera…
-            </div>
-          </div>
-        )}
-
-        {status === 'denied' && (
-          <CameraFallbackMessage
-            icon="🚫"
-            title="Fotocamera bloccata"
-            description="Autorizza l'accesso alla fotocamera nelle impostazioni del browser, oppure usa l'inserimento manuale."
-          />
-        )}
-
-        {status === 'no-camera' && (
-          <CameraFallbackMessage
-            icon="📷"
-            title="Nessuna fotocamera rilevata"
-            description="Questo dispositivo non espone una fotocamera utilizzabile. Inserisci il codice manualmente."
-          />
-        )}
-
-        {status === 'error' && (
-          <CameraFallbackMessage
-            icon="⚠️"
-            title="Errore fotocamera"
-            description={errorMsg || 'Impossibile avviare la fotocamera. Usa l\'inserimento manuale.'}
-          />
-        )}
-
-        {loading && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(34,24,28,0.85)',
-              color: '#fff',
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  border: '3px solid rgba(255,255,255,0.2)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  margin: '0 auto 8px',
-                  animation: 'verifySpin 0.8s linear infinite',
-                }}
-              />
-              Verifica in corso…
-            </div>
-          </div>
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={onSwitchToManual}
-        style={{
-          display: 'block',
-          width: '100%',
-          marginTop: 16,
-          padding: '14px',
-          background: 'transparent',
-          border: '1px solid var(--color-line)',
-          borderRadius: 14,
-          color: 'var(--color-ink)',
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: 'pointer',
-        }}
-      >
-        Inserisci il codice manualmente
-      </button>
-
-      <p
-        style={{
-          marginTop: 12,
-          fontSize: 11,
-          color: 'var(--color-ink-55)',
-          textAlign: 'center',
-          lineHeight: 1.5,
-        }}
-      >
-        Il riconoscimento avviene automaticamente. Tieni il QR del cliente
-        inquadrato e a fuoco.
-      </p>
-
-      <CameraPermanentAllowHint />
-    </div>
-  )
-}
-
-/* Detect iOS: the hint is only useful on iOS because Chrome/Android already
- * persist camera permission automatically after first grant. iOS Safari
- * re-asks on every page load unless the user explicitly sets the site to
- * "Consenti" in Impostazioni > Safari, or installs it as a PWA. */
-function isIOS() {
-  if (typeof navigator === 'undefined') return false
-  const ua = navigator.userAgent || ''
-  const platform = navigator.platform || ''
-  // iPhone/iPad/iPod, plus iPadOS that reports as MacIntel with touch.
-  return /iP(hone|ad|od)/.test(platform)
-    || /iP(hone|ad|od)/.test(ua)
-    || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-}
-
-function CameraPermanentAllowHint() {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return true
-    try {
-      return localStorage.getItem('verify_camera_hint_dismissed') === '1'
-    } catch { return false }
-  })
-  const [expanded, setExpanded] = useState(false)
-  if (dismissed) return null
-  if (!isIOS()) return null
-
-  const dismiss = () => {
-    setDismissed(true)
-    try { localStorage.setItem('verify_camera_hint_dismissed', '1') } catch {}
-  }
-
-  return (
-    <div
-      style={{
-        marginTop: 10,
-        padding: '10px 12px',
-        background: '#FFF8E6',
-        border: '1px solid #F3DDA1',
-        borderRadius: 10,
-        fontSize: 11.5,
-        color: '#7A5A00',
-        lineHeight: 1.5,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <span style={{ fontSize: 14, lineHeight: 1 }}>💡</span>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600, marginBottom: 2 }}>
-            Evitare di autorizzare la fotocamera ogni volta
-          </div>
-          <div style={{ opacity: 0.9 }}>
-            Su iPhone Safari chiede il permesso ad ogni visita.{' '}
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: '#7A5A00',
-                textDecoration: 'underline',
-                fontSize: 'inherit',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              {expanded ? 'Nascondi' : 'Come risolvere?'}
-            </button>
-          </div>
-          {expanded && (
-            <ol style={{ marginTop: 8, marginBottom: 0, paddingLeft: 18 }}>
-              <li>
-                <strong>Più rapido</strong> — tocca l'icona «aA» nella barra
-                URL, poi «Impostazioni sito web» → «Fotocamera» → «Consenti».
-              </li>
-              <li style={{ marginTop: 4 }}>
-                <strong>Permanente</strong> — apri l'app Impostazioni → Safari
-                → Fotocamera → chiamamibi.com → «Consenti».
-              </li>
-              <li style={{ marginTop: 4 }}>
-                <strong>Come app</strong> — in Safari tocca «Condividi» →
-                «Aggiungi alla schermata Home»: il permesso viene ricordato.
-              </li>
-            </ol>
-          )}
-        </div>
-        <button
-          type="button"
-          aria-label="Chiudi"
-          onClick={dismiss}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: 16,
-            color: '#7A5A00',
-            cursor: 'pointer',
-            padding: 0,
-            lineHeight: 1,
-            marginTop: -2,
-          }}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function CameraFallbackMessage({ icon, title, description }) {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        color: '#fff',
-        textAlign: 'center',
-        background: 'rgba(34,24,28,0.95)',
-      }}
-    >
-      <div style={{ fontSize: 36, marginBottom: 10 }}>{icon}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{title}</div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-        {description}
-      </div>
-    </div>
-  )
-}
-
-async function fetchUserName(userId) {
-  if (!userId) return 'Utente'
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', userId)
-      .maybeSingle()
-    return data?.full_name || 'Utente'
-  } catch {
-    return 'Utente'
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  VerifyResult — stati successo / errore / già-usato                */
-/* ------------------------------------------------------------------ */
-function VerifyResult({ result, onReset }) {
-  const { status, data } = result
-
-  if (status === 'success') {
-    return <SuccessResult data={data} onReset={onReset} />
-  }
-
-  if (status === 'invalid_now') {
-    return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={onReset} />
-  }
-
-  if (status === 'already_redeemed') {
-    return <AlreadyUsedResult data={data} onReset={onReset} />
-  }
-
-  if (status === 'expired') {
-    return (
-      <ResultCard
-        tone="neutral"
-        icon="⏱"
-        title="Sconto scaduto"
-        description="La data di validità di questo sconto è passata."
-        onReset={onReset}
-        resetLabel="Nuova verifica"
-      />
-    )
-  }
-
-  if (status === 'wrong_restaurant') {
-    return (
-      <ResultCard
-        tone="error"
-        icon="✕"
-        title="Codice non valido per questo ristorante"
-        description="Questo QR appartiene a uno sconto di un altro locale."
-        onReset={onReset}
-        resetLabel="Nuova verifica"
-      />
-    )
-  }
-
-  if (status === 'not_found') {
-    return (
-      <ResultCard
-        tone="error"
-        icon="✕"
-        title="Codice non riconosciuto"
-        description="Controlla che il codice sia scritto correttamente."
-        onReset={onReset}
-        resetLabel="Riprova"
-      />
-    )
-  }
-
-  // generic error
-  return (
-    <ResultCard
-      tone="error"
-      icon="✕"
-      title="Errore"
-      description={data?.message || 'Si è verificato un errore.'}
-      onReset={onReset}
-      resetLabel="Riprova"
-    />
-  )
-}
-
-
 function formatDiscountValue(discount) {
   if (!discount) return ''
   const v = String(discount.discount_value ?? '').trim()
@@ -1853,480 +1904,6 @@ function ResultCard({ tone, icon, title, description, children, onReset, resetLa
   )
 }
 
-function ResultRow({ label, value, strong }) {
-  if (!value) return null
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        fontSize: 13,
-        gap: 12,
-      }}
-    >
-      <span style={{ color: 'var(--color-ink-55)', fontWeight: 500, flexShrink: 0 }}>{label}</span>
-      <span
-        style={{
-          color: 'var(--color-ink)',
-          fontWeight: strong ? 700 : 500,
-          fontSize: strong ? 15 : 13,
-          textAlign: 'right',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Range picker — 7g / 30g / 365g / Personalizzato                    */
-/* ------------------------------------------------------------------ */
-function buildPresetRange(kind) {
-  const to = new Date()
-  const from = new Date()
-  if (kind === '7d') {
-    from.setDate(from.getDate() - 7)
-    from.setHours(0, 0, 0, 0)
-    return { kind, from, to, label: 'Ultimi 7 giorni' }
-  }
-  if (kind === '30d') {
-    from.setDate(from.getDate() - 30)
-    from.setHours(0, 0, 0, 0)
-    return { kind, from, to, label: 'Ultimi 30 giorni' }
-  }
-  if (kind === '365d') {
-    from.setDate(from.getDate() - 365)
-    from.setHours(0, 0, 0, 0)
-    return { kind, from, to, label: 'Ultimi 12 mesi' }
-  }
-  return null
-}
-
-function formatShortDate(d) {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-}
-
-function RangePicker({ range, onChange }) {
-  const [showCalendar, setShowCalendar] = useState(false)
-  const presets = [
-    { kind: '7d', label: '7 giorni' },
-    { kind: '30d', label: '30 giorni' },
-    { kind: '365d', label: '12 mesi' },
-  ]
-  const isCustom = range?.kind === 'custom'
-  const customDates = isCustom
-    ? `${formatShortDate(range.from)} – ${formatShortDate(range.to)}`
-    : null
-
-  return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'stretch',
-          gap: 8,
-          marginBottom: 14,
-          width: '100%',
-        }}
-      >
-        <div
-          role="tablist"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 4,
-            padding: 4,
-            background: 'var(--color-cream)',
-            borderRadius: 12,
-            border: '1px solid var(--color-line)',
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          {presets.map((p) => {
-            const active = range?.kind === p.kind
-            return (
-              <button
-                key={p.kind}
-                role="tab"
-                aria-selected={active}
-                onClick={() => onChange(buildPresetRange(p.kind))}
-                style={{
-                  padding: '10px 6px',
-                  borderRadius: 9,
-                  border: 'none',
-                  background: active ? 'var(--color-ink)' : 'transparent',
-                  color: active ? '#fff' : 'var(--color-ink-70)',
-                  fontSize: 14,
-                  fontWeight: active ? 700 : 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  whiteSpace: 'nowrap',
-                  boxShadow: active ? '0 2px 6px rgba(34,24,28,0.18)' : 'none',
-                }}
-              >
-                {p.label}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowCalendar(true)}
-          aria-label="Scegli periodo personalizzato"
-          title="Personalizzato"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '0 14px',
-            minWidth: 52,
-            borderRadius: 12,
-            border: isCustom ? '1px solid var(--color-ink)' : '1px solid var(--color-line)',
-            background: isCustom ? 'var(--color-ink)' : 'var(--color-card)',
-            color: isCustom ? '#fff' : 'var(--color-ink)',
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-            transition: 'all 0.18s ease',
-            boxShadow: isCustom ? '0 2px 6px rgba(34,24,28,0.18)' : 'none',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        </button>
-      </div>
-
-      {isCustom && (
-        <button
-          type="button"
-          onClick={() => setShowCalendar(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            padding: '10px 14px',
-            marginBottom: 14,
-            borderRadius: 10,
-            border: '1px solid var(--color-line)',
-            background: 'var(--color-card)',
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--color-ink)',
-          }}
-        >
-          <span style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 500 }}>
-            Periodo selezionato
-          </span>
-          <span>{customDates}</span>
-        </button>
-      )}
-
-      {showCalendar && (
-        <CalendarRangeModal
-          initialFrom={range?.from}
-          initialTo={range?.to}
-          onClose={() => setShowCalendar(false)}
-          onApply={(from, to) => {
-            const f = new Date(from); f.setHours(0, 0, 0, 0)
-            const t = new Date(to); t.setHours(23, 59, 59, 999)
-            onChange({
-              kind: 'custom',
-              from: f,
-              to: t,
-              label: `${formatShortDate(f)} – ${formatShortDate(t)}`,
-            })
-            setShowCalendar(false)
-          }}
-        />
-      )}
-    </>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Calendar modal — two-month range picker                            */
-/* ------------------------------------------------------------------ */
-const WEEKDAYS_IT = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
-const MONTHS_IT = [
-  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
-]
-
-function startOfMonth(d) {
-  const x = new Date(d.getFullYear(), d.getMonth(), 1)
-  return x
-}
-function sameDay(a, b) {
-  if (!a || !b) return false
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-function dayTs(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-}
-
-function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
-  const first = startOfMonth(monthDate)
-  // Monday as first day of week
-  const jsDay = first.getDay() // 0=Sun..6=Sat
-  const lead = jsDay === 0 ? 6 : jsDay - 1
-  const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
-  const cells = []
-  for (let i = 0; i < lead; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(new Date(first.getFullYear(), first.getMonth(), d))
-  }
-  while (cells.length % 7 !== 0) cells.push(null)
-
-  const fromTs = from ? dayTs(from) : null
-  const toTs = to ? dayTs(to) : null
-  const hoverTs = hover ? dayTs(hover) : null
-  const rangeEnd = toTs ?? (fromTs && hoverTs && hoverTs > fromTs ? hoverTs : null)
-  const rangeStart = fromTs && rangeEnd ? Math.min(fromTs, rangeEnd) : fromTs
-  const rangeStop = fromTs && rangeEnd ? Math.max(fromTs, rangeEnd) : null
-
-  return (
-    <div style={{ width: '100%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
-        {WEEKDAYS_IT.map((w, i) => (
-          <div key={i} style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600 }}>
-            {w}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-        {cells.map((c, i) => {
-          if (!c) return <div key={i} />
-          const ts = dayTs(c)
-          const isFrom = fromTs === ts
-          const isTo = toTs === ts
-          const inRange = rangeStart && rangeStop && ts >= rangeStart && ts <= rangeStop
-          const isFuture = ts > dayTs(new Date())
-          const isEdge = isFrom || isTo
-          const bg = isEdge ? 'var(--color-ink)' : inRange ? 'var(--color-corallo-soft)' : 'transparent'
-          const color = isEdge ? '#fff' : isFuture ? 'var(--color-ink-15)' : 'var(--color-ink)'
-          return (
-            <button
-              key={i}
-              disabled={isFuture}
-              onClick={() => onPick(c)}
-              onMouseEnter={() => onHover(c)}
-              style={{
-                aspectRatio: '1',
-                minHeight: 40,
-                border: 'none',
-                background: bg,
-                color,
-                fontSize: 15,
-                fontWeight: isEdge ? 700 : 500,
-                borderRadius: 10,
-                cursor: isFuture ? 'not-allowed' : 'pointer',
-                opacity: isFuture ? 0.5 : 1,
-                transition: 'background 0.12s ease',
-              }}
-            >
-              {c.getDate()}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
-  const [month, setMonth] = useState(() => {
-    const base = initialFrom ? new Date(initialFrom) : new Date()
-    base.setDate(1)
-    return base
-  })
-  const [from, setFrom] = useState(initialFrom ? new Date(initialFrom) : null)
-  const [to, setTo] = useState(initialTo ? new Date(initialTo) : null)
-  const [hover, setHover] = useState(null)
-
-  function handlePick(d) {
-    if (!from || (from && to)) {
-      setFrom(d)
-      setTo(null)
-      return
-    }
-    if (d < from) {
-      setTo(from)
-      setFrom(d)
-    } else {
-      setTo(d)
-    }
-  }
-
-  const canApply = from && to
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 150,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        padding: 0,
-        animation: 'verifyFadeIn 0.18s ease-out',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--color-card)',
-          borderRadius: '20px 20px 0 0',
-          width: '100%',
-          maxWidth: 520,
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '85dvh',
-          boxShadow: '0 -20px 60px rgba(0,0,0,0.25)',
-          animation: 'verifyFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-      >
-        {/* Header — bigger X, bigger title */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '18px 20px 14px',
-            borderBottom: '1px solid #F0EAE0',
-          }}
-        >
-          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)' }}>Seleziona periodo</div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'var(--color-cream)',
-              border: 'none',
-              width: 40,
-              height: 40,
-              borderRadius: 12,
-              cursor: 'pointer',
-              color: 'var(--color-ink)',
-              fontSize: 24,
-              fontWeight: 400,
-              lineHeight: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            aria-label="Chiudi"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Body — scrollable if needed */}
-        <div style={{ padding: '16px 20px', overflow: 'auto', flex: 1 }}>
-          {/* Month nav */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <button
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-              style={{ background: 'var(--color-cream)', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
-              aria-label="Mese precedente"
-            >
-              ‹
-            </button>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)' }}>
-              {MONTHS_IT[month.getMonth()]} {month.getFullYear()}
-            </div>
-            <button
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              style={{ background: 'var(--color-cream)', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
-              aria-label="Mese successivo"
-            >
-              ›
-            </button>
-          </div>
-
-          {/* Selected range summary */}
-          <div
-            style={{
-              fontSize: 13,
-              color: 'var(--color-ink-55)',
-              fontWeight: 600,
-              textAlign: 'center',
-              marginBottom: 14,
-              padding: '8px 12px',
-              background: 'var(--color-cream)',
-              borderRadius: 10,
-            }}
-          >
-            {from ? formatShortDate(from) : '—'} → {to ? formatShortDate(to) : '—'}
-          </div>
-
-          <MonthView monthDate={month} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
-        </div>
-
-        {/* Footer — always visible */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            padding: '14px 20px',
-            paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))',
-            borderTop: '1px solid #F0EAE0',
-            background: 'var(--color-card)',
-          }}
-        >
-          <button
-            onClick={() => { setFrom(null); setTo(null); setHover(null) }}
-            style={{
-              padding: '13px 16px',
-              borderRadius: 12,
-              border: '1px solid var(--color-line)',
-              background: 'var(--color-card)',
-              color: 'var(--color-ink)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Azzera
-          </button>
-          <button
-            disabled={!canApply}
-            onClick={() => onApply(from, to)}
-            style={{
-              flex: 1,
-              padding: '13px 20px',
-              borderRadius: 12,
-              border: 'none',
-              background: canApply ? 'var(--color-corallo)' : 'var(--color-cream)',
-              color: canApply ? '#fff' : 'var(--color-ink-55)',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: canApply ? 'pointer' : 'not-allowed',
-              transition: 'background 0.18s ease',
-            }}
-          >
-            Applica
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
@@ -2347,6 +1924,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
   const [range, setRange] = useState(defaultRange)
+  const [storicoOpen, setStoricoOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -2365,7 +1943,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         // 2) Active discount (public read)
         const discountPromise = supabase
           .from('discounts')
-          .select('id, title, description, discount_type, discount_value, valid_until, max_redemptions, total_redeemed, is_active')
+          .select('id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions')
           .eq('restaurant_id', restaurant.id)
           .eq('is_active', true)
           .gt('valid_until', new Date().toISOString())
@@ -2449,74 +2027,357 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
     }
   }, [restaurant.id, deviceToken, reloadKey, onSessionExpired, range])
 
-  return (
-    <div style={{ padding: '20px 16px 80px', maxWidth: 1100, margin: '0 auto' }}>
-      {/* Range picker always visible, even while loading */}
-      <RangePicker range={range} onChange={setRange} />
+  if (loading) {
+    return (
+      <div style={{ padding: '40px 20px 100px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
+        <div
+          style={{
+            width: 28, height: 28,
+            border: '3px solid var(--color-line)',
+            borderTopColor: 'var(--color-corallo)',
+            borderRadius: '50%',
+            margin: '0 auto 12px',
+            animation: 'verifySpin 0.8s linear infinite',
+          }}
+        />
+        <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
+      </div>
+    )
+  }
 
-      {loading ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
-          <div
+  return (
+    <>
+      {statsError && (
+        <div
+          style={{
+            background: '#FEF3C7',
+            border: '1px solid #FCD34D',
+            borderRadius: 10,
+            padding: '10px 14px',
+            marginBottom: 12,
+            fontSize: 12,
+            color: '#92400E',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          }}
+        >
+          <span>⚠ {statsError}</span>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
             style={{
-              width: 28,
-              height: 28,
-              border: '3px solid var(--color-line)',
-              borderTopColor: 'var(--color-corallo)',
-              borderRadius: '50%',
-              margin: '0 auto 12px',
-              animation: 'verifySpin 0.8s linear infinite',
+              background: 'transparent', border: '1px solid #FCD34D', color: '#92400E',
+              fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
             }}
-          />
-          <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
+          >
+            Riprova
+          </button>
         </div>
+      )}
+
+      <RangePicker range={range} onChange={setRange} />
+      <ScontoHero discount={discount} />
+      <Stats4 stats={stats} range={range} />
+
+      <div className="v4-section-lbl">
+        Ultime verifiche
+        <button
+          type="button"
+          className="all"
+          onClick={() => setStoricoOpen((v) => !v)}
+        >
+          {storicoOpen ? 'Riduci ↑' : 'Mostra tutto ↓'}
+        </button>
+      </div>
+
+      {storicoOpen ? (
+        <ExpandableStorico
+          restaurant={restaurant}
+          deviceToken={deviceToken}
+          onSessionExpired={onSessionExpired}
+        />
       ) : (
-        <>
-          {statsError && (
-            <div
-              style={{
-                background: '#FEF3C7',
-                border: '1px solid #FCD34D',
-                borderRadius: 10,
-                padding: '10px 14px',
-                marginBottom: 16,
-                fontSize: 12,
-                color: '#92400E',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <span>⚠ {statsError}</span>
-              <button
-                onClick={() => setReloadKey((k) => k + 1)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #FCD34D',
-                  color: '#92400E',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                }}
-              >
-                Riprova
-              </button>
+        <V4ActivityLog
+          items={(activity || []).slice(0, 5)}
+          emptyLabel="Nessuna verifica ancora."
+        />
+      )}
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  v4 — Dashboard presentational components                          */
+/* ------------------------------------------------------------------ */
+function ScontoHero({ discount }) {
+  if (!discount) {
+    return (
+      <div className="v4-sconto-hero" style={{ background: 'linear-gradient(135deg, var(--color-cream-deep), var(--color-cream))', color: 'var(--color-ink)' }}>
+        <div className="lab" style={{ color: 'var(--color-ink-55)' }}>● NESSUNO SCONTO ATTIVO</div>
+        <div className="val" style={{ fontSize: 24, marginTop: 8 }}>—</div>
+        <div className="cond" style={{ color: 'var(--color-ink-55)' }}>
+          Quando Bi attiva uno sconto sulla tua scheda, lo vedi qui.
+        </div>
+      </div>
+    )
+  }
+  const value = formatDiscountValue(discount)
+  const isDrop = !!discount.is_drop
+  const typeLabel = isDrop ? 'DROP · TEMPO LIMITATO' : 'SCONTO ATTIVO'
+
+  // Limite + utilizzi: per i drop preferiamo max_quantity/claimed_count, ma se
+  // non sono compilati ricadiamo su max_redemptions/total_redeemed così la
+  // barra appare comunque (succede quando il drop è creato senza max esplicito).
+  const limit = (isDrop ? (discount.max_quantity ?? discount.max_redemptions) : discount.max_redemptions) || 0
+  const used  = (isDrop ? (discount.claimed_count ?? discount.total_redeemed) : discount.total_redeemed) || 0
+  const hasLimit = limit > 0
+  const pct = hasLimit ? Math.min(100, Math.round((used / limit) * 100)) : null
+  // Il blocco progress lo mostriamo sempre per i drop, e per gli sconti
+  // standard quando esiste un limite. Senza limite mostriamo "X presi" senza barra.
+  const showProgress = isDrop || hasLimit || used > 0
+
+  const startIso = isDrop ? discount.drop_starts_at : discount.valid_from
+  const endIso   = isDrop ? discount.drop_ends_at   : discount.valid_until
+  const validityLine = formatValidity(startIso, endIso)
+  const daysLine = formatValidDays(discount.valid_days)
+  const slotLine = formatTimeSlots(discount.valid_time_from, discount.valid_time_to, discount.valid_meal_slots)
+
+  const conditionsList = (discount.conditions || '')
+    .split(/\n+/).map((s) => s.trim()).filter(Boolean)
+
+  return (
+    <div className={`v4-sconto-hero v4-sconto-hero--rich ${isDrop ? 'is-drop' : ''}`}>
+      <div className="lab">{isDrop ? '◉' : '●'} {typeLabel}</div>
+      <div className="val">{value}</div>
+      {discount.title && <div className="ttl">{discount.title}</div>}
+      {discount.description && <div className="cond">{discount.description}</div>}
+
+      {(validityLine || daysLine || slotLine) && (
+        <div className="v4-sconto-meta">
+          {validityLine && (
+            <div className="v4-sconto-metarow">
+              <CalIcon /><span>{validityLine}</span>
             </div>
           )}
-          <StatGrid stats={stats} range={range} />
-          <div className="verify-dashboard-main">
-            <div className="verify-dashboard-col">
-              {discount && <ActiveDiscountCard discount={discount} />}
-              <FunnelCard stats={stats} range={range} />
+          {daysLine && (
+            <div className="v4-sconto-metarow">
+              <DaysIcon /><span>{daysLine}</span>
             </div>
-            <div className="verify-dashboard-col">
-              <ActivityList activity={activity} />
+          )}
+          {slotLine && (
+            <div className="v4-sconto-metarow">
+              <ClockIcon /><span>{slotLine}</span>
             </div>
-          </div>
-        </>
+          )}
+        </div>
       )}
+
+      {showProgress && (
+        <div className="v4-sconto-progress">
+          <div className="v4-sconto-progress-head">
+            <span>
+              {isDrop
+                ? (hasLimit ? 'Posti disponibili' : 'Sconti riscattati')
+                : 'Utilizzi'}
+            </span>
+            <span>
+              {hasLimit ? (
+                <>
+                  <b>{used}</b>
+                  {' / '}
+                  <span>{limit}</span>
+                </>
+              ) : (
+                <>
+                  <b>{used}</b>
+                  {' '}{used === 1 ? 'preso' : 'presi'}
+                </>
+              )}
+            </span>
+          </div>
+          {hasLimit && (
+            <div className="v4-sconto-progress-track">
+              <div className="v4-sconto-progress-fill" style={{ width: `${pct}%` }} />
+            </div>
+          )}
+          {hasLimit && (
+            <div className="v4-sconto-progress-foot">
+              <span>{Math.max(0, limit - used)} ancora disponibili</span>
+              <span>{pct}%</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {conditionsList.length > 0 && (
+        <ul className="v4-sconto-conditions">
+          {conditionsList.map((c, i) => <li key={i}>{c}</li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/* ScontoHero icons (small inline SVG) */
+function CalIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+function DaysIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="6" width="20" height="14" rx="2" />
+      <line x1="2" y1="11" x2="22" y2="11" />
+      <line x1="7" y1="6" x2="7" y2="20" />
+      <line x1="12" y1="6" x2="12" y2="20" />
+      <line x1="17" y1="6" x2="17" y2="20" />
+    </svg>
+  )
+}
+function ClockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
+
+/* ScontoHero formatting helpers */
+function formatValidity(startIso, endIso) {
+  const fmt = (iso) => iso
+    ? new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+  const start = fmt(startIso)
+  const end = fmt(endIso)
+  if (start && end) return `Dal ${start} al ${end}`
+  if (end) return `Valido fino al ${end}`
+  if (start) return `Valido dal ${start}`
+  return null
+}
+
+const SCONTO_DAY_NAMES_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+function formatValidDays(days) {
+  if (!Array.isArray(days) || days.length === 0 || days.length === 7) return null
+  // valid_days schema: 1=Mon..7=Sun. Convert to JS Date getDay() (0=Sun..6=Sat).
+  const idxs = days.map((d) => (d === 7 ? 0 : d)).sort((a, b) => a - b)
+  const isContig = idxs.every((v, i) => i === 0 || v - idxs[i - 1] === 1)
+  if (isContig && idxs.length > 1) {
+    return `${SCONTO_DAY_NAMES_IT[idxs[0]]}–${SCONTO_DAY_NAMES_IT[idxs[idxs.length - 1]]}`
+  }
+  return idxs.map((d) => SCONTO_DAY_NAMES_IT[d]).join(' · ')
+}
+
+const SCONTO_MEAL_LABELS_IT = {
+  colazione: 'Colazione',
+  brunch: 'Brunch',
+  pranzo: 'Pranzo',
+  aperitivo: 'Aperitivo',
+  cena: 'Cena',
+}
+function formatTimeSlots(from, to, mealSlots) {
+  if (from && to) {
+    const trim = (t) => String(t).slice(0, 5)
+    return `${trim(from)}–${trim(to)}`
+  }
+  if (Array.isArray(mealSlots) && mealSlots.length > 0) {
+    return mealSlots.map((s) => SCONTO_MEAL_LABELS_IT[s] || s).join(' · ')
+  }
+  return null
+}
+
+/* 4 KPI tiles — visite pagina / salvataggi / sconti presi / sconti usati */
+function Stats4({ stats, range }) {
+  const periodLabel = range?.label || 'Periodo selezionato'
+  const tiles = [
+    { v: stats?.views || 0,                 l: 'Visite pagina',  featured: false },
+    { v: stats?.saves || 0,                 l: 'Salvataggi',     featured: false },
+    { v: stats?.redemptions_generated || 0, l: 'Sconti presi',   featured: false },
+    { v: stats?.redemptions_used || 0,      l: 'Sconti usati',   featured: true  },
+  ]
+  return (
+    <div className="v4-stats4">
+      <div className="v4-stats4-head">{periodLabel}</div>
+      <div className="v4-stats4-grid">
+        {tiles.map((t) => (
+          <div key={t.l} className={`v4-stat ${t.featured ? 'featured' : ''}`}>
+            <div className="lab">{t.l}</div>
+            <div className="val">{Number(t.v).toLocaleString('it-IT')}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function relativeTimeIt(iso) {
+  if (!iso) return ''
+  const ts = new Date(iso).getTime()
+  if (!ts) return ''
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+  if (diffSec < 60) return 'adesso'
+  if (diffSec < 3600) {
+    const m = Math.floor(diffSec / 60)
+    return `${m} min fa`
+  }
+  if (diffSec < 86400) {
+    const h = Math.floor(diffSec / 3600)
+    return `${h} h fa`
+  }
+  if (diffSec < 86400 * 2) return 'ieri'
+  const d = Math.floor(diffSec / 86400)
+  if (d < 7) return `${d} giorni fa`
+  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+}
+
+function V4ActivityRow({ item }) {
+  const isRedeemed = item.status === 'redeemed'
+  const date = isRedeemed ? item.redeemed_at : item.generated_at
+  const time = date
+    ? new Date(date).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+    : ''
+  const ago = relativeTimeIt(date)
+  const userName = (item.user_name || '').trim() || 'Utente'
+  const discountValue = formatDiscountValue(item.discount)
+  const discountTitle = item.discount?.title || ''
+  const primary = discountValue ? `${userName} · ${discountValue}` : userName
+  const secondary = isRedeemed
+    ? (discountTitle || 'Sconto riscattato')
+    : (discountTitle ? `In attesa · ${discountTitle}` : 'In attesa')
+  const icClass = isRedeemed ? '' : 'pending'
+  const ic = isRedeemed ? '✓' : '•'
+  return (
+    <div className="v4-log-row">
+      <div className={`v4-log-ic ${icClass}`}>{ic}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="n" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primary}</div>
+        <div className="m" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondary}</div>
+      </div>
+      <div className="t">
+        {time}
+        {ago && (<><br /><span style={{ color: '#9a8e84' }}>{ago}</span></>)}
+      </div>
+    </div>
+  )
+}
+
+function V4ActivityLog({ items, emptyLabel = 'Nessuna attività' }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+        <div style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+          {emptyLabel}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="v4-log">
+      {items.map((it) => <V4ActivityRow key={it.id} item={it} />)}
     </div>
   )
 }
@@ -2545,366 +2406,537 @@ function buildFallbackStats(activityData, range) {
   }
 }
 
-function StatGrid({ stats, range }) {
-  if (!stats) return null
-  const rangeLabel = range?.label || 'Periodo selezionato'
-  const cards = [
-    {
-      label: 'Visualizzazioni',
-      value: stats.views || 0,
-      sublabel: `${stats.views_total || 0} in totale`,
-      icon: '👁',
-      color: '#6366F1',
-    },
-    {
-      label: 'Salvati',
-      value: stats.saves || 0,
-      sublabel: `${stats.saves_total || 0} in totale`,
-      icon: '♥',
-      color: '#EC4899',
-    },
-    {
-      label: 'Sconti generati',
-      value: stats.redemptions_generated || 0,
-      sublabel: rangeLabel,
-      icon: '✦',
-      color: '#F59E0B',
-    },
-    {
-      label: 'Sconti usati',
-      value: stats.redemptions_used || 0,
-      sublabel: `${stats.redemptions_used_total || 0} in totale`,
-      icon: '✓',
-      color: '#10B981',
-    },
+
+/* ------------------------------------------------------------------ */
+/*  RangePicker — 7g / 30g / 12 mesi + custom calendar                */
+/* ------------------------------------------------------------------ */
+function buildPresetRange(kind) {
+  const to = new Date()
+  const from = new Date()
+  if (kind === '7d') {
+    from.setDate(from.getDate() - 7); from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 7 giorni' }
+  }
+  if (kind === '30d') {
+    from.setDate(from.getDate() - 30); from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 30 giorni' }
+  }
+  if (kind === '365d') {
+    from.setDate(from.getDate() - 365); from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 12 mesi' }
+  }
+  return null
+}
+
+function formatShortDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+}
+
+function RangePicker({ range, onChange }) {
+  const [showCal, setShowCal] = useState(false)
+  const presets = [
+    { kind: '7d', label: '7 giorni' },
+    { kind: '30d', label: '30 giorni' },
+    { kind: '365d', label: '12 mesi' },
   ]
+  const isCustom = range?.kind === 'custom'
   return (
-    <div className="verify-stat-grid">
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          style={{
-            background: 'var(--color-card)',
-            borderRadius: 14,
-            padding: '16px 16px 14px',
-            border: '1px solid #F0EAE0',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              color: c.color,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: 0.3,
-              textTransform: 'uppercase',
-              marginBottom: 6,
-            }}
-          >
-            <span style={{ fontSize: 14 }}>{c.icon}</span>
-            <span>{c.label}</span>
-          </div>
-          <div
-            style={{
-              fontSize: 26,
-              fontWeight: 800,
-              color: 'var(--color-ink)',
-              lineHeight: 1,
-              letterSpacing: -0.5,
-            }}
-          >
-            {c.value.toLocaleString('it-IT')}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--color-ink-55)', marginTop: 6 }}>{c.sublabel}</div>
+    <>
+      <div className="v4-range">
+        <div className="v4-range-presets" role="tablist">
+          {presets.map((p) => (
+            <button
+              key={p.kind}
+              type="button"
+              role="tab"
+              aria-selected={range?.kind === p.kind}
+              className={`v4-range-preset ${range?.kind === p.kind ? 'on' : ''}`}
+              onClick={() => onChange(buildPresetRange(p.kind))}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
-      ))}
+        <button
+          type="button"
+          className={`v4-range-cal ${isCustom ? 'on' : ''}`}
+          onClick={() => setShowCal(true)}
+          aria-label="Periodo personalizzato"
+          title="Periodo personalizzato"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </button>
+      </div>
+      {isCustom && (
+        <button
+          type="button"
+          className="v4-range-custom-bar"
+          onClick={() => setShowCal(true)}
+        >
+          <span className="l">Periodo selezionato</span>
+          <span>{formatShortDate(range.from)} – {formatShortDate(range.to)}</span>
+        </button>
+      )}
+      {showCal && (
+        <CalendarRangeModal
+          initialFrom={range?.from}
+          initialTo={range?.to}
+          onClose={() => setShowCal(false)}
+          onApply={(from, to) => {
+            const f = new Date(from); f.setHours(0, 0, 0, 0)
+            const t = new Date(to); t.setHours(23, 59, 59, 999)
+            onChange({
+              kind: 'custom',
+              from: f,
+              to: t,
+              label: `${formatShortDate(f)} – ${formatShortDate(t)}`,
+            })
+            setShowCal(false)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  CalendarRangeModal — compact one-month calendar bottom sheet      */
+/* ------------------------------------------------------------------ */
+const V4_WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+const V4_MONTHS = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+]
+
+function v4DayTs(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
+  const [month, setMonth] = useState(() => {
+    const base = initialFrom ? new Date(initialFrom) : new Date()
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
+  const [from, setFrom] = useState(initialFrom ? new Date(initialFrom) : null)
+  const [to, setTo] = useState(initialTo ? new Date(initialTo) : null)
+
+  const handlePick = (d) => {
+    if (!from || (from && to)) {
+      setFrom(d); setTo(null); return
+    }
+    if (d < from) { setTo(from); setFrom(d) }
+    else { setTo(d) }
+  }
+
+  const first = new Date(month.getFullYear(), month.getMonth(), 1)
+  const jsDay = first.getDay()
+  const lead = jsDay === 0 ? 6 : jsDay - 1
+  const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(first.getFullYear(), first.getMonth(), d))
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  const fromTs = from ? v4DayTs(from) : null
+  const toTs = to ? v4DayTs(to) : null
+  const todayTs = v4DayTs(new Date())
+
+  return (
+    <div className="v4-cal-backdrop" onClick={onClose}>
+      <div className="v4-cal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="v4-cal-head">
+          <div className="t">Seleziona periodo</div>
+          <button type="button" className="v4-cal-close" onClick={onClose} aria-label="Chiudi">×</button>
+        </div>
+        <div className="v4-cal-body">
+          <div className="v4-cal-monthnav">
+            <button
+              type="button"
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+              aria-label="Mese precedente"
+            >‹</button>
+            <div className="lbl">{V4_MONTHS[month.getMonth()]} {month.getFullYear()}</div>
+            <button
+              type="button"
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+              aria-label="Mese successivo"
+            >›</button>
+          </div>
+          <div className="v4-cal-summary">
+            {from ? formatShortDate(from) : '—'} → {to ? formatShortDate(to) : '—'}
+          </div>
+          <div className="v4-cal-weekdays">
+            {V4_WEEKDAYS.map((w, i) => <div key={i}>{w}</div>)}
+          </div>
+          <div className="v4-cal-grid">
+            {cells.map((c, i) => {
+              if (!c) return <button key={i} className="v4-cal-day empty" disabled />
+              const ts = v4DayTs(c)
+              const isFrom = fromTs === ts
+              const isTo = toTs === ts
+              const inRange = fromTs && toTs && ts >= Math.min(fromTs, toTs) && ts <= Math.max(fromTs, toTs)
+              const isFuture = ts > todayTs
+              const cls = isFrom || isTo ? 'edge' : (inRange ? 'in-range' : '')
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`v4-cal-day ${cls}`}
+                  onClick={() => handlePick(c)}
+                  disabled={isFuture}
+                >
+                  {c.getDate()}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div className="v4-cal-foot">
+          <button
+            type="button"
+            className="clear"
+            onClick={() => { setFrom(null); setTo(null) }}
+          >
+            Azzera
+          </button>
+          <button
+            type="button"
+            className="apply"
+            disabled={!(from && to)}
+            onClick={() => onApply(from, to)}
+          >
+            Applica
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
 
-function daysUntil(isoDate) {
-  if (!isoDate) return 0
-  const diffMs = new Date(isoDate).getTime() - new Date().getTime()
-  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
-}
+/* ------------------------------------------------------------------ */
+/*  ExpandableStorico — versione inline della tab Storico            */
+/* ------------------------------------------------------------------ */
+function ExpandableStorico({ restaurant, deviceToken, onSessionExpired }) {
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all') // all | today | week | problems
+  const [reloadKey, setReloadKey] = useState(0)
 
-function ActiveDiscountCard({ discount }) {
-  const value = formatDiscountValue(discount)
-  const pct =
-    discount.max_redemptions && discount.max_redemptions > 0
-      ? Math.min(100, ((discount.total_redeemed || 0) / discount.max_redemptions) * 100)
-      : null
-  const days = daysUntil(discount.valid_until)
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const { data } = await supabase.rpc('verify_activity_list', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_limit: 100,
+        })
+        if (cancelled) return
+        if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
+        setActivity(Array.isArray(data?.items) ? data.items : [])
+      } catch (e) {
+        console.error('expandable storico load error', e)
+        if (!cancelled) setActivity([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired])
+
+  if (loading) {
+    return (
+      <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+        <div style={{
+          width: 22, height: 22,
+          border: '2px solid var(--color-line)', borderTopColor: 'var(--color-corallo)',
+          borderRadius: '50%', margin: '0 auto 8px',
+          animation: 'verifySpin 0.8s linear infinite',
+        }} />
+        <div style={{ fontSize: 12, color: 'var(--color-ink-55)' }}>Caricamento storico…</div>
+      </div>
+    )
+  }
+
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - 7)
+  const filtered = activity.filter((a) => {
+    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
+    const ts = date ? new Date(date).getTime() : 0
+    if (filter === 'today') return ts >= startOfToday.getTime()
+    if (filter === 'week') return ts >= startOfWeek.getTime()
+    if (filter === 'problems') return a.status !== 'redeemed'
+    return true
+  })
+
+  const groups = {}
+  filtered.forEach((a) => {
+    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
+    if (!date) return
+    const d = new Date(date)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (!groups[key]) groups[key] = []
+    groups[key].push(a)
+  })
+  const sortedKeys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1))
+  const today = new Date()
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const yest = new Date(today); yest.setDate(yest.getDate() - 1)
+  const yestKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`
+  const labelForKey = (k) => {
+    if (k === todayKey) return 'Oggi'
+    if (k === yestKey) return 'Ieri'
+    const [y, m, d] = k.split('-')
+    return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
+  }
+
   return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, var(--color-ink) 0%, #3A2A30 100%)',
-        color: '#fff',
-        borderRadius: 'var(--radius-lg)',
-        padding: 18,
-        marginBottom: 16,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 11,
-          color: 'var(--color-corallo)',
-          fontWeight: 700,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          marginBottom: 8,
-        }}
-      >
-        Sconto attivo
-      </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-        <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
-        <div style={{ fontSize: 15, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
-      </div>
-      {discount.description && (
-        <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 14, lineHeight: 1.45 }}>
-          {discount.description}
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: 14, fontSize: 12, opacity: 0.9 }}>
-        <span>
-          <strong style={{ color: '#fff' }}>{discount.total_redeemed || 0}</strong> usati
-          {discount.max_redemptions ? ` / ${discount.max_redemptions}` : ''}
-        </span>
-        <span>·</span>
-        <span>
-          Scade in <strong style={{ color: '#fff' }}>{days}</strong> gg
-        </span>
-      </div>
-      {pct != null && (
-        <div
-          style={{
-            marginTop: 10,
-            height: 4,
-            background: 'rgba(255,255,255,0.1)',
-            borderRadius: 2,
-            overflow: 'hidden',
-          }}
+    <>
+      <div className="v4-chip-row">
+        {[
+          { k: 'all', l: 'Tutti' },
+          { k: 'today', l: 'Oggi' },
+          { k: 'week', l: '7 giorni' },
+          { k: 'problems', l: 'Problemi' },
+        ].map((c) => (
+          <button
+            key={c.k}
+            type="button"
+            className={`v4-chip ${filter === c.k ? 'on' : ''}`}
+            onClick={() => setFilter(c.k)}
+          >
+            {c.l}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="v4-chip"
+          onClick={() => setReloadKey((k) => k + 1)}
+          aria-label="Aggiorna"
+          title="Aggiorna"
+          style={{ marginLeft: 'auto' }}
         >
-          <div
-            style={{
-              width: `${pct}%`,
-              height: '100%',
-              background: 'var(--color-corallo)',
-              transition: 'width 0.4s',
-            }}
-          />
+          ↻
+        </button>
+      </div>
+      {sortedKeys.length === 0 ? (
+        <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+            Nessuna verifica nel filtro selezionato.
+          </div>
         </div>
+      ) : (
+        sortedKeys.map((k) => (
+          <div key={k}>
+            <div className="v4-section-lbl">{labelForKey(k)}</div>
+            <V4ActivityLog items={groups[k]} />
+          </div>
+        ))
       )}
-    </div>
+    </>
   )
 }
 
-function FunnelCard({ stats, range }) {
-  if (!stats) return null
-  const steps = [
-    { label: 'Visualizzazioni', value: stats.views || 0, color: '#6366F1' },
-    { label: 'Salvati', value: stats.saves || 0, color: '#EC4899' },
-    { label: 'Sconti generati', value: stats.redemptions_generated || 0, color: '#F59E0B' },
-    { label: 'Sconti usati', value: stats.redemptions_used || 0, color: '#10B981' },
-  ]
-  const max = Math.max(...steps.map((s) => s.value), 1)
-  const funnelLabel = range?.label ? `Andamento — ${range.label}` : 'Andamento'
+/* ------------------------------------------------------------------ */
+/*  OpeningHoursEditor — editor strutturato 7 giorni × time ranges     */
+/*  State shape: { 0: [{open:'12:00', close:'14:30'}], 1: [...], ... }  */
+/*  0=Domenica, 1=Lunedì, ..., 6=Sabato (convenzione JS Date / Google)  */
+/* ------------------------------------------------------------------ */
+const OH_DAY_LABELS = [
+  { idx: 1, full: 'Lunedì',    short: 'Lun' },
+  { idx: 2, full: 'Martedì',   short: 'Mar' },
+  { idx: 3, full: 'Mercoledì', short: 'Mer' },
+  { idx: 4, full: 'Giovedì',   short: 'Gio' },
+  { idx: 5, full: 'Venerdì',   short: 'Ven' },
+  { idx: 6, full: 'Sabato',    short: 'Sab' },
+  { idx: 0, full: 'Domenica',  short: 'Dom' },
+]
+
+function emptyHoursDays() {
+  return { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
+}
+
+function pad2(n) { return String(n).padStart(2, '0') }
+function fmtHM(h, m) { return `${pad2(h ?? 0)}:${pad2(m ?? 0)}` }
+
+function periodsToHoursDays(periods) {
+  const days = emptyHoursDays()
+  if (!Array.isArray(periods)) return days
+  for (const p of periods) {
+    const d = p?.open?.day
+    if (d == null) continue
+    const open = fmtHM(p.open.hour, p.open.minute)
+    // close puo essere null = aperto 24h: trattiamo come '23:59' di compromesso
+    const closeDay = p.close?.day
+    if (closeDay != null && closeDay !== d) {
+      // cross-midnight: chiudo a 23:59 sul giorno open per semplicità editor
+      days[d].push({ open, close: '23:59' })
+      continue
+    }
+    const close = p.close ? fmtHM(p.close.hour, p.close.minute) : '23:59'
+    days[d].push({ open, close })
+  }
+  // Ordina i turni per orario di apertura
+  Object.keys(days).forEach((k) => {
+    days[k].sort((a, b) => a.open.localeCompare(b.open))
+  })
+  return days
+}
+
+function hoursDaysToPayload(hoursDays) {
+  const periods = []
+  Object.entries(hoursDays).forEach(([dStr, slots]) => {
+    const day = Number(dStr)
+    slots.forEach(({ open, close }) => {
+      if (!/^\d{2}:\d{2}$/.test(open) || !/^\d{2}:\d{2}$/.test(close)) return
+      const [oh, om] = open.split(':').map(Number)
+      const [ch, cm] = close.split(':').map(Number)
+      periods.push({
+        open:  { day, hour: oh, minute: om },
+        close: { day, hour: ch, minute: cm },
+      })
+    })
+  })
+  if (periods.length === 0) return null
+  return { regularOpeningHours: { periods } }
+}
+
+function OpeningHoursEditor({ value, onChange, disabled }) {
+  const setDay = (dayIdx, slots) => {
+    onChange({ ...value, [dayIdx]: slots })
+  }
+  const addSlot = (dayIdx) => {
+    const slots = value[dayIdx] || []
+    const last = slots[slots.length - 1]
+    const next = last
+      ? { open: last.close || '19:00', close: '' }
+      : { open: '12:00', close: '14:30' }
+    setDay(dayIdx, [...slots, next])
+  }
+  const removeSlot = (dayIdx, slotIdx) => {
+    setDay(dayIdx, (value[dayIdx] || []).filter((_, i) => i !== slotIdx))
+  }
+  const updateSlot = (dayIdx, slotIdx, patch) => {
+    setDay(dayIdx, (value[dayIdx] || []).map((s, i) => (i === slotIdx ? { ...s, ...patch } : s)))
+  }
+  const markClosed = (dayIdx) => setDay(dayIdx, [])
+  const copyFromMonday = () => {
+    const monday = value[1] || []
+    const next = { ...value }
+    for (let d = 2; d <= 6; d++) next[d] = monday.map((s) => ({ ...s }))
+    next[0] = monday.map((s) => ({ ...s }))
+    onChange(next)
+  }
+  const closeAll = () => onChange(emptyHoursDays())
 
   return (
-    <div
-      style={{
-        background: 'var(--color-card)',
-        borderRadius: 16,
-        padding: 18,
-        marginBottom: 16,
-        border: '1px solid #F0EAE0',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--color-ink-55)',
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-          marginBottom: 12,
-        }}
-      >
-        {funnelLabel}
+    <div className="v4-oh">
+      <div className="v4-oh-actions">
+        <button type="button" className="v4-oh-act" onClick={copyFromMonday} disabled={disabled}>
+          Copia Lun in tutti
+        </button>
+        <button type="button" className="v4-oh-act" onClick={closeAll} disabled={disabled}>
+          Chiudi tutti
+        </button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {steps.map((s) => {
-          const pct = (s.value / max) * 100
+      <div className="v4-oh-list">
+        {OH_DAY_LABELS.map(({ idx, full, short }) => {
+          const slots = value[idx] || []
+          const isOpen = slots.length > 0
           return (
-            <div key={s.label}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 13,
-                  marginBottom: 5,
-                }}
-              >
-                <span style={{ color: 'var(--color-ink)', fontWeight: 500 }}>{s.label}</span>
-                <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
+            <div key={idx} className={`v4-oh-day ${isOpen ? 'open' : 'closed'}`}>
+              <div className="v4-oh-day-head">
+                <div className="v4-oh-day-name">
+                  <span className="full">{full}</span>
+                  <span className="short">{short}</span>
+                </div>
+                {!isOpen && (
+                  <span className="v4-oh-badge closed" aria-hidden="true">Chiuso</span>
+                )}
+                {isOpen && (
+                  <button
+                    type="button"
+                    className="v4-oh-close-btn"
+                    onClick={() => markClosed(idx)}
+                    disabled={disabled}
+                    title="Segna come chiuso"
+                  >
+                    Chiudi
+                  </button>
+                )}
               </div>
-              <div style={{ height: 8, background: 'var(--color-cream)', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.max(2, pct)}%`,
-                    height: '100%',
-                    background: s.color,
-                    borderRadius: 4,
-                    transition: 'width 0.4s',
-                  }}
-                />
+
+              {isOpen && (
+                <div className="v4-oh-slots">
+                  {slots.map((s, si) => (
+                    <div key={si} className="v4-oh-slot">
+                      <input
+                        type="time"
+                        className="v4-oh-time"
+                        value={s.open}
+                        onChange={(e) => updateSlot(idx, si, { open: e.target.value })}
+                        disabled={disabled}
+                        aria-label="Apertura"
+                      />
+                      <span className="v4-oh-sep">–</span>
+                      <input
+                        type="time"
+                        className="v4-oh-time"
+                        value={s.close}
+                        onChange={(e) => updateSlot(idx, si, { close: e.target.value })}
+                        disabled={disabled}
+                        aria-label="Chiusura"
+                      />
+                      <button
+                        type="button"
+                        className="v4-oh-rm"
+                        onClick={() => removeSlot(idx, si)}
+                        disabled={disabled}
+                        aria-label="Rimuovi turno"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="v4-oh-day-actions">
+                <button
+                  type="button"
+                  className="v4-oh-addslot primary"
+                  onClick={() => addSlot(idx)}
+                  disabled={disabled}
+                >
+                  + Aggiungi turno
+                </button>
+                {!isOpen && (
+                  <button
+                    type="button"
+                    className="v4-oh-addslot ghost"
+                    onClick={() => markClosed(idx)}
+                    disabled={disabled}
+                    aria-pressed="true"
+                  >
+                    Chiuso
+                  </button>
+                )}
               </div>
             </div>
           )
         })}
       </div>
-    </div>
-  )
-}
-
-function ActivityList({ activity }) {
-  if (!activity || activity.length === 0) {
-    return (
-      <div
-        style={{
-          background: 'var(--color-card)',
-          borderRadius: 16,
-          padding: '24px 18px',
-          border: '1px solid #F0EAE0',
-          textAlign: 'center',
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--color-ink-55)',
-            letterSpacing: 0.5,
-            textTransform: 'uppercase',
-            marginBottom: 8,
-          }}
-        >
-          Attività recente
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--color-ink-55)' }}>
-          Nessuno sconto ancora generato.
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      style={{
-        background: 'var(--color-card)',
-        borderRadius: 16,
-        border: '1px solid #F0EAE0',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--color-ink-55)',
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-          padding: '14px 16px 8px',
-        }}
-      >
-        Attività recente
-      </div>
-      {activity.map((a) => (
-        <ActivityRow key={a.id} item={a} />
-      ))}
-    </div>
-  )
-}
-
-function ActivityRow({ item }) {
-  const isRedeemed = item.status === 'redeemed'
-  const date = isRedeemed ? item.redeemed_at : item.generated_at
-  const when = date
-    ? new Date(date).toLocaleString('it-IT', {
-        day: '2-digit',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : ''
-  const actionLabel = isRedeemed ? 'Validato sconto' : 'Generato sconto'
-  const userName = (item.user_name || '').trim()
-  const discountTitle = item.discount?.title || ''
-  // Primary line: prefer the person's name since that's what the restaurant
-  // owner wants to see at a glance (e.g. "Validato sconto — Beatrice")
-  const primary = userName
-    ? `${actionLabel} — ${userName}`
-    : `${actionLabel}${discountTitle ? ' · ' + discountTitle : ''}`
-  // Secondary line: discount title when we already showed the name, plus time.
-  const secondaryParts = []
-  if (userName && discountTitle) secondaryParts.push(discountTitle)
-  if (when) secondaryParts.push(when)
-  const secondary = secondaryParts.join(' · ')
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 11,
-        padding: '10px 16px',
-        borderTop: '1px solid #F5F1EA',
-      }}
-    >
-      <div
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: '50%',
-          background: isRedeemed ? '#10B981' : '#F59E0B',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 14,
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
-      >
-        {isRedeemed ? '✓' : '•'}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--color-ink)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {primary}
-        </div>
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--color-ink-55)',
-            marginTop: 2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {secondary}
-        </div>
+      <div className="v4-oh-hint">
+        Per ogni giorno tocca <b>+ Aggiungi turno</b> per inserire pranzo, cena o un solo turno.
+        Tocca <b>Chiuso</b> per segnare il giorno di chiusura. Gli orari sono mostrati anche sulla scheda pubblica del locale.
       </div>
     </div>
   )
