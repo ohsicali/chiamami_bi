@@ -7,11 +7,16 @@ import FGroup from './_FGroup'
  * ScontoTab — read-only panel showing the active discount for the restaurant.
  * Create / edit flow lives in /admin/discounts (full-page manager).
  * This tab is the "quick glance" from inside the drawer.
+ *
+ * Vincolo: gli sconti richiedono PIN attivo. Se il PIN non c'è, la tab
+ * mostra un blocker che rimanda alle Credenziali.
  */
-export default function ScontoTab({ restaurantId }) {
+export default function ScontoTab({ form, restaurantId }) {
   const [loading, setLoading] = useState(true)
   const [discount, setDiscount] = useState(null)
   const [stats, setStats] = useState({ redeemed: 0, total: 0 })
+
+  const pinActive = !!form?.verify_pin
 
   useEffect(() => {
     if (!restaurantId || !isSupabaseConfigured()) return
@@ -47,6 +52,73 @@ export default function ScontoTab({ restaurantId }) {
     return <FGroup title="Sconto"><div style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 13 }}>Carico…</div></FGroup>
   }
 
+  // ── Blocker: gli sconti richiedono PIN attivo ──
+  if (!pinActive) {
+    return (
+      <FGroup title="Sconto per i lettori di Bi" count="bloccato">
+        <div
+          style={{
+            background: 'var(--color-cream, #F5F0E4)',
+            border: '1px dashed var(--color-line, #EAE3D7)',
+            borderRadius: 14,
+            padding: 24,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: 32, marginBottom: 10 }} aria-hidden>🔒</div>
+          <div
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 900,
+              fontSize: 16,
+              color: 'var(--color-ink)',
+              marginBottom: 6,
+            }}
+          >
+            Attiva prima il PIN partner
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              lineHeight: 1.5,
+              maxWidth: 460,
+              margin: '0 auto 18px',
+            }}
+          >
+            Per creare uno sconto serve che il locale possa convalidare le redenzioni
+            dall'area <code>/verify</code>. Vai nelle <b>Credenziali</b> e attiva il PIN —
+            poi torni qui per creare lo sconto.
+          </div>
+          <a
+            href="#sec-credenziali"
+            onClick={(e) => {
+              const el = document.getElementById('sec-credenziali')
+              if (el) {
+                e.preventDefault()
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+            style={{
+              display: 'inline-block',
+              background: 'var(--color-corallo, #E8453C)',
+              color: '#fff',
+              textDecoration: 'none',
+              padding: '11px 20px',
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 800,
+              boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            🔑 Vai alle Credenziali
+          </a>
+        </div>
+      </FGroup>
+    )
+  }
+
   if (!discount) {
     return (
       <FGroup title="Sconto per i lettori di Bi">
@@ -66,7 +138,7 @@ export default function ScontoTab({ restaurantId }) {
             Lo sconto è la leva più forte per far sì che un lettore di Bi scelga questo locale.
           </div>
           <Link
-            to="/admin/discounts"
+            to={`/admin/discounts?restaurant=${restaurantId}`}
             style={{
               display: 'inline-block',
               background: 'var(--color-corallo, #E8453C)',

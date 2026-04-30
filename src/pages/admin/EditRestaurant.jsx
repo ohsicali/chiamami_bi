@@ -208,7 +208,10 @@ export default function EditRestaurant() {
 
   return (
     <AdminLayout title={`Modifica ${form.name}`}>
-      <div style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }} className="max-md:!p-[18px]">
+      <div
+        style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}
+        className="max-md:!p-[18px] max-md:!pb-[100px]"
+      >
         {/* ── Header ── */}
         <div style={{ marginBottom: 24 }}>
           <div
@@ -407,7 +410,7 @@ export default function EditRestaurant() {
               <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
             )}
             {activeTab === 'sconto' && (
-              <ScontoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+              <ScontoTab form={form} restaurantId={restaurantId} />
             )}
             {activeTab === 'credenziali' && (
               <CredenzialiTab
@@ -509,7 +512,7 @@ export default function EditRestaurant() {
               <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
             </Section>
             <Section id="sec-sconto" num="04" title="Sconto">
-              <ScontoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+              <ScontoTab form={form} restaurantId={restaurantId} />
             </Section>
             <Section id="sec-credenziali" num="05" title="Credenziali PIN">
               <CredenzialiTab
@@ -541,6 +544,80 @@ export default function EditRestaurant() {
           </>
         )}
       </div>
+
+      {/* ── Sticky mobile save bar ── */}
+      {!isDesktop && (
+        <div
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: '#fff',
+            borderTop: '1px solid var(--color-line, #EAE3D7)',
+            padding: '10px 14px',
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+            zIndex: 30,
+            boxShadow: '0 -6px 18px rgba(0,0,0,0.06)',
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              fontSize: 11,
+              fontWeight: 700,
+              color: dirty ? 'var(--color-corallo, #E8453C)' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              fontFamily: 'var(--font-sans)',
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {dirty ? '● Modifiche non salvate' : '✓ Tutto salvato'}
+          </div>
+          <button
+            type="button"
+            disabled={saving || !dirty}
+            onClick={() => handleSave(false)}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-line, #EAE3D7)',
+              color: 'var(--color-ink, #22181C)',
+              padding: '9px 14px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: saving || !dirty ? 'not-allowed' : 'pointer',
+              fontFamily: 'var(--font-sans)',
+              opacity: saving || !dirty ? 0.5 : 1,
+            }}
+          >
+            Salva
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => handleSave(true)}
+            style={{
+              background: 'var(--color-corallo, #E8453C)',
+              color: '#fff',
+              border: 0,
+              padding: '10px 16px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: saving ? 'wait' : 'pointer',
+              boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            {saving ? 'Salvo…' : form.is_published ? 'Salva' : 'Pubblica'}
+          </button>
+        </div>
+      )}
 
       {/* Save toast */}
       <AnimatePresence>
@@ -681,6 +758,10 @@ function toFormState(r) {
     phone: r.phone || '',
     website: r.website || '',
     google_maps_url: r.google_maps_url || '',
+    menu_url: r.menu_url || '',
+    reservation_url: r.reservation_url || '',
+    instagram_url: r.instagram_url || '',
+    services: r.services || {},
     category: Array.isArray(r.category) ? r.category : [],
     cuisine_type: r.cuisine_type || '',
     price_range: r.price_range ?? 2,
@@ -729,6 +810,10 @@ function toDbPayload(form, alsoPublish) {
     phone: form.phone || null,
     website: form.website || null,
     google_maps_url: form.google_maps_url || null,
+    menu_url: form.menu_url || null,
+    reservation_url: form.reservation_url || null,
+    instagram_url: form.instagram_url || null,
+    services: form.services || {},
     category: form.category,
     cuisine_type: form.cuisine_type || (form.category?.[0] ?? null),
     price_range: form.price_range ?? 2,
