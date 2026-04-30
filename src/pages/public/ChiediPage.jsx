@@ -24,11 +24,14 @@ export default function ChiediPage() {
   const [convId, setConvId] = useState(routeConvId || null)
   const [showAuthGate, setShowAuthGate] = useState(false)
   const [pendingMessage, setPendingMessage] = useState(null)
+  const [typingIdx, setTypingIdx] = useState(-1)
+  const [displayedTyping, setDisplayedTyping] = useState('')
 
   const bodyRef = useRef(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const initialMessageHandledRef = useRef(false)
+  const prevMsgCountRef = useRef(0)
 
   const isEmpty = messages.length === 0 && !loading
 
@@ -43,6 +46,33 @@ export default function ChiediPage() {
     if (isEmpty) return
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, loading, isEmpty])
+
+  /* ---- Typewriter: rileva nuovo messaggio assistant ---- */
+  useEffect(() => {
+    const n = messages.length
+    if (n === prevMsgCountRef.current + 1) {
+      const last = messages[n - 1]
+      if (last?.role === 'assistant' && !last.error) {
+        setTypingIdx(n - 1)
+        setDisplayedTyping('')
+      }
+    }
+    prevMsgCountRef.current = n
+  }, [messages.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---- Typewriter: carattere per carattere 25 ms ---- */
+  useEffect(() => {
+    if (typingIdx < 0) return
+    const fullText = messages[typingIdx]?.content || ''
+    if (!fullText) { setTypingIdx(-1); return }
+    if (displayedTyping.length >= fullText.length) {
+      setDisplayedTyping(fullText)
+      setTypingIdx(-1)
+      return
+    }
+    const t = setTimeout(() => setDisplayedTyping(fullText.slice(0, displayedTyping.length + 1)), 25)
+    return () => clearTimeout(t)
+  }, [typingIdx, displayedTyping, messages])
 
   /* ---- Load existing conversation when arriving on /chiedi/:id ---- */
   useEffect(() => {
@@ -184,7 +214,7 @@ export default function ChiediPage() {
         {isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
-          <Conversation messages={messages} loading={loading} />
+          <Conversation messages={messages} loading={loading} typingIdx={typingIdx} displayedTyping={displayedTyping} />
         )}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
@@ -368,14 +398,11 @@ function EmptyState({ onPromptClick }) {
 /* ============================================================ */
 /*  Conversation                                                  */
 /* ============================================================ */
-function Conversation({ messages, loading }) {
+function Conversation({ messages, loading, typingIdx, displayedTyping }) {
   const allRestaurantIds = messages.flatMap((m) =>
     Array.isArray(m.results) ? m.results.map((r) => r.restaurant_id).filter(Boolean) : [],
   )
   const [photos, setPhotos] = useState({})
-  const [typingIndex, setTypingIndex] = useState(-1)
-  const [displayedText, setDisplayedText] = useState('')
-  const prevLengthRef = useRef(messages.length)
 
   useEffect(() => {
     if (allRestaurantIds.length === 0 || !isSupabaseConfigured()) return
@@ -397,36 +424,6 @@ function Conversation({ messages, loading }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allRestaurantIds.join(',')])
 
-  // Detect a single new assistant message (not bulk history restore)
-  useEffect(() => {
-    const newLen = messages.length
-    if (newLen === 0) {
-      setTypingIndex(-1)
-      setDisplayedText('')
-    } else if (newLen === prevLengthRef.current + 1) {
-      const last = messages[newLen - 1]
-      if (last?.role === 'assistant' && !last.error) {
-        setTypingIndex(newLen - 1)
-        setDisplayedText('')
-      }
-    }
-    prevLengthRef.current = newLen
-  }, [messages.length]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Typewriter: carattere per carattere (~25 ms/char)
-  useEffect(() => {
-    if (typingIndex < 0) return
-    const fullText = messages[typingIndex]?.content || ''
-    if (!fullText) { setTypingIndex(-1); return }
-    if (displayedText.length >= fullText.length) {
-      setDisplayedText(fullText)
-      setTypingIndex(-1)
-      return
-    }
-    const t = setTimeout(() => setDisplayedText(fullText.slice(0, displayedText.length + 1)), 25)
-    return () => clearTimeout(t)
-  }, [typingIndex, displayedText, messages])
-
   return (
     <div className="cp-conv">
       {messages.map((m, i) => {
@@ -437,8 +434,8 @@ function Conversation({ messages, loading }) {
             </div>
           )
         }
-        const isTypingThis = i === typingIndex
-        const textToShow = isTypingThis ? displayedText : m.content
+        const isTypingThis = i === typingIdx
+        const textToShow = isTypingThis ? displayedTyping : m.content
         const showResults = !isTypingThis && Array.isArray(m.results) && m.results.length > 0
         return (
           <div key={i}>
