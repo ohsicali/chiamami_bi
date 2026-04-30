@@ -276,7 +276,7 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
           {category?.name || restaurant.cuisine_type || 'Ristorante'}
           {restaurant.description && (
             <>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#D1CDC6', flexShrink: 0 }} />
+              <span style={{ opacity: 0.35 }}>|</span>
               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {restaurant.description.slice(0, 30)}
               </span>

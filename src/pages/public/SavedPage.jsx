@@ -451,7 +451,7 @@ export default function SavedPage() {
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
                         {r.neighborhood || r.city}
-                        {priceStr && <> · {priceStr}</>}
+                        {priceStr && <> | {priceStr}</>}
                       </div>
                     </div>
                   </div>
@@ -551,7 +551,7 @@ export default function SavedPage() {
                       </h3>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
                         {category && <span>{category.emoji} {category.name}</span>}
-                        {category && priceStr && <span style={{ opacity: 0.5 }}>·</span>}
+                        {category && priceStr && <span style={{ opacity: 0.4 }}>|</span>}
                         {priceStr && <span>{priceStr}</span>}
                       </div>
                     </div>

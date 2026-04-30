@@ -619,7 +619,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
   const max = deal.max_quantity || deal.max_redemptions || 0
   const pct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' · ')
+  const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' | ')
 
   const status = redemption?.status
   const isSaved = status === 'generated'
@@ -827,7 +827,7 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const photo = getPhoto(r)
   const expired = isDealExpired(deal)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' · ')
+  const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' | ')
   const validityStatus = expired ? 'expired' : checkValidity(deal)
   const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
   const pctBadge = dealBadgeText(deal) || freebieLabel(deal)
@@ -970,8 +970,8 @@ function UsedRow({ redemption, isDesktop, onClick }) {
       <div className="sc-info">
         <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
         <div className="sc-sub">
-          {[cuisine, zona].filter(Boolean).join(' · ')}
-          {(cuisine || zona) && ' · '}
+          {[cuisine, zona].filter(Boolean).join(' | ')}
+          {(cuisine || zona) && ' | '}
           {tipoLabel}<strong>{valueLabel}</strong>
         </div>
       </div>
