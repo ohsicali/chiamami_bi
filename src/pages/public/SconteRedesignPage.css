@@ -1201,46 +1201,47 @@
 }
 .sc-conv .sc-ph {
   position: relative;
-  width: 108px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
-  align-self: stretch;
+  align-self: center;
   background: #dcd0c0;
-  overflow: hidden;
-  border-radius: 0;
+  overflow: visible;
+  border-radius: 14px;
 }
-.sc-conv .sc-ph img {
-  position: absolute;
-  inset: 0;
+.sc-conv .sc-ph img,
+.sc-conv .sc-ph > div:first-child {
+  border-radius: 14px;
+  overflow: hidden;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-ph { width: 128px; }
+  .sc-conv .sc-ph { width: 92px; height: 92px; border-radius: 16px; }
+  .sc-conv .sc-ph img,
+  .sc-conv .sc-ph > div:first-child { border-radius: 16px; }
 }
 .sc-conv .sc-badge-pct {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  bottom: -5px;
+  right: -5px;
   background: linear-gradient(135deg, #A3E635, #4ADE80);
   color: #1a4731;
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
-  font-size: 12px;
-  padding: 3px 8px;
+  font-size: 13px;
+  padding: 3px 9px;
   border-radius: 999px;
-  letter-spacing: -0.3px;
-  box-shadow: 0 2px 8px rgba(74, 222, 128, 0.25);
+  letter-spacing: -0.2px;
   line-height: 1;
+  border: 2.5px solid var(--sc-paper);
+  white-space: nowrap;
+  pointer-events: none;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-badge-pct {
-    top: 10px;
-    left: 10px;
-    font-size: 13px;
-    padding: 4px 10px;
-  }
+  .sc-conv .sc-badge-pct { font-size: 14px; padding: 4px 10px; }
 }
 /* Freebie: badge verde sfumato (label invece di percentuale) */
 .sc-conv .sc-badge-pct.is-freebie {
