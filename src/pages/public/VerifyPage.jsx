@@ -961,6 +961,18 @@ function StoricoTab({ restaurant, deviceToken, onSessionExpired }) {
 /* Stub Scanner overlay — wrappa VerifyTab in overlay nero con close.
    Sostituito con versione full-bleed black + corner brackets nel commit successivo. */
 function ScannerOverlay({ restaurant, onClose }) {
+  const [mode, setMode] = useState('camera') // 'camera' | 'manual'
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null) // { status, reason, data }
+  const [camStatus, setCamStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
+  const [camError, setCamError] = useState(null)
+  const [torchOn, setTorchOn] = useState(false)
+  const videoRef = useRef(null)
+  const scannerRef = useRef(null)
+  const lastScanRef = useRef({ code: null, at: 0 })
+  const inputRef = useRef(null)
+
   // Lock body scroll while overlay is open
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -968,8 +980,192 @@ function ScannerOverlay({ restaurant, onClose }) {
     return () => { document.body.style.overflow = prev }
   }, [])
 
+  const verifyCode = async (rawCode) => {
+    const trimmed = extractQrCode(rawCode)
+    if (!trimmed || loading) return
+    setLoading(true)
+    try {
+      const token = getCookie(COOKIE_NAME)
+      if (!token) {
+        setResult({ status: 'error', data: { message: 'Sessione scaduta, rientra con il PIN.' } })
+        return
+      }
+      const { data: resp, error: rpcErr } = await supabase.rpc('verify_redeem_qr', {
+        p_device_token: token,
+        p_qr_code: trimmed,
+      })
+      if (rpcErr || !resp) {
+        setResult({ status: 'error', data: { message: rpcErr?.message || 'Errore di rete, riprova' } })
+        return
+      }
+      const payload = resp.data || {}
+      const normalized = {
+        ...payload,
+        discount: {
+          title: payload.discount_title ?? null,
+          discount_value: payload.discount_value ?? null,
+          discount_type: payload.discount_type ?? null,
+        },
+      }
+      if (resp.status === 'success') {
+        try { navigator.vibrate?.([40, 60, 40]) } catch { /* no-op */ }
+      }
+      if (resp.status === 'unauthorized') {
+        deleteCookie(COOKIE_NAME)
+        setResult({ status: 'error', data: { message: 'Sessione non valida, rientra con il PIN.' } })
+        return
+      }
+      setResult({ status: resp.status, reason: resp.reason, data: normalized })
+    } catch (err) {
+      console.error('verify error:', err)
+      setResult({ status: 'error', data: { message: err?.message || 'Errore di rete, riprova' } })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Camera scanner setup — runs only when camera mode is active and no result is showing
+  useEffect(() => {
+    if (mode !== 'camera' || result) return undefined
+    let cancelled = false
+    let scanner = null
+
+    async function start() {
+      let QrScanner
+      try {
+        const mod = await import('qr-scanner')
+        QrScanner = mod.default
+      } catch (e) {
+        console.error('Failed to load qr-scanner', e)
+        if (!cancelled) {
+          setCamStatus('error')
+          setCamError('Impossibile caricare lo scanner')
+        }
+        return
+      }
+      if (cancelled || !videoRef.current) return
+
+      if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
+        try {
+          const perm = await navigator.permissions.query({ name: 'camera' })
+          if (!cancelled && perm.state === 'denied') {
+            setCamStatus('denied')
+            return
+          }
+        } catch { /* not supported, continue */ }
+      }
+      try {
+        const hasCamera = await QrScanner.hasCamera()
+        if (!hasCamera) { if (!cancelled) setCamStatus('no-camera'); return }
+      } catch { /* continue */ }
+
+      scanner = new QrScanner(
+        videoRef.current,
+        (res) => {
+          const scanned = typeof res === 'string' ? res : res?.data
+          if (!scanned) return
+          const now = Date.now()
+          if (lastScanRef.current.code === scanned && now - lastScanRef.current.at < 2500) return
+          lastScanRef.current = { code: scanned, at: now }
+          verifyCode(scanned)
+        },
+        { preferredCamera: 'environment', highlightScanRegion: false, highlightCodeOutline: false, maxScansPerSecond: 5 },
+      )
+      scannerRef.current = scanner
+      try {
+        await scanner.start()
+        if (!cancelled) setCamStatus('running')
+      } catch (e) {
+        console.error('Camera start failed', e)
+        if (cancelled) return
+        const msg = String(e?.message || e?.name || '').toLowerCase()
+        if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) setCamStatus('denied')
+        else if (msg.includes('notfound') || msg.includes('no camera')) setCamStatus('no-camera')
+        else { setCamStatus('error'); setCamError(e?.message || 'Impossibile avviare la fotocamera') }
+      }
+    }
+    start()
+    return () => {
+      cancelled = true
+      if (scannerRef.current) {
+        try { scannerRef.current.stop(); scannerRef.current.destroy() } catch { /* no-op */ }
+        scannerRef.current = null
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, result])
+
+  // Pause scanner during loading verify
+  useEffect(() => {
+    const s = scannerRef.current
+    if (!s) return
+    if (loading) {
+      try { s.stop() } catch { /* no-op */ }
+    } else if (camStatus === 'running' && mode === 'camera' && !result) {
+      s.start().catch(() => {})
+    }
+  }, [loading, camStatus, mode, result])
+
+  // Toggle torch (flashlight) — supported on mobile cameras with track capabilities
+  const toggleTorch = async () => {
+    const s = scannerRef.current
+    if (!s) return
+    try {
+      const next = !torchOn
+      if (s.hasFlash && (await s.hasFlash())) {
+        if (next) await s.turnFlashOn(); else await s.turnFlashOff()
+        setTorchOn(next)
+      }
+    } catch (e) {
+      console.warn('torch toggle failed', e)
+    }
+  }
+
+  // Auto-focus manual input when switching to manual mode
+  useEffect(() => {
+    if (mode === 'manual' && !result) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [mode, result])
+
+  const resetForNextScan = () => {
+    setCode('')
+    setResult(null)
+    lastScanRef.current = { code: null, at: 0 }
+    setMode('camera')
+  }
+
+  const handleManualSubmit = (e) => {
+    e?.preventDefault?.()
+    verifyCode(code)
+  }
+
+  // ============ RESULT MODE ============
+  if (result) {
+    return (
+      <div className="v4-scan-overlay" role="dialog" aria-label="Esito verifica">
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 5,
+          overflow: 'auto', padding: 0,
+        }}>
+          <ScanResultView
+            result={result}
+            onReset={resetForNextScan}
+            onClose={onClose}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ============ CAMERA / MANUAL MODE ============
   return (
     <div className="v4-scan-overlay" role="dialog" aria-label="Scansiona QR">
+      <div className="v4-scan-cam">
+        {mode === 'camera' && (camStatus === 'starting' || camStatus === 'running') && (
+          <video ref={videoRef} playsInline muted />
+        )}
+      </div>
+
+      {/* Top bar — close + title + flash */}
       <div className="v4-scan-top">
         <button
           type="button"
@@ -979,23 +1175,185 @@ function ScannerOverlay({ restaurant, onClose }) {
         >
           ✕
         </button>
-        <div className="v4-scan-title">Scansiona QR</div>
-        <span style={{ width: 40, height: 40, flex: '0 0 auto' }} aria-hidden="true" />
+        <div className="v4-scan-title">{mode === 'manual' ? 'Inserisci codice' : 'Scansiona QR'}</div>
+        {mode === 'camera' && camStatus === 'running' ? (
+          <button
+            type="button"
+            className={`v4-scan-icon-btn ${torchOn ? 'on' : ''}`}
+            onClick={toggleTorch}
+            aria-label="Torcia"
+          >
+            ⚡
+          </button>
+        ) : (
+          <span style={{ width: 40, height: 40, flex: '0 0 auto' }} aria-hidden="true" />
+        )}
       </div>
-      <div style={{
-        position: 'absolute',
-        inset: 'max(80px, env(safe-area-inset-top)) 16px max(120px, env(safe-area-inset-bottom)) 16px',
-        zIndex: 5,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <div style={{ width: '100%', maxWidth: 480 }}>
-          <VerifyTab restaurant={restaurant} onResultDone={onClose} />
-        </div>
-      </div>
+
+      {/* CAMERA mode: scan window + hint + bottom buttons */}
+      {mode === 'camera' && (
+        <>
+          {(camStatus === 'starting' || camStatus === 'running') && (
+            <>
+              <div className="v4-scan-window">
+                <div className="v4-scan-corner tl" />
+                <div className="v4-scan-corner tr" />
+                <div className="v4-scan-corner bl" />
+                <div className="v4-scan-corner br" />
+                <div className="v4-scan-line" />
+              </div>
+              <div className="v4-scan-hint">
+                <div className="h1">Inquadra il QR del cliente</div>
+                <div className="h2">Il codice è nella sua app, dentro la scheda del tuo ristorante</div>
+              </div>
+              <div className="v4-scan-bottom">
+                <button type="button" className="v4-scan-btn" onClick={() => setMode('manual')}>
+                  ⌨︎ Inserisci codice
+                </button>
+                <a className="v4-scan-btn" href="mailto:info@chiamamibi.com" style={{ textDecoration: 'none' }}>
+                  ? Aiuto
+                </a>
+              </div>
+              {camStatus === 'starting' && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 4, background: 'rgba(0,0,0,0.4)', color: '#fff',
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: 28, height: 28, border: '3px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#fff', borderRadius: '50%', margin: '0 auto 8px',
+                      animation: 'verifySpin 0.8s linear infinite',
+                    }} />
+                    Avvio fotocamera…
+                  </div>
+                </div>
+              )}
+              {loading && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 4, background: 'rgba(0,0,0,0.65)', color: '#fff',
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: 28, height: 28, border: '3px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#fff', borderRadius: '50%', margin: '0 auto 10px',
+                      animation: 'verifySpin 0.8s linear infinite',
+                    }} />
+                    <div style={{ fontWeight: 700 }}>Verifica in corso…</div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Camera fallbacks: denied / no-camera / error */}
+          {(camStatus === 'denied' || camStatus === 'no-camera' || camStatus === 'error') && (
+            <div className="v4-scan-fallback">
+              <div className="ic">
+                {camStatus === 'denied' && '🚫'}
+                {camStatus === 'no-camera' && '📷'}
+                {camStatus === 'error' && '⚠️'}
+              </div>
+              <div className="t">
+                {camStatus === 'denied' && 'Fotocamera bloccata'}
+                {camStatus === 'no-camera' && 'Nessuna fotocamera'}
+                {camStatus === 'error' && 'Errore fotocamera'}
+              </div>
+              <div className="d">
+                {camStatus === 'denied' && 'Autorizza l\'accesso alla fotocamera nelle impostazioni del browser, oppure usa l\'inserimento manuale.'}
+                {camStatus === 'no-camera' && 'Questo dispositivo non espone una fotocamera utilizzabile. Inserisci il codice manualmente.'}
+                {camStatus === 'error' && (camError || 'Impossibile avviare la fotocamera. Usa l\'inserimento manuale.')}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMode('manual')}
+                style={{
+                  marginTop: 18, padding: '14px 22px', borderRadius: 14,
+                  background: 'var(--color-corallo)', color: '#fff', border: 0,
+                  fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 14,
+                  letterSpacing: '-0.01em', cursor: 'pointer',
+                }}
+              >
+                Inserisci codice manualmente
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* MANUAL mode: full-screen black input form */}
+      {mode === 'manual' && (
+        <form className="v4-scan-manual" onSubmit={handleManualSubmit}>
+          <h2>Inserisci codice</h2>
+          <p>Scrivi il codice <code style={{ color: '#fff', fontWeight: 700 }}>BiSc-XXXXXXXX</code> mostrato sotto il QR del cliente</p>
+          <input
+            ref={inputRef}
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="BiSc-XXXXXXXX"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            disabled={loading}
+          />
+          <button
+            type="submit"
+            className="submit"
+            disabled={!code.trim() || loading}
+          >
+            {loading ? 'Verifica…' : 'Verifica sconto'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setCode(''); setMode('camera') }}
+            style={{
+              marginTop: 14, padding: 12, background: 'transparent', border: 0,
+              color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            ← Torna alla fotocamera
+          </button>
+        </form>
+      )}
     </div>
   )
+}
+
+/* ScanResultView — wrapper sui componenti Result esistenti, con close-on-success */
+function ScanResultView({ result, onReset, onClose }) {
+  const { status, data } = result
+  const handleReset = () => {
+    if (status === 'success') {
+      // Su successo, dopo "Fatto" chiudo direttamente l'overlay invece di tornare a scansionare
+      onClose?.()
+    } else {
+      onReset?.()
+    }
+  }
+  if (status === 'success') return <SuccessResult data={data} onReset={handleReset} />
+  if (status === 'invalid_now') return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={handleReset} />
+  if (status === 'already_redeemed') return <AlreadyUsedResult data={data} onReset={handleReset} />
+  if (status === 'expired') {
+    return <ResultCard tone="neutral" icon="⏱" title="Sconto scaduto"
+      description="La data di validità di questo sconto è passata."
+      onReset={handleReset} resetLabel="Nuova verifica" />
+  }
+  if (status === 'wrong_restaurant') {
+    return <ResultCard tone="error" icon="✕" title="Codice non valido per questo ristorante"
+      description="Questo QR appartiene a uno sconto di un altro locale."
+      onReset={handleReset} resetLabel="Nuova verifica" />
+  }
+  if (status === 'not_found') {
+    return <ResultCard tone="error" icon="✕" title="Codice non riconosciuto"
+      description="Controlla che il codice sia scritto correttamente."
+      onReset={handleReset} resetLabel="Riprova" />
+  }
+  return <ResultCard tone="error" icon="✕" title="Errore"
+    description={data?.message || 'Si è verificato un errore.'}
+    onReset={handleReset} resetLabel="Riprova" />
 }
 
 /* Desktop placeholder shell — usa la stessa struttura mobile per ora.
@@ -1068,751 +1426,6 @@ function extractQrCode(raw) {
   // Altrimenti assume che sia già il qr_code nudo (es. inserimento manuale)
   return trimmed
 }
-
-/* ------------------------------------------------------------------ */
-/*  Verifica QR tab — camera scanner (primary) + manual input fallback */
-/* ------------------------------------------------------------------ */
-function VerifyTab({ restaurant }) {
-  const [mode, setMode] = useState('camera') // 'camera' | 'manual'
-  const [code, setCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null) // { status, data }
-  const inputRef = useRef(null)
-
-  const reset = () => {
-    setCode('')
-    setResult(null)
-  }
-
-  // Extracted so it can be triggered by both the camera (on scan) and the
-  // manual-input submit form.
-  //
-  // SECURITY: All validation + redemption logic runs server-side in the
-  // SECURITY DEFINER RPC `verify_redeem_qr`, which:
-  //   • Authenticates the device via verify_device_token cookie
-  //   • Checks the QR belongs to *this* restaurant
-  //   • Atomically marks redeemed + increments counter
-  // The client only forwards the token and displays the outcome.
-  const verifyCode = async (rawCode) => {
-    const trimmed = extractQrCode(rawCode)
-    if (!trimmed || loading) return
-    setLoading(true)
-    try {
-      const token = getCookie(COOKIE_NAME)
-      if (!token) {
-        setResult({
-          status: 'error',
-          data: { message: 'Sessione scaduta, rientra con il PIN.' },
-        })
-        return
-      }
-
-      const { data: resp, error: rpcErr } = await supabase.rpc('verify_redeem_qr', {
-        p_device_token: token,
-        p_qr_code: trimmed,
-      })
-
-      if (rpcErr || !resp) {
-        setResult({
-          status: 'error',
-          data: { message: rpcErr?.message || 'Errore di rete, riprova' },
-        })
-        return
-      }
-
-      // Normalize RPC response to the shape VerifyResult expects:
-      //   { status, data: { ..., discount: { title, discount_value, discount_type } } }
-      const payload = resp.data || {}
-      const normalized = {
-        ...payload,
-        discount: {
-          title: payload.discount_title ?? null,
-          discount_value: payload.discount_value ?? null,
-          discount_type: payload.discount_type ?? null,
-        },
-      }
-
-      if (resp.status === 'success') {
-        try {
-          navigator.vibrate?.([40, 60, 40])
-        } catch {
-          /* no-op */
-        }
-      }
-
-      if (resp.status === 'unauthorized') {
-        deleteCookie(COOKIE_NAME)
-        setResult({
-          status: 'error',
-          data: { message: 'Sessione non valida, rientra con il PIN.' },
-        })
-        return
-      }
-
-      setResult({ status: resp.status, reason: resp.reason, data: normalized })
-    } catch (err) {
-      console.error('verify error:', err)
-      setResult({
-        status: 'error',
-        data: { message: err?.message || 'Errore di rete, riprova' },
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleManualSubmit = (e) => {
-    e?.preventDefault?.()
-    verifyCode(code)
-  }
-
-  // Focus input when switching to manual mode
-  useEffect(() => {
-    if (mode === 'manual' && !result) {
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-  }, [mode, result])
-
-  return (
-    <div style={{ padding: '24px 16px 80px', maxWidth: 520, margin: '0 auto' }}>
-      {!result && mode === 'camera' && (
-        <QrCameraScanner
-          loading={loading}
-          onScan={(scanned) => verifyCode(scanned)}
-          onSwitchToManual={() => setMode('manual')}
-        />
-      )}
-
-      {!result && mode === 'manual' && (
-        <form onSubmit={handleManualSubmit}>
-          <div
-            style={{
-              fontSize: 13,
-              color: 'var(--color-ink-55)',
-              marginBottom: 10,
-              textAlign: 'center',
-            }}
-          >
-            Inserisci il codice mostrato dal cliente
-          </div>
-
-          <input
-            ref={inputRef}
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="BiSc-XXXXXXXX"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '18px 16px',
-              fontSize: 18,
-              fontWeight: 600,
-              fontFamily: "'SF Mono', 'Menlo', monospace",
-              letterSpacing: 1.5,
-              textAlign: 'center',
-              border: '2px solid var(--color-line)',
-              borderRadius: 14,
-              background: 'var(--color-card)',
-              color: 'var(--color-ink)',
-              outline: 'none',
-              transition: 'border-color 0.15s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = 'var(--color-corallo)')}
-            onBlur={(e) => (e.target.style.borderColor = 'var(--color-line)')}
-          />
-
-          <button
-            type="submit"
-            disabled={!code.trim() || loading}
-            style={{
-              width: '100%',
-              marginTop: 14,
-              padding: '16px',
-              background: code.trim() && !loading ? 'var(--color-corallo)' : 'var(--color-line)',
-              color: code.trim() && !loading ? '#fff' : 'var(--color-ink-55)',
-              border: 'none',
-              borderRadius: 14,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: code.trim() && !loading ? 'pointer' : 'not-allowed',
-              letterSpacing: 0.3,
-              transition: 'all 0.15s',
-            }}
-          >
-            {loading ? 'Verifica in corso…' : 'Verifica sconto'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setCode('')
-              setMode('camera')
-            }}
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: 14,
-              padding: '10px',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--color-ink)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            ← Usa la fotocamera
-          </button>
-
-          <p
-            style={{
-              marginTop: 16,
-              fontSize: 11,
-              color: 'var(--color-ink-55)',
-              textAlign: 'center',
-              lineHeight: 1.5,
-            }}
-          >
-            Il codice è nel formato <strong>BiSc-XXXXXXXX</strong> e si trova
-            sotto il QR mostrato dal cliente.
-          </p>
-        </form>
-      )}
-
-      {result && <VerifyResult result={result} onReset={reset} />}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  QrCameraScanner — camera preview + live QR detection              */
-/* ------------------------------------------------------------------ */
-function QrCameraScanner({ loading, onScan, onSwitchToManual }) {
-  const videoRef = useRef(null)
-  const scannerRef = useRef(null)
-  const lastScanRef = useRef({ code: null, at: 0 })
-  const onScanRef = useRef(onScan)
-  // Start as 'running' when the browser has already granted camera permission
-  // for this origin — skips the "Avvio fotocamera…" flash on subsequent visits.
-  // Browsers persist mediaDevices permissions per-site automatically, so once
-  // granted the user won't be prompted again on return visits.
-  const [status, setStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
-  const [errorMsg, setErrorMsg] = useState(null)
-
-  // Keep the ref pointing at the latest onScan without retriggering setup
-  useEffect(() => {
-    onScanRef.current = onScan
-  }, [onScan])
-
-  // Pause the scanner while the verification request is in-flight to avoid
-  // re-triggering the same code multiple times.
-  useEffect(() => {
-    const s = scannerRef.current
-    if (!s) return
-    if (loading) {
-      try {
-        s.stop()
-      } catch {
-        // ignore
-      }
-    } else if (status === 'running') {
-      s.start().catch(() => {})
-    }
-  }, [loading, status])
-
-  useEffect(() => {
-    let cancelled = false
-    let scanner = null
-
-    async function start() {
-      // Dynamic import keeps the scanner code out of the main bundle
-      let QrScanner
-      try {
-        const mod = await import('qr-scanner')
-        QrScanner = mod.default
-      } catch (e) {
-        console.error('Failed to load qr-scanner', e)
-        if (!cancelled) {
-          setStatus('error')
-          setErrorMsg('Impossibile caricare lo scanner')
-        }
-        return
-      }
-
-      if (cancelled || !videoRef.current) return
-
-      // Pre-check permission state. When it's already 'denied' we can skip
-      // the failing getUserMedia attempt and show the fallback immediately.
-      // When it's 'granted' we know the camera will start instantly, so we
-      // don't need to show the spinner either. Not supported on Safari < 16,
-      // so we fall through to the normal flow on failure.
-      if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
-        try {
-          const perm = await navigator.permissions.query({ name: 'camera' })
-          if (!cancelled && perm.state === 'denied') {
-            setStatus('denied')
-            return
-          }
-        } catch {
-          // Not supported (e.g. older Safari) — proceed with normal flow
-        }
-      }
-
-      // Ensure a camera exists before asking for permission — nicer UX
-      try {
-        const hasCamera = await QrScanner.hasCamera()
-        if (!hasCamera) {
-          if (!cancelled) setStatus('no-camera')
-          return
-        }
-      } catch {
-        // hasCamera can throw on older browsers — proceed and let the real
-        // start call decide
-      }
-
-      scanner = new QrScanner(
-        videoRef.current,
-        (res) => {
-          const scanned = typeof res === 'string' ? res : res?.data
-          if (!scanned) return
-          // Debounce: ignore rapid-fire duplicates for 2.5s
-          const now = Date.now()
-          if (lastScanRef.current.code === scanned && now - lastScanRef.current.at < 2500) {
-            return
-          }
-          lastScanRef.current = { code: scanned, at: now }
-          onScanRef.current?.(scanned)
-        },
-        {
-          preferredCamera: 'environment',
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-          maxScansPerSecond: 5,
-        },
-      )
-      scannerRef.current = scanner
-
-      try {
-        await scanner.start()
-        if (!cancelled) setStatus('running')
-      } catch (e) {
-        console.error('Camera start failed', e)
-        if (cancelled) return
-        const msg = String(e?.message || e?.name || '').toLowerCase()
-        if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
-          setStatus('denied')
-        } else if (msg.includes('notfound') || msg.includes('no camera')) {
-          setStatus('no-camera')
-        } else {
-          setStatus('error')
-          setErrorMsg(e?.message || 'Impossibile avviare la fotocamera')
-        }
-      }
-    }
-
-    start()
-
-    return () => {
-      cancelled = true
-      if (scannerRef.current) {
-        try {
-          scannerRef.current.stop()
-          scannerRef.current.destroy()
-        } catch {
-          // ignore
-        }
-        scannerRef.current = null
-      }
-    }
-    // Run setup only once per mount — onScan is accessed via ref
-  }, [])
-
-  const canShowVideo = status === 'starting' || status === 'running'
-
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 13,
-          color: 'var(--color-ink-55)',
-          marginBottom: 10,
-          textAlign: 'center',
-        }}
-      >
-        Inquadra il QR code mostrato dal cliente
-      </div>
-
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '1 / 1',
-          background: 'var(--color-ink)',
-          borderRadius: 14,
-          overflow: 'hidden',
-          border: '2px solid var(--color-line)',
-        }}
-      >
-        {canShowVideo && (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-          />
-        )}
-
-        {status === 'starting' && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: 12,
-              background: 'rgba(34,24,28,0.85)',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  border: '3px solid rgba(255,255,255,0.2)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  margin: '0 auto 8px',
-                  animation: 'verifySpin 0.8s linear infinite',
-                }}
-              />
-              Avvio fotocamera…
-            </div>
-          </div>
-        )}
-
-        {status === 'denied' && (
-          <CameraFallbackMessage
-            icon="🚫"
-            title="Fotocamera bloccata"
-            description="Autorizza l'accesso alla fotocamera nelle impostazioni del browser, oppure usa l'inserimento manuale."
-          />
-        )}
-
-        {status === 'no-camera' && (
-          <CameraFallbackMessage
-            icon="📷"
-            title="Nessuna fotocamera rilevata"
-            description="Questo dispositivo non espone una fotocamera utilizzabile. Inserisci il codice manualmente."
-          />
-        )}
-
-        {status === 'error' && (
-          <CameraFallbackMessage
-            icon="⚠️"
-            title="Errore fotocamera"
-            description={errorMsg || 'Impossibile avviare la fotocamera. Usa l\'inserimento manuale.'}
-          />
-        )}
-
-        {loading && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(34,24,28,0.85)',
-              color: '#fff',
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  border: '3px solid rgba(255,255,255,0.2)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  margin: '0 auto 8px',
-                  animation: 'verifySpin 0.8s linear infinite',
-                }}
-              />
-              Verifica in corso…
-            </div>
-          </div>
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={onSwitchToManual}
-        style={{
-          display: 'block',
-          width: '100%',
-          marginTop: 16,
-          padding: '14px',
-          background: 'transparent',
-          border: '1px solid var(--color-line)',
-          borderRadius: 14,
-          color: 'var(--color-ink)',
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: 'pointer',
-        }}
-      >
-        Inserisci il codice manualmente
-      </button>
-
-      <p
-        style={{
-          marginTop: 12,
-          fontSize: 11,
-          color: 'var(--color-ink-55)',
-          textAlign: 'center',
-          lineHeight: 1.5,
-        }}
-      >
-        Il riconoscimento avviene automaticamente. Tieni il QR del cliente
-        inquadrato e a fuoco.
-      </p>
-
-      <CameraPermanentAllowHint />
-    </div>
-  )
-}
-
-/* Detect iOS: the hint is only useful on iOS because Chrome/Android already
- * persist camera permission automatically after first grant. iOS Safari
- * re-asks on every page load unless the user explicitly sets the site to
- * "Consenti" in Impostazioni > Safari, or installs it as a PWA. */
-function isIOS() {
-  if (typeof navigator === 'undefined') return false
-  const ua = navigator.userAgent || ''
-  const platform = navigator.platform || ''
-  // iPhone/iPad/iPod, plus iPadOS that reports as MacIntel with touch.
-  return /iP(hone|ad|od)/.test(platform)
-    || /iP(hone|ad|od)/.test(ua)
-    || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-}
-
-function CameraPermanentAllowHint() {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return true
-    try {
-      return localStorage.getItem('verify_camera_hint_dismissed') === '1'
-    } catch { return false }
-  })
-  const [expanded, setExpanded] = useState(false)
-  if (dismissed) return null
-  if (!isIOS()) return null
-
-  const dismiss = () => {
-    setDismissed(true)
-    try { localStorage.setItem('verify_camera_hint_dismissed', '1') } catch {}
-  }
-
-  return (
-    <div
-      style={{
-        marginTop: 10,
-        padding: '10px 12px',
-        background: '#FFF8E6',
-        border: '1px solid #F3DDA1',
-        borderRadius: 10,
-        fontSize: 11.5,
-        color: '#7A5A00',
-        lineHeight: 1.5,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <span style={{ fontSize: 14, lineHeight: 1 }}>💡</span>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600, marginBottom: 2 }}>
-            Evitare di autorizzare la fotocamera ogni volta
-          </div>
-          <div style={{ opacity: 0.9 }}>
-            Su iPhone Safari chiede il permesso ad ogni visita.{' '}
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: '#7A5A00',
-                textDecoration: 'underline',
-                fontSize: 'inherit',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              {expanded ? 'Nascondi' : 'Come risolvere?'}
-            </button>
-          </div>
-          {expanded && (
-            <ol style={{ marginTop: 8, marginBottom: 0, paddingLeft: 18 }}>
-              <li>
-                <strong>Più rapido</strong> — tocca l'icona «aA» nella barra
-                URL, poi «Impostazioni sito web» → «Fotocamera» → «Consenti».
-              </li>
-              <li style={{ marginTop: 4 }}>
-                <strong>Permanente</strong> — apri l'app Impostazioni → Safari
-                → Fotocamera → chiamamibi.com → «Consenti».
-              </li>
-              <li style={{ marginTop: 4 }}>
-                <strong>Come app</strong> — in Safari tocca «Condividi» →
-                «Aggiungi alla schermata Home»: il permesso viene ricordato.
-              </li>
-            </ol>
-          )}
-        </div>
-        <button
-          type="button"
-          aria-label="Chiudi"
-          onClick={dismiss}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: 16,
-            color: '#7A5A00',
-            cursor: 'pointer',
-            padding: 0,
-            lineHeight: 1,
-            marginTop: -2,
-          }}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function CameraFallbackMessage({ icon, title, description }) {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        color: '#fff',
-        textAlign: 'center',
-        background: 'rgba(34,24,28,0.95)',
-      }}
-    >
-      <div style={{ fontSize: 36, marginBottom: 10 }}>{icon}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{title}</div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-        {description}
-      </div>
-    </div>
-  )
-}
-
-async function fetchUserName(userId) {
-  if (!userId) return 'Utente'
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', userId)
-      .maybeSingle()
-    return data?.full_name || 'Utente'
-  } catch {
-    return 'Utente'
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  VerifyResult — stati successo / errore / già-usato                */
-/* ------------------------------------------------------------------ */
-function VerifyResult({ result, onReset }) {
-  const { status, data } = result
-
-  if (status === 'success') {
-    return <SuccessResult data={data} onReset={onReset} />
-  }
-
-  if (status === 'invalid_now') {
-    return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={onReset} />
-  }
-
-  if (status === 'already_redeemed') {
-    return <AlreadyUsedResult data={data} onReset={onReset} />
-  }
-
-  if (status === 'expired') {
-    return (
-      <ResultCard
-        tone="neutral"
-        icon="⏱"
-        title="Sconto scaduto"
-        description="La data di validità di questo sconto è passata."
-        onReset={onReset}
-        resetLabel="Nuova verifica"
-      />
-    )
-  }
-
-  if (status === 'wrong_restaurant') {
-    return (
-      <ResultCard
-        tone="error"
-        icon="✕"
-        title="Codice non valido per questo ristorante"
-        description="Questo QR appartiene a uno sconto di un altro locale."
-        onReset={onReset}
-        resetLabel="Nuova verifica"
-      />
-    )
-  }
-
-  if (status === 'not_found') {
-    return (
-      <ResultCard
-        tone="error"
-        icon="✕"
-        title="Codice non riconosciuto"
-        description="Controlla che il codice sia scritto correttamente."
-        onReset={onReset}
-        resetLabel="Riprova"
-      />
-    )
-  }
-
-  // generic error
-  return (
-    <ResultCard
-      tone="error"
-      icon="✕"
-      title="Errore"
-      description={data?.message || 'Si è verificato un errore.'}
-      onReset={onReset}
-      resetLabel="Riprova"
-    />
-  )
-}
-
-
 function formatDiscountValue(discount) {
   if (!discount) return ''
   const v = String(discount.discount_value ?? '').trim()
@@ -1949,480 +1562,6 @@ function ResultCard({ tone, icon, title, description, children, onReset, resetLa
   )
 }
 
-function ResultRow({ label, value, strong }) {
-  if (!value) return null
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        fontSize: 13,
-        gap: 12,
-      }}
-    >
-      <span style={{ color: 'var(--color-ink-55)', fontWeight: 500, flexShrink: 0 }}>{label}</span>
-      <span
-        style={{
-          color: 'var(--color-ink)',
-          fontWeight: strong ? 700 : 500,
-          fontSize: strong ? 15 : 13,
-          textAlign: 'right',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Range picker — 7g / 30g / 365g / Personalizzato                    */
-/* ------------------------------------------------------------------ */
-function buildPresetRange(kind) {
-  const to = new Date()
-  const from = new Date()
-  if (kind === '7d') {
-    from.setDate(from.getDate() - 7)
-    from.setHours(0, 0, 0, 0)
-    return { kind, from, to, label: 'Ultimi 7 giorni' }
-  }
-  if (kind === '30d') {
-    from.setDate(from.getDate() - 30)
-    from.setHours(0, 0, 0, 0)
-    return { kind, from, to, label: 'Ultimi 30 giorni' }
-  }
-  if (kind === '365d') {
-    from.setDate(from.getDate() - 365)
-    from.setHours(0, 0, 0, 0)
-    return { kind, from, to, label: 'Ultimi 12 mesi' }
-  }
-  return null
-}
-
-function formatShortDate(d) {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-}
-
-function RangePicker({ range, onChange }) {
-  const [showCalendar, setShowCalendar] = useState(false)
-  const presets = [
-    { kind: '7d', label: '7 giorni' },
-    { kind: '30d', label: '30 giorni' },
-    { kind: '365d', label: '12 mesi' },
-  ]
-  const isCustom = range?.kind === 'custom'
-  const customDates = isCustom
-    ? `${formatShortDate(range.from)} – ${formatShortDate(range.to)}`
-    : null
-
-  return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'stretch',
-          gap: 8,
-          marginBottom: 14,
-          width: '100%',
-        }}
-      >
-        <div
-          role="tablist"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 4,
-            padding: 4,
-            background: 'var(--color-cream)',
-            borderRadius: 12,
-            border: '1px solid var(--color-line)',
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          {presets.map((p) => {
-            const active = range?.kind === p.kind
-            return (
-              <button
-                key={p.kind}
-                role="tab"
-                aria-selected={active}
-                onClick={() => onChange(buildPresetRange(p.kind))}
-                style={{
-                  padding: '10px 6px',
-                  borderRadius: 9,
-                  border: 'none',
-                  background: active ? 'var(--color-ink)' : 'transparent',
-                  color: active ? '#fff' : 'var(--color-ink-70)',
-                  fontSize: 14,
-                  fontWeight: active ? 700 : 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  whiteSpace: 'nowrap',
-                  boxShadow: active ? '0 2px 6px rgba(34,24,28,0.18)' : 'none',
-                }}
-              >
-                {p.label}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowCalendar(true)}
-          aria-label="Scegli periodo personalizzato"
-          title="Personalizzato"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '0 14px',
-            minWidth: 52,
-            borderRadius: 12,
-            border: isCustom ? '1px solid var(--color-ink)' : '1px solid var(--color-line)',
-            background: isCustom ? 'var(--color-ink)' : 'var(--color-card)',
-            color: isCustom ? '#fff' : 'var(--color-ink)',
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-            transition: 'all 0.18s ease',
-            boxShadow: isCustom ? '0 2px 6px rgba(34,24,28,0.18)' : 'none',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        </button>
-      </div>
-
-      {isCustom && (
-        <button
-          type="button"
-          onClick={() => setShowCalendar(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            padding: '10px 14px',
-            marginBottom: 14,
-            borderRadius: 10,
-            border: '1px solid var(--color-line)',
-            background: 'var(--color-card)',
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--color-ink)',
-          }}
-        >
-          <span style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 500 }}>
-            Periodo selezionato
-          </span>
-          <span>{customDates}</span>
-        </button>
-      )}
-
-      {showCalendar && (
-        <CalendarRangeModal
-          initialFrom={range?.from}
-          initialTo={range?.to}
-          onClose={() => setShowCalendar(false)}
-          onApply={(from, to) => {
-            const f = new Date(from); f.setHours(0, 0, 0, 0)
-            const t = new Date(to); t.setHours(23, 59, 59, 999)
-            onChange({
-              kind: 'custom',
-              from: f,
-              to: t,
-              label: `${formatShortDate(f)} – ${formatShortDate(t)}`,
-            })
-            setShowCalendar(false)
-          }}
-        />
-      )}
-    </>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Calendar modal — two-month range picker                            */
-/* ------------------------------------------------------------------ */
-const WEEKDAYS_IT = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
-const MONTHS_IT = [
-  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
-]
-
-function startOfMonth(d) {
-  const x = new Date(d.getFullYear(), d.getMonth(), 1)
-  return x
-}
-function sameDay(a, b) {
-  if (!a || !b) return false
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-function dayTs(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-}
-
-function MonthView({ monthDate, from, to, hover, onPick, onHover }) {
-  const first = startOfMonth(monthDate)
-  // Monday as first day of week
-  const jsDay = first.getDay() // 0=Sun..6=Sat
-  const lead = jsDay === 0 ? 6 : jsDay - 1
-  const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
-  const cells = []
-  for (let i = 0; i < lead; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(new Date(first.getFullYear(), first.getMonth(), d))
-  }
-  while (cells.length % 7 !== 0) cells.push(null)
-
-  const fromTs = from ? dayTs(from) : null
-  const toTs = to ? dayTs(to) : null
-  const hoverTs = hover ? dayTs(hover) : null
-  const rangeEnd = toTs ?? (fromTs && hoverTs && hoverTs > fromTs ? hoverTs : null)
-  const rangeStart = fromTs && rangeEnd ? Math.min(fromTs, rangeEnd) : fromTs
-  const rangeStop = fromTs && rangeEnd ? Math.max(fromTs, rangeEnd) : null
-
-  return (
-    <div style={{ width: '100%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
-        {WEEKDAYS_IT.map((w, i) => (
-          <div key={i} style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600 }}>
-            {w}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-        {cells.map((c, i) => {
-          if (!c) return <div key={i} />
-          const ts = dayTs(c)
-          const isFrom = fromTs === ts
-          const isTo = toTs === ts
-          const inRange = rangeStart && rangeStop && ts >= rangeStart && ts <= rangeStop
-          const isFuture = ts > dayTs(new Date())
-          const isEdge = isFrom || isTo
-          const bg = isEdge ? 'var(--color-ink)' : inRange ? 'var(--color-corallo-soft)' : 'transparent'
-          const color = isEdge ? '#fff' : isFuture ? 'var(--color-ink-15)' : 'var(--color-ink)'
-          return (
-            <button
-              key={i}
-              disabled={isFuture}
-              onClick={() => onPick(c)}
-              onMouseEnter={() => onHover(c)}
-              style={{
-                aspectRatio: '1',
-                minHeight: 40,
-                border: 'none',
-                background: bg,
-                color,
-                fontSize: 15,
-                fontWeight: isEdge ? 700 : 500,
-                borderRadius: 10,
-                cursor: isFuture ? 'not-allowed' : 'pointer',
-                opacity: isFuture ? 0.5 : 1,
-                transition: 'background 0.12s ease',
-              }}
-            >
-              {c.getDate()}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
-  const [month, setMonth] = useState(() => {
-    const base = initialFrom ? new Date(initialFrom) : new Date()
-    base.setDate(1)
-    return base
-  })
-  const [from, setFrom] = useState(initialFrom ? new Date(initialFrom) : null)
-  const [to, setTo] = useState(initialTo ? new Date(initialTo) : null)
-  const [hover, setHover] = useState(null)
-
-  function handlePick(d) {
-    if (!from || (from && to)) {
-      setFrom(d)
-      setTo(null)
-      return
-    }
-    if (d < from) {
-      setTo(from)
-      setFrom(d)
-    } else {
-      setTo(d)
-    }
-  }
-
-  const canApply = from && to
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 150,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        padding: 0,
-        animation: 'verifyFadeIn 0.18s ease-out',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--color-card)',
-          borderRadius: '20px 20px 0 0',
-          width: '100%',
-          maxWidth: 520,
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '85dvh',
-          boxShadow: '0 -20px 60px rgba(0,0,0,0.25)',
-          animation: 'verifyFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-      >
-        {/* Header — bigger X, bigger title */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '18px 20px 14px',
-            borderBottom: '1px solid #F0EAE0',
-          }}
-        >
-          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-ink)' }}>Seleziona periodo</div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'var(--color-cream)',
-              border: 'none',
-              width: 40,
-              height: 40,
-              borderRadius: 12,
-              cursor: 'pointer',
-              color: 'var(--color-ink)',
-              fontSize: 24,
-              fontWeight: 400,
-              lineHeight: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            aria-label="Chiudi"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Body — scrollable if needed */}
-        <div style={{ padding: '16px 20px', overflow: 'auto', flex: 1 }}>
-          {/* Month nav */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <button
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-              style={{ background: 'var(--color-cream)', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
-              aria-label="Mese precedente"
-            >
-              ‹
-            </button>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)' }}>
-              {MONTHS_IT[month.getMonth()]} {month.getFullYear()}
-            </div>
-            <button
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              style={{ background: 'var(--color-cream)', border: 'none', width: 40, height: 40, borderRadius: 10, cursor: 'pointer', fontSize: 20, color: 'var(--color-ink)' }}
-              aria-label="Mese successivo"
-            >
-              ›
-            </button>
-          </div>
-
-          {/* Selected range summary */}
-          <div
-            style={{
-              fontSize: 13,
-              color: 'var(--color-ink-55)',
-              fontWeight: 600,
-              textAlign: 'center',
-              marginBottom: 14,
-              padding: '8px 12px',
-              background: 'var(--color-cream)',
-              borderRadius: 10,
-            }}
-          >
-            {from ? formatShortDate(from) : '—'} → {to ? formatShortDate(to) : '—'}
-          </div>
-
-          <MonthView monthDate={month} from={from} to={to} hover={hover} onPick={handlePick} onHover={setHover} />
-        </div>
-
-        {/* Footer — always visible */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            padding: '14px 20px',
-            paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))',
-            borderTop: '1px solid #F0EAE0',
-            background: 'var(--color-card)',
-          }}
-        >
-          <button
-            onClick={() => { setFrom(null); setTo(null); setHover(null) }}
-            style={{
-              padding: '13px 16px',
-              borderRadius: 12,
-              border: '1px solid var(--color-line)',
-              background: 'var(--color-card)',
-              color: 'var(--color-ink)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Azzera
-          </button>
-          <button
-            disabled={!canApply}
-            onClick={() => onApply(from, to)}
-            style={{
-              flex: 1,
-              padding: '13px 20px',
-              borderRadius: 12,
-              border: 'none',
-              background: canApply ? 'var(--color-corallo)' : 'var(--color-cream)',
-              color: canApply ? '#fff' : 'var(--color-ink-55)',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: canApply ? 'pointer' : 'not-allowed',
-              transition: 'background 0.18s ease',
-            }}
-          >
-            Applica
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /*  Dashboard tab — stats + sconto attivo + funnel + attivita         */
