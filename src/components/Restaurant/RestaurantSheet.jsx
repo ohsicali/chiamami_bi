@@ -97,13 +97,17 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
         exit={{ y: 80, opacity: 0 }}
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0,
-          padding: '10px 14px calc(10px + env(safe-area-inset-bottom, 14px))',
-          background: 'rgba(250,247,242,0.92)',
-          backdropFilter: 'saturate(120%) blur(10px)',
-          WebkitBackdropFilter: 'saturate(120%) blur(10px)',
-          borderTop: '1px solid rgba(34,24,28,0.06)',
+          position: 'fixed',
+          left: 14, right: 14,
+          bottom: 'calc(18px + env(safe-area-inset-bottom, 0px))',
+          height: 68,
+          borderRadius: 999,
           zIndex: 40,
+          display: 'flex', alignItems: 'center',
+          gap: 10,
+          padding: '0 8px 0 20px',
+          background: 'linear-gradient(135deg, #A3E635 0%, #4ADE80 100%)',
+          boxShadow: '0 8px 24px rgba(74,222,128,.40), 0 2px 10px rgba(0,0,0,.10)',
         }}
       >
         {/* Close button */}
@@ -111,7 +115,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           onClick={() => setDismissed(true)}
           aria-label="Chiudi"
           style={{
-            position: 'absolute', top: -10, right: 14, zIndex: 1,
+            position: 'absolute', top: -8, right: 4, zIndex: 1,
             width: 22, height: 22, borderRadius: '50%',
             background: 'var(--color-ink, #22181C)', border: '2px solid #fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -124,72 +128,62 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           </svg>
         </button>
 
-        {/* inner green pill */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          height: 52, padding: '0 6px 0 14px',
-          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
-          color: '#22181C', borderRadius: 999,
-          boxShadow: '0 6px 16px rgba(0,0,0,0.08)',
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
-            <span style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 14.5,
-              letterSpacing: '-0.01em', color: '#22181C',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
-              {displayTitle}
-            </span>
-            <span style={{
-              fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 700,
-              color: 'rgba(34,24,28,.72)', marginTop: 2, letterSpacing: '0.02em',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
-              {displaySub}
-            </span>
-          </div>
-
-          {isRedeemed ? (
-            <span style={{
-              flex: '0 0 auto', fontSize: 12, fontWeight: 700,
-              color: 'rgba(34,24,28,.55)', padding: '0 14px',
-            }}>
-              {t('discount.alreadyUsed')}
-            </span>
-          ) : isGenerated ? (
-            <button
-              onClick={() => setShowQR(true)}
-              style={{
-                flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 40, padding: '0 16px',
-                background: '#22181C', color: '#fff',
-                borderRadius: 999, border: 'none',
-                fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
-                letterSpacing: '-0.01em', cursor: 'pointer',
-              }}
-            >
-              Mostra QR
-              <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </button>
-          ) : (
-            <button
-              onClick={handleUnlock}
-              disabled={generating || redemptionLoading}
-              style={{
-                flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 40, padding: '0 16px',
-                background: '#22181C', color: '#fff',
-                borderRadius: 999, border: 'none',
-                fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
-                letterSpacing: '-0.01em', cursor: 'pointer',
-                opacity: generating ? 0.5 : 1,
-              }}
-            >
-              {generating ? '...' : 'Usa sconto'}
-              <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-            </button>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, flex: 1, minWidth: 0 }}>
+          <span style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 14.5,
+            letterSpacing: '-0.01em', color: '#22181C',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {displayTitle}
+          </span>
+          <span style={{
+            fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 700,
+            color: 'rgba(34,24,28,.72)', marginTop: 2, letterSpacing: '0.02em',
+          }}>
+            {displaySub}
+          </span>
         </div>
+
+        {isRedeemed ? (
+          <span style={{
+            flex: '0 0 auto', fontSize: 12, fontWeight: 700,
+            color: 'rgba(34,24,28,.55)', padding: '0 14px',
+          }}>
+            {t('discount.alreadyUsed')}
+          </span>
+        ) : isGenerated ? (
+          <button
+            onClick={() => setShowQR(true)}
+            style={{
+              flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
+              height: 44, padding: '0 18px',
+              background: '#22181C', color: '#fff',
+              borderRadius: 999, border: 'none',
+              fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
+              letterSpacing: '-0.01em', cursor: 'pointer',
+            }}
+          >
+            Mostra QR
+            <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        ) : (
+          <button
+            onClick={handleUnlock}
+            disabled={generating || redemptionLoading}
+            style={{
+              flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
+              height: 44, padding: '0 18px',
+              background: '#22181C', color: '#fff',
+              borderRadius: 999, border: 'none',
+              fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
+              letterSpacing: '-0.01em', cursor: 'pointer',
+              opacity: generating ? 0.5 : 1,
+            }}
+          >
+            {generating ? '...' : 'Usa sconto'}
+            <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        )}
       </motion.div>
 
       <AnimatePresence>
