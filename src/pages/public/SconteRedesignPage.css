@@ -284,16 +284,16 @@
   color: #1a4731;
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
-  font-size: 14px;
-  padding: 4px 10px;
+  font-size: 18px;
+  padding: 6px 14px;
   border-radius: 999px;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
   line-height: 1;
-  border: 2.5px solid var(--sc-paper);
+  border: 3px solid var(--sc-corallo);
   pointer-events: none;
 }
 @media (min-width: 768px) {
-  .sc-drop-pct-photo { font-size: 15px; padding: 5px 12px; }
+  .sc-drop-pct-photo { font-size: 20px; padding: 7px 16px; }
 }
 .sc-badge-pct {
   position: absolute;
