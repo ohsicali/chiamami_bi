@@ -211,24 +211,6 @@ export default function ProfilePage() {
             label="Le mie conversazioni con Bi"
             sub="Storia chat AI · suggerimenti personali"
           />
-          <PfItem
-            onClick={() => navigate('/settings')}
-            icon={<svg viewBox="0 0 24 24"><path d="M12 2l3 6 6.5 1-5 4.5 1.5 6.5L12 17l-6 3 1.5-6.5L2.5 9 9 8z"/></svg>}
-            label="Preferenze"
-            sub="Cucina, momenti, fascia prezzo"
-          />
-          <PfItem
-            onClick={() => navigate('/settings')}
-            icon={<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>}
-            label="Notifiche"
-            sub="Nuovi drop, aggiunte in zona"
-          />
-          <PfItem
-            onClick={() => setCityPickerOpen(true)}
-            icon={<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>}
-            label="Città"
-            sub={`${currentCity.name} · Bi è qui`}
-          />
         </PfList>
 
         {/* ── SEC: Contribuisci ── */}

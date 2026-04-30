@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 
@@ -151,7 +152,7 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
   const emailValid = !isAnon || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   const nameValid = (name.trim().length >= 2 || mapsUrl.trim().length >= 5) && emailValid
 
-  return (
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, touchAction: 'none' }}>
       <style>{`
         @media (min-width: 768px) {
@@ -468,7 +469,8 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
           </div>
         </motion.div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
