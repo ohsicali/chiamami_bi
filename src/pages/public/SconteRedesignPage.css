@@ -1479,17 +1479,6 @@
 @media (min-width: 768px) {
   .sc-mine-row .sc-info .sc-meta { font-size: 11.5px; }
 }
-/* sc-conv-item: Convenzioni cards reuse sc-mine-row layout */
-.sc-conv-item .sc-when {
-  font-size: 10px;
-  color: var(--sc-ink-3);
-  font-weight: 500;
-  line-height: 1.2;
-  margin-left: 4px;
-}
-@media (min-width: 768px) {
-  .sc-conv-item .sc-when { font-size: 11px; }
-}
 .sc-qr-btn {
   background: var(--sc-ink);
   color: #fff;
