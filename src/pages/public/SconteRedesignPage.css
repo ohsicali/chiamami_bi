@@ -1179,12 +1179,12 @@
   padding: 11px 14px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-width: 0;
   gap: 8px;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-body-c { padding: 14px 16px; }
+  .sc-conv .sc-body-c { padding: 14px 16px; gap: 10px; }
 }
 .sc-conv .sc-top-info { min-width: 0; }
 .sc-conv h4 {
