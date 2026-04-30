@@ -656,6 +656,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
         )}
         <span className="sc-badge-live">live</span>
         {time && <span className="sc-badge-time">{time}</span>}
+        <span className="sc-drop-pct-photo">{dealBadgeText(deal)}</span>
       </div>
       <div className="sc-body-c">
         <div className="sc-drop-name-row">
@@ -667,7 +668,6 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
           {location && <><span className="sc-sep">|</span><span>{location}</span></>}
           {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
         </div>
-        <div className="sc-pill-row"><span className="sc-drop-pct-inline">{dealBadgeText(deal)}</span></div>
         {max > 0 && (
           <div className="sc-progress">
             <div className="sc-progress-labels">
