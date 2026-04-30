@@ -715,14 +715,14 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const isFreebie = deal?.discount_type === 'freebie'
   const badge = isFreebie ? (deal.title || deal.discount_value) : dealBadgeText(deal)
-  const address = shortAddress(r?.address)
+  const location = r?.neighborhood || r?.city
+  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
   const validityStatus = checkValidity(deal)
   const validityPill = formatShortPill(deal, validityStatus)
   const daysShort = (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7)
     ? formatDays(deal.valid_days)
     : null
 
-  // §12.2: card intera cliccabile per dettagli, 1 solo CTA "Sblocca"
   return (
     <div
       className="sc-conv sc-conv-clean"
@@ -748,7 +748,8 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
             <h4>{r?.name || deal.title}</h4>
             <div className="sc-meta">
               {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-              {address}
+              {location && <span>{location}</span>}
+              {priceStr && <span>{priceStr}</span>}
             </div>
           </div>
           <div className="sc-left-info">
