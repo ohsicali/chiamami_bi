@@ -866,7 +866,7 @@ function MineRow({ redemption, onOpenQR, onClick }) {
       <div className="sc-info">
         <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
         <div className="sc-meta">
-          {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+          {cuisine && <span className="sc-cat">{cuisine}</span>}
           {location && <><span className="sc-sep">|</span><span>{location}</span></>}
           {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
         </div>
