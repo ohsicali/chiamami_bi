@@ -657,11 +657,11 @@ function PinView({
 /* ------------------------------------------------------------------ */
 function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
   const [tab, setTab] = useState('dashboard')
-  const [scanning, setScanning] = useState(false)
   const isDesktop = useIsDesktop()
 
-  const openScanner = () => setScanning(true)
-  const closeScanner = () => setScanning(false)
+  // Quando l'utente chiude il scanner, torna alla dashboard
+  const closeScanner = () => setTab('dashboard')
+  const openScanner = () => setTab('scan')
 
   if (isDesktop) {
     return (
@@ -672,11 +672,15 @@ function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
         onSessionExpired={onSessionExpired}
         tab={tab}
         onTabChange={setTab}
-        scanning={scanning}
         onOpenScanner={openScanner}
         onCloseScanner={closeScanner}
       />
     )
+  }
+
+  // Quando si è nel tab Scansiona, mostra l'overlay full-bleed
+  if (tab === 'scan') {
+    return <ScannerOverlay restaurant={restaurant} onClose={closeScanner} />
   }
 
   return (
@@ -690,32 +694,23 @@ function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
             onOpenScanner={openScanner}
-            onJumpToStorico={() => setTab('storico')}
-          />
-        )}
-        {tab === 'storico' && (
-          <StoricoTab
-            restaurant={restaurant}
-            deviceToken={deviceToken}
-            onSessionExpired={onSessionExpired}
           />
         )}
         {tab === 'impostazioni' && (
-          <ImpostazioniTab restaurant={restaurant} onLogout={onLogout} />
+          <ImpostazioniTab
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onLogout={onLogout}
+            onSessionExpired={onSessionExpired}
+          />
         )}
       </div>
-      {tab !== 'impostazioni' && <FloatingScanCTA onClick={openScanner} />}
-      {scanning && (
-        <ScannerOverlay
-          restaurant={restaurant}
-          onClose={closeScanner}
-        />
-      )}
+      {tab === 'dashboard' && <FloatingScanCTA onClick={openScanner} />}
     </div>
   )
 }
 
-/* Mobile top bar (cream) — wordmark + ristorante + avatar + logout */
+/* Mobile top bar (cream) — wordmark + ristorante + avatar+esci */
 function VerifyTopBar({ restaurant, onLogout }) {
   const firstPhoto = restaurant?.photos?.[0]
   const photoUrl = firstPhoto
@@ -729,25 +724,42 @@ function VerifyTopBar({ restaurant, onLogout }) {
         LA GUIDA DI BI
         <small>{restaurant?.name || 'Area ristoratori'}</small>
       </div>
-      <button
-        type="button"
-        onClick={onLogout}
-        className="v4-top-logout"
-        aria-label="Esci"
-      >
-        Esci
-      </button>
-      <div className="v4-top-av" aria-hidden="true">
-        {photoUrl ? <img src={photoUrl} alt="" loading="lazy" /> : initial}
+      <div className="v4-top-avgroup">
+        <div className="v4-top-av" aria-hidden="true">
+          {photoUrl ? <img src={photoUrl} alt="" loading="lazy" /> : initial}
+        </div>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="v4-top-exit"
+          aria-label="Esci"
+          title="Esci dall'area ristoratori"
+        >
+          Esci
+        </button>
       </div>
     </div>
   )
 }
 
-/* Pill tab bar — 3 tab (Dashboard / Storico / Impostazioni) */
+/* Camera icon (SVG) — usato in CTA, tab bar, e desktop sidebar */
+function CameraIcon({ size = 22, color = 'currentColor' }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  )
+}
+
+/* Pill tab bar — 3 tab (Dashboard / Scansiona / Impostazioni) */
 const V4_TABS = [
   { key: 'dashboard', label: 'Dashboard' },
-  { key: 'storico', label: 'Storico' },
+  { key: 'scan', label: 'Scansiona' },
   { key: 'impostazioni', label: 'Impostazioni' },
 ]
 
@@ -779,9 +791,11 @@ function FloatingScanCTA({ onClick }) {
       onClick={onClick}
       aria-label="Scansiona QR"
     >
-      <span className="ic" aria-hidden="true">⌑</span>
+      <span className="ic" aria-hidden="true">
+        <CameraIcon size={22} color="#fff" />
+      </span>
       <span className="body">
-        <span className="t">Scansiona QR</span>
+        <span className="t">Scansiona il QR</span>
         <span className="s">Verifica lo sconto del cliente</span>
       </span>
       <span className="arr" aria-hidden="true">›</span>
@@ -1397,7 +1411,7 @@ function ScanResultView({ result, onReset, onClose }) {
    Sostituito con sidebar back-office nel commit successivo. */
 function DesktopShell({
   restaurant, onLogout, deviceToken, onSessionExpired,
-  tab, onTabChange, scanning, onOpenScanner, onCloseScanner,
+  tab, onTabChange, onOpenScanner, onCloseScanner,
 }) {
   const firstPhoto = restaurant?.photos?.[0]
   const photoUrl = firstPhoto ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url) : null
@@ -1405,8 +1419,7 @@ function DesktopShell({
 
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: '◈' },
-    { key: 'scan', label: 'Scansiona QR', icon: '⌑', action: onOpenScanner },
-    { key: 'storico', label: 'Storico verifiche', icon: '📋' },
+    { key: 'scan', label: 'Scansiona', iconNode: <CameraIcon size={16} />, action: onOpenScanner },
     { key: 'impostazioni', label: 'Impostazioni', icon: '⚙' },
   ]
 
@@ -1424,7 +1437,7 @@ function DesktopShell({
             className={`v4-dsk-ni ${tab === n.key ? 'on' : ''}`}
             onClick={() => (n.action ? n.action() : onTabChange(n.key))}
           >
-            <span className="ic">{n.icon}</span>
+            <span className="ic">{n.iconNode || n.icon}</span>
             <span>{n.label}</span>
           </button>
         ))}
@@ -1458,52 +1471,43 @@ function DesktopShell({
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
             onOpenScanner={onOpenScanner}
-            onJumpToStorico={() => onTabChange('storico')}
           />
-        )}
-        {tab === 'storico' && (
-          <>
-            <div className="v4-dsk-crumb">{restaurant?.name || '—'}</div>
-            <h1 className="v4-dsk-title">Storico verifiche</h1>
-            <div className="v4-dsk-sub">
-              <span className="meta">Tutte le verifiche degli ultimi 30 giorni</span>
-            </div>
-            <StoricoTab
-              restaurant={restaurant}
-              deviceToken={deviceToken}
-              onSessionExpired={onSessionExpired}
-            />
-          </>
         )}
         {tab === 'impostazioni' && (
           <>
             <div className="v4-dsk-crumb">{restaurant?.name || '—'}</div>
             <h1 className="v4-dsk-title">Impostazioni</h1>
             <div className="v4-dsk-sub">
-              <span className="meta">Contatti Bi e logout</span>
+              <span className="meta">Dati locale, PIN, contatto Bi</span>
             </div>
-            <div style={{ maxWidth: 520 }}>
-              <ImpostazioniTab restaurant={restaurant} onLogout={onLogout} />
+            <div style={{ maxWidth: 560 }}>
+              <ImpostazioniTab
+                restaurant={restaurant}
+                deviceToken={deviceToken}
+                onLogout={onLogout}
+                onSessionExpired={onSessionExpired}
+              />
             </div>
           </>
         )}
       </main>
 
-      {scanning && (
+      {tab === 'scan' && (
         <ScannerOverlay restaurant={restaurant} onClose={onCloseScanner} />
       )}
     </div>
   )
 }
 
-/* Desktop Dashboard — hero verde + scan tile + 4-col stats + 2-col cards */
-function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner, onJumpToStorico }) {
+/* Desktop Dashboard — hero verde + scan tile + 4-col stats + storico expandable */
+function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner }) {
   const [stats, setStats] = useState(null)
   const [discount, setDiscount] = useState(null)
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
-  const range = defaultRange()
+  const [range, setRange] = useState(defaultRange)
+  const [storicoOpen, setStoricoOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -1560,7 +1564,7 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
     load()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurant.id, deviceToken])
+  }, [restaurant.id, deviceToken, range])
 
   if (loading) {
     return (
@@ -1576,37 +1580,32 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
     )
   }
 
-  // "Oggi" computato dall'attività di oggi
-  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
-  const startTs = startOfToday.getTime()
-  const todayCount = (activity || []).filter((a) => {
-    if (a.status !== 'redeemed') return false
-    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
-    return ts >= startTs
-  }).length
-
-  // Settimana = ultimi 7 giorni dall'attività disponibile
-  const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - 7)
-  const weekCount = (activity || []).filter((a) => {
-    if (a.status !== 'redeemed') return false
-    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
-    return ts >= startOfWeek.getTime()
-  }).length
-
-  const monthOk = stats?.redemptions_used || 0
-  const saves = stats?.saves_total || stats?.saves || 0
   const discountValue = discount ? formatDiscountValue(discount) : null
   const today = new Date()
   const dayLabel = today.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const todayCount = (activity || []).filter((a) => {
+    if (a.status !== 'redeemed') return false
+    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
+    return ts >= startOfToday.getTime()
+  }).length
 
   return (
     <>
-      <div className="v4-dsk-crumb">{restaurant?.name || '—'}{restaurant?.address ? ` · ${restaurant.address}` : ''}</div>
+      <div className="v4-dsk-crumb">
+        {restaurant?.name || '—'}{restaurant?.address ? ` · ${restaurant.address}` : ''}
+      </div>
       <h1 className="v4-dsk-title">Ciao 👋</h1>
       <div className="v4-dsk-sub">
-        {dayLabel}
+        <span>{dayLabel}</span>
         <span className="dot" />
-        <span className="meta">{todayCount} {todayCount === 1 ? 'verifica OK oggi' : 'verifiche OK oggi'}</span>
+        <span className="meta">
+          {todayCount} {todayCount === 1 ? 'verifica OK oggi' : 'verifiche OK oggi'}
+        </span>
+      </div>
+
+      <div style={{ maxWidth: 480, marginBottom: 18 }}>
+        <RangePicker range={range} onChange={setRange} />
       </div>
 
       {statsError && (
@@ -1633,67 +1632,34 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
 
         <button type="button" className="v4-dsk-scan-tile" onClick={onOpenScanner}>
           <div className="l">Azione principale</div>
-          <h3>Scansiona QR</h3>
+          <h3>Scansiona il QR</h3>
           <div className="p">Il cliente ti mostra il QR dalla sua app, tu lo scansioni dal tuo telefono.</div>
           <div className="btn">Apri scanner →</div>
         </button>
       </div>
 
-      <div className="v4-dsk-stats">
-        <div className="v4-dsk-stat">
-          <div className="lab">Oggi</div>
-          <div className="val">{todayCount}</div>
-          <div className="sub">verifiche OK</div>
-        </div>
-        <div className="v4-dsk-stat">
-          <div className="lab">Settimana</div>
-          <div className="val">{weekCount}</div>
-          <div className="sub">verifiche OK</div>
-        </div>
-        <div className="v4-dsk-stat">
-          <div className="lab">30 giorni</div>
-          <div className="val">{monthOk}</div>
-          <div className="sub">verifiche OK</div>
-        </div>
-        <div className="v4-dsk-stat">
-          <div className="lab">Salvataggi</div>
-          <div className="val">{Number(saves).toLocaleString('it-IT')}</div>
-          <div className="sub">in totale</div>
-        </div>
-      </div>
+      <Stats4 stats={stats} range={range} />
 
-      <div className="v4-dsk-row">
-        <div className="v4-dsk-card">
-          <h4>Quanto ti cercano</h4>
-          <div className="v4-dsk-rate-tiles">
-            <div className="v4-dsk-rate-tile">
-              <div className="v">{Number(stats?.views || 0).toLocaleString('it-IT')}</div>
-              <div className="l">Visite scheda</div>
-            </div>
-            <div className="v4-dsk-rate-tile">
-              <div className="v">{Number(stats?.saves || 0).toLocaleString('it-IT')}</div>
-              <div className="l">Salvataggi</div>
-            </div>
-            <div className="v4-dsk-rate-tile">
-              <div className="v">{Number(stats?.redemptions_used || 0).toLocaleString('it-IT')}</div>
-              <div className="l">Sconti usati</div>
-            </div>
-          </div>
-          <div className="v4-dsk-note">
-            Dati ultimi 30 giorni. Nella Guida di Bi <b>non ci sono recensioni utente</b>:
-            sei qui perché ti ha scelto Augusto, non perché voti una media.
-          </div>
-        </div>
-
-        <div className="v4-dsk-card">
-          <h4>
-            Ultime verifiche
-            {onJumpToStorico && (
-              <button type="button" className="all" onClick={onJumpToStorico}>Storico completo →</button>
-            )}
-          </h4>
+      <div className="v4-dsk-card" style={{ marginTop: 8 }}>
+        <h4>
+          Ultime verifiche
+          <button
+            type="button"
+            className="all"
+            onClick={() => setStoricoOpen((v) => !v)}
+          >
+            {storicoOpen ? 'Riduci ↑' : 'Mostra tutto ↓'}
+          </button>
+        </h4>
+        {storicoOpen ? (
+          <ExpandableStorico
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+          />
+        ) : (
           <V4ActivityLog items={(activity || []).slice(0, 6)} emptyLabel="Nessuna verifica ancora." />
-        </div>
+        )}
       </div>
     </>
   )
@@ -1878,15 +1844,15 @@ function defaultRange() {
   return { kind: '30d', from, to, label: 'Ultimi 30 giorni' }
 }
 
-function DashboardTab({ restaurant, deviceToken, onSessionExpired, onJumpToStorico }) {
+function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
   const [stats, setStats] = useState(null)
   const [statsError, setStatsError] = useState(null)
   const [discount, setDiscount] = useState(null)
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
-  // Dashboard (v4) usa sempre 30 giorni: range picker spostato in Storico tab
-  const [range] = useState(defaultRange)
+  const [range, setRange] = useState(defaultRange)
+  const [storicoOpen, setStoricoOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -2035,19 +2001,33 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired, onJumpToStori
         </div>
       )}
 
+      <RangePicker range={range} onChange={setRange} />
       <ScontoHero discount={discount} />
-      <StatPair activity={activity} stats={stats} />
-      <RateCard stats={stats} />
+      <Stats4 stats={stats} range={range} />
 
       <div className="v4-section-lbl">
         Ultime verifiche
-        {onJumpToStorico && (
-          <button type="button" className="all" onClick={onJumpToStorico}>
-            Storico →
-          </button>
-        )}
+        <button
+          type="button"
+          className="all"
+          onClick={() => setStoricoOpen((v) => !v)}
+        >
+          {storicoOpen ? 'Riduci ↑' : 'Mostra tutto ↓'}
+        </button>
       </div>
-      <V4ActivityLog items={(activity || []).slice(0, 5)} emptyLabel="Nessuna verifica ancora." />
+
+      {storicoOpen ? (
+        <ExpandableStorico
+          restaurant={restaurant}
+          deviceToken={deviceToken}
+          onSessionExpired={onSessionExpired}
+        />
+      ) : (
+        <V4ActivityLog
+          items={(activity || []).slice(0, 5)}
+          emptyLabel="Nessuna verifica ancora."
+        />
+      )}
     </>
   )
 }
@@ -2078,55 +2058,23 @@ function ScontoHero({ discount }) {
   )
 }
 
-function StatPair({ activity, stats }) {
-  // "Oggi" deriva dalle attività riscattate oggi
-  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
-  const startTs = startOfToday.getTime()
-  const todayCount = (activity || []).filter((a) => {
-    if (a.status !== 'redeemed') return false
-    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
-    return ts >= startTs
-  }).length
-
-  // "30 giorni" arriva dalle stats range RPC
-  const monthCount = stats?.redemptions_used || 0
-
-  return (
-    <div className="v4-stat-grid">
-      <div className="v4-stat featured">
-        <div className="lab">Oggi</div>
-        <div className="val">{todayCount}</div>
-        <div className="sub">{todayCount === 1 ? 'verifica OK' : 'verifiche OK'}</div>
-      </div>
-      <div className="v4-stat">
-        <div className="lab">30 giorni</div>
-        <div className="val">{monthCount}</div>
-        <div className="sub">{monthCount === 1 ? 'verifica OK' : 'verifiche OK'}</div>
-      </div>
-    </div>
-  )
-}
-
-function RateCard({ stats }) {
-  if (!stats) return null
+/* 4 KPI tiles — visite pagina / salvataggi / sconti presi / sconti usati */
+function Stats4({ stats, range }) {
+  const periodLabel = range?.label || 'Periodo selezionato'
   const tiles = [
-    { v: stats.views || 0, l: 'visite scheda' },
-    { v: stats.saves || 0, l: 'salvataggi' },
-    { v: stats.redemptions_used || 0, l: 'sconti usati' },
+    { v: stats?.views || 0,                 l: 'Visite pagina',  featured: false },
+    { v: stats?.saves || 0,                 l: 'Salvataggi',     featured: false },
+    { v: stats?.redemptions_generated || 0, l: 'Sconti presi',   featured: false },
+    { v: stats?.redemptions_used || 0,      l: 'Sconti usati',   featured: true  },
   ]
   return (
-    <div className="v4-rate-card">
-      <div className="v4-rate-head">
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="v4-rate-title">Quanto ti cercano</div>
-          <div className="v4-rate-sub">Attività sulla tua scheda · ultimi 30 giorni</div>
-        </div>
-      </div>
-      <div className="v4-rate-tiles">
+    <div className="v4-stats4">
+      <div className="v4-stats4-head">{periodLabel}</div>
+      <div className="v4-stats4-grid">
         {tiles.map((t) => (
-          <div key={t.l} className="v4-rate-tile">
-            <div className="v">{Number(t.v).toLocaleString('it-IT')}</div>
-            <div className="l">{t.l}</div>
+          <div key={t.l} className={`v4-stat ${t.featured ? 'featured' : ''}`}>
+            <div className="lab">{t.l}</div>
+            <div className="val">{Number(t.v).toLocaleString('it-IT')}</div>
           </div>
         ))}
       </div>
@@ -2226,3 +2174,341 @@ function buildFallbackStats(activityData, range) {
   }
 }
 
+
+/* ------------------------------------------------------------------ */
+/*  RangePicker — 7g / 30g / 12 mesi + custom calendar                */
+/* ------------------------------------------------------------------ */
+function buildPresetRange(kind) {
+  const to = new Date()
+  const from = new Date()
+  if (kind === '7d') {
+    from.setDate(from.getDate() - 7); from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 7 giorni' }
+  }
+  if (kind === '30d') {
+    from.setDate(from.getDate() - 30); from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 30 giorni' }
+  }
+  if (kind === '365d') {
+    from.setDate(from.getDate() - 365); from.setHours(0, 0, 0, 0)
+    return { kind, from, to, label: 'Ultimi 12 mesi' }
+  }
+  return null
+}
+
+function formatShortDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+}
+
+function RangePicker({ range, onChange }) {
+  const [showCal, setShowCal] = useState(false)
+  const presets = [
+    { kind: '7d', label: '7 giorni' },
+    { kind: '30d', label: '30 giorni' },
+    { kind: '365d', label: '12 mesi' },
+  ]
+  const isCustom = range?.kind === 'custom'
+  return (
+    <>
+      <div className="v4-range">
+        <div className="v4-range-presets" role="tablist">
+          {presets.map((p) => (
+            <button
+              key={p.kind}
+              type="button"
+              role="tab"
+              aria-selected={range?.kind === p.kind}
+              className={`v4-range-preset ${range?.kind === p.kind ? 'on' : ''}`}
+              onClick={() => onChange(buildPresetRange(p.kind))}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={`v4-range-cal ${isCustom ? 'on' : ''}`}
+          onClick={() => setShowCal(true)}
+          aria-label="Periodo personalizzato"
+          title="Periodo personalizzato"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </button>
+      </div>
+      {isCustom && (
+        <button
+          type="button"
+          className="v4-range-custom-bar"
+          onClick={() => setShowCal(true)}
+        >
+          <span className="l">Periodo selezionato</span>
+          <span>{formatShortDate(range.from)} – {formatShortDate(range.to)}</span>
+        </button>
+      )}
+      {showCal && (
+        <CalendarRangeModal
+          initialFrom={range?.from}
+          initialTo={range?.to}
+          onClose={() => setShowCal(false)}
+          onApply={(from, to) => {
+            const f = new Date(from); f.setHours(0, 0, 0, 0)
+            const t = new Date(to); t.setHours(23, 59, 59, 999)
+            onChange({
+              kind: 'custom',
+              from: f,
+              to: t,
+              label: `${formatShortDate(f)} – ${formatShortDate(t)}`,
+            })
+            setShowCal(false)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  CalendarRangeModal — compact one-month calendar bottom sheet      */
+/* ------------------------------------------------------------------ */
+const V4_WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+const V4_MONTHS = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+]
+
+function v4DayTs(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+function CalendarRangeModal({ initialFrom, initialTo, onClose, onApply }) {
+  const [month, setMonth] = useState(() => {
+    const base = initialFrom ? new Date(initialFrom) : new Date()
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
+  const [from, setFrom] = useState(initialFrom ? new Date(initialFrom) : null)
+  const [to, setTo] = useState(initialTo ? new Date(initialTo) : null)
+
+  const handlePick = (d) => {
+    if (!from || (from && to)) {
+      setFrom(d); setTo(null); return
+    }
+    if (d < from) { setTo(from); setFrom(d) }
+    else { setTo(d) }
+  }
+
+  const first = new Date(month.getFullYear(), month.getMonth(), 1)
+  const jsDay = first.getDay()
+  const lead = jsDay === 0 ? 6 : jsDay - 1
+  const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(first.getFullYear(), first.getMonth(), d))
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  const fromTs = from ? v4DayTs(from) : null
+  const toTs = to ? v4DayTs(to) : null
+  const todayTs = v4DayTs(new Date())
+
+  return (
+    <div className="v4-cal-backdrop" onClick={onClose}>
+      <div className="v4-cal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="v4-cal-head">
+          <div className="t">Seleziona periodo</div>
+          <button type="button" className="v4-cal-close" onClick={onClose} aria-label="Chiudi">×</button>
+        </div>
+        <div className="v4-cal-body">
+          <div className="v4-cal-monthnav">
+            <button
+              type="button"
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+              aria-label="Mese precedente"
+            >‹</button>
+            <div className="lbl">{V4_MONTHS[month.getMonth()]} {month.getFullYear()}</div>
+            <button
+              type="button"
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+              aria-label="Mese successivo"
+            >›</button>
+          </div>
+          <div className="v4-cal-summary">
+            {from ? formatShortDate(from) : '—'} → {to ? formatShortDate(to) : '—'}
+          </div>
+          <div className="v4-cal-weekdays">
+            {V4_WEEKDAYS.map((w, i) => <div key={i}>{w}</div>)}
+          </div>
+          <div className="v4-cal-grid">
+            {cells.map((c, i) => {
+              if (!c) return <button key={i} className="v4-cal-day empty" disabled />
+              const ts = v4DayTs(c)
+              const isFrom = fromTs === ts
+              const isTo = toTs === ts
+              const inRange = fromTs && toTs && ts >= Math.min(fromTs, toTs) && ts <= Math.max(fromTs, toTs)
+              const isFuture = ts > todayTs
+              const cls = isFrom || isTo ? 'edge' : (inRange ? 'in-range' : '')
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`v4-cal-day ${cls}`}
+                  onClick={() => handlePick(c)}
+                  disabled={isFuture}
+                >
+                  {c.getDate()}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div className="v4-cal-foot">
+          <button
+            type="button"
+            className="clear"
+            onClick={() => { setFrom(null); setTo(null) }}
+          >
+            Azzera
+          </button>
+          <button
+            type="button"
+            className="apply"
+            disabled={!(from && to)}
+            onClick={() => onApply(from, to)}
+          >
+            Applica
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  ExpandableStorico — versione inline della tab Storico            */
+/* ------------------------------------------------------------------ */
+function ExpandableStorico({ restaurant, deviceToken, onSessionExpired }) {
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all') // all | today | week | problems
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const { data } = await supabase.rpc('verify_activity_list', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_limit: 100,
+        })
+        if (cancelled) return
+        if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
+        setActivity(Array.isArray(data?.items) ? data.items : [])
+      } catch (e) {
+        console.error('expandable storico load error', e)
+        if (!cancelled) setActivity([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired])
+
+  if (loading) {
+    return (
+      <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+        <div style={{
+          width: 22, height: 22,
+          border: '2px solid var(--color-line)', borderTopColor: 'var(--color-corallo)',
+          borderRadius: '50%', margin: '0 auto 8px',
+          animation: 'verifySpin 0.8s linear infinite',
+        }} />
+        <div style={{ fontSize: 12, color: 'var(--color-ink-55)' }}>Caricamento storico…</div>
+      </div>
+    )
+  }
+
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - 7)
+  const filtered = activity.filter((a) => {
+    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
+    const ts = date ? new Date(date).getTime() : 0
+    if (filter === 'today') return ts >= startOfToday.getTime()
+    if (filter === 'week') return ts >= startOfWeek.getTime()
+    if (filter === 'problems') return a.status !== 'redeemed'
+    return true
+  })
+
+  const groups = {}
+  filtered.forEach((a) => {
+    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
+    if (!date) return
+    const d = new Date(date)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (!groups[key]) groups[key] = []
+    groups[key].push(a)
+  })
+  const sortedKeys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1))
+  const today = new Date()
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const yest = new Date(today); yest.setDate(yest.getDate() - 1)
+  const yestKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`
+  const labelForKey = (k) => {
+    if (k === todayKey) return 'Oggi'
+    if (k === yestKey) return 'Ieri'
+    const [y, m, d] = k.split('-')
+    return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
+  }
+
+  return (
+    <>
+      <div className="v4-chip-row">
+        {[
+          { k: 'all', l: 'Tutti' },
+          { k: 'today', l: 'Oggi' },
+          { k: 'week', l: '7 giorni' },
+          { k: 'problems', l: 'Problemi' },
+        ].map((c) => (
+          <button
+            key={c.k}
+            type="button"
+            className={`v4-chip ${filter === c.k ? 'on' : ''}`}
+            onClick={() => setFilter(c.k)}
+          >
+            {c.l}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="v4-chip"
+          onClick={() => setReloadKey((k) => k + 1)}
+          aria-label="Aggiorna"
+          title="Aggiorna"
+          style={{ marginLeft: 'auto' }}
+        >
+          ↻
+        </button>
+      </div>
+      {sortedKeys.length === 0 ? (
+        <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+            Nessuna verifica nel filtro selezionato.
+          </div>
+        </div>
+      ) : (
+        sortedKeys.map((k) => (
+          <div key={k}>
+            <div className="v4-section-lbl">{labelForKey(k)}</div>
+            <V4ActivityLog items={groups[k]} />
+          </div>
+        ))
+      )}
+    </>
+  )
+}
