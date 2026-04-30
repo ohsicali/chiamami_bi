@@ -876,6 +876,119 @@
 .v4-set-row.danger .ic { background: var(--color-corallo-wash); color: var(--color-corallo); }
 .v4-set-row.danger .t { color: var(--color-corallo); }
 
+/* Impostazioni — sezioni e form */
+.v4-set-section {
+  margin-bottom: 16px;
+}
+.v4-set-section-head {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-55);
+  margin: 0 4px 8px;
+}
+.v4-set-form {
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v4-set-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-set-field .lab {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-55);
+}
+.v4-set-form .inp {
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid var(--color-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.v4-set-form textarea.inp {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.45;
+  font-weight: 500;
+  font-size: 14px;
+}
+.v4-set-form .inp:focus {
+  border-color: var(--color-corallo);
+  box-shadow: 0 0 0 3px var(--color-corallo-wash);
+}
+.v4-set-form .inp:disabled {
+  background: var(--color-cream);
+  color: var(--color-ink-55);
+  cursor: not-allowed;
+}
+.v4-pin-inp {
+  font-family: 'SF Mono', 'Menlo', monospace !important;
+  letter-spacing: 0.5em;
+  text-align: center;
+  font-size: 18px !important;
+}
+.v4-set-msg {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 12px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+.v4-set-msg.ok {
+  background: #E8F5D8;
+  color: #2C7A4A;
+  border: 1px solid #BFE08C;
+}
+.v4-set-msg.err {
+  background: var(--color-corallo-wash);
+  color: var(--color-corallo);
+  border: 1px solid var(--color-corallo-soft);
+}
+.v4-set-msg.warn {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+.v4-set-save {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-corallo);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(232, 69, 60, 0.24);
+  transition: all 0.15s;
+}
+.v4-set-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(232, 69, 60, 0.3);
+}
+.v4-set-save:disabled {
+  background: var(--color-line);
+  color: var(--color-ink-55);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* ==================================================================
  * Scan overlay (full-bleed black, mobile + desktop)
  * ================================================================== */

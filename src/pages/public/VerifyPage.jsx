@@ -803,36 +803,267 @@ function FloatingScanCTA({ onClick }) {
   )
 }
 
-/* Stub Impostazioni — sostituito con versione completa nel commit successivo */
-function ImpostazioniTab({ restaurant, onLogout }) {
+/* Impostazioni — dati locale (email + orari), cambio PIN, contatto Bi, logout */
+function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }) {
+  const [email, setEmail] = useState('')
+  const [hours, setHours] = useState('')
+  const [savingMeta, setSavingMeta] = useState(false)
+  const [metaMsg, setMetaMsg] = useState(null) // { kind, text }
+  const [loadingMeta, setLoadingMeta] = useState(true)
+
+  const [pinCur, setPinCur] = useState('')
+  const [pinNew, setPinNew] = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
+  const [savingPin, setSavingPin] = useState(false)
+  const [pinMsg, setPinMsg] = useState(null) // { kind, text }
+
+  // Carica email + orari attuali
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('email, opening_hours')
+          .eq('id', restaurant.id)
+          .maybeSingle()
+        if (cancelled) return
+        if (error) {
+          console.warn('load meta error', error)
+        }
+        setEmail(data?.email || '')
+        // opening_hours puรฒ essere stringa o JSON: lo mostriamo come testo
+        if (data?.opening_hours) {
+          setHours(typeof data.opening_hours === 'string' ? data.opening_hours : JSON.stringify(data.opening_hours, null, 2))
+        }
+      } catch (e) {
+        console.warn('load meta failed', e)
+      } finally {
+        if (!cancelled) setLoadingMeta(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [restaurant.id])
+
+  const handleSaveMeta = async () => {
+    setSavingMeta(true)
+    setMetaMsg(null)
+    try {
+      const { data, error } = await supabase.rpc('verify_update_restaurant_meta', {
+        p_device_token: deviceToken,
+        p_email: email || null,
+        p_opening_hours: hours || null,
+      })
+      if (error) {
+        if (String(error.message || '').match(/function .* does not exist/i)) {
+          setMetaMsg({ kind: 'warn', text: 'Funzione in arrivo: contatta Bi per aggiornare i dati.' })
+        } else {
+          setMetaMsg({ kind: 'err', text: error.message || 'Errore nel salvataggio' })
+        }
+        return
+      }
+      if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
+      if (data?.error) {
+        setMetaMsg({ kind: 'err', text: data.error })
+        return
+      }
+      setMetaMsg({ kind: 'ok', text: 'Modifiche salvate' })
+    } catch (e) {
+      console.error('save meta error', e)
+      setMetaMsg({ kind: 'err', text: e?.message || 'Errore di rete' })
+    } finally {
+      setSavingMeta(false)
+    }
+  }
+
+  const handleChangePin = async () => {
+    setPinMsg(null)
+    if (!/^\d{6}$/.test(pinCur)) {
+      setPinMsg({ kind: 'err', text: 'Il PIN attuale deve essere di 6 cifre' })
+      return
+    }
+    if (!/^\d{6}$/.test(pinNew)) {
+      setPinMsg({ kind: 'err', text: 'Il nuovo PIN deve essere di 6 cifre' })
+      return
+    }
+    if (pinNew !== pinConfirm) {
+      setPinMsg({ kind: 'err', text: 'Il nuovo PIN e la conferma non coincidono' })
+      return
+    }
+    if (pinNew === pinCur) {
+      setPinMsg({ kind: 'err', text: 'Il nuovo PIN deve essere diverso da quello attuale' })
+      return
+    }
+    setSavingPin(true)
+    try {
+      const { data, error } = await supabase.rpc('verify_change_pin', {
+        p_device_token: deviceToken,
+        p_current_pin: pinCur,
+        p_new_pin: pinNew,
+      })
+      if (error) {
+        if (String(error.message || '').match(/function .* does not exist/i)) {
+          setPinMsg({ kind: 'warn', text: 'Funzione in arrivo: contatta Bi per cambiare il PIN.' })
+        } else {
+          setPinMsg({ kind: 'err', text: error.message || 'Errore nel cambio PIN' })
+        }
+        return
+      }
+      if (data?.error === 'unauthorized') { onSessionExpired?.(); return }
+      if (data?.error === 'wrong_pin') {
+        setPinMsg({ kind: 'err', text: 'Il PIN attuale non è corretto' })
+        return
+      }
+      if (data?.error) {
+        setPinMsg({ kind: 'err', text: data.error })
+        return
+      }
+      setPinMsg({ kind: 'ok', text: 'PIN aggiornato. Usalo dal prossimo accesso.' })
+      setPinCur(''); setPinNew(''); setPinConfirm('')
+    } catch (e) {
+      console.error('change pin error', e)
+      setPinMsg({ kind: 'err', text: e?.message || 'Errore di rete' })
+    } finally {
+      setSavingPin(false)
+    }
+  }
+
   return (
     <div style={{ paddingTop: 8 }}>
-      <div className="v4-set-card">
-        <a className="v4-set-row" href="mailto:info@chiamamibi.com">
-          <span className="ic">B</span>
-          <span className="body">
-            <span className="t">Bi · Augusto</span>
-            <span className="s">info@chiamamibi.com</span>
-          </span>
-          <span className="arr">›</span>
-        </a>
-        <div className="v4-set-row">
-          <span className="ic">🏷</span>
-          <span className="body">
-            <span className="t">{restaurant?.name || '—'}</span>
-            <span className="s">{restaurant?.address || ''}</span>
-          </span>
+      {/* Dati locale */}
+      <div className="v4-set-section">
+        <div className="v4-set-section-head">Dati locale</div>
+        <div className="v4-set-card v4-set-form">
+          <label className="v4-set-field">
+            <span className="lab">Nome</span>
+            <input className="inp" value={restaurant?.name || ''} disabled />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Indirizzo</span>
+            <input className="inp" value={restaurant?.address || ''} disabled />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Email del locale</span>
+            <input
+              className="inp"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="info@nomeristorante.it"
+              disabled={loadingMeta || savingMeta}
+            />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Orari di apertura</span>
+            <textarea
+              className="inp"
+              rows={4}
+              value={hours}
+              onChange={(e) => setHours(e.target.value)}
+              placeholder={'Es: Lun–Ven 19:30–23:30 · Sab/Dom anche pranzo 12:30–14:30'}
+              disabled={loadingMeta || savingMeta}
+            />
+          </label>
+          {metaMsg && (
+            <div className={`v4-set-msg ${metaMsg.kind}`}>{metaMsg.text}</div>
+          )}
+          <button
+            type="button"
+            className="v4-set-save"
+            onClick={handleSaveMeta}
+            disabled={loadingMeta || savingMeta}
+          >
+            {savingMeta ? 'Salvataggio…' : 'Salva modifiche'}
+          </button>
         </div>
       </div>
-      <div className="v4-set-card">
-        <button className="v4-set-row danger" type="button" onClick={onLogout}>
-          <span className="ic">⏻</span>
-          <span className="body">
-            <span className="t">Esci da quest&apos;area</span>
-            <span className="s">Dovrai re-inserire il PIN per rientrare</span>
-          </span>
-          <span className="arr">›</span>
-        </button>
+
+      {/* Cambio PIN */}
+      <div className="v4-set-section">
+        <div className="v4-set-section-head">Cambia il PIN di accesso</div>
+        <div className="v4-set-card v4-set-form">
+          <label className="v4-set-field">
+            <span className="lab">PIN attuale</span>
+            <input
+              className="inp v4-pin-inp"
+              type="password"
+              inputMode="numeric"
+              autoComplete="current-password"
+              maxLength={6}
+              value={pinCur}
+              onChange={(e) => setPinCur(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="••••••"
+            />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Nuovo PIN</span>
+            <input
+              className="inp v4-pin-inp"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={6}
+              value={pinNew}
+              onChange={(e) => setPinNew(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="6 cifre"
+            />
+          </label>
+          <label className="v4-set-field">
+            <span className="lab">Conferma nuovo PIN</span>
+            <input
+              className="inp v4-pin-inp"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={6}
+              value={pinConfirm}
+              onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="ripeti il nuovo PIN"
+            />
+          </label>
+          {pinMsg && (
+            <div className={`v4-set-msg ${pinMsg.kind}`}>{pinMsg.text}</div>
+          )}
+          <button
+            type="button"
+            className="v4-set-save"
+            onClick={handleChangePin}
+            disabled={savingPin}
+          >
+            {savingPin ? 'Aggiornamento…' : 'Aggiorna PIN'}
+          </button>
+        </div>
+      </div>
+
+      {/* Contatto Bi */}
+      <div className="v4-set-section">
+        <div className="v4-set-section-head">Hai bisogno di aiuto?</div>
+        <div className="v4-set-card">
+          <a className="v4-set-row" href="mailto:info@chiamamibi.com">
+            <span className="ic">B</span>
+            <span className="body">
+              <span className="t">Bi · Augusto</span>
+              <span className="s">info@chiamamibi.com</span>
+            </span>
+            <span className="arr">›</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Esci */}
+      <div className="v4-set-section">
+        <div className="v4-set-card">
+          <button className="v4-set-row danger" type="button" onClick={onLogout}>
+            <span className="ic">⏻</span>
+            <span className="body">
+              <span className="t">Esci da quest&apos;area</span>
+              <span className="s">Dovrai re-inserire il PIN per rientrare</span>
+            </span>
+            <span className="arr">›</span>
+          </button>
+        </div>
       </div>
     </div>
   )
