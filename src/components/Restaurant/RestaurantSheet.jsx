@@ -180,8 +180,14 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
               opacity: generating ? 0.5 : 1,
             }}
           >
-            {generating ? '...' : 'Usa sconto'}
-            <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            {generating ? '…' : (
+              <>
+                <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Sblocca sconto
+              </>
+            )}
           </button>
         )}
       </motion.div>
