@@ -736,47 +736,43 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
 
   return (
     <div
-      className="sc-conv sc-conv-clean"
+      className="sc-mine-row sc-conv-item"
       role="button"
       tabIndex={0}
       onClick={(e) => { if (!e.defaultPrevented) onInfo() }}
       onKeyDown={(e) => { if (e.key === 'Enter') onInfo() }}
     >
-      <div className="sc-ph">
+      <div className="sc-ph-mini">
         {photo ? (
           <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
         ) : (
           <div style={{
             width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 30,
+            background: '#F1ECE3', fontSize: 22, borderRadius: 14,
           }}>{categoryEmoji(cuisine)}</div>
         )}
-        <span className={`sc-badge-pct ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
+        <span className={`sc-pct-corner ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
       </div>
-      <div className="sc-body-c">
-        <div className="sc-info-stack">
-          <div className="sc-top-info">
-            <h4>{r?.name || deal.title}</h4>
-            <div className="sc-meta">
-              {cuisine && <span className="sc-cat">{cuisine}</span>}
-              {location && <><span style={{ opacity: 0.35 }}>|</span><span>{location}</span></>}
-              {priceStr && <><span style={{ opacity: 0.35 }}>|</span><span>{priceStr}</span></>}
-            </div>
-          </div>
-          <div className="sc-left-info">
-            <ValidityPill status={validityStatus} text={validityPill} />
-            {daysShort && <span className="sc-when">{daysShort}</span>}
-          </div>
+      <div className="sc-info">
+        <h4>{r?.name || deal.title}</h4>
+        <div className="sc-meta">
+          {cuisine && <span className="sc-cat">{cuisine}</span>}
+          {location && <><span className="sc-sep">|</span><span>{location}</span></>}
+          {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
         </div>
-        <button
-          type="button"
-          className="sc-cta-mini"
-          disabled={!!claiming}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
-        >
-          {claiming ? '…' : (<><LockIcon />Sblocca</>)}
-        </button>
+        <div className="sc-pill-row sc-pill-row-mini">
+          <ValidityPill status={validityStatus} text={validityPill} />
+          {daysShort && <span className="sc-when">{daysShort}</span>}
+        </div>
       </div>
+      <button
+        type="button"
+        className="sc-cta-mini"
+        disabled={!!claiming}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+      >
+        {claiming ? '…' : (<><LockIcon />Sblocca</>)}
+      </button>
     </div>
   )
 }
