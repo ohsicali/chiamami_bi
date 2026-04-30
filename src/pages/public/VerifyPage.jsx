@@ -1362,13 +1362,61 @@ function DesktopShell({
   restaurant, onLogout, deviceToken, onSessionExpired,
   tab, onTabChange, scanning, onOpenScanner, onCloseScanner,
 }) {
+  const firstPhoto = restaurant?.photos?.[0]
+  const photoUrl = firstPhoto ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url) : null
+  const initial = (restaurant?.name || 'B').trim().charAt(0).toUpperCase()
+
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: '◈' },
+    { key: 'scan', label: 'Scansiona QR', icon: '⌑', action: onOpenScanner },
+    { key: 'storico', label: 'Storico verifiche', icon: '📋' },
+    { key: 'impostazioni', label: 'Impostazioni', icon: '⚙' },
+  ]
+
   return (
-    <div className="v4-shell">
-      <VerifyTopBar restaurant={restaurant} onLogout={onLogout} />
-      <VerifyPillTabs tab={tab} onChange={onTabChange} />
-      <div className="v4-content" style={{ maxWidth: 720 }}>
+    <div className="v4-dsk-shell">
+      <aside className="v4-dsk-side">
+        <div className="v4-dsk-wm">
+          LA GUIDA<br />DI BI
+          <small>Area ristoratori</small>
+        </div>
+        {navItems.map((n) => (
+          <button
+            key={n.key}
+            type="button"
+            className={`v4-dsk-ni ${tab === n.key ? 'on' : ''}`}
+            onClick={() => (n.action ? n.action() : onTabChange(n.key))}
+          >
+            <span className="ic">{n.icon}</span>
+            <span>{n.label}</span>
+          </button>
+        ))}
+        <div className="v4-dsk-user">
+          <div className="av" aria-hidden="true">
+            {photoUrl ? <img src={photoUrl} alt="" loading="lazy" /> : initial}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="u" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {restaurant?.name || '—'}
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              style={{
+                background: 'transparent', border: 0, padding: 0, marginTop: 2,
+                color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 700,
+                cursor: 'pointer', textAlign: 'left', textDecoration: 'underline',
+              }}
+            >
+              Esci
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main className="v4-dsk-main">
         {tab === 'dashboard' && (
-          <DashboardTab
+          <DesktopDashboard
             restaurant={restaurant}
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
@@ -1377,21 +1425,240 @@ function DesktopShell({
           />
         )}
         {tab === 'storico' && (
-          <StoricoTab
-            restaurant={restaurant}
-            deviceToken={deviceToken}
-            onSessionExpired={onSessionExpired}
-          />
+          <>
+            <div className="v4-dsk-crumb">{restaurant?.name || '—'}</div>
+            <h1 className="v4-dsk-title">Storico verifiche</h1>
+            <div className="v4-dsk-sub">
+              <span className="meta">Tutte le verifiche degli ultimi 30 giorni</span>
+            </div>
+            <StoricoTab
+              restaurant={restaurant}
+              deviceToken={deviceToken}
+              onSessionExpired={onSessionExpired}
+            />
+          </>
         )}
         {tab === 'impostazioni' && (
-          <ImpostazioniTab restaurant={restaurant} onLogout={onLogout} />
+          <>
+            <div className="v4-dsk-crumb">{restaurant?.name || '—'}</div>
+            <h1 className="v4-dsk-title">Impostazioni</h1>
+            <div className="v4-dsk-sub">
+              <span className="meta">Contatti Bi e logout</span>
+            </div>
+            <div style={{ maxWidth: 520 }}>
+              <ImpostazioniTab restaurant={restaurant} onLogout={onLogout} />
+            </div>
+          </>
         )}
-      </div>
-      {tab !== 'impostazioni' && <FloatingScanCTA onClick={onOpenScanner} />}
+      </main>
+
       {scanning && (
         <ScannerOverlay restaurant={restaurant} onClose={onCloseScanner} />
       )}
     </div>
+  )
+}
+
+/* Desktop Dashboard — hero verde + scan tile + 4-col stats + 2-col cards */
+function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenScanner, onJumpToStorico }) {
+  const [stats, setStats] = useState(null)
+  const [discount, setDiscount] = useState(null)
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [statsError, setStatsError] = useState(null)
+  const range = defaultRange()
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const statsPromise = supabase.rpc('verify_dashboard_stats_range', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_from: range.from.toISOString(),
+          p_to: range.to.toISOString(),
+        })
+        const discountPromise = supabase
+          .from('discounts')
+          .select('id, title, description, discount_type, discount_value, valid_until, max_redemptions, total_redeemed, is_active')
+          .eq('restaurant_id', restaurant.id)
+          .eq('is_active', true)
+          .gt('valid_until', new Date().toISOString())
+          .order('valid_until', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        const activityPromise = supabase.rpc('verify_activity_list', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_limit: 10,
+        })
+        const [statsRes, discountRes, activityRes] = await Promise.allSettled([
+          statsPromise, discountPromise, activityPromise,
+        ])
+        if (cancelled) return
+        const statsValue = statsRes.status === 'fulfilled' ? statsRes.value : null
+        if (statsValue?.data?.error === 'unauthorized') { onSessionExpired?.(); return }
+        if (statsRes.status === 'fulfilled' && !statsValue?.error && statsValue?.data) {
+          setStats(statsValue.data)
+        } else {
+          setStatsError('Statistiche non disponibili')
+          const actVal = activityRes.status === 'fulfilled' ? activityRes.value?.data : null
+          setStats(buildFallbackStats(actVal?.items || null, range))
+        }
+        setDiscount(discountRes.status === 'fulfilled' ? (discountRes.value?.data || null) : null)
+        let activityRows = []
+        if (activityRes.status === 'fulfilled') {
+          const val = activityRes.value?.data
+          if (val?.error === 'unauthorized') { onSessionExpired?.(); return }
+          activityRows = Array.isArray(val?.items) ? val.items : []
+        }
+        if (!cancelled) setActivity(activityRows)
+      } catch (e) {
+        if (!cancelled) console.error('desktop dashboard load error', e)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurant.id, deviceToken])
+
+  if (loading) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
+        <div style={{
+          width: 36, height: 36,
+          border: '3px solid var(--color-line)', borderTopColor: 'var(--color-corallo)',
+          borderRadius: '50%', margin: '0 auto 14px',
+          animation: 'verifySpin 0.8s linear infinite',
+        }} />
+        Caricamento dashboard…
+      </div>
+    )
+  }
+
+  // "Oggi" computato dall'attività di oggi
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const startTs = startOfToday.getTime()
+  const todayCount = (activity || []).filter((a) => {
+    if (a.status !== 'redeemed') return false
+    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
+    return ts >= startTs
+  }).length
+
+  // Settimana = ultimi 7 giorni dall'attività disponibile
+  const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - 7)
+  const weekCount = (activity || []).filter((a) => {
+    if (a.status !== 'redeemed') return false
+    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
+    return ts >= startOfWeek.getTime()
+  }).length
+
+  const monthOk = stats?.redemptions_used || 0
+  const saves = stats?.saves_total || stats?.saves || 0
+  const discountValue = discount ? formatDiscountValue(discount) : null
+  const today = new Date()
+  const dayLabel = today.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  return (
+    <>
+      <div className="v4-dsk-crumb">{restaurant?.name || '—'}{restaurant?.address ? ` · ${restaurant.address}` : ''}</div>
+      <h1 className="v4-dsk-title">Ciao 👋</h1>
+      <div className="v4-dsk-sub">
+        {dayLabel}
+        <span className="dot" />
+        <span className="meta">{todayCount} {todayCount === 1 ? 'verifica OK oggi' : 'verifiche OK oggi'}</span>
+      </div>
+
+      {statsError && (
+        <div style={{
+          background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10,
+          padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#92400E',
+        }}>⚠ {statsError}</div>
+      )}
+
+      <div className="v4-dsk-grid">
+        {discount ? (
+          <div className="v4-dsk-hero">
+            <div className="lab">● SCONTO ATTIVO</div>
+            <div className="val">{discountValue}</div>
+            <div className="cond">{[discount.title, discount.description].filter(Boolean).join(' · ')}</div>
+          </div>
+        ) : (
+          <div className="v4-dsk-hero" style={{ background: 'linear-gradient(135deg, var(--color-cream-deep), var(--color-cream))', color: 'var(--color-ink)' }}>
+            <div className="lab" style={{ color: 'var(--color-ink-55)' }}>● NESSUNO SCONTO ATTIVO</div>
+            <div className="val">—</div>
+            <div className="cond">Quando Bi attiva uno sconto sulla tua scheda lo vedi qui.</div>
+          </div>
+        )}
+
+        <button type="button" className="v4-dsk-scan-tile" onClick={onOpenScanner}>
+          <div className="l">Azione principale</div>
+          <h3>Scansiona QR</h3>
+          <div className="p">Il cliente ti mostra il QR dalla sua app, tu lo scansioni dal tuo telefono.</div>
+          <div className="btn">Apri scanner →</div>
+        </button>
+      </div>
+
+      <div className="v4-dsk-stats">
+        <div className="v4-dsk-stat">
+          <div className="lab">Oggi</div>
+          <div className="val">{todayCount}</div>
+          <div className="sub">verifiche OK</div>
+        </div>
+        <div className="v4-dsk-stat">
+          <div className="lab">Settimana</div>
+          <div className="val">{weekCount}</div>
+          <div className="sub">verifiche OK</div>
+        </div>
+        <div className="v4-dsk-stat">
+          <div className="lab">30 giorni</div>
+          <div className="val">{monthOk}</div>
+          <div className="sub">verifiche OK</div>
+        </div>
+        <div className="v4-dsk-stat">
+          <div className="lab">Salvataggi</div>
+          <div className="val">{Number(saves).toLocaleString('it-IT')}</div>
+          <div className="sub">in totale</div>
+        </div>
+      </div>
+
+      <div className="v4-dsk-row">
+        <div className="v4-dsk-card">
+          <h4>Quanto ti cercano</h4>
+          <div className="v4-dsk-rate-tiles">
+            <div className="v4-dsk-rate-tile">
+              <div className="v">{Number(stats?.views || 0).toLocaleString('it-IT')}</div>
+              <div className="l">Visite scheda</div>
+            </div>
+            <div className="v4-dsk-rate-tile">
+              <div className="v">{Number(stats?.saves || 0).toLocaleString('it-IT')}</div>
+              <div className="l">Salvataggi</div>
+            </div>
+            <div className="v4-dsk-rate-tile">
+              <div className="v">{Number(stats?.redemptions_used || 0).toLocaleString('it-IT')}</div>
+              <div className="l">Sconti usati</div>
+            </div>
+          </div>
+          <div className="v4-dsk-note">
+            Dati ultimi 30 giorni. Nella Guida di Bi <b>non ci sono recensioni utente</b>:
+            sei qui perché ti ha scelto Augusto, non perché voti una media.
+          </div>
+        </div>
+
+        <div className="v4-dsk-card">
+          <h4>
+            Ultime verifiche
+            {onJumpToStorico && (
+              <button type="button" className="all" onClick={onJumpToStorico}>Storico completo →</button>
+            )}
+          </h4>
+          <V4ActivityLog items={(activity || []).slice(0, 6)} emptyLabel="Nessuna verifica ancora." />
+        </div>
+      </div>
+    </>
   )
 }
 
