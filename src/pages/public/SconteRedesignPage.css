@@ -1181,17 +1181,27 @@
   padding: 3px 8px;
   box-shadow: 0 2px 8px rgba(74, 222, 128, 0.2);
 }
+/* §12.2: body-c in row layout — info-stack a sinistra (column flex con
+   top-info + pill+giorni), CTA a destra verticalmente centrata. */
 .sc-conv .sc-body-c {
   flex: 1;
   padding: 11px 14px;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   min-width: 0;
-  gap: 8px;
+  gap: 10px;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-body-c { padding: 14px 16px; gap: 10px; }
+  .sc-conv .sc-body-c { padding: 14px 16px; gap: 12px; }
+}
+.sc-conv .sc-info-stack {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .sc-conv .sc-top-info { min-width: 0; }
 .sc-conv h4 {

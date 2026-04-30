@@ -743,27 +743,27 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
         <span className={`sc-badge-pct ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
       </div>
       <div className="sc-body-c">
-        <div className="sc-top-info">
-          <h4>{r?.name || deal.title}</h4>
-          <div className="sc-meta">
-            {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-            {address}
+        <div className="sc-info-stack">
+          <div className="sc-top-info">
+            <h4>{r?.name || deal.title}</h4>
+            <div className="sc-meta">
+              {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {address}
+            </div>
           </div>
-        </div>
-        <div className="sc-bottom-row">
           <div className="sc-left-info">
             <ValidityPill status={validityStatus} text={validityPill} />
             {daysShort && <span className="sc-when">{daysShort}</span>}
           </div>
-          <button
-            type="button"
-            className="sc-cta-mini"
-            disabled={!!claiming}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
-          >
-            {claiming ? '…' : (<><LockIcon />Sblocca</>)}
-          </button>
         </div>
+        <button
+          type="button"
+          className="sc-cta-mini"
+          disabled={!!claiming}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+        >
+          {claiming ? '…' : (<><LockIcon />Sblocca</>)}
+        </button>
       </div>
     </div>
   )
