@@ -373,6 +373,9 @@ function Conversation({ messages, loading }) {
     Array.isArray(m.results) ? m.results.map((r) => r.restaurant_id).filter(Boolean) : [],
   )
   const [photos, setPhotos] = useState({})
+  const [typingIndex, setTypingIndex] = useState(-1)
+  const [displayedText, setDisplayedText] = useState('')
+  const prevLengthRef = useRef(messages.length)
 
   useEffect(() => {
     if (allRestaurantIds.length === 0 || !isSupabaseConfigured()) return
@@ -394,6 +397,38 @@ function Conversation({ messages, loading }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allRestaurantIds.join(',')])
 
+  // Detect a single new assistant message (not bulk history restore)
+  useEffect(() => {
+    const newLen = messages.length
+    if (newLen === 0) {
+      setTypingIndex(-1)
+      setDisplayedText('')
+    } else if (newLen === prevLengthRef.current + 1) {
+      const last = messages[newLen - 1]
+      if (last?.role === 'assistant' && !last.error) {
+        setTypingIndex(newLen - 1)
+        setDisplayedText('')
+      }
+    }
+    prevLengthRef.current = newLen
+  }, [messages.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Typewriter: reveal word by word (~35 ms/word)
+  useEffect(() => {
+    if (typingIndex < 0) return
+    const fullText = messages[typingIndex]?.content || ''
+    if (!fullText) { setTypingIndex(-1); return }
+    if (displayedText.length >= fullText.length) {
+      setDisplayedText(fullText)
+      setTypingIndex(-1)
+      return
+    }
+    const nextSpace = fullText.indexOf(' ', displayedText.length)
+    const nextEnd = nextSpace === -1 ? fullText.length : nextSpace + 1
+    const t = setTimeout(() => setDisplayedText(fullText.slice(0, nextEnd)), 35)
+    return () => clearTimeout(t)
+  }, [typingIndex, displayedText, messages])
+
   return (
     <div className="cp-conv">
       {messages.map((m, i) => {
@@ -404,15 +439,19 @@ function Conversation({ messages, loading }) {
             </div>
           )
         }
+        const isTypingThis = i === typingIndex
+        const textToShow = isTypingThis ? displayedText : m.content
+        const showResults = !isTypingThis && Array.isArray(m.results) && m.results.length > 0
         return (
           <div key={i}>
             <div className="cp-bi-row">
               <div className="cp-av-mini"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
               <div className={`cp-bubble cp-bi${m.error ? ' cp-error' : ''}`}>
-                {m.content}
+                {textToShow}
+                {isTypingThis && <span className="cp-cursor" aria-hidden="true" />}
               </div>
             </div>
-            {Array.isArray(m.results) && m.results.length > 0 && (
+            {showResults && (
               <div className="cp-results">
                 {m.results.map((r, j) => (
                   <ResultCard
