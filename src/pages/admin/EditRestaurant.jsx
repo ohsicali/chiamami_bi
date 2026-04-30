@@ -210,7 +210,7 @@ export default function EditRestaurant() {
     <AdminLayout title={`Modifica ${form.name}`}>
       <div
         style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}
-        className="max-md:!p-[18px] max-md:!pb-[100px]"
+        className="max-md:!p-[18px] max-md:!pb-[180px]"
       >
         {/* ── Header ── */}
         <div style={{ marginBottom: 24 }}>
@@ -545,21 +545,23 @@ export default function EditRestaurant() {
         )}
       </div>
 
-      {/* ── Sticky mobile save bar ── */}
+      {/* ── Sticky mobile save bar — sopra la nav admin ── */}
       {!isDesktop && (
         <div
           style={{
             position: 'fixed',
             left: 0,
             right: 0,
-            bottom: 0,
-            background: '#fff',
+            bottom: 'calc(86px + env(safe-area-inset-bottom, 0px))',
+            background: 'rgba(255,255,255,0.96)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             borderTop: '1px solid var(--color-line, #EAE3D7)',
             padding: '10px 14px',
             display: 'flex',
             gap: 8,
             alignItems: 'center',
-            zIndex: 30,
+            zIndex: 25,
             boxShadow: '0 -6px 18px rgba(0,0,0,0.06)',
           }}
         >
@@ -614,7 +616,7 @@ export default function EditRestaurant() {
               fontFamily: 'var(--font-sans)',
             }}
           >
-            {saving ? 'Salvo…' : form.is_published ? 'Salva' : 'Pubblica'}
+            {saving ? 'Salvo…' : 'Pubblica'}
           </button>
         </div>
       )}
