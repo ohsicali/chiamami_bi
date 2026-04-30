@@ -2123,10 +2123,16 @@ function ScontoHero({ discount }) {
   const isDrop = !!discount.is_drop
   const typeLabel = isDrop ? 'DROP · TEMPO LIMITATO' : 'SCONTO ATTIVO'
 
-  const limit = isDrop ? discount.max_quantity : discount.max_redemptions
-  const used  = isDrop ? (discount.claimed_count || 0) : (discount.total_redeemed || 0)
-  const hasProgress = limit && limit > 0
-  const pct = hasProgress ? Math.min(100, Math.round((used / limit) * 100)) : null
+  // Limite + utilizzi: per i drop preferiamo max_quantity/claimed_count, ma se
+  // non sono compilati ricadiamo su max_redemptions/total_redeemed così la
+  // barra appare comunque (succede quando il drop è creato senza max esplicito).
+  const limit = (isDrop ? (discount.max_quantity ?? discount.max_redemptions) : discount.max_redemptions) || 0
+  const used  = (isDrop ? (discount.claimed_count ?? discount.total_redeemed) : discount.total_redeemed) || 0
+  const hasLimit = limit > 0
+  const pct = hasLimit ? Math.min(100, Math.round((used / limit) * 100)) : null
+  // Il blocco progress lo mostriamo sempre per i drop, e per gli sconti
+  // standard quando esiste un limite. Senza limite mostriamo "X presi" senza barra.
+  const showProgress = isDrop || hasLimit || used > 0
 
   const startIso = isDrop ? discount.drop_starts_at : discount.valid_from
   const endIso   = isDrop ? discount.drop_ends_at   : discount.valid_until
@@ -2164,18 +2170,40 @@ function ScontoHero({ discount }) {
         </div>
       )}
 
-      {hasProgress && (
+      {showProgress && (
         <div className="v4-sconto-progress">
           <div className="v4-sconto-progress-head">
-            <span>{isDrop ? 'Posti rimasti' : 'Utilizzi'}</span>
             <span>
-              <b>{isDrop ? Math.max(0, limit - used) : used}</b>
-              {isDrop ? ` / ${limit}` : ` / ${limit}`}
+              {isDrop
+                ? (hasLimit ? 'Posti disponibili' : 'Sconti riscattati')
+                : 'Utilizzi'}
+            </span>
+            <span>
+              {hasLimit ? (
+                <>
+                  <b>{used}</b>
+                  {' / '}
+                  <span>{limit}</span>
+                </>
+              ) : (
+                <>
+                  <b>{used}</b>
+                  {' '}{used === 1 ? 'preso' : 'presi'}
+                </>
+              )}
             </span>
           </div>
-          <div className="v4-sconto-progress-track">
-            <div className="v4-sconto-progress-fill" style={{ width: `${pct}%` }} />
-          </div>
+          {hasLimit && (
+            <div className="v4-sconto-progress-track">
+              <div className="v4-sconto-progress-fill" style={{ width: `${pct}%` }} />
+            </div>
+          )}
+          {hasLimit && (
+            <div className="v4-sconto-progress-foot">
+              <span>{Math.max(0, limit - used)} ancora disponibili</span>
+              <span>{pct}%</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -2785,11 +2813,6 @@ function OpeningHoursEditor({ value, onChange, disabled }) {
   const setDay = (dayIdx, slots) => {
     onChange({ ...value, [dayIdx]: slots })
   }
-  const toggleDay = (dayIdx) => {
-    const isOpen = (value[dayIdx] || []).length > 0
-    if (isOpen) setDay(dayIdx, [])
-    else setDay(dayIdx, [{ open: '19:00', close: '23:00' }])
-  }
   const addSlot = (dayIdx) => {
     const slots = value[dayIdx] || []
     const last = slots[slots.length - 1]
@@ -2804,6 +2827,7 @@ function OpeningHoursEditor({ value, onChange, disabled }) {
   const updateSlot = (dayIdx, slotIdx, patch) => {
     setDay(dayIdx, (value[dayIdx] || []).map((s, i) => (i === slotIdx ? { ...s, ...patch } : s)))
   }
+  const markClosed = (dayIdx) => setDay(dayIdx, [])
   const copyFromMonday = () => {
     const monday = value[1] || []
     const next = { ...value }
@@ -2834,16 +2858,22 @@ function OpeningHoursEditor({ value, onChange, disabled }) {
                   <span className="full">{full}</span>
                   <span className="short">{short}</span>
                 </div>
-                <button
-                  type="button"
-                  className={`v4-oh-toggle ${isOpen ? 'on' : ''}`}
-                  onClick={() => toggleDay(idx)}
-                  disabled={disabled}
-                  aria-pressed={isOpen}
-                >
-                  {isOpen ? 'Aperto' : 'Chiuso'}
-                </button>
+                {!isOpen && (
+                  <span className="v4-oh-badge closed" aria-hidden="true">Chiuso</span>
+                )}
+                {isOpen && (
+                  <button
+                    type="button"
+                    className="v4-oh-close-btn"
+                    onClick={() => markClosed(idx)}
+                    disabled={disabled}
+                    title="Segna come chiuso"
+                  >
+                    Chiudi
+                  </button>
+                )}
               </div>
+
               {isOpen && (
                 <div className="v4-oh-slots">
                   {slots.map((s, si) => (
@@ -2876,22 +2906,37 @@ function OpeningHoursEditor({ value, onChange, disabled }) {
                       </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    className="v4-oh-addslot"
-                    onClick={() => addSlot(idx)}
-                    disabled={disabled}
-                  >
-                    + Aggiungi turno
-                  </button>
                 </div>
               )}
+
+              <div className="v4-oh-day-actions">
+                <button
+                  type="button"
+                  className="v4-oh-addslot primary"
+                  onClick={() => addSlot(idx)}
+                  disabled={disabled}
+                >
+                  + Aggiungi turno
+                </button>
+                {!isOpen && (
+                  <button
+                    type="button"
+                    className="v4-oh-addslot ghost"
+                    onClick={() => markClosed(idx)}
+                    disabled={disabled}
+                    aria-pressed="true"
+                  >
+                    Chiuso
+                  </button>
+                )}
+              </div>
             </div>
           )
         })}
       </div>
       <div className="v4-oh-hint">
-        Inserisci uno o più turni per ogni giorno (es. pranzo + cena). Gli orari saranno mostrati anche sulla scheda pubblica del locale.
+        Per ogni giorno tocca <b>+ Aggiungi turno</b> per inserire pranzo, cena o un solo turno.
+        Tocca <b>Chiuso</b> per segnare il giorno di chiusura. Gli orari sono mostrati anche sulla scheda pubblica del locale.
       </div>
     </div>
   )
