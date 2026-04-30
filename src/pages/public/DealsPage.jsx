@@ -133,8 +133,8 @@ function DropMini({ deal, onTap, kind = 'live' }) {
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <span style={{
-            background: 'var(--color-corallo-soft, rgba(232,69,60,.08))',
-            color: 'var(--color-corallo-ink, #C6372F)',
+            background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+            color: '#1a4731',
             fontWeight: 800, fontSize: 11, padding: '3px 7px',
             borderRadius: 999, letterSpacing: '-0.01em',
           }}>{deal.discount_value}</span>
@@ -223,9 +223,10 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
       <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div className="flex items-center gap-2 justify-center" style={{ marginBottom: 8 }}>
           <span style={{
-            display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#fff',
-            background: 'var(--color-corallo)',
-            borderRadius: 7, padding: '2px 8px', flexShrink: 0,
+            display: 'inline-block', fontSize: 11, fontWeight: 800,
+            background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+            color: '#1a4731',
+            borderRadius: 999, padding: '2px 8px', flexShrink: 0,
           }}>{deal.discount_value}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{deal.title}</span>
         </div>
@@ -341,8 +342,9 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
         {/* Discount badge */}
         <div style={{
           position: 'absolute', top: 10, right: 10,
-          background: '#fff', color: 'var(--color-primary)',
-          fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 8,
+          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+          color: '#1a4731',
+          fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 999,
         }}>
           {deal.discount_value}
         </div>
@@ -648,10 +650,10 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
           </div>
         )}
         <div style={{
-          background: alreadyUsed ? '#9ca3af' : 'var(--color-corallo)',
-          color: '#fff',
+          background: alreadyUsed ? '#9ca3af' : 'linear-gradient(135deg, #A3E635, #4ADE80)',
+          color: alreadyUsed ? '#fff' : '#1a4731',
           fontSize: 11, fontWeight: 700,
-          padding: '5px 12px', borderRadius: 10,
+          padding: '5px 12px', borderRadius: 999,
           textDecoration: alreadyUsed ? 'line-through' : 'none',
           transition: 'background 0.6s ease, color 0.6s ease',
         }}>
@@ -761,8 +763,8 @@ function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
         }}>{deal?.title}</div>
         <span style={{
           display: 'inline-block', marginTop: 4,
-          background: 'var(--color-corallo-soft, #FCE0DE)',
-          color: 'var(--color-corallo-ink, #8E2620)',
+          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+          color: '#1a4731',
           fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
           borderRadius: 999, letterSpacing: '-0.01em',
         }}>{deal?.discount_value}</span>
@@ -822,8 +824,8 @@ function MyUsedCard({ redemption, onGoTo }) {
         }}>{usedDate ? `Usato il ${usedDate}` : deal?.title}</div>
         <span style={{
           display: 'inline-block', marginTop: 4,
-          background: 'var(--color-corallo-soft, #FCE0DE)',
-          color: 'var(--color-corallo-ink, #8E2620)',
+          background: '#e5e7eb',
+          color: '#6b7280',
           fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
           borderRadius: 999, letterSpacing: '-0.01em',
         }}>{deal?.discount_value}</span>
@@ -1006,9 +1008,10 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           {/* Discount tag + title */}
           <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
             <span style={{
-              display: 'inline-block', fontSize: 13, fontWeight: 800, color: '#fff',
-              background: 'var(--color-corallo)',
-              borderRadius: 8, padding: '3px 12px',
+              display: 'inline-block', fontSize: 13, fontWeight: 800,
+              background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
+              color: '#1a4731',
+              borderRadius: 999, padding: '3px 12px',
             }}>{deal?.discount_value}</span>
             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>{deal?.title}</span>
           </div>
