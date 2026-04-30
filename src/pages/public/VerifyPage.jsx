@@ -381,30 +381,42 @@ function PinView({
     const onKey = (e) => {
       if (isLocked || submitting) return
       if (/^[0-9]$/.test(e.key)) {
-        setPin(prev => {
-          const next = (prev + e.key).slice(0, PIN_LENGTH)
-          if (next.length === PIN_LENGTH) setTimeout(() => onSubmit(next), 0)
-          return next
-        })
+        setPin(prev => (prev + e.key).slice(0, PIN_LENGTH))
       } else if (e.key === 'Backspace') {
         setPin(prev => prev.slice(0, -1))
+      } else if (e.key === 'Enter') {
+        // Submit only when 6 digits entered; access via callback ref to current pin
+        // (handled by the dedicated submit button below; Enter mirrors that button)
+        const evt = new Event('verify-pin-submit')
+        window.dispatchEvent(evt)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [isLocked, submitting, setPin, onSubmit])
+  }, [isLocked, submitting, setPin])
+
+  // Submit when the dispatched event fires AND pin is complete
+  useEffect(() => {
+    const onSubmitEvent = () => {
+      if (isLocked || submitting) return
+      if (pin.length === PIN_LENGTH) onSubmit(pin)
+    }
+    window.addEventListener('verify-pin-submit', onSubmitEvent)
+    return () => window.removeEventListener('verify-pin-submit', onSubmitEvent)
+  }, [isLocked, submitting, pin, onSubmit])
 
   const onPad = (k) => {
     if (isLocked || submitting) return
     if (k === 'del') {
       setPin(p => p.slice(0, -1))
     } else {
-      setPin(p => {
-        const next = (p + k).slice(0, PIN_LENGTH)
-        if (next.length === PIN_LENGTH) setTimeout(() => onSubmit(next), 0)
-        return next
-      })
+      setPin(p => (p + k).slice(0, PIN_LENGTH))
     }
+  }
+
+  const handleSubmitClick = () => {
+    if (isLocked || submitting) return
+    if (pin.length === PIN_LENGTH) onSubmit(pin)
   }
 
   const mins = Math.floor(lockoutRemainingSec / 60)
@@ -586,6 +598,31 @@ function PinView({
           )
         })}
       </div>
+
+      {/* Submit button — Accedi */}
+      <button
+        type="button"
+        onClick={handleSubmitClick}
+        disabled={pin.length !== PIN_LENGTH || submitting}
+        style={{
+          width: '100%',
+          marginTop: 14,
+          padding: '15px 16px',
+          border: 0,
+          borderRadius: 14,
+          background: pin.length === PIN_LENGTH && !submitting ? 'var(--color-corallo)' : 'var(--color-line)',
+          color: pin.length === PIN_LENGTH && !submitting ? '#fff' : 'var(--color-ink-55)',
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 800,
+          fontSize: 15,
+          letterSpacing: '-0.01em',
+          cursor: pin.length === PIN_LENGTH && !submitting ? 'pointer' : 'not-allowed',
+          boxShadow: pin.length === PIN_LENGTH && !submitting ? '0 8px 20px rgba(232,69,60,.28)' : 'none',
+          transition: 'all 0.15s',
+        }}
+      >
+        {submitting ? 'Verifica…' : 'Accedi'}
+      </button>
 
       {/* Footer */}
       <div style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: 'var(--color-ink-55)', fontWeight: 600 }}>
