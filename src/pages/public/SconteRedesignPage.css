@@ -275,18 +275,18 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: #fff;
-  color: var(--sc-corallo);
-  font-family: var(--sc-ff-mark);
-  font-weight: 400;
-  font-size: 15px;
+  background: linear-gradient(135deg, #A3E635, #4ADE80);
+  color: #1a4731;
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 12px;
   padding: 4px 9px;
-  border-radius: 8px;
+  border-radius: 999px;
   letter-spacing: -0.3px;
   line-height: 1;
 }
 @media (min-width: 768px) {
-  .sc-drop .sc-badge-pct { top: 12px; left: 12px; font-size: 20px; padding: 6px 12px; border-radius: 9px; }
+  .sc-drop .sc-badge-pct { top: 12px; left: 12px; font-size: 16px; padding: 6px 12px; border-radius: 999px; }
 }
 .sc-badge-time {
   position: absolute;
@@ -1152,24 +1152,23 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: var(--sc-corallo);
-  color: #fff;
-  font-family: var(--sc-ff-mark);
-  font-weight: 400;
-  font-size: 13px;
+  background: linear-gradient(135deg, #A3E635, #4ADE80);
+  color: #1a4731;
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 12px;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   letter-spacing: -0.3px;
-  box-shadow: 0 2px 8px rgba(232, 69, 60, 0.18);
+  box-shadow: 0 2px 8px rgba(74, 222, 128, 0.25);
   line-height: 1;
 }
 @media (min-width: 768px) {
   .sc-conv .sc-badge-pct {
     top: 10px;
     left: 10px;
-    font-size: 14px;
+    font-size: 13px;
     padding: 4px 10px;
-    border-radius: 7px;
   }
 }
 /* Freebie: badge verde sfumato (label invece di percentuale) */
