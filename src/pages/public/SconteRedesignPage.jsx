@@ -618,8 +618,10 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
   const claimed = deal.claimed_count || deal.total_redeemed || 0
   const max = deal.max_quantity || deal.max_redemptions || 0
   const pct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
+  const remaining = Math.max(0, max - claimed)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' | ')
+  const location = r?.neighborhood || r?.city
+  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
 
   const status = redemption?.status
   const isSaved = status === 'generated'
@@ -657,12 +659,20 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
       </div>
       <div className="sc-body-c">
         <h4>{r?.name || deal.title}</h4>
-        {meta && <div className="sc-meta">{meta}</div>}
+        {r?.tagline && <div className="sc-drop-tagline">{r.tagline}</div>}
+        <div className="sc-meta sc-drop-meta">
+          {cuisine && <span className="sc-cat sc-cat-drop">{categoryEmoji(cuisine)} {cuisine}</span>}
+          {location && <><span className="sc-sep">|</span><span>{location}</span></>}
+          {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
+        </div>
         <div className="sc-pill-row"><span className="sc-drop-pct-inline">{dealBadgeText(deal)}</span></div>
         {max > 0 && (
           <div className="sc-progress">
+            <div className="sc-progress-labels">
+              <span>{claimed} presi</span>
+              <span className={remaining <= 3 ? 'sc-few' : ''}>{remaining > 0 ? `${remaining} rimasti` : 'Esauriti'}</span>
+            </div>
             <div className="sc-bar"><i style={{ width: `${pct}%` }} /></div>
-            <span>{claimed}/{max} presi</span>
           </div>
         )}
         <div className="sc-drop-actions">
