@@ -1201,7 +1201,7 @@
 }
 .sc-conv .sc-ph {
   position: relative;
-  width: 108px;
+  width: 140px;
   flex-shrink: 0;
   align-self: stretch;
   background: #dcd0c0;
@@ -1217,18 +1217,18 @@
   display: block;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-ph { width: 128px; }
+  .sc-conv .sc-ph { width: 164px; }
 }
 .sc-conv .sc-badge-pct {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 10px;
+  left: 10px;
   background: linear-gradient(135deg, #A3E635, #4ADE80);
   color: #1a4731;
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
-  font-size: 12px;
-  padding: 3px 8px;
+  font-size: 14px;
+  padding: 4px 10px;
   border-radius: 999px;
   letter-spacing: -0.3px;
   box-shadow: 0 2px 8px rgba(74, 222, 128, 0.25);
@@ -1236,10 +1236,10 @@
 }
 @media (min-width: 768px) {
   .sc-conv .sc-badge-pct {
-    top: 10px;
-    left: 10px;
-    font-size: 13px;
-    padding: 4px 10px;
+    top: 12px;
+    left: 12px;
+    font-size: 16px;
+    padding: 5px 12px;
   }
 }
 /* Freebie: badge verde sfumato (label invece di percentuale) */
