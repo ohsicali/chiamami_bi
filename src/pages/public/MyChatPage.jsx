@@ -147,6 +147,8 @@ function ConversationRow({ conversation, onDelete }) {
         textDecoration: 'none',
         color: 'inherit',
         transition: 'border-color .15s ease, transform .1s ease',
+        overflow: 'hidden',
+        minWidth: 0,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-corallo)' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink-05)' }}
