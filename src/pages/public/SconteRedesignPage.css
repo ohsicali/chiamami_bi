@@ -511,12 +511,12 @@
   background: var(--sc-paper);
   border: 1px solid var(--sc-line);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: row;
-  align-items: stretch;
-  gap: 0;
-  padding: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 11px;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1196,15 +1196,11 @@
    bordo, body bianco con top-info + bottom-row.
    La foto stretch-a all'altezza del body (no white-space sotto). L'img è in
    position absolute così la sua altezza naturale non spinge la card. */
-.sc-conv {
-  align-items: stretch;
-}
 .sc-conv .sc-ph {
   position: relative;
   width: 80px;
   height: 80px;
   flex-shrink: 0;
-  align-self: center;
   background: #dcd0c0;
   overflow: visible;
   border-radius: 14px;
@@ -1258,7 +1254,7 @@
    top-info + pill+giorni), CTA a destra verticalmente centrata. */
 .sc-conv .sc-body-c {
   flex: 1;
-  padding: 11px 14px;
+  padding: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1267,7 +1263,8 @@
   gap: 10px;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-body-c { padding: 14px 16px; gap: 12px; }
+  .sc-conv .sc-body-c { gap: 12px; }
+  .sc-conv { gap: 14px; padding: 14px 16px; }
 }
 .sc-conv .sc-info-stack {
   flex: 1;
