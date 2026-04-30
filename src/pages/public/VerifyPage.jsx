@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import './VerifyPage.css'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
-import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { LogoFull } from '../../components/UI/Logo'
 import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 import SuccessResult from '../../components/Verify/SuccessResult'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
@@ -618,325 +616,263 @@ function PinView({
 }
 
 /* ------------------------------------------------------------------ */
-/*  AuthedView — header ristorante + tab bar + corpo tab              */
+/*  AuthedView — shell mobile (v4-verify) + scanner overlay          */
 /* ------------------------------------------------------------------ */
 function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
-  const [tab, setTab] = useState('verify')
+  const [tab, setTab] = useState('dashboard')
+  const [scanning, setScanning] = useState(false)
+  const isDesktop = useIsDesktop()
+
+  const openScanner = () => setScanning(true)
+  const closeScanner = () => setScanning(false)
+
+  if (isDesktop) {
+    return (
+      <DesktopShell
+        restaurant={restaurant}
+        onLogout={onLogout}
+        deviceToken={deviceToken}
+        onSessionExpired={onSessionExpired}
+        tab={tab}
+        onTabChange={setTab}
+        scanning={scanning}
+        onOpenScanner={openScanner}
+        onCloseScanner={closeScanner}
+      />
+    )
+  }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--color-page)' }}>
-      <RestaurantHeader restaurant={restaurant} onLogout={onLogout} />
-      <TabBar tab={tab} onChange={setTab} />
-      <div style={{ padding: 0 }}>
-        {tab === 'verify' ? (
-          <VerifyTab restaurant={restaurant} />
-        ) : (
+    <div className="v4-shell">
+      <VerifyTopBar restaurant={restaurant} onLogout={onLogout} />
+      <VerifyPillTabs tab={tab} onChange={setTab} />
+      <div className="v4-content">
+        {tab === 'dashboard' && (
           <DashboardTab
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+            onOpenScanner={openScanner}
+            onJumpToStorico={() => setTab('storico')}
+          />
+        )}
+        {tab === 'storico' && (
+          <StoricoTab
             restaurant={restaurant}
             deviceToken={deviceToken}
             onSessionExpired={onSessionExpired}
           />
         )}
+        {tab === 'impostazioni' && (
+          <ImpostazioniTab restaurant={restaurant} onLogout={onLogout} />
+        )}
       </div>
+      {tab !== 'impostazioni' && <FloatingScanCTA onClick={openScanner} />}
+      {scanning && (
+        <ScannerOverlay
+          restaurant={restaurant}
+          onClose={closeScanner}
+        />
+      )}
     </div>
   )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Header ristorante (barra scura, mobile + desktop)                 */
-/* ------------------------------------------------------------------ */
-function RestaurantHeader({ restaurant, onLogout }) {
+/* Mobile top bar (cream) — wordmark + ristorante + avatar + logout */
+function VerifyTopBar({ restaurant, onLogout }) {
   const firstPhoto = restaurant?.photos?.[0]
   const photoUrl = firstPhoto
     ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url)
     : null
-
-  const categoryName = (() => {
-    const first = Array.isArray(restaurant?.category) && restaurant.category.length > 0
-      ? restaurant.category[0]
-      : restaurant?.cuisine_type
-    if (!first) return null
-    const info = getCategoryInfo(first)
-    return info?.name || first
-  })()
-
-  const subtitle = [categoryName, restaurant?.address].filter(Boolean).join(' · ')
-  const isDesktop = useIsDesktop()
+  const initial = (restaurant?.name || 'B').trim().charAt(0).toUpperCase()
 
   return (
-    <>
-      {/* Brand bar — ChiamamiBi logo, taller with centered mark on mobile.
-          Desktop already has DesktopNavbar (see App.jsx via desktop-nav-offset). */}
-      {!isDesktop && (
-      <div
-        style={{
-          background: 'var(--color-ink)',
-          padding: '20px 16px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <LogoFull height={28} />
+    <div className="v4-top">
+      <div className="v4-top-logo">
+        LA GUIDA DI BI
+        <small>{restaurant?.name || 'Area ristoratori'}</small>
       </div>
-      )}
-
-      {/* Mobile */}
-      {!isDesktop && (
-      <div
-        style={{
-          background: 'var(--color-ink)',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
+      <button
+        type="button"
+        onClick={onLogout}
+        className="v4-top-logout"
+        aria-label="Esci"
       >
-        <RestaurantAvatar photoUrl={photoUrl} size={36} radius={10} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#fff',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {restaurant?.name}
-          </div>
-          {subtitle && (
-            <div
-              style={{
-                fontSize: 9,
-                color: 'rgba(255,255,255,0.3)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                marginTop: 1,
-              }}
-            >
-              {subtitle}
-            </div>
-          )}
-        </div>
-        <GuideBadge compact />
-        <button
-          onClick={onLogout}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'rgba(255,255,255,0.35)',
-            fontSize: 10,
-            fontWeight: 500,
-            padding: 6,
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          Esci
-        </button>
+        Esci
+      </button>
+      <div className="v4-top-av" aria-hidden="true">
+        {photoUrl ? <img src={photoUrl} alt="" loading="lazy" /> : initial}
       </div>
-      )}
-
-      {/* Desktop */}
-      {isDesktop && (
-      <div
-        className="desktop-nav-offset"
-        style={{
-          background: 'var(--color-ink)',
-          padding: '16px 32px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-        }}
-      >
-        <RestaurantAvatar photoUrl={photoUrl} size={48} radius={12} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 18,
-              color: '#fff',
-              fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em',
-            }}
-          >
-            {restaurant?.name}
-          </div>
-          {subtitle && (
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-              {subtitle}
-            </div>
-          )}
-        </div>
-        <GuideBadge />
-        <button
-          onClick={onLogout}
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: 12,
-            fontWeight: 500,
-            padding: '8px 16px',
-            borderRadius: 10,
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          Esci
-        </button>
-      </div>
-      )}
-    </>
+    </div>
   )
 }
 
-function RestaurantAvatar({ photoUrl, size, radius }) {
+/* Pill tab bar — 3 tab (Dashboard / Storico / Impostazioni) */
+const V4_TABS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'storico', label: 'Storico' },
+  { key: 'impostazioni', label: 'Impostazioni' },
+]
+
+function VerifyPillTabs({ tab, onChange }) {
   return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: radius,
-        overflow: 'hidden',
-        flexShrink: 0,
-        background: 'rgba(255,255,255,0.06)',
+    <div className="v4-tabs" role="tablist">
+      {V4_TABS.map((t) => (
+        <button
+          key={t.key}
+          role="tab"
+          aria-selected={tab === t.key}
+          className={`v4-tab ${tab === t.key ? 'on' : ''}`}
+          onClick={() => onChange(t.key)}
+          type="button"
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* Floating scan CTA — corallo, fixed at bottom */
+function FloatingScanCTA({ onClick }) {
+  return (
+    <button
+      type="button"
+      className="v4-scan-cta"
+      onClick={onClick}
+      aria-label="Scansiona QR"
+    >
+      <span className="ic" aria-hidden="true">⌑</span>
+      <span className="body">
+        <span className="t">Scansiona QR</span>
+        <span className="s">Verifica lo sconto del cliente</span>
+      </span>
+      <span className="arr" aria-hidden="true">›</span>
+    </button>
+  )
+}
+
+/* Stub Impostazioni — sostituito con versione completa nel commit successivo */
+function ImpostazioniTab({ restaurant, onLogout }) {
+  return (
+    <div style={{ paddingTop: 8 }}>
+      <div className="v4-set-card">
+        <a className="v4-set-row" href="mailto:info@chiamamibi.com">
+          <span className="ic">B</span>
+          <span className="body">
+            <span className="t">Bi · Augusto</span>
+            <span className="s">info@chiamamibi.com</span>
+          </span>
+          <span className="arr">›</span>
+        </a>
+        <div className="v4-set-row">
+          <span className="ic">🏷</span>
+          <span className="body">
+            <span className="t">{restaurant?.name || '—'}</span>
+            <span className="s">{restaurant?.address || ''}</span>
+          </span>
+        </div>
+      </div>
+      <div className="v4-set-card">
+        <button className="v4-set-row danger" type="button" onClick={onLogout}>
+          <span className="ic">⏻</span>
+          <span className="body">
+            <span className="t">Esci da quest&apos;area</span>
+            <span className="s">Dovrai re-inserire il PIN per rientrare</span>
+          </span>
+          <span className="arr">›</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* Stub Storico — usa il DashboardTab esistente per ora; visual proper nel commit successivo */
+function StoricoTab({ restaurant, deviceToken, onSessionExpired }) {
+  return (
+    <DashboardTab
+      restaurant={restaurant}
+      deviceToken={deviceToken}
+      onSessionExpired={onSessionExpired}
+    />
+  )
+}
+
+/* Stub Scanner overlay — wrappa VerifyTab in overlay nero con close.
+   Sostituito con versione full-bleed black + corner brackets nel commit successivo. */
+function ScannerOverlay({ restaurant, onClose }) {
+  // Lock body scroll while overlay is open
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  return (
+    <div className="v4-scan-overlay" role="dialog" aria-label="Scansiona QR">
+      <div className="v4-scan-top">
+        <button
+          type="button"
+          className="v4-scan-icon-btn"
+          onClick={onClose}
+          aria-label="Chiudi scanner"
+        >
+          ✕
+        </button>
+        <div className="v4-scan-title">Scansiona QR</div>
+        <span style={{ width: 40, height: 40, flex: '0 0 auto' }} aria-hidden="true" />
+      </div>
+      <div style={{
+        position: 'absolute',
+        inset: 'max(80px, env(safe-area-inset-top)) 16px max(120px, env(safe-area-inset-bottom)) 16px',
+        zIndex: 5,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-      }}
-    >
-      {photoUrl ? (
-        <img
-          src={photoUrl}
-          alt=""
-          loading="lazy"
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      ) : (
-        <span style={{ fontSize: size * 0.42 }}>🍽️</span>
-      )}
-    </div>
-  )
-}
-
-function GuideBadge({ compact }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 5,
-        background: 'rgba(74,222,128,0.12)',
-        color: 'var(--color-success)',
-        borderRadius: 999,
-        padding: compact ? '3px 8px' : '5px 12px',
-        fontSize: compact ? 8 : 10,
-        fontWeight: 700,
-        letterSpacing: 0.4,
-        textTransform: 'uppercase',
-        flexShrink: 0,
-      }}
-    >
-      <span
-        style={{
-          width: compact ? 4 : 6,
-          height: compact ? 4 : 6,
-          borderRadius: '50%',
-          background: 'var(--color-success)',
-        }}
-      />
-      Nella guida
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Tab bar (Verifica QR / Dashboard)                                 */
-/* ------------------------------------------------------------------ */
-const TABS = [
-  { key: 'verify', label: 'Verifica QR' },
-  { key: 'dashboard', label: 'Dashboard' },
-]
-
-function TabBar({ tab, onChange }) {
-  return (
-    <div
-      style={{
-        background: 'var(--color-ink)',
-        display: 'flex',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      {TABS.map((t) => {
-        const active = tab === t.key
-        return (
-          <button
-            key={t.key}
-            onClick={() => onChange(t.key)}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              padding: '14px 8px',
-              color: active ? '#fff' : 'rgba(255,255,255,0.35)',
-              fontSize: 13,
-              fontWeight: active ? 600 : 500,
-              cursor: 'pointer',
-              position: 'relative',
-              fontFamily: 'inherit',
-              transition: 'color 0.15s',
-            }}
-          >
-            {t.label}
-            {active && (
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  bottom: 0,
-                  width: 60,
-                  height: 3,
-                  background: 'var(--color-corallo)',
-                  borderRadius: '3px 3px 0 0',
-                }}
-              />
-            )}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Placeholder tab (rimpiazzati in Step 4 e 5)                       */
-/* ------------------------------------------------------------------ */
-function TabPlaceholder({ title, description }) {
-  return (
-    <div
-      style={{
-        padding: '40px 20px',
-        textAlign: 'center',
-        color: 'var(--color-ink-55)',
-        maxWidth: 480,
-        margin: '0 auto',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'var(--color-ink)',
-          marginBottom: 6,
-        }}
-      >
-        {title}
+      }}>
+        <div style={{ width: '100%', maxWidth: 480 }}>
+          <VerifyTab restaurant={restaurant} onResultDone={onClose} />
+        </div>
       </div>
-      <div style={{ fontSize: 12, lineHeight: 1.5 }}>{description}</div>
+    </div>
+  )
+}
+
+/* Desktop placeholder shell — usa la stessa struttura mobile per ora.
+   Sostituito con sidebar back-office nel commit successivo. */
+function DesktopShell({
+  restaurant, onLogout, deviceToken, onSessionExpired,
+  tab, onTabChange, scanning, onOpenScanner, onCloseScanner,
+}) {
+  return (
+    <div className="v4-shell">
+      <VerifyTopBar restaurant={restaurant} onLogout={onLogout} />
+      <VerifyPillTabs tab={tab} onChange={onTabChange} />
+      <div className="v4-content" style={{ maxWidth: 720 }}>
+        {tab === 'dashboard' && (
+          <DashboardTab
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+            onOpenScanner={onOpenScanner}
+            onJumpToStorico={() => onTabChange('storico')}
+          />
+        )}
+        {tab === 'storico' && (
+          <StoricoTab
+            restaurant={restaurant}
+            deviceToken={deviceToken}
+            onSessionExpired={onSessionExpired}
+          />
+        )}
+        {tab === 'impostazioni' && (
+          <ImpostazioniTab restaurant={restaurant} onLogout={onLogout} />
+        )}
+      </div>
+      {tab !== 'impostazioni' && <FloatingScanCTA onClick={onOpenScanner} />}
+      {scanning && (
+        <ScannerOverlay restaurant={restaurant} onClose={onCloseScanner} />
+      )}
     </div>
   )
 }
