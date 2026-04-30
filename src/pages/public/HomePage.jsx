@@ -108,7 +108,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
               {restaurant.tagline}
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2, flexWrap: 'nowrap', overflow: 'hidden' }}>
             {category && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 2,
@@ -117,11 +117,12 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
                 fontSize: 9, fontWeight: 600,
                 padding: '1px 6px', borderRadius: 12,
                 whiteSpace: 'nowrap',
+                overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0,
               }}>
                 {category.emoji} {category.name}
               </span>
             )}
-            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600 }}>{priceStr}</span>}
+            {priceStr && <span style={{ fontSize: 10, color: '#555', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{priceStr}</span>}
           </div>
           {distance != null && (
             <div style={{ fontSize: 10, color: '#8A8680', fontWeight: 500 }}>
