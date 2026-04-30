@@ -1069,176 +1069,6 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
   )
 }
 
-/* Storico tab — riepilogo + filtri + log raggruppato per data */
-function StoricoTab({ restaurant, deviceToken, onSessionExpired }) {
-  const [activity, setActivity] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // all | today | week | problems
-  const [reloadKey, setReloadKey] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      try {
-        const { data } = await supabase.rpc('verify_activity_list', {
-          p_restaurant_id: restaurant.id,
-          p_device_token: deviceToken,
-          p_limit: 100,
-        })
-        if (cancelled) return
-        if (data?.error === 'unauthorized') {
-          onSessionExpired?.()
-          return
-        }
-        setActivity(Array.isArray(data?.items) ? data.items : [])
-      } catch (e) {
-        console.error('storico load error', e)
-        if (!cancelled) setActivity([])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired])
-
-  // Riepilogo: tutti i record (no filtro applicato)
-  const totalCount = activity.length
-  const okCount = activity.filter((a) => a.status === 'redeemed').length
-  const pendingCount = activity.filter((a) => a.status !== 'redeemed').length
-
-  // Applico filtro periodo / problemi
-  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
-  const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - 7)
-  const filteredActivity = activity.filter((a) => {
-    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
-    const ts = date ? new Date(date).getTime() : 0
-    if (filter === 'today') return ts >= startOfToday.getTime()
-    if (filter === 'week') return ts >= startOfWeek.getTime()
-    if (filter === 'problems') return a.status !== 'redeemed'
-    return true
-  })
-
-  // Raggruppo per data (yyyy-mm-dd)
-  const groups = {}
-  filteredActivity.forEach((a) => {
-    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
-    if (!date) return
-    const d = new Date(date)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    if (!groups[key]) groups[key] = []
-    groups[key].push(a)
-  })
-  const sortedKeys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1))
-  const todayKey = (() => {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  })()
-  const yesterdayKey = (() => {
-    const d = new Date(); d.setDate(d.getDate() - 1)
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  })()
-  const labelForKey = (k) => {
-    if (k === todayKey) return 'Oggi'
-    if (k === yesterdayKey) return 'Ieri'
-    const [y, m, d] = k.split('-')
-    return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
-  }
-
-  if (loading) {
-    return (
-      <div style={{ padding: '40px 20px 100px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
-        <div style={{
-          width: 28, height: 28,
-          border: '3px solid var(--color-line)',
-          borderTopColor: 'var(--color-corallo)',
-          borderRadius: '50%',
-          margin: '0 auto 12px',
-          animation: 'verifySpin 0.8s linear infinite',
-        }} />
-        <div style={{ fontSize: 12 }}>Caricamento storico…</div>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <div className="v4-rate-card" style={{ padding: 18 }}>
-        <div className="v4-rate-head">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 28,
-              letterSpacing: '-0.03em', lineHeight: 1,
-            }}>{totalCount}</div>
-            <div style={{
-              fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 700, marginTop: 4,
-            }}>verifiche · ultime 100</div>
-          </div>
-        </div>
-        <div className="v4-rate-tiles">
-          <div className="v4-rate-tile">
-            <div className="v">{okCount}</div>
-            <div className="l">OK</div>
-          </div>
-          <div className="v4-rate-tile">
-            <div className="v" style={{ color: 'var(--color-corallo)' }}>{pendingCount}</div>
-            <div className="l">in attesa</div>
-          </div>
-          <div className="v4-rate-tile">
-            <div className="v">
-              {totalCount > 0 ? Math.round((okCount / totalCount) * 100) : 0}%
-            </div>
-            <div className="l">tasso ok</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="v4-chip-row">
-        {[
-          { k: 'all', l: 'Tutti' },
-          { k: 'today', l: 'Oggi' },
-          { k: 'week', l: '7 giorni' },
-          { k: 'problems', l: 'Problemi' },
-        ].map((c) => (
-          <button
-            key={c.k}
-            type="button"
-            className={`v4-chip ${filter === c.k ? 'on' : ''}`}
-            onClick={() => setFilter(c.k)}
-          >
-            {c.l}
-          </button>
-        ))}
-        <button
-          type="button"
-          className="v4-chip"
-          onClick={() => setReloadKey((k) => k + 1)}
-          aria-label="Aggiorna"
-          title="Aggiorna"
-          style={{ marginLeft: 'auto' }}
-        >
-          ↻
-        </button>
-      </div>
-
-      {sortedKeys.length === 0 ? (
-        <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 600 }}>
-            Nessuna verifica nel filtro selezionato.
-          </div>
-        </div>
-      ) : (
-        sortedKeys.map((k) => (
-          <div key={k}>
-            <div className="v4-section-lbl">{labelForKey(k)}</div>
-            <V4ActivityLog items={groups[k]} />
-          </div>
-        ))
-      )}
-    </>
-  )
-}
 
 /* Stub Scanner overlay — wrappa VerifyTab in overlay nero con close.
    Sostituito con versione full-bleed black + corner brackets nel commit successivo. */
@@ -1457,7 +1287,7 @@ function ScannerOverlay({ restaurant, onClose }) {
         >
           ✕
         </button>
-        <div className="v4-scan-title">{mode === 'manual' ? 'Inserisci codice' : 'Scansiona QR'}</div>
+        <div className="v4-scan-title">{mode === 'manual' ? 'Inserisci il codice' : 'Scansiona il QR'}</div>
         {mode === 'camera' && camStatus === 'running' ? (
           <button
             type="button"
@@ -1490,10 +1320,10 @@ function ScannerOverlay({ restaurant, onClose }) {
               </div>
               <div className="v4-scan-bottom">
                 <button type="button" className="v4-scan-btn" onClick={() => setMode('manual')}>
-                  ⌨︎ Inserisci codice
+                  ⌨︎  Inserisci codice
                 </button>
                 <a className="v4-scan-btn" href="mailto:info@chiamamibi.com" style={{ textDecoration: 'none' }}>
-                  ? Aiuto
+                  ?  Aiuto
                 </a>
               </div>
               {camStatus === 'starting' && (
@@ -1567,8 +1397,12 @@ function ScannerOverlay({ restaurant, onClose }) {
       {/* MANUAL mode: full-screen black input form */}
       {mode === 'manual' && (
         <form className="v4-scan-manual" onSubmit={handleManualSubmit}>
-          <h2>Inserisci codice</h2>
-          <p>Scrivi il codice <code style={{ color: '#fff', fontWeight: 700 }}>BiSc-XXXXXXXX</code> mostrato sotto il QR del cliente</p>
+          <h2>Inserisci il codice</h2>
+          <p>
+            Scrivi il codice{' '}
+            <code style={{ color: '#fff', fontWeight: 700 }}>BiSc-XXXXXXXX</code>
+            {' '}mostrato sotto il QR del cliente.
+          </p>
           <input
             ref={inputRef}
             type="text"
@@ -2325,11 +2159,11 @@ function relativeTimeIt(iso) {
   }
   if (diffSec < 86400) {
     const h = Math.floor(diffSec / 3600)
-    return `${h}h fa`
+    return `${h} h fa`
   }
   if (diffSec < 86400 * 2) return 'ieri'
   const d = Math.floor(diffSec / 86400)
-  if (d < 7) return `${d}g fa`
+  if (d < 7) return `${d} giorni fa`
   return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
 }
 
