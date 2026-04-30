@@ -581,7 +581,7 @@ export default function HomeFeedV4() {
       restaurantName: r.name,
       restLine,
       subtitle: subtitleParts.join(' · '),
-      cta: 'Vai al drop',
+      cta: 'Sblocca sconto',
       secondaryCta: `Scopri ${r.name}`,
       href: `/restaurant/${r.slug}`,
       photo,

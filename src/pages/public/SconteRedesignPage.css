@@ -432,21 +432,19 @@
 .sc-conv {
   background: var(--sc-paper);
   border: 1px solid var(--sc-line);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  gap: 12px;
-  padding: 12px;
+  gap: 0;
+  padding: 0;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 @media (min-width: 768px) {
   .sc-conv {
-    padding: 14px;
-    gap: 14px;
-    border-radius: 18px;
+    border-radius: 16px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   }
   .sc-conv:hover {
@@ -454,55 +452,6 @@
     border-color: var(--sc-corallo);
     box-shadow: 0 8px 24px rgba(34, 24, 28, 0.06);
   }
-}
-
-/* riga "valore deal · prima condizione" sotto la cuisine */
-.sc-conv .sc-conv-line {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--sc-ink-2);
-  line-height: 1.35;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.sc-conv .sc-conv-line strong {
-  color: var(--sc-ink);
-  font-weight: 700;
-  letter-spacing: -0.1px;
-}
-.sc-conv .sc-conv-line .sc-dot { color: var(--sc-ink-3); }
-.sc-conv .sc-conv-line .sc-cond { color: var(--sc-ink-3); }
-@media (min-width: 768px) {
-  .sc-conv .sc-conv-line { font-size: 12px; margin-top: 5px; }
-}
-
-/* azioni: due bottoni in riga, allineati al centro verticale */
-.sc-conv .sc-conv-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-  align-self: center;
-}
-.sc-conv .sc-cta-info {
-  background: transparent;
-  color: var(--sc-ink-2);
-  border: 1px solid var(--sc-line);
-  padding: 6px 12px;
-  border-radius: 99px;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.sc-conv .sc-cta-info:hover { border-color: var(--sc-ink-3); color: var(--sc-ink); }
-@media (min-width: 768px) {
-  .sc-conv .sc-cta-info { font-size: 11.5px; padding: 7px 14px; }
 }
 
 /* ============================================================================
@@ -1166,14 +1115,16 @@
   .sc-drop-card-title { font-size: 15.5px; }
   .sc-drop-card-desc { font-size: 13px; }
 }
+/* §12.2 — conv-clean: foto sq 108px (mobile) / 128px (desktop) attaccata
+   al bordo, body bianco con top-info + bottom-row. */
 .sc-conv .sc-ph {
   position: relative;
-  width: 88px;
-  height: 88px;
+  width: 108px;
   flex-shrink: 0;
-  border-radius: 14px;
+  align-self: stretch;
   background: #dcd0c0;
   overflow: hidden;
+  border-radius: 0;
 }
 .sc-conv .sc-ph img {
   width: 100%;
@@ -1182,76 +1133,80 @@
   display: block;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-ph {
-    /* Identico a ListView: 88×88, borderRadius 14. */
-    width: 88px;
-    height: 88px;
-    border-radius: 14px;
-  }
+  .sc-conv .sc-ph { width: 128px; }
 }
 .sc-conv .sc-badge-pct {
   position: absolute;
-  top: 5px;
-  left: 5px;
+  top: 8px;
+  left: 8px;
+  background: var(--sc-corallo);
+  color: #fff;
+  font-family: var(--sc-ff-mark);
+  font-weight: 400;
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: -0.3px;
+  box-shadow: 0 2px 8px rgba(232, 69, 60, 0.18);
+  line-height: 1;
+}
+@media (min-width: 768px) {
+  .sc-conv .sc-badge-pct {
+    top: 10px;
+    left: 10px;
+    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 7px;
+  }
+}
+/* Freebie: badge verde sfumato (label invece di percentuale) */
+.sc-conv .sc-badge-pct.is-freebie {
   background: linear-gradient(135deg, #A3E635, #4ADE80);
   color: #1a4731;
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
   font-size: 10px;
-  padding: 3px 8px;
   border-radius: 999px;
-  letter-spacing: 0.02em;
+  padding: 3px 8px;
   box-shadow: 0 2px 8px rgba(74, 222, 128, 0.2);
 }
-@media (min-width: 768px) {
-  .sc-conv .sc-badge-pct {
-    top: 6px;
-    left: 6px;
-    font-size: 11px;
-    padding: 4px 9px;
-    border-radius: 999px;
-  }
-}
-/* Variante coral disattivata: tutti i badge convenzione vanno verde sfumato
-   come richiesto, per coerenza con il resto dell'app. */
-.sc-conv .sc-badge-pct.is-coral {
-  background: linear-gradient(135deg, #A3E635, #4ADE80);
-  color: #1a4731;
-}
 .sc-conv .sc-body-c {
-  padding: 0;
+  flex: 1;
+  padding: 11px 14px;
   display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  justify-content: space-between;
   min-width: 0;
+  gap: 8px;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-body-c { padding: 0; align-items: center; gap: 12px; flex: 1; }
+  .sc-conv .sc-body-c { padding: 14px 16px; }
 }
-.sc-conv .sc-info {
-  flex: 1;
-  min-width: 0;
-}
+.sc-conv .sc-top-info { min-width: 0; }
 .sc-conv h4 {
-  font-size: 13.5px;
-  font-weight: 800;
+  font-family: var(--sc-ff-mark);
+  font-weight: 400;
+  font-size: 16px;
   color: var(--sc-ink);
-  line-height: 1.2;
-  margin: 0 0 2px;
-  letter-spacing: -0.2px;
+  line-height: 1.05;
+  margin: 0 0 3px;
+  letter-spacing: 0.2px;
 }
 @media (min-width: 768px) {
-  .sc-conv h4 { font-size: 17px; margin-bottom: 4px; letter-spacing: -0.3px; }
+  .sc-conv h4 { font-size: 18px; margin-bottom: 4px; }
 }
 .sc-conv .sc-meta {
   font-size: 10.5px;
   color: var(--sc-ink-3);
   font-weight: 500;
   line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-meta { font-size: 11.5px; }
+  .sc-conv .sc-meta { font-size: 11.5px; gap: 6px; }
 }
 .sc-conv .sc-cat {
   display: inline-block;
@@ -1259,13 +1214,35 @@
   color: var(--sc-corallo-ink);
   font-size: 9px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 1.5px 6px;
   border-radius: 99px;
   letter-spacing: 0.3px;
-  margin-right: 3px;
 }
 @media (min-width: 768px) {
-  .sc-conv .sc-cat { font-size: 9.5px; padding: 2px 7px; margin-right: 4px; }
+  .sc-conv .sc-cat { font-size: 9.5px; padding: 2px 7px; }
+}
+.sc-conv .sc-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sc-conv .sc-left-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+.sc-conv .sc-when {
+  font-size: 10px;
+  color: var(--sc-ink-3);
+  font-weight: 500;
+  line-height: 1.2;
+}
+@media (min-width: 768px) {
+  .sc-conv .sc-when { font-size: 11px; }
 }
 .sc-cta-mini {
   background: var(--sc-ink);
@@ -1329,16 +1306,44 @@
   height: 54px;
   border-radius: 11px;
   background: #dcd0c0;
-  overflow: hidden;
+  overflow: visible; /* let pct-corner peek out */
   flex-shrink: 0;
+  position: relative;
+}
+.sc-mine-row .sc-ph-mini > img,
+.sc-mine-row .sc-ph-mini > div:first-child {
+  border-radius: 11px;
+  overflow: hidden;
 }
 .sc-mine-row .sc-ph-mini img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 @media (min-width: 768px) {
-  .sc-mine-row .sc-ph-mini { width: 60px; height: 60px; border-radius: 12px; }
+  .sc-mine-row .sc-ph-mini { width: 56px; height: 56px; border-radius: 11px; }
+}
+/* pct-corner badge: corallo con bordo bianco che esce dalla foto bottom-right */
+.sc-mine-row .sc-pct-corner {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--sc-corallo);
+  color: #fff;
+  font-family: var(--sc-ff-mark);
+  font-weight: 400;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  letter-spacing: -0.2px;
+  line-height: 1;
+  border: 2px solid var(--sc-paper);
+  white-space: nowrap;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .sc-mine-row .sc-pct-corner { font-size: 11px; padding: 2px 7px; }
 }
 .sc-mine-row .sc-info {
   flex: 1;
@@ -1351,93 +1356,27 @@
   .sc-mine-row .sc-info { gap: 3px; }
 }
 .sc-mine-row .sc-info h4 {
-  font-size: 13.5px;
-  font-weight: 700;
+  font-family: var(--sc-ff-mark);
+  font-weight: 400;
+  font-size: 15px;
   color: var(--sc-ink);
-  line-height: 1.2;
-  letter-spacing: -0.2px;
-  margin: 0;
+  line-height: 1.05;
+  letter-spacing: 0.2px;
+  margin: 0 0 2px;
 }
 @media (min-width: 768px) {
-  .sc-mine-row .sc-info h4 { font-size: 15.5px; }
+  .sc-mine-row .sc-info h4 { font-size: 16px; margin-bottom: 3px; }
 }
 .sc-mine-row .sc-info .sc-meta {
   font-size: 10.5px;
   color: var(--sc-ink-3);
   font-weight: 500;
   line-height: 1.3;
+  margin-bottom: 5px;
 }
 @media (min-width: 768px) {
-  .sc-mine-row .sc-info .sc-meta { font-size: 12px; }
+  .sc-mine-row .sc-info .sc-meta { font-size: 11.5px; }
 }
-.sc-mine-row .sc-badge-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 3px;
-  flex-wrap: wrap;
-}
-@media (min-width: 768px) {
-  /* Su desktop: nome + meta a sinistra, badges in colonna destra accanto al
-     bottone QR. Usiamo grid sull'info così i badge non vengono stretched
-     dal column-flex e mantengono la loro larghezza naturale. */
-  .sc-mine-row .sc-info {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "name   badges"
-      "meta   badges";
-    gap: 3px 16px;
-    align-items: center;
-  }
-  .sc-mine-row .sc-info h4 { grid-area: name; }
-  .sc-mine-row .sc-info .sc-meta { grid-area: meta; }
-  .sc-mine-row .sc-info .sc-badge-row {
-    grid-area: badges;
-    margin-top: 0;
-    display: inline-flex;
-    gap: 8px;
-    flex-wrap: nowrap;
-  }
-}
-.sc-mine-row .sc-badge-pct {
-  position: static;
-  background: var(--sc-corallo);
-  color: #fff;
-  font-family: var(--font-sans, 'Poppins', sans-serif);
-  font-weight: 700;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  letter-spacing: 0.2px;
-}
-@media (min-width: 768px) {
-  .sc-mine-row .sc-badge-pct {
-    font-family: var(--sc-ff-mark);
-    font-size: 14px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    letter-spacing: -0.3px;
-    flex-shrink: 0;
-  }
-}
-.sc-mine-row .sc-scad {
-  background: var(--sc-oro-soft);
-  color: var(--sc-oro);
-  font-size: 9.5px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 99px;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.sc-mine-row .sc-scad::before { content: '⏱'; font-size: 10px; }
-@media (min-width: 768px) {
-  .sc-mine-row .sc-scad { font-size: 11.5px; padding: 5px 11px; gap: 5px; flex-shrink: 0; }
-  .sc-mine-row .sc-scad::before { font-size: 13px; }
-}
-.sc-mine-row .sc-scad.is-expired { background: rgba(34, 24, 28, 0.06); color: var(--sc-ink-3); }
 .sc-qr-btn {
   background: var(--sc-ink);
   color: #fff;
