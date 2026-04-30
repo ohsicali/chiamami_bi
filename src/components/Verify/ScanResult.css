@@ -49,11 +49,11 @@
 }
 
 .ris-h1 {
-  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
   font-size: 32px;
-  font-weight: 400;
-  letter-spacing: 0.4px;
-  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   margin: 0 0 10px;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
@@ -90,11 +90,11 @@
 .ris-pct-info { text-align: left; min-width: 0; }
 .ris-pct-info strong {
   display: block;
-  font-family: var(--font-mark, 'Alfa Slab One', serif);
-  font-weight: 400;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
   font-size: 14px;
-  letter-spacing: 0.2px;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   color: #fff;
 }
 .ris-pct-info p {

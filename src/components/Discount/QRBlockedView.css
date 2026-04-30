@@ -88,12 +88,12 @@
 .qrb-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .qrb-info { flex: 1; min-width: 0; }
 .qrb-info h3 {
-  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 900;
   color: #22181C;
-  letter-spacing: 0.2px;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   margin: 0;
 }
 .qrb-info .qrb-meta {
@@ -124,12 +124,12 @@
 }
 
 .qrb-headline {
-  font-family: var(--font-mark, 'Alfa Slab One', serif);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
   font-size: 22px;
-  font-weight: 400;
+  font-weight: 900;
   color: #22181C;
-  letter-spacing: 0.2px;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   margin: 0 0 6px;
 }
 
