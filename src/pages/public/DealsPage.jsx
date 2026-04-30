@@ -135,6 +135,7 @@ function DropMini({ deal, onTap, kind = 'live' }) {
           <span style={{
             background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
             color: '#1a4731',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 800, fontSize: 11, padding: '3px 7px',
             borderRadius: 999, letterSpacing: '-0.01em',
           }}>{deal.discount_value}</span>
@@ -224,6 +225,7 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
         <div className="flex items-center gap-2 justify-center" style={{ marginBottom: 8 }}>
           <span style={{
             display: 'inline-block', fontSize: 11, fontWeight: 800,
+            fontFamily: 'var(--font-sans)',
             background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
             color: '#1a4731',
             borderRadius: 999, padding: '2px 8px', flexShrink: 0,
@@ -344,6 +346,7 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
           position: 'absolute', top: 10, right: 10,
           background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
           color: '#1a4731',
+          fontFamily: 'var(--font-sans)',
           fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 999,
         }}>
           {deal.discount_value}
@@ -652,7 +655,8 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
         <div style={{
           background: alreadyUsed ? '#9ca3af' : 'linear-gradient(135deg, #A3E635, #4ADE80)',
           color: alreadyUsed ? '#fff' : '#1a4731',
-          fontSize: 11, fontWeight: 700,
+          fontFamily: 'var(--font-sans)',
+          fontSize: 11, fontWeight: 800,
           padding: '5px 12px', borderRadius: 999,
           textDecoration: alreadyUsed ? 'line-through' : 'none',
           transition: 'background 0.6s ease, color 0.6s ease',
@@ -765,6 +769,7 @@ function MyActiveCard({ redemption, onShowQR, onGoTo, onOpenDeal }) {
           display: 'inline-block', marginTop: 4,
           background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
           color: '#1a4731',
+          fontFamily: 'var(--font-sans)',
           fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
           borderRadius: 999, letterSpacing: '-0.01em',
         }}>{deal?.discount_value}</span>
@@ -1009,6 +1014,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
           <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
             <span style={{
               display: 'inline-block', fontSize: 13, fontWeight: 800,
+              fontFamily: 'var(--font-sans)',
               background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
               color: '#1a4731',
               borderRadius: 999, padding: '3px 12px',
