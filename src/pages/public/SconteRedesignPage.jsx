@@ -658,8 +658,10 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
         {time && <span className="sc-badge-time">{time}</span>}
       </div>
       <div className="sc-body-c">
-        <h4>{r?.name || deal.title}</h4>
-        {r?.tagline && <div className="sc-drop-tagline">{r.tagline}</div>}
+        <div className="sc-drop-name-row">
+          <h4>{r?.name || deal.title}</h4>
+          {r?.tagline && <><span className="sc-sep">|</span><span className="sc-drop-tagline">{r.tagline}</span></>}
+        </div>
         <div className="sc-meta sc-drop-meta">
           {cuisine && <span>{cuisine}</span>}
           {location && <><span className="sc-sep">|</span><span>{location}</span></>}
@@ -836,7 +838,8 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const photo = getPhoto(r)
   const expired = isDealExpired(deal)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' | ')
+  const location = r?.neighborhood || r?.city
+  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
   const validityStatus = expired ? 'expired' : checkValidity(deal)
   const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
   const pctBadge = dealBadgeText(deal) || freebieLabel(deal)
@@ -862,7 +865,11 @@ function MineRow({ redemption, onOpenQR, onClick }) {
       </div>
       <div className="sc-info">
         <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
-        {meta && <div className="sc-meta">{meta}</div>}
+        <div className="sc-meta">
+          {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+          {location && <><span className="sc-sep">|</span><span>{location}</span></>}
+          {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
+        </div>
         <div className="sc-pill-row sc-pill-row-mini">
           <ValidityPill status={validityStatus} text={validityPill} />
         </div>
