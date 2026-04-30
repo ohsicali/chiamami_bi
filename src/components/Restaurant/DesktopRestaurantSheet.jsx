@@ -267,12 +267,6 @@ export default function DesktopRestaurantSheet({
                   {priceLabel}
                 </span>
               )}
-              {/* recommended_for (momento) */}
-              {(restaurant.recommended_for || []).map(tag => (
-                <span key={tag} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, background: ORO_SOFT, color: ORO_DEEP }}>
-                  {tag}
-                </span>
-              ))}
               {/* open status */}
               {openChipText && (
                 <span style={{

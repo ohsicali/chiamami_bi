@@ -660,16 +660,6 @@ export default function RestaurantSheet({
                     {priceLabel}
                   </span>
                 )}
-                {restaurant.recommended_for?.map((tag) => (
-                  <span key={tag} style={{
-                    fontSize: 12, fontWeight: 700,
-                    color: 'var(--color-oro-deep, #8E6B3E)',
-                    background: 'var(--color-oro-soft, #F4E7CC)',
-                    padding: '6px 12px', borderRadius: 999,
-                  }}>
-                    {tag}
-                  </span>
-                ))}
                 {orariStatus && (
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
