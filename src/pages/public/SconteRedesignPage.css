@@ -191,11 +191,11 @@
 }
 .sc-section-head strong {
   display: block;
-  font-family: var(--sc-ff-mark);
-  font-weight: 400;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
   font-size: 17px;
   color: var(--sc-ink);
-  letter-spacing: 0.3px;
+  letter-spacing: -0.02em;
   margin-bottom: 2px;
 }
 .sc-section-head small {
@@ -350,16 +350,16 @@
   .sc-drop .sc-body-c { padding: 16px 18px 18px; }
 }
 .sc-drop h4 {
-  font-family: var(--sc-ff-mark);
-  font-weight: 400;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
   font-size: 16px;
-  letter-spacing: 0.2px;
+  letter-spacing: -0.02em;
   color: #fff;
-  line-height: 1.05;
+  line-height: 1.1;
   margin: 0 0 3px;
 }
 @media (min-width: 768px) {
-  .sc-drop h4 { font-size: 22px; }
+  .sc-drop h4 { font-size: 20px; }
 }
 .sc-drop .sc-meta {
   font-size: 10.5px;
@@ -1207,16 +1207,16 @@
 }
 .sc-conv .sc-top-info { min-width: 0; }
 .sc-conv h4 {
-  font-family: var(--sc-ff-mark);
-  font-weight: 400;
-  font-size: 16px;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
+  font-size: 15px;
   color: var(--sc-ink);
-  line-height: 1.05;
+  line-height: 1.15;
   margin: 0 0 3px;
-  letter-spacing: 0.2px;
+  letter-spacing: -0.02em;
 }
 @media (min-width: 768px) {
-  .sc-conv h4 { font-size: 18px; margin-bottom: 4px; }
+  .sc-conv h4 { font-size: 17px; margin-bottom: 4px; }
 }
 .sc-conv .sc-meta {
   font-size: 10.5px;
@@ -1383,16 +1383,16 @@
   .sc-mine-row .sc-info { gap: 3px; }
 }
 .sc-mine-row .sc-info h4 {
-  font-family: var(--sc-ff-mark);
-  font-weight: 400;
-  font-size: 15px;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
+  font-size: 14px;
   color: var(--sc-ink);
-  line-height: 1.05;
-  letter-spacing: 0.2px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   margin: 0 0 2px;
 }
 @media (min-width: 768px) {
-  .sc-mine-row .sc-info h4 { font-size: 16px; margin-bottom: 3px; }
+  .sc-mine-row .sc-info h4 { font-size: 15px; margin-bottom: 3px; }
 }
 .sc-mine-row .sc-info .sc-meta {
   font-size: 10.5px;
@@ -1530,11 +1530,12 @@
 }
 .sc-empty strong {
   display: block;
-  font-family: var(--sc-ff-mark);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-weight: 900;
   font-size: 17px;
   color: var(--sc-ink);
   margin-bottom: 6px;
-  letter-spacing: 0.2px;
+  letter-spacing: -0.02em;
 }
 .sc-empty p {
   font-size: 12.5px;
