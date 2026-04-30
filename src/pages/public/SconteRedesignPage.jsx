@@ -565,7 +565,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
         <section className="sc-section">
           <div className="sc-section-head">
             <strong>Drop a tempo</strong>
-            <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'} · scorri →</small>
+            <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'}</small>
           </div>
           <div className="sc-drop-track">
             {drops.map((d) => {

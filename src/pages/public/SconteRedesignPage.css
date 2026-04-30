@@ -184,28 +184,35 @@
   .sc-body { padding-bottom: 60px; }
 }
 .sc-section { padding: 18px 0 8px; }
+/* §12 mockup: strong block Alfa Slab + small Caveat corallo sotto */
 .sc-section-head {
   padding: 0 16px 12px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  display: block;
 }
 .sc-section-head strong {
+  display: block;
   font-family: var(--sc-ff-mark);
+  font-weight: 400;
   font-size: 17px;
   color: var(--sc-ink);
   letter-spacing: 0.3px;
+  margin-bottom: 2px;
 }
 .sc-section-head small {
-  font-size: 10.5px;
-  color: var(--sc-ink-3);
-  font-weight: 500;
+  display: inline-block;
+  font-family: var(--sc-ff-hand);
+  font-size: 16px;
+  color: var(--sc-corallo);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  margin-top: 2px;
 }
 @media (min-width: 768px) {
   .sc-section { padding: 0 0 36px; }
-  .sc-section-head { padding: 0 0 16px; }
-  .sc-section-head strong { font-size: 22px; }
-  .sc-section-head small { font-size: 12px; }
+  .sc-section-head { padding: 0 0 14px; }
+  .sc-section-head strong { font-size: 18px; }
+  .sc-section-head small { font-size: 16px; }
 }
 
 /* ============= drop track (mobile carousel / desktop grid) ============= */
