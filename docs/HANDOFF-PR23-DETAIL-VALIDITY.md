@@ -473,7 +473,70 @@ Riusa il pattern del mockup `v4-mobile-validity-states.html` — schermate fulls
 - Mockup popup mobile: `docs/mockups/v4-mobile-detail-popup-redesign.html`
 - Mockup popup desktop: `docs/mockups/v4-desktop-detail-popup-redesign.html`
 - Mockup validità (cliente + ristoratore): `docs/mockups/v4-mobile-validity-states.html`
+- **Mockup CARD finali (drop rossa + convenzione cleanup + I miei vantaggi)**: `docs/mockups/v4-bi-club-final.html`
 - Logo SVG Bi: `public/bi_logo_def_centrato.svg`
 - Template PDF coupon: `docs/templates/pdf-coupon-template.html` (PR21)
 - AuthGate: `src/components/AuthGate.jsx` (PR20b)
 - Endpoint scan esistente: `/api/discount/scan` (da estendere)
+
+---
+
+## 12. Addendum — Card finali (decisione 29/04)
+
+Dopo iterazioni con Augusto sul layout delle card del Bi Club:
+
+### 12.1 Drop card (catalogo)
+
+**RESTA come live attuale** — sfondo corallo pieno, foto top, body coral con info bianche. Augusto ha confermato che gli piace così.
+
+Modifiche minimali:
+- Aggiungi pill "Valido ora" sotto la meta del locale, **variante on-coral** (sfondo bianco, testo verde-ink) per leggibilità su rosso
+- Countdown integrato come pill nera traslucida nella foto top-right (già live)
+- CTA "Sblocca sconto" 🔒 ink scuro full-width al posto di "Vai al drop"
+- Bottone "Dettagli" outlined bianco trasparente affianca CTA primario
+
+### 12.2 Convenzione card (catalogo) — riorganizzata
+
+Layout orizzontale ordinato (sostituisce live attuale che ha testo che si va a capo male):
+
+```
+[foto 108px sq + pct corallo] [Nome locale + categoria-tag + indirizzo] [pill validità + Mar–Ven] [Sblocca pill stretto]
+```
+
+CSS classi da `v4-bi-club-final.html`:
+- `.conv-clean` — container flex orizzontale paper
+- `.conv-clean .ph` — foto quadrata 108px con `.badge-pct` corallo top-left
+- `.conv-clean .body-c` — body con `.top-info` (nome + meta una riga) e `.bottom-row` (pill+giorni sx, CTA dx)
+- 1 solo CTA "Sblocca" — la card intera è cliccabile per dettagli
+
+### 12.3 I miei vantaggi (lista Pronti da usare)
+
+Pattern row pulito (versione finale scelta):
+
+```
+[foto 54px round + pct-corner badge] [nome + meta · zona + pill validità] [Apri QR pill ink stretto]
+```
+
+CSS classi:
+- `.mine` — container flex padding 11px gap 11px
+- `.mine .ph-mini` — foto 54px round-11, con `.pct-corner` (corallo, font-mark, bordo bianco 2px) in basso destra che esce dalla foto
+- `.mine .info` — nome Alfa Slab 15px + meta categoria · indirizzo + pill validità
+- `.mine .qr-btn` — pill ink scuro 9×13 padding con icona QR + label "Apri QR"
+
+Desktop usa `.dmine` con foto 56px e tipografia leggermente più grande, stesso pattern row.
+
+### 12.4 Riassunto decisioni naming + UI
+
+| Elemento | Pattern finale |
+|---|---|
+| Tab nav | "Club" |
+| Pagina H1 | "Bi Club" + h2 SEO "Sconti e vantaggi nei ristoranti di Torino" |
+| Drop card catalogo | sfondo corallo (live) + pill validità + Sblocca/Dettagli |
+| Convenzione card catalogo | foto sq 108px + body paper + 1 CTA Sblocca |
+| Riga "I miei vantaggi" | foto 54px + pct-corner + meta + pill + Apri QR pill |
+| CTA universale per "prendere" | "Sblocca sconto" (drop) / "Sblocca" (conv) |
+| CTA universale per "usare" | "Apri QR" |
+| Popup dettagli | editorial completo con Secondo Bi + Scopri ristorante (vedi §3) |
+| Popup unlocked QR | banner success + QR + scarica PDF (vedi §3.3) |
+| Popup QR blocked | day strip + reminder Caveat (vedi §3.4) |
+| Schermate ristoratore | success verde, invalid rosso, used grigio (vedi §6) |

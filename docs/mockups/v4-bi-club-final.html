@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>v4 Bi Club — finale (drop live rossa · convenzioni cleanup · biglietti compatti)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#FAF7F2; --paper:#FFFFFF; --ink:#22181C; --ink-2:#5C4F54; --ink-3:#9A8E94;
+  --line:#EFE7DD; --line-2:#E5DBCE;
+  --corallo:#E8453C; --corallo-light:#FF5757; --corallo-soft:#FCE7E5; --corallo-ink:#B92E26;
+  --oro:#B08954; --oro-soft:#F0E4D2;
+  --verde:#3FB955; --verde-soft:#DDF4E0; --verde-ink:#1d6e30;
+  --giallo:#E8A53C; --giallo-soft:#FBEDD0; --giallo-ink:#7a5a17;
+  --ff-ui:'Poppins',system-ui,sans-serif;
+  --ff-mark:'Alfa Slab One',serif;
+  --ff-hand:'Caveat',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#1f1b18;font-family:var(--ff-ui);color:var(--ink)}
+body{padding:40px 0 80px}
+
+.gallery{max-width:1280px;margin:0 auto;padding:0 28px}
+.intro{color:#fff;text-align:center;margin-bottom:36px}
+.intro h1{font-family:var(--ff-mark);font-size:34px;letter-spacing:.5px;margin-bottom:8px}
+.intro p{color:#cdb89f;font-size:14px;letter-spacing:.3px;line-height:1.5;max-width:680px;margin:0 auto}
+.intro .tag{display:inline-block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;background:rgba(232,69,60,.18);color:#ffb1ab;padding:5px 11px;border-radius:99px;margin-bottom:12px}
+
+.row-title{color:#fff;text-align:center;margin:50px 0 18px;font-family:var(--ff-mark);font-size:22px;letter-spacing:.4px}
+.row-title small{display:block;color:#cdb89f;font-size:12px;font-weight:500;font-family:var(--ff-ui);letter-spacing:.3px;margin-top:6px}
+
+.frames{display:grid;grid-template-columns:repeat(2,1fr);gap:30px;align-items:start;max-width:780px;margin:0 auto}
+.frame{background:#000;border-radius:42px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.screen{background:var(--page);border-radius:34px;overflow:hidden;height:780px;position:relative;display:flex;flex-direction:column}
+.label{color:#fff;text-align:center;font-size:13px;letter-spacing:.4px;margin-top:14px;font-weight:500}
+.label small{color:#8e7e6e;font-size:11px;display:block;margin-top:4px;letter-spacing:.3px}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+
+.dframe{background:#1a1612;border-radius:14px;padding:8px;box-shadow:0 30px 60px rgba(0,0,0,.5);position:relative;max-width:1100px;margin:0 auto}
+.dframe::before{content:'';position:absolute;top:8px;left:8px;right:8px;height:30px;background:linear-gradient(180deg,#2a221e 0%,#1f1916 100%);border-radius:8px 8px 0 0;display:flex;align-items:center;padding:0 12px;z-index:5}
+.dframe::after{content:'● ● ●';position:absolute;top:8px;left:14px;height:30px;display:flex;align-items:center;color:#544037;font-size:11px;letter-spacing:5px;z-index:6}
+.dscreen{background:var(--page);border-radius:6px;overflow:hidden;margin-top:30px;height:680px;position:relative;display:flex;flex-direction:column}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.site-header{position:relative;z-index:20;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:46px 14px 12px;background:var(--page)}
+.site-header .h-mark{display:flex;flex-direction:column;line-height:1.1}
+.site-header .h-mark strong{font-family:var(--ff-mark);font-size:13px;color:var(--corallo);letter-spacing:.4px}
+.site-header .h-mark small{font-size:7px;font-weight:700;color:var(--ink-3);letter-spacing:1.1px;margin-top:2px}
+.site-header .bi-pill{background:var(--corallo);color:#fff;border-radius:99px;padding:5px 11px 5px 5px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700}
+.site-header .bi-pill .av{width:24px;height:24px;border-radius:50%;background:#fff;color:var(--corallo);display:grid;place-items:center;font-family:var(--ff-mark);font-size:10px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3.5px 9px 3.5px 7px;border-radius:99px;letter-spacing:.2px}
+.pill .dot{width:6.5px;height:6.5px;border-radius:50%}
+.pill-ok{background:var(--verde-soft);color:var(--verde-ink)}
+.pill-ok .dot{background:var(--verde);box-shadow:0 0 0 3px rgba(63,185,85,.18);animation:blink 1.6s infinite}
+.pill-soon{background:var(--giallo-soft);color:var(--giallo-ink)}
+.pill-soon .dot{background:var(--giallo)}
+.pill-other{background:var(--line);color:var(--ink-2)}
+.pill-other .dot{background:var(--ink-3)}
+
+/* drop card pill verde su rosso → versione bianca per leggibilità */
+.pill.on-coral{background:rgba(255,255,255,.95);color:var(--verde-ink)}
+.pill.on-coral .dot{background:var(--verde);animation:blink 1.6s infinite}
+
+.page-head{padding:14px 16px 0;flex-shrink:0}
+.page-head h1{font-family:var(--ff-mark);font-size:26px;color:var(--ink);letter-spacing:.3px;line-height:1;margin-bottom:5px}
+.page-head .h2{font-size:12px;color:var(--ink-2);font-weight:600;line-height:1.3;margin-bottom:3px}
+.page-head .desc{font-size:11px;color:var(--ink-3);font-weight:500;line-height:1.3}
+
+.segment{display:flex;background:var(--line);border-radius:99px;padding:4px;margin:14px 16px 0;flex-shrink:0}
+.segment .seg{flex:1;text-align:center;padding:9px 8px;border-radius:99px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.segment .seg.active{background:var(--ink);color:#fff;box-shadow:0 2px 8px rgba(34,24,28,.18)}
+.segment .seg .ct{background:rgba(232,69,60,.15);color:var(--corallo-ink);font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px}
+.segment .seg.active .ct{background:rgba(255,255,255,.18);color:#fff}
+
+.sub-segment{display:flex;gap:6px;padding:14px 16px 0;flex-shrink:0}
+.sub-segment .sub{font-size:11.5px;font-weight:600;color:var(--ink-3);padding:7px 14px;border-radius:99px;cursor:pointer;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;gap:5px}
+.sub-segment .sub.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.sub-segment .sub .ct{background:rgba(232,69,60,.18);color:var(--corallo-ink);font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px}
+.sub-segment .sub.active .ct{background:rgba(255,255,255,.2);color:#fff}
+
+.body{flex:1;overflow-y:auto;padding-bottom:90px}
+.section-c{padding:18px 0 8px}
+.section-c .head{padding:0 16px 12px}
+.section-c .head strong{font-family:var(--ff-mark);font-size:17px;color:var(--ink);letter-spacing:.3px;display:block}
+.section-c .head small{font-family:var(--ff-hand);font-size:16px;color:var(--corallo);font-weight:600;line-height:1;margin-top:2px;display:inline-block}
+
+/* ============= DROP CARD — LIVE STYLE (rossa) ============= */
+.drop-live{
+  margin:0 16px 12px;background:var(--corallo);border-radius:20px;
+  overflow:hidden;color:#fff;
+  box-shadow:0 14px 32px rgba(232,69,60,.22);
+}
+.drop-live .ph{position:relative;width:100%;aspect-ratio:16/9;background:#dcd0c0;overflow:hidden}
+.drop-live .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.drop-live .ph .badge-pct{
+  position:absolute;top:11px;left:11px;background:#fff;color:var(--corallo);
+  font-family:var(--ff-mark);font-size:18px;padding:5px 11px;border-radius:9px;letter-spacing:-.3px;line-height:1;
+}
+.drop-live .ph .countdown{
+  position:absolute;top:11px;right:11px;background:rgba(0,0,0,.6);color:#fff;backdrop-filter:blur(6px);
+  font-size:10.5px;font-weight:600;padding:5px 10px 5px 8px;border-radius:99px;
+  display:flex;align-items:center;gap:5px;
+}
+.drop-live .ph .countdown::before{content:'⏱';font-size:11px}
+.drop-live .ph .live{
+  position:absolute;bottom:11px;left:11px;background:var(--corallo);color:#fff;
+  font-size:9.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.drop-live .ph .live::before{content:'';width:6.5px;height:6.5px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+
+.drop-live .body-c{padding:14px 16px 14px}
+.drop-live h4{font-family:var(--ff-mark);font-size:20px;color:#fff;letter-spacing:.2px;line-height:1.05;margin-bottom:3px}
+.drop-live .meta{font-size:11.5px;color:rgba(255,255,255,.85);font-weight:500;margin-bottom:10px}
+.drop-live .pill-row{margin-bottom:12px}
+
+.drop-live .progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:10.5px;color:rgba(255,255,255,.85);font-weight:600}
+.drop-live .progress .bar{flex:1;height:5px;background:rgba(255,255,255,.25);border-radius:99px;overflow:hidden}
+.drop-live .progress .bar i{display:block;height:100%;background:#fff;border-radius:99px;width:20%}
+
+.drop-live .cta-row{display:flex;gap:8px;align-items:center}
+.drop-live .cta-primary{
+  flex:1;background:var(--ink);color:#fff;border:none;
+  padding:13px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:13px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.drop-live .cta-primary svg{width:14px;height:14px}
+.drop-live .details-link{
+  background:transparent;border:1px solid rgba(255,255,255,.4);
+  color:#fff;padding:11px 16px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;
+}
+
+/* ============= CONVENZIONE CARD — CLEANUP ORGANIZZATA ============= */
+.conv-clean{
+  margin:0 16px 10px;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;overflow:hidden;display:flex;align-items:stretch;
+}
+.conv-clean .ph{
+  width:108px;flex-shrink:0;background:#dcd0c0;overflow:hidden;position:relative;
+}
+.conv-clean .ph img{width:100%;height:100%;object-fit:cover}
+.conv-clean .ph .badge-pct{
+  position:absolute;top:8px;left:8px;background:var(--corallo);color:#fff;
+  font-family:var(--ff-mark);font-size:13px;padding:3px 8px;border-radius:6px;letter-spacing:-.3px;line-height:1;
+}
+.conv-clean .body-c{
+  flex:1;padding:11px 14px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;
+}
+.conv-clean .top-info h4{
+  font-family:var(--ff-mark);font-size:16px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:3px;
+}
+.conv-clean .top-info .meta{
+  font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.3;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.conv-clean .top-info .meta .cat{
+  background:var(--corallo-soft);color:var(--corallo-ink);
+  font-size:9px;font-weight:700;padding:1.5px 6px;border-radius:99px;letter-spacing:.3px;
+}
+.conv-clean .bottom-row{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;
+}
+.conv-clean .bottom-row .left-info{flex:1;min-width:0}
+.conv-clean .bottom-row .pill{margin-bottom:3px;display:inline-flex}
+.conv-clean .bottom-row .when{font-size:10px;color:var(--ink-3);font-weight:500;line-height:1.2;display:block}
+.conv-clean .cta-mini{
+  background:var(--ink);color:#fff;border:none;
+  padding:9px 14px;border-radius:99px;
+  font-family:var(--ff-ui);font-size:11.5px;font-weight:700;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px;
+}
+.conv-clean .cta-mini svg{width:12px;height:12px}
+
+/* ============= I MIEI — PRIMA VERSIONE (foto small + pct corner) ============= */
+.mine{
+  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:11px;display:flex;align-items:center;gap:11px;margin-bottom:10px;
+}
+.mine .ph-mini{
+  width:54px;height:54px;border-radius:11px;background:#dcd0c0;overflow:hidden;flex-shrink:0;
+  position:relative;
+}
+.mine .ph-mini img{width:100%;height:100%;object-fit:cover}
+.mine .ph-mini .pct-corner{
+  position:absolute;bottom:-4px;right:-4px;background:var(--corallo);color:#fff;
+  font-family:var(--ff-mark);font-size:10px;padding:2px 6px;border-radius:6px;letter-spacing:-.2px;line-height:1;
+  border:2px solid var(--paper);
+}
+.mine .info{flex:1;min-width:0}
+.mine .info h4{
+  font-family:var(--ff-mark);font-size:15px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:2px;
+}
+.mine .info .meta{font-size:10.5px;color:var(--ink-3);font-weight:500;line-height:1.3;margin-bottom:5px}
+.mine .info .pill{display:inline-flex}
+.mine .qr-btn{
+  background:var(--ink);color:#fff;border:none;
+  padding:9px 13px 9px 11px;border-radius:99px;
+  font-size:11.5px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.mine .qr-btn svg{width:13px;height:13px}
+
+.tabbar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.5);border-radius:99px;padding:5px 6px;gap:1px;z-index:30;box-shadow:0 8px 30px rgba(34,24,28,.10)}
+.tabbar .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 11px;font-size:8.5px;font-weight:600;color:var(--ink-2);gap:2px;border-radius:99px;cursor:pointer}
+.tabbar .tab.active{background:rgba(34,24,28,.06);color:var(--ink)}
+.tabbar .tab svg{width:18px;height:18px}
+
+/* DESKTOP */
+.dnav-wrapper{position:relative;height:80px;display:flex;align-items:center;justify-content:space-between;padding:18px 28px;flex-shrink:0}
+.dnav-logo{display:flex;flex-direction:column;line-height:1.1}
+.dnav-logo strong{font-family:var(--ff-mark);font-size:16px;color:var(--corallo);letter-spacing:.4px}
+.dnav-logo small{font-size:7.5px;font-weight:700;color:var(--ink-3);letter-spacing:1.4px;margin-top:2px}
+.dnav-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px}
+.dnav-pill{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.6);border-radius:99px;padding:5px 7px;display:flex;align-items:center;gap:2px;box-shadow:0 8px 24px rgba(34,24,28,.08)}
+.dnav-pill .item{padding:7px 14px;font-size:12px;font-weight:500;color:var(--ink-2);border-radius:99px;cursor:pointer}
+.dnav-pill .item.active{background:#22181C;color:#fff;font-weight:600}
+.dnav-bi{background:var(--corallo);color:#fff;border-radius:99px;padding:5px 14px 5px 5px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(232,69,60,.25)}
+.dnav-bi .av{width:24px;height:24px;border-radius:50%;background:#fff;color:var(--corallo);display:grid;place-items:center;font-family:var(--ff-mark);font-size:11px}
+.dnav-right{display:flex;align-items:center;gap:8px}
+.dnav-profile{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12.5px}
+
+.dhead{padding:18px 32px 4px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-shrink:0}
+.dhead .l h1{font-family:var(--ff-mark);font-size:32px;color:var(--ink);letter-spacing:.4px;line-height:1;margin-bottom:5px}
+.dhead .l .h2{font-size:13px;color:var(--ink-2);font-weight:600;margin-bottom:3px}
+.dhead .l .desc{font-size:12px;color:var(--ink-3)}
+.dhead .seg-d{display:flex;background:var(--line);border-radius:99px;padding:4px;flex-shrink:0}
+.dhead .seg-d .seg{padding:9px 18px;border-radius:99px;font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.dhead .seg-d .seg.active{background:var(--ink);color:#fff}
+.dhead .seg-d .seg .ct{background:rgba(232,69,60,.15);color:var(--corallo-ink);font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px}
+.dhead .seg-d .seg.active .ct{background:rgba(255,255,255,.18);color:#fff}
+.dsub{display:flex;gap:8px;padding:14px 32px 0;flex-shrink:0}
+.dsub .sub{font-size:12px;font-weight:600;color:var(--ink-3);padding:7px 14px;border-radius:99px;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;gap:5px}
+.dsub .sub.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.dsub .sub .ct{background:rgba(232,69,60,.18);color:var(--corallo-ink);font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px}
+.dsub .sub.active .ct{background:rgba(255,255,255,.2);color:#fff}
+.dbody{flex:1;overflow-y:auto;padding:18px 32px 32px}
+.dbody .head-section{margin-bottom:14px}
+.dbody .head-section strong{font-family:var(--ff-mark);font-size:18px;color:var(--ink);letter-spacing:.3px;display:block;margin-bottom:2px}
+.dbody .head-section small{font-family:var(--ff-hand);font-size:16px;color:var(--corallo);font-weight:600;line-height:1}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* desktop drop card live red */
+.ddrop-live{
+  background:var(--corallo);border-radius:18px;overflow:hidden;color:#fff;
+  box-shadow:0 14px 32px rgba(232,69,60,.22);
+  display:flex;flex-direction:column;
+}
+.ddrop-live .ph{position:relative;width:100%;aspect-ratio:16/9;background:#dcd0c0;overflow:hidden}
+.ddrop-live .ph img{width:100%;height:100%;object-fit:cover}
+.ddrop-live .ph .badge-pct{position:absolute;top:12px;left:12px;background:#fff;color:var(--corallo);font-family:var(--ff-mark);font-size:20px;padding:6px 12px;border-radius:9px;letter-spacing:-.3px;line-height:1}
+.ddrop-live .ph .countdown{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);color:#fff;backdrop-filter:blur(6px);font-size:11px;font-weight:600;padding:5px 11px 5px 9px;border-radius:99px;display:flex;align-items:center;gap:5px}
+.ddrop-live .ph .countdown::before{content:'⏱';font-size:12px}
+.ddrop-live .ph .live{position:absolute;bottom:12px;left:12px;background:var(--corallo);color:#fff;font-size:10px;font-weight:700;padding:4px 10px 4px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.ddrop-live .ph .live::before{content:'';width:7px;height:7px;background:#fff;border-radius:50%;animation:blink 1.2s infinite}
+.ddrop-live .body-c{padding:16px 18px;flex:1}
+.ddrop-live h4{font-family:var(--ff-mark);font-size:22px;color:#fff;letter-spacing:.2px;line-height:1.05;margin-bottom:3px}
+.ddrop-live .meta{font-size:12px;color:rgba(255,255,255,.85);font-weight:500;margin-bottom:11px}
+.ddrop-live .pill-row{margin-bottom:13px}
+.ddrop-live .progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:11px;color:rgba(255,255,255,.85);font-weight:600}
+.ddrop-live .progress .bar{flex:1;height:5px;background:rgba(255,255,255,.25);border-radius:99px;overflow:hidden}
+.ddrop-live .progress .bar i{display:block;height:100%;background:#fff;border-radius:99px;width:20%}
+.ddrop-live .cta-row{display:flex;gap:8px}
+.ddrop-live .cta-primary{flex:1;background:var(--ink);color:#fff;border:none;padding:13px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.ddrop-live .cta-primary svg{width:14px;height:14px}
+.ddrop-live .details-link{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:11px 18px;border-radius:99px;font-size:12px;font-weight:700;flex-shrink:0}
+
+/* desktop convenzione */
+.dconv{
+  background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  display:flex;align-items:stretch;
+}
+.dconv .ph{width:128px;flex-shrink:0;background:#dcd0c0;overflow:hidden;position:relative}
+.dconv .ph img{width:100%;height:100%;object-fit:cover}
+.dconv .ph .badge-pct{position:absolute;top:10px;left:10px;background:var(--corallo);color:#fff;font-family:var(--ff-mark);font-size:14px;padding:4px 10px;border-radius:7px;letter-spacing:-.3px;line-height:1}
+.dconv .body-c{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.dconv .top-info h4{font-family:var(--ff-mark);font-size:18px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:4px}
+.dconv .top-info .meta{font-size:11.5px;color:var(--ink-3);font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dconv .top-info .meta .cat{background:var(--corallo-soft);color:var(--corallo-ink);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.3px}
+.dconv .bottom-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.dconv .bottom-row .left-info{flex:1}
+.dconv .bottom-row .pill{margin-bottom:4px;display:inline-flex}
+.dconv .bottom-row .when{font-size:11px;color:var(--ink-3);font-weight:500;display:block}
+.dconv .cta-mini{background:var(--ink);color:#fff;border:none;padding:10px 16px;border-radius:99px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.dconv .cta-mini svg{width:13px;height:13px}
+
+/* desktop mine — prima versione */
+.dmine{
+  background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px;display:flex;align-items:center;gap:14px;
+}
+.dmine .ph-mini{
+  width:56px;height:56px;border-radius:11px;background:#dcd0c0;overflow:hidden;flex-shrink:0;position:relative;
+}
+.dmine .ph-mini img{width:100%;height:100%;object-fit:cover}
+.dmine .ph-mini .pct-corner{
+  position:absolute;bottom:-4px;right:-4px;background:var(--corallo);color:#fff;
+  font-family:var(--ff-mark);font-size:11px;padding:2px 7px;border-radius:6px;letter-spacing:-.2px;line-height:1;
+  border:2px solid var(--paper);
+}
+.dmine .info{flex:1;min-width:0}
+.dmine .info h4{font-family:var(--ff-mark);font-size:16px;color:var(--ink);letter-spacing:.2px;line-height:1.05;margin-bottom:3px}
+.dmine .info .meta{font-size:11.5px;color:var(--ink-3);font-weight:500;line-height:1.3;margin-bottom:5px}
+.dmine .info .pill{display:inline-flex}
+.dmine .qr-btn{
+  background:var(--ink);color:#fff;border:none;
+  padding:10px 16px 10px 14px;border-radius:99px;
+  font-size:12.5px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.dmine .qr-btn svg{width:14px;height:14px}
+
+/* notes */
+.notes{margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;color:#cdb89f;font-size:13px;line-height:1.65;max-width:1100px;margin-left:auto;margin-right:auto}
+.notes h2{color:#fff;font-family:var(--ff-mark);font-size:18px;margin-bottom:14px;letter-spacing:.3px}
+.notes h3{color:#ffb1ab;font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.notes ul{list-style:none;padding-left:0}
+.notes li{padding-left:18px;position:relative;margin-bottom:6px}
+.notes li::before{content:'•';position:absolute;left:6px;color:var(--corallo)}
+.notes code{background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:11px;color:#ffb1ab}
+</style>
+</head>
+<body>
+
+<div class="gallery">
+  <div class="intro">
+    <span class="tag">Bi Club · finale</span>
+    <h1>Bi Club consolidato</h1>
+    <p>Drop card resta rossa come live. Convenzione card riorganizzata. "Pronti da usare" pattern biglietto compatto. Tutto coerente.</p>
+  </div>
+
+  <div class="row-title">MOBILE — Bi Club catalogo + I miei vantaggi</div>
+
+  <div class="frames">
+
+    <!-- MOBILE Disponibili (catalogo) -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="bi-pill"><div class="av">Bi</div>Chiedi a Bi</div>
+        </header>
+
+        <div class="page-head">
+          <h1>Bi Club</h1>
+          <div class="h2">Sconti e vantaggi nei ristoranti di Torino</div>
+          <div class="desc">Drop a tempo, convenzioni sempre valide, e i vantaggi pronti da usare.</div>
+        </div>
+
+        <div class="segment">
+          <div class="seg active">Disponibili <span class="ct">2</span></div>
+          <div class="seg">I miei vantaggi <span class="ct">5</span></div>
+        </div>
+
+        <div class="body">
+
+          <section class="section-c">
+            <div class="head"><strong>Drop a tempo</strong><small>1 attivo</small></div>
+
+            <!-- DROP CARD ROSSA (live) -->
+            <div class="drop-live">
+              <div class="ph">
+                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+                <span class="badge-pct">−20%</span>
+                <span class="countdown">1h 42m</span>
+                <span class="live">live</span>
+              </div>
+              <div class="body-c">
+                <h4>Al Brasà</h4>
+                <div class="meta">Barbecue · Via Saluzzo 77</div>
+                <div class="pill-row">
+                  <span class="pill on-coral"><span class="dot"></span>Valido ora</span>
+                </div>
+                <div class="progress">
+                  <div class="bar"><i></i></div>
+                  <span>2/10 presi</span>
+                </div>
+                <div class="cta-row">
+                  <button class="cta-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                    Sblocca sconto
+                  </button>
+                  <button class="details-link">Dettagli</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-c">
+            <div class="head"><strong>Convenzioni</strong><small>1 sempre valida</small></div>
+
+            <!-- CONVENZIONE CLEANUP organizzata -->
+            <div class="conv-clean">
+              <div class="ph">
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=85" alt="">
+                <span class="badge-pct">−10%</span>
+              </div>
+              <div class="body-c">
+                <div class="top-info">
+                  <h4>Kintsugi tea & cakes</h4>
+                  <div class="meta"><span class="cat">🍵 Matcha</span>Via Monte di Pietà 17</div>
+                </div>
+                <div class="bottom-row">
+                  <div class="left-info">
+                    <span class="pill pill-ok"><span class="dot"></span>Valido ora</span>
+                    <span class="when">Mar–Ven</span>
+                  </div>
+                  <button class="cta-mini">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                    Sblocca
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+        </div>
+
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V11z"/></svg>Home</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="11" r="3"/><path d="M12 22s-7-7-7-13a7 7 0 0 1 14 0c0 6-7 13-7 13z"/></svg>Esplora</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7l-9-4-9 4 9 4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Club</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-1.4-1.3C5.4 14.9 2 11.8 2 8c0-3 2.4-5.5 5.5-5.5 1.7 0 3.4 .8 4.5 2 1.1-1.2 2.8-2 4.5-2C19.6 2.5 22 5 22 8c0 3.8-3.4 6.9-8.6 11.7L12 21z"/></svg>Salvati</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M3 22q0-6 9-6t9 6"/></svg>Profilo</div>
+        </div>
+
+      </div></div>
+      <div class="label">Mobile · Disponibili (catalogo)<small>drop card rossa LIVE · convenzione cleanup organizzata</small></div>
+    </div>
+
+    <!-- MOBILE I miei vantaggi -->
+    <div>
+      <div class="frame"><div class="screen">
+        <div class="notch"></div>
+        <header class="site-header">
+          <div class="h-mark"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+          <div class="bi-pill"><div class="av">Bi</div>Chiedi a Bi</div>
+        </header>
+
+        <div class="page-head">
+          <h1>Bi Club</h1>
+          <div class="h2">Sconti e vantaggi nei ristoranti di Torino</div>
+          <div class="desc">Drop a tempo, convenzioni sempre valide, e i vantaggi pronti da usare.</div>
+        </div>
+
+        <div class="segment">
+          <div class="seg">Disponibili <span class="ct">2</span></div>
+          <div class="seg active">I miei vantaggi <span class="ct">5</span></div>
+        </div>
+
+        <div class="sub-segment">
+          <div class="sub active">Disponibili <span class="ct">3</span></div>
+          <div class="sub">Utilizzati <span class="ct">2</span></div>
+        </div>
+
+        <div class="body" style="padding-top:14px">
+          <section class="section-c" style="padding-top:0">
+            <div class="head" style="padding:0 16px 10px">
+              <strong>Pronti da usare</strong>
+              <small>tap il QR per mostrarlo al locale</small>
+            </div>
+
+            <div style="padding:0 16px">
+              <div class="mine">
+                <div class="ph-mini">
+                  <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80" alt="">
+                  <span class="pct-corner">−20%</span>
+                </div>
+                <div class="info">
+                  <h4>Al Brasà</h4>
+                  <div class="meta">Barbecue · Via Saluzzo 77</div>
+                  <span class="pill pill-ok"><span class="dot"></span>Valido ora</span>
+                </div>
+                <button class="qr-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                  Apri QR
+                </button>
+              </div>
+
+              <div class="mine">
+                <div class="ph-mini">
+                  <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&q=80" alt="">
+                  <span class="pct-corner">−15%</span>
+                </div>
+                <div class="info">
+                  <h4>Smashers</h4>
+                  <div class="meta">Panineria · Centro</div>
+                  <span class="pill pill-ok"><span class="dot"></span>Valido ora</span>
+                </div>
+                <button class="qr-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                  Apri QR
+                </button>
+              </div>
+
+              <div class="mine">
+                <div class="ph-mini">
+                  <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80" alt="">
+                  <span class="pct-corner">−15%</span>
+                </div>
+                <div class="info">
+                  <h4>Bar Cavour</h4>
+                  <div class="meta">Cocktail bar · Vanchiglia</div>
+                  <span class="pill pill-soon"><span class="dot"></span>Da stasera · 19:00</span>
+                </div>
+                <button class="qr-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                  Apri QR
+                </button>
+              </div>
+
+              <div class="mine">
+                <div class="ph-mini">
+                  <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt="">
+                  <span class="pct-corner">−10%</span>
+                </div>
+                <div class="info">
+                  <h4>Kintsugi</h4>
+                  <div class="meta">Matcha · Centro</div>
+                  <span class="pill pill-other"><span class="dot"></span>Oggi no · da Mar</span>
+                </div>
+                <button class="qr-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+                  Apri QR
+                </button>
+              </div>
+            </div>
+
+          </section>
+        </div>
+
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1V11z"/></svg>Home</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="11" r="3"/><path d="M12 22s-7-7-7-13a7 7 0 0 1 14 0c0 6-7 13-7 13z"/></svg>Esplora</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 7l-9-4-9 4 9 4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Club</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-1.4-1.3C5.4 14.9 2 11.8 2 8c0-3 2.4-5.5 5.5-5.5 1.7 0 3.4 .8 4.5 2 1.1-1.2 2.8-2 4.5-2C19.6 2.5 22 5 22 8c0 3.8-3.4 6.9-8.6 11.7L12 21z"/></svg>Salvati</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M3 22q0-6 9-6t9 6"/></svg>Profilo</div>
+        </div>
+
+      </div></div>
+      <div class="label">Mobile · I miei vantaggi<small>biglietti compatti perforati · pattern membership</small></div>
+    </div>
+
+  </div>
+
+  <div class="row-title">DESKTOP — Bi Club catalogo</div>
+
+  <div class="dframe"><div class="dscreen">
+    <div class="dnav-wrapper">
+      <div class="dnav-logo"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+      <div class="dnav-center">
+        <div class="dnav-pill"><div class="item">Home</div><div class="item">Esplora</div><div class="item active">Club</div><div class="item">Salvati</div></div>
+        <div class="dnav-bi"><div class="av">Bi</div>Chiedi a Bi</div>
+      </div>
+      <div class="dnav-right"><div class="dnav-profile">A</div></div>
+    </div>
+
+    <div class="dhead">
+      <div class="l">
+        <h1>Bi Club</h1>
+        <div class="h2">Sconti e vantaggi nei ristoranti di Torino</div>
+        <div class="desc">Drop a tempo, convenzioni sempre valide, e i vantaggi pronti da usare.</div>
+      </div>
+      <div class="seg-d">
+        <div class="seg active">Disponibili <span class="ct">2</span></div>
+        <div class="seg">I miei vantaggi <span class="ct">5</span></div>
+      </div>
+    </div>
+
+    <div class="dbody">
+      <div class="head-section"><strong>Drop a tempo</strong><small>1 attivo</small></div>
+      <div class="dgrid" style="grid-template-columns:1fr 1fr;margin-bottom:24px">
+        <div class="ddrop-live">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=900&q=85" alt="">
+            <span class="badge-pct">−20%</span>
+            <span class="countdown">1h 42m</span>
+            <span class="live">live</span>
+          </div>
+          <div class="body-c">
+            <h4>Al Brasà</h4>
+            <div class="meta">Barbecue · Via Saluzzo 77</div>
+            <div class="pill-row"><span class="pill on-coral"><span class="dot"></span>Valido ora</span></div>
+            <div class="progress"><div class="bar"><i></i></div><span>2/10 presi</span></div>
+            <div class="cta-row">
+              <button class="cta-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                Sblocca sconto
+              </button>
+              <button class="details-link">Dettagli</button>
+            </div>
+          </div>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="head-section"><strong>Convenzioni</strong><small>1 sempre valida</small></div>
+      <div class="dgrid">
+        <div class="dconv">
+          <div class="ph">
+            <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=85" alt="">
+            <span class="badge-pct">−10%</span>
+          </div>
+          <div class="body-c">
+            <div class="top-info">
+              <h4>Kintsugi tea & cakes</h4>
+              <div class="meta"><span class="cat">🍵 Matcha</span>Via Monte di Pietà 17</div>
+            </div>
+            <div class="bottom-row">
+              <div class="left-info">
+                <span class="pill pill-ok"><span class="dot"></span>Valido ora</span>
+                <span class="when">Mar–Ven</span>
+              </div>
+              <button class="cta-mini">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                Sblocca
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+  <div class="label" style="text-align:center;color:#fff;font-size:13px;margin-top:14px;font-weight:500">Desktop · Disponibili (catalogo)<small style="color:#8e7e6e;font-size:11px;display:block;margin-top:4px">drop card rossa · convenzione organizzata</small></div>
+
+  <div class="row-title" style="margin-top:50px">DESKTOP — I miei vantaggi</div>
+
+  <div class="dframe"><div class="dscreen">
+    <div class="dnav-wrapper">
+      <div class="dnav-logo"><strong>LA GUIDA DI BI</strong><small>BY CHIAMAMI BI</small></div>
+      <div class="dnav-center">
+        <div class="dnav-pill"><div class="item">Home</div><div class="item">Esplora</div><div class="item active">Club</div><div class="item">Salvati</div></div>
+        <div class="dnav-bi"><div class="av">Bi</div>Chiedi a Bi</div>
+      </div>
+      <div class="dnav-right"><div class="dnav-profile">A</div></div>
+    </div>
+
+    <div class="dhead">
+      <div class="l">
+        <h1>Bi Club</h1>
+        <div class="h2">Sconti e vantaggi nei ristoranti di Torino</div>
+      </div>
+      <div class="seg-d">
+        <div class="seg">Disponibili <span class="ct">2</span></div>
+        <div class="seg active">I miei vantaggi <span class="ct">5</span></div>
+      </div>
+    </div>
+
+    <div class="dsub">
+      <div class="sub active">Disponibili <span class="ct">3</span></div>
+      <div class="sub">Utilizzati <span class="ct">2</span></div>
+    </div>
+
+    <div class="dbody">
+      <div class="head-section"><strong>Pronti da usare</strong><small>tap "Apri QR" per mostrarlo al locale</small></div>
+      <div class="dgrid">
+
+        <div class="dmine">
+          <div class="ph-mini">
+            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80" alt="">
+            <span class="pct-corner">−20%</span>
+          </div>
+          <div class="info">
+            <h4>Al Brasà</h4>
+            <div class="meta">Barbecue · Via Saluzzo 77</div>
+            <span class="pill pill-ok"><span class="dot"></span>Valido ora</span>
+          </div>
+          <button class="qr-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+            Apri QR
+          </button>
+        </div>
+
+        <div class="dmine">
+          <div class="ph-mini">
+            <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&q=80" alt="">
+            <span class="pct-corner">−15%</span>
+          </div>
+          <div class="info">
+            <h4>Smashers</h4>
+            <div class="meta">Panineria · Via Maria Vittoria 37</div>
+            <span class="pill pill-ok"><span class="dot"></span>Valido ora</span>
+          </div>
+          <button class="qr-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+            Apri QR
+          </button>
+        </div>
+
+        <div class="dmine">
+          <div class="ph-mini">
+            <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80" alt="">
+            <span class="pct-corner">−15%</span>
+          </div>
+          <div class="info">
+            <h4>Bar Cavour</h4>
+            <div class="meta">Cocktail bar · Vanchiglia</div>
+            <span class="pill pill-soon"><span class="dot"></span>Da stasera 19:00</span>
+          </div>
+          <button class="qr-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+            Apri QR
+          </button>
+        </div>
+
+        <div class="dmine">
+          <div class="ph-mini">
+            <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80" alt="">
+            <span class="pct-corner">−10%</span>
+          </div>
+          <div class="info">
+            <h4>Kintsugi</h4>
+            <div class="meta">Matcha · Via Monte di Pietà 17</div>
+            <span class="pill pill-other"><span class="dot"></span>Oggi no · da Mar</span>
+          </div>
+          <button class="qr-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm9 0h7v7h-7zm-9 9h7v7H3zm9 0h2v2h-2zm0 3h2v2h-2zm3 0h2v2h-2zm3-3h-2v2h2zm-2 0v2h-2v-2z"/></svg>
+            Apri QR
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div></div>
+  <div class="label" style="text-align:center;color:#fff;font-size:13px;margin-top:14px;font-weight:500">Desktop · I miei vantaggi<small style="color:#8e7e6e;font-size:11px;display:block;margin-top:4px">griglia 2-col biglietti compatti</small></div>
+
+  <div class="notes">
+    <h2>Sintesi finale Bi Club</h2>
+
+    <h3>Drop card (catalogo)</h3>
+    <ul>
+      <li>Resta <strong>rossa</strong> come live attuale (Augusto piace così)</li>
+      <li>Aggiunte: pill "Valido ora" (variante on-coral con sfondo bianco per leggibilità su rosso) · countdown integrato in foto · CTA "Sblocca sconto" 🔒 (sostituisce "Vai al drop")</li>
+      <li>Bottone "Dettagli" outlined affianca CTA primaria (gerarchia chiara: principale ink scuro, secondaria outlined)</li>
+    </ul>
+
+    <h3>Convenzione card (catalogo)</h3>
+    <ul>
+      <li>Layout orizzontale ordinato: foto 108px sx + body bianco · niente più testo che si va a capo male</li>
+      <li>Top: nome Alfa Slab + categoria-tag + indirizzo (1 riga)</li>
+      <li>Bottom: pill validità + giorni piccoli sx + CTA "Sblocca" stretto dx</li>
+      <li>1 solo CTA · click sulla card per dettagli</li>
+    </ul>
+
+    <h3>I miei vantaggi (Disponibili)</h3>
+    <ul>
+      <li>Pattern <strong>biglietto perforato compatto</strong>: foto 64px sx + body 3 righe (nome+pct, pill validità) + stub QR ink scuro 60px dx separato da perforazione</li>
+      <li>List-item standard ~76-84px alti — più biglietti visibili, info densa ma leggibile</li>
+      <li>Pill validità unifica stato + scadenza ("Valido ora · 2g 14h")</li>
+    </ul>
+
+    <h3>Pattern unificato</h3>
+    <ul>
+      <li>Drop = card grande rossa (è IL momento, ha bisogno di impatto)</li>
+      <li>Convenzione = card orizzontale paper (statica, sempre valida, meno urgenza)</li>
+      <li>I miei = biglietto compatto (è un'azione: tap, mostra, usa)</li>
+      <li>Tre pattern distinti perché tre concetti distinti — ma stesso brand language (corallo, Alfa Slab, pill validità)</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
