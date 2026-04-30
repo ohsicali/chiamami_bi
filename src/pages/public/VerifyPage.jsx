@@ -787,14 +787,174 @@ function ImpostazioniTab({ restaurant, onLogout }) {
   )
 }
 
-/* Stub Storico — usa il DashboardTab esistente per ora; visual proper nel commit successivo */
+/* Storico tab — riepilogo + filtri + log raggruppato per data */
 function StoricoTab({ restaurant, deviceToken, onSessionExpired }) {
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all') // all | today | week | problems
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const { data } = await supabase.rpc('verify_activity_list', {
+          p_restaurant_id: restaurant.id,
+          p_device_token: deviceToken,
+          p_limit: 100,
+        })
+        if (cancelled) return
+        if (data?.error === 'unauthorized') {
+          onSessionExpired?.()
+          return
+        }
+        setActivity(Array.isArray(data?.items) ? data.items : [])
+      } catch (e) {
+        console.error('storico load error', e)
+        if (!cancelled) setActivity([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [restaurant.id, deviceToken, reloadKey, onSessionExpired])
+
+  // Riepilogo: tutti i record (no filtro applicato)
+  const totalCount = activity.length
+  const okCount = activity.filter((a) => a.status === 'redeemed').length
+  const pendingCount = activity.filter((a) => a.status !== 'redeemed').length
+
+  // Applico filtro periodo / problemi
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - 7)
+  const filteredActivity = activity.filter((a) => {
+    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
+    const ts = date ? new Date(date).getTime() : 0
+    if (filter === 'today') return ts >= startOfToday.getTime()
+    if (filter === 'week') return ts >= startOfWeek.getTime()
+    if (filter === 'problems') return a.status !== 'redeemed'
+    return true
+  })
+
+  // Raggruppo per data (yyyy-mm-dd)
+  const groups = {}
+  filteredActivity.forEach((a) => {
+    const date = a.status === 'redeemed' ? a.redeemed_at : a.generated_at
+    if (!date) return
+    const d = new Date(date)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (!groups[key]) groups[key] = []
+    groups[key].push(a)
+  })
+  const sortedKeys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1))
+  const todayKey = (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
+  const yesterdayKey = (() => {
+    const d = new Date(); d.setDate(d.getDate() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
+  const labelForKey = (k) => {
+    if (k === todayKey) return 'Oggi'
+    if (k === yesterdayKey) return 'Ieri'
+    const [y, m, d] = k.split('-')
+    return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })
+  }
+
+  if (loading) {
+    return (
+      <div style={{ padding: '40px 20px 100px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
+        <div style={{
+          width: 28, height: 28,
+          border: '3px solid var(--color-line)',
+          borderTopColor: 'var(--color-corallo)',
+          borderRadius: '50%',
+          margin: '0 auto 12px',
+          animation: 'verifySpin 0.8s linear infinite',
+        }} />
+        <div style={{ fontSize: 12 }}>Caricamento storico…</div>
+      </div>
+    )
+  }
+
   return (
-    <DashboardTab
-      restaurant={restaurant}
-      deviceToken={deviceToken}
-      onSessionExpired={onSessionExpired}
-    />
+    <>
+      <div className="v4-rate-card" style={{ padding: 18 }}>
+        <div className="v4-rate-head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 28,
+              letterSpacing: '-0.03em', lineHeight: 1,
+            }}>{totalCount}</div>
+            <div style={{
+              fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 700, marginTop: 4,
+            }}>verifiche · ultime 100</div>
+          </div>
+        </div>
+        <div className="v4-rate-tiles">
+          <div className="v4-rate-tile">
+            <div className="v">{okCount}</div>
+            <div className="l">OK</div>
+          </div>
+          <div className="v4-rate-tile">
+            <div className="v" style={{ color: 'var(--color-corallo)' }}>{pendingCount}</div>
+            <div className="l">in attesa</div>
+          </div>
+          <div className="v4-rate-tile">
+            <div className="v">
+              {totalCount > 0 ? Math.round((okCount / totalCount) * 100) : 0}%
+            </div>
+            <div className="l">tasso ok</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="v4-chip-row">
+        {[
+          { k: 'all', l: 'Tutti' },
+          { k: 'today', l: 'Oggi' },
+          { k: 'week', l: '7 giorni' },
+          { k: 'problems', l: 'Problemi' },
+        ].map((c) => (
+          <button
+            key={c.k}
+            type="button"
+            className={`v4-chip ${filter === c.k ? 'on' : ''}`}
+            onClick={() => setFilter(c.k)}
+          >
+            {c.l}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="v4-chip"
+          onClick={() => setReloadKey((k) => k + 1)}
+          aria-label="Aggiorna"
+          title="Aggiorna"
+          style={{ marginLeft: 'auto' }}
+        >
+          ↻
+        </button>
+      </div>
+
+      {sortedKeys.length === 0 ? (
+        <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+            Nessuna verifica nel filtro selezionato.
+          </div>
+        </div>
+      ) : (
+        sortedKeys.map((k) => (
+          <div key={k}>
+            <div className="v4-section-lbl">{labelForKey(k)}</div>
+            <V4ActivityLog items={groups[k]} />
+          </div>
+        ))
+      )}
+    </>
   )
 }
 
