@@ -1587,7 +1587,7 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
         })
         const discountPromise = supabase
           .from('discounts')
-          .select('id, title, description, discount_type, discount_value, valid_until, max_redemptions, total_redeemed, is_active')
+          .select('id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions')
           .eq('restaurant_id', restaurant.id)
           .eq('is_active', true)
           .gt('valid_until', new Date().toISOString())
@@ -1936,7 +1936,7 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
         // 2) Active discount (public read)
         const discountPromise = supabase
           .from('discounts')
-          .select('id, title, description, discount_type, discount_value, valid_until, max_redemptions, total_redeemed, is_active')
+          .select('id, title, description, discount_type, discount_value, valid_from, valid_until, max_redemptions, total_redeemed, is_active, is_drop, drop_starts_at, drop_ends_at, max_quantity, claimed_count, valid_days, valid_meal_slots, valid_time_from, valid_time_to, conditions')
           .eq('restaurant_id', restaurant.id)
           .eq('is_active', true)
           .gt('valid_until', new Date().toISOString())
@@ -2113,14 +2113,146 @@ function ScontoHero({ discount }) {
     )
   }
   const value = formatDiscountValue(discount)
-  const cond = [discount.title, discount.description].filter(Boolean).join(' · ')
+  const isDrop = !!discount.is_drop
+  const typeLabel = isDrop ? 'DROP · TEMPO LIMITATO' : 'SCONTO ATTIVO'
+
+  const limit = isDrop ? discount.max_quantity : discount.max_redemptions
+  const used  = isDrop ? (discount.claimed_count || 0) : (discount.total_redeemed || 0)
+  const hasProgress = limit && limit > 0
+  const pct = hasProgress ? Math.min(100, Math.round((used / limit) * 100)) : null
+
+  const startIso = isDrop ? discount.drop_starts_at : discount.valid_from
+  const endIso   = isDrop ? discount.drop_ends_at   : discount.valid_until
+  const validityLine = formatValidity(startIso, endIso)
+  const daysLine = formatValidDays(discount.valid_days)
+  const slotLine = formatTimeSlots(discount.valid_time_from, discount.valid_time_to, discount.valid_meal_slots)
+
+  const conditionsList = (discount.conditions || '')
+    .split(/\n+/).map((s) => s.trim()).filter(Boolean)
+
   return (
-    <div className="v4-sconto-hero">
-      <div className="lab">● SCONTO ATTIVO</div>
+    <div className={`v4-sconto-hero v4-sconto-hero--rich ${isDrop ? 'is-drop' : ''}`}>
+      <div className="lab">{isDrop ? '◉' : '●'} {typeLabel}</div>
       <div className="val">{value}</div>
-      {cond && <div className="cond">{cond}</div>}
+      {discount.title && <div className="ttl">{discount.title}</div>}
+      {discount.description && <div className="cond">{discount.description}</div>}
+
+      {(validityLine || daysLine || slotLine) && (
+        <div className="v4-sconto-meta">
+          {validityLine && (
+            <div className="v4-sconto-metarow">
+              <CalIcon /><span>{validityLine}</span>
+            </div>
+          )}
+          {daysLine && (
+            <div className="v4-sconto-metarow">
+              <DaysIcon /><span>{daysLine}</span>
+            </div>
+          )}
+          {slotLine && (
+            <div className="v4-sconto-metarow">
+              <ClockIcon /><span>{slotLine}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasProgress && (
+        <div className="v4-sconto-progress">
+          <div className="v4-sconto-progress-head">
+            <span>{isDrop ? 'Posti rimasti' : 'Utilizzi'}</span>
+            <span>
+              <b>{isDrop ? Math.max(0, limit - used) : used}</b>
+              {isDrop ? ` / ${limit}` : ` / ${limit}`}
+            </span>
+          </div>
+          <div className="v4-sconto-progress-track">
+            <div className="v4-sconto-progress-fill" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      )}
+
+      {conditionsList.length > 0 && (
+        <ul className="v4-sconto-conditions">
+          {conditionsList.map((c, i) => <li key={i}>{c}</li>)}
+        </ul>
+      )}
     </div>
   )
+}
+
+/* ScontoHero icons (small inline SVG) */
+function CalIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+function DaysIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="6" width="20" height="14" rx="2" />
+      <line x1="2" y1="11" x2="22" y2="11" />
+      <line x1="7" y1="6" x2="7" y2="20" />
+      <line x1="12" y1="6" x2="12" y2="20" />
+      <line x1="17" y1="6" x2="17" y2="20" />
+    </svg>
+  )
+}
+function ClockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
+
+/* ScontoHero formatting helpers */
+function formatValidity(startIso, endIso) {
+  const fmt = (iso) => iso
+    ? new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+  const start = fmt(startIso)
+  const end = fmt(endIso)
+  if (start && end) return `Dal ${start} al ${end}`
+  if (end) return `Valido fino al ${end}`
+  if (start) return `Valido dal ${start}`
+  return null
+}
+
+const SCONTO_DAY_NAMES_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+function formatValidDays(days) {
+  if (!Array.isArray(days) || days.length === 0 || days.length === 7) return null
+  // valid_days schema: 1=Mon..7=Sun. Convert to JS Date getDay() (0=Sun..6=Sat).
+  const idxs = days.map((d) => (d === 7 ? 0 : d)).sort((a, b) => a - b)
+  const isContig = idxs.every((v, i) => i === 0 || v - idxs[i - 1] === 1)
+  if (isContig && idxs.length > 1) {
+    return `${SCONTO_DAY_NAMES_IT[idxs[0]]}–${SCONTO_DAY_NAMES_IT[idxs[idxs.length - 1]]}`
+  }
+  return idxs.map((d) => SCONTO_DAY_NAMES_IT[d]).join(' · ')
+}
+
+const SCONTO_MEAL_LABELS_IT = {
+  colazione: 'Colazione',
+  brunch: 'Brunch',
+  pranzo: 'Pranzo',
+  aperitivo: 'Aperitivo',
+  cena: 'Cena',
+}
+function formatTimeSlots(from, to, mealSlots) {
+  if (from && to) {
+    const trim = (t) => String(t).slice(0, 5)
+    return `${trim(from)}–${trim(to)}`
+  }
+  if (Array.isArray(mealSlots) && mealSlots.length > 0) {
+    return mealSlots.map((s) => SCONTO_MEAL_LABELS_IT[s] || s).join(' · ')
+  }
+  return null
 }
 
 /* 4 KPI tiles — visite pagina / salvataggi / sconti presi / sconti usati */

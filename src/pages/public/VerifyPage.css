@@ -278,6 +278,133 @@
   line-height: 1.4;
 }
 
+/* Sconto hero rich — con tutti i metadati */
+.v4-sconto-hero--rich {
+  padding: 18px 18px 16px;
+}
+.v4-sconto-hero--rich .ttl {
+  position: relative;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  margin-top: 6px;
+}
+.v4-sconto-hero--rich .cond {
+  margin-top: 4px;
+  font-weight: 600;
+}
+.v4-sconto-hero--rich.is-drop {
+  background: linear-gradient(135deg, var(--color-corallo) 0%, #C53A33 100%);
+  color: #fff;
+}
+.v4-sconto-hero--rich.is-drop .lab,
+.v4-sconto-hero--rich.is-drop .cond,
+.v4-sconto-hero--rich.is-drop .ttl {
+  opacity: 1;
+}
+
+.v4-sconto-meta {
+  position: relative;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(15, 44, 18, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-sconto-hero--rich.is-drop .v4-sconto-meta {
+  border-top-color: rgba(255, 255, 255, 0.32);
+}
+.v4-sconto-metarow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.v4-sconto-metarow .ic,
+.v4-sconto-metarow svg {
+  flex: 0 0 auto;
+  opacity: 0.75;
+}
+
+.v4-sconto-progress {
+  position: relative;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(15, 44, 18, 0.22);
+}
+.v4-sconto-hero--rich.is-drop .v4-sconto-progress {
+  border-top-color: rgba(255, 255, 255, 0.32);
+}
+.v4-sconto-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+.v4-sconto-progress-head b {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.v4-sconto-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 44, 18, 0.18);
+  overflow: hidden;
+  position: relative;
+}
+.v4-sconto-hero--rich.is-drop .v4-sconto-progress-track {
+  background: rgba(255, 255, 255, 0.22);
+}
+.v4-sconto-progress-fill {
+  height: 100%;
+  background: rgba(15, 44, 18, 0.7);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+.v4-sconto-hero--rich.is-drop .v4-sconto-progress-fill {
+  background: #fff;
+}
+
+.v4-sconto-conditions {
+  position: relative;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px dashed rgba(15, 44, 18, 0.22);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v4-sconto-hero--rich.is-drop .v4-sconto-conditions {
+  border-top-color: rgba(255, 255, 255, 0.32);
+}
+.v4-sconto-conditions li {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding-left: 14px;
+  position: relative;
+  opacity: 0.88;
+}
+.v4-sconto-conditions li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 800;
+}
+
 /* Stat tiles 2-col (Oggi featured + Settimana) */
 .v4-stat-grid {
   display: grid;
@@ -770,8 +897,12 @@
   text-align: left;
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .v4-scan-cta .body .t {
+  display: block;
   font-family: var(--font-sans);
   font-weight: 900;
   font-size: 16px;
@@ -779,10 +910,11 @@
   line-height: 1.1;
 }
 .v4-scan-cta .body .s {
-  font-size: 11px;
+  display: block;
+  font-size: 11.5px;
   font-weight: 600;
   opacity: 0.82;
-  margin-top: 2px;
+  line-height: 1.3;
 }
 .v4-scan-cta .arr {
   margin-left: auto;
