@@ -254,10 +254,9 @@
 }
 .sc-drop .sc-ph {
   position: relative;
-  /* aspect-ratio panoramica 16:9 → card più compatta su mobile,
-     niente più zoom/crop verticale fastidioso. */
   aspect-ratio: 16 / 9;
-  width: 100%;
+  margin: 10px 10px 0;
+  border-radius: 12px;
   background: #dcd0c0;
   overflow: hidden;
 }
@@ -269,7 +268,25 @@
   display: block;
 }
 @media (min-width: 768px) {
-  .sc-drop .sc-ph { aspect-ratio: auto; height: 200px; }
+  .sc-drop .sc-ph { aspect-ratio: auto; height: 190px; margin: 12px 12px 0; border-radius: 14px; }
+}
+.sc-drop-pct-photo {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #A3E635, #4ADE80);
+  color: #1a4731;
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 16px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  letter-spacing: -0.3px;
+  line-height: 1;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .sc-drop-pct-photo { font-size: 18px; padding: 6px 15px; }
 }
 .sc-badge-pct {
   position: absolute;
