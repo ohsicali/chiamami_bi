@@ -272,21 +272,22 @@
 }
 .sc-drop-pct-photo {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
+  bottom: 9px;
+  right: 9px;
   background: linear-gradient(135deg, #A3E635, #4ADE80);
   color: #1a4731;
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
-  font-size: 16px;
-  padding: 5px 13px;
+  font-size: 14px;
+  padding: 4px 10px;
   border-radius: 999px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
   line-height: 1;
+  border: 2.5px solid #fff;
   pointer-events: none;
 }
 @media (min-width: 768px) {
-  .sc-drop-pct-photo { font-size: 18px; padding: 6px 15px; }
+  .sc-drop-pct-photo { font-size: 15px; padding: 5px 12px; }
 }
 .sc-badge-pct {
   position: absolute;
