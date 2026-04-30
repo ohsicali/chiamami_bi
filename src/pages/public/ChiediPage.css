@@ -614,6 +614,15 @@
   40%           { transform: scale(1);   opacity: 1; }
 }
 
+/* Card dei ristoranti: entrano con slide-up + fade dopo il typing */
+.cp-results-in {
+  animation: cp-results-appear 0.35s ease both;
+}
+@keyframes cp-results-appear {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Cursore lampeggiante durante il typewriter */
 .cp-cursor {
   display: inline-block;

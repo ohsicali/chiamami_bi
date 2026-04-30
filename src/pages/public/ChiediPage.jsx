@@ -24,14 +24,13 @@ export default function ChiediPage() {
   const [convId, setConvId] = useState(routeConvId || null)
   const [showAuthGate, setShowAuthGate] = useState(false)
   const [pendingMessage, setPendingMessage] = useState(null)
-  const [typingIdx, setTypingIdx] = useState(-1)
+  const [isTypingActive, setIsTypingActive] = useState(false)
   const [displayedTyping, setDisplayedTyping] = useState('')
 
   const bodyRef = useRef(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const initialMessageHandledRef = useRef(false)
-  const prevMsgCountRef = useRef(0)
 
   const isEmpty = messages.length === 0 && !loading
 
@@ -47,32 +46,20 @@ export default function ChiediPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, loading, isEmpty])
 
-  /* ---- Typewriter: rileva nuovo messaggio assistant ---- */
-  useEffect(() => {
-    const n = messages.length
-    if (n === prevMsgCountRef.current + 1) {
-      const last = messages[n - 1]
-      if (last?.role === 'assistant' && !last.error) {
-        setTypingIdx(n - 1)
-        setDisplayedTyping('')
-      }
-    }
-    prevMsgCountRef.current = n
-  }, [messages.length]) // eslint-disable-line react-hooks/exhaustive-deps
-
   /* ---- Typewriter: carattere per carattere 25 ms ---- */
   useEffect(() => {
-    if (typingIdx < 0) return
-    const fullText = messages[typingIdx]?.content || ''
-    if (!fullText) { setTypingIdx(-1); return }
+    if (!isTypingActive) return
+    const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant' && !m.error)
+    const fullText = lastAssistant?.content || ''
+    if (!fullText) { setIsTypingActive(false); return }
     if (displayedTyping.length >= fullText.length) {
       setDisplayedTyping(fullText)
-      setTypingIdx(-1)
+      setIsTypingActive(false)
       return
     }
     const t = setTimeout(() => setDisplayedTyping(fullText.slice(0, displayedTyping.length + 1)), 25)
     return () => clearTimeout(t)
-  }, [typingIdx, displayedTyping, messages])
+  }, [isTypingActive, displayedTyping, messages])
 
   /* ---- Load existing conversation when arriving on /chiedi/:id ---- */
   useEffect(() => {
@@ -164,6 +151,8 @@ export default function ChiediPage() {
           results: Array.isArray(data.results) ? data.results : [],
         },
       ])
+      setIsTypingActive(true)
+      setDisplayedTyping('')
     } catch (err) {
       setMessages((m) => [
         ...m,
@@ -207,6 +196,8 @@ export default function ChiediPage() {
       <ChiediHeader hasConversation={!isEmpty} onNewChat={() => {
         setMessages([])
         setConvId(null)
+        setIsTypingActive(false)
+        setDisplayedTyping('')
         navigate('/chiedi', { replace: true })
       }} />
 
@@ -214,7 +205,7 @@ export default function ChiediPage() {
         {isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
-          <Conversation messages={messages} loading={loading} typingIdx={typingIdx} displayedTyping={displayedTyping} />
+          <Conversation messages={messages} loading={loading} isTypingActive={isTypingActive} displayedTyping={displayedTyping} />
         )}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
@@ -398,7 +389,7 @@ function EmptyState({ onPromptClick }) {
 /* ============================================================ */
 /*  Conversation                                                  */
 /* ============================================================ */
-function Conversation({ messages, loading, typingIdx, displayedTyping }) {
+function Conversation({ messages, loading, isTypingActive, displayedTyping }) {
   const allRestaurantIds = messages.flatMap((m) =>
     Array.isArray(m.results) ? m.results.map((r) => r.restaurant_id).filter(Boolean) : [],
   )
@@ -434,20 +425,20 @@ function Conversation({ messages, loading, typingIdx, displayedTyping }) {
             </div>
           )
         }
-        const isTypingThis = i === typingIdx
-        const textToShow = isTypingThis ? displayedTyping : m.content
-        const showResults = !isTypingThis && Array.isArray(m.results) && m.results.length > 0
+        const isLastAssistant = isTypingActive && i === messages.length - 1
+        const textToShow = isLastAssistant ? displayedTyping : m.content
+        const showResults = !isLastAssistant && Array.isArray(m.results) && m.results.length > 0
         return (
           <div key={i}>
             <div className="cp-bi-row">
               <div className="cp-av-mini"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
               <div className={`cp-bubble cp-bi${m.error ? ' cp-error' : ''}`}>
                 {textToShow}
-                {isTypingThis && <span className="cp-cursor" aria-hidden="true" />}
+                {isLastAssistant && <span className="cp-cursor" aria-hidden="true" />}
               </div>
             </div>
             {showResults && (
-              <div className="cp-results">
+              <div className="cp-results cp-results-in">
                 {m.results.map((r, j) => (
                   <ResultCard
                     key={r.restaurant_id || r.slug || `${i}-${j}`}
