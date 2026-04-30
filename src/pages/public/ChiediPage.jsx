@@ -413,7 +413,7 @@ function Conversation({ messages, loading }) {
     prevLengthRef.current = newLen
   }, [messages.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Typewriter: reveal word by word (~35 ms/word)
+  // Typewriter: carattere per carattere (~25 ms/char)
   useEffect(() => {
     if (typingIndex < 0) return
     const fullText = messages[typingIndex]?.content || ''
@@ -423,9 +423,7 @@ function Conversation({ messages, loading }) {
       setTypingIndex(-1)
       return
     }
-    const nextSpace = fullText.indexOf(' ', displayedText.length)
-    const nextEnd = nextSpace === -1 ? fullText.length : nextSpace + 1
-    const t = setTimeout(() => setDisplayedText(fullText.slice(0, nextEnd)), 35)
+    const t = setTimeout(() => setDisplayedText(fullText.slice(0, displayedText.length + 1)), 25)
     return () => clearTimeout(t)
   }, [typingIndex, displayedText, messages])
 
