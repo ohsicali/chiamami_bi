@@ -1221,6 +1221,8 @@
 }
 .sc-conv .sc-badge-pct {
   position: absolute;
+  top: auto;
+  left: auto;
   bottom: -5px;
   right: -5px;
   background: linear-gradient(135deg, #A3E635, #4ADE80);
