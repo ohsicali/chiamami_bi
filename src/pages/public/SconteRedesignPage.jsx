@@ -16,7 +16,7 @@ import SconteSchemaOrg from '../../components/Discount/SconteSchemaOrg'
 import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
-import { checkValidity, formatShortPill } from '../../lib/validity'
+import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
 import './SconteRedesignPage.css'
 
 /* ---------- helpers ---------- */
@@ -565,7 +565,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
         <section className="sc-section">
           <div className="sc-section-head">
             <strong>Drop a tempo</strong>
-            <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'} · scorri →</small>
+            <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'}</small>
           </div>
           <div className="sc-drop-track">
             {drops.map((d) => {
@@ -659,7 +659,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
       <div className="sc-body-c">
         <h4>{r?.name || deal.title}</h4>
         {meta && <div className="sc-meta">{meta}</div>}
-        <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} /></div>
+        <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} className="on-coral" /></div>
         {max > 0 && (
           <div className="sc-progress">
             <div className="sc-bar"><i style={{ width: `${pct}%` }} /></div>
@@ -681,6 +681,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
             disabled={ctaDisabled}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
           >
+            {ctaLabel === 'Sblocca sconto' && <LockIcon />}
             {ctaLabel}
           </button>
         </div>
@@ -689,7 +690,26 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
   )
 }
 
-function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
+function LockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
+}
+
+function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
@@ -698,22 +718,18 @@ function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
   const address = shortAddress(r?.address)
   const validityStatus = checkValidity(deal)
   const validityPill = formatShortPill(deal, validityStatus)
+  const daysShort = (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7)
+    ? formatDays(deal.valid_days)
+    : null
 
-  // Riga "valore deal · condizione breve" sotto la cuisine: dà un'idea
-  // immediata del cosa-ottieni senza aprire i dettagli.
-  const dealLabel = isFreebie
-    ? (deal?.title || deal?.discount_value)
-    : (deal?.title || dealBadgeText(deal))
-  const firstCondition = (deal?.conditions || '')
-    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)[0]
-
+  // §12.2: card intera cliccabile per dettagli, 1 solo CTA "Sblocca"
   return (
     <div
-      className="sc-conv"
+      className="sc-conv sc-conv-clean"
       role="button"
       tabIndex={0}
-      onClick={(e) => { if (!e.defaultPrevented) onClick() }}
-      onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
+      onClick={(e) => { if (!e.defaultPrevented) onInfo() }}
+      onKeyDown={(e) => { if (e.key === 'Enter') onInfo() }}
     >
       <div className="sc-ph">
         {photo ? (
@@ -724,42 +740,30 @@ function ConvCard({ deal, claiming, onClaim, onClick, onInfo }) {
             background: '#F1ECE3', fontSize: 30,
           }}>{categoryEmoji(cuisine)}</div>
         )}
-        <span className={`sc-badge-pct ${isFreebie ? '' : 'is-coral'}`}>{badge}</span>
+        <span className={`sc-badge-pct ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
       </div>
       <div className="sc-body-c">
-        <div className="sc-info">
-          <h4>{r?.name || deal.title}</h4>
-          <div className="sc-meta">
-            {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
-            {address}
-          </div>
-          <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} /></div>
-          {(dealLabel || firstCondition) && (
-            <div className="sc-conv-line">
-              {dealLabel && <strong>{dealLabel}</strong>}
-              {dealLabel && firstCondition && <span className="sc-dot">·</span>}
-              {firstCondition && <span className="sc-cond">{firstCondition}</span>}
+        <div className="sc-info-stack">
+          <div className="sc-top-info">
+            <h4>{r?.name || deal.title}</h4>
+            <div className="sc-meta">
+              {cuisine && <span className="sc-cat">{categoryEmoji(cuisine)} {cuisine}</span>}
+              {address}
             </div>
-          )}
+          </div>
+          <div className="sc-left-info">
+            <ValidityPill status={validityStatus} text={validityPill} />
+            {daysShort && <span className="sc-when">{daysShort}</span>}
+          </div>
         </div>
-        <div className="sc-conv-actions">
-          <button
-            type="button"
-            className="sc-cta-info"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
-            aria-label="Vedi dettagli sconto"
-          >
-            Dettagli
-          </button>
-          <button
-            type="button"
-            className="sc-cta-mini"
-            disabled={!!claiming}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
-          >
-            {claiming ? '…' : 'Sblocca'}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="sc-cta-mini"
+          disabled={!!claiming}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+        >
+          {claiming ? '…' : (<><LockIcon />Sblocca</>)}
+        </button>
       </div>
     </div>
   )
@@ -823,9 +827,9 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const expired = isDealExpired(deal)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const meta = [cuisine, shortAddress(r?.address)].filter(Boolean).join(' · ')
-  const expLbl = expired ? 'scaduto' : expiryLabel(deal)
   const validityStatus = expired ? 'expired' : checkValidity(deal)
-  const validityPill = formatShortPill(deal, validityStatus)
+  const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
+  const pctBadge = dealBadgeText(deal) || freebieLabel(deal)
 
   return (
     <div
@@ -844,14 +848,11 @@ function MineRow({ redemption, onOpenQR, onClick }) {
             background: '#F1ECE3', fontSize: 22,
           }}>🍽️</div>
         )}
+        {pctBadge && <span className="sc-pct-corner">{pctBadge}</span>}
       </div>
       <div className="sc-info">
         <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
         {meta && <div className="sc-meta">{meta}</div>}
-        <div className="sc-badge-row">
-          <span className="sc-badge-pct">{dealBadgeText(deal) || freebieLabel(deal)}</span>
-          {expLbl && <span className={`sc-scad ${expired ? 'is-expired' : ''}`}>{expLbl}</span>}
-        </div>
         <div className="sc-pill-row sc-pill-row-mini">
           <ValidityPill status={validityStatus} text={validityPill} />
         </div>
