@@ -52,7 +52,7 @@ GRANT EXECUTE ON FUNCTION verify_resolve_restaurant(uuid) TO anon, authenticated
 CREATE OR REPLACE FUNCTION verify_update_restaurant_meta(
   p_device_token uuid,
   p_email text DEFAULT NULL,
-  p_opening_hours text DEFAULT NULL
+  p_opening_hours jsonb DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -74,9 +74,10 @@ BEGIN
     RETURN jsonb_build_object('error', 'Email non valida');
   END IF;
 
+  -- Aggiorna i campi forniti (passare NULL = non modificare)
   UPDATE restaurants
      SET email = COALESCE(NULLIF(trim(p_email), ''), email),
-         opening_hours = COALESCE(NULLIF(trim(p_opening_hours), ''), opening_hours),
+         opening_hours = COALESCE(p_opening_hours, opening_hours),
          updated_at = now()
    WHERE id = v_restaurant_id;
 
@@ -84,8 +85,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION verify_update_restaurant_meta(uuid, text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION verify_update_restaurant_meta(uuid, text, text) TO anon, authenticated;
+REVOKE ALL ON FUNCTION verify_update_restaurant_meta(uuid, text, jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION verify_update_restaurant_meta(uuid, text, jsonb) TO anon, authenticated;
 
 -- --------------------------------------------------------------------
 -- 2. verify_change_pin

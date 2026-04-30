@@ -81,16 +81,34 @@ export function computeStatus(data) {
 
 export function useOrariStatus(restaurant) {
   const id = restaurant?.id
-  const hasVerified = !!restaurant?.place_id && !!restaurant?.place_id_verified_at
+  const hasGooglePlaces = !!restaurant?.place_id && !!restaurant?.place_id_verified_at
+  // Orari manuali impostati dal ristoratore (panello /verify > Impostazioni).
+  // Hanno priorità sull'eventuale hours_cache da Google: se l'oste li ha
+  // impostati manualmente, vince la sua intenzione.
+  const manualHours = (
+    restaurant?.opening_hours?.regularOpeningHours?.periods?.length > 0
+      ? restaurant.opening_hours
+      : null
+  )
+  const hasVerified = !!manualHours || hasGooglePlaces
+
   const [data, setData] = useState(() => {
+    if (manualHours) return manualHours
     const c = id && cache.get(id)
     return c && Date.now() - c.ts < CACHE_TTL_MS ? c.data : null
   })
-  const [loading, setLoading] = useState(!data && hasVerified)
+  const [loading, setLoading] = useState(!data && hasGooglePlaces && !manualHours)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    if (!id || !hasVerified) {
+    // Se ci sono orari manuali, niente fetch: usali direttamente.
+    if (manualHours) {
+      setData(manualHours)
+      setLoading(false)
+      setFailed(false)
+      return
+    }
+    if (!id || !hasGooglePlaces) {
       setLoading(false)
       return
     }
@@ -127,7 +145,7 @@ export function useOrariStatus(restaurant) {
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [id, hasVerified])
+  }, [id, hasGooglePlaces, manualHours])
 
   const status = data ? computeStatus(data) : null
   return { data, status, loading, failed, hasVerified }

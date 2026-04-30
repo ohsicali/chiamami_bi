@@ -806,7 +806,9 @@ function FloatingScanCTA({ onClick }) {
 /* Impostazioni — dati locale (email + orari), cambio PIN, contatto Bi, logout */
 function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }) {
   const [email, setEmail] = useState('')
-  const [hours, setHours] = useState('')
+  // hoursDays: { 0: [{open:'12:00', close:'14:30'}, ...], 1: [...], ... }
+  // 0=Domenica, 1=Lunedì, ..., 6=Sabato (convenzione JS Date / Google Places)
+  const [hoursDays, setHoursDays] = useState(() => emptyHoursDays())
   const [savingMeta, setSavingMeta] = useState(false)
   const [metaMsg, setMetaMsg] = useState(null) // { kind, text }
   const [loadingMeta, setLoadingMeta] = useState(true)
@@ -824,7 +826,7 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
       try {
         const { data, error } = await supabase
           .from('restaurants')
-          .select('email, opening_hours')
+          .select('email, opening_hours, hours_cache, place_id_verified_at')
           .eq('id', restaurant.id)
           .maybeSingle()
         if (cancelled) return
@@ -832,10 +834,17 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
           console.warn('load meta error', error)
         }
         setEmail(data?.email || '')
-        // opening_hours puรฒ essere stringa o JSON: lo mostriamo come testo
-        if (data?.opening_hours) {
-          setHours(typeof data.opening_hours === 'string' ? data.opening_hours : JSON.stringify(data.opening_hours, null, 2))
+        // Pre-popolazione orari, in ordine di priorità:
+        //   1) opening_hours già impostato manualmente
+        //   2) hours_cache da Google Places (se Place ID verificato)
+        //   3) default: tutti i giorni chiusi
+        let source = null
+        if (data?.opening_hours?.regularOpeningHours?.periods?.length) {
+          source = data.opening_hours
+        } else if (data?.hours_cache?.regularOpeningHours?.periods?.length && data?.place_id_verified_at) {
+          source = data.hours_cache
         }
+        setHoursDays(periodsToHoursDays(source?.regularOpeningHours?.periods))
       } catch (e) {
         console.warn('load meta failed', e)
       } finally {
@@ -850,10 +859,11 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
     setSavingMeta(true)
     setMetaMsg(null)
     try {
+      const openingHoursPayload = hoursDaysToPayload(hoursDays)
       const { data, error } = await supabase.rpc('verify_update_restaurant_meta', {
         p_device_token: deviceToken,
         p_email: email || null,
-        p_opening_hours: hours || null,
+        p_opening_hours: openingHoursPayload,
       })
       if (error) {
         if (String(error.message || '').match(/function .* does not exist/i)) {
@@ -955,17 +965,14 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
               disabled={loadingMeta || savingMeta}
             />
           </label>
-          <label className="v4-set-field">
+          <div className="v4-set-field">
             <span className="lab">Orari di apertura</span>
-            <textarea
-              className="inp"
-              rows={4}
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
-              placeholder={'Es: Lun–Ven 19:30–23:30 · Sab/Dom anche pranzo 12:30–14:30'}
+            <OpeningHoursEditor
+              value={hoursDays}
+              onChange={setHoursDays}
               disabled={loadingMeta || savingMeta}
             />
-          </label>
+          </div>
           {metaMsg && (
             <div className={`v4-set-msg ${metaMsg.kind}`}>{metaMsg.text}</div>
           )}
@@ -2707,5 +2714,185 @@ function ExpandableStorico({ restaurant, deviceToken, onSessionExpired }) {
         ))
       )}
     </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  OpeningHoursEditor — editor strutturato 7 giorni × time ranges     */
+/*  State shape: { 0: [{open:'12:00', close:'14:30'}], 1: [...], ... }  */
+/*  0=Domenica, 1=Lunedì, ..., 6=Sabato (convenzione JS Date / Google)  */
+/* ------------------------------------------------------------------ */
+const OH_DAY_LABELS = [
+  { idx: 1, full: 'Lunedì',    short: 'Lun' },
+  { idx: 2, full: 'Martedì',   short: 'Mar' },
+  { idx: 3, full: 'Mercoledì', short: 'Mer' },
+  { idx: 4, full: 'Giovedì',   short: 'Gio' },
+  { idx: 5, full: 'Venerdì',   short: 'Ven' },
+  { idx: 6, full: 'Sabato',    short: 'Sab' },
+  { idx: 0, full: 'Domenica',  short: 'Dom' },
+]
+
+function emptyHoursDays() {
+  return { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
+}
+
+function pad2(n) { return String(n).padStart(2, '0') }
+function fmtHM(h, m) { return `${pad2(h ?? 0)}:${pad2(m ?? 0)}` }
+
+function periodsToHoursDays(periods) {
+  const days = emptyHoursDays()
+  if (!Array.isArray(periods)) return days
+  for (const p of periods) {
+    const d = p?.open?.day
+    if (d == null) continue
+    const open = fmtHM(p.open.hour, p.open.minute)
+    // close puo essere null = aperto 24h: trattiamo come '23:59' di compromesso
+    const closeDay = p.close?.day
+    if (closeDay != null && closeDay !== d) {
+      // cross-midnight: chiudo a 23:59 sul giorno open per semplicità editor
+      days[d].push({ open, close: '23:59' })
+      continue
+    }
+    const close = p.close ? fmtHM(p.close.hour, p.close.minute) : '23:59'
+    days[d].push({ open, close })
+  }
+  // Ordina i turni per orario di apertura
+  Object.keys(days).forEach((k) => {
+    days[k].sort((a, b) => a.open.localeCompare(b.open))
+  })
+  return days
+}
+
+function hoursDaysToPayload(hoursDays) {
+  const periods = []
+  Object.entries(hoursDays).forEach(([dStr, slots]) => {
+    const day = Number(dStr)
+    slots.forEach(({ open, close }) => {
+      if (!/^\d{2}:\d{2}$/.test(open) || !/^\d{2}:\d{2}$/.test(close)) return
+      const [oh, om] = open.split(':').map(Number)
+      const [ch, cm] = close.split(':').map(Number)
+      periods.push({
+        open:  { day, hour: oh, minute: om },
+        close: { day, hour: ch, minute: cm },
+      })
+    })
+  })
+  if (periods.length === 0) return null
+  return { regularOpeningHours: { periods } }
+}
+
+function OpeningHoursEditor({ value, onChange, disabled }) {
+  const setDay = (dayIdx, slots) => {
+    onChange({ ...value, [dayIdx]: slots })
+  }
+  const toggleDay = (dayIdx) => {
+    const isOpen = (value[dayIdx] || []).length > 0
+    if (isOpen) setDay(dayIdx, [])
+    else setDay(dayIdx, [{ open: '19:00', close: '23:00' }])
+  }
+  const addSlot = (dayIdx) => {
+    const slots = value[dayIdx] || []
+    const last = slots[slots.length - 1]
+    const next = last
+      ? { open: last.close || '19:00', close: '' }
+      : { open: '12:00', close: '14:30' }
+    setDay(dayIdx, [...slots, next])
+  }
+  const removeSlot = (dayIdx, slotIdx) => {
+    setDay(dayIdx, (value[dayIdx] || []).filter((_, i) => i !== slotIdx))
+  }
+  const updateSlot = (dayIdx, slotIdx, patch) => {
+    setDay(dayIdx, (value[dayIdx] || []).map((s, i) => (i === slotIdx ? { ...s, ...patch } : s)))
+  }
+  const copyFromMonday = () => {
+    const monday = value[1] || []
+    const next = { ...value }
+    for (let d = 2; d <= 6; d++) next[d] = monday.map((s) => ({ ...s }))
+    next[0] = monday.map((s) => ({ ...s }))
+    onChange(next)
+  }
+  const closeAll = () => onChange(emptyHoursDays())
+
+  return (
+    <div className="v4-oh">
+      <div className="v4-oh-actions">
+        <button type="button" className="v4-oh-act" onClick={copyFromMonday} disabled={disabled}>
+          Copia Lun in tutti
+        </button>
+        <button type="button" className="v4-oh-act" onClick={closeAll} disabled={disabled}>
+          Chiudi tutti
+        </button>
+      </div>
+      <div className="v4-oh-list">
+        {OH_DAY_LABELS.map(({ idx, full, short }) => {
+          const slots = value[idx] || []
+          const isOpen = slots.length > 0
+          return (
+            <div key={idx} className={`v4-oh-day ${isOpen ? 'open' : 'closed'}`}>
+              <div className="v4-oh-day-head">
+                <div className="v4-oh-day-name">
+                  <span className="full">{full}</span>
+                  <span className="short">{short}</span>
+                </div>
+                <button
+                  type="button"
+                  className={`v4-oh-toggle ${isOpen ? 'on' : ''}`}
+                  onClick={() => toggleDay(idx)}
+                  disabled={disabled}
+                  aria-pressed={isOpen}
+                >
+                  {isOpen ? 'Aperto' : 'Chiuso'}
+                </button>
+              </div>
+              {isOpen && (
+                <div className="v4-oh-slots">
+                  {slots.map((s, si) => (
+                    <div key={si} className="v4-oh-slot">
+                      <input
+                        type="time"
+                        className="v4-oh-time"
+                        value={s.open}
+                        onChange={(e) => updateSlot(idx, si, { open: e.target.value })}
+                        disabled={disabled}
+                        aria-label="Apertura"
+                      />
+                      <span className="v4-oh-sep">–</span>
+                      <input
+                        type="time"
+                        className="v4-oh-time"
+                        value={s.close}
+                        onChange={(e) => updateSlot(idx, si, { close: e.target.value })}
+                        disabled={disabled}
+                        aria-label="Chiusura"
+                      />
+                      <button
+                        type="button"
+                        className="v4-oh-rm"
+                        onClick={() => removeSlot(idx, si)}
+                        disabled={disabled}
+                        aria-label="Rimuovi turno"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="v4-oh-addslot"
+                    onClick={() => addSlot(idx)}
+                    disabled={disabled}
+                  >
+                    + Aggiungi turno
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      <div className="v4-oh-hint">
+        Inserisci uno o più turni per ogni giorno (es. pranzo + cena). Gli orari saranno mostrati anche sulla scheda pubblica del locale.
+      </div>
+    </div>
   )
 }
