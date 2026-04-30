@@ -2275,14 +2275,15 @@ function defaultRange() {
   return { kind: '30d', from, to, label: 'Ultimi 30 giorni' }
 }
 
-function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
+function DashboardTab({ restaurant, deviceToken, onSessionExpired, onJumpToStorico }) {
   const [stats, setStats] = useState(null)
   const [statsError, setStatsError] = useState(null)
   const [discount, setDiscount] = useState(null)
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
-  const [range, setRange] = useState(defaultRange)
+  // Dashboard (v4) usa sempre 30 giorni: range picker spostato in Storico tab
+  const [range] = useState(defaultRange)
 
   useEffect(() => {
     let cancelled = false
@@ -2385,74 +2386,215 @@ function DashboardTab({ restaurant, deviceToken, onSessionExpired }) {
     }
   }, [restaurant.id, deviceToken, reloadKey, onSessionExpired, range])
 
-  return (
-    <div style={{ padding: '20px 16px 80px', maxWidth: 1100, margin: '0 auto' }}>
-      {/* Range picker always visible, even while loading */}
-      <RangePicker range={range} onChange={setRange} />
+  if (loading) {
+    return (
+      <div style={{ padding: '40px 20px 100px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
+        <div
+          style={{
+            width: 28, height: 28,
+            border: '3px solid var(--color-line)',
+            borderTopColor: 'var(--color-corallo)',
+            borderRadius: '50%',
+            margin: '0 auto 12px',
+            animation: 'verifySpin 0.8s linear infinite',
+          }}
+        />
+        <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
+      </div>
+    )
+  }
 
-      {loading ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-ink-55)' }}>
-          <div
+  return (
+    <>
+      {statsError && (
+        <div
+          style={{
+            background: '#FEF3C7',
+            border: '1px solid #FCD34D',
+            borderRadius: 10,
+            padding: '10px 14px',
+            marginBottom: 12,
+            fontSize: 12,
+            color: '#92400E',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          }}
+        >
+          <span>⚠ {statsError}</span>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
             style={{
-              width: 28,
-              height: 28,
-              border: '3px solid var(--color-line)',
-              borderTopColor: 'var(--color-corallo)',
-              borderRadius: '50%',
-              margin: '0 auto 12px',
-              animation: 'verifySpin 0.8s linear infinite',
+              background: 'transparent', border: '1px solid #FCD34D', color: '#92400E',
+              fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
             }}
-          />
-          <div style={{ fontSize: 12 }}>Caricamento statistiche…</div>
+          >
+            Riprova
+          </button>
         </div>
-      ) : (
-        <>
-          {statsError && (
-            <div
-              style={{
-                background: '#FEF3C7',
-                border: '1px solid #FCD34D',
-                borderRadius: 10,
-                padding: '10px 14px',
-                marginBottom: 16,
-                fontSize: 12,
-                color: '#92400E',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <span>⚠ {statsError}</span>
-              <button
-                onClick={() => setReloadKey((k) => k + 1)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #FCD34D',
-                  color: '#92400E',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                }}
-              >
-                Riprova
-              </button>
-            </div>
-          )}
-          <StatGrid stats={stats} range={range} />
-          <div className="verify-dashboard-main">
-            <div className="verify-dashboard-col">
-              {discount && <ActiveDiscountCard discount={discount} />}
-              <FunnelCard stats={stats} range={range} />
-            </div>
-            <div className="verify-dashboard-col">
-              <ActivityList activity={activity} />
-            </div>
-          </div>
-        </>
       )}
+
+      <ScontoHero discount={discount} />
+      <StatPair activity={activity} stats={stats} />
+      <RateCard stats={stats} />
+
+      <div className="v4-section-lbl">
+        Ultime verifiche
+        {onJumpToStorico && (
+          <button type="button" className="all" onClick={onJumpToStorico}>
+            Storico →
+          </button>
+        )}
+      </div>
+      <V4ActivityLog items={(activity || []).slice(0, 5)} emptyLabel="Nessuna verifica ancora." />
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  v4 — Dashboard presentational components                          */
+/* ------------------------------------------------------------------ */
+function ScontoHero({ discount }) {
+  if (!discount) {
+    return (
+      <div className="v4-sconto-hero" style={{ background: 'linear-gradient(135deg, var(--color-cream-deep), var(--color-cream))', color: 'var(--color-ink)' }}>
+        <div className="lab" style={{ color: 'var(--color-ink-55)' }}>● NESSUNO SCONTO ATTIVO</div>
+        <div className="val" style={{ fontSize: 24, marginTop: 8 }}>—</div>
+        <div className="cond" style={{ color: 'var(--color-ink-55)' }}>
+          Quando Bi attiva uno sconto sulla tua scheda, lo vedi qui.
+        </div>
+      </div>
+    )
+  }
+  const value = formatDiscountValue(discount)
+  const cond = [discount.title, discount.description].filter(Boolean).join(' · ')
+  return (
+    <div className="v4-sconto-hero">
+      <div className="lab">● SCONTO ATTIVO</div>
+      <div className="val">{value}</div>
+      {cond && <div className="cond">{cond}</div>}
+    </div>
+  )
+}
+
+function StatPair({ activity, stats }) {
+  // "Oggi" deriva dalle attività riscattate oggi
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const startTs = startOfToday.getTime()
+  const todayCount = (activity || []).filter((a) => {
+    if (a.status !== 'redeemed') return false
+    const ts = a.redeemed_at ? new Date(a.redeemed_at).getTime() : 0
+    return ts >= startTs
+  }).length
+
+  // "30 giorni" arriva dalle stats range RPC
+  const monthCount = stats?.redemptions_used || 0
+
+  return (
+    <div className="v4-stat-grid">
+      <div className="v4-stat featured">
+        <div className="lab">Oggi</div>
+        <div className="val">{todayCount}</div>
+        <div className="sub">{todayCount === 1 ? 'verifica OK' : 'verifiche OK'}</div>
+      </div>
+      <div className="v4-stat">
+        <div className="lab">30 giorni</div>
+        <div className="val">{monthCount}</div>
+        <div className="sub">{monthCount === 1 ? 'verifica OK' : 'verifiche OK'}</div>
+      </div>
+    </div>
+  )
+}
+
+function RateCard({ stats }) {
+  if (!stats) return null
+  const tiles = [
+    { v: stats.views || 0, l: 'visite scheda' },
+    { v: stats.saves || 0, l: 'salvataggi' },
+    { v: stats.redemptions_used || 0, l: 'sconti usati' },
+  ]
+  return (
+    <div className="v4-rate-card">
+      <div className="v4-rate-head">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="v4-rate-title">Quanto ti cercano</div>
+          <div className="v4-rate-sub">Attività sulla tua scheda · ultimi 30 giorni</div>
+        </div>
+      </div>
+      <div className="v4-rate-tiles">
+        {tiles.map((t) => (
+          <div key={t.l} className="v4-rate-tile">
+            <div className="v">{Number(t.v).toLocaleString('it-IT')}</div>
+            <div className="l">{t.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function relativeTimeIt(iso) {
+  if (!iso) return ''
+  const ts = new Date(iso).getTime()
+  if (!ts) return ''
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+  if (diffSec < 60) return 'adesso'
+  if (diffSec < 3600) {
+    const m = Math.floor(diffSec / 60)
+    return `${m} min fa`
+  }
+  if (diffSec < 86400) {
+    const h = Math.floor(diffSec / 3600)
+    return `${h}h fa`
+  }
+  if (diffSec < 86400 * 2) return 'ieri'
+  const d = Math.floor(diffSec / 86400)
+  if (d < 7) return `${d}g fa`
+  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+}
+
+function V4ActivityRow({ item }) {
+  const isRedeemed = item.status === 'redeemed'
+  const date = isRedeemed ? item.redeemed_at : item.generated_at
+  const time = date
+    ? new Date(date).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+    : ''
+  const ago = relativeTimeIt(date)
+  const userName = (item.user_name || '').trim() || 'Utente'
+  const discountValue = formatDiscountValue(item.discount)
+  const discountTitle = item.discount?.title || ''
+  const primary = discountValue ? `${userName} · ${discountValue}` : userName
+  const secondary = isRedeemed
+    ? (discountTitle || 'Sconto riscattato')
+    : (discountTitle ? `In attesa · ${discountTitle}` : 'In attesa')
+  const icClass = isRedeemed ? '' : 'pending'
+  const ic = isRedeemed ? '✓' : '•'
+  return (
+    <div className="v4-log-row">
+      <div className={`v4-log-ic ${icClass}`}>{ic}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="n" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primary}</div>
+        <div className="m" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondary}</div>
+      </div>
+      <div className="t">
+        {time}
+        {ago && (<><br /><span style={{ color: '#9a8e84' }}>{ago}</span></>)}
+      </div>
+    </div>
+  )
+}
+
+function V4ActivityLog({ items, emptyLabel = 'Nessuna attività' }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="v4-log" style={{ padding: '20px 16px', textAlign: 'center' }}>
+        <div style={{ fontSize: 13, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+          {emptyLabel}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="v4-log">
+      {items.map((it) => <V4ActivityRow key={it.id} item={it} />)}
     </div>
   )
 }
@@ -2481,367 +2623,3 @@ function buildFallbackStats(activityData, range) {
   }
 }
 
-function StatGrid({ stats, range }) {
-  if (!stats) return null
-  const rangeLabel = range?.label || 'Periodo selezionato'
-  const cards = [
-    {
-      label: 'Visualizzazioni',
-      value: stats.views || 0,
-      sublabel: `${stats.views_total || 0} in totale`,
-      icon: '👁',
-      color: '#6366F1',
-    },
-    {
-      label: 'Salvati',
-      value: stats.saves || 0,
-      sublabel: `${stats.saves_total || 0} in totale`,
-      icon: '♥',
-      color: '#EC4899',
-    },
-    {
-      label: 'Sconti generati',
-      value: stats.redemptions_generated || 0,
-      sublabel: rangeLabel,
-      icon: '✦',
-      color: '#F59E0B',
-    },
-    {
-      label: 'Sconti usati',
-      value: stats.redemptions_used || 0,
-      sublabel: `${stats.redemptions_used_total || 0} in totale`,
-      icon: '✓',
-      color: '#10B981',
-    },
-  ]
-  return (
-    <div className="verify-stat-grid">
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          style={{
-            background: 'var(--color-card)',
-            borderRadius: 14,
-            padding: '16px 16px 14px',
-            border: '1px solid #F0EAE0',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              color: c.color,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: 0.3,
-              textTransform: 'uppercase',
-              marginBottom: 6,
-            }}
-          >
-            <span style={{ fontSize: 14 }}>{c.icon}</span>
-            <span>{c.label}</span>
-          </div>
-          <div
-            style={{
-              fontSize: 26,
-              fontWeight: 800,
-              color: 'var(--color-ink)',
-              lineHeight: 1,
-              letterSpacing: -0.5,
-            }}
-          >
-            {c.value.toLocaleString('it-IT')}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--color-ink-55)', marginTop: 6 }}>{c.sublabel}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function daysUntil(isoDate) {
-  if (!isoDate) return 0
-  const diffMs = new Date(isoDate).getTime() - new Date().getTime()
-  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
-}
-
-function ActiveDiscountCard({ discount }) {
-  const value = formatDiscountValue(discount)
-  const pct =
-    discount.max_redemptions && discount.max_redemptions > 0
-      ? Math.min(100, ((discount.total_redeemed || 0) / discount.max_redemptions) * 100)
-      : null
-  const days = daysUntil(discount.valid_until)
-  return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, var(--color-ink) 0%, #3A2A30 100%)',
-        color: '#fff',
-        borderRadius: 'var(--radius-lg)',
-        padding: 18,
-        marginBottom: 16,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 11,
-          color: 'var(--color-corallo)',
-          fontWeight: 700,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          marginBottom: 8,
-        }}
-      >
-        Sconto attivo
-      </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-        <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{value}</div>
-        <div style={{ fontSize: 15, fontWeight: 600, opacity: 0.9 }}>{discount.title}</div>
-      </div>
-      {discount.description && (
-        <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 14, lineHeight: 1.45 }}>
-          {discount.description}
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: 14, fontSize: 12, opacity: 0.9 }}>
-        <span>
-          <strong style={{ color: '#fff' }}>{discount.total_redeemed || 0}</strong> usati
-          {discount.max_redemptions ? ` / ${discount.max_redemptions}` : ''}
-        </span>
-        <span>·</span>
-        <span>
-          Scade in <strong style={{ color: '#fff' }}>{days}</strong> gg
-        </span>
-      </div>
-      {pct != null && (
-        <div
-          style={{
-            marginTop: 10,
-            height: 4,
-            background: 'rgba(255,255,255,0.1)',
-            borderRadius: 2,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              width: `${pct}%`,
-              height: '100%',
-              background: 'var(--color-corallo)',
-              transition: 'width 0.4s',
-            }}
-          />
-        </div>
-      )}
-    </div>
-  )
-}
-
-function FunnelCard({ stats, range }) {
-  if (!stats) return null
-  const steps = [
-    { label: 'Visualizzazioni', value: stats.views || 0, color: '#6366F1' },
-    { label: 'Salvati', value: stats.saves || 0, color: '#EC4899' },
-    { label: 'Sconti generati', value: stats.redemptions_generated || 0, color: '#F59E0B' },
-    { label: 'Sconti usati', value: stats.redemptions_used || 0, color: '#10B981' },
-  ]
-  const max = Math.max(...steps.map((s) => s.value), 1)
-  const funnelLabel = range?.label ? `Andamento — ${range.label}` : 'Andamento'
-
-  return (
-    <div
-      style={{
-        background: 'var(--color-card)',
-        borderRadius: 16,
-        padding: 18,
-        marginBottom: 16,
-        border: '1px solid #F0EAE0',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--color-ink-55)',
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-          marginBottom: 12,
-        }}
-      >
-        {funnelLabel}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {steps.map((s) => {
-          const pct = (s.value / max) * 100
-          return (
-            <div key={s.label}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 13,
-                  marginBottom: 5,
-                }}
-              >
-                <span style={{ color: 'var(--color-ink)', fontWeight: 500 }}>{s.label}</span>
-                <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
-              </div>
-              <div style={{ height: 8, background: 'var(--color-cream)', borderRadius: 4, overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.max(2, pct)}%`,
-                    height: '100%',
-                    background: s.color,
-                    borderRadius: 4,
-                    transition: 'width 0.4s',
-                  }}
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function ActivityList({ activity }) {
-  if (!activity || activity.length === 0) {
-    return (
-      <div
-        style={{
-          background: 'var(--color-card)',
-          borderRadius: 16,
-          padding: '24px 18px',
-          border: '1px solid #F0EAE0',
-          textAlign: 'center',
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--color-ink-55)',
-            letterSpacing: 0.5,
-            textTransform: 'uppercase',
-            marginBottom: 8,
-          }}
-        >
-          Attività recente
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--color-ink-55)' }}>
-          Nessuno sconto ancora generato.
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      style={{
-        background: 'var(--color-card)',
-        borderRadius: 16,
-        border: '1px solid #F0EAE0',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--color-ink-55)',
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-          padding: '14px 16px 8px',
-        }}
-      >
-        Attività recente
-      </div>
-      {activity.map((a) => (
-        <ActivityRow key={a.id} item={a} />
-      ))}
-    </div>
-  )
-}
-
-function ActivityRow({ item }) {
-  const isRedeemed = item.status === 'redeemed'
-  const date = isRedeemed ? item.redeemed_at : item.generated_at
-  const when = date
-    ? new Date(date).toLocaleString('it-IT', {
-        day: '2-digit',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : ''
-  const actionLabel = isRedeemed ? 'Validato sconto' : 'Generato sconto'
-  const userName = (item.user_name || '').trim()
-  const discountTitle = item.discount?.title || ''
-  // Primary line: prefer the person's name since that's what the restaurant
-  // owner wants to see at a glance (e.g. "Validato sconto — Beatrice")
-  const primary = userName
-    ? `${actionLabel} — ${userName}`
-    : `${actionLabel}${discountTitle ? ' · ' + discountTitle : ''}`
-  // Secondary line: discount title when we already showed the name, plus time.
-  const secondaryParts = []
-  if (userName && discountTitle) secondaryParts.push(discountTitle)
-  if (when) secondaryParts.push(when)
-  const secondary = secondaryParts.join(' · ')
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 11,
-        padding: '10px 16px',
-        borderTop: '1px solid #F5F1EA',
-      }}
-    >
-      <div
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: '50%',
-          background: isRedeemed ? '#10B981' : '#F59E0B',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 14,
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
-      >
-        {isRedeemed ? '✓' : '•'}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--color-ink)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {primary}
-        </div>
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--color-ink-55)',
-            marginTop: 2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {secondary}
-        </div>
-      </div>
-    </div>
-  )
-}
