@@ -49,6 +49,8 @@ export default function EditRestaurant() {
   const [toast, setToast] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [notifyOnPublish, setNotifyOnPublish] = useState(true)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!restaurantId || !isSupabaseConfigured()) return
@@ -166,6 +168,23 @@ export default function EditRestaurant() {
     [form, restaurantId, restaurant, notifyOnPublish]
   )
 
+  const handleDelete = useCallback(async () => {
+    if (!restaurantId) return
+    setDeleting(true)
+    try {
+      // Photo, sconti, partner sono in ON DELETE CASCADE — basta eliminare
+      // la riga di restaurants.
+      const { error } = await supabase.from('restaurants').delete().eq('id', restaurantId)
+      if (error) throw error
+      navigate('/admin/restaurants', { replace: true })
+    } catch (err) {
+      setToast({ kind: 'err', text: `Errore eliminazione: ${err.message || 'unknown'}` })
+      setTimeout(() => setToast(null), 3400)
+      setDeleting(false)
+      setDeleteOpen(false)
+    }
+  }, [restaurantId, navigate])
+
   // SEO lock: until minimum data is filled, the SEO section shows a
   // checklist instead of the form.
   const { ready: seoReady, missing: seoMissing } = useMemo(
@@ -208,7 +227,10 @@ export default function EditRestaurant() {
 
   return (
     <AdminLayout title={`Modifica ${form.name}`}>
-      <div style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }} className="max-md:!p-[18px]">
+      <div
+        style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}
+        className="max-md:!p-[18px] max-md:!pb-[180px]"
+      >
         {/* ── Header ── */}
         <div style={{ marginBottom: 24 }}>
           <div
@@ -300,6 +322,32 @@ export default function EditRestaurant() {
             </div>
 
             <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                title="Elimina ristorante"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--color-line, #EAE3D7)',
+                  color: 'var(--color-danger, #C0392B)',
+                  padding: '9px 14px',
+                  borderRadius: 999,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span style={{ display: 'inline-flex', width: 14, height: 14 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18M19 6l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 6m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3" />
+                  </svg>
+                </span>
+                Elimina
+              </button>
               <a
                 href={form.slug ? `/r/${form.slug}` : '#'}
                 target="_blank"
@@ -407,7 +455,7 @@ export default function EditRestaurant() {
               <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
             )}
             {activeTab === 'sconto' && (
-              <ScontoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+              <ScontoTab form={form} restaurantId={restaurantId} />
             )}
             {activeTab === 'credenziali' && (
               <CredenzialiTab
@@ -509,7 +557,7 @@ export default function EditRestaurant() {
               <CosaTiConsiglioTab form={form} onChange={updateField} restaurantId={restaurantId} />
             </Section>
             <Section id="sec-sconto" num="04" title="Sconto">
-              <ScontoTab form={form} onChange={updateField} restaurantId={restaurantId} />
+              <ScontoTab form={form} restaurantId={restaurantId} />
             </Section>
             <Section id="sec-credenziali" num="05" title="Credenziali PIN">
               <CredenzialiTab
@@ -541,6 +589,158 @@ export default function EditRestaurant() {
           </>
         )}
       </div>
+
+      {/* ── Floating mobile action bar — stile nav admin, staccata sopra ── */}
+      {!isDesktop && (
+        <div
+          style={{
+            position: 'fixed',
+            left: 12,
+            right: 12,
+            bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+            background: 'rgba(34,24,28,0.92)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 24,
+            padding: '8px 8px 8px 14px',
+            display: 'flex',
+            gap: 6,
+            alignItems: 'center',
+            zIndex: 25,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {/* Status dot + label */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7,
+              minWidth: 0,
+              flexShrink: 1,
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: dirty ? 'var(--color-corallo, #E8453C)' : '#86E5A8',
+                flexShrink: 0,
+                boxShadow: dirty
+                  ? '0 0 0 4px rgba(232,69,60,0.18)'
+                  : '0 0 0 4px rgba(134,229,168,0.18)',
+              }}
+            />
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: 'rgba(255,255,255,0.85)',
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {dirty ? 'Da salvare' : 'Salvato'}
+            </span>
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Salva (ghost chiaro) */}
+          <button
+            type="button"
+            disabled={saving || !dirty}
+            onClick={() => handleSave(false)}
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              border: 0,
+              color: '#fff',
+              padding: '9px 14px',
+              borderRadius: 18,
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              cursor: saving || !dirty ? 'not-allowed' : 'pointer',
+              opacity: saving || !dirty ? 0.4 : 1,
+              fontFamily: 'inherit',
+            }}
+          >
+            Salva
+          </button>
+
+          {/* Pubblica (corallo) */}
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => handleSave(true)}
+            style={{
+              background: 'var(--color-corallo, #E8453C)',
+              color: '#fff',
+              border: 0,
+              padding: '9px 16px',
+              borderRadius: 18,
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              cursor: saving ? 'wait' : 'pointer',
+              boxShadow: '0 6px 14px rgba(232,69,60,0.45)',
+              fontFamily: 'inherit',
+            }}
+          >
+            {saving ? 'Salvo…' : 'Pubblica'}
+          </button>
+
+          {/* Divider */}
+          <div
+            style={{
+              width: 1,
+              height: 22,
+              background: 'rgba(255,255,255,0.15)',
+              margin: '0 2px',
+              flexShrink: 0,
+            }}
+            aria-hidden
+          />
+
+          {/* Elimina */}
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            title="Elimina ristorante"
+            aria-label="Elimina ristorante"
+            style={{
+              background: 'transparent',
+              border: 0,
+              color: '#FF8A82',
+              width: 36,
+              height: 36,
+              borderRadius: 14,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'inherit',
+              flexShrink: 0,
+            }}
+          >
+            <TrashIcon />
+          </button>
+        </div>
+      )}
+
+      {/* ── Modale conferma eliminazione ── */}
+      {deleteOpen && (
+        <DeleteConfirmModal
+          name={form.name}
+          deleting={deleting}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={handleDelete}
+        />
+      )}
 
       {/* Save toast */}
       <AnimatePresence>
@@ -638,6 +838,130 @@ function Section({ id, num, title, locked, children }) {
   )
 }
 
+function TrashIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18M19 6l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 6m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3" />
+    </svg>
+  )
+}
+
+function DeleteConfirmModal({ name, deleting, onCancel, onConfirm }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={() => !deleting && onCancel()}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(34,24,28,0.55)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#fff',
+          borderRadius: 20,
+          padding: 26,
+          maxWidth: 420,
+          width: '100%',
+          boxShadow: '0 30px 60px rgba(0,0,0,0.3)',
+          fontFamily: 'var(--font-sans)',
+        }}
+      >
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            background: 'var(--color-danger-wash, #FCE8E4)',
+            color: 'var(--color-danger, #C0392B)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 14px',
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M19 6l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 6m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3" />
+          </svg>
+        </div>
+        <h3
+          style={{
+            margin: 0,
+            fontWeight: 900,
+            fontSize: 20,
+            color: 'var(--color-ink, #22181C)',
+            textAlign: 'center',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Eliminare {name || 'questo ristorante'}?
+        </h3>
+        <p
+          style={{
+            margin: '10px 0 22px',
+            fontSize: 13,
+            color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+            textAlign: 'center',
+            lineHeight: 1.5,
+          }}
+        >
+          Verranno eliminati anche foto, sconti e dati partner collegati. <b>L'azione è
+          irreversibile.</b>
+        </p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={deleting}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-line, #EAE3D7)',
+              color: 'var(--color-ink, #22181C)',
+              padding: '10px 18px',
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: deleting ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Annulla
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            style={{
+              background: 'var(--color-danger, #C0392B)',
+              color: '#fff',
+              border: 0,
+              padding: '10px 18px',
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: deleting ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+              boxShadow: '0 6px 14px rgba(192,57,43,0.32)',
+            }}
+          >
+            {deleting ? 'Elimino…' : 'Sì, elimina'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function LoadingScreen() {
   return (
     <div
@@ -681,6 +1005,10 @@ function toFormState(r) {
     phone: r.phone || '',
     website: r.website || '',
     google_maps_url: r.google_maps_url || '',
+    menu_url: r.menu_url || '',
+    reservation_url: r.reservation_url || '',
+    instagram_url: r.instagram_url || '',
+    services: r.services || {},
     category: Array.isArray(r.category) ? r.category : [],
     cuisine_type: r.cuisine_type || '',
     price_range: r.price_range ?? 2,
@@ -729,6 +1057,10 @@ function toDbPayload(form, alsoPublish) {
     phone: form.phone || null,
     website: form.website || null,
     google_maps_url: form.google_maps_url || null,
+    menu_url: form.menu_url || null,
+    reservation_url: form.reservation_url || null,
+    instagram_url: form.instagram_url || null,
+    services: form.services || {},
     category: form.category,
     cuisine_type: form.cuisine_type || (form.category?.[0] ?? null),
     price_range: form.price_range ?? 2,

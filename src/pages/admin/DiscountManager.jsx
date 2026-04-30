@@ -519,7 +519,7 @@ export default function DiscountManager() {
     }
     Promise.all([
       supabase.from('discounts').select('*, restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
-      supabase.from('restaurants').select('id, name, restaurant_photos(photo_url)').order('name'),
+      supabase.from('restaurants').select('id, name, verify_pin, restaurant_photos(photo_url)').order('name'),
       supabase.from('discount_redemptions').select('discount_id, status'),
       supabase.from('restaurant_partners').select('restaurant_id').eq('is_active', true),
     ]).then(([discRes, restRes, redRes, partRes]) => {
@@ -542,7 +542,7 @@ export default function DiscountManager() {
         restaurant_photo: restPhotoMap[d.restaurant_id] || null,
       }))
       setDiscounts(enriched)
-      setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name })))
+      setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name, has_pin: !!r.verify_pin })))
       setPartnerIds(new Set((partRes.data || []).map((p) => p.restaurant_id)))
       setLoading(false)
     })
@@ -635,6 +635,20 @@ export default function DiscountManager() {
   const handleSave = async () => {
     const restId = form.restaurant_id || newPartner?.id
     if (!restId || !form.title || !form.discount_value || !form.valid_until) return
+
+    // Vincolo: PIN partner attivo è prerequisito per creare uno sconto.
+    // newPartner viene creato con un PIN automaticamente, quindi ok.
+    if (!newPartner) {
+      const rest = restaurants.find((r) => r.id === restId)
+      if (rest && !rest.has_pin) {
+        setSaveError(
+          `${rest.name} non ha il PIN partner attivo. ` +
+            'Vai in Ristoranti → apri la scheda → tab Credenziali → "Attiva PIN partner", poi torna qui.'
+        )
+        return
+      }
+    }
+
     if (!editing) {
       const existing = discounts.find(
         (d) => d.restaurant_id === restId && d.is_active && new Date(d.valid_until) > new Date()
@@ -1083,8 +1097,10 @@ export default function DiscountManager() {
                           }}>
                             {(() => {
                               const q = restSearch.toLowerCase().trim()
+                              // Eligibili: ristoranti con PIN attivo (verify_pin) o
+                              // già presenti come partner nella tabella legacy.
                               const partners = restaurants.filter(
-                                (r) => partnerIds.has(r.id) && (!q || r.name.toLowerCase().includes(q))
+                                (r) => (r.has_pin || partnerIds.has(r.id)) && (!q || r.name.toLowerCase().includes(q))
                               )
                               return partners.length > 0 ? (
                                 partners.map((r) => (
@@ -1101,7 +1117,7 @@ export default function DiscountManager() {
                                 ))
                               ) : (
                                 <div style={{ padding: '12px 14px', color: '#999', fontSize: 13 }}>
-                                  {q ? `Nessun partner trovato per "${restSearch}"` : 'Nessun ristorante partner'}
+                                  {q ? `Nessun partner trovato per "${restSearch}"` : 'Nessun ristorante con PIN attivo'}
                                 </div>
                               )
                             })()}

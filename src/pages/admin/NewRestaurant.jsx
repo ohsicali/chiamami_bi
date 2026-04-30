@@ -39,9 +39,10 @@ export default function NewRestaurant() {
     const website = (searchParams.get('website') || '').trim()
 
     const draftName = name || 'Nuovo ristorante'
-    const pin = generatePin()
     const uniqueSuffix = Date.now().toString(36)
 
+    // PIN opzionale: alla creazione NON viene generato. L'admin lo attiva
+    // dalla tab Credenziali quando serve (è prerequisito per gli sconti).
     const payload = {
       name: draftName,
       slug: slugify(draftName) + '-' + uniqueSuffix,
@@ -50,8 +51,8 @@ export default function NewRestaurant() {
       partner_email: email || null,
       phone: phone || null,
       website: website || null,
-      verify_pin: pin,
-      last_pin_rotation_at: new Date().toISOString(),
+      verify_pin: null,
+      last_pin_rotation_at: null,
       is_published: false,
       is_disabled: false,
       category: [],
@@ -170,6 +171,3 @@ function slugify(s) {
     .slice(0, 50)
 }
 
-function generatePin() {
-  return String(Math.floor(Math.random() * 900000) + 100000)
-}

@@ -114,6 +114,12 @@ export default function GoogleMapsImportBlock({
         }
       }
 
+      // Estrai la città dall'indirizzo (anziché lasciare il default "Torino")
+      if (patch.address) {
+        const city = extractCityFromAddress(patch.address)
+        if (city) patch.city = city
+      }
+
       onApply?.(patch)
       if (variant === 'compact') setUrl('')
 
@@ -181,6 +187,10 @@ export default function GoogleMapsImportBlock({
       if (data.website) patch.website = data.website
       if (data.resolved_url) patch.google_maps_url = data.resolved_url
       if (patch.name && onSlug) patch.slug = onSlug(patch.name)
+      if (patch.address) {
+        const city = extractCityFromAddress(patch.address)
+        if (city) patch.city = city
+      }
       onApply?.(patch)
       setShowNameSearch(false)
       setNameQuery('')
@@ -471,4 +481,49 @@ function defaultSlugify(s) {
 function isInvalidName(name) {
   const cities = ['torino', 'milano', 'roma', 'napoli', 'firenze', 'bologna', 'genova', 'palermo']
   return /^\d+$/.test(name) || cities.includes(name.toLowerCase())
+}
+
+/**
+ * Estrae la città da un indirizzo formattato Google.
+ * Esempi:
+ *  - "Via Roma 10, 10100 Torino TO, Italia"  → "Torino"
+ *  - "Piazza Duomo 5, 20121 Milano MI, Italy" → "Milano"
+ *  - "Via Garibaldi 1, Asti, Italia"          → "Asti" (no CAP)
+ *  - "23 Rue de Rivoli, 75001 Paris, France"  → "Paris"
+ */
+function extractCityFromAddress(address) {
+  if (!address || typeof address !== 'string') return null
+  const segments = address.split(',').map((s) => s.trim()).filter(Boolean)
+  if (!segments.length) return null
+
+  // 1. Cerca segmento con CAP italiano/EU all'inizio: "10100 Torino TO" o "75001 Paris"
+  for (const seg of segments) {
+    const m = seg.match(/^\d{4,5}\s+(.+?)(?:\s+[A-Z]{2})?$/)
+    if (m) {
+      const city = m[1].trim()
+      // Filtra eventuali codici provincia rimasti incollati (es. "Torino TO")
+      return city.replace(/\s+[A-Z]{2}$/, '').trim()
+    }
+  }
+
+  // 2. Fallback: il segmento prima dell'ultimo (che di solito è il paese)
+  const COUNTRY_NAMES = [
+    'italia', 'italy', 'francia', 'france', 'spagna', 'spain',
+    'germania', 'germany', 'svizzera', 'switzerland', 'austria',
+    'regno unito', 'united kingdom', 'uk',
+  ]
+  if (segments.length >= 2) {
+    const last = segments[segments.length - 1].toLowerCase()
+    if (COUNTRY_NAMES.includes(last)) {
+      return segments[segments.length - 2].replace(/\s+[A-Z]{2}$/, '').trim()
+    }
+  }
+
+  // 3. Ultimo tentativo: l'ultimo segmento se non sembra un paese
+  const last = segments[segments.length - 1]
+  if (last && !COUNTRY_NAMES.includes(last.toLowerCase())) {
+    return last.replace(/\s+[A-Z]{2}$/, '').trim()
+  }
+
+  return null
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
-import { useCategories } from '../../lib/hooks/useCategories'
+import { useCategories, CATEGORY_GROUPS, getGroupLabel } from '../../lib/hooks/useCategories'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import AdminLayout from '../../components/Layout/AdminLayout'
 
@@ -42,9 +42,10 @@ export default function CategoryManager() {
   const { allRestaurants: restaurants } = useRestaurants()
 
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ name: '', emoji: '', color: '' })
+  const [editForm, setEditForm] = useState({ name: '', emoji: '', color: '', group_key: 'cucina' })
   const [showAdd, setShowAdd] = useState(false)
-  const [addForm, setAddForm] = useState({ name: '', emoji: '', color: COLOR_PRESETS[0] })
+  const [addForm, setAddForm] = useState({ name: '', emoji: '', color: COLOR_PRESETS[0], group_key: 'cucina' })
+  const [filterGroup, setFilterGroup] = useState('all')
   const [deleteId, setDeleteId] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -61,7 +62,7 @@ export default function CategoryManager() {
 
   const startEdit = (cat) => {
     setEditingId(cat.id)
-    setEditForm({ name: cat.name, emoji: cat.emoji, color: cat.color })
+    setEditForm({ name: cat.name, emoji: cat.emoji, color: cat.color, group_key: cat.group_key || 'cucina' })
     setShowAdd(false)
   }
 
@@ -78,10 +79,15 @@ export default function CategoryManager() {
   const handleAdd = async () => {
     if (!addForm.name.trim() || saving) return
     setSaving(true)
-    const { error } = await addCategory({ name: addForm.name, emoji: addForm.emoji || '🍴', color: addForm.color })
+    const { error } = await addCategory({
+      name: addForm.name,
+      emoji: addForm.emoji || '🍴',
+      color: addForm.color,
+      group_key: addForm.group_key || 'cucina',
+    })
     setSaving(false)
     if (!error) {
-      setAddForm({ name: '', emoji: '', color: COLOR_PRESETS[0] })
+      setAddForm({ name: '', emoji: '', color: COLOR_PRESETS[0], group_key: addForm.group_key || 'cucina' })
       setShowAdd(false)
     }
   }
@@ -149,6 +155,51 @@ export default function CategoryManager() {
       {/* ─── CONTENT ─── */}
       <div className="px-[18px] py-[16px] md:px-[28px] md:py-[24px]" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+        {/* ─── GROUP FILTER ─── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <button
+            type="button"
+            onClick={() => setFilterGroup('all')}
+            style={{
+              padding: '6px 13px',
+              borderRadius: 999,
+              border: filterGroup === 'all' ? '1.5px solid #E8453C' : '1.5px solid #eee',
+              background: filterGroup === 'all' ? '#E8453C' : '#fff',
+              color: filterGroup === 'all' ? '#fff' : 'var(--color-ink)',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Tutti ({categories.length})
+          </button>
+          {CATEGORY_GROUPS.map((g) => {
+            const count = categories.filter((c) => (c.group_key || 'cucina') === g.key).length
+            const active = filterGroup === g.key
+            return (
+              <button
+                key={g.key}
+                type="button"
+                onClick={() => setFilterGroup(g.key)}
+                style={{
+                  padding: '6px 13px',
+                  borderRadius: 999,
+                  border: active ? '1.5px solid #E8453C' : '1.5px solid #eee',
+                  background: active ? '#E8453C' : '#fff',
+                  color: active ? '#fff' : 'var(--color-ink)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {g.emoji} {g.label} ({count})
+              </button>
+            )
+          })}
+        </div>
+
         {/* ─── ADD FORM ─── */}
         {showAdd && (
           <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 16 }}>
@@ -171,6 +222,36 @@ export default function CategoryManager() {
                   style={{ ...inputStyle, textAlign: 'center' }}
                   maxLength={4}
                 />
+              </div>
+
+              {/* Group picker */}
+              <div>
+                <p style={{ fontSize: 11, color: '#999', margin: '0 0 6px' }}>Gruppo</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {CATEGORY_GROUPS.map((g) => {
+                    const active = addForm.group_key === g.key
+                    return (
+                      <button
+                        key={g.key}
+                        type="button"
+                        onClick={() => setAddForm((p) => ({ ...p, group_key: g.key }))}
+                        style={{
+                          padding: '5px 11px',
+                          borderRadius: 999,
+                          border: active ? '1.5px solid #E8453C' : '1.5px solid #eee',
+                          background: active ? '#E8453C' : '#fff',
+                          color: active ? '#fff' : 'var(--color-ink)',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {g.emoji} {g.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Color picker */}
@@ -234,9 +315,12 @@ export default function CategoryManager() {
             style={{ display: 'grid', gap: 10 }}
             className="grid-cols-1 md:!grid-cols-2 lg:!grid-cols-3"
           >
-            {categories.map((cat) => {
+            {categories
+              .filter((c) => filterGroup === 'all' || (c.group_key || 'cucina') === filterGroup)
+              .map((cat) => {
               const isEditing = editingId === cat.id
               const count = countMap[cat.name] || 0
+              const groupLabel = getGroupLabel(cat.group_key || 'cucina')
 
               if (isEditing) {
                 return (
@@ -257,6 +341,31 @@ export default function CategoryManager() {
                           style={{ ...inputStyle, textAlign: 'center' }}
                           maxLength={4}
                         />
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {CATEGORY_GROUPS.map((g) => {
+                          const active = editForm.group_key === g.key
+                          return (
+                            <button
+                              key={g.key}
+                              type="button"
+                              onClick={() => setEditForm((p) => ({ ...p, group_key: g.key }))}
+                              style={{
+                                padding: '4px 9px',
+                                borderRadius: 999,
+                                border: active ? '1.5px solid #E8453C' : '1.5px solid #eee',
+                                background: active ? '#E8453C' : '#fff',
+                                color: active ? '#fff' : 'var(--color-ink)',
+                                fontSize: 10,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              {g.emoji} {g.label}
+                            </button>
+                          )
+                        })}
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                         {COLOR_PRESETS.map((c) => (
@@ -334,8 +443,23 @@ export default function CategoryManager() {
 
                   {/* Name + count */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {cat.name}
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 800,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          padding: '2px 6px',
+                          borderRadius: 999,
+                          background: '#f5f0e4',
+                          color: '#999',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {groupLabel}
+                      </span>
                     </div>
                     <div style={{ fontSize: 11, color: '#999', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: cat.color, display: 'inline-block', flexShrink: 0 }} />
