@@ -652,14 +652,13 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
             background: '#F1ECE3', fontSize: 32,
           }}>🍽️</div>
         )}
-        <span className="sc-badge-pct">{dealBadgeText(deal)}</span>
-        {time && <span className="sc-badge-time">{time}</span>}
         <span className="sc-badge-live">live</span>
+        {time && <span className="sc-badge-time">{time}</span>}
       </div>
       <div className="sc-body-c">
         <h4>{r?.name || deal.title}</h4>
         {meta && <div className="sc-meta">{meta}</div>}
-        <div className="sc-pill-row"><ValidityPill status={validityStatus} text={validityPill} className="on-coral" /></div>
+        <div className="sc-pill-row"><span className="sc-drop-pct-inline">{dealBadgeText(deal)}</span></div>
         {max > 0 && (
           <div className="sc-progress">
             <div className="sc-bar"><i style={{ width: `${pct}%` }} /></div>

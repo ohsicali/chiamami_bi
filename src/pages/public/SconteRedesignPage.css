@@ -332,9 +332,22 @@
   border-radius: 50%;
   animation: scBlink 1.2s infinite;
 }
+.sc-drop .sc-badge-live { top: 9px; left: 9px; bottom: auto; }
 @media (min-width: 768px) {
-  .sc-drop .sc-badge-live { bottom: 12px; left: 12px; font-size: 10px; padding: 4px 10px; }
+  .sc-drop .sc-badge-live { top: 12px; left: 12px; bottom: auto; font-size: 10px; padding: 4px 10px; }
   .sc-drop .sc-badge-live::before { width: 7px; height: 7px; }
+}
+.sc-drop-pct-inline {
+  display: inline-block;
+  background: linear-gradient(135deg, #A3E635, #4ADE80);
+  color: #1a4731;
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: -0.3px;
+  line-height: 1;
 }
 @keyframes scBlink {
   0%, 100% { opacity: 1; }
