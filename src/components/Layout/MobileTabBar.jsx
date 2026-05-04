@@ -53,6 +53,26 @@ function isIOSDevice() {
   )
 }
 
+// The bottom nav is `md:hidden` so it never paints on desktop. Bail before
+// loading the ~270 kB vendor bundle (html2canvas + liquidGL) on viewports
+// where the nav isn't visible.
+function isMobileViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(max-width: 767px)').matches
+}
+
+// Skip the snapshot effect on devices that can't handle a per-scroll WebGL
+// pass — saves jank + battery on low-end Android.
+function isLowEndDevice() {
+  if (typeof navigator === 'undefined') return true
+  const cores = navigator.hardwareConcurrency || 4
+  const mem = navigator.deviceMemory || 4
+  if (cores < 4 || mem < 4) return true
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return true
+  if (navigator.connection?.saveData) return true
+  return false
+}
+
 // Script loading is global + idempotent. Once loaded and initialized, liquidGL
 // keeps a shared canvas across mounts/unmounts; cleanup per-instance is not
 // strictly required, but we re-snapshot on route/scroll changes.
@@ -138,37 +158,54 @@ export default function MobileTabBar() {
   // backdrop-filter pill if WebGL is unavailable or the script fails to load.
   useEffect(() => {
     let cancelled = false
-    if (isIOSDevice() || !detectWebGL()) return undefined
+    // Bail conditions: nav isn't rendered (desktop), iOS bug, no WebGL, or
+    // low-end device where the snapshot pass would jank scrolling.
+    if (
+      !isMobileViewport() ||
+      isIOSDevice() ||
+      !detectWebGL() ||
+      isLowEndDevice()
+    ) return undefined
 
-    ensureLiquidGLLoaded().then((ready) => {
-      if (cancelled || !ready || typeof window.liquidGL !== 'function') return
-      if (window.__liquidGLInstance) {
-        liquidGLInstanceRef.current = window.__liquidGLInstance
-        return
-      }
-      try {
-        const instance = window.liquidGL({
-          target: '.bottom-nav',
-          snapshot: 'body',
-          resolution: 2.0,
-          refraction: 0.025,
-          bevelDepth: 0.11,
-          bevelWidth: 0.18,
-          frost: 2,
-          shadow: true,
-          specular: true,
-          reveal: 'fade',
-          magnify: 1,
-        })
-        window.__liquidGLInstance = instance
-        liquidGLInstanceRef.current = instance
-      } catch (err) {
-        console.warn('[bottom-nav] liquidGL init error:', err)
-      }
-    })
+    // Defer loading until the browser is idle so the LCP isn't blocked by a
+    // ~270 kB vendor download on first paint.
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500))
+    const handle = idle(() => {
+      if (cancelled) return
+      ensureLiquidGLLoaded().then((ready) => {
+        if (cancelled || !ready || typeof window.liquidGL !== 'function') return
+        if (window.__liquidGLInstance) {
+          liquidGLInstanceRef.current = window.__liquidGLInstance
+          return
+        }
+        try {
+          const instance = window.liquidGL({
+            target: '.bottom-nav',
+            snapshot: 'body',
+            // Lowered from 2.0 to halve the per-frame rasterization cost;
+            // visual difference on a 64 px nav is imperceptible.
+            resolution: 1.25,
+            refraction: 0.025,
+            bevelDepth: 0.11,
+            bevelWidth: 0.18,
+            frost: 2,
+            shadow: true,
+            specular: true,
+            reveal: 'fade',
+            magnify: 1,
+          })
+          window.__liquidGLInstance = instance
+          liquidGLInstanceRef.current = instance
+        } catch (err) {
+          console.warn('[bottom-nav] liquidGL init error:', err)
+        }
+      })
+    }, { timeout: 3000 })
 
     return () => {
       cancelled = true
+      const cancel = window.cancelIdleCallback || clearTimeout
+      cancel(handle)
     }
   }, [])
 
@@ -176,6 +213,7 @@ export default function MobileTabBar() {
   // the content underneath the nav.
   useEffect(() => {
     if (typeof window === 'undefined' || isIOSDevice()) return undefined
+    if (!isMobileViewport() || isLowEndDevice()) return undefined
     if (typeof window.liquidGL?.syncWith !== 'function') return undefined
 
     let frame = 0

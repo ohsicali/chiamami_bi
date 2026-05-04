@@ -455,7 +455,7 @@ export default function DesktopRestaurantSheet({
                   display: 'grid', placeItems: 'center', fontSize: 22, flexShrink: 0,
                   overflow: 'hidden',
                 }}>
-                  <img src="/bi-photo.JPG" alt="Bi" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; e.target.parentElement.textContent = 'B' }} />
+                  <img src="/bi-photo.webp" alt="Bi" loading="lazy" decoding="async" width="64" height="64" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; e.target.parentElement.textContent = 'B' }} />
                 </div>
                 <div>
                   <div style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 16, letterSpacing: '-.02em', color: INK }}>Ciao, sono Bi</div>

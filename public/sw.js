@@ -1,18 +1,31 @@
 // ChiamamiBi Service Worker — Push + Offline Shell
 // Bump version to invalidate old caches on deploy.
-const VERSION = 'v2'
+const VERSION = 'v3-perf'
 const STATIC_CACHE = `chiamamibi-static-${VERSION}`
 const RUNTIME_CACHE = `chiamamibi-runtime-${VERSION}`
+const IMAGE_CACHE = `chiamamibi-img-${VERSION}`
 
 // Minimal app shell pre-cache. Hashed JS/CSS are picked up at runtime.
 const SHELL_ASSETS = [
   '/',
   '/manifest.json',
-  '/favicon.svg',
-  '/logo-bi.svg',
+  '/favicon.png',
+  '/favicon-192.png',
+  '/favicon-512.png',
   '/logo-guida-bi.svg',
   '/icons.svg',
+  '/bi-photo.webp',
 ]
+
+// Hard cap so we don't fill the device storage with restaurant images.
+const IMAGE_CACHE_LIMIT = 80
+
+async function trimCache(name, max) {
+  const cache = await caches.open(name)
+  const keys = await cache.keys()
+  if (keys.length <= max) return
+  for (const k of keys.slice(0, keys.length - max)) await cache.delete(k)
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -28,7 +41,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+          .filter((k) => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== IMAGE_CACHE)
           .map((k) => caches.delete(k))
       )
     ).then(() => self.clients.claim())
@@ -80,20 +93,40 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Other same-origin static (svg, png, woff…) → stale-while-revalidate
-  if (/\.(svg|png|jpe?g|webp|gif|woff2?|ttf|otf|ico)$/i.test(url.pathname)) {
+  // Same-origin images → cache-first with size cap (most are restaurant photos
+  // proxied through /api/img which we already excluded above; these are local
+  // SVG/PNG/WebP assets like the logo + bi-photo).
+  if (/\.(svg|png|jpe?g|webp|gif|avif|ico)$/i.test(url.pathname)) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const networked = fetch(request)
-          .then((res) => {
-            if (res.ok) {
-              const copy = res.clone()
-              caches.open(RUNTIME_CACHE).then((c) => c.put(request, copy)).catch(() => {})
-            }
-            return res
-          })
-          .catch(() => cached)
-        return cached || networked
+        if (cached) return cached
+        return fetch(request).then((res) => {
+          if (res.ok) {
+            const copy = res.clone()
+            caches.open(IMAGE_CACHE).then(async (c) => {
+              await c.put(request, copy)
+              trimCache(IMAGE_CACHE, IMAGE_CACHE_LIMIT)
+            }).catch(() => {})
+          }
+          return res
+        })
+      })
+    )
+    return
+  }
+
+  // Web fonts → cache-first, never expire (versioned URLs from Google Fonts).
+  if (/\.(woff2?|ttf|otf)$/i.test(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached
+        return fetch(request).then((res) => {
+          if (res.ok) {
+            const copy = res.clone()
+            caches.open(STATIC_CACHE).then((c) => c.put(request, copy)).catch(() => {})
+          }
+          return res
+        })
       })
     )
   }

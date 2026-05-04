@@ -112,6 +112,8 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
               src={proxyImg(normalizedPhotos[currentIndex].photo_url)}
               alt={normalizedPhotos[currentIndex].caption || `${restaurantName}${city ? ` - ${city}` : ''}${normalizedPhotos.length > 1 ? ` - Foto ${currentIndex + 1}` : ''}`}
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
+              fetchpriority={currentIndex === 0 ? 'high' : 'auto'}
+              decoding="async"
               onLoad={() => handleImageLoad(currentIndex)}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
                 loadedImages[currentIndex] ? 'opacity-100' : 'opacity-0'
