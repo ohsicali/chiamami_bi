@@ -1,12 +1,16 @@
 import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
-import { lazy, Suspense, useEffect, useRef, Component } from 'react'
-import CookieConsent from 'react-cookie-consent'
+import { lazy, Suspense, useEffect, useRef, useState, Component } from 'react'
 import { LoadingSpinner } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 import MaintenanceGate from './components/MaintenanceGate'
+
+// CookieConsent is rendered after first paint via requestIdleCallback so it
+// doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
+// entry chunk if imported eagerly.
+const CookieConsent = lazy(() => import('react-cookie-consent'))
 
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
@@ -93,6 +97,16 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
+  // Defer the cookie banner until the browser is idle. If the user has already
+  // chosen, the lib short-circuits internally and renders nothing.
+  const [showCookieBanner, setShowCookieBanner] = useState(false)
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500))
+    const cancel = window.cancelIdleCallback || clearTimeout
+    const handle = idle(() => setShowCookieBanner(true), { timeout: 3000 })
+    return () => cancel(handle)
+  }, [])
+
   // Scroll to top on route change — but preserve scroll when transitioning
   // between the map (/) and a restaurant detail (/restaurant/:slug), since
   // HomePage stays mounted and we don't want to disturb the map state.
@@ -175,7 +189,9 @@ export default function App() {
     {/* Mobile Tab Bar */}
     {showTabBar && <MobileTabBar />}
 
-    {/* Cookie Banner GDPR */}
+    {/* Cookie Banner GDPR — deferred to idle to protect LCP */}
+    {showCookieBanner && (
+    <Suspense fallback={null}>
     <CookieConsent
       location="bottom"
       buttonText="Accetta tutti"
@@ -217,6 +233,8 @@ export default function App() {
       Questo sito utilizza cookie tecnici necessari al funzionamento. Non utilizziamo cookie di profilazione.{' '}
       <Link to="/privacy" style={{ color: '#E8453C', textDecoration: 'underline' }}>Privacy Policy</Link>
     </CookieConsent>
+    </Suspense>
+    )}
     </>
   )
 }

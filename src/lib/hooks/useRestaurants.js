@@ -356,9 +356,21 @@ export function useRestaurants(userPosition = null) {
     setError(null)
     try {
       if (isSupabaseConfigured()) {
+        // Narrow the SELECT to columns actually consumed by public components.
+        // `*` pulled ~30+ unused fields per row, including long text columns
+        // (`our_review`, etc.) that aren't read on list views.
+        const RESTAURANT_COLUMNS = [
+          'id', 'name', 'slug', 'city', 'country', 'address',
+          'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
+          'category', 'cuisine_type', 'price_range', 'our_rating',
+          'our_review', 'our_tip', 'recommended_for', 'tagline',
+          'tiktok_url', 'instagram_reel', 'hours_cache',
+          'is_published', 'created_at', 'updated_at',
+        ].join(', ')
         const { data, error: dbError } = await supabase
           .from('restaurants')
-          .select('*, restaurant_photos(*)')
+          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, caption, sort_order)`)
+          .eq('is_published', true)
           .order('name')
         if (dbError) {
           // eslint-disable-next-line no-console

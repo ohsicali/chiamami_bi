@@ -146,8 +146,12 @@ export default function AboutPage() {
             background: 'rgba(255,255,255,.1)',
           }}>
             <img
-              src="/bi-photo.JPG"
+              src="/bi-photo.webp"
               alt="Bi"
+              width="240"
+              height="240"
+              decoding="async"
+              fetchpriority="high"
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           </div>

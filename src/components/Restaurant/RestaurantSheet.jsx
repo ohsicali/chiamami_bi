@@ -925,7 +925,7 @@ export default function RestaurantSheet({
                     boxShadow: 'var(--shadow-sm)',
                     overflow: 'hidden',
                   }}>
-                    <img src="/bi-photo.JPG" alt="Bi" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = 'B' }} />
+                    <img src="/bi-photo.webp" alt="Bi" loading="lazy" decoding="async" width="64" height="64" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = 'B' }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>Ciao, sono Bi</div>
