@@ -124,7 +124,11 @@ export default function EditRestaurant() {
         setDirty(false)
         setToast({
           kind: 'ok',
-          text: alsoPublish === true ? 'Salvato e pubblicato ✓' : 'Salvato ✓',
+          text: isFirstPublish
+            ? 'Salvato e pubblicato ✓'
+            : restaurant?.is_published
+              ? 'Aggiornato ✓'
+              : 'Salvato ✓',
         })
         setRestaurant((prev) => ({ ...prev, ...payload }))
         setTimeout(() => setToast(null), 2400)
@@ -368,43 +372,67 @@ export default function EditRestaurant() {
               >
                 Anteprima
               </a>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleSave(false)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--color-line, #EAE3D7)',
-                  color: 'var(--color-ink, #22181C)',
-                  padding: '9px 16px',
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: saving ? 'wait' : 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              >
-                Salva
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleSave(true)}
-                style={{
-                  background: 'var(--color-corallo, #E8453C)',
-                  color: '#fff',
-                  border: 0,
-                  padding: '10px 18px',
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 800,
-                  cursor: saving ? 'wait' : 'pointer',
-                  boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              >
-                {saving ? 'Salvo…' : 'Salva · pubblica'}
-              </button>
+              {form.is_published ? (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSave(true)}
+                  style={{
+                    background: 'var(--color-corallo, #E8453C)',
+                    color: '#fff',
+                    border: 0,
+                    padding: '10px 18px',
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: saving ? 'wait' : 'pointer',
+                    boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  {saving ? 'Aggiorno…' : 'Aggiorna'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleSave(false)}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid var(--color-line, #EAE3D7)',
+                      color: 'var(--color-ink, #22181C)',
+                      padding: '9px 16px',
+                      borderRadius: 999,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: saving ? 'wait' : 'pointer',
+                      fontFamily: 'var(--font-sans)',
+                    }}
+                  >
+                    Salva
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleSave(true)}
+                    style={{
+                      background: 'var(--color-corallo, #E8453C)',
+                      color: '#fff',
+                      border: 0,
+                      padding: '10px 18px',
+                      borderRadius: 999,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      cursor: saving ? 'wait' : 'pointer',
+                      boxShadow: '0 6px 14px rgba(232,69,60,0.28)',
+                      fontFamily: 'var(--font-sans)',
+                    }}
+                  >
+                    {saving ? 'Salvo…' : 'Salva · pubblica'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -650,49 +678,77 @@ export default function EditRestaurant() {
 
           <div style={{ flex: 1 }} />
 
-          {/* Salva (ghost chiaro) */}
-          <button
-            type="button"
-            disabled={saving || !dirty}
-            onClick={() => handleSave(false)}
-            style={{
-              background: 'rgba(255,255,255,0.12)',
-              border: 0,
-              color: '#fff',
-              padding: '9px 14px',
-              borderRadius: 18,
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              cursor: saving || !dirty ? 'not-allowed' : 'pointer',
-              opacity: saving || !dirty ? 0.4 : 1,
-              fontFamily: 'inherit',
-            }}
-          >
-            Salva
-          </button>
+          {form.is_published ? (
+            // Già pubblicato: un solo bottone "Aggiorna" — sovrascrive i
+            // dati senza far partire le mail di prima-pubblicazione.
+            <button
+              type="button"
+              disabled={saving || !dirty}
+              onClick={() => handleSave(true)}
+              style={{
+                background: 'var(--color-corallo, #E8453C)',
+                color: '#fff',
+                border: 0,
+                padding: '9px 16px',
+                borderRadius: 18,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.04em',
+                cursor: saving || !dirty ? 'not-allowed' : 'pointer',
+                opacity: saving || !dirty ? 0.4 : 1,
+                boxShadow: '0 6px 14px rgba(232,69,60,0.45)',
+                fontFamily: 'inherit',
+              }}
+            >
+              {saving ? 'Aggiorno…' : 'Aggiorna'}
+            </button>
+          ) : (
+            <>
+              {/* Salva (ghost chiaro) — bozza, non pubblica ancora */}
+              <button
+                type="button"
+                disabled={saving || !dirty}
+                onClick={() => handleSave(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  border: 0,
+                  color: '#fff',
+                  padding: '9px 14px',
+                  borderRadius: 18,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  cursor: saving || !dirty ? 'not-allowed' : 'pointer',
+                  opacity: saving || !dirty ? 0.4 : 1,
+                  fontFamily: 'inherit',
+                }}
+              >
+                Salva
+              </button>
 
-          {/* Pubblica (corallo) */}
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleSave(true)}
-            style={{
-              background: 'var(--color-corallo, #E8453C)',
-              color: '#fff',
-              border: 0,
-              padding: '9px 16px',
-              borderRadius: 18,
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              cursor: saving ? 'wait' : 'pointer',
-              boxShadow: '0 6px 14px rgba(232,69,60,0.45)',
-              fontFamily: 'inherit',
-            }}
-          >
-            {saving ? 'Salvo…' : 'Pubblica'}
-          </button>
+              {/* Pubblica (corallo) — prima pubblicazione, parte la mail */}
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => handleSave(true)}
+                style={{
+                  background: 'var(--color-corallo, #E8453C)',
+                  color: '#fff',
+                  border: 0,
+                  padding: '9px 16px',
+                  borderRadius: 18,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  cursor: saving ? 'wait' : 'pointer',
+                  boxShadow: '0 6px 14px rgba(232,69,60,0.45)',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {saving ? 'Salvo…' : 'Pubblica'}
+              </button>
+            </>
+          )}
 
           {/* Divider */}
           <div
