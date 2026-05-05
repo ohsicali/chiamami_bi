@@ -720,7 +720,15 @@ export default function HomeFeedV4() {
             overflow: visible !important;
             padding-left: 0 !important; padding-right: 0 !important;
           }
-          .hfv4-rcard { flex: 1 1 auto !important; }
+          /* Grid cells stretch to tallest. Make the card a flex column so
+             its body absorbs the extra space — every photo keeps the
+             16/11 aspect at the top, no white gap below the address. */
+          .hfv4-rcard {
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .hfv4-rcard > div:last-child { flex: 1 1 auto !important; }
           .hfv4-sec-head { padding-left: 0 !important; padding-right: 0 !important; margin-bottom: 22px; }
           .hfv4-sec-head h2 { font-size: 32px !important; letter-spacing: -.02em !important; }
         }
