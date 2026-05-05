@@ -30,6 +30,22 @@ export default function MomentResultsGrid({
       .slice(0, 10)
   }, [restaurants, activeMoment])
 
+  // Cosa mostra la pill verde per ogni fascia:
+  //   colazione, aperitivo → solo "apre alle HH:MM"
+  //   pranzo, cena → "apre HH:MM · chiude HH:MM"
+  //   dopocena (cocktail) → solo "chiude alle HH:MM"
+  const hoursDisplay = (m) => {
+    if (activeMoment === 'colazione' || activeMoment === 'aperitivo') {
+      return m.opensAt ? `Apre alle ${m.opensAt}` : 'Aperto'
+    }
+    if (activeMoment === 'dopocena') {
+      return m.closesAt ? `Chiude alle ${m.closesAt}` : 'Aperto'
+    }
+    if (m.opensAt && m.closesAt) return `${m.opensAt} – ${m.closesAt}`
+    if (m.closesAt) return `Fino ${m.closesAt}`
+    return 'Aperto'
+  }
+
   const visibleCards = filtered.slice(0, 3)
   const remaining = Math.max(0, filtered.length - visibleCards.length)
 
@@ -86,7 +102,7 @@ export default function MomentResultsGrid({
           <Lcard
             key={r.id}
             r={r}
-            closesAt={match.closesAt}
+            hoursLabel={hoursDisplay(match)}
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
             onToggleSave={toggleSave ? () => toggleSave(r.id) : undefined}
@@ -157,7 +173,7 @@ export default function MomentResultsGrid({
   )
 }
 
-function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
+function Lcard({ r, hoursLabel, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
@@ -200,7 +216,7 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
             style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}
           />
         )}
-        <OpenPill closesAt={closesAt} />
+        <OpenPill label={hoursLabel} />
         {onToggleSave && (
           <div
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave() }}
@@ -263,8 +279,8 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
   )
 }
 
-function OpenPill({ closesAt }) {
-  const text = closesAt ? `Aperto · fino ${closesAt}` : 'Aperto'
+function OpenPill({ label }) {
+  const text = label || 'Aperto'
   return (
     <span
       style={{

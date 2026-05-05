@@ -178,13 +178,13 @@ export function getCurrentMoment(now = new Date()) {
  *   { match: false, verified: true,  closesAt: null    }  → orari noti ma non aperto per quel momento
  */
 export function isOpenForMoment(hours, moment, now = new Date()) {
-  if (!MOMENT_SLOTS[moment]) return { match: false, verified: true, closesAt: null }
+  if (!MOMENT_SLOTS[moment]) return { match: false, verified: true, opensAt: null, closesAt: null }
 
   const slot = MOMENT_SLOTS[moment]
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
   if (!source || !Array.isArray(source.periods) || source.periods.length === 0) {
     // No tolleranza: ristoranti senza hours_cache non appaiono nel filtro momento
-    return { match: false, verified: false, closesAt: null }
+    return { match: false, verified: false, opensAt: null, closesAt: null }
   }
 
   const utcOffset = typeof hours?.utcOffsetMinutes === 'number' ? hours.utcOffsetMinutes : null
@@ -195,6 +195,7 @@ export function isOpenForMoment(hours, moment, now = new Date()) {
   const daysToCheck = moment === 'dopocena' ? [todayDow, (todayDow + 6) % 7] : [todayDow]
 
   let bestCloseMin = null
+  let bestOpenMin = null
 
   for (const checkDow of daysToCheck) {
     for (const p of source.periods) {
@@ -229,25 +230,36 @@ export function isOpenForMoment(hours, moment, now = new Date()) {
       const overlapStart = Math.max(periodStart, slot.startMin)
       const overlapEnd = Math.min(periodEnd, slot.endMin)
       if (overlapEnd > overlapStart) {
-        // Match! Prendi l'orario di chiusura più tardivo tra i periodi che matchano.
+        // Match! Tieni l'apertura più anticipata e la chiusura più tardiva
+        // fra i periodi che intersecano il momento (così "apre alle" è
+        // l'orario reale di apertura, "chiude alle" la chiusura reale).
         const closeNormalized = periodEnd > 24 * 60 ? periodEnd - 24 * 60 : periodEnd
         if (bestCloseMin == null || closeNormalized > bestCloseMin) {
           bestCloseMin = closeNormalized
+        }
+        const openNormalized = periodStart < 0 ? periodStart + 24 * 60 : periodStart
+        if (bestOpenMin == null || openNormalized < bestOpenMin) {
+          bestOpenMin = openNormalized
         }
       }
     }
   }
 
+  const fmt = (mins) => {
+    const h = Math.floor(mins / 60) % 24
+    const m = mins % 60
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+
   if (bestCloseMin != null) {
-    const h = Math.floor(bestCloseMin / 60) % 24
-    const m = bestCloseMin % 60
     return {
       match: true,
       verified: true,
-      closesAt: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+      opensAt: bestOpenMin != null ? fmt(bestOpenMin) : null,
+      closesAt: fmt(bestCloseMin),
     }
   }
-  return { match: false, verified: true, closesAt: null }
+  return { match: false, verified: true, opensAt: null, closesAt: null }
 }
 
 export function getHoursStatus(hours, now = new Date()) {
