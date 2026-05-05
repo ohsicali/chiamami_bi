@@ -340,7 +340,7 @@ function searchRestaurantsTool() {
 async function executeSearch(admin, filters) {
   let query = admin
     .from('restaurants')
-    .select('id, slug, name, address, cuisine_type, category, price_range, tagline, our_review, our_tip, recommended_for, hours_cache, is_published')
+    .select('id, slug, name, address, cuisine_type, category, price_range, tagline, our_review, our_tip, recommended_for, hours_cache, moments, is_published')
     .eq('is_published', true)
     .limit(30)
 
@@ -391,7 +391,7 @@ async function executeSearch(admin, filters) {
   const results = (data || []).map((r) => {
     const openStatus = computeOpenStatus(r.hours_cache, now)
     const momentOk = filters.moment
-      ? isOpenForMomentServer(r.hours_cache, filters.moment, now).match
+      ? isOpenForMomentServer(r.hours_cache, filters.moment, now, r.moments).match
       : true
 
     return {
@@ -516,7 +516,11 @@ function fmt(h, m) {
 }
 
 // Minimal server-side reimpl of isOpenForMoment (can't import frontend src/lib)
-function isOpenForMomentServer(hours, moment, now) {
+// Server-side mirror of lib/hours.js#isOpenForMoment. Combina in OR il
+// tag manuale dell'admin (`manualMoments` da restaurants.moments) e
+// l'overlap orario calcolato da hours_cache, così l'AI vede un locale
+// in fascia se è vero almeno uno dei due segnali.
+function isOpenForMomentServer(hours, moment, now, manualMoments = null) {
   const SLOTS = {
     colazione: { startMin:  6 * 60 + 30, endMin: 10 * 60 + 30 },
     pranzo:    { startMin: 11 * 60 + 30, endMin: 14 * 60 + 30 },
@@ -525,8 +529,15 @@ function isOpenForMomentServer(hours, moment, now) {
     dopocena:  { startMin: 22 * 60 + 30, endMin: 26 * 60 },
   }
   if (!SLOTS[moment]) return { match: false }
+  const manualMatch = Array.isArray(manualMoments) && manualMoments.includes(moment)
+
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
-  if (!source?.periods?.length) return { match: true, verified: false }
+  if (!source?.periods?.length) {
+    // Senza orari fidiamoci del tag manuale; fallback "aperto" preservato
+    // per non rompere la compat (era già il comportamento precedente).
+    if (manualMatch) return { match: true, verified: false }
+    return { match: true, verified: false }
+  }
   const slot = SLOTS[moment]
   const offset = typeof hours?.utcOffsetMinutes === 'number' ? hours.utcOffsetMinutes : null
   const shifted = offset != null ? new Date(now.getTime() + offset * 60_000) : now
@@ -542,6 +553,8 @@ function isOpenForMomentServer(hours, moment, now) {
     const overlapEnd = Math.min(closeMin, slot.endMin)
     if (overlapEnd > overlapStart) return { match: true, verified: true }
   }
+  // Nessun overlap orario: il tag manuale resta come fallback.
+  if (manualMatch) return { match: true, verified: false }
   return { match: false, verified: true }
 }
 
