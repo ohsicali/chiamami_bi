@@ -451,7 +451,7 @@ function SectionHead({ title, kicker, subtitle, trailing }) {
 function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
   const cat = getCategoryInfo(restaurant.cuisine_type || (restaurant.category && restaurant.category[0]))
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
-  const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 600 })
+  const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const discLabel = discount?.discount_value
     ? (discount.discount_type === 'percentage' ? `-${String(discount.discount_value).replace('%','')}%` : `-${discount.discount_value}€`)

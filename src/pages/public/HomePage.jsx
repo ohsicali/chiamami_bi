@@ -48,7 +48,7 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
     ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null, { w: 900 })
+    : null, { w: 1200 })
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)

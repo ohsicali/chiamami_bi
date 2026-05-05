@@ -88,7 +88,7 @@ function useCountdown(targetDate) {
 /* ── Photo helper ── */
 function getPhoto(restaurant) {
   const p = restaurant?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
-  return proxyImg(p?.thumb_url || p?.photo_url || null, { w: 600 })
+  return proxyImg(p?.thumb_url || p?.photo_url || null, { w: 800 })
 }
 
 /* ── DropMini — drop-mini compatto orizzontale (mockup §drops-row + .drop-mini) */

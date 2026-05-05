@@ -15,7 +15,7 @@ function slugify(name) {
 
 function getPhoto(restaurant) {
   const p = restaurant?.photos?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
-  return proxyImg(p?.thumb_url || p?.photo_url || null, { w: 600 })
+  return proxyImg(p?.thumb_url || p?.photo_url || null, { w: 800 })
 }
 
 function useCountdown(targetDate) {
