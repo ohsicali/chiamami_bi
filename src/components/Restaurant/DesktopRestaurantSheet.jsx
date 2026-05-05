@@ -162,7 +162,7 @@ export default function DesktopRestaurantSheet({
       {/* ── HERO ── */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '100px 40px 28px', width: '100%' }}>
         <div style={{
-          aspectRatio: '16 / 10', borderRadius: 24, overflow: 'hidden',
+          height: 520, borderRadius: 24, overflow: 'hidden',
           position: 'relative', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
           background: '#e0d8cc',
         }}>
