@@ -1971,6 +1971,7 @@
   height: 70px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--sc-corallo) 0%, var(--sc-corallo-ink) 100%);
+  color: #fff;
   display: grid;
   place-items: center;
   position: relative;
