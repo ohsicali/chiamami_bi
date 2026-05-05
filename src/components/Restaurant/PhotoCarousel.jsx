@@ -105,24 +105,54 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
             transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="absolute inset-0"
           >
-            {/* Placeholder background */}
-            <div className="absolute inset-0 skeleton" />
-
-            <img
-              src={proxyImg(normalizedPhotos[currentIndex].photo_url, { w: 1600 })}
-              alt={normalizedPhotos[currentIndex].caption || `${restaurantName}${city ? ` - ${city}` : ''}${normalizedPhotos.length > 1 ? ` - Foto ${currentIndex + 1}` : ''}`}
-              loading={currentIndex === 0 ? 'eager' : 'lazy'}
-              fetchpriority={currentIndex === 0 ? 'high' : 'auto'}
-              decoding="async"
-              onLoad={() => handleImageLoad(currentIndex)}
-              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-                loadedImages[currentIndex] ? 'opacity-100' : 'opacity-0'
-              }`}
-              style={{
-                transform: `translateX(${dragX * 0.1}px)`,
-              }}
-              draggable={false}
-            />
+            {/* Low-res placeholder painted instantly behind the high-res
+               image. thumb_url is the 400px WebP uploaded alongside the
+               full asset, ~30-50KB and reaches the user before the proxy
+               resize finishes. The high-res then fades in on load. */}
+            {(() => {
+              const photo = normalizedPhotos[currentIndex]
+              const thumb = photo.thumb_url || photo.thumb || null
+              const fullUrl = photo.photo_url
+              const altText = photo.caption || `${restaurantName}${city ? ` - ${city}` : ''}${normalizedPhotos.length > 1 ? ` - Foto ${currentIndex + 1}` : ''}`
+              return (
+                <>
+                  <div className="absolute inset-0 skeleton" />
+                  {thumb && (
+                    <img
+                      src={thumb}
+                      alt=""
+                      aria-hidden="true"
+                      loading="eager"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      style={{ filter: 'blur(8px)', transform: 'scale(1.04)' }}
+                      draggable={false}
+                    />
+                  )}
+                  <img
+                    src={proxyImg(fullUrl, { w: 1200 })}
+                    srcSet={[
+                      `${proxyImg(fullUrl, { w: 800 })} 800w`,
+                      `${proxyImg(fullUrl, { w: 1200 })} 1200w`,
+                      `${proxyImg(fullUrl, { w: 1600 })} 1600w`,
+                    ].join(', ')}
+                    sizes="(max-width: 768px) 100vw, 1200px"
+                    alt={altText}
+                    loading={currentIndex === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={currentIndex === 0 ? 'high' : 'auto'}
+                    decoding="async"
+                    onLoad={() => handleImageLoad(currentIndex)}
+                    className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+                      loadedImages[currentIndex] ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    style={{
+                      transform: `translateX(${dragX * 0.1}px)`,
+                    }}
+                    draggable={false}
+                  />
+                </>
+              )
+            })()}
           </motion.div>
         </AnimatePresence>
       </div>
