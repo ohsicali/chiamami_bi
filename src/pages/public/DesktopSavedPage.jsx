@@ -153,7 +153,7 @@ export default function DesktopSavedPage() {
     }
 
     if (filters.moment) {
-      list = list.filter(r => isOpenForMoment(r.hours_cache, filters.moment).match)
+      list = list.filter(r => isOpenForMoment(r.hours_cache, filters.moment, undefined, r.moments).match)
     }
 
     if (extraFilters.dietary?.length > 0) {

@@ -23,7 +23,7 @@ export default function MomentResultsGrid({
     return restaurants
       .filter((r) => r.is_published !== false)
       .map((r) => {
-        const match = isOpenForMoment(r.hours_cache, activeMoment)
+        const match = isOpenForMoment(r.hours_cache, activeMoment, undefined, r.moments)
         return { r, match }
       })
       .filter(({ match }) => match.match)

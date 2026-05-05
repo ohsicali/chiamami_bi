@@ -171,19 +171,31 @@ export function getCurrentMoment(now = new Date()) {
  *   hours: restaurant.hours_cache (formato Google Places) o null
  *   moment: 'colazione' | 'pranzo' | 'aperitivo' | 'cena' | 'dopocena'
  *   now: Date (default = ora corrente)
+ *   manualMoments: array opzionale di chiavi momento scelte dall'admin
+ *     (restaurants.moments). Se non vuoto, è la sola fonte di verità per
+ *     `match`: il sistema ignora l'euristica oraria e considera il
+ *     ristorante "in fascia" solo se manualMoments include `moment`.
+ *     `opensAt`/`closesAt` restano calcolati dagli orari reali, perché
+ *     servono comunque per l'etichetta "Apre alle …" / "Chiude alle …".
  *
  * Return:
- *   { match: true,  verified: true,  closesAt: 'HH:MM' }  → aperto + overlap
- *   { match: false, verified: false, closesAt: null    }  → no hours_cache (non mostrato)
- *   { match: false, verified: true,  closesAt: null    }  → orari noti ma non aperto per quel momento
+ *   { match, verified, opensAt, closesAt }
  */
-export function isOpenForMoment(hours, moment, now = new Date()) {
+export function isOpenForMoment(hours, moment, now = new Date(), manualMoments = null) {
   if (!MOMENT_SLOTS[moment]) return { match: false, verified: true, opensAt: null, closesAt: null }
+
+  const hasManual = Array.isArray(manualMoments) && manualMoments.length > 0
+  if (hasManual && !manualMoments.includes(moment)) {
+    return { match: false, verified: true, opensAt: null, closesAt: null }
+  }
 
   const slot = MOMENT_SLOTS[moment]
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
   if (!source || !Array.isArray(source.periods) || source.periods.length === 0) {
-    // No tolleranza: ristoranti senza hours_cache non appaiono nel filtro momento
+    // Senza hours_cache: se l'admin ha taggato manualmente questo momento
+    // ci fidiamo del tag (apre/chiude resteranno null perché non abbiamo
+    // gli orari). Altrimenti il ristorante non appare nel filtro momento.
+    if (hasManual) return { match: true, verified: false, opensAt: null, closesAt: null }
     return { match: false, verified: false, opensAt: null, closesAt: null }
   }
 
@@ -259,6 +271,9 @@ export function isOpenForMoment(hours, moment, now = new Date()) {
       closesAt: fmt(bestCloseMin),
     }
   }
+  // Tag manuale presente ma nessun overlap orario: match per scelta admin,
+  // niente etichetta orari.
+  if (hasManual) return { match: true, verified: false, opensAt: null, closesAt: null }
   return { match: false, verified: true, opensAt: null, closesAt: null }
 }
 
