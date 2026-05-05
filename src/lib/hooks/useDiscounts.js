@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 
+// Stale-while-revalidate cache for the active discounts list. Painted at mount
+// from localStorage so the home and deals page render instantly on repeat
+// visits while a fresh fetch runs in the background. Bump the key version
+// when the select shape changes.
+const ACTIVE_DISCOUNTS_CACHE_KEY = 'cb_active_discounts_v2'
+function readActiveDiscountsCache() {
+  try {
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(ACTIVE_DISCOUNTS_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed?.data) ? parsed.data : null
+  } catch { return null }
+}
+function writeActiveDiscountsCache(data) {
+  try { localStorage.setItem(ACTIVE_DISCOUNTS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch { /* quota / private mode */ }
+}
+
 // Generate a short unique code for QR
 function generateQRCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -195,8 +212,9 @@ export function useUserRedemption(discountId, userId) {
  * Separates: activeDrops, upcomingDrops, featured, regular
  */
 export function useActiveDiscounts() {
-  const [discounts, setDiscounts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const cached = typeof window !== 'undefined' ? readActiveDiscountsCache() : null
+  const [discounts, setDiscounts] = useState(cached || [])
+  const [loading, setLoading] = useState(!cached)
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -211,7 +229,9 @@ export function useActiveDiscounts() {
       .gt('valid_until', new Date().toISOString())
       .order('created_at', { ascending: false })
       .then(({ data }) => {
-        setDiscounts(data || [])
+        const fresh = data || []
+        setDiscounts(fresh)
+        writeActiveDiscountsCache(fresh)
         setLoading(false)
       })
   }, [])
