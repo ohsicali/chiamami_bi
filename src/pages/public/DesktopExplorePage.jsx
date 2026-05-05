@@ -1,6 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import MapView from '../../components/Map/MapView'
+// Mapbox-gl is ~600KB gzipped — load only when this page actually mounts so
+// users that never open the map don't pay the bytes upfront.
+const MapView = lazy(() => import('../../components/Map/MapView'))
 import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -370,15 +372,17 @@ export default function DesktopExplorePage() {
 
       {/* RIGHT — Map */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <MapView
-          ref={mapRef}
-          restaurants={filteredRestaurants}
-          selectedId={selectedId}
-          onSelectRestaurant={handlePinSelect}
-          userPosition={position}
-          savedIds={savedIds}
-          discountMap={discountLabelMap}
-        />
+        <Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: '#F5F5F3' }} />}>
+          <MapView
+            ref={mapRef}
+            restaurants={filteredRestaurants}
+            selectedId={selectedId}
+            onSelectRestaurant={handlePinSelect}
+            userPosition={position}
+            savedIds={savedIds}
+            discountMap={discountLabelMap}
+          />
+        </Suspense>
 
         {/* Map controls */}
         <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 5 }}>

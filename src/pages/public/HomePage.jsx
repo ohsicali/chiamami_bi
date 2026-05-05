@@ -1,10 +1,12 @@
 import DesktopExplorePage from './DesktopExplorePage'
-import { useState, useCallback, useRef, useEffect, useMemo, memo } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, memo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
-import MapView from '../../components/Map/MapView'
+// Mapbox-gl is ~600KB gzipped — defer until the map actually mounts so the
+// initial JS payload for list-first users stays small.
+const MapView = lazy(() => import('../../components/Map/MapView'))
 import SearchBar from '../../components/Layout/SearchBar'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
@@ -482,17 +484,19 @@ export default function HomePage() {
 
       {/* Single MapView — repositioned via CSS for desktop vs mobile */}
       <div className="absolute inset-0 md:top-[56px] md:left-[360px] lg:left-[420px]">
-        <MapView
-          ref={mapRef}
-          restaurants={allRestaurants}
-          selectedId={selectedId}
-          onSelectRestaurant={handlePinSelect}
-          onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
-          userPosition={position}
-          savedIds={savedIds}
-          discountMap={discountLabelMap}
-          className="absolute inset-0"
-        />
+        <Suspense fallback={<div className="absolute inset-0" style={{ background: '#F5F5F3' }} />}>
+          <MapView
+            ref={mapRef}
+            restaurants={allRestaurants}
+            selectedId={selectedId}
+            onSelectRestaurant={handlePinSelect}
+            onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
+            userPosition={position}
+            savedIds={savedIds}
+            discountMap={discountLabelMap}
+            className="absolute inset-0"
+          />
+        </Suspense>
       </div>
 
       {/* ═══ DESKTOP LIST PANEL (≥768px) — renderizzato SOLO su desktop per evitare
