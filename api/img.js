@@ -9,11 +9,21 @@
 // AVIF is served when the browser sends `Accept: image/avif` and a transform
 // is applied. WebP is the default transform output. When no `w` is set we
 // stream the original bytes through (back-compat with old call sites).
-import sharp from 'sharp'
 
 export const config = {
   // Sharp resize is fast (~200-500ms cold, ~50-150ms warm) so 10s is plenty.
   maxDuration: 10,
+}
+
+// Dynamic import sharp lazily so the function still serves images even if the
+// sharp native binary isn't available in this Vercel runtime — we just stream
+// the original bytes through. Cached after first successful load.
+let sharpModulePromise = null
+async function getSharp() {
+  if (!sharpModulePromise) {
+    sharpModulePromise = import('sharp').then((m) => m.default).catch(() => null)
+  }
+  return sharpModulePromise
 }
 
 // Resolve the Supabase project host from env — we only proxy images from
@@ -110,17 +120,19 @@ export default async function handler(req, res) {
     // Apply transform only when a width is requested. Without ?w we keep
     // the original bytes (and old behavior) so legacy callers are
     // unaffected and we don't burn function time on a no-op.
-    if (width) {
+    const sharp = width ? await getSharp() : null
+    if (width && sharp) {
       try {
-        let pipeline = sharp(originalBuffer, { failOn: 'none' }).rotate()
-        const meta = await pipeline.metadata().catch(() => null)
-        // Don't upscale: if the source is already smaller than target, just
-        // re-encode without resizing.
-        if (meta?.width && meta.width > width) {
-          pipeline = pipeline.resize({ width, withoutEnlargement: true })
-        }
+        // Sharp gotcha: calling .metadata() consumes the underlying stream,
+        // so we can't read meta and reuse the pipeline. Use withoutEnlargement
+        // on .resize() instead — sharp will skip resizing if the source is
+        // already smaller than the target width. AVIF effort lowered to 3 so
+        // cold function invocations finish under the 10s maxDuration.
+        const pipeline = sharp(originalBuffer, { failOn: 'none' })
+          .rotate()
+          .resize({ width, withoutEnlargement: true })
         if (wantsAvif) {
-          outBuffer = await pipeline.avif({ quality, effort: 4 }).toBuffer()
+          outBuffer = await pipeline.avif({ quality, effort: 3 }).toBuffer()
           outContentType = 'image/avif'
         } else {
           outBuffer = await pipeline.webp({ quality }).toBuffer()
