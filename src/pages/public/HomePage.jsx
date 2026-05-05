@@ -490,7 +490,7 @@ export default function HomePage() {
           onVisibleRestaurantsChange={handleVisibleRestaurantsChange}
           userPosition={position}
           savedIds={savedIds}
-          discountMap={discountValueMap}
+          discountMap={discountLabelMap}
           className="absolute inset-0"
         />
       </div>

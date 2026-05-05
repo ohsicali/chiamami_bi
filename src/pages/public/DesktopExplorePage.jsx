@@ -377,7 +377,7 @@ export default function DesktopExplorePage() {
           onSelectRestaurant={handlePinSelect}
           userPosition={position}
           savedIds={savedIds}
-          discountMap={discountMap}
+          discountMap={discountLabelMap}
         />
 
         {/* Map controls */}
