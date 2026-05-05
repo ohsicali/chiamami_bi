@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/hooks/useAuth'
 
@@ -11,11 +11,22 @@ const BYPASS_PATHS = [
   '/verify',
 ]
 
+const MAINTENANCE_PIN = '4321'
+const PIN_STORAGE_KEY = 'cb_maintenance_unlocked'
+
 export default function MaintenanceGate({ children }) {
-  const { user, isAdmin, loading, signIn, signOut } = useAuth()
+  const { isAdmin, loading } = useAuth()
   const location = useLocation()
   const maintenanceOn = import.meta.env.VITE_MAINTENANCE_MODE === 'true'
   const pathBypassed = BYPASS_PATHS.some((p) => location.pathname.startsWith(p))
+
+  const [pinUnlocked, setPinUnlocked] = useState(() => {
+    try {
+      return sessionStorage.getItem(PIN_STORAGE_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
     if (!maintenanceOn || isAdmin || pathBypassed) return
@@ -28,33 +39,65 @@ export default function MaintenanceGate({ children }) {
 
   if (!maintenanceOn) return children
   if (loading) return null
-  if (isAdmin || pathBypassed) return children
+  if (isAdmin || pathBypassed || pinUnlocked) return children
 
-  return <GateLogin user={user} signIn={signIn} signOut={signOut} />
+  return <PinGate onUnlock={() => {
+    try { sessionStorage.setItem(PIN_STORAGE_KEY, '1') } catch { /* noop */ }
+    setPinUnlocked(true)
+  }} />
 }
 
-function GateLogin({ user, signIn, signOut }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+function PinGate({ onUnlock }) {
+  const [digits, setDigits] = useState(['', '', '', ''])
   const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const inputsRef = useRef([])
 
-  const onSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSubmitting(true)
-    try {
-      await signIn(email, password)
-      // After successful signIn, useAuth will re-evaluate and MaintenanceGate
-      // will re-render; if admin, bypass. If not admin, fallthrough.
-    } catch (err) {
-      setError(err.message || 'Credenziali non valide')
-    } finally {
-      setSubmitting(false)
+  useEffect(() => {
+    inputsRef.current[0]?.focus()
+  }, [])
+
+  const submitPin = (value) => {
+    if (value === MAINTENANCE_PIN) {
+      onUnlock()
+    } else {
+      setError('PIN errato')
+      setDigits(['', '', '', ''])
+      setTimeout(() => inputsRef.current[0]?.focus(), 0)
     }
   }
 
-  const loggedInNotAdmin = !!user
+  const handleChange = (idx, raw) => {
+    const v = raw.replace(/\D/g, '').slice(-1)
+    const next = [...digits]
+    next[idx] = v
+    setDigits(next)
+    setError('')
+    if (v && idx < 3) {
+      inputsRef.current[idx + 1]?.focus()
+    }
+    if (next.every((d) => d !== '')) {
+      submitPin(next.join(''))
+    }
+  }
+
+  const handleKeyDown = (idx, e) => {
+    if (e.key === 'Backspace' && !digits[idx] && idx > 0) {
+      inputsRef.current[idx - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4)
+    if (!pasted) return
+    e.preventDefault()
+    const next = ['', '', '', '']
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i]
+    setDigits(next)
+    setError('')
+    const lastIdx = Math.min(pasted.length, 4) - 1
+    inputsRef.current[lastIdx]?.focus()
+    if (pasted.length === 4) submitPin(pasted)
+  }
 
   return (
     <div
@@ -97,104 +140,64 @@ function GateLogin({ user, signIn, signOut }) {
           </div>
         </div>
 
-        {loggedInNotAdmin ? (
-          <>
-            <p style={{ textAlign: 'center', color: '#4a4a4a', fontSize: 15, lineHeight: 1.5, marginBottom: 20 }}>
-              Account senza accesso.<br />Prova con un altro account.
-            </p>
-            <button
-              onClick={signOut}
+        <p style={{ textAlign: 'center', color: '#4a4a4a', fontSize: 15, lineHeight: 1.5, marginBottom: 20 }}>
+          Sito in manutenzione.<br />Inserisci il PIN per continuare.
+        </p>
+
+        {error && (
+          <div
+            style={{
+              background: '#fef2f2',
+              color: '#dc2626',
+              border: '1px solid #fecaca',
+              borderRadius: 10,
+              padding: '10px 12px',
+              fontSize: 13,
+              marginBottom: 16,
+              textAlign: 'center',
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 12,
+            marginTop: 8,
+          }}
+          onPaste={handlePaste}
+        >
+          {digits.map((d, idx) => (
+            <input
+              key={idx}
+              ref={(el) => (inputsRef.current[idx] = el)}
+              type="tel"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={1}
+              value={d}
+              onChange={(e) => handleChange(idx, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(idx, e)}
               style={{
-                width: '100%',
-                padding: '12px',
+                width: 56,
+                height: 64,
+                textAlign: 'center',
+                fontSize: 28,
+                fontWeight: 600,
+                color: '#22181C',
                 border: '1px solid #e5e5e5',
                 borderRadius: 12,
                 background: '#ffffff',
-                color: '#4a4a4a',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
+                outline: 'none',
+                boxSizing: 'border-box',
               }}
-            >
-              Esci
-            </button>
-          </>
-        ) : (
-          <form onSubmit={onSubmit}>
-            {error && (
-              <div
-                style={{
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  border: '1px solid #fecaca',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  fontSize: 13,
-                  marginBottom: 16,
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#22181C', marginBottom: 6 }}>
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
             />
-
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#22181C', marginBottom: 6, marginTop: 16 }}>
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={inputStyle}
-            />
-
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                width: '100%',
-                marginTop: 24,
-                padding: '13px',
-                background: '#E8453C',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: 12,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: submitting ? 'default' : 'pointer',
-                opacity: submitting ? 0.6 : 1,
-              }}
-            >
-              {submitting ? 'Accesso in corso…' : 'Accedi'}
-            </button>
-          </form>
-        )}
+          ))}
+        </div>
       </div>
     </div>
   )
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '12px 14px',
-  border: '1px solid #e5e5e5',
-  borderRadius: 10,
-  fontSize: 14,
-  color: '#22181C',
-  background: '#ffffff',
-  boxSizing: 'border-box',
-  outline: 'none',
 }
