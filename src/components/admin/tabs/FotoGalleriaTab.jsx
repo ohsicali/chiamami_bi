@@ -364,7 +364,7 @@ function normalizePhotos(list) {
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
 }
 
-function convertToWebP(file, maxWidth = 1200, quality = 0.78) {
+function convertToWebP(file, maxWidth = 2400, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {

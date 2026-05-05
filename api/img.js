@@ -52,9 +52,9 @@ function parseWidth(raw) {
 }
 
 function parseQuality(raw) {
-  if (!raw) return 82
+  if (!raw) return 88
   const n = Math.floor(Number(raw))
-  if (!Number.isFinite(n) || n < 30 || n > 95) return 82
+  if (!Number.isFinite(n) || n < 30 || n > 95) return 88
   return n
 }
 
