@@ -134,6 +134,34 @@ export default function AdminRestaurants() {
   const [deleteId, setDeleteId] = useState(null)
   const [discountsMap, setDiscountsMap] = useState({})
   const [viewsMap, setViewsMap] = useState({})
+  // Override locale dei `moments` per evitare il flash di rifetch:
+  // quando l'admin tocca un chip salviamo il nuovo array nello state e in
+  // DB; la riga renderizza dall'override se presente, altrimenti da
+  // `r.moments`. Il map viene popolato pigramente.
+  const [momentsOverrides, setMomentsOverrides] = useState({})
+  const [momentsSaving, setMomentsSaving] = useState(null) // `${id}:${key}` mentre salva
+
+  const toggleMoment = async (restaurant, key) => {
+    if (!isSupabaseConfigured()) return
+    const current = momentsOverrides[restaurant.id] ?? (Array.isArray(restaurant.moments) ? restaurant.moments : [])
+    const next = current.includes(key)
+      ? current.filter((m) => m !== key)
+      : [...current, key]
+    const tag = `${restaurant.id}:${key}`
+    setMomentsSaving(tag)
+    setMomentsOverrides((prev) => ({ ...prev, [restaurant.id]: next }))
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ moments: next, updated_at: new Date().toISOString() })
+      .eq('id', restaurant.id)
+    if (error) {
+      // Rollback ottimistico
+      setMomentsOverrides((prev) => ({ ...prev, [restaurant.id]: current }))
+      // eslint-disable-next-line no-console
+      console.error('toggleMoment failed', error)
+    }
+    setMomentsSaving((s) => (s === tag ? null : s))
+  }
 
   // Click a row → navigate to full-page edit (replaces drawer overlay).
   // Back-compat: if the URL still carries ?edit=ID (from older bookmarks
@@ -449,6 +477,7 @@ export default function AdminRestaurants() {
                   <Th style={{ width: 40 }}></Th>
                   <Th>Ristorante</Th>
                   <Th>Categoria</Th>
+                  <Th title="Quando andarci — clicca per taggare">Fasce</Th>
                   <Th>Zona</Th>
                   <Th>Sconto</Th>
                   <Th>Aggiunto</Th>
@@ -465,6 +494,9 @@ export default function AdminRestaurants() {
                     idx={idx}
                     discount={discountsMap[r.id]}
                     views={viewsMap[r.slug] || 0}
+                    moments={momentsOverrides[r.id] ?? (Array.isArray(r.moments) ? r.moments : [])}
+                    momentsSaving={momentsSaving}
+                    onToggleMoment={(key) => toggleMoment(r, key)}
                     onDelete={() => setDeleteId(r.id)}
                     onEdit={() => openEdit(r.id)}
                   />
@@ -561,7 +593,55 @@ export default function AdminRestaurants() {
 /* ------------------------------------------------------------------ */
 /*  Row (desktop) + Card (mobile)                                      */
 /* ------------------------------------------------------------------ */
-function RestaurantRow({ r, idx, discount, views, onDelete, onEdit }) {
+const MOMENT_QUICK = [
+  { key: 'colazione', emoji: '🥐', label: 'Colazione' },
+  { key: 'pranzo',    emoji: '🍝', label: 'Pranzo' },
+  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
+  { key: 'cena',      emoji: '🍷', label: 'Cena' },
+  { key: 'dopocena',  emoji: '🍸', label: 'Dopo cena' },
+]
+
+function MomentQuickToggles({ moments, onToggle, saving, restaurantId }) {
+  return (
+    <div style={{ display: 'inline-flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+      {MOMENT_QUICK.map((m) => {
+        const active = moments.includes(m.key)
+        const isSaving = saving === `${restaurantId}:${m.key}`
+        return (
+          <button
+            key={m.key}
+            type="button"
+            disabled={isSaving}
+            onClick={() => onToggle(m.key)}
+            title={`${m.label}${active ? ' (attivo)' : ''}`}
+            aria-pressed={active}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              border: `1.5px solid ${active ? 'var(--color-corallo, #E8453C)' : 'var(--color-line, #EAE3D7)'}`,
+              background: active ? 'var(--color-corallo, #E8453C)' : '#fff',
+              color: active ? '#fff' : 'var(--color-ink, #22181C)',
+              fontSize: 14,
+              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: isSaving ? 'wait' : 'pointer',
+              opacity: isSaving ? 0.55 : 1,
+              transition: 'all 0.12s',
+              padding: 0,
+            }}
+          >
+            {m.emoji}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function RestaurantRow({ r, idx, discount, views, moments, momentsSaving, onToggleMoment, onDelete, onEdit }) {
   const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map((n) => getCategoryInfo(n)).filter(Boolean)
   const firstCat = cats[0]
   const isPublished = r.is_published !== false
@@ -606,6 +686,14 @@ function RestaurantRow({ r, idx, discount, views, onDelete, onEdit }) {
         </div>
       </Td>
       <Td>{firstCat ? <CategoryTag name={firstCat.name} colorKey={categoryTagColor(idx)} /> : '—'}</Td>
+      <Td>
+        <MomentQuickToggles
+          moments={moments}
+          onToggle={onToggleMoment}
+          saving={momentsSaving}
+          restaurantId={r.id}
+        />
+      </Td>
       <Td>{zona}</Td>
       <Td>{discount ? <DiscountTag value={discount.discount_value} /> : <span style={{ color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>—</span>}</Td>
       <Td>{formatShortDate(r.created_at)}</Td>
