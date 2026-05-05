@@ -552,7 +552,7 @@ export default function HomeFeedV4() {
     const r = (restaurants || []).find((x) => x.id === drop.restaurant_id)
     if (!r) return null
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null)
+    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.thumb_url || photos?.photo_url) : null)
     const label = drop.discount_type === 'percentage' ? `-${String(drop.discount_value).replace('%','')}%` : `-${drop.discount_value}€`
     const catName = r.category?.[0] || r.cuisine_type || ''
     const catInfo = getCategoryInfo(catName)

@@ -162,7 +162,7 @@ function Lcard({ r, closesAt, onClick, saved, onToggleSave }) {
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
   const priceLabel = '€'.repeat(r.price_range || 2)
-  const photo = proxyImg(r.photos?.[0]?.photo_url || r.photos?.[0]?.thumb_url)
+  const photo = proxyImg(r.photos?.[0]?.thumb_url || r.photos?.[0]?.photo_url)
 
   return (
     <a

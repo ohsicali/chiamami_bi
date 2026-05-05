@@ -369,7 +369,7 @@ export function useRestaurants(userPosition = null) {
         ].join(', ')
         const { data, error: dbError } = await supabase
           .from('restaurants')
-          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, caption, sort_order)`)
+          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, sort_order)`)
           .eq('is_published', true)
           .order('name')
         if (dbError) {
