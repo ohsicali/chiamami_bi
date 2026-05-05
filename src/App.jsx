@@ -124,8 +124,9 @@ export default function App() {
   const isAdmin = location.pathname.startsWith('/admin')
   const isPartner = location.pathname === '/partner'
   const isVerify = location.pathname === '/verify'
-  const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner && !isVerify
-  const showDesktopNav = !isAdmin && !isVerify
+  const isLogin = location.pathname === '/login'
+  const showTabBar = !isAdmin && !isRestaurantDetail && !isPartner && !isVerify && !isLogin
+  const showDesktopNav = !isAdmin && !isVerify && !isLogin
 
   return (
     <>

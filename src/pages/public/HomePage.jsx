@@ -212,6 +212,19 @@ export default function HomePage() {
     return result
   }, [restaurants, showDealsOnly, extraFilters, position, discountRestaurantIds])
 
+  // Any user-selected filter (deal toggle, category, price, moment, search,
+  // dietary, radius) means the map should mirror the filtered list. With no
+  // filter active the map shows every published restaurant.
+  const hasActiveFilters = (
+    showDealsOnly ||
+    !!filters.category ||
+    !!filters.priceRange ||
+    !!filters.moment ||
+    !!searchQuery.trim() ||
+    (extraFilters.dietary?.length || 0) > 0 ||
+    extraFilters.radiusKm != null
+  )
+
   const [selectedId, setSelectedId] = useState(null)
   const [visibleIds, setVisibleIds] = useState(null)
   const [mapCenter, setMapCenter] = useState(null)
@@ -259,7 +272,6 @@ export default function HomePage() {
     mapRef.current?.flyToCity(lng, lat)
   }, [])
 
-  const featuredRestaurantId = (viewportRestaurants.find(r => discountRestaurantIds.has(r.id)) || viewportRestaurants[0])?.id
   const [carouselLimit, setCarouselLimit] = useState(CAROUSEL_INITIAL)
   useEffect(() => { setCarouselLimit(CAROUSEL_INITIAL) }, [filters, showDealsOnly])
   const carouselRestaurants = viewportRestaurants.slice(0, carouselLimit)
@@ -434,7 +446,6 @@ export default function HomePage() {
               onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
               hasDiscount={discountRestaurantIds.has(restaurant.id)}
               discountTitle={discountTitleMap[restaurant.id]}
-              isFeatured={restaurant.id === featuredRestaurantId}
             />
           ))}
 
@@ -482,12 +493,15 @@ export default function HomePage() {
         onLocateMe={handleLocateMe}
       />
 
-      {/* Single MapView — repositioned via CSS for desktop vs mobile */}
+      {/* Single MapView — repositioned via CSS for desktop vs mobile.
+         When filters/sconti/categorie are active, mirror them on the map
+         so only matching pins render. Falls back to allRestaurants when
+         no filter is set so the default view shows everything. */}
       <div className="absolute inset-0 md:top-[56px] md:left-[360px] lg:left-[420px]">
         <Suspense fallback={<div className="absolute inset-0" style={{ background: '#F5F5F3' }} />}>
           <MapView
             ref={mapRef}
-            restaurants={allRestaurants}
+            restaurants={hasActiveFilters ? displayedRestaurants : allRestaurants}
             selectedId={selectedId}
             onSelectRestaurant={handlePinSelect}
             onVisibleRestaurantsChange={handleVisibleRestaurantsChange}

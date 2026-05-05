@@ -1013,6 +1013,7 @@ function toFormState(r) {
     cuisine_type: r.cuisine_type || '',
     price_range: r.price_range ?? 2,
     recommended_for: Array.isArray(r.recommended_for) ? r.recommended_for : [],
+    moments: Array.isArray(r.moments) ? r.moments : [],
     latitude: r.latitude != null ? String(r.latitude) : '',
     longitude: r.longitude != null ? String(r.longitude) : '',
     photos: Array.isArray(r.restaurant_photos)
@@ -1065,6 +1066,7 @@ function toDbPayload(form, alsoPublish) {
     cuisine_type: form.cuisine_type || (form.category?.[0] ?? null),
     price_range: form.price_range ?? 2,
     recommended_for: form.recommended_for,
+    moments: Array.isArray(form.moments) ? form.moments : [],
     latitude: form.latitude !== '' && form.latitude != null ? parseFloat(form.latitude) || null : null,
     longitude: form.longitude !== '' && form.longitude != null ? parseFloat(form.longitude) || null : null,
     partner_email: form.partner_email || null,

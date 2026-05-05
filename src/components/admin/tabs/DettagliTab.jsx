@@ -14,6 +14,16 @@ const PRICE_LEVELS = [
   { value: 4, label: '€€€€', desc: 'alto' },
 ]
 
+// Le 5 fasce canoniche; chiavi allineate a MOMENT_KEYS in src/lib/hours.js
+// e al check constraint SQL su restaurants.moments.
+const MOMENT_OPTIONS = [
+  { key: 'colazione', emoji: '🥐', label: 'Colazione' },
+  { key: 'pranzo',    emoji: '🍝', label: 'Pranzo' },
+  { key: 'aperitivo', emoji: '🥂', label: 'Aperitivo' },
+  { key: 'cena',      emoji: '🍷', label: 'Cena' },
+  { key: 'dopocena',  emoji: '🍸', label: 'Dopo cena' },
+]
+
 const RECOMMENDED_FOR_OPTIONS = [
   'Cena romantica',
   'Famiglia',
@@ -74,6 +84,15 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
 
   function handleAddressBlur() {
     if (!form.latitude && !form.longitude) runGeocode()
+  }
+
+  function toggleMoment(key) {
+    const current = Array.isArray(form.moments) ? form.moments : []
+    onChange({
+      moments: current.includes(key)
+        ? current.filter((m) => m !== key)
+        : [...current, key],
+    })
   }
 
   function toggleRecommended(tag) {
@@ -482,6 +501,47 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
       </FGroup>
 
       {/* ── 4. CONSIGLIATO PER ── */}
+      <FGroup
+        title="Quando andarci"
+        count="fasce in cui questo locale ha senso — seleziona quelle giuste"
+      >
+        <div style={{ fontSize: 12, color: 'var(--color-ink-70, rgba(34,24,28,.7))', marginBottom: 10, lineHeight: 1.45 }}>
+          Lascia vuoto per usare gli orari di Google come default. Selezionando una o più
+          fasce sovrascrivi: il locale appare in quelle, anche se gli orari non
+          combaciassero.
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {MOMENT_OPTIONS.map((m) => {
+            const active = Array.isArray(form.moments) && form.moments.includes(m.key)
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => toggleMoment(m.key)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  border: `1.5px solid ${active ? 'var(--color-corallo, #E8453C)' : 'var(--color-line, #EAE3D7)'}`,
+                  background: active ? 'var(--color-corallo, #E8453C)' : '#fff',
+                  color: active ? '#fff' : 'var(--color-ink, #22181C)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  transition: 'all 0.12s',
+                }}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1 }}>{m.emoji}</span>
+                {m.label}
+              </button>
+            )
+          })}
+        </div>
+      </FGroup>
+
       <FGroup title="Consigliato per" count="seleziona tutti quelli che si applicano">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {RECOMMENDED_FOR_OPTIONS.map((tag) => {

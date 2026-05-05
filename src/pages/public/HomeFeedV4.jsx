@@ -458,10 +458,10 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
     : null
   return (
     <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
-      <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'#ddd', overflow:'hidden' }}>
+      <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
         {photoUrl
-          ? <img src={photoUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" />
-          : <div style={{ width:'100%', height:'100%', display:'grid', placeItems:'center', fontSize:28 }}>{cat?.emoji || '🍽️'}</div>
+          ? <img src={photoUrl} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" decoding="async" />
+          : <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center', fontSize:28 }}>{cat?.emoji || '🍽️'}</div>
         }
         {discLabel && (
           <span style={{ position:'absolute', top:10, left:10, background:'linear-gradient(135deg, #A3E635, #4ADE80)', color:'#1a4731', fontSize:11, fontWeight:800, padding:'4px 9px', borderRadius:999, letterSpacing:'0.02em' }}>{discLabel}</span>
@@ -544,7 +544,14 @@ export default function HomeFeedV4() {
     () => Object.fromEntries((discounts || []).map((d) => [d.restaurant_id, d])),
     [discounts]
   )
-  const recent = (restaurants || []).slice(0, 8)
+  // Hook default-sorts by name; section is "Ultimi aggiunti" so sort
+  // explicitly by created_at desc.
+  const recent = useMemo(
+    () => [...(restaurants || [])]
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .slice(0, 8),
+    [restaurants]
+  )
 
   const featuredDrop = useMemo(() => {
     const drop = (discounts || []).find((d) => d.is_drop)
@@ -713,7 +720,15 @@ export default function HomeFeedV4() {
             overflow: visible !important;
             padding-left: 0 !important; padding-right: 0 !important;
           }
-          .hfv4-rcard { flex: 1 1 auto !important; }
+          /* Grid cells stretch to tallest. Make the card a flex column so
+             its body absorbs the extra space — every photo keeps the
+             16/11 aspect at the top, no white gap below the address. */
+          .hfv4-rcard {
+            flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .hfv4-rcard > div:last-child { flex: 1 1 auto !important; }
           .hfv4-sec-head { padding-left: 0 !important; padding-right: 0 !important; margin-bottom: 22px; }
           .hfv4-sec-head h2 { font-size: 32px !important; letter-spacing: -.02em !important; }
         }

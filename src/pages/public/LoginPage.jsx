@@ -3,8 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
-import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
+import BiLogoMark from '../../components/UI/BiLogoMark'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -197,7 +197,7 @@ export default function LoginPage() {
       className="flex flex-col min-h-dvh md:min-h-[calc(100dvh-80px)]"
       style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}
     >
-      {/* ─── HEADER — logo + Esplora la mappa (mobile only) ─── */}
+      {/* ─── HEADER — wordmark + Esplora la mappa (mobile only) ─── */}
       <header
         className="md:hidden"
         style={{
@@ -223,17 +223,23 @@ export default function LoginPage() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              gap: 1,
+              lineHeight: 0.92,
               textDecoration: 'none',
             }}
           >
-            <img
-              src="/logo-guida-bi.png"
-              alt="La Guida di Bi"
-              style={{ height: 22, width: 'auto' }}
-            />
             <span
               style={{
+                fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
+                fontSize: 18,
+                letterSpacing: '0.02em',
+                color: 'var(--color-corallo)',
+              }}
+            >
+              LA GUIDA DI BI
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-sans)',
                 fontSize: 8,
                 color: 'var(--color-ink-55)',
                 fontWeight: 700,
@@ -247,7 +253,7 @@ export default function LoginPage() {
           </Link>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/esplora')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -286,8 +292,8 @@ export default function LoginPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: `16px 22px`,
-          paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${TAB_BAR_HEIGHT + 16}px)`,
+          padding: `24px 22px`,
+          paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 24px)`,
         }}
       >
         <motion.div
@@ -297,32 +303,32 @@ export default function LoginPage() {
           animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
         >
-          {/* Desktop-only gradient icon */}
+          {/* Bi mark — corallo circle with the brand B. Replaces the
+             generic gradient heart so the auth screen carries the same
+             wordmark identity as the rest of the site. */}
           <motion.div
             variants={itemVariants}
-            className="hidden md:flex"
             style={{
               width: 64,
               height: 64,
-              borderRadius: 20,
-              background: 'linear-gradient(135deg, #E8453C 0%, #f07068 100%)',
+              borderRadius: '50%',
+              background: 'var(--color-corallo)',
+              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 18px',
-              boxShadow: '0 8px 24px rgba(232, 69, 60,0.25)',
+              boxShadow: '0 10px 24px rgba(232, 69, 60, 0.28)',
+              color: '#fff',
             }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
+            <BiLogoMark style={{ width: 38, height: 38 }} />
           </motion.div>
 
-          {/* Kick pill — mobile only */}
+          {/* Kick pill */}
           {(mode === 'login' || mode === 'register') && (
             <motion.div
               variants={itemVariants}
-              className="md:hidden"
-              style={{ textAlign: 'center', marginBottom: 12 }}
+              style={{ textAlign: 'center', marginBottom: 10 }}
             >
               <span
                 style={{

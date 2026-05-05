@@ -57,6 +57,7 @@ export default function NewRestaurant() {
       is_disabled: false,
       category: [],
       recommended_for: [],
+      moments: [],
       photos: [],
       price_range: 2,
     }

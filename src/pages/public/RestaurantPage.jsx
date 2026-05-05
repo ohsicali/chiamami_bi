@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation, matchPath } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import DesktopRestaurantSheet from '../../components/Restaurant/DesktopRestaurantSheet'
@@ -8,6 +9,7 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { LogoLoader } from '../../components/UI/Logo'
 import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
+import { proxyImg } from '../../lib/supabase'
 
 function slugify(name) {
   return name
@@ -32,6 +34,29 @@ export default function RestaurantPage() {
   const isDesktop = useIsDesktop()
 
   const restaurant = allRestaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
+
+  // Preload the first photo as soon as we know which restaurant we're
+  // showing — this kicks off the network fetch ~50-150ms before the
+  // PhotoCarousel mounts, so the LCP image lands faster.
+  useEffect(() => {
+    const first = restaurant?.photos?.[0]
+    if (!first) return
+    const fullUrl = typeof first === 'string' ? first : (first.photo_url || first.url)
+    if (!fullUrl) return
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'image'
+    link.href = proxyImg(fullUrl, { w: 1200 })
+    link.imageSrcset = [
+      `${proxyImg(fullUrl, { w: 800 })} 800w`,
+      `${proxyImg(fullUrl, { w: 1200 })} 1200w`,
+      `${proxyImg(fullUrl, { w: 1600 })} 1600w`,
+    ].join(', ')
+    link.imageSizes = '(max-width: 768px) 100vw, 1200px'
+    link.fetchPriority = 'high'
+    document.head.appendChild(link)
+    return () => { document.head.removeChild(link) }
+  }, [restaurant?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = () => {
     if (window.history.length > 1) {

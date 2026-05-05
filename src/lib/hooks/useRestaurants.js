@@ -385,7 +385,7 @@ export function useRestaurants(userPosition = null) {
           'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
           'category', 'cuisine_type', 'price_range', 'our_rating',
           'our_review', 'our_tip', 'recommended_for', 'tagline',
-          'tiktok_url', 'instagram_reel', 'hours_cache',
+          'tiktok_url', 'instagram_reel', 'hours_cache', 'moments',
           'is_published', 'created_at', 'updated_at',
         ].join(', ')
         const { data, error: dbError } = await supabase
@@ -456,7 +456,7 @@ export function useRestaurants(userPosition = null) {
     }
 
     if (filters.moment) {
-      result = result.filter(r => isOpenForMoment(r.hours_cache, filters.moment).match)
+      result = result.filter(r => isOpenForMoment(r.hours_cache, filters.moment, undefined, r.moments).match)
     }
 
     // Sort
