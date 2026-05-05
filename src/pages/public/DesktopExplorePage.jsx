@@ -1,6 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import MapView from '../../components/Map/MapView'
+// Mapbox-gl is ~600KB gzipped — load only when this page actually mounts so
+// users that never open the map don't pay the bytes upfront.
+const MapView = lazy(() => import('../../components/Map/MapView'))
 import { useRestaurants, getCategoryInfo, CUISINE_CATEGORIES } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -32,7 +34,7 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null)
+    : null, { w: 800 })
   const priceStr = restaurant.price_range ? '€'.repeat(restaurant.price_range) : null
   const dist = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude) : null
@@ -151,7 +153,7 @@ function MapPopup({ restaurant, hasDiscount, discountLabel, onClose, onNavigate 
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null)
+    : null, { w: 800 })
 
   return (
     <div style={{
@@ -370,15 +372,17 @@ export default function DesktopExplorePage() {
 
       {/* RIGHT — Map */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <MapView
-          ref={mapRef}
-          restaurants={filteredRestaurants}
-          selectedId={selectedId}
-          onSelectRestaurant={handlePinSelect}
-          userPosition={position}
-          savedIds={savedIds}
-          discountMap={discountMap}
-        />
+        <Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: '#F5F5F3' }} />}>
+          <MapView
+            ref={mapRef}
+            restaurants={filteredRestaurants}
+            selectedId={selectedId}
+            onSelectRestaurant={handlePinSelect}
+            userPosition={position}
+            savedIds={savedIds}
+            discountMap={discountLabelMap}
+          />
+        </Suspense>
 
         {/* Map controls */}
         <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 5 }}>

@@ -397,7 +397,7 @@ export default function SavedPage() {
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
                 const category = categories[0]
                 const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
+                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
                 const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
                 return (
                   <div
@@ -508,7 +508,7 @@ export default function SavedPage() {
                 const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
                 const category = categories[0]
                 const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
+                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
                 const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
 
                 return (

@@ -27,9 +27,9 @@ function slugify(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
-function getPhoto(restaurant) {
+function getPhoto(restaurant, opts) {
   const p = restaurant?.photos?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
-  return proxyImg(p?.thumb_url || p?.photo_url || null)
+  return proxyImg(p?.thumb_url || p?.photo_url || null, opts || { w: 800 })
 }
 
 function shortAddress(addr) {
@@ -432,7 +432,7 @@ function SconteRedesignPageInner() {
             qrPopup.deal?.restaurant?.cuisine_type || qrPopup.deal?.restaurant?.category?.[0],
             shortAddress(qrPopup.deal?.restaurant?.address),
           ].filter(Boolean).join(' · ')}
-          photoUrl={getPhoto(qrPopup.deal?.restaurant)}
+          photoUrl={getPhoto(qrPopup.deal?.restaurant, { w: 1200 })}
           discountValue={dealBadgeText(qrPopup.deal) || freebieLabel(qrPopup.deal)}
           discountTitle={qrPopup.deal?.title}
           expiresLabel={shortExpiryLine(qrPopup.deal)}
@@ -450,7 +450,7 @@ function SconteRedesignPageInner() {
       {infoDeal && (
         <DiscountDetailPopup
           deal={infoDeal}
-          photoUrl={getPhoto(infoDeal.restaurant)}
+          photoUrl={getPhoto(infoDeal.restaurant, { w: 1200 })}
           restaurantUrl={infoDeal.restaurant?.slug
             ? `/restaurant/${infoDeal.restaurant.slug}`
             : `/restaurant/${slugify(infoDeal.restaurant?.name || '')}`}
@@ -466,7 +466,7 @@ function SconteRedesignPageInner() {
       {qrBlocked && (
         <QRBlockedView
           deal={qrBlocked}
-          photoUrl={getPhoto(qrBlocked.restaurant)}
+          photoUrl={getPhoto(qrBlocked.restaurant, { w: 1200 })}
           restaurantName={qrBlocked.restaurant?.name || qrBlocked.title}
           restaurantSubtitle={[
             qrBlocked.restaurant?.cuisine_type || qrBlocked.restaurant?.category?.[0],

@@ -1,6 +1,6 @@
 // ChiamamiBi Service Worker — Push + Offline Shell
 // Bump version to invalidate old caches on deploy.
-const VERSION = 'v3-perf'
+const VERSION = 'v4-perf'
 const STATIC_CACHE = `chiamamibi-static-${VERSION}`
 const RUNTIME_CACHE = `chiamamibi-runtime-${VERSION}`
 const IMAGE_CACHE = `chiamamibi-img-${VERSION}`
@@ -15,10 +15,12 @@ const SHELL_ASSETS = [
   '/logo-guida-bi.svg',
   '/icons.svg',
   '/bi-photo.webp',
+  '/og-image.png',
 ]
 
 // Hard cap so we don't fill the device storage with restaurant images.
-const IMAGE_CACHE_LIMIT = 80
+// Bumped to fit hero photos served via /api/img on top of local assets.
+const IMAGE_CACHE_LIMIT = 150
 
 async function trimCache(name, max) {
   const cache = await caches.open(name)
@@ -57,6 +59,30 @@ self.addEventListener('fetch', (event) => {
 
   // Skip cross-origin + known dynamic endpoints
   if (url.origin !== self.location.origin) return
+
+  // /api/img is the Supabase storage image proxy — cache aggressively under
+  // IMAGE_CACHE so restaurant photos visited once load instantly on repeat
+  // navigations (and survive offline). Match by full request (query string
+  // included) since the proxy keys content by ?url=…
+  if (url.pathname === '/api/img') {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached
+        return fetch(request).then((res) => {
+          if (res.ok) {
+            const copy = res.clone()
+            caches.open(IMAGE_CACHE).then(async (c) => {
+              await c.put(request, copy)
+              trimCache(IMAGE_CACHE, IMAGE_CACHE_LIMIT)
+            }).catch(() => {})
+          }
+          return res
+        })
+      })
+    )
+    return
+  }
+
   if (url.pathname.startsWith('/api/')) return
   if (url.pathname.startsWith('/auth/')) return
 

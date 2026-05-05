@@ -1,6 +1,59 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
 
+// Stale-while-revalidate cache for the active discounts list. Painted at mount
+// from localStorage so the home and deals page render instantly on repeat
+// visits while a fresh fetch runs in the background. Bump the key version
+// when the select shape changes.
+const ACTIVE_DISCOUNTS_CACHE_KEY = 'cb_active_discounts_v2'
+function readActiveDiscountsCache() {
+  try {
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(ACTIVE_DISCOUNTS_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed?.data) ? parsed.data : null
+  } catch { return null }
+}
+function writeActiveDiscountsCache(data) {
+  try { localStorage.setItem(ACTIVE_DISCOUNTS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch { /* quota / private mode */ }
+}
+
+// Channel pool for discount_redemptions: one WebSocket subscription per
+// user_id, with multiple in-process listeners. Without this, every component
+// that calls useUserRedemption / useMyDiscounts opens its own channel —
+// N redemption cards = N parallel WebSocket subscriptions.
+const redemptionChannels = new Map()
+
+function subscribeToRedemptions(userId, listener) {
+  if (!userId || !isSupabaseConfigured()) return () => {}
+  let entry = redemptionChannels.get(userId)
+  if (!entry) {
+    const listeners = new Set()
+    const channel = supabase
+      .channel(`redemptions:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'discount_redemptions' },
+        (payload) => {
+          const row = payload.new || payload.old
+          if (!row || row.user_id !== userId) return
+          listeners.forEach((cb) => { try { cb(payload) } catch { /* swallow */ } })
+        }
+      )
+      .subscribe()
+    entry = { channel, listeners }
+    redemptionChannels.set(userId, entry)
+  }
+  entry.listeners.add(listener)
+  return () => {
+    entry.listeners.delete(listener)
+    if (entry.listeners.size === 0) {
+      try { supabase.removeChannel(entry.channel) } catch { /* noop */ }
+      redemptionChannels.delete(userId)
+    }
+  }
+}
+
 // Generate a short unique code for QR
 function generateQRCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -80,29 +133,15 @@ export function useUserRedemption(discountId, userId) {
 
     load()
 
-    // Realtime subscription: when the restaurant marks this redemption as
-    // redeemed, auto-update the UI so the user sees the dimmed/used state
-    // without a page refresh. Filter client-side so we catch every event
-    // reliably even if the server-side filter semantics change.
-    const channel = supabase
-      .channel(`redemption:${userId}:${discountId}:${Math.random().toString(36).slice(2, 8)}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'discount_redemptions' },
-        (payload) => {
-          const row = payload.new || payload.old
-          if (!row) return
-          if (row.user_id !== userId) return
-          if (row.discount_id !== discountId) return
-          if (payload.eventType === 'DELETE') {
-            setRedemption(null)
-          } else {
-            // Refetch so we always have a fresh, fully-joined row
-            load()
-          }
-        }
-      )
-      .subscribe()
+    // Realtime: pooled subscription on discount_redemptions filtered to this
+    // user. When the restaurant marks the QR as redeemed, refetch so the UI
+    // moves to the dimmed/used state without a page refresh.
+    const unsubscribe = subscribeToRedemptions(userId, (payload) => {
+      const row = payload.new || payload.old
+      if (!row || row.discount_id !== discountId) return
+      if (payload.eventType === 'DELETE') setRedemption(null)
+      else load()
+    })
 
     // Fallback: refetch when the user returns to the tab. Covers cases
     // where the realtime websocket may have disconnected in the background.
@@ -116,7 +155,7 @@ export function useUserRedemption(discountId, userId) {
       cancelled = true
       window.removeEventListener('visibilitychange', onFocus)
       window.removeEventListener('focus', onFocus)
-      try { supabase.removeChannel(channel) } catch {}
+      unsubscribe()
     }
   }, [discountId, userId])
 
@@ -194,26 +233,48 @@ export function useUserRedemption(discountId, userId) {
  * Fetch all active discounts (for deals page)
  * Separates: activeDrops, upcomingDrops, featured, regular
  */
+// Module-scoped in-flight promise: when multiple components mount on the same
+// page (e.g. HomeFeedV4 + SponsorBanner) they share a single fetch instead of
+// firing duplicate identical queries to Supabase.
+let activeDiscountsInFlight = null
+
+function fetchActiveDiscounts() {
+  if (activeDiscountsInFlight) return activeDiscountsInFlight
+  activeDiscountsInFlight = supabase
+    .from('discounts')
+    .select('*, restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
+    .eq('is_active', true)
+    .gt('valid_until', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .then(({ data }) => {
+      const fresh = data || []
+      writeActiveDiscountsCache(fresh)
+      return fresh
+    })
+    .finally(() => {
+      // Release the lock so subsequent navigations can revalidate.
+      activeDiscountsInFlight = null
+    })
+  return activeDiscountsInFlight
+}
+
 export function useActiveDiscounts() {
-  const [discounts, setDiscounts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const cached = typeof window !== 'undefined' ? readActiveDiscountsCache() : null
+  const [discounts, setDiscounts] = useState(cached || [])
+  const [loading, setLoading] = useState(!cached)
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setLoading(false)
       return
     }
-
-    supabase
-      .from('discounts')
-      .select('*, restaurant:restaurants(id, name, slug, city, address, phone, website, cuisine_type, category, price_range, our_rating, tagline, recommended_for, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
-      .eq('is_active', true)
-      .gt('valid_until', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setDiscounts(data || [])
-        setLoading(false)
-      })
+    let cancelled = false
+    fetchActiveDiscounts().then((fresh) => {
+      if (cancelled) return
+      setDiscounts(fresh)
+      setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [])
 
   const now = new Date().toISOString()
@@ -270,21 +331,9 @@ export function useMyDiscounts(userId) {
 
     load()
 
-    // Realtime: when restaurant validates a QR (status: generated→redeemed),
-    // refetch so the item moves from "active" to "used" (dimmed) automatically.
-    // Filter client-side for reliability across event types.
-    const channel = supabase
-      .channel(`my-discounts:${userId}:${Math.random().toString(36).slice(2, 8)}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'discount_redemptions' },
-        (payload) => {
-          const row = payload.new || payload.old
-          if (!row || row.user_id !== userId) return
-          load()
-        }
-      )
-      .subscribe()
+    // Realtime: pooled subscription so multiple components mounted on the
+    // same page (e.g. saved page + redemption card) share a single channel.
+    const unsubscribe = subscribeToRedemptions(userId, () => load())
 
     // Fallback: refetch on tab focus so data stays fresh even if realtime
     // misses an event (eg. connection dropped in background).
@@ -298,7 +347,7 @@ export function useMyDiscounts(userId) {
       cancelled = true
       window.removeEventListener('visibilitychange', onFocus)
       window.removeEventListener('focus', onFocus)
-      try { supabase.removeChannel(channel) } catch {}
+      unsubscribe()
     }
   }, [userId])
 

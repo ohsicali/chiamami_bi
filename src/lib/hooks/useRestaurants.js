@@ -8,6 +8,23 @@ export { getCategoryInfo, DEFAULT_CATEGORIES as CUISINE_CATEGORIES, useCategorie
 
 export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 
+// Stale-while-revalidate cache for the restaurants list. On repeat visits we
+// can paint the previous list immediately while a fresh fetch runs in the
+// background, eliminating the "Caricamento…" flash on the home and list pages.
+// Bump the key version when the select shape or mapping changes.
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v2'
+function readRestaurantsCache() {
+  try {
+    const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed?.data) ? parsed.data : null
+  } catch { return null }
+}
+function writeRestaurantsCache(data) {
+  try { localStorage.setItem(RESTAURANTS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch { /* quota / private mode */ }
+}
+
 const MOCK_RESTAURANTS = [
   {
     id: '1',
@@ -340,8 +357,9 @@ const MOCK_RESTAURANTS = [
 ]
 
 export function useRestaurants(userPosition = null) {
-  const [allRestaurants, setAllRestaurants] = useState([])
-  const [loading, setLoading] = useState(true)
+  const cachedRestaurants = typeof window !== 'undefined' ? readRestaurantsCache() : null
+  const [allRestaurants, setAllRestaurants] = useState(cachedRestaurants || [])
+  const [loading, setLoading] = useState(!cachedRestaurants)
   const [error, setError] = useState(null)
   const [filters, setFilters] = useState({
     category: null,
@@ -352,7 +370,10 @@ export function useRestaurants(userPosition = null) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchRestaurants = useCallback(async () => {
-    setLoading(true)
+    // If we already painted from cache, keep loading=false so the UI doesn't
+    // flash a spinner while we revalidate in the background.
+    const hasCache = readRestaurantsCache() != null
+    if (!hasCache) setLoading(true)
     setError(null)
     try {
       if (isSupabaseConfigured()) {
@@ -369,7 +390,7 @@ export function useRestaurants(userPosition = null) {
         ].join(', ')
         const { data, error: dbError } = await supabase
           .from('restaurants')
-          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, caption, sort_order)`)
+          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, sort_order)`)
           .eq('is_published', true)
           .order('name')
         if (dbError) {
@@ -385,6 +406,7 @@ export function useRestaurants(userPosition = null) {
           }
         })
         setAllRestaurants(mapped)
+        writeRestaurantsCache(mapped)
       } else {
         // Only use mocks when Supabase is NOT configured (local dev without env vars)
         await new Promise(r => setTimeout(r, 300))
@@ -395,8 +417,8 @@ export function useRestaurants(userPosition = null) {
       console.error('[useRestaurants] Fetch failed:', err)
       setError(err.message || 'Errore nel caricamento dei ristoranti')
       // Do NOT fallback to MOCK_RESTAURANTS in production — it hides real errors.
-      // Show an empty list so the error is visible to the user.
-      setAllRestaurants([])
+      // If we have cached data already painted, keep it; otherwise show empty.
+      if (!readRestaurantsCache()) setAllRestaurants([])
     } finally {
       setLoading(false)
     }

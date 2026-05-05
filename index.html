@@ -23,6 +23,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
+    <!-- Preconnect to critical 3rd-party origins so DNS+TLS handshake
+         starts in parallel with the HTML parse, instead of waiting for
+         the first fetch to fire. -->
+    <link rel="preconnect" href="https://urcwnontifybzugmmiov.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://api.mapbox.com" crossorigin />
+    <link rel="dns-prefetch" href="https://urcwnontifybzugmmiov.supabase.co" />
+    <link rel="dns-prefetch" href="https://api.mapbox.com" />
+
     <!-- v4 fonts: Poppins (UI), Alfa Slab One (wordmark), Caveat (Bi's handwriting).
          Loaded async via media="print" trick so they don't block first paint. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
