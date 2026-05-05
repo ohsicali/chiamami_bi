@@ -58,10 +58,10 @@ function useShare(restaurant) {
 }
 
 /* ── photo URL normalizer ── */
-function getPhotoUrl(p) {
+function getPhotoUrl(p, opts) {
   if (!p) return null
   const raw = typeof p === 'string' ? p : (p.photo_url || p.url || null)
-  return proxyImg(raw)
+  return proxyImg(raw, opts)
 }
 
 /* ══════════════════════════════════════════ */
@@ -90,9 +90,12 @@ export default function DesktopRestaurantSheet({
   /* ── derived data ── */
   const photos = restaurant.photos || []
   const photoCount = photos.length
+  // Hero needs higher resolution than card thumbs since it renders at ~1200px
+  // wide. Sharp's withoutEnlargement keeps it within the source dimensions
+  // (max 1200) but we still get the WebP/AVIF transcode for compression.
   const heroUrl = photoCount > 0
-    ? getPhotoUrl(photos[photoIndex])
-    : proxyImg(restaurant.image) || null
+    ? getPhotoUrl(photos[photoIndex], { w: 1800 })
+    : proxyImg(restaurant.image, { w: 1800 }) || null
 
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(n => getCategoryInfo(n)).filter(Boolean)
@@ -159,7 +162,7 @@ export default function DesktopRestaurantSheet({
       {/* ── HERO ── */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '100px 40px 28px', width: '100%' }}>
         <div style={{
-          height: 520, borderRadius: 24, overflow: 'hidden',
+          aspectRatio: '16 / 10', borderRadius: 24, overflow: 'hidden',
           position: 'relative', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
           background: '#e0d8cc',
         }}>
@@ -171,11 +174,54 @@ export default function DesktopRestaurantSheet({
             />
           )}
 
-          {/* prev / next click zones */}
+          {/* invisible click zones (left/right) — keep for accessibility,
+              the visible arrow buttons sit on top */}
           {photoCount > 1 && (
             <>
               <button onClick={prev} aria-label="Foto precedente" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '35%', background: 'transparent', border: 0, cursor: 'pointer', zIndex: 3 }} />
               <button onClick={next} aria-label="Foto successiva" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '35%', background: 'transparent', border: 0, cursor: 'pointer', zIndex: 3 }} />
+
+              {/* Visible arrow buttons (desktop) */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); prev() }}
+                aria-label="Foto precedente"
+                style={{
+                  position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+                  width: 44, height: 44, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.92)', border: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', zIndex: 4,
+                  transition: 'transform 0.15s ease, background 0.15s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1.06)'; e.currentTarget.style.background = '#fff' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.92)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); next() }}
+                aria-label="Foto successiva"
+                style={{
+                  position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+                  width: 44, height: 44, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.92)', border: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', zIndex: 4,
+                  transition: 'transform 0.15s ease, background 0.15s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1.06)'; e.currentTarget.style.background = '#fff' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.92)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
             </>
           )}
 
