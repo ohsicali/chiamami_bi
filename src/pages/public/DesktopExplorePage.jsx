@@ -34,7 +34,7 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null)
+    : null, { w: 600 })
   const priceStr = restaurant.price_range ? '€'.repeat(restaurant.price_range) : null
   const dist = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude) : null
@@ -153,7 +153,7 @@ function MapPopup({ restaurant, hasDiscount, discountLabel, onClose, onNavigate 
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null)
+    : null, { w: 600 })
 
   return (
     <div style={{

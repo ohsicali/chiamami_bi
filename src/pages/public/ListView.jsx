@@ -60,7 +60,7 @@ function PriceDisplay({ level }) {
 function getPhotoUrl(restaurant) {
   if (Array.isArray(restaurant.photos) && restaurant.photos.length > 0) {
     const p = restaurant.photos[0]
-    return proxyImg(typeof p === 'string' ? p : (p?.thumb_url || p?.photo_url))
+    return proxyImg(typeof p === 'string' ? p : (p?.thumb_url || p?.photo_url), { w: 600 })
   }
   return null
 }

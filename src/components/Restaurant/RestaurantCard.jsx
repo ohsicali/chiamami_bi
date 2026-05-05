@@ -45,7 +45,7 @@ export default function RestaurantCard({
     ? typeof firstPhoto === 'string'
       ? firstPhoto
       : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null)
+    : null, { w: 900 })
 
   const distance =
     userPosition && restaurant.latitude && restaurant.longitude

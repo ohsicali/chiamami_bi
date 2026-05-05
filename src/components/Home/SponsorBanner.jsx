@@ -117,7 +117,7 @@ function RestaurantVariant({ p }) {
   if (!r) return null
 
   const cover = p.cover_image_url
-    || proxyImg(r.photos?.[0]?.photo_url || r.photos?.[0]?.thumb_url)
+    || proxyImg(r.photos?.[0]?.photo_url || r.photos?.[0]?.thumb_url, { w: 1200 })
   const status = getHoursStatus(r.hours_cache)
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const zone = (r.address || '').split(',')[0].trim()

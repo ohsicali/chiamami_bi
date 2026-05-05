@@ -88,7 +88,7 @@ function useCountdown(targetDate) {
 /* ── Photo helper ── */
 function getPhoto(restaurant) {
   const p = restaurant?.photos?.sort((a, b) => a.sort_order - b.sort_order)?.[0]
-  return proxyImg(p?.thumb_url || p?.photo_url || null)
+  return proxyImg(p?.thumb_url || p?.photo_url || null, { w: 600 })
 }
 
 /* ── DropMini — drop-mini compatto orizzontale (mockup §drops-row + .drop-mini) */
@@ -848,7 +848,7 @@ function MyUsedCard({ redemption, onGoTo }) {
 /* ── DealBottomSheet — detail overlay on tap ── */
 function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, myRedemption, onShowQR, onGoTo, saved, onSaveToggle }) {
   const r = deal?.restaurant
-  const allPhotos = (r?.photos || []).sort((a, b) => a.sort_order - b.sort_order).map(p => proxyImg(p.photo_url)).filter(Boolean)
+  const allPhotos = (r?.photos || []).sort((a, b) => a.sort_order - b.sort_order).map(p => proxyImg(p.photo_url, { w: 1200 })).filter(Boolean)
   const remaining = deal?.max_redemptions ? deal.max_redemptions - (deal.total_redeemed || 0) : null
   const soldOut = remaining !== null && remaining <= 0
   const conditions = deal?.conditions ? deal.conditions.split('\n').filter(Boolean) : []

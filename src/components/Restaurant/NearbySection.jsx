@@ -29,7 +29,8 @@ function NearbyCard({ restaurant, index, onSelect }) {
       ? typeof restaurant.photos[0] === 'string'
         ? restaurant.photos[0]
         : restaurant.photos[0]?.thumb_url || restaurant.photos[0]?.photo_url
-      : null
+      : null,
+    { w: 400 }
   )
 
   // Short description: first ~60 chars of our_review

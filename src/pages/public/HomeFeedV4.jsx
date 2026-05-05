@@ -451,7 +451,7 @@ function SectionHead({ title, kicker, subtitle, trailing }) {
 function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
   const cat = getCategoryInfo(restaurant.cuisine_type || (restaurant.category && restaurant.category[0]))
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
-  const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null)
+  const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 600 })
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const discLabel = discount?.discount_value
     ? (discount.discount_type === 'percentage' ? `-${String(discount.discount_value).replace('%','')}%` : `-${discount.discount_value}€`)
@@ -552,7 +552,7 @@ export default function HomeFeedV4() {
     const r = (restaurants || []).find((x) => x.id === drop.restaurant_id)
     if (!r) return null
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null)
+    const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null, { w: 1600 })
     const label = drop.discount_type === 'percentage' ? `-${String(drop.discount_value).replace('%','')}%` : `-${drop.discount_value}€`
     const catName = r.category?.[0] || r.cuisine_type || ''
     const catInfo = getCategoryInfo(catName)
