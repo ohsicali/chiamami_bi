@@ -12,7 +12,7 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // can paint the previous list immediately while a fresh fetch runs in the
 // background, eliminating the "Caricamento…" flash on the home and list pages.
 // Bump the key version when the select shape or mapping changes.
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v2'
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v3'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
