@@ -488,6 +488,7 @@ export default function DiscountManager() {
   const [discounts, setDiscounts] = useState([])
   const [restaurants, setRestaurants] = useState([])
   const [partnerIds, setPartnerIds] = useState(new Set()) // restaurant_ids that are active partners
+  const [partnerPins, setPartnerPins] = useState({}) // restaurant_id → pin_code (legacy restaurant_partners)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -521,7 +522,7 @@ export default function DiscountManager() {
       supabase.from('discounts').select('*, restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
       supabase.from('restaurants').select('id, name, verify_pin, restaurant_photos(photo_url)').order('name'),
       supabase.from('discount_redemptions').select('discount_id, status'),
-      supabase.from('restaurant_partners').select('restaurant_id').eq('is_active', true),
+      supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
     ]).then(([discRes, restRes, redRes, partRes]) => {
       const genMap = {}
       const usedMap = {}
@@ -543,7 +544,9 @@ export default function DiscountManager() {
       }))
       setDiscounts(enriched)
       setRestaurants((restRes.data || []).map((r) => ({ id: r.id, name: r.name, has_pin: !!r.verify_pin })))
-      setPartnerIds(new Set((partRes.data || []).map((p) => p.restaurant_id)))
+      const partnerRows = partRes.data || []
+      setPartnerIds(new Set(partnerRows.map((p) => p.restaurant_id)))
+      setPartnerPins(Object.fromEntries(partnerRows.filter((p) => p.pin_code).map((p) => [p.restaurant_id, p.pin_code])))
       setLoading(false)
     })
   }, [])
@@ -638,9 +641,14 @@ export default function DiscountManager() {
 
     // Vincolo: PIN partner attivo è prerequisito per creare uno sconto.
     // newPartner viene creato con un PIN automaticamente, quindi ok.
+    // Un partner "legacy" (presente in restaurant_partners.is_active ma senza
+    // verify_pin sulla riga restaurants) è valido: il PIN viene copiato dal
+    // record legacy a restaurants.verify_pin più sotto, così CredenzialiTab e
+    // ScontoTab vedono lo stato corretto.
     if (!newPartner) {
       const rest = restaurants.find((r) => r.id === restId)
-      if (rest && !rest.has_pin) {
+      const isLegacyPartner = rest && partnerIds.has(rest.id)
+      if (rest && !rest.has_pin && !isLegacyPartner) {
         setSaveError(
           `${rest.name} non ha il PIN partner attivo. ` +
             'Vai in Ristoranti → apri la scheda → tab Credenziali → "Attiva PIN partner", poi torna qui.'
@@ -672,9 +680,25 @@ export default function DiscountManager() {
       })
       if (!pErr) {
         setPartnerIds((prev) => new Set([...prev, newPartner.id]))
+        setPartnerPins((prev) => ({ ...prev, [newPartner.id]: pin }))
         pendingPin = { name: newPartner.name, pin }
         // Also update restaurants column if it exists
         await supabase.from('restaurants').update({ verify_pin: pin }).eq('id', newPartner.id).then(() => {})
+      }
+    } else if (!editing) {
+      // Legacy partner: presente in restaurant_partners ma con restaurants.verify_pin
+      // ancora NULL (mai backfillato). Copia il pin_code dal record legacy così
+      // CredenzialiTab/ScontoTab e tutti i flow basati su verify_pin lo vedono.
+      const rest = restaurants.find((r) => r.id === restId)
+      if (rest && !rest.has_pin && partnerPins[restId]) {
+        const legacyPin = partnerPins[restId]
+        const { error: backfillErr } = await supabase
+          .from('restaurants')
+          .update({ verify_pin: legacyPin })
+          .eq('id', restId)
+        if (!backfillErr) {
+          setRestaurants((prev) => prev.map((r) => (r.id === restId ? { ...r, has_pin: true } : r)))
+        }
       }
     }
 
