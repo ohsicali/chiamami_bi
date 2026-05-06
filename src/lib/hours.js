@@ -164,19 +164,24 @@ export function getCurrentMoment(now = new Date()) {
 
 /**
  * isOpenForMoment — ritorna se un ristorante è ragionevolmente aperto per
- * un dato momento giornata. Regola: overlap tra la fascia del momento
- * e uno dei `periods[]` di `hours_cache` proiettati sul giorno target.
+ * un dato momento giornata. Combina due segnali in OR:
  *
- * Input:
- *   hours: restaurant.hours_cache (formato Google Places) o null
- *   moment: 'colazione' | 'pranzo' | 'aperitivo' | 'cena' | 'dopocena'
- *   now: Date (default = ora corrente)
- *   manualMoments: array opzionale di chiavi momento scelte dall'admin
- *     (restaurants.moments). Se non vuoto, è la sola fonte di verità per
- *     `match`: il sistema ignora l'euristica oraria e considera il
- *     ristorante "in fascia" solo se manualMoments include `moment`.
- *     `opensAt`/`closesAt` restano calcolati dagli orari reali, perché
- *     servono comunque per l'etichetta "Apre alle …" / "Chiude alle …".
+ *   1. Tag manuale dell'admin (`manualMoments` da restaurants.moments).
+ *      Se include il momento richiesto → match (anche se gli orari Google
+ *      non coprirebbero la fascia, es. cocktail bar a cui Google non ha
+ *      messo "aperitivo").
+ *   2. Overlap orario tra la fascia del momento e uno dei `periods[]`
+ *      di `hours_cache` proiettati sul giorno target. Se i due si
+ *      sovrappongono → match.
+ *
+ * Quindi: l'admin marca "cena" su un locale che a Roma sa fare anche
+ * pranzo nel weekend → il sistema lo trova lo stesso a pranzo nei giorni
+ * giusti grazie agli orari Google.
+ *
+ * `opensAt`/`closesAt` arrivano sempre dagli orari reali quando l'overlap
+ * c'è; se il match nasce solo dal tag manuale (orari Google assenti o
+ * non coprono la fascia) restano `null` e l'UI mostra "Aperto" senza
+ * orario.
  *
  * Return:
  *   { match, verified, opensAt, closesAt }
@@ -184,18 +189,13 @@ export function getCurrentMoment(now = new Date()) {
 export function isOpenForMoment(hours, moment, now = new Date(), manualMoments = null) {
   if (!MOMENT_SLOTS[moment]) return { match: false, verified: true, opensAt: null, closesAt: null }
 
-  const hasManual = Array.isArray(manualMoments) && manualMoments.length > 0
-  if (hasManual && !manualMoments.includes(moment)) {
-    return { match: false, verified: true, opensAt: null, closesAt: null }
-  }
+  const manualMatch = Array.isArray(manualMoments) && manualMoments.includes(moment)
 
   const slot = MOMENT_SLOTS[moment]
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
   if (!source || !Array.isArray(source.periods) || source.periods.length === 0) {
-    // Senza hours_cache: se l'admin ha taggato manualmente questo momento
-    // ci fidiamo del tag (apre/chiude resteranno null perché non abbiamo
-    // gli orari). Altrimenti il ristorante non appare nel filtro momento.
-    if (hasManual) return { match: true, verified: false, opensAt: null, closesAt: null }
+    // Senza hours_cache: il match dipende solo dal tag manuale.
+    if (manualMatch) return { match: true, verified: false, opensAt: null, closesAt: null }
     return { match: false, verified: false, opensAt: null, closesAt: null }
   }
 
@@ -271,9 +271,8 @@ export function isOpenForMoment(hours, moment, now = new Date(), manualMoments =
       closesAt: fmt(bestCloseMin),
     }
   }
-  // Tag manuale presente ma nessun overlap orario: match per scelta admin,
-  // niente etichetta orari.
-  if (hasManual) return { match: true, verified: false, opensAt: null, closesAt: null }
+  // Nessun overlap orario: il match dipende solo dal tag manuale.
+  if (manualMatch) return { match: true, verified: false, opensAt: null, closesAt: null }
   return { match: false, verified: true, opensAt: null, closesAt: null }
 }
 
