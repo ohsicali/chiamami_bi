@@ -3,6 +3,7 @@ import { getHoursStatus } from '../../lib/hours'
 import { proxyImg } from '../../lib/supabase'
 import { useSponsoredPlacement } from '../../lib/hooks/useSponsoredPlacement'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 /**
  * SponsorBanner · 3 variant (DB-driven da sponsored_placements):
@@ -124,11 +125,7 @@ function RestaurantVariant({ p }) {
   const priceLabel = '€'.repeat(r.price_range || 2)
 
   const hasDiscount = p.variant === 'restaurant_discount' && p.discount
-  const discountLabel = hasDiscount
-    ? (p.discount.discount_type === 'percentage'
-        ? `-${String(p.discount.discount_value).replace('%', '')}%`
-        : `-${p.discount.discount_value}€`)
-    : null
+  const discountLabel = hasDiscount ? formatDiscountValue(p.discount) : null
 
   const title = p.headline || r.name
   const subtitle = p.subtitle || p.discount?.description || r.tagline || ''

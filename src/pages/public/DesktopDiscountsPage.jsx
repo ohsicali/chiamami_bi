@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { proxyImg } from '../../lib/supabase'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -109,10 +110,9 @@ function DiscountCard({ deal, isUsed, redemptionDate, onClick }) {
   const catInfo = getCategoryInfo(cats[0])
 
   const discountText = (() => {
-    const v = String(deal.discount_value || '').replace(/[%€]/g, '')
-    const isNum = /^\d+(\.\d+)?$/.test(v)
-    if (!isNum) return deal.discount_value || deal.title
-    return deal.discount_type === 'percentage' ? `-${v}% sul totale` : `-${v}€`
+    const formatted = formatDiscountValue(deal)
+    if (!formatted) return deal.title || ''
+    return deal.discount_type === 'percentage' ? `${formatted} sul totale` : formatted
   })()
 
   return (

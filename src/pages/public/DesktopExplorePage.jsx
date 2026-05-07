@@ -11,6 +11,7 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg } from '../../lib/supabase'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -225,12 +226,9 @@ export default function DesktopExplorePage() {
   const { discounts: activeDiscounts } = useActiveDiscounts()
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
-  const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
-    const v = String(d.discount_value).replace(/[%€]/g, '')
-    const isNumeric = /^\d+(\.\d+)?$/.test(v)
-    const label = !isNumeric ? v : d.discount_type === 'percentage' ? `-${v}%` : `-${v}€`
-    return [d.restaurant_id, label]
-  }))
+  const discountLabelMap = Object.fromEntries(
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountValue(d)])
+  )
   const discountMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d]))
 
   const {

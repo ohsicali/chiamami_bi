@@ -113,6 +113,13 @@ export function useUserRedemption(discountId, userId) {
       return
     }
 
+    // Reset state when discountId/userId changes so we don't briefly show
+    // a redeemed/generated state from a different discount while the new
+    // fetch is in flight (caused "Sblocca sconto" flashes / stale "Già
+    // utilizzato" labels when navigating between restaurants).
+    setRedemption(null)
+    setLoading(true)
+
     let cancelled = false
 
     const load = () => {
@@ -123,7 +130,7 @@ export function useUserRedemption(discountId, userId) {
         .eq('user_id', userId)
         .order('generated_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           if (cancelled) return
           setRedemption(data || null)
@@ -143,17 +150,20 @@ export function useUserRedemption(discountId, userId) {
       else load()
     })
 
-    // Fallback: refetch when the user returns to the tab. Covers cases
-    // where the realtime websocket may have disconnected in the background.
-    const onFocus = () => {
+    // Fallback: refetch when the user returns to the tab. visibilitychange
+    // fires on `document`, NOT window — binding to window means the listener
+    // never fires, leaving the UI stuck on a stale "Sblocca sconto" after
+    // the restaurant marks the QR redeemed in another tab/PWA.
+    const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') load()
     }
-    window.addEventListener('visibilitychange', onFocus)
+    const onFocus = () => load()
+    document.addEventListener('visibilitychange', onVisibilityChange)
     window.addEventListener('focus', onFocus)
 
     return () => {
       cancelled = true
-      window.removeEventListener('visibilitychange', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('focus', onFocus)
       unsubscribe()
     }
@@ -337,15 +347,17 @@ export function useMyDiscounts(userId) {
 
     // Fallback: refetch on tab focus so data stays fresh even if realtime
     // misses an event (eg. connection dropped in background).
-    const onFocus = () => {
+    // `visibilitychange` fires on `document`, not `window`.
+    const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') load()
     }
-    window.addEventListener('visibilitychange', onFocus)
+    const onFocus = () => load()
+    document.addEventListener('visibilitychange', onVisibilityChange)
     window.addEventListener('focus', onFocus)
 
     return () => {
       cancelled = true
-      window.removeEventListener('visibilitychange', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('focus', onFocus)
       unsubscribe()
     }

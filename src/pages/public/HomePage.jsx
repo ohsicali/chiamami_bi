@@ -23,6 +23,7 @@ import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function slugify(name) {
   return name
@@ -165,12 +166,9 @@ export default function HomePage() {
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
   const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
-  const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
-    const v = String(d.discount_value).replace(/[%€]/g, '')
-    const isNumeric = /^\d+(\.\d+)?$/.test(v)
-    const label = !isNumeric ? v : d.discount_type === 'percentage' ? `-${v}%` : `-${v}€`
-    return [d.restaurant_id, label]
-  }))
+  const discountLabelMap = Object.fromEntries(
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountValue(d)])
+  )
 
   const {
     restaurants,

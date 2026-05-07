@@ -15,6 +15,7 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function slugify(name) {
   return name.toLowerCase().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
@@ -425,7 +426,7 @@ export default function SavedPage() {
                           background: 'var(--color-corallo)', color: '#fff',
                           fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
                           borderRadius: 999, letterSpacing: '-0.01em',
-                        }}>{discount.title || (discount.discount_value ? `-${discount.discount_value}%` : 'SCONTO')}</span>
+                        }}>{discount.title || formatDiscountValue(discount) || 'SCONTO'}</span>
                       )}
                       <button
                         type="button"

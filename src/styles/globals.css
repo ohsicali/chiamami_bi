@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Self-hosted Alfa Slab One — wordmark font.
+   Loading from Google Fonts CDN proved unreliable on some mobile browsers
+   (privacy/adblock layers, slow networks): the wordmark would fall back to
+   the generic serif and render as a thin/wrong typeface. Self-hosting from
+   our own origin sidesteps that. The Google Fonts <link> in index.html is
+   kept as a secondary source for Poppins and Caveat. */
+@font-face {
+  font-family: 'Alfa Slab One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/alfa-slab-one.woff2') format('woff2');
+}
+
 /* TAN Songbird removed — v4 handoff §3 rule 3 */
 
 @theme {
@@ -42,7 +56,7 @@
      editorial handwriting (Caveat). */
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
-  --font-wordmark: 'Alfa Slab One', Georgia, serif;
+  --font-wordmark: 'Alfa Slab One', 'Rockwell', 'Roboto Slab', Georgia, serif;
   --font-editorial: 'Caveat', cursive;
   /* Legacy aliases (kept for backwards-compat) */
   --font-mark: var(--font-wordmark);
