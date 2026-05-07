@@ -10,6 +10,7 @@ import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { isOpenForMoment } from '../../lib/hours'
 import { getDistance } from '../../lib/utils/distance'
 import { supabase, proxyImg } from '../../lib/supabase'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -110,12 +111,9 @@ export default function DesktopSavedPage() {
   const [showDealsOnly, setShowDealsOnly] = useState(false)
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
-  const discountLabelMap = Object.fromEntries(activeDiscounts.map(d => {
-    const v = String(d.discount_value).replace(/[%€]/g, '')
-    const isNumeric = /^\d+(\.\d+)?$/.test(v)
-    const label = !isNumeric ? v : d.discount_type === 'percentage' ? `-${v}%` : `-${v}€`
-    return [d.restaurant_id, label]
-  }))
+  const discountLabelMap = Object.fromEntries(
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountValue(d)])
+  )
 
   // Fetch saved restaurants
   useEffect(() => {

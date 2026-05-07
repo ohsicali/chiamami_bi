@@ -15,6 +15,7 @@ import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function formatCountdown(endsAt) {
   if (!endsAt) return null
@@ -453,9 +454,7 @@ function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
-  const discLabel = discount?.discount_value
-    ? (discount.discount_type === 'percentage' ? `-${String(discount.discount_value).replace('%','')}%` : `-${discount.discount_value}€`)
-    : null
+  const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
   return (
     <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
@@ -560,7 +559,7 @@ export default function HomeFeedV4() {
     if (!r) return null
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
     const photo = proxyImg(photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null, { w: 1600 })
-    const label = drop.discount_type === 'percentage' ? `-${String(drop.discount_value).replace('%','')}%` : `-${drop.discount_value}€`
+    const label = formatDiscountValue(drop)
     const catName = r.category?.[0] || r.cuisine_type || ''
     const catInfo = getCategoryInfo(catName)
     const neighborhood = r.address ? r.address.split(',')[0].trim() : ''

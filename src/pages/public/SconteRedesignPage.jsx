@@ -17,6 +17,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
 
 /* ---------- helpers ---------- */
@@ -90,14 +91,7 @@ function isDealExpired(deal) {
 }
 
 function dealBadgeText(deal) {
-  if (!deal) return ''
-  const v = deal.discount_value
-  if (!v) return deal.title || ''
-  // If value already contains symbol leave as is, else infer from type
-  if (/[%€]/.test(v)) return v.startsWith('-') || v.startsWith('−') ? v : `−${v.replace(/^-?/, '')}`
-  if (deal.discount_type === 'percentage') return `−${v}%`
-  if (deal.discount_type === 'fixed') return `−${v}€`
-  return deal.title || v
+  return formatDiscountValue(deal)
 }
 
 function freebieLabel(deal) {

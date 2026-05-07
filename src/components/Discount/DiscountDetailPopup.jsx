@@ -10,6 +10,7 @@ import {
   computeNextValidWindow,
 } from '../../lib/validity'
 import ValidityPill from './ValidityPill'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import './DiscountDetailPopup.css'
 
 /* ============================================================================
@@ -28,12 +29,7 @@ function shortAddress(addr) {
 }
 
 function pctNum(deal) {
-  if (!deal) return ''
-  const v = String(deal.discount_value || '').replace(/[%€\s]/g, '').replace(/^[-−]/, '')
-  if (deal.discount_type === 'percentage') return `−${v}%`
-  if (deal.discount_type === 'fixed') return `−${v}€`
-  if (deal.discount_type === 'freebie') return deal.title || deal.discount_value || ''
-  return deal.discount_value || ''
+  return formatDiscountValue(deal)
 }
 
 function pctLabel(deal) {

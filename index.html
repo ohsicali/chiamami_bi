@@ -31,23 +31,28 @@
     <link rel="dns-prefetch" href="https://urcwnontifybzugmmiov.supabase.co" />
     <link rel="dns-prefetch" href="https://api.mapbox.com" />
 
-    <!-- v4 fonts: Poppins (UI), Alfa Slab One (wordmark), Caveat (Bi's handwriting).
-         Loaded async via media="print" trick so they don't block first paint. -->
+    <!-- v4 fonts: Poppins (UI), Alfa Slab One (wordmark, self-hosted),
+         Caveat (Bi's handwriting). Poppins/Caveat come from Google Fonts via
+         the media="print" async trick. Alfa Slab One is served locally
+         (public/fonts/alfa-slab-one.woff2) and registered in globals.css —
+         self-hosting keeps the wordmark readable on connections where the
+         Google Fonts CDN is blocked or slow. -->
+    <link rel="preload" href="/fonts/alfa-slab-one.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Caveat:wght@400&family=Alfa+Slab+One&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Caveat:wght@400&display=swap"
     />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Caveat:wght@400&family=Alfa+Slab+One&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Caveat:wght@400&display=swap"
       media="print"
       onload="this.media='all'"
     />
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Caveat:wght@400&family=Alfa+Slab+One&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Caveat:wght@400&display=swap" />
     </noscript>
   </head>
   <body>

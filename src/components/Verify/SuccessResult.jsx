@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
 import './ScanResult.css'
-
-function formatDiscountValue(discount) {
-  if (!discount) return ''
-  const v = String(discount.discount_value ?? '').trim()
-  if (!v) return ''
-  if (discount.discount_type === 'percentage') return v.includes('%') ? v : `${v}%`
-  if (discount.discount_type === 'fixed') return v.includes('€') ? v : `€${v}`
-  return v
-}
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 /**
  * Schermata fullscreen ristoratore — sconto attivato. PR23 §6.1.
