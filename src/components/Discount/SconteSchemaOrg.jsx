@@ -17,6 +17,7 @@ function dealDescription(deal) {
 function dealCategory(deal) {
   if (deal?.is_drop) return 'drop'
   if (deal?.discount_type === 'freebie') return 'convenzione'
+  if (deal?.discount_type === 'special_price') return 'offerta'
   return 'sconto'
 }
 

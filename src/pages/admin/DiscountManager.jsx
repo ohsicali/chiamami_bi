@@ -22,6 +22,7 @@ const TYPE_LABELS = {
   percentage: 'Percentuale',
   fixed: 'Importo fisso',
   freebie: 'Omaggio',
+  special_price: 'Prezzo speciale',
 }
 
 const EMPTY_FORM = {
@@ -1220,9 +1221,10 @@ export default function DiscountManager() {
                         onChange={(e) => setForm((f) => ({ ...f, discount_type: e.target.value }))}
                         style={inputStyle}
                       >
-                        <option value="percentage">Percentuale</option>
-                        <option value="fixed">Importo fisso</option>
-                        <option value="freebie">Omaggio</option>
+                        <option value="percentage">Percentuale (10% sul conto)</option>
+                        <option value="fixed">Importo fisso (-5€ sul conto)</option>
+                        <option value="freebie">Omaggio (qualcosa in regalo)</option>
+                        <option value="special_price">Prezzo speciale (es. tramezzino a 5€)</option>
                       </select>
                     </FormField>
                     <FormField label="Valore">
@@ -1230,7 +1232,7 @@ export default function DiscountManager() {
                         type="text"
                         value={form.discount_value}
                         onChange={(e) => setForm((f) => ({ ...f, discount_value: e.target.value }))}
-                        placeholder="Es: 10%, 5€"
+                        placeholder="Es: 10, 5"
                         style={inputStyle}
                       />
                     </FormField>

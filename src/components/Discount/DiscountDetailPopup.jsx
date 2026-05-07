@@ -37,6 +37,7 @@ function pctLabel(deal) {
   if (deal.discount_type === 'percentage') return 'sul totale'
   if (deal.discount_type === 'fixed') return 'di sconto'
   if (deal.discount_type === 'freebie') return 'in regalo'
+  if (deal.discount_type === 'special_price') return 'prezzo speciale'
   return ''
 }
 

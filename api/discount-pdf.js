@@ -124,9 +124,10 @@ function formatExpiryLabel(deal) {
 function pctText(deal) {
   if (!deal) return ''
   if (deal.discount_type === 'freebie') return deal.title || deal.discount_value || ''
-  const v = String(deal.discount_value || '').replace(/[%€]/g, '').trim()
-  if (deal.discount_type === 'percentage') return `-${v}%`
-  if (deal.discount_type === 'fixed') return `-${v}€`
+  if (deal.discount_type === 'special_price') return deal.title || `${String(deal.discount_value || '').replace(/[%€\s]/g, '').replace(/^[-−]/, '').trim()}€`
+  const v = String(deal.discount_value || '').replace(/[%€\s]/g, '').replace(/^[-−]/, '').trim()
+  if (deal.discount_type === 'percentage') return `${v}%`
+  if (deal.discount_type === 'fixed') return `${v}€`
   return deal.discount_value || deal.title || ''
 }
 

@@ -17,7 +17,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
 
 /* ---------- helpers ---------- */
@@ -718,8 +718,8 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const isFreebie = deal?.discount_type === 'freebie'
-  const badge = isFreebie ? (deal.title || deal.discount_value) : dealBadgeText(deal)
+  const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
+  const badge = formatDiscountValue(deal)
   const location = r?.neighborhood || r?.city
   const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
   const validityStatus = checkValidity(deal)
@@ -953,9 +953,8 @@ function UsedRow({ redemption, isDesktop, onClick }) {
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const zona = r?.neighborhood || null
-  const isFreebie = deal?.discount_type === 'freebie'
-  const tipoLabel = isFreebie ? 'convenzione ' : 'sconto '
-  const valueLabel = isFreebie ? (deal?.title || deal?.discount_value) : dealBadgeText(deal)
+  const tipoLabel = `${discountContextWord(deal)} `
+  const valueLabel = formatDiscountValue(deal)
   const usedAtIso = redemption.redeemed_at || redemption.generated_at
   const usedAtDate = usedAtIso ? new Date(usedAtIso) : null
 
@@ -1008,8 +1007,8 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
   const r = deal?.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const isFreebie = deal?.discount_type === 'freebie'
-  const badge = isFreebie ? (deal?.title || deal?.discount_value) : dealBadgeText(deal)
+  const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
+  const badge = formatDiscountValue(deal)
   const dealTitle = deal?.title
   const description = deal?.description
   const conditionLines = (deal?.conditions || '')
