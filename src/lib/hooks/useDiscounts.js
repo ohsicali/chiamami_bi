@@ -172,14 +172,19 @@ export function useUserRedemption(discountId, userId) {
   const generateRedemption = useCallback(async () => {
     if (!discountId || !userId || !isSupabaseConfigured()) return null
 
-    // Check if user already has a redemption for this discount
+    // Check if user already has a redemption for this discount.
+    // maybeSingle() is the right primitive: returns {data: null} when 0 rows
+    // exist (the common first-time-unlock case). .single() instead returns
+    // an error response on 0 rows — harmless on its own, but a footgun next
+    // to the post-insert .single() that DOES throw.
     const { data: existing } = await supabase
       .from('discount_redemptions')
-      .select('id, qr_code, status')
+      .select('*')
       .eq('discount_id', discountId)
       .eq('user_id', userId)
+      .order('generated_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (existing) {
       setRedemption(existing)
@@ -213,9 +218,30 @@ export function useUserRedemption(discountId, userId) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // The insert may have succeeded server-side even though the chained
+      // .select().single() came back with an error (transient RLS read
+      // failure, network glitch on the return, post-INSERT trigger noise,
+      // etc). Re-fetch before declaring the unlock a failure — otherwise
+      // we surface "Errore nello sblocco" to the user even though the row
+      // is sitting in the DB and shows up in "I miei vantaggi".
+      const { data: recovered } = await supabase
+        .from('discount_redemptions')
+        .select('*')
+        .eq('discount_id', discountId)
+        .eq('user_id', userId)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (recovered) {
+        setRedemption(recovered)
+        return recovered
+      }
+      throw error
+    }
 
-    // Increment total_redeemed counter
+    // Increment total_redeemed counter (no-op when a DB trigger already
+    // increments it; kept for environments without the trigger).
     const { error: rpcError } = await supabase.rpc('increment_discount_redeemed', { discount_uuid: discountId })
     if (rpcError) {
       // Fallback: manual increment if RPC doesn't exist
@@ -223,7 +249,7 @@ export function useUserRedemption(discountId, userId) {
         .from('discounts')
         .select('total_redeemed')
         .eq('id', discountId)
-        .single()
+        .maybeSingle()
       if (d) {
         await supabase
           .from('discounts')

@@ -1352,14 +1352,16 @@ export default function DealsPage() {
     setClaiming(deal.id)
     try {
       const { supabase } = await import('../../lib/supabase')
-      // Check existing redemption first
+      // Check existing redemption first. maybeSingle() so 0 rows (first-time
+      // unlock) doesn't surface as an error response.
       const { data: existing } = await supabase
         .from('discount_redemptions')
         .select('id, qr_code, status')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
+        .order('generated_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (existing?.qr_code) {
         setJustClaimed(prev => [...prev, { ...existing, discount_id: deal.id, discount: deal }])
@@ -1387,13 +1389,27 @@ export default function DealsPage() {
         // best-effort; ignore errors
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('discount_redemptions')
         .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated', user_name: userName })
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // Insert may have committed even when the chained select errors —
+        // re-fetch before declaring failure so we don't bail on a row that's
+        // actually in the DB and visible in "I miei vantaggi".
+        const { data: recovered } = await supabase
+          .from('discount_redemptions')
+          .select('*')
+          .eq('discount_id', deal.id)
+          .eq('user_id', user.id)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (!recovered) throw error
+        data = recovered
+      }
 
       // Increment counter
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
