@@ -2196,6 +2196,7 @@ export default function RestaurantForm() {
                         { value: 'percentage', label: 'Percentuale' },
                         { value: 'fixed', label: 'Importo fisso' },
                         { value: 'freebie', label: 'Omaggio' },
+                        { value: 'special_price', label: 'Prezzo speciale' },
                       ].map((opt) => (
                         <button
                           key={opt.value}

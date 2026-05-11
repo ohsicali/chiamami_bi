@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 import SuccessResult from '../../components/Verify/SuccessResult'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 const RESTAURANT_COLS = 'id, name, slug, address, city, category, cuisine_type, restaurant_photos(photo_url, thumb_url, sort_order)'
 
@@ -1767,18 +1768,6 @@ function extractQrCode(raw) {
 
   // Altrimenti assume che sia già il qr_code nudo (es. inserimento manuale)
   return trimmed
-}
-function formatDiscountValue(discount) {
-  if (!discount) return ''
-  const v = String(discount.discount_value ?? '').trim()
-  if (!v) return ''
-  if (discount.discount_type === 'percentage') {
-    return v.includes('%') ? v : `${v}%`
-  }
-  if (discount.discount_type === 'fixed') {
-    return v.includes('€') ? v : `€${v}`
-  }
-  return v
 }
 
 const TONES = {

@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import SponsorBanner from '../../components/Home/SponsorBanner'
+import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 const VARIANTS = [
   { key: 'restaurant_discount', label: 'Ristorante + sconto', hint: 'Richiede ristorante + sconto attivo associato' },
@@ -379,7 +380,7 @@ function Editor({ form, setForm, restaurants, discounts, save, cancel, saving })
           <Field label="Sconto collegato">
             <select value={form.discount_id} onChange={(e) => update('discount_id', e.target.value)} style={inputStyle}>
               <option value="">—</option>
-              {discounts.map((d) => (<option key={d.id} value={d.id}>{d.title} ({d.discount_value}{d.discount_type === 'percentage' ? '%' : '€'})</option>))}
+              {discounts.map((d) => (<option key={d.id} value={d.id}>{d.title} ({formatDiscountValue(d)})</option>))}
             </select>
           </Field>
         )}

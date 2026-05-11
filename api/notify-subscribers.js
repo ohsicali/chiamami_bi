@@ -354,9 +354,11 @@ function renderDropEmail({ discount, restaurant, photo }) {
 }
 
 function formatDiscountValue(d) {
-  if (d.discount_type === 'percentage') return `${d.discount_value}% di sconto`
-  if (d.discount_type === 'fixed') return `${d.discount_value}€ di sconto`
-  if (d.discount_type === 'freebie') return `${d.discount_value} in omaggio`
+  const v = String(d.discount_value || '').replace(/[%€\s]/g, '').replace(/^[-−]/, '').trim()
+  if (d.discount_type === 'percentage') return `${v}% di sconto`
+  if (d.discount_type === 'fixed') return `${v}€ di sconto`
+  if (d.discount_type === 'freebie') return `${d.title || d.discount_value} in omaggio`
+  if (d.discount_type === 'special_price') return d.title ? `Offerta: ${d.title}` : `Offerta a ${v}€`
   return d.discount_value || 'Sconto riservato'
 }
 
