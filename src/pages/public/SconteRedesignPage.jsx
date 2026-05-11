@@ -240,13 +240,16 @@ function SconteRedesignPageInner() {
     setClaiming(deal.id)
     try {
       const { supabase } = await import('../../lib/supabase')
+      // maybeSingle: 0 rows is the normal first-unlock case, .single() makes
+      // that look like an error response and obscures real failures.
       const { data: existing } = await supabase
         .from('discount_redemptions')
         .select('id, qr_code, status')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
+        .order('generated_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (existing?.qr_code) {
         setQrPopup({ redemption: { ...existing, discount_id: deal.id }, deal })
@@ -278,7 +281,23 @@ function SconteRedesignPageInner() {
         })
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        // Insert may have committed server-side even if the chained select
+        // came back with an error. Re-fetch before declaring failure so we
+        // don't show "Non sono riuscito a salvare" while the row sits in
+        // the DB and shows up in "I miei vantaggi".
+        const { data: recovered } = await supabase
+          .from('discount_redemptions')
+          .select('*')
+          .eq('discount_id', deal.id)
+          .eq('user_id', user.id)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (!recovered) throw error
+        setQrPopup({ redemption: { ...recovered, discount_id: deal.id }, deal })
+        return
+      }
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
 
       setQrPopup({ redemption: { ...data, discount_id: deal.id }, deal })
@@ -318,8 +337,9 @@ function SconteRedesignPageInner() {
         .select('id, qr_code, status')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
+        .order('generated_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
       if (existing?.qr_code) return existing
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
       let code = 'BiSc-'
@@ -334,7 +354,21 @@ function SconteRedesignPageInner() {
         .from('discount_redemptions')
         .insert({ discount_id: deal.id, user_id: user.id, qr_code: code, status: 'generated', user_name: userName })
         .select().single()
-      if (error) throw error
+      if (error) {
+        // Insert may have committed even when the chained select errors —
+        // re-fetch before treating this as failure so the popup transitions
+        // to the unlocked QR state instead of showing the error toast.
+        const { data: recovered } = await supabase
+          .from('discount_redemptions')
+          .select('*')
+          .eq('discount_id', deal.id)
+          .eq('user_id', user.id)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (recovered) return recovered
+        throw error
+      }
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
       return data
     } catch (e) {
