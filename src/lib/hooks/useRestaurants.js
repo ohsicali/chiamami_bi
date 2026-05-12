@@ -386,6 +386,7 @@ export function useRestaurants(userPosition = null) {
           'category', 'cuisine_type', 'price_range', 'our_rating',
           'our_review', 'our_tip', 'recommended_for', 'tagline',
           'tiktok_url', 'instagram_reel', 'hours_cache', 'moments',
+          'place_id', 'place_id_verified_at', 'opening_hours',
           'is_published', 'created_at', 'updated_at',
         ].join(', ')
         const { data, error: dbError } = await supabase
