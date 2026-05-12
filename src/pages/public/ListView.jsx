@@ -73,7 +73,8 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
   const [imgLoaded, setImgLoaded] = useState(false)
   const photoRaw = getPhotoRaw(restaurant)
   const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 900 }) : null
-  const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 600, 900, 1200])
+  // Hero is the LCP on /list — keep srcset tight (3 widths) to limit cold-cache misses.
+  const photoSrcSet = proxyImgSrcSet(photoRaw, [600, 900, 1400])
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
@@ -100,7 +101,8 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
             srcSet={photoSrcSet}
             sizes="(max-width: 768px) 100vw, 720px"
             alt={restaurant.name}
-            loading="lazy"
+            loading="eager"
+            fetchpriority="high"
             decoding="async"
             onLoad={() => setImgLoaded(true)}
             style={{
@@ -198,12 +200,13 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
 /* ============================================
    HORIZONTAL CARD — Compact restaurant row
    ============================================ */
-function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
+function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, saved, onSave, onClick }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const photoRaw = getPhotoRaw(restaurant)
-  // 88×88 CSS slot → 264px covers DPR 3.
+  // 88×88 CSS slot — a single 250w variant covers DPR ~3. No srcset needed
+  // for such a small slot (avoids extra cold cache transforms on /api/img).
   const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 250 }) : null
-  const photoSrcSet = proxyImgSrcSet(photoRaw, [150, 250, 400])
+  const isAboveFold = index < 3
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
@@ -237,12 +240,11 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
             }} />
             <img
               src={photoUrl}
-              srcSet={photoSrcSet}
-              sizes="88px"
               width={88}
               height={88}
               alt={restaurant.name}
-              loading="lazy"
+              loading={isAboveFold ? 'eager' : 'lazy'}
+              fetchpriority={isAboveFold ? 'high' : 'auto'}
               decoding="async"
               onLoad={() => setImgLoaded(true)}
               style={{
@@ -377,6 +379,7 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
           >
             <HorizontalCard
               restaurant={r}
+              index={vi.index}
               userPosition={userPosition}
               discountValue={discountValueMap[r.id]}
               saved={isSaved(r.id)}

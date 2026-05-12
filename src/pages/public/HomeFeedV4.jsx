@@ -451,20 +451,23 @@ function SectionHead({ title, kicker, subtitle, trailing }) {
   )
 }
 
-function Rcard({ restaurant, discount, onClick, saved, onToggleSave }) {
+function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }) {
   const cat = getCategoryInfo(restaurant.cuisine_type || (restaurant.category && restaurant.category[0]))
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   // Card is 72% viewport width on mobile (~280px), 16:11 ratio → 600w covers DPR 2.
+  // Keep srcset tight (2 widths) so we minimize unique /api/img cold-cache misses.
   const photoRaw = firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null
   const photoUrl = proxyImg(photoRaw, { w: 600 })
-  const photoSrcSet = proxyImgSrcSet(photoRaw, [300, 450, 600, 900])
+  const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 800])
+  // First card visible on screen → eager load so it doesn't pop in.
+  const isAboveFold = index < 2
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
   return (
     <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
         {photoUrl
-          ? <img src={photoUrl} srcSet={photoSrcSet} sizes="(max-width: 768px) 72vw, 320px" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading="lazy" decoding="async" />
+          ? <img src={photoUrl} srcSet={photoSrcSet} sizes="(max-width: 768px) 72vw, 320px" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading={isAboveFold ? 'eager' : 'lazy'} fetchpriority={isAboveFold ? 'high' : 'auto'} decoding="async" />
           : <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center', fontSize:28 }}>{cat?.emoji || '🍽️'}</div>
         }
         {discLabel && (
@@ -565,7 +568,8 @@ export default function HomeFeedV4() {
     const photos = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
     const photoRaw = photos ? (typeof photos === 'string' ? photos : photos?.photo_url || photos?.thumb_url) : null
     const photo = proxyImg(photoRaw, { w: 900 })
-    const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 600, 900, 1200, 1600])
+    // Keep srcset to 3 widths (mobile / desktop / retina) — fewer cold-cache misses.
+    const photoSrcSet = proxyImgSrcSet(photoRaw, [600, 900, 1400])
     const label = formatDiscountValue(drop)
     const catName = r.category?.[0] || r.cuisine_type || ''
     const catInfo = getCategoryInfo(catName)
@@ -886,8 +890,8 @@ export default function HomeFeedV4() {
           <div style={{ padding: '0 20px', color: 'var(--color-ink-70)' }}>Caricamento...</div>
         ) : (
           <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px 20px', scrollSnapType:'x mandatory', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
-            {recent.map((r) => (
-              <Rcard key={r.id} restaurant={r} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => toggleSave(r.id)} />
+            {recent.map((r, i) => (
+              <Rcard key={r.id} restaurant={r} index={i} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => toggleSave(r.id)} />
             ))}
           </div>
         )}

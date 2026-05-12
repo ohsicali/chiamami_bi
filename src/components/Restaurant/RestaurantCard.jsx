@@ -47,16 +47,14 @@ function RestaurantCard({
     : null
   // Hero spans the viewport width (~360-400px mobile, ~700px desktop);
   // default card photo is 100×100 mobile / 72×72 desktop. Use proper widths
-  // so the browser doesn't pull a 1200w image into a 72px slot.
+  // so the browser doesn't pull a 1200w image into a 72px slot. For the
+  // tiny default slot a single 300w variant covers DPR 3 — no srcset.
   const isHero = variant === 'hero'
   const photoUrl = proxyImg(photoRaw, { w: isHero ? 900 : 300 })
-  const photoSrcSet = proxyImgSrcSet(
-    photoRaw,
-    isHero ? [400, 600, 900, 1200] : [150, 300, 450]
-  )
-  const photoSizes = isHero
-    ? '(max-width: 768px) 100vw, 720px'
-    : '(max-width: 768px) 100px, 72px'
+  const photoSrcSet = isHero ? proxyImgSrcSet(photoRaw, [600, 900, 1400]) : undefined
+  const photoSizes = isHero ? '(max-width: 768px) 100vw, 720px' : undefined
+  // First few cards (index < 3) are above the fold in most lists — load eagerly.
+  const isAboveFold = index < 3
 
   const distance =
     userPosition && restaurant.latitude && restaurant.longitude
@@ -86,7 +84,8 @@ function RestaurantCard({
               srcSet={photoSrcSet}
               sizes={photoSizes}
               alt={restaurant.name}
-              loading="lazy"
+              loading={isAboveFold ? 'eager' : 'lazy'}
+              fetchpriority={index === 0 ? 'high' : 'auto'}
               decoding="async"
               onLoad={() => setImageLoaded(true)}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-40' : 'opacity-0'}`}
@@ -248,7 +247,8 @@ function RestaurantCard({
             srcSet={photoSrcSet}
             sizes={photoSizes}
             alt={restaurant.name}
-            loading="lazy"
+            loading={isAboveFold ? 'eager' : 'lazy'}
+            fetchpriority={index === 0 ? 'high' : 'auto'}
             decoding="async"
             onLoad={() => setImageLoaded(true)}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { isOpenForMoment, MOMENT_SLOTS } from '../../lib/hours'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { proxyImg } from '../../lib/supabase'
+import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 
 /**
  * MomentResultsGrid · card scroll orizzontale filtrate per momento giornata.
@@ -98,10 +98,11 @@ export default function MomentResultsGrid({
           scrollbarWidth: 'none',
         }}
       >
-        {visibleCards.map(({ r, match }) => (
+        {visibleCards.map(({ r, match }, i) => (
           <Lcard
             key={r.id}
             r={r}
+            index={i}
             hoursLabel={hoursDisplay(match)}
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
@@ -173,12 +174,16 @@ export default function MomentResultsGrid({
   )
 }
 
-function Lcard({ r, hoursLabel, onClick, saved, onToggleSave }) {
+function Lcard({ r, index = 0, hoursLabel, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
   const priceLabel = '€'.repeat(r.price_range || 2)
-  const photo = proxyImg(r.photos?.[0]?.thumb_url || r.photos?.[0]?.photo_url, { w: 800 })
+  // Card is 72% viewport on mobile (~280px), 16:11 ratio.
+  const photoRaw = r.photos?.[0]?.thumb_url || r.photos?.[0]?.photo_url
+  const photo = proxyImg(photoRaw, { w: 600 })
+  const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 800])
+  const isAboveFold = index < 2
 
   return (
     <a
@@ -210,8 +215,12 @@ function Lcard({ r, hoursLabel, onClick, saved, onToggleSave }) {
         {photo && (
           <img
             src={photo}
+            srcSet={photoSrcSet}
+            sizes="(max-width: 768px) 72vw, 320px"
             alt=""
-            loading="lazy"
+            loading={isAboveFold ? 'eager' : 'lazy'}
+            fetchpriority={isAboveFold ? 'high' : 'auto'}
+            decoding="async"
             onError={(e) => { e.currentTarget.style.display = 'none' }}
             style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}
           />
