@@ -430,7 +430,7 @@ function PinView({
         background: bg,
         padding: `24px 28px ${isDesktop ? '28px' : 'max(24px, env(safe-area-inset-bottom))'}`,
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
-        ...(isDesktop ? {} : { height: '100%', boxSizing: 'border-box' }),
+        ...(isDesktop ? {} : { minHeight: '100dvh', boxSizing: 'border-box' }),
       }}>
         <PinLogo />
         <div style={{
@@ -500,7 +500,7 @@ function PinView({
         </div>
       )
     }
-    return <div style={{ height: '100dvh', overflow: 'hidden' }}>{lockedInner}</div>
+    return <div style={{ minHeight: '100dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>{lockedInner}</div>
   }
 
   /* ---- NORMAL / WRONG state ---- */
@@ -509,7 +509,7 @@ function PinView({
       background: bg,
       padding: `24px 28px ${isDesktop ? '28px' : 'max(24px, env(safe-area-inset-bottom))'}`,
       display: 'flex', flexDirection: 'column',
-      ...(isDesktop ? {} : { height: '100%', boxSizing: 'border-box' }),
+      ...(isDesktop ? {} : { minHeight: '100dvh', boxSizing: 'border-box' }),
     }}>
       <PinLogo />
 
@@ -650,7 +650,7 @@ function PinView({
       </div>
     )
   }
-  return <div style={{ height: '100dvh', overflow: 'hidden' }}>{normalInner}</div>
+  return <div style={{ minHeight: '100dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>{normalInner}</div>
 }
 
 /* ------------------------------------------------------------------ */
