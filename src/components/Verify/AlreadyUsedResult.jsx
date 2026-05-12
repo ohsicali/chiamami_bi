@@ -7,6 +7,8 @@ import { formatDiscountValue } from '../../lib/utils/discountFormat'
  */
 export default function AlreadyUsedResult({ data, onReset }) {
   const value = formatDiscountValue(data?.discount)
+  const type = data?.discount?.discount_type
+  const isShortBadge = type === 'percentage' || type === 'fixed'
   const usedAt = data?.redeemed_at
     ? new Date(data.redeemed_at).toLocaleString('it-IT', {
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -29,7 +31,7 @@ export default function AlreadyUsedResult({ data, onReset }) {
           : 'Questo codice è già stato attivato.'}
       </p>
 
-      {value && (
+      {value && (isShortBadge ? (
         <div className="ris-pct-banner is-faded">
           <div className="ris-pct-num">{value}</div>
           <div className="ris-pct-info">
@@ -37,7 +39,14 @@ export default function AlreadyUsedResult({ data, onReset }) {
             {data?.user_name && <p>Cliente: {data.user_name}</p>}
           </div>
         </div>
-      )}
+      ) : (
+        <div className="ris-pct-banner ris-pct-banner--text is-faded">
+          <div className="ris-pct-info ris-pct-info--full">
+            <strong>{value}</strong>
+            {data?.user_name && <p>Cliente: {data.user_name}</p>}
+          </div>
+        </div>
+      ))}
 
       <button type="button" className="ris-cta" onClick={onReset}>
         Chiudi
