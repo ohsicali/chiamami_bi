@@ -1,6 +1,6 @@
 // ChiamamiBi Service Worker — Push + Offline Shell
 // Bump version to invalidate old caches on deploy.
-const VERSION = 'v4-perf'
+const VERSION = 'v4-claim-fix'
 const STATIC_CACHE = `chiamamibi-static-${VERSION}`
 const RUNTIME_CACHE = `chiamamibi-runtime-${VERSION}`
 const IMAGE_CACHE = `chiamamibi-img-${VERSION}`
