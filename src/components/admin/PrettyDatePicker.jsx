@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
 /*
@@ -77,11 +78,55 @@ export default function PrettyDatePicker({
     return { year: base.getFullYear(), month: base.getMonth() }
   })
   const containerRef = useRef(null)
+  const triggerRef = useRef(null)
+  const popoverRef = useRef(null)
+  const [pos, setPos] = useState(() => ({
+    top: 0,
+    left: 0,
+    mobile: typeof window !== 'undefined' && window.innerWidth < 520,
+  }))
+
+  // Calcola la posizione del popover ogni volta che si apre (e ad ogni resize).
+  useLayoutEffect(() => {
+    if (!open) return
+    const recompute = () => {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const mobile = vw < 520
+      if (mobile) {
+        setPos({ mobile: true, top: 0, left: 0 })
+        return
+      }
+      const popoverWidth = 296
+      const popoverHeight = withTime ? 380 : 320
+      const gap = 6
+      // Prefer below; flip above if not enough space.
+      let top = rect.bottom + gap
+      if (top + popoverHeight > vh - 8 && rect.top - gap - popoverHeight > 8) {
+        top = rect.top - gap - popoverHeight
+      }
+      // Allinea a sinistra del trigger; se sborda a destra, allinea al bordo destro del trigger.
+      let left = rect.left
+      if (left + popoverWidth > vw - 8) left = Math.max(8, rect.right - popoverWidth)
+      setPos({ mobile: false, top, left })
+    }
+    recompute()
+    window.addEventListener('resize', recompute)
+    window.addEventListener('scroll', recompute, true)
+    return () => {
+      window.removeEventListener('resize', recompute)
+      window.removeEventListener('scroll', recompute, true)
+    }
+  }, [open, withTime])
 
   useEffect(() => {
     if (!open) return
     const onDocClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false)
+      const inTrigger = triggerRef.current && triggerRef.current.contains(e.target)
+      const inPopover = popoverRef.current && popoverRef.current.contains(e.target)
+      if (!inTrigger && !inPopover) setOpen(false)
     }
     const onEsc = (e) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', onDocClick)
@@ -143,6 +188,7 @@ export default function PrettyDatePicker({
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         style={{
@@ -172,163 +218,201 @@ export default function PrettyDatePicker({
         </svg>
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.12 }}
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              left: 0,
-              zIndex: 50,
-              width: 296,
-              maxWidth: '92vw',
-              background: '#fff',
-              border: '1px solid #eee',
-              borderRadius: 14,
-              boxShadow: '0 12px 36px rgba(0,0,0,0.14)',
-              padding: 14,
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            {/* Header: mese + nav */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <button
-                type="button"
-                onClick={goPrev}
-                aria-label="Mese precedente"
-                style={navBtn}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-ink)' }}>
-                {MONTHS_IT[view.month]} {view.year}
-              </div>
-              <button
-                type="button"
-                onClick={goNext}
-                aria-label="Mese successivo"
-                style={navBtn}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Giorni della settimana */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
-              {DOW_IT.map((d, i) => (
-                <div key={i} style={{ fontSize: 10, fontWeight: 700, color: '#999', textAlign: 'center', padding: '4px 0', letterSpacing: '0.04em' }}>
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Grid giorni */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-              {cells.map((d, i) => {
-                if (!d) return <div key={i} />
-                const isSel = parsed.date && sameDay(d, parsed.date)
-                const isToday = sameDay(d, today)
-                const isDisabled = minDateObj && d < minDateObj
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => selectDay(d)}
-                    disabled={isDisabled}
-                    style={{
-                      aspectRatio: '1 / 1',
-                      border: 0,
-                      borderRadius: 9,
-                      background: isSel ? accent : isToday ? 'var(--color-cream, #F5F0E4)' : 'transparent',
-                      color: isSel ? '#fff' : isDisabled ? '#d0d0d0' : 'var(--color-ink)',
-                      fontSize: 13,
-                      fontWeight: isSel ? 800 : isToday ? 700 : 500,
-                      cursor: isDisabled ? 'not-allowed' : 'pointer',
-                      fontFamily: 'var(--font-sans)',
-                      transition: 'background 0.12s',
-                    }}
-                    onMouseEnter={(e) => { if (!isSel && !isDisabled) e.currentTarget.style.background = '#f6f3ec' }}
-                    onMouseLeave={(e) => { if (!isSel && !isDisabled) e.currentTarget.style.background = isToday ? 'var(--color-cream, #F5F0E4)' : 'transparent' }}
-                  >
-                    {d.getDate()}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Selettore orario (solo se withTime) */}
-            {withTime && (
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f3f0e8', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Ora</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-                  <TimeSpinner
-                    value={parsed.hour}
-                    onChange={(h) => setHM(h, parsed.minute)}
-                    max={23}
-                    accent={accent}
-                  />
-                  <span style={{ fontWeight: 800, color: 'var(--color-ink)', fontSize: 14 }}>:</span>
-                  <TimeSpinner
-                    value={parsed.minute}
-                    onChange={(m) => setHM(parsed.hour, m)}
-                    max={59}
-                    step={5}
-                    accent={accent}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Footer */}
-            <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              <button
-                type="button"
-                onClick={goToday}
+      {createPortal(
+        <AnimatePresence>
+          {open && (pos.mobile ? (
+            // Mobile: bottom sheet centrato in basso
+            <>
+              <motion.div
+                key="backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setOpen(false)}
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  background: 'transparent',
-                  border: 0,
-                  color: accent,
-                  cursor: 'pointer',
-                  padding: '6px 8px',
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.35)',
+                  zIndex: 200,
+                  touchAction: 'none',
+                }}
+              />
+              <motion.div
+                key="sheet"
+                ref={popoverRef}
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                style={{
+                  position: 'fixed',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 201,
+                  background: '#fff',
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  boxShadow: '0 -8px 32px rgba(0,0,0,0.18)',
+                  padding: '14px 14px 22px',
                   fontFamily: 'var(--font-sans)',
+                  touchAction: 'pan-y',
+                  maxHeight: '85vh',
+                  overflowY: 'auto',
                 }}
               >
-                Oggi
-              </button>
-              {withTime && (
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    background: accent,
-                    border: 0,
-                    color: '#fff',
-                    cursor: 'pointer',
-                    padding: '7px 14px',
-                    borderRadius: 8,
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                >
-                  Conferma
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <div style={{ width: 40, height: 4, background: '#e6e0d3', borderRadius: 999, margin: '0 auto 12px' }} />
+                <CalendarBody
+                  view={view}
+                  cells={cells}
+                  parsed={parsed}
+                  today={today}
+                  minDateObj={minDateObj}
+                  accent={accent}
+                  withTime={withTime}
+                  goPrev={goPrev}
+                  goNext={goNext}
+                  goToday={goToday}
+                  selectDay={selectDay}
+                  setHM={setHM}
+                  closeSheet={() => setOpen(false)}
+                />
+              </motion.div>
+            </>
+          ) : (
+            <motion.div
+              key="popover"
+              ref={popoverRef}
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ duration: 0.12 }}
+              style={{
+                position: 'fixed',
+                top: pos.top,
+                left: pos.left,
+                zIndex: 200,
+                width: 296,
+                background: '#fff',
+                border: '1px solid #eee',
+                borderRadius: 14,
+                boxShadow: '0 12px 36px rgba(0,0,0,0.14)',
+                padding: 14,
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              <CalendarBody
+                view={view}
+                cells={cells}
+                parsed={parsed}
+                today={today}
+                minDateObj={minDateObj}
+                accent={accent}
+                withTime={withTime}
+                goPrev={goPrev}
+                goNext={goNext}
+                goToday={goToday}
+                selectDay={selectDay}
+                setHM={setHM}
+                closeSheet={() => setOpen(false)}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
+  )
+}
+
+function CalendarBody({ view, cells, parsed, today, minDateObj, accent, withTime, goPrev, goNext, goToday, selectDay, setHM, closeSheet }) {
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <button type="button" onClick={goPrev} aria-label="Mese precedente" style={navBtn}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-ink)' }}>
+          {MONTHS_IT[view.month]} {view.year}
+        </div>
+        <button type="button" onClick={goNext} aria-label="Mese successivo" style={navBtn}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+        {DOW_IT.map((d, i) => (
+          <div key={i} style={{ fontSize: 10, fontWeight: 700, color: '#999', textAlign: 'center', padding: '4px 0', letterSpacing: '0.04em' }}>
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {cells.map((d, i) => {
+          if (!d) return <div key={i} />
+          const isSel = parsed.date && sameDay(d, parsed.date)
+          const isToday = sameDay(d, today)
+          const isDisabled = minDateObj && d < minDateObj
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => selectDay(d)}
+              disabled={isDisabled}
+              style={{
+                aspectRatio: '1 / 1',
+                border: 0,
+                borderRadius: 9,
+                background: isSel ? accent : isToday ? 'var(--color-cream, #F5F0E4)' : 'transparent',
+                color: isSel ? '#fff' : isDisabled ? '#d0d0d0' : 'var(--color-ink)',
+                fontSize: 14,
+                fontWeight: isSel ? 800 : isToday ? 700 : 500,
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                fontFamily: 'var(--font-sans)',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={(e) => { if (!isSel && !isDisabled) e.currentTarget.style.background = '#f6f3ec' }}
+              onMouseLeave={(e) => { if (!isSel && !isDisabled) e.currentTarget.style.background = isToday ? 'var(--color-cream, #F5F0E4)' : 'transparent' }}
+            >
+              {d.getDate()}
+            </button>
+          )
+        })}
+      </div>
+
+      {withTime && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f3f0e8', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#999', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Ora</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+            <TimeSpinner value={parsed.hour} onChange={(h) => setHM(h, parsed.minute)} max={23} accent={accent} />
+            <span style={{ fontWeight: 800, color: 'var(--color-ink)', fontSize: 14 }}>:</span>
+            <TimeSpinner value={parsed.minute} onChange={(m) => setHM(parsed.hour, m)} max={59} step={5} accent={accent} />
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+        <button
+          type="button"
+          onClick={goToday}
+          style={{ fontSize: 12, fontWeight: 600, background: 'transparent', border: 0, color: accent, cursor: 'pointer', padding: '6px 8px', fontFamily: 'var(--font-sans)' }}
+        >
+          Oggi
+        </button>
+        <button
+          type="button"
+          onClick={closeSheet}
+          style={{ fontSize: 12, fontWeight: 700, background: accent, border: 0, color: '#fff', cursor: 'pointer', padding: '7px 14px', borderRadius: 8, fontFamily: 'var(--font-sans)' }}
+        >
+          {withTime ? 'Conferma' : 'Chiudi'}
+        </button>
+      </div>
+    </>
   )
 }
 
