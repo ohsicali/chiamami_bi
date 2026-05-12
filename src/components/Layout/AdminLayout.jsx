@@ -759,11 +759,10 @@ function MobileBottomNav({ location, counts, onAltroClick }) {
 function MobileFAB({ location }) {
   const p = location.pathname
   const isRestaurants = p === '/admin/restaurants'
-  const isDiscounts   = p === '/admin/discounts'
-  if (!isRestaurants && !isDiscounts) return null
+  if (!isRestaurants) return null
 
-  const to   = isRestaurants ? '/admin/restaurant/new' : '/admin/discount/new'
-  const icon = isDiscounts ? '🔥' : '+'
+  const to = '/admin/restaurant/new'
+  const icon = '+'
 
   return (
     <Link
