@@ -21,7 +21,7 @@ import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
-import { proxyImg } from '../../lib/supabase'
+import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
@@ -47,9 +47,12 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
   const category = categories[0]
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
     ? restaurant.photos[0] : null
-  const photoUrl = proxyImg(firstPhoto
+  // 68×68 CSS slot → 200w covers DPR 3 comfortably without quality loss.
+  const photoRaw = firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
-    : null, { w: 1200 })
+    : null
+  const photoUrl = proxyImg(photoRaw, { w: 200 })
+  const photoSrcSet = proxyImgSrcSet(photoRaw, [100, 200, 300])
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
@@ -78,7 +81,17 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
       <div style={{ display: 'flex', gap: 10, padding: 10, position: 'relative' }}>
         <div style={{ width: 68, height: 68, borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
           {photoUrl ? (
-            <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            <img
+              src={photoUrl}
+              srcSet={photoSrcSet}
+              sizes="68px"
+              width={68}
+              height={68}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
               {category?.emoji || '🍽️'}

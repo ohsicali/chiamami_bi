@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
 import { proxyImg } from '../../lib/supabase'
@@ -12,8 +12,9 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
   const [direction, setDirection] = useState(0)
   const containerRef = useRef(null)
 
-  const normalizedPhotos = photos.map((p) =>
-    typeof p === 'string' ? { photo_url: p, caption: '' } : p
+  const normalizedPhotos = useMemo(
+    () => photos.map((p) => (typeof p === 'string' ? { photo_url: p, caption: '' } : p)),
+    [photos]
   )
 
   const hasPhotos = normalizedPhotos.length > 0

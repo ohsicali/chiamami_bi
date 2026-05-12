@@ -25,3 +25,12 @@ export function proxyImg(url, opts) {
   if (opts?.q) params.set('q', String(opts.q))
   return `/api/img?${params.toString()}`
 }
+
+// Build a responsive srcSet for a Supabase Storage image. Browsers pick the
+// smallest variant that fits the slot × devicePixelRatio, so an oversized
+// proxy width is never downloaded just because the source is huge.
+// `widths` defaults cover the common card/hero sizes used across the app.
+export function proxyImgSrcSet(url, widths = [300, 600, 900, 1200, 1600]) {
+  if (!url || !url.includes('supabase.co/storage/')) return undefined
+  return widths.map((w) => `${proxyImg(url, { w })} ${w}w`).join(', ')
+}
