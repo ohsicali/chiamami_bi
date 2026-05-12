@@ -657,11 +657,36 @@ function PinView({
 /*  AuthedView — shell mobile (v4-verify) + scanner overlay          */
 /* ------------------------------------------------------------------ */
 function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
-  const [tab, setTab] = useState('dashboard')
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Deep-link verify: il QR del cliente codifica l'URL /verify?code=BiSc-XXX,
+  // quindi se il ristoratore apre il link con la fotocamera del telefono
+  // (Camera app iOS / Google Lens / lettore QR di sistema) il browser arriva
+  // qui con `?code=` in query. Se siamo già autenticati apriamo lo scanner
+  // direttamente in modalità "verifica in corso" con quel codice.
+  const initialScanCode = (() => {
+    const raw = searchParams.get('code')
+    if (!raw) return null
+    return extractQrCode(raw)
+  })()
+  const [tab, setTab] = useState(initialScanCode ? 'scan' : 'dashboard')
+  const [pendingScanCode, setPendingScanCode] = useState(initialScanCode)
   const isDesktop = useIsDesktop()
 
+  // Una volta consumato il `code` dalla URL lo rimuoviamo per evitare che un
+  // refresh ri-triggheri la verifica e per tenere la barra indirizzi pulita.
+  useEffect(() => {
+    if (!initialScanCode) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('code')
+    setSearchParams(next, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Quando l'utente chiude il scanner, torna alla dashboard
-  const closeScanner = () => setTab('dashboard')
+  const closeScanner = () => {
+    setPendingScanCode(null)
+    setTab('dashboard')
+  }
   const openScanner = () => setTab('scan')
 
   if (isDesktop) {
@@ -675,13 +700,22 @@ function AuthedView({ restaurant, onLogout, deviceToken, onSessionExpired }) {
         onTabChange={setTab}
         onOpenScanner={openScanner}
         onCloseScanner={closeScanner}
+        initialScanCode={pendingScanCode}
+        onInitialCodeConsumed={() => setPendingScanCode(null)}
       />
     )
   }
 
   // Quando si è nel tab Scansiona, mostra l'overlay full-bleed
   if (tab === 'scan') {
-    return <ScannerOverlay restaurant={restaurant} onClose={closeScanner} />
+    return (
+      <ScannerOverlay
+        restaurant={restaurant}
+        onClose={closeScanner}
+        initialCode={pendingScanCode}
+        onInitialCodeConsumed={() => setPendingScanCode(null)}
+      />
+    )
   }
 
   return (
@@ -1080,7 +1114,7 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
 
 /* Stub Scanner overlay — wrappa VerifyTab in overlay nero con close.
    Sostituito con versione full-bleed black + corner brackets nel commit successivo. */
-function ScannerOverlay({ restaurant, onClose }) {
+function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCodeConsumed }) {
   const [mode, setMode] = useState('camera') // 'camera' | 'manual'
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1088,6 +1122,10 @@ function ScannerOverlay({ restaurant, onClose }) {
   const [camStatus, setCamStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
   const [camError, setCamError] = useState(null)
   const [torchOn, setTorchOn] = useState(false)
+  // Quando l'overlay è aperto via deep-link (`/verify?code=…`), mostriamo
+  // un'attesa neutra invece di accendere la fotocamera, finché il verify
+  // non torna con un risultato.
+  const [autoVerifyPending, setAutoVerifyPending] = useState(!!initialCode)
   const videoRef = useRef(null)
   const scannerRef = useRef(null)
   const lastScanRef = useRef({ code: null, at: 0 })
@@ -1144,9 +1182,23 @@ function ScannerOverlay({ restaurant, onClose }) {
     }
   }
 
+  // Deep-link auto-verify: il QR del cliente codifica /verify?code=…, quindi
+  // se il ristoratore lo apre dalla fotocamera del telefono arriviamo qui
+  // con `initialCode` già pronto e tiriamo subito la verifica, saltando la
+  // camera. Il flag pending evita che il setup della fotocamera parta nel
+  // frattempo.
+  useEffect(() => {
+    if (!initialCode) return
+    verifyCode(initialCode).finally(() => {
+      setAutoVerifyPending(false)
+      onInitialCodeConsumed?.()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCode])
+
   // Camera scanner setup — runs only when camera mode is active and no result is showing
   useEffect(() => {
-    if (mode !== 'camera' || result) return undefined
+    if (mode !== 'camera' || result || autoVerifyPending) return undefined
     let cancelled = false
     let scanner = null
 
@@ -1213,7 +1265,7 @@ function ScannerOverlay({ restaurant, onClose }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, result])
+  }, [mode, result, autoVerifyPending])
 
   // Pause scanner during loading verify
   useEffect(() => {
@@ -1221,10 +1273,10 @@ function ScannerOverlay({ restaurant, onClose }) {
     if (!s) return
     if (loading) {
       try { s.stop() } catch { /* no-op */ }
-    } else if (camStatus === 'running' && mode === 'camera' && !result) {
+    } else if (camStatus === 'running' && mode === 'camera' && !result && !autoVerifyPending) {
       s.start().catch(() => {})
     }
-  }, [loading, camStatus, mode, result])
+  }, [loading, camStatus, mode, result, autoVerifyPending])
 
   // Toggle torch (flashlight) — supported on mobile cameras with track capabilities
   const toggleTorch = async () => {
@@ -1256,6 +1308,33 @@ function ScannerOverlay({ restaurant, onClose }) {
   const handleManualSubmit = (e) => {
     e?.preventDefault?.()
     verifyCode(code)
+  }
+
+  // ============ AUTO-VERIFY PENDING (deep-link da fotocamera del telefono) ===
+  if (autoVerifyPending && !result) {
+    return (
+      <div className="v4-scan-overlay" role="dialog" aria-label="Verifica in corso">
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          background: '#000', color: '#fff', padding: 24,
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: 36, height: 36, border: '3px solid rgba(255,255,255,0.2)',
+              borderTopColor: '#fff', borderRadius: '50%', margin: '0 auto 14px',
+              animation: 'verifySpin 0.8s linear infinite',
+            }} />
+            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>
+              Verifica in corso…
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>
+              Sto controllando il codice scansionato
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ============ RESULT MODE ============
@@ -1485,6 +1564,7 @@ function ScanResultView({ result, onReset, onClose }) {
 function DesktopShell({
   restaurant, onLogout, deviceToken, onSessionExpired,
   tab, onTabChange, onOpenScanner, onCloseScanner,
+  initialScanCode = null, onInitialCodeConsumed,
 }) {
   const firstPhoto = restaurant?.photos?.[0]
   const photoUrl = firstPhoto ? proxyImg(firstPhoto.thumb_url || firstPhoto.photo_url) : null
@@ -1566,7 +1646,12 @@ function DesktopShell({
       </main>
 
       {tab === 'scan' && (
-        <ScannerOverlay restaurant={restaurant} onClose={onCloseScanner} />
+        <ScannerOverlay
+          restaurant={restaurant}
+          onClose={onCloseScanner}
+          initialCode={initialScanCode}
+          onInitialCodeConsumed={onInitialCodeConsumed}
+        />
       )}
     </div>
   )
