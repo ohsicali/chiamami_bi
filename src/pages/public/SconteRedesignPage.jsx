@@ -303,6 +303,27 @@ function SconteRedesignPageInner() {
       setQrPopup({ redemption: { ...data, discount_id: deal.id }, deal })
     } catch (e) {
       console.error('Claim failed:', e)
+      // The insert can commit server-side even when the JS promise rejects
+      // (chained .select() RLS read miss, network glitch on the return-leg,
+      // or stale cached client running pre-fix code). Try one last recovery
+      // fetch before declaring failure, so the user gets the QR popup
+      // instead of a misleading "non sono riuscito a salvare" toast while
+      // the row already sits in the DB.
+      try {
+        const { supabase } = await import('../../lib/supabase')
+        const { data: recovered } = await supabase
+          .from('discount_redemptions')
+          .select('*')
+          .eq('discount_id', deal.id)
+          .eq('user_id', user.id)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (recovered?.qr_code) {
+          setQrPopup({ redemption: { ...recovered, discount_id: deal.id }, deal })
+          return
+        }
+      } catch { /* recovery best-effort */ }
       setToast('Non sono riuscito a salvare lo sconto. Riprova.')
     } finally {
       setClaiming(null)
@@ -373,6 +394,21 @@ function SconteRedesignPageInner() {
       return data
     } catch (e) {
       console.error('Claim failed:', e)
+      // Mirror the recovery in claimDeal: if the insert silently committed
+      // but the promise rejected, return the row so the popup transitions
+      // to the unlocked QR view instead of showing the error toast.
+      try {
+        const { supabase } = await import('../../lib/supabase')
+        const { data: recovered } = await supabase
+          .from('discount_redemptions')
+          .select('*')
+          .eq('discount_id', deal.id)
+          .eq('user_id', user.id)
+          .order('generated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (recovered?.qr_code) return recovered
+      } catch { /* recovery best-effort */ }
       setToast('Non sono riuscito a salvare lo sconto. Riprova.')
       return null
     } finally {
