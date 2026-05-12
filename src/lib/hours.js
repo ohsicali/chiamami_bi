@@ -163,25 +163,18 @@ export function getCurrentMoment(now = new Date()) {
 }
 
 /**
- * isOpenForMoment — ritorna se un ristorante è ragionevolmente aperto per
- * un dato momento giornata. Combina due segnali in OR:
+ * isOpenForMoment — ritorna se un ristorante deve apparire in una sezione
+ * "fascia oraria" della home / esplora / saved.
  *
- *   1. Tag manuale dell'admin (`manualMoments` da restaurants.moments).
- *      Se include il momento richiesto → match (anche se gli orari Google
- *      non coprirebbero la fascia, es. cocktail bar a cui Google non ha
- *      messo "aperitivo").
- *   2. Overlap orario tra la fascia del momento e uno dei `periods[]`
- *      di `hours_cache` proiettati sul giorno target. Se i due si
- *      sovrappongono → match.
+ * Match esclusivamente sul tag manuale dell'admin (`manualMoments` da
+ * `restaurants.moments`): un ristorante appare in una fascia solo se
+ * l'admin l'ha attivato esplicitamente dai toggle 🥐 🍝 🥂 🍷 🍸.
  *
- * Quindi: l'admin marca "cena" su un locale che a Roma sa fare anche
- * pranzo nel weekend → il sistema lo trova lo stesso a pranzo nei giorni
- * giusti grazie agli orari Google.
- *
- * `opensAt`/`closesAt` arrivano sempre dagli orari reali quando l'overlap
- * c'è; se il match nasce solo dal tag manuale (orari Google assenti o
- * non coprono la fascia) restano `null` e l'UI mostra "Aperto" senza
- * orario.
+ * Gli orari Google (`hours_cache`) NON contribuiscono al match: servono
+ * solo a calcolare `opensAt`/`closesAt` da mostrare nella card (pill
+ * verde "Apre alle …" / "Chiude alle …"). Se l'admin ha taggato la
+ * fascia ma gli orari Google non la coprono, `opensAt`/`closesAt`
+ * restano `null` e la UI mostra solo "Aperto".
  *
  * Return:
  *   { match, verified, opensAt, closesAt }
@@ -190,13 +183,12 @@ export function isOpenForMoment(hours, moment, now = new Date(), manualMoments =
   if (!MOMENT_SLOTS[moment]) return { match: false, verified: true, opensAt: null, closesAt: null }
 
   const manualMatch = Array.isArray(manualMoments) && manualMoments.includes(moment)
+  if (!manualMatch) return { match: false, verified: true, opensAt: null, closesAt: null }
 
   const slot = MOMENT_SLOTS[moment]
   const source = hours?.regularOpeningHours || hours?.currentOpeningHours
   if (!source || !Array.isArray(source.periods) || source.periods.length === 0) {
-    // Senza hours_cache: il match dipende solo dal tag manuale.
-    if (manualMatch) return { match: true, verified: false, opensAt: null, closesAt: null }
-    return { match: false, verified: false, opensAt: null, closesAt: null }
+    return { match: true, verified: false, opensAt: null, closesAt: null }
   }
 
   const utcOffset = typeof hours?.utcOffsetMinutes === 'number' ? hours.utcOffsetMinutes : null
@@ -217,11 +209,6 @@ export function isOpenForMoment(hours, moment, now = new Date(), manualMoments =
       const openMin = (p.open.hour || 0) * 60 + (p.open.minute || 0)
       const closeMinRaw = p.close ? (p.close.hour || 0) * 60 + (p.close.minute || 0) : 24 * 60
 
-      // Considera un periodo come intervallo [periodStart, periodEnd] sul giorno target.
-      // Due casi:
-      //   a) openDay == checkDow e close lo stesso giorno → [openMin, closeMin]
-      //   b) openDay == checkDow con cross-midnight (closeDay != openDay) → [openMin, 24h + closeMin]
-      //   c) openDay == checkDow-1 con cross-midnight → [0, closeMin] (mattina presto)
       let periodStart, periodEnd
       if (openDay === checkDow && closeDay === openDay) {
         periodStart = openMin
@@ -230,21 +217,15 @@ export function isOpenForMoment(hours, moment, now = new Date(), manualMoments =
         periodStart = openMin
         periodEnd = 24 * 60 + closeMinRaw
       } else if (closeDay === checkDow && openDay !== closeDay && checkDow !== todayDow) {
-        // Periodo cross-midnight del giorno precedente che si estende al mattino di oggi.
-        // Rilevante solo per dopocena su giorno corrente: periodStart negativo.
         periodStart = -(24 * 60 - openMin)
         periodEnd = closeMinRaw
       } else {
         continue
       }
 
-      // Overlap con slot [slot.startMin, slot.endMin]
       const overlapStart = Math.max(periodStart, slot.startMin)
       const overlapEnd = Math.min(periodEnd, slot.endMin)
       if (overlapEnd > overlapStart) {
-        // Match! Tieni l'apertura più anticipata e la chiusura più tardiva
-        // fra i periodi che intersecano il momento (così "apre alle" è
-        // l'orario reale di apertura, "chiude alle" la chiusura reale).
         const closeNormalized = periodEnd > 24 * 60 ? periodEnd - 24 * 60 : periodEnd
         if (bestCloseMin == null || closeNormalized > bestCloseMin) {
           bestCloseMin = closeNormalized
@@ -263,17 +244,12 @@ export function isOpenForMoment(hours, moment, now = new Date(), manualMoments =
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
   }
 
-  if (bestCloseMin != null) {
-    return {
-      match: true,
-      verified: true,
-      opensAt: bestOpenMin != null ? fmt(bestOpenMin) : null,
-      closesAt: fmt(bestCloseMin),
-    }
+  return {
+    match: true,
+    verified: bestCloseMin != null,
+    opensAt: bestOpenMin != null ? fmt(bestOpenMin) : null,
+    closesAt: bestCloseMin != null ? fmt(bestCloseMin) : null,
   }
-  // Nessun overlap orario: il match dipende solo dal tag manuale.
-  if (manualMatch) return { match: true, verified: false, opensAt: null, closesAt: null }
-  return { match: false, verified: true, opensAt: null, closesAt: null }
 }
 
 export function getHoursStatus(hours, now = new Date()) {
