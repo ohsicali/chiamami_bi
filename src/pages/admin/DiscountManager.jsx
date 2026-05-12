@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
+import PrettyDatePicker from '../../components/admin/PrettyDatePicker'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -516,6 +517,24 @@ export default function DiscountManager() {
   const [notifyingId, setNotifyingId] = useState(null)
 
   const [form, setForm] = useState(EMPTY_FORM)
+
+  // Blocca lo scroll del body quando la modal è aperta (impedisce lo "swipe orizzontale" su mobile).
+  useEffect(() => {
+    if (!showForm) return
+    const html = document.documentElement
+    const body = document.body
+    const prevHtmlOverflow = html.style.overflow
+    const prevBodyOverflow = body.style.overflow
+    const prevBodyOverscroll = body.style.overscrollBehavior
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    body.style.overscrollBehavior = 'contain'
+    return () => {
+      html.style.overflow = prevHtmlOverflow
+      body.style.overflow = prevBodyOverflow
+      body.style.overscrollBehavior = prevBodyOverscroll
+    }
+  }, [showForm])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -1058,6 +1077,8 @@ export default function DiscountManager() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: 16,
+                overflow: 'hidden',
+                touchAction: 'none',
               }}
             >
               <motion.div
@@ -1075,6 +1096,10 @@ export default function DiscountManager() {
                   maxWidth: 520,
                   maxHeight: '85vh',
                   overflowY: 'auto',
+                  overflowX: 'hidden',
+                  overscrollBehavior: 'contain',
+                  touchAction: 'pan-y',
+                  WebkitOverflowScrolling: 'touch',
                   fontFamily: "var(--font-sans)",
                 }}
               >
@@ -1332,22 +1357,23 @@ export default function DiscountManager() {
                     </div>
                   </FormField>
 
-                  {/* Periodo di validità: unico, cambia solo formato in base al tipo */}
+                  {/* Periodo di validità: date picker custom */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <FormField label={form.kind === 'drop' ? 'Inizio' : 'Valido dal'}>
-                      <input
-                        type={form.kind === 'drop' ? 'datetime-local' : 'date'}
+                      <PrettyDatePicker
                         value={form.starts_at}
-                        onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))}
-                        style={inputStyle}
+                        onChange={(v) => setForm((f) => ({ ...f, starts_at: v }))}
+                        withTime={form.kind === 'drop'}
+                        placeholder="Scegli data"
                       />
                     </FormField>
                     <FormField label={form.kind === 'drop' ? 'Fine' : 'Valido fino al'}>
-                      <input
-                        type={form.kind === 'drop' ? 'datetime-local' : 'date'}
+                      <PrettyDatePicker
                         value={form.ends_at}
-                        onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
-                        style={inputStyle}
+                        onChange={(v) => setForm((f) => ({ ...f, ends_at: v }))}
+                        withTime={form.kind === 'drop'}
+                        minDate={form.starts_at?.split('T')[0]}
+                        placeholder="Scegli data"
                       />
                     </FormField>
                   </div>
