@@ -1525,18 +1525,11 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
   )
 }
 
-/* ScanResultView — wrapper sui componenti Result esistenti, con close-on-success */
+/* ScanResultView — wrapper sui componenti Result esistenti */
 function ScanResultView({ result, onReset, onClose }) {
   const { status, data } = result
-  const handleReset = () => {
-    if (status === 'success') {
-      // Su successo, dopo "Fatto" chiudo direttamente l'overlay invece di tornare a scansionare
-      onClose?.()
-    } else {
-      onReset?.()
-    }
-  }
-  if (status === 'success') return <SuccessResult data={data} onReset={handleReset} />
+  const handleReset = () => onReset?.()
+  if (status === 'success') return <SuccessResult data={data} onReset={handleReset} onClose={onClose} />
   if (status === 'invalid_now') return <InvalidNowResult data={data} reason={result?.reason || data?.reason} onReset={handleReset} />
   if (status === 'already_redeemed') return <AlreadyUsedResult data={data} onReset={handleReset} />
   if (status === 'expired') {

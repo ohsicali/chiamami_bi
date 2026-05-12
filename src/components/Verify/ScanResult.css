@@ -87,7 +87,7 @@
   color: #fff;
   flex-shrink: 0;
 }
-.ris-pct-info { text-align: left; min-width: 0; }
+.ris-pct-info { text-align: left; min-width: 0; flex: 1 1 auto; }
 .ris-pct-info strong {
   display: block;
   font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
@@ -96,6 +96,10 @@
   letter-spacing: -0.02em;
   line-height: 1.15;
   color: #fff;
+  /* I titoli liberi (freebie/special_price) possono essere lunghi: spezza
+     parole troppo larghe invece di sborrare fuori dal banner. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .ris-pct-info p {
   font-size: 11.5px;
@@ -103,6 +107,16 @@
   font-weight: 500;
   margin: 2px 0 0;
   line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Variante text-only: niente numerone, il titolo prende tutto il banner.
+   Usata per discount_type = freebie/special_price dove `value` è il
+   titolo intero ("2 coni al prezzo di 1") e non un badge corto. */
+.ris-pct-banner--text { padding: 14px 18px; }
+.ris-pct-banner--text .ris-pct-info--full strong {
+  font-size: 17px;
+  line-height: 1.2;
 }
 
 /* Day strip ristoratore (solo invalid) */
@@ -156,3 +170,21 @@
 .ris-success .ris-cta { color: #1d6e30; }
 .ris-invalid .ris-cta { color: #A12727; }
 .ris-used    .ris-cta { color: #22181C; }
+
+/* CTA secondario (text-only) sotto al CTA bianco principale.
+   Usato per "Torna alla dashboard" su SuccessResult. */
+.ris-cta-secondary {
+  margin-top: 14px;
+  background: transparent;
+  border: 0;
+  padding: 10px 18px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ris-cta-secondary:hover { color: #fff; }
