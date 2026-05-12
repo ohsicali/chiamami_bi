@@ -1,5 +1,6 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import Navbar from '../../components/Layout/Navbar'
@@ -12,7 +13,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
-import { proxyImg } from '../../lib/supabase'
+import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 
 function slugify(name) {
   return name
@@ -57,10 +58,10 @@ function PriceDisplay({ level }) {
 }
 
 /* ── Photo helper ── */
-function getPhotoUrl(restaurant) {
+function getPhotoRaw(restaurant) {
   if (Array.isArray(restaurant.photos) && restaurant.photos.length > 0) {
     const p = restaurant.photos[0]
-    return proxyImg(typeof p === 'string' ? p : (p?.thumb_url || p?.photo_url), { w: 800 })
+    return typeof p === 'string' ? p : (p?.thumb_url || p?.photo_url)
   }
   return null
 }
@@ -70,7 +71,9 @@ function getPhotoUrl(restaurant) {
    ============================================ */
 function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const photoUrl = getPhotoUrl(restaurant)
+  const photoRaw = getPhotoRaw(restaurant)
+  const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 900 }) : null
+  const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 600, 900, 1200])
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
@@ -93,7 +96,12 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       <div style={{ position: 'absolute', inset: 0, background: '#2a1f18' }}>
         {photoUrl && (
           <img
-            src={photoUrl} alt={restaurant.name} loading="lazy"
+            src={photoUrl}
+            srcSet={photoSrcSet}
+            sizes="(max-width: 768px) 100vw, 720px"
+            alt={restaurant.name}
+            loading="lazy"
+            decoding="async"
             onLoad={() => setImgLoaded(true)}
             style={{
               position: 'absolute', inset: 0, width: '100%', height: '100%',
@@ -192,7 +200,10 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
    ============================================ */
 function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const photoUrl = getPhotoUrl(restaurant)
+  const photoRaw = getPhotoRaw(restaurant)
+  // 88×88 CSS slot → 264px covers DPR 3.
+  const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 250 }) : null
+  const photoSrcSet = proxyImgSrcSet(photoRaw, [150, 250, 400])
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
@@ -225,7 +236,14 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
               background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
             }} />
             <img
-              src={photoUrl} alt={restaurant.name} loading="lazy"
+              src={photoUrl}
+              srcSet={photoSrcSet}
+              sizes="88px"
+              width={88}
+              height={88}
+              alt={restaurant.name}
+              loading="lazy"
+              decoding="async"
               onLoad={() => setImgLoaded(true)}
               style={{
                 position: 'absolute', inset: 0, width: '100%', height: '100%',
@@ -309,6 +327,66 @@ function HorizontalCard({ restaurant, userPosition, discountValue, saved, onSave
         <HeartIcon filled={saved} />
       </div>
     </button>
+  )
+}
+
+/* ============================================
+   VIRTUALIZED LIST — uses window scroll
+   ============================================ */
+function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSaved, onSave, onClick }) {
+  const parentRef = useRef(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
+
+  useLayoutEffect(() => {
+    if (!parentRef.current) return
+    const update = () => {
+      const rect = parentRef.current.getBoundingClientRect()
+      setScrollMargin(rect.top + window.scrollY)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  const virtualizer = useWindowVirtualizer({
+    count: items.length,
+    estimateSize: () => 130,
+    overscan: 6,
+    scrollMargin,
+  })
+
+  return (
+    <div
+      ref={parentRef}
+      style={{ position: 'relative', height: virtualizer.getTotalSize() }}
+    >
+      {virtualizer.getVirtualItems().map((vi) => {
+        const r = items[vi.index]
+        return (
+          <div
+            key={r.id}
+            data-index={vi.index}
+            ref={virtualizer.measureElement}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${vi.start - scrollMargin}px)`,
+            }}
+          >
+            <HorizontalCard
+              restaurant={r}
+              userPosition={userPosition}
+              discountValue={discountValueMap[r.id]}
+              saved={isSaved(r.id)}
+              onSave={() => onSave(r.id)}
+              onClick={onClick}
+            />
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -452,21 +530,16 @@ export default function ListView() {
               />
             )}
 
-            {/* All restaurants */}
+            {/* All restaurants (windowed) */}
             {otherRestaurants.length > 0 && (
-              <>
-                {otherRestaurants.map((restaurant) => (
-                  <HorizontalCard
-                    key={restaurant.id}
-                    restaurant={restaurant}
-                    userPosition={position}
-                    discountValue={discountValueMap[restaurant.id]}
-                    saved={isSaved(restaurant.id)}
-                    onSave={() => handleSave(restaurant.id)}
-                    onClick={handleCardClick}
-                  />
-                ))}
-              </>
+              <VirtualizedRestaurantList
+                items={otherRestaurants}
+                userPosition={position}
+                discountValueMap={discountValueMap}
+                isSaved={isSaved}
+                onSave={handleSave}
+                onClick={handleCardClick}
+              />
             )}
           </>
         )}
