@@ -73,6 +73,7 @@ const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 const SettingsPage = lazy(() => import('./pages/public/SettingsPage'))
+const DropdownDemoPage = lazy(() => import('./pages/public/DropdownDemoPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
@@ -179,6 +180,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/dropdown-demo" element={<DropdownDemoPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </div>
