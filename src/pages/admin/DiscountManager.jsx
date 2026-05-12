@@ -32,15 +32,18 @@ const EMPTY_FORM = {
   discount_type: 'percentage',
   discount_value: '',
   conditions: '',
-  valid_from: new Date().toISOString().split('T')[0],
-  valid_until: '',
-  max_redemptions: '',
+  kind: 'discount', // 'discount' | 'featured' | 'drop'
+  starts_at: new Date().toISOString().split('T')[0],
+  ends_at: '',
+  max_uses: '',
   is_active: true,
-  is_drop: false,
-  drop_starts_at: '',
-  drop_ends_at: '',
-  max_quantity: '',
-  is_featured: false,
+}
+
+// Restituisce il valore di periodo nel formato giusto per l'input
+// (date per sconti/evidenza, datetime-local per drop).
+const toInputDate = (iso, isDrop) => {
+  if (!iso) return ''
+  return isDrop ? iso.slice(0, 16) : iso.split('T')[0]
 }
 
 /* ------------------------------------------------------------------ */
@@ -615,6 +618,8 @@ export default function DiscountManager() {
   }
 
   const handleEdit = (d) => {
+    const kind = d.is_drop ? 'drop' : d.is_featured ? 'featured' : 'discount'
+    const isDrop = kind === 'drop'
     setForm({
       restaurant_id: d.restaurant_id,
       title: d.title,
@@ -622,15 +627,11 @@ export default function DiscountManager() {
       discount_type: d.discount_type,
       discount_value: d.discount_value,
       conditions: d.conditions || '',
-      valid_from: d.valid_from?.split('T')[0] || '',
-      valid_until: d.valid_until?.split('T')[0] || '',
-      max_redemptions: d.max_redemptions || '',
+      kind,
+      starts_at: toInputDate(isDrop ? (d.drop_starts_at || d.valid_from) : d.valid_from, isDrop),
+      ends_at: toInputDate(isDrop ? (d.drop_ends_at || d.valid_until) : d.valid_until, isDrop),
+      max_uses: (isDrop ? (d.max_quantity || d.max_redemptions) : d.max_redemptions) || '',
       is_active: d.is_active,
-      is_drop: d.is_drop || false,
-      drop_starts_at: d.drop_starts_at ? d.drop_starts_at.slice(0, 16) : '',
-      drop_ends_at: d.drop_ends_at ? d.drop_ends_at.slice(0, 16) : '',
-      max_quantity: d.max_quantity || '',
-      is_featured: d.is_featured || false,
     })
     setEditing(d.id)
     setShowForm(true)
@@ -638,7 +639,7 @@ export default function DiscountManager() {
 
   const handleSave = async () => {
     const restId = form.restaurant_id || newPartner?.id
-    if (!restId || !form.title || !form.discount_value || !form.valid_until) return
+    if (!restId || !form.title || !form.discount_value || !form.ends_at) return
 
     // Vincolo: PIN partner attivo è prerequisito per creare uno sconto.
     // newPartner viene creato con un PIN automaticamente, quindi ok.
@@ -659,11 +660,17 @@ export default function DiscountManager() {
     }
 
     if (!editing) {
+      const endIsoCheck = new Date(form.ends_at).toISOString()
       const existing = discounts.find(
         (d) => d.restaurant_id === restId && d.is_active && new Date(d.valid_until) > new Date()
       )
       if (existing) {
         setSaveError(`${existing.restaurant?.name || 'Questo ristorante'} ha già uno sconto attivo. Disattiva o elimina quello esistente prima.`)
+        return
+      }
+      // Guard di sanità: la data di fine deve essere nel futuro.
+      if (new Date(endIsoCheck) <= new Date()) {
+        setSaveError('La data di fine deve essere nel futuro.')
         return
       }
     }
@@ -703,6 +710,12 @@ export default function DiscountManager() {
       }
     }
 
+    const isDrop = form.kind === 'drop'
+    const isFeatured = form.kind === 'featured'
+    const startIso = form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString()
+    const endIso = new Date(form.ends_at).toISOString()
+    const uses = form.max_uses ? parseInt(form.max_uses) : null
+
     const payload = {
       restaurant_id: restId,
       title: form.title,
@@ -710,15 +723,15 @@ export default function DiscountManager() {
       discount_type: form.discount_type,
       discount_value: form.discount_value,
       conditions: form.conditions || null,
-      valid_from: new Date(form.valid_from).toISOString(),
-      valid_until: new Date(form.valid_until).toISOString(),
-      max_redemptions: form.max_redemptions ? parseInt(form.max_redemptions) : null,
+      valid_from: startIso,
+      valid_until: endIso,
+      max_redemptions: uses,
       is_active: form.is_active,
-      is_drop: form.is_drop,
-      drop_starts_at: form.is_drop && form.drop_starts_at ? new Date(form.drop_starts_at).toISOString() : null,
-      drop_ends_at: form.is_drop && form.drop_ends_at ? new Date(form.drop_ends_at).toISOString() : null,
-      max_quantity: form.is_drop && form.max_quantity ? parseInt(form.max_quantity) : null,
-      is_featured: !form.is_drop && form.is_featured,
+      is_drop: isDrop,
+      drop_starts_at: isDrop ? startIso : null,
+      drop_ends_at: isDrop ? endIso : null,
+      max_quantity: isDrop ? uses : null,
+      is_featured: isFeatured,
     }
     const result = editing
       ? await supabase.from('discounts').update(payload).eq('id', editing).select('*, restaurant:restaurants(id, name)').single()
@@ -1248,97 +1261,139 @@ export default function DiscountManager() {
                     />
                   </FormField>
 
+                  {/* Tipo offerta: selettore unico (sostituisce i due checkbox drop + evidenza) */}
+                  <FormField label="Tipo offerta">
+                    <div
+                      role="radiogroup"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: 8,
+                        background: 'var(--color-cream, #F5F0E4)',
+                        padding: 4,
+                        borderRadius: 12,
+                      }}
+                    >
+                      {[
+                        { id: 'discount', label: 'Sconto', hint: 'Sempre attivo', color: '#E8453C' },
+                        { id: 'featured', label: 'In evidenza', hint: 'In primo piano', color: '#B08954' },
+                        { id: 'drop', label: '🔥 Drop', hint: 'Tempo limitato', color: '#E8453C' },
+                      ].map((opt) => {
+                        const active = form.kind === opt.id
+                        const switchingToDrop = !active && opt.id === 'drop' && form.kind !== 'drop'
+                        const switchingFromDrop = !active && form.kind === 'drop' && opt.id !== 'drop'
+                        return (
+                          <button
+                            type="button"
+                            key={opt.id}
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() =>
+                              setForm((f) => {
+                                // Converte tra date e datetime-local quando si passa da/a drop.
+                                const next = { ...f, kind: opt.id }
+                                if (switchingToDrop && f.starts_at && !f.starts_at.includes('T')) {
+                                  next.starts_at = `${f.starts_at}T19:00`
+                                }
+                                if (switchingToDrop && f.ends_at && !f.ends_at.includes('T')) {
+                                  next.ends_at = `${f.ends_at}T23:00`
+                                }
+                                if (switchingFromDrop && f.starts_at?.includes('T')) {
+                                  next.starts_at = f.starts_at.split('T')[0]
+                                }
+                                if (switchingFromDrop && f.ends_at?.includes('T')) {
+                                  next.ends_at = f.ends_at.split('T')[0]
+                                }
+                                return next
+                              })
+                            }
+                            style={{
+                              padding: '10px 8px',
+                              borderRadius: 9,
+                              border: 0,
+                              background: active ? '#fff' : 'transparent',
+                              color: active ? opt.color : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                              fontSize: 12,
+                              fontWeight: active ? 800 : 600,
+                              cursor: 'pointer',
+                              boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                              fontFamily: 'var(--font-sans)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 2,
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            <span>{opt.label}</span>
+                            <span style={{ fontSize: 9, fontWeight: 600, opacity: 0.7 }}>{opt.hint}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </FormField>
+
+                  {/* Periodo di validità: unico, cambia solo formato in base al tipo */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <FormField label="Valido dal">
+                    <FormField label={form.kind === 'drop' ? 'Inizio' : 'Valido dal'}>
                       <input
-                        type="date"
-                        value={form.valid_from}
-                        onChange={(e) => setForm((f) => ({ ...f, valid_from: e.target.value }))}
+                        type={form.kind === 'drop' ? 'datetime-local' : 'date'}
+                        value={form.starts_at}
+                        onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))}
                         style={inputStyle}
                       />
                     </FormField>
-                    <FormField label="Valido fino al">
+                    <FormField label={form.kind === 'drop' ? 'Fine' : 'Valido fino al'}>
                       <input
-                        type="date"
-                        value={form.valid_until}
-                        onChange={(e) => setForm((f) => ({ ...f, valid_until: e.target.value }))}
+                        type={form.kind === 'drop' ? 'datetime-local' : 'date'}
+                        value={form.ends_at}
+                        onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
                         style={inputStyle}
                       />
                     </FormField>
                   </div>
 
-                  <FormField label="Max persone che possono attivarlo" hint="Lascia vuoto per illimitato">
+                  {/* Limite utilizzi: unico campo */}
+                  <FormField
+                    label={form.kind === 'drop' ? 'Quantità disponibile' : 'Max utilizzi'}
+                    hint={form.kind === 'drop' ? 'Quanti pezzi metti in palio' : 'Lascia vuoto per illimitato'}
+                  >
                     <input
                       type="number"
-                      value={form.max_redemptions}
-                      onChange={(e) => setForm((f) => ({ ...f, max_redemptions: e.target.value }))}
-                      placeholder="Illimitato"
+                      value={form.max_uses}
+                      onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value }))}
+                      placeholder={form.kind === 'drop' ? 'Es. 10' : 'Illimitato'}
                       min="1"
                       style={inputStyle}
                     />
                   </FormField>
 
-                  {/* Drop toggle */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingTop: 4 }}>
-                    <input
-                      type="checkbox"
-                      checked={form.is_drop}
-                      onChange={(e) => setForm((f) => ({ ...f, is_drop: e.target.checked, is_featured: e.target.checked ? false : f.is_featured }))}
-                      style={{ accentColor: '#B08954', width: 16, height: 16 }}
-                    />
-                    <span style={{ fontSize: 13, color: 'var(--color-ink)', fontWeight: 500 }}>È un drop? (tempo limitato)</span>
-                  </label>
-
-                  {form.is_drop && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingLeft: 12, borderLeft: '2px solid #B08954' }}>
-                      <FormField label="Inizio drop">
-                        <input
-                          type="datetime-local"
-                          value={form.drop_starts_at}
-                          onChange={(e) => setForm((f) => ({ ...f, drop_starts_at: e.target.value }))}
-                          style={inputStyle}
-                        />
-                      </FormField>
-                      <FormField label="Fine drop">
-                        <input
-                          type="datetime-local"
-                          value={form.drop_ends_at}
-                          onChange={(e) => setForm((f) => ({ ...f, drop_ends_at: e.target.value }))}
-                          style={inputStyle}
-                        />
-                      </FormField>
-                      <FormField label="Quantità massima">
-                        <input
-                          type="number"
-                          value={form.max_quantity}
-                          onChange={(e) => setForm((f) => ({ ...f, max_quantity: e.target.value }))}
-                          placeholder="Es. 10"
-                          style={inputStyle}
-                        />
-                      </FormField>
+                  {/* Stato attivo / in pausa */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      cursor: 'pointer',
+                      padding: '10px 12px',
+                      background: 'var(--color-cream, #F5F0E4)',
+                      borderRadius: 10,
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                        {form.is_active ? 'Pubblicato' : 'In pausa'}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+                        {form.is_active ? 'Visibile agli utenti' : 'Nascosto agli utenti, modificabile in seguito'}
+                      </span>
                     </div>
-                  )}
-
-                  {!form.is_drop && (
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={form.is_featured}
-                        onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))}
-                        style={{ accentColor: '#B08954', width: 16, height: 16 }}
-                      />
-                      <span style={{ fontSize: 13, color: 'var(--color-ink)' }}>In evidenza</span>
-                    </label>
-                  )}
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={form.is_active}
                       onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                      style={{ accentColor: '#E8453C', width: 16, height: 16 }}
+                      style={{ accentColor: '#E8453C', width: 18, height: 18 }}
                     />
-                    <span style={{ fontSize: 13, color: 'var(--color-ink)' }}>Attivo</span>
                   </label>
 
                   {saveError && (
@@ -1370,7 +1425,7 @@ export default function DiscountManager() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={saving || !form.restaurant_id || !form.title || !form.discount_value || !form.valid_until}
+                    disabled={saving || !form.restaurant_id || !form.title || !form.discount_value || !form.ends_at}
                     style={{
                       padding: '9px 18px',
                       borderRadius: 8,
@@ -1380,7 +1435,7 @@ export default function DiscountManager() {
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: saving ? 'not-allowed' : 'pointer',
-                      opacity: saving || !form.restaurant_id || !form.title || !form.discount_value || !form.valid_until ? 0.5 : 1,
+                      opacity: saving || !form.restaurant_id || !form.title || !form.discount_value || !form.ends_at ? 0.5 : 1,
                       fontFamily: "var(--font-sans)",
                     }}
                   >
