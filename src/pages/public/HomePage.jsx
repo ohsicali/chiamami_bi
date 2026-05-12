@@ -41,18 +41,19 @@ function slugify(name) {
 const CAROUSEL_INITIAL = 4
 const CAROUSEL_STEP = 4
 
-function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onClick, style }) {
+function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, onSave, onClick, style }) {
   const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
     .map(name => getCategoryInfo(name))
   const category = categories[0]
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
     ? restaurant.photos[0] : null
-  // 68×68 CSS slot → 200w covers DPR 3 comfortably without quality loss.
+  // 68×68 CSS slot. A single 200w variant covers DPR 3 — no srcset needed
+  // for such a small slot, which avoids extra cold cache transforms on /api/img.
   const photoRaw = firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
     : null
   const photoUrl = proxyImg(photoRaw, { w: 200 })
-  const photoSrcSet = proxyImgSrcSet(photoRaw, [100, 200, 300])
+  const isAboveFold = index < 2
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
@@ -83,13 +84,12 @@ function MiniCard({ restaurant, userPosition, discountTitle, saved, onSave, onCl
           {photoUrl ? (
             <img
               src={photoUrl}
-              srcSet={photoSrcSet}
-              sizes="68px"
               width={68}
               height={68}
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              loading="lazy"
+              loading={isAboveFold ? 'eager' : 'lazy'}
+              fetchpriority={isAboveFold ? 'high' : 'auto'}
               decoding="async"
             />
           ) : (
@@ -626,10 +626,11 @@ export default function HomePage() {
                     scrollbarWidth: 'none', msOverflowStyle: 'none',
                   }}
                 >
-                  {carouselRestaurants.map((r) => (
+                  {carouselRestaurants.map((r, i) => (
                     <MiniCard
                       key={r.id}
                       restaurant={r}
+                      index={i}
                       userPosition={position}
                       discountTitle={discountLabelMap[r.id]}
                       saved={isSaved(r.id)}
