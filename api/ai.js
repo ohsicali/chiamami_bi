@@ -107,12 +107,15 @@ export default async function handler(req, res) {
   const limited = rateLimit(req, { key: `ai-auth-${userId}`, max: 10, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
-  const { prompt: rawPrompt, conversation_id, current_moment } = req.body || {}
+  const { prompt: rawPrompt, conversation_id, current_moment, user_location } = req.body || {}
   const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : ''
   if (!prompt) return res.status(400).json({ error: 'prompt required' })
   if (prompt.length > MAX_PROMPT_LEN) {
     return res.status(400).json({ error: `prompt troppo lungo (max ${MAX_PROMPT_LEN} caratteri)` })
   }
+  // user_location opzionale: { lat, lng }. Sanitizzato: numeri finiti e
+  // dentro lat ∈ [-90,90], lng ∈ [-180,180]. Se invalido → ignorato.
+  const userLocation = sanitizeUserLocation(user_location)
 
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -151,6 +154,7 @@ export default async function handler(req, res) {
       history,
       userPrompt: prompt,
       currentMoment: current_moment || null,
+      userLocation,
     })
 
     // ── Persist ──
@@ -178,7 +182,10 @@ export default async function handler(req, res) {
           conversation_id: finalConversationId,
           role: 'user',
           content: { text: prompt },
-          metadata: current_moment ? { current_moment } : null,
+          metadata: (current_moment || userLocation) ? {
+            ...(current_moment ? { current_moment } : {}),
+            ...(userLocation ? { user_location: userLocation } : {}),
+          } : null,
         },
         {
           conversation_id: finalConversationId,
@@ -212,11 +219,44 @@ function extractMessageText(content) {
   return ''
 }
 
+/**
+ * Sanitizza { lat, lng } dell'utente: numeri finiti dentro i range geografici
+ * standard. Out-of-range o garbage → null (l'AI lavora senza geo).
+ */
+function sanitizeUserLocation(loc) {
+  if (!loc || typeof loc !== 'object') return null
+  const lat = Number(loc.lat)
+  const lng = Number(loc.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
+  return { lat, lng }
+}
+
+/**
+ * Distanza geodetica fra due punti (km). Haversine, sferica.
+ * Sufficiente per "a X min a piedi" in raggio urbano.
+ */
+function haversineKm(a, b) {
+  const R = 6371
+  const toRad = (d) => (d * Math.PI) / 180
+  const dLat = toRad(b.lat - a.lat)
+  const dLng = toRad(b.lng - a.lng)
+  const sa = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(sa))
+}
+
+// 4.5 km/h è una velocità a piedi italiana media (urbana, con semafori).
+const WALK_KM_H = 4.5
+function walkMinutes(km) {
+  return Math.max(1, Math.round((km / WALK_KM_H) * 60))
+}
+
 /* ------------------------------------------------------------------ */
 /*  askClaude — function calling loop                                   */
 /* ------------------------------------------------------------------ */
-async function askClaude({ apiKey, admin, history, userPrompt, currentMoment }) {
-  const system = buildSystemBlocks(currentMoment)
+async function askClaude({ apiKey, admin, history, userPrompt, currentMoment, userLocation }) {
+  const system = buildSystemBlocks(currentMoment, userLocation)
   const tools = [searchRestaurantsTool(), presentPicksTool()]
 
   const messages = [
@@ -246,7 +286,7 @@ async function askClaude({ apiKey, admin, history, userPrompt, currentMoment }) 
     const searchCall = toolUses.find((t) => t.name === 'search_restaurants')
     if (!searchCall) break
 
-    const toolOutput = await executeSearch(admin, searchCall.input || {})
+    const toolOutput = await executeSearch(admin, searchCall.input || {}, userLocation)
     // Indicizza candidati per join futuro
     for (const c of (toolOutput.candidates || [])) {
       candidatesById.set(c.id, c)
@@ -313,6 +353,10 @@ function buildResultsFromPicks(picks, candidatesById) {
       open_now: c.open_now,
       closes_at: c.closes_at,
       why: String(pick?.why || '').trim().slice(0, 120),
+      // Geo + sconto: il frontend mostra il pill se valorizzati.
+      distance_km: c.distance_km ?? null,
+      walk_minutes: c.walk_minutes ?? null,
+      discount_percent: c.active_discount?.percent ?? null,
     })
   }
   return out
@@ -385,6 +429,10 @@ function searchRestaurantsTool() {
           enum: RECOMMENDED_FOR_TAGS,
           description: 'Tag editoriale di adeguatezza. \'Cena romantica\' per coppie, \'Gruppo di amici\' per gruppi, \'Tradizione\' per piemontese classico, \'Esperienza unica\' per il top, \'Vegetariano\' per veg, \'Vista panoramica\' per vista, \'Famiglia\' per famiglie, \'Appuntamento\' per primo appuntamento.',
         },
+        near_me: {
+          type: 'boolean',
+          description: 'True se l\'utente cita la prossimità ("vicino a me", "qui intorno", "in zona", "a piedi", "a 5 min"). Funziona solo se l\'utente ha condiviso la posizione (vedi contesto sessione): in quel caso ordina per distanza e tiene solo locali entro 2 km. Se senza posizione, lo ignoro.',
+        },
       },
     },
   }
@@ -424,10 +472,10 @@ function presentPicksTool() {
 /* ------------------------------------------------------------------ */
 /*  Tool executor — query Supabase                                      */
 /* ------------------------------------------------------------------ */
-async function executeSearch(admin, filters) {
+async function executeSearch(admin, filters, userLocation = null) {
   let query = admin
     .from('restaurants')
-    .select('id, slug, name, address, city, cuisine_type, category, price_range, our_rating, tagline, our_review, our_tip, recommended_for, hours_cache, moments, is_published')
+    .select('id, slug, name, address, city, cuisine_type, category, price_range, our_rating, tagline, our_review, our_tip, recommended_for, hours_cache, moments, latitude, longitude, is_published')
     .eq('is_published', true)
     .limit(40)
 
@@ -464,6 +512,15 @@ async function executeSearch(admin, filters) {
       ? isOpenForMomentServer(r.hours_cache, filters.moment, now, r.moments)
       : { match: true }
 
+    // Distanza in linea d'aria + stima minuti a piedi. Solo se l'utente ha
+    // condiviso la posizione e il locale ha lat/lng nel DB.
+    let distance_km = null
+    let walk_minutes = null
+    if (userLocation && Number.isFinite(r.latitude) && Number.isFinite(r.longitude)) {
+      distance_km = haversineKm(userLocation, { lat: r.latitude, lng: r.longitude })
+      walk_minutes = walkMinutes(distance_km)
+    }
+
     return {
       // Campi opachi per il join finale (anche presi da present_picks)
       id: r.id,
@@ -484,6 +541,9 @@ async function executeSearch(admin, filters) {
         review_excerpt: truncate(r.our_review, 280),
         tip: r.our_tip || '',
       },
+      // Geo (null se l'utente non ha condiviso la posizione)
+      distance_km: distance_km != null ? Math.round(distance_km * 10) / 10 : null,
+      walk_minutes,
       moment_match: momentOk.match,
     }
   })
@@ -492,24 +552,55 @@ async function executeSearch(admin, filters) {
   if (filters.moment) filtered = filtered.filter((r) => r.moment_match)
   if (filters.open_now) filtered = filtered.filter((r) => r.open_now || r.closes_at == null)
 
-  if (filters.discount_only === true && filtered.length > 0) {
+  // Filtro "vicino a me": richiede userLocation. Tiene chi è entro NEAR_KM
+  // e ordina per distanza crescente. Se userLocation manca → no-op (Claude
+  // sa che è inutile, ma per sicurezza non rompiamo nulla).
+  const NEAR_KM = 2.0
+  if (filters.near_me === true && userLocation) {
+    filtered = filtered
+      .filter((r) => r.distance_km != null && r.distance_km <= NEAR_KM)
+      .sort((a, b) => (a.distance_km ?? 9e9) - (b.distance_km ?? 9e9))
+  }
+
+  // Discounts attivi (query batch). Se l'utente vuole solo sconti → filtro;
+  // altrimenti li espongo come campo informativo per il why di Bi.
+  if (filtered.length > 0) {
     const ids = filtered.map((r) => r.id)
     const nowIso = new Date().toISOString()
     const { data: drops } = await admin
       .from('discounts')
-      .select('restaurant_id')
+      .select('restaurant_id, discount_percent, title, ends_at')
       .eq('is_active', true)
       .lte('starts_at', nowIso)
       .gte('ends_at', nowIso)
       .in('restaurant_id', ids)
-    const activeIds = new Set((drops || []).map((d) => d.restaurant_id))
-    filtered = filtered.filter((r) => activeIds.has(r.id))
+    const dropByRest = new Map()
+    for (const d of (drops || [])) {
+      // Tieni il primo (= maggiore percentuale se ce ne fossero più di uno).
+      if (!dropByRest.has(d.restaurant_id) ||
+          (d.discount_percent || 0) > (dropByRest.get(d.restaurant_id).discount_percent || 0)) {
+        dropByRest.set(d.restaurant_id, d)
+      }
+    }
+    for (const c of filtered) {
+      const d = dropByRest.get(c.id)
+      if (d) {
+        c.active_discount = {
+          percent: d.discount_percent || null,
+          title: d.title || null,
+          ends_at: d.ends_at || null,
+        }
+      }
+    }
+    if (filters.discount_only === true) {
+      filtered = filtered.filter((r) => r.active_discount)
+    }
   }
 
   // Retry allargato: togli zone + open_now
   if (filtered.length === 0 && (filters.zone || filters.open_now)) {
     const relaxed = { ...filters, zone: null, open_now: false }
-    const relaxedResult = await executeSearch(admin, relaxed)
+    const relaxedResult = await executeSearch(admin, relaxed, userLocation)
     if (relaxedResult.candidates && relaxedResult.candidates.length > 0) {
       return { candidates: relaxedResult.candidates, total: relaxedResult.total, relaxed: true }
     }
@@ -518,7 +609,7 @@ async function executeSearch(admin, filters) {
   // Retry ancora più permissivo: alza price_max
   if (filtered.length === 0 && typeof filters.price_max === 'number' && filters.price_max < 4) {
     const relaxed = { ...filters, zone: null, open_now: false, price_max: filters.price_max + 1 }
-    const relaxedResult = await executeSearch(admin, relaxed)
+    const relaxedResult = await executeSearch(admin, relaxed, userLocation)
     if (relaxedResult.candidates && relaxedResult.candidates.length > 0) {
       return { candidates: relaxedResult.candidates, total: relaxedResult.total, relaxed: true }
     }
@@ -661,12 +752,15 @@ function isOpenForMomentServer(hours, moment, now, manualMoments = null) {
 /* ------------------------------------------------------------------ */
 /*  System prompt                                                       */
 /* ------------------------------------------------------------------ */
-function buildSystemBlocks(currentMoment) {
+function buildSystemBlocks(currentMoment, userLocation) {
   const momentHint = currentMoment && MOMENT_LABELS[currentMoment]
     ? `\nMomento corrente per l'utente: ${MOMENT_LABELS[currentMoment]}.`
     : ''
+  const locationHint = userLocation
+    ? `\nPosizione utente: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} — i candidati ti arrivano con \`distance_km\` e \`walk_minutes\` valorizzati, puoi filtrare con \`near_me: true\` e citare i minuti a piedi nel why.`
+    : '\nPosizione utente: NON disponibile — il filtro `near_me` non funziona. Non promettere "vicino a te". Se l\'utente chiede prossimità, chiedigli di condividere la posizione dal bottone 📍 in basso.'
 
-  // Blocco statico (cacheable) + blocco dinamico (momento corrente).
+  // Blocco statico (cacheable) + blocco dinamico (momento + posizione).
   // cache_control sul blocco statico: Anthropic riusa il KV cache fra le chiamate.
   return [
     {
@@ -676,7 +770,7 @@ function buildSystemBlocks(currentMoment) {
     },
     {
       type: 'text',
-      text: `Contesto sessione corrente:${momentHint}\nData/ora: ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}.`,
+      text: `Contesto sessione corrente:${momentHint}${locationHint}\nData/ora: ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}.`,
     },
   ]
 }
@@ -703,6 +797,7 @@ Procedi così:
 Dopo aver letto i candidati, rispondi nella stessa risposta con DUE blocchi nell'ordine:
 
 A) BLOCCO TESTO (la "bolla" di Bi): 1-3 frasi in prosa naturale italiana, prima persona, voce calda e asciutta. Niente nomi di locali qui (li mette già la card). Niente JSON, niente bullet, niente "ecco". Apri spesso con una contestualizzazione corta ("Allora", "Per il pranzo lì", "Su questo ti dico subito che…").
+Se l'utente ha condiviso la posizione (i candidati hanno walk_minutes valorizzato) puoi citare la prossimità nel testo: "Il più vicino a te è a 6 minuti." Se NON ha condiviso e ti ha chiesto "vicino", suggeriscigli di toccare il 📍 in basso per condividere la posizione.
 
 B) CHIAMATA al tool present_picks con i tuoi 1-3 picks. Ogni pick deve avere:
    - restaurant_id: l'id esatto dal candidato (campo "id").
@@ -713,6 +808,12 @@ B) CHIAMATA al tool present_picks con i tuoi 1-3 picks. Ogni pick deve avere:
        • "Piccolo, silenzioso."
        • "Da provare il tagliere."
        • "Per te, stasera."
+   Se il candidato ha active_discount.percent valorizzato e non è già implicito (e tu non ne hai parlato nel testo), puoi citarlo nel why: "Stasera −20%." — ma il pill di sconto compare già nella card, quindi NON è obbligatorio ripeterlo.
+
+# SEGNALI EXTRA NEI CANDIDATI
+- walk_minutes + distance_km: minuti a piedi e km. Disponibili solo con posizione utente. Usa minuti, non km: "a 7 minuti a piedi" suona meglio di "a 0.5 km".
+- active_discount: { percent, title, ends_at }. Indica che il locale ha uno sconto live ora.
+- near_me: filtro che ordina per distanza e tiene solo ≤2 km. Attiva quando l'utente cita "vicino", "qui", "intorno a me", "a piedi", "in zona", "a 5 minuti". MAI da solo: combina con almeno una categoria/momento/recommended_for se hanno citato anche quello.
 
 # CASO ZERO RISULTATI
 Se anche dopo il retry il tool torna 0 candidati validi: NON chiamare present_picks. Rispondi col solo testo, riconosci il limite con onestà, proponi una via vicina ("a 5 minuti hai…", "su questa cosa non te lo so consigliare, ma se vuoi su X ti dico…"). Mai "nessun risultato trovato".
