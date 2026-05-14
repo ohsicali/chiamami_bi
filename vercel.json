@@ -14,8 +14,14 @@
     "api/discount-pdf.js": {
       "maxDuration": 30,
       "includeFiles": "api/_{fonts,assets}/**"
+    },
+    "api/places-refresh.js": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    { "path": "/api/places-refresh", "schedule": "0 4 * * 0" }
+  ],
   "headers": [
     {
       "source": "/api/img",

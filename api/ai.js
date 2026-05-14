@@ -574,7 +574,10 @@ function mapZoneToAddressPatterns(zoneRaw) {
 }
 
 function computeOpenStatus(hours, now) {
-  const source = hours?.regularOpeningHours || hours?.currentOpeningHours
+  // Preferiamo currentOpeningHours: Google ci merge dentro i festivi /
+  // chiusure straordinarie della settimana corrente. regularOpeningHours è il
+  // "tipo" della settimana, fallback se per quel locale current manca.
+  const source = hours?.currentOpeningHours || hours?.regularOpeningHours
   if (!source?.periods?.length) return { open: null, closesAt: null }
   const offset = typeof hours?.utcOffsetMinutes === 'number' ? hours.utcOffsetMinutes : null
   const shifted = offset != null ? new Date(now.getTime() + offset * 60_000) : now
@@ -629,7 +632,8 @@ function isOpenForMomentServer(hours, moment, now, manualMoments = null) {
     dopocena:  { startMin: 22 * 60 + 30, endMin: 26 * 60 },
   }
   if (!SLOTS[moment]) return { match: false }
-  const source = hours?.regularOpeningHours || hours?.currentOpeningHours
+  // Stesso criterio di computeOpenStatus: current ha i festivi mergiati.
+  const source = hours?.currentOpeningHours || hours?.regularOpeningHours
   if (!source?.periods?.length) {
     // Senza tag e senza orari: tag manuale era già la fonte primaria → no match.
     // Manteniamo però true se manualMoments è null (mai impostato) per non
