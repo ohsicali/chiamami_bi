@@ -4,15 +4,12 @@
  */
 
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
+import { applyCors } from './_cors.js'
 
 const NOTIFY_EMAIL = 'info@chiamamibi.com'
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   // Rate-limit to prevent application-form spam.
@@ -37,6 +34,32 @@ export default async function handler(req, res) {
     })
   }
 
+  // Strict email validation — prevents email header injection via CR/LF in reply_to.
+  // Resend would refuse a malformed address, but defense-in-depth here keeps any
+  // future direct SMTP integration safe.
+  const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  const cleanEmail = String(email).trim()
+  if (cleanEmail.length > 254 || !EMAIL_RE.test(cleanEmail) || /[\r\n]/.test(cleanEmail)) {
+    return res.status(400).json({ error: 'Indirizzo email non valido' })
+  }
+
+  // Sanitize free-text fields: cap length, strip control chars (defense-in-depth).
+  const sanitizeText = (v, max) => {
+    if (v == null) return null
+    const s = String(v).replace(/[\u0000-\u001F\u007F]/g, '').trim()
+    return s.length === 0 ? null : s.slice(0, max)
+  }
+  const cleanRestaurantName = sanitizeText(restaurant_name, 200)
+  const cleanContactName = sanitizeText(contact_name, 200)
+  const cleanPhone = sanitizeText(phone, 50)
+  const cleanAddress = sanitizeText(address, 500)
+  const cleanInstagram = sanitizeText(instagram, 200)
+  const cleanMotivation = sanitizeText(motivation, 2000)
+
+  if (!cleanRestaurantName || !cleanContactName || !cleanAddress) {
+    return res.status(400).json({ error: 'Campi obbligatori non validi' })
+  }
+
   // Save to Supabase using the service role (bypasses RLS cleanly from the
   // server). We intentionally no longer fall back to the anon key: doing so
   // would require a permissive anon INSERT policy on partner_applications,
@@ -55,15 +78,15 @@ export default async function handler(req, res) {
           Prefer: 'return=minimal',
         },
         body: JSON.stringify({
-          restaurant_name,
-          contact_name,
-          email,
-          phone: phone || null,
-          address,
-          instagram: instagram || null,
-          motivation: motivation || null,
+          restaurant_name: cleanRestaurantName,
+          contact_name: cleanContactName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          address: cleanAddress,
+          instagram: cleanInstagram,
+          motivation: cleanMotivation,
           // legacy compat: ApplicationManager still reads these
-          message: motivation || null,
+          message: cleanMotivation,
           city: 'Torino',
           status: 'pending',
         }),
@@ -84,13 +107,13 @@ export default async function handler(req, res) {
   if (apiKey) {
     try {
       const html = buildEmailHtml({
-        restaurant_name,
-        contact_name,
-        email,
-        phone,
-        address,
-        instagram,
-        motivation,
+        restaurant_name: cleanRestaurantName,
+        contact_name: cleanContactName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        address: cleanAddress,
+        instagram: cleanInstagram,
+        motivation: cleanMotivation,
       })
 
       const resp = await fetch('https://api.resend.com/emails', {
@@ -102,8 +125,8 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
           to: [NOTIFY_EMAIL],
-          reply_to: email,
-          subject: `Nuova candidatura partner: ${restaurant_name}`,
+          reply_to: cleanEmail,
+          subject: `Nuova candidatura partner: ${cleanRestaurantName}`,
           html,
         }),
       })
@@ -117,19 +140,17 @@ export default async function handler(req, res) {
     }
 
     // Send confirmation to candidate (fire-and-forget — does not block the response)
-    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      const siteUrl = process.env.SITE_URL || 'https://chiamamibi.com'
-      fetch(`${siteUrl}/api/send-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'partner-application-confirmation',
-          to: email,
-          nome_referente: contact_name,
-          nome_attivita: restaurant_name,
-        }),
-      }).catch((err) => console.warn('[partner-application] confirmation send failed:', err))
-    }
+    const siteUrl = process.env.SITE_URL || 'https://chiamamibi.com'
+    fetch(`${siteUrl}/api/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'partner-application-confirmation',
+        to: cleanEmail,
+        nome_referente: cleanContactName,
+        nome_attivita: cleanRestaurantName,
+      }),
+    }).catch((err) => console.warn('[partner-application] confirmation send failed:', err))
   }
 
   return res.status(200).json({ success: true })

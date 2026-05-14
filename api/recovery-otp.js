@@ -17,23 +17,23 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
+import { applyCors } from './_cors.js'
+
+const MAX_FAILED_ATTEMPTS = 5
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const body = req.body || {}
   const isVerify = !!body.otp
 
-  // Rate-limit separato per i due step. Verify ha quota più alta perché
-  // l'utente potrebbe sbagliare a digitare il codice.
+  // Rate-limit separato per i due step. Verify abbassato da 10 a 5/min per
+  // limitare brute-force distribuito; in più la riga auth_recovery_tokens
+  // viene cancellata dopo MAX_FAILED_ATTEMPTS tentativi falliti (sotto).
   maybeCleanup()
   const limited = isVerify
-    ? rateLimit(req, { key: 'verify-recovery-otp', max: 10, windowMs: 60_000 })
+    ? rateLimit(req, { key: 'verify-recovery-otp', max: 5, windowMs: 60_000 })
     : rateLimit(req, { key: 'recovery-otp', max: 5, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
@@ -150,15 +150,11 @@ async function handleVerify({ adminClient, body, res }) {
 
     const { data: token, error: tokenErr } = await adminClient
       .from('auth_recovery_tokens')
-      .select('otp, expires_at, action')
+      .select('otp, expires_at, action, failed_attempts')
       .eq('user_id', profile.id)
       .single()
 
     if (tokenErr || !token) {
-      return res.status(400).json({ error: 'Codice non valido' })
-    }
-
-    if (!token.otp || token.otp !== otp.trim()) {
       return res.status(400).json({ error: 'Codice non valido' })
     }
 
@@ -168,6 +164,29 @@ async function handleVerify({ adminClient, body, res }) {
         .delete()
         .eq('user_id', profile.id)
       return res.status(400).json({ error: 'Codice scaduto. Richiedine uno nuovo.' })
+    }
+
+    // Defense-in-depth against brute force: cap failed attempts per OTP row.
+    // The column is added by supabase/security-hardening-2026-05.sql; if the
+    // migration hasn't run yet the field is `undefined` and we skip the cap
+    // (rate-limit still applies).
+    const currentFailed = Number(token.failed_attempts) || 0
+    if (currentFailed >= MAX_FAILED_ATTEMPTS) {
+      await adminClient
+        .from('auth_recovery_tokens')
+        .delete()
+        .eq('user_id', profile.id)
+      return res.status(429).json({ error: 'Troppi tentativi errati. Richiedi un nuovo codice.' })
+    }
+
+    if (!token.otp || token.otp !== String(otp).trim()) {
+      // Best-effort increment; ignore failure if column missing.
+      await adminClient
+        .from('auth_recovery_tokens')
+        .update({ failed_attempts: currentFailed + 1 })
+        .eq('user_id', profile.id)
+        .then(() => null, () => null)
+      return res.status(400).json({ error: 'Codice non valido' })
     }
 
     const action = token.action

@@ -14,6 +14,8 @@
  * al cap Vercel Hobby di 12 functions).
  */
 
+import { applyCors } from './_cors.js'
+
 // SSRF guard: only fetch URLs on these Google-owned hosts. The endpoint
 // purposefully does not accept arbitrary destinations — it's intended for
 // Maps link resolution only.
@@ -34,11 +36,7 @@ function isHostAllowed(host) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { url, query, type } = req.body || {}
@@ -62,11 +60,13 @@ export default async function handler(req, res) {
     }
   }
 
-  // Reject non-https and non-allowlisted hosts up front
+  // Reject non-https and non-allowlisted hosts up front. We only accept
+  // https URLs (Google share links are always https — http would only happen
+  // through a redirect, which we re-validate inside followRedirects()).
   try {
     const u = new URL(url)
-    if (u.protocol !== 'https:' && u.protocol !== 'http:') {
-      return res.status(400).json({ error: 'Invalid URL protocol' })
+    if (u.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Invalid URL protocol — only https is accepted' })
     }
     if (!isHostAllowed(u.hostname)) {
       return res.status(403).json({ error: 'URL non supportato. Usa un link di Google Maps.' })
@@ -377,10 +377,12 @@ async function followRedirects(url, maxRedirects = 10) {
     const location = res.headers.get('location')
     if (!location) return current
     const next = location.startsWith('http') ? location : new URL(location, current).href
-    // Re-validate destination host — reject if outside allowlist
+    // Re-validate destination host AND protocol — reject http downgrade
+    // and any host outside the allowlist.
     try {
-      const nextHost = new URL(next).hostname
-      if (!isHostAllowed(nextHost)) return current
+      const nextUrl = new URL(next)
+      if (nextUrl.protocol !== 'https:') return current
+      if (!isHostAllowed(nextUrl.hostname)) return current
     } catch {
       return current
     }

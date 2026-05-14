@@ -10,6 +10,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
+import { applyCors } from './_cors.js'
 
 const SITE_URL = 'https://chiamamibi.com'
 const RESEND_BATCH_URL = 'https://api.resend.com/emails/batch'
@@ -17,11 +18,7 @@ const RESEND_BATCH_URL = 'https://api.resend.com/emails/batch'
 const RESEND_BATCH_SIZE = 100
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   maybeCleanup()

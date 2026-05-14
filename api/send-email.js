@@ -13,13 +13,10 @@
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
+import { applyCors } from './_cors.js'
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { type } = req.body || {}
@@ -387,7 +384,9 @@ ChiamamiBi · Torino · chiamamibi.com`
 /* ------------------------------------------------------------------ */
 
 async function handleSuggestionConfirmation(req, res) {
-  const limited = rateLimit(req, { key: 'send-email-confirmation', max: 5, windowMs: 60_000 })
+  // Tightened from 5 → 3 / min: this endpoint is unauthenticated and a
+  // determined attacker could use it to spam arbitrary inboxes via Resend.
+  const limited = rateLimit(req, { key: 'send-email-confirmation', max: 3, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
   const apiKey = process.env.RESEND_API_KEY
@@ -434,7 +433,10 @@ async function handleSuggestionConfirmation(req, res) {
 /* ------------------------------------------------------------------ */
 
 async function handleInternalNotify(req, res) {
-  const limited = rateLimit(req, { key: 'send-email-internal-notify', max: 10, windowMs: 60_000 })
+  // Tightened from 10 → 3 / min: unauthenticated endpoint that delivers
+  // arbitrary user-supplied text to info@chiamamibi.com. Strong rate-limit
+  // is the main defense against spam given we have no CAPTCHA yet.
+  const limited = rateLimit(req, { key: 'send-email-internal-notify', max: 3, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
 
   const apiKey = process.env.RESEND_API_KEY
@@ -443,6 +445,23 @@ async function handleInternalNotify(req, res) {
   const { nome_locale, address, tags, description, nome_utente, email_utente, id } = req.body || {}
   if (!nome_locale || !email_utente) {
     return res.status(400).json({ error: 'Missing required fields: nome_locale, email_utente' })
+  }
+  // Strict email validation — escapeHtml already runs in the template, but
+  // reject anything that's not a real address up front (prevents future
+  // template variants from accidentally introducing a header injection).
+  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(String(email_utente).trim())) {
+    return res.status(400).json({ error: 'Invalid email_utente' })
+  }
+  // Cap free-text field lengths to prevent oversized payloads to Resend.
+  const cap = (v, n) => (v == null ? null : String(v).slice(0, n))
+  const safe = {
+    nome_locale: cap(nome_locale, 200),
+    address: cap(address, 500),
+    tags: cap(tags, 500),
+    description: cap(description, 2000),
+    nome_utente: cap(nome_utente, 200),
+    email_utente: String(email_utente).trim().slice(0, 254),
+    id,
   }
 
   // No individual detail route exists — link to the filterable list
@@ -458,8 +477,16 @@ async function handleInternalNotify(req, res) {
       body: JSON.stringify({
         from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
         to: ['info@chiamamibi.com'],
-        subject: `[Bi] Nuovo suggerimento: ${nome_locale}`,
-        html: buildInternalNotifyHtml({ nome_locale, address, tags, description, nome_utente: nome_utente || '', email_utente, urlAdmin }),
+        subject: `[Bi] Nuovo suggerimento: ${safe.nome_locale}`,
+        html: buildInternalNotifyHtml({
+          nome_locale: safe.nome_locale,
+          address: safe.address,
+          tags: safe.tags,
+          description: safe.description,
+          nome_utente: safe.nome_utente || '',
+          email_utente: safe.email_utente,
+          urlAdmin,
+        }),
       }),
     })
 
