@@ -5,6 +5,7 @@
 
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
+import { verifyTurnstile } from './_turnstile.js'
 
 const NOTIFY_EMAIL = 'info@chiamamibi.com'
 
@@ -16,6 +17,10 @@ export default async function handler(req, res) {
   maybeCleanup()
   const limited = rateLimit(req, { key: 'partner-application', max: 3, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
+
+  // Cloudflare Turnstile verification (no-op if TURNSTILE_SECRET_KEY unset).
+  const captcha = await verifyTurnstile(req)
+  if (!captcha.ok) return res.status(captcha.status).json({ error: captcha.error })
 
   const {
     restaurant_name,
