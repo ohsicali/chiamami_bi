@@ -42,20 +42,46 @@ const THROTTLE_MS = 200
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-
-  // Auth: solo cron Vercel o chiamate manuali col secret.
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return res.status(500).json({ error: 'CRON_SECRET not configured' })
-  const auth = req.headers.authorization || ''
-  if (auth !== `Bearer ${cronSecret}`) {
-    return res.status(401).json({ error: 'unauthorized' })
-  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  if (req.method === 'OPTIONS') return res.status(200).end()
 
   const apiKey = process.env.GOOGLE_PLACES_KEY
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
   if (!apiKey) return res.status(500).json({ error: 'GOOGLE_PLACES_KEY not configured' })
-  if (!supabaseUrl || !serviceRoleKey) return res.status(500).json({ error: 'Supabase env missing' })
+  if (!supabaseUrl || !serviceRoleKey || !anonKey) return res.status(500).json({ error: 'Supabase env missing' })
+
+  // Due percorsi di auth:
+  //  - Cron Vercel: Authorization: Bearer $CRON_SECRET (settimanale automatico).
+  //  - Admin manuale: Authorization: Bearer <supabase JWT> di un utente con
+  //    profiles.is_admin = true (bottone "Sincronizza orari" in /admin).
+  // Se nessuno dei due passa → 401.
+  const auth = req.headers.authorization || ''
+  const cronSecret = process.env.CRON_SECRET
+  let authedAs = null
+
+  if (cronSecret && auth === `Bearer ${cronSecret}`) {
+    authedAs = 'cron'
+  } else if (auth.startsWith('Bearer ')) {
+    const token = auth.replace('Bearer ', '')
+    const anon = createClient(supabaseUrl, anonKey)
+    const { data: { user } } = await anon.auth.getUser(token)
+    if (user) {
+      const adminCheck = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+      const { data: prof } = await adminCheck
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (prof?.is_admin === true) authedAs = 'admin'
+    }
+  }
+
+  if (!authedAs) return res.status(401).json({ error: 'unauthorized' })
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -130,6 +156,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     ok: true,
+    triggered_by: authedAs,
     elapsed_ms: Date.now() - startedAt,
     ...results,
   })

@@ -455,8 +455,107 @@ export default function AdminDashboard() {
 
         {/* ── Inbox candidature ── */}
         <InboxCandidatureTile applications={inboxApps} totalPending={metrics.inboxApplications} />
+
+        {/* ── Manutenzione ── */}
+        <MaintenanceTile />
       </div>
     </AdminLayout>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  MaintenanceTile — strumenti rapidi (es. sync orari Google)         */
+/* ------------------------------------------------------------------ */
+function MaintenanceTile() {
+  const [status, setStatus] = useState('idle') // idle | running | done | error
+  const [result, setResult] = useState(null)
+
+  const runSync = async () => {
+    setStatus('running')
+    setResult(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setStatus('error')
+        setResult({ error: 'Sessione scaduta, rifai login' })
+        return
+      }
+      const resp = await fetch('/api/places-refresh', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await resp.json().catch(() => ({}))
+      if (!resp.ok || data.ok === false) {
+        setStatus('error')
+        setResult(data)
+        return
+      }
+      setStatus('done')
+      setResult(data)
+    } catch (err) {
+      setStatus('error')
+      setResult({ error: err?.message || String(err) })
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 24, background: '#fff', border: '1px solid var(--color-line, #EAE3D7)', borderRadius: 18, padding: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+        <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 16, letterSpacing: '-0.01em', margin: 0 }}>
+          Manutenzione
+        </h3>
+        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-ink-55, rgba(34,24,28,0.55))' }}>
+          strumenti
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 4 }}>
+            Sincronizza orari Google
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--color-ink-70, rgba(34,24,28,0.7))', lineHeight: 1.45 }}>
+            Aggiorna gli orari di apertura (regolari + festivi della settimana) per tutti i locali pubblicati. Lo cron settimanale lo fa già di domenica, ma puoi forzarlo qui se hai appena aggiunto locali.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={runSync}
+          disabled={status === 'running'}
+          style={{
+            padding: '11px 18px',
+            borderRadius: 999,
+            fontSize: 13,
+            fontWeight: 800,
+            background: status === 'running' ? 'var(--color-ink-30, rgba(34,24,28,0.3))' : 'var(--color-ink, #22181C)',
+            color: '#fff',
+            border: 0,
+            cursor: status === 'running' ? 'wait' : 'pointer',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
+          {status === 'running' ? 'Sincronizzo…' : 'Sincronizza ora'}
+        </button>
+      </div>
+
+      {status === 'done' && result && (
+        <div style={{ marginTop: 14, padding: 12, background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 12, fontSize: 12.5, color: '#065F46', lineHeight: 1.5 }}>
+          ✅ Sincronizzati <b>{result.succeeded}</b> locali su {result.candidates} candidati
+          {result.failed > 0 ? <> (<b>{result.failed}</b> falliti — controlla i log Vercel)</> : ''}.
+          <br />
+          Tempo: {Math.round((result.elapsed_ms || 0) / 100) / 10}s.
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div style={{ marginTop: 14, padding: 12, background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, fontSize: 12.5, color: '#991B1B', lineHeight: 1.5 }}>
+          ❌ Errore: {result?.error || 'qualcosa non gira'}.
+        </div>
+      )}
+    </div>
   )
 }
 
