@@ -19,9 +19,6 @@
       "maxDuration": 60
     }
   },
-  "crons": [
-    { "path": "/api/places-refresh", "schedule": "0 4 * * 0" }
-  ],
   "headers": [
     {
       "source": "/api/img",
