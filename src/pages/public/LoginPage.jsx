@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import Footer from '../../components/Layout/Footer'
 import BiLogoMark from '../../components/UI/BiLogoMark'
+import Turnstile from '../../components/Turnstile'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -60,6 +61,8 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [maskedRecovery, setMaskedRecovery] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
 
   // Redirect if already logged in
   useEffect(() => {
@@ -79,10 +82,15 @@ export default function LoginPage() {
         setSuccess('Email inviata! Controlla la tua casella di posta per reimpostare la password.')
       } else if (mode === 'recovery_forgot') {
         // Send recovery OTP for password reset
+        if (captchaRequired && !captchaToken) {
+          setError('Attendi qualche secondo: la verifica anti-spam è in corso, poi riprova.')
+          setSubmitting(false)
+          return
+        }
         const resp = await fetch('/api/recovery-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, action: 'reset_password' }),
+          body: JSON.stringify({ email, action: 'reset_password', captcha_token: captchaToken }),
         })
         const data = await resp.json()
         if (data.no_recovery) {
@@ -713,6 +721,12 @@ export default function LoginPage() {
                 </motion.p>
               )}
             </AnimatePresence>
+
+            {mode === 'recovery_forgot' && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                <Turnstile onToken={setCaptchaToken} action="recovery-otp" />
+              </div>
+            )}
 
             {/* Submit */}
             <motion.button

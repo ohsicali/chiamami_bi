@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
+import Turnstile from '../Turnstile'
 
 const TAGS = [
   { emoji: '🍝', label: 'Cibo pazzesco' },
@@ -60,6 +61,8 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -102,6 +105,10 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
   }
 
   const handleSubmit = async () => {
+    if (captchaRequired && !captchaToken) {
+      setError('Attendi qualche secondo: la verifica anti-spam è in corso, poi riprova.')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
@@ -168,6 +175,7 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
               nome_utente: senderName,
               email_utente: recipientEmail,
               id: inserted?.id,
+              captcha_token: captchaToken,
             }),
           }),
         ]).catch(() => {})
@@ -486,6 +494,10 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
                     borderRadius: 12, marginBottom: 12,
                   }}>{error}</p>
                 )}
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                  <Turnstile onToken={setCaptchaToken} action="suggest-restaurant" />
+                </div>
 
                 <ButtonRow>
                   <GhostButton onClick={() => setStep(2)}>Indietro</GhostButton>

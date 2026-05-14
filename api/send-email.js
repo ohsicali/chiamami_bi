@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
+import { verifyTurnstile } from './_turnstile.js'
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
@@ -433,11 +434,16 @@ async function handleSuggestionConfirmation(req, res) {
 /* ------------------------------------------------------------------ */
 
 async function handleInternalNotify(req, res) {
-  // Tightened from 10 → 3 / min: unauthenticated endpoint that delivers
-  // arbitrary user-supplied text to info@chiamamibi.com. Strong rate-limit
-  // is the main defense against spam given we have no CAPTCHA yet.
+  // Unauthenticated endpoint that delivers arbitrary user-supplied text to
+  // info@chiamamibi.com. Defenses, layered:
+  //   • Cloudflare Turnstile (verifyTurnstile below)
+  //   • Rate-limit 3/min per IP
+  //   • Strict input validation
   const limited = rateLimit(req, { key: 'send-email-internal-notify', max: 3, windowMs: 60_000 })
   if (limited) return res.status(429).json({ error: limited })
+
+  const captcha = await verifyTurnstile(req)
+  if (!captcha.ok) return res.status(captcha.status).json({ error: captcha.error })
 
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return res.status(500).json({ error: 'Email service not configured' })

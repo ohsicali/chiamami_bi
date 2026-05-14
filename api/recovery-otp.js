@@ -18,6 +18,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
+import { verifyTurnstile } from './_turnstile.js'
 
 const MAX_FAILED_ATTEMPTS = 5
 
@@ -48,11 +49,11 @@ export default async function handler(req, res) {
 
   return isVerify
     ? handleVerify({ adminClient, body, res })
-    : handleRequest({ adminClient, body, res })
+    : handleRequest({ adminClient, body, req, res })
 }
 
 /* ===================== STEP "request" ===================== */
-async function handleRequest({ adminClient, body, res }) {
+async function handleRequest({ adminClient, body, req, res }) {
   const { email, action } = body
   // email = the primary email of the account
   // action = 'verify_recovery' | 'reset_password'
@@ -60,6 +61,11 @@ async function handleRequest({ adminClient, body, res }) {
   if (!email || !action) {
     return res.status(400).json({ error: 'Email and action required' })
   }
+
+  // Captcha required only on the "request" step — the verify step is gated
+  // by knowledge of the OTP itself and the failed_attempts cap.
+  const captcha = await verifyTurnstile(req)
+  if (!captcha.ok) return res.status(captcha.status).json({ error: captcha.error })
 
   const resendKey = process.env.RESEND_API_KEY
 
