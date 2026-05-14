@@ -1,0 +1,48 @@
+# Sincronizza ogni domenica gli orari di apertura dei locali da Google Places.
+# Sostituisce il cron Vercel (che richiede piano Pro). Chiama l'endpoint
+# bulk-refresh esposto da api/places-details.js con il secret condiviso.
+#
+# Setup richiesto (una sola volta):
+#   1. GitHub repo → Settings → Secrets and variables → Actions → New secret
+#      Name: CRON_SECRET
+#      Value: (stringa random, es. openssl rand -hex 32)
+#   2. Vercel project chiamami-bi → Settings → Environment Variables
+#      Key: CRON_SECRET
+#      Value: stessa stringa del passo 1
+#      Environments: Production, Preview, Development
+#
+# Si può triggerare a mano dal tab Actions di GitHub (workflow_dispatch).
+
+name: Sync Google Places hours
+
+on:
+  schedule:
+    # Ogni domenica alle 04:00 UTC (06:00 ora di Roma in estate, 05:00 d'inverno)
+    - cron: '0 4 * * 0'
+  workflow_dispatch:        # bottone "Run workflow" in /actions
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST /api/places-details (bulk refresh)
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET non configurato nei repo secrets."
+            exit 1
+          fi
+          response=$(curl --silent --show-error --fail-with-body \
+            --max-time 90 \
+            -X POST https://chiamamibi.com/api/places-details \
+            -H "Authorization: Bearer $CRON_SECRET")
+          echo "Response: $response"
+          succeeded=$(echo "$response" | grep -o '"succeeded":[0-9]*' | head -1 | cut -d: -f2)
+          failed=$(echo "$response" | grep -o '"failed":[0-9]*' | head -1 | cut -d: -f2)
+          echo "Sincronizzati: ${succeeded:-?} · falliti: ${failed:-?}"
+          # Se più della metà falliscono c'è qualcosa che non va (quota Google?).
+          if [ -n "$failed" ] && [ -n "$succeeded" ] && [ "$failed" -gt "$succeeded" ]; then
+            echo "::warning::Più fallimenti che successi — controlla i log Vercel."
+          fi
