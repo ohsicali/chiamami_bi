@@ -127,6 +127,20 @@ export default async function handler(req, res) {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
+  // ── Load user preferences (memoria cross-conversazione) ──
+  // Tabella ai_user_preferences: dietary, favorite_zones, price_max, notes.
+  // Iniettiamo nel system prompt come "Profilo dell'utente". Bi le tiene a
+  // mente ma non le impone in modo rigido (si veda la regola nel prompt).
+  let userPreferences = null
+  {
+    const { data: prefRow } = await admin
+      .from('ai_user_preferences')
+      .select('dietary, favorite_zones, price_max, notes')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (prefRow && hasAnyPreference(prefRow)) userPreferences = prefRow
+  }
+
   // ── Load history (clean text only) ──
   let history = []
   if (conversation_id) {
@@ -207,6 +221,7 @@ export default async function handler(req, res) {
         userPrompt: prompt,
         currentMoment: current_moment || null,
         userLocation,
+        userPreferences,
       })
       const finalConversationId = await persist(result).catch((err) => {
         console.warn('[ai] persist failed:', err?.message)
@@ -229,6 +244,7 @@ export default async function handler(req, res) {
       userPrompt: prompt,
       currentMoment: current_moment || null,
       userLocation,
+      userPreferences,
     })
     const finalConversationId = await persist(result).catch(() => null)
     return res.status(200).json({
@@ -298,8 +314,8 @@ function walkMinutes(km) {
 /* ------------------------------------------------------------------ */
 /*  askClaude — function calling loop                                   */
 /* ------------------------------------------------------------------ */
-async function askClaude({ apiKey, admin, history, userPrompt, currentMoment, userLocation }) {
-  const system = buildSystemBlocks(currentMoment, userLocation)
+async function askClaude({ apiKey, admin, history, userPrompt, currentMoment, userLocation, userPreferences }) {
+  const system = buildSystemBlocks(currentMoment, userLocation, userPreferences)
   const tools = [searchRestaurantsTool(), presentPicksTool()]
 
   const messages = [
@@ -371,8 +387,8 @@ async function askClaude({ apiKey, admin, history, userPrompt, currentMoment, us
 /*  Garanzie: emette sempre alla fine (success o caso degenere) un     */
 /*  evento "picks" — anche vuoto — così il client sa di aver finito.   */
 /* ------------------------------------------------------------------ */
-async function streamAskClaude({ apiKey, admin, res, history, userPrompt, currentMoment, userLocation }) {
-  const system = buildSystemBlocks(currentMoment, userLocation)
+async function streamAskClaude({ apiKey, admin, res, history, userPrompt, currentMoment, userLocation, userPreferences }) {
+  const system = buildSystemBlocks(currentMoment, userLocation, userPreferences)
   const tools = [searchRestaurantsTool(), presentPicksTool()]
   const messages = [...history, { role: 'user', content: userPrompt }]
   const candidatesById = new Map()
@@ -941,15 +957,16 @@ function isOpenForMomentServer(hours, moment, now, manualMoments = null) {
 /* ------------------------------------------------------------------ */
 /*  System prompt                                                       */
 /* ------------------------------------------------------------------ */
-function buildSystemBlocks(currentMoment, userLocation) {
+function buildSystemBlocks(currentMoment, userLocation, userPreferences) {
   const momentHint = currentMoment && MOMENT_LABELS[currentMoment]
     ? `\nMomento corrente per l'utente: ${MOMENT_LABELS[currentMoment]}.`
     : ''
   const locationHint = userLocation
     ? `\nPosizione utente: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} — i candidati ti arrivano con \`distance_km\` e \`walk_minutes\` valorizzati, puoi filtrare con \`near_me: true\` e citare i minuti a piedi nel why.`
     : '\nPosizione utente: NON disponibile — il filtro `near_me` non funziona. Non promettere "vicino a te". Se l\'utente chiede prossimità, chiedigli di condividere la posizione dal bottone 📍 in basso.'
+  const prefBlock = formatPreferencesBlock(userPreferences)
 
-  // Blocco statico (cacheable) + blocco dinamico (momento + posizione).
+  // Blocco statico (cacheable) + blocco dinamico (momento + posizione + prefs).
   // cache_control sul blocco statico: Anthropic riusa il KV cache fra le chiamate.
   return [
     {
@@ -959,9 +976,47 @@ function buildSystemBlocks(currentMoment, userLocation) {
     },
     {
       type: 'text',
-      text: `Contesto sessione corrente:${momentHint}${locationHint}\nData/ora: ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}.`,
+      text: `Contesto sessione corrente:${momentHint}${locationHint}${prefBlock}\nData/ora: ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}.`,
     },
   ]
+}
+
+/**
+ * Restituisce true se almeno un campo delle preferenze utente è valorizzato.
+ * Serve per evitare di iniettare un blocco vuoto / fake nel system prompt.
+ */
+function hasAnyPreference(p) {
+  if (!p) return false
+  if (Array.isArray(p.dietary) && p.dietary.length > 0) return true
+  if (Array.isArray(p.favorite_zones) && p.favorite_zones.length > 0) return true
+  if (typeof p.price_max === 'number' && p.price_max > 0) return true
+  if (typeof p.notes === 'string' && p.notes.trim().length > 0) return true
+  return false
+}
+
+/**
+ * Costruisce il blocco "Profilo dell'utente" da inserire nel system prompt
+ * dinamico. Bi lo considera come informazione di contesto: deve tenerne
+ * conto SENZA imporlo se l'utente nella chat corrente chiede esplicitamente
+ * altro (es. utente vegetariano che oggi chiede "consigliami una bisteccheria"
+ * → Bi rispetta la richiesta corrente).
+ */
+function formatPreferencesBlock(p) {
+  if (!hasAnyPreference(p)) return ''
+  const parts = []
+  if (Array.isArray(p.dietary) && p.dietary.length > 0) {
+    parts.push(`dieta: ${p.dietary.join(', ')}`)
+  }
+  if (Array.isArray(p.favorite_zones) && p.favorite_zones.length > 0) {
+    parts.push(`zone preferite: ${p.favorite_zones.join(', ')}`)
+  }
+  if (typeof p.price_max === 'number' && p.price_max > 0) {
+    parts.push(`budget max: ${'€'.repeat(Math.min(4, Math.max(1, p.price_max)))}`)
+  }
+  if (typeof p.notes === 'string' && p.notes.trim().length > 0) {
+    parts.push(`note libere: "${p.notes.trim().slice(0, 240)}"`)
+  }
+  return `\nProfilo dell'utente (preferenze memorizzate dalle impostazioni): ${parts.join(' · ')}. Tieni conto di questo profilo come default — usa zone/dieta/budget per pesare le scelte e cita riferimenti naturali ("so che mangi vegetariano, ti dico..."). NON imporlo se nel messaggio corrente l'utente chiede esplicitamente qualcosa di diverso (es. vegetariano che chiede "bisteccheria" → rispetti la richiesta del momento).`
 }
 
 const STATIC_SYSTEM_PROMPT = `Sei Bi, la voce della guida ChiamamiBi.com. In prima persona, hai selezionato a Torino circa 70 ristoranti, bar e bistrot — tutti validati da te. Quando un utente ti chiede dove andare, rispondi col tuo tono: diretto, caldo, asciutto, parlato. Niente formalità.
