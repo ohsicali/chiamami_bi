@@ -117,6 +117,12 @@ export default async function handler(req, res) {
   // dentro lat ∈ [-90,90], lng ∈ [-180,180]. Se invalido → ignorato.
   const userLocation = sanitizeUserLocation(user_location)
 
+  // Streaming SSE quando il client lo richiede (Accept o body.stream).
+  // I round-trip a Claude restano max 2: round 1 sync per la search,
+  // round 2 streamato col present_picks alla fine.
+  const wantStream = req.body?.stream === true ||
+    (req.headers.accept || '').includes('text/event-stream')
+
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
@@ -147,25 +153,13 @@ export default async function handler(req, res) {
       .filter((m) => m.content) // drop empty
   }
 
-  try {
-    const result = await askClaude({
-      apiKey,
-      admin,
-      history,
-      userPrompt: prompt,
-      currentMoment: current_moment || null,
-      userLocation,
-    })
-
-    // ── Persist ──
+  // Helper di persistenza condiviso fra streaming e non-streaming.
+  const persist = async ({ message, results }) => {
     let finalConversationId = conversation_id || null
     if (!finalConversationId) {
       const { data: newConv, error: convErr } = await admin
         .from('ai_conversations')
-        .insert({
-          user_id: userId,
-          title: prompt.slice(0, 60),
-        })
+        .insert({ user_id: userId, title: prompt.slice(0, 60) })
         .select('id')
         .single()
       if (!convErr && newConv) finalConversationId = newConv.id
@@ -175,7 +169,6 @@ export default async function handler(req, res) {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', finalConversationId)
     }
-
     if (finalConversationId) {
       await admin.from('ai_messages').insert([
         {
@@ -190,12 +183,54 @@ export default async function handler(req, res) {
         {
           conversation_id: finalConversationId,
           role: 'assistant',
-          content: { text: result.message, results: result.results },
+          content: { text: message, results },
           metadata: { model: CLAUDE_MODEL },
         },
       ])
     }
+    return finalConversationId
+  }
 
+  // ── Streaming path ──
+  if (wantStream) {
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-cache, no-transform')
+    res.setHeader('Connection', 'keep-alive')
+    // Disabilita buffering proxy (Vercel/Nginx).
+    res.setHeader('X-Accel-Buffering', 'no')
+    res.flushHeaders?.()
+
+    try {
+      const result = await streamAskClaude({
+        apiKey, admin, res,
+        history,
+        userPrompt: prompt,
+        currentMoment: current_moment || null,
+        userLocation,
+      })
+      const finalConversationId = await persist(result).catch((err) => {
+        console.warn('[ai] persist failed:', err?.message)
+        return null
+      })
+      sseEvent(res, 'done', { conversation_id: finalConversationId })
+      res.end()
+    } catch (err) {
+      console.error('ai stream error:', err)
+      sseEvent(res, 'error', { message: err?.message || 'AI error' })
+      res.end()
+    }
+    return
+  }
+
+  // ── Non-streaming path (back-compat) ──
+  try {
+    const result = await askClaude({
+      apiKey, admin, history,
+      userPrompt: prompt,
+      currentMoment: current_moment || null,
+      userLocation,
+    })
+    const finalConversationId = await persist(result).catch(() => null)
     return res.status(200).json({
       message: result.message,
       results: result.results,
@@ -204,6 +239,14 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('ai endpoint error:', err)
     return res.status(502).json({ error: `AI service error: ${err.message}` })
+  }
+}
+
+function sseEvent(res, name, data) {
+  try {
+    res.write(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`)
+  } catch {
+    // Connessione chiusa lato client → ignora
   }
 }
 
@@ -312,6 +355,152 @@ async function askClaude({ apiKey, admin, history, userPrompt, currentMoment, us
     message: cleanupText(message) || "Su questa cosa non ti so dire — riprova con qualcosa di più specifico?",
     results: [],
   }
+}
+
+/* ------------------------------------------------------------------ */
+/*  streamAskClaude — variante streaming SSE                            */
+/*                                                                     */
+/*  Differenze rispetto a askClaude:                                   */
+/*  - Round 1 (search tool call) resta sincrono — è veloce e non       */
+/*    produce testo user-facing.                                       */
+/*  - Round 2 (testo + present_picks) viene streamato:                 */
+/*    ogni text_delta diventa un evento SSE "delta" verso il client.   */
+/*    L'input JSON di present_picks viene accumulato dai input_json_   */
+/*    delta e parserato in fondo, poi emesso come evento "picks".      */
+/*                                                                     */
+/*  Garanzie: emette sempre alla fine (success o caso degenere) un     */
+/*  evento "picks" — anche vuoto — così il client sa di aver finito.   */
+/* ------------------------------------------------------------------ */
+async function streamAskClaude({ apiKey, admin, res, history, userPrompt, currentMoment, userLocation }) {
+  const system = buildSystemBlocks(currentMoment, userLocation)
+  const tools = [searchRestaurantsTool(), presentPicksTool()]
+  const messages = [...history, { role: 'user', content: userPrompt }]
+  const candidatesById = new Map()
+
+  let resp = await callClaude(apiKey, { system, messages, tools })
+  let toolIterations = 0
+
+  // Loop normale fino a che vediamo un search_restaurants. Quando lo
+  // eseguiamo e dobbiamo richiamare Claude per la risposta finale →
+  // passiamo al ramo streaming.
+  while (resp.stop_reason === 'tool_use' && toolIterations < MAX_TOOL_ITERATIONS) {
+    toolIterations++
+    const toolUses = (resp.content || []).filter((c) => c.type === 'tool_use')
+
+    // Edge case: Claude chiama present_picks già al primo turno (senza
+    // search prima). Raro ma possibile se la query è zero-tool. Emetti
+    // tutto e finisci.
+    const presentCall = toolUses.find((t) => t.name === 'present_picks')
+    if (presentCall) {
+      const message = cleanupText(extractTextBlocks(resp.content))
+      const results = buildResultsFromPicks(presentCall.input?.picks, candidatesById)
+      if (message) sseEvent(res, 'delta', { text: message })
+      sseEvent(res, 'picks', results)
+      return { message, results }
+    }
+
+    const searchCall = toolUses.find((t) => t.name === 'search_restaurants')
+    if (!searchCall) break
+
+    const toolOutput = await executeSearch(admin, searchCall.input || {}, userLocation)
+    for (const c of (toolOutput.candidates || [])) candidatesById.set(c.id, c)
+
+    messages.push({ role: 'assistant', content: resp.content })
+    messages.push({
+      role: 'user',
+      content: [{ type: 'tool_result', tool_use_id: searchCall.id, content: JSON.stringify(toolOutput) }],
+    })
+
+    // Round finale: streaming
+    return await streamFinalRound({ apiKey, system, messages, tools, candidatesById, res })
+  }
+
+  // Nessun tool call → Claude ha risposto solo testo. Emetti come delta.
+  const message = cleanupText(extractTextBlocks(resp.content)) ||
+    "Su questa cosa non ti so dire — riprova con qualcosa di più specifico?"
+  sseEvent(res, 'delta', { text: message })
+  sseEvent(res, 'picks', [])
+  return { message, results: [] }
+}
+
+async function streamFinalRound({ apiKey, system, messages, tools, candidatesById, res }) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': ANTHROPIC_VERSION,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 1500,
+      system, tools, messages,
+      stream: true,
+    }),
+  })
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => '')
+    throw new Error(`Claude HTTP ${response.status}: ${errBody.slice(0, 200)}`)
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buf = ''
+  let accumulatedText = ''
+  let toolUseName = null
+  let toolUseJson = ''
+
+  // Parser SSE generico (eventi separati da blank line).
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += decoder.decode(value, { stream: true })
+
+    let idx
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const block = buf.slice(0, idx)
+      buf = buf.slice(idx + 2)
+
+      let evtName = ''
+      let dataStr = ''
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) evtName = line.slice(6).trim()
+        else if (line.startsWith('data:')) dataStr += line.slice(5).trim()
+      }
+      if (!dataStr) continue
+      let data
+      try { data = JSON.parse(dataStr) } catch { continue }
+
+      if (evtName === 'content_block_start') {
+        if (data.content_block?.type === 'tool_use') {
+          toolUseName = data.content_block.name
+          toolUseJson = ''
+        }
+      } else if (evtName === 'content_block_delta') {
+        if (data.delta?.type === 'text_delta') {
+          const text = data.delta.text || ''
+          accumulatedText += text
+          sseEvent(res, 'delta', { text })
+        } else if (data.delta?.type === 'input_json_delta') {
+          toolUseJson += data.delta.partial_json || ''
+        }
+      }
+      // message_stop / content_block_stop / message_delta: ignorati
+    }
+  }
+
+  let results = []
+  if (toolUseName === 'present_picks' && toolUseJson) {
+    try {
+      const input = JSON.parse(toolUseJson)
+      results = buildResultsFromPicks(input.picks, candidatesById)
+    } catch (err) {
+      console.warn('[ai] present_picks parse failed:', err?.message)
+    }
+  }
+
+  sseEvent(res, 'picks', results)
+  return { message: cleanupText(accumulatedText), results }
 }
 
 function extractTextBlocks(content) {

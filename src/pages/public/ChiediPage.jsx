@@ -24,8 +24,8 @@ export default function ChiediPage() {
   const [convId, setConvId] = useState(routeConvId || null)
   const [showAuthGate, setShowAuthGate] = useState(false)
   const [pendingMessage, setPendingMessage] = useState(null)
-  const [isTypingActive, setIsTypingActive] = useState(false)
-  const [displayedTyping, setDisplayedTyping] = useState('')
+  // (Streaming SSE sostituisce il typewriter: ogni delta arriva già in tempo
+  // reale dal server e viene appeso al content del messaggio.)
   // userLocation: { lat, lng } | null. Si attiva al click del 📍 nell'input bar.
   // Se attivo, viene incluso in /api/ai così Bi può citare i minuti a piedi
   // e usare il filtro near_me.
@@ -52,20 +52,6 @@ export default function ChiediPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, loading, isEmpty])
 
-  /* ---- Typewriter: carattere per carattere 25 ms ---- */
-  useEffect(() => {
-    if (!isTypingActive) return
-    const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant' && !m.error)
-    const fullText = lastAssistant?.content || ''
-    if (!fullText) { setIsTypingActive(false); return }
-    if (displayedTyping.length >= fullText.length) {
-      setDisplayedTyping(fullText)
-      setIsTypingActive(false)
-      return
-    }
-    const t = setTimeout(() => setDisplayedTyping(fullText.slice(0, displayedTyping.length + 1)), 25)
-    return () => clearTimeout(t)
-  }, [isTypingActive, displayedTyping, messages])
 
   /* ---- Load existing conversation when arriving on /chiedi/:id ---- */
   useEffect(() => {
@@ -103,7 +89,7 @@ export default function ChiediPage() {
   }, [])
   useEffect(adjustTextarea, [input, adjustTextarea])
 
-  /* ---- Send message ---- */
+  /* ---- Send message (streaming SSE) ---- */
   const sendMessage = useCallback(async (rawText) => {
     const text = String(rawText ?? '').trim()
     if (!text || loading) return
@@ -114,9 +100,25 @@ export default function ChiediPage() {
       return
     }
 
-    setMessages((m) => [...m, { role: 'user', content: text }])
+    // Append messaggio user + bolla assistant vuota (verrà riempita dai delta).
+    setMessages((m) => [
+      ...m,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '', results: [], streaming: true },
+    ])
     setInput('')
     setLoading(true)
+
+    const failWithError = (msg) => {
+      setMessages((m) => {
+        // Sostituisci l'ultima bolla assistant in streaming con l'errore.
+        const last = m[m.length - 1]
+        if (last?.role === 'assistant' && last?.streaming) {
+          return [...m.slice(0, -1), { role: 'assistant', content: msg, error: true }]
+        }
+        return [...m, { role: 'assistant', content: msg, error: true }]
+      })
+    }
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -125,51 +127,94 @@ export default function ChiediPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           prompt: text,
           conversation_id: convId || undefined,
           user_location: userLocation || undefined,
+          stream: true,
         }),
       })
-      const data = await resp.json().catch(() => ({}))
+
       if (resp.status === 401) {
+        // Toglie messaggio user + bolla streaming (entrambi gli ultimi due).
+        setMessages((m) => m.slice(0, -2))
         setShowAuthGate(true)
         setPendingMessage(text)
-        setMessages((m) => m.slice(0, -1))
         return
       }
-      if (!resp.ok) {
-        throw new Error(data.error || `Errore ${resp.status}`)
+      if (!resp.ok || !resp.body) {
+        const fallback = await resp.text().catch(() => '')
+        throw new Error(fallback || `Errore ${resp.status}`)
       }
 
-      const newConvId = data.conversation_id
-      if (newConvId && !convId) {
-        setConvId(newConvId)
-        navigate(`/chiedi/${newConvId}`, { replace: true })
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      let gotAnyDelta = false
+
+      // Parser SSE: eventi separati da blank line; ogni evento ha event:
+      // name + data: payload. Data può essere spezzato in più "data:" lines.
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        let idx
+        while ((idx = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, idx)
+          buf = buf.slice(idx + 2)
+          let evt = ''
+          let data = ''
+          for (const line of block.split('\n')) {
+            if (line.startsWith('event:')) evt = line.slice(6).trim()
+            else if (line.startsWith('data:')) data += line.slice(5).trim()
+          }
+          if (!data) continue
+          let parsed
+          try { parsed = JSON.parse(data) } catch { continue }
+
+          if (evt === 'delta') {
+            gotAnyDelta = true
+            setMessages((m) => m.map((msg, i) =>
+              i === m.length - 1 && msg.role === 'assistant'
+                ? { ...msg, content: (msg.content || '') + (parsed.text || '') }
+                : msg,
+            ))
+          } else if (evt === 'picks') {
+            setMessages((m) => m.map((msg, i) =>
+              i === m.length - 1 && msg.role === 'assistant'
+                ? { ...msg, results: Array.isArray(parsed) ? parsed : [] }
+                : msg,
+            ))
+          } else if (evt === 'done') {
+            if (parsed?.conversation_id && !convId) {
+              setConvId(parsed.conversation_id)
+              navigate(`/chiedi/${parsed.conversation_id}`, { replace: true })
+            }
+            setMessages((m) => m.map((msg, i) =>
+              i === m.length - 1 && msg.role === 'assistant'
+                ? { ...msg, streaming: false }
+                : msg,
+            ))
+          } else if (evt === 'error') {
+            throw new Error(parsed?.message || 'AI stream error')
+          }
+        }
       }
 
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'assistant',
-          content: data.message || 'Eccomi.',
-          results: Array.isArray(data.results) ? data.results : [],
-        },
-      ])
-      setIsTypingActive(true)
-      setDisplayedTyping('')
+      // Safety: se lo stream è finito senza alcun delta, mostra un fallback.
+      if (!gotAnyDelta) {
+        setMessages((m) => m.map((msg, i) =>
+          i === m.length - 1 && msg.role === 'assistant' && !msg.content
+            ? { ...msg, content: 'Eccomi.', streaming: false }
+            : msg,
+        ))
+      }
     } catch (err) {
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'assistant',
-          content: 'Mmh, qualcosa non gira. Riprova tra un secondo?',
-          error: true,
-        },
-      ])
       console.error('[chiedi] sendMessage error', err)
+      failWithError('Mmh, qualcosa non gira. Riprova tra un secondo?')
     } finally {
       setLoading(false)
     }
@@ -230,8 +275,6 @@ export default function ChiediPage() {
       <ChiediHeader hasConversation={!isEmpty} onNewChat={() => {
         setMessages([])
         setConvId(null)
-        setIsTypingActive(false)
-        setDisplayedTyping('')
         navigate('/chiedi', { replace: true })
       }} />
 
@@ -239,7 +282,7 @@ export default function ChiediPage() {
         {isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
-          <Conversation messages={messages} loading={loading} isTypingActive={isTypingActive} displayedTyping={displayedTyping} />
+          <Conversation messages={messages} loading={loading} />
         )}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
@@ -439,7 +482,7 @@ function EmptyState({ onPromptClick }) {
 /* ============================================================ */
 /*  Conversation                                                  */
 /* ============================================================ */
-function Conversation({ messages, loading, isTypingActive, displayedTyping }) {
+function Conversation({ messages, loading }) {
   const allRestaurantIds = messages.flatMap((m) =>
     Array.isArray(m.results) ? m.results.map((r) => r.restaurant_id).filter(Boolean) : [],
   )
@@ -475,19 +518,20 @@ function Conversation({ messages, loading, isTypingActive, displayedTyping }) {
             </div>
           )
         }
-        const isLastAssistant = isTypingActive && i === messages.length - 1
-        const textToShow = isLastAssistant ? displayedTyping : m.content
-        const showResults = !isLastAssistant && Array.isArray(m.results) && m.results.length > 0
+        // Streaming: il content cresce in tempo reale dai delta SSE.
+        // Mostriamo il cursore lampeggiante mentre msg.streaming è true.
+        const isStreaming = m.streaming === true
+        const hasResults = Array.isArray(m.results) && m.results.length > 0
         return (
           <div key={i}>
             <div className="cp-bi-row">
               <div className="cp-av-mini"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
               <div className={`cp-bubble cp-bi${m.error ? ' cp-error' : ''}`}>
-                {textToShow}
-                {isLastAssistant && <span className="cp-cursor" aria-hidden="true" />}
+                {m.content}
+                {isStreaming && <span className="cp-cursor" aria-hidden="true" />}
               </div>
             </div>
-            {showResults && (
+            {hasResults && (
               <div className="cp-results cp-results-in">
                 {m.results.map((r, j) => (
                   <ResultCard
@@ -502,7 +546,9 @@ function Conversation({ messages, loading, isTypingActive, displayedTyping }) {
         )
       })}
 
-      {loading && (
+      {/* Typing dots: solo se NON c'è una bolla assistant attiva — evita doppia
+          indicazione (cursore + dots) durante lo streaming. */}
+      {loading && !messages.some((m) => m.role === 'assistant' && m.streaming) && (
         <div className="cp-typing">
           <div className="cp-av-mini"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
           <div className="cp-bub">
