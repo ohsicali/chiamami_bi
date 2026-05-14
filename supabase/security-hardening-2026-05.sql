@@ -47,6 +47,12 @@ ALTER TABLE public.auth_recovery_tokens
 -- Limita gli upload nel bucket suggestions ai soli MIME image/* attesi e a
 -- una size massima ragionevole. La policy lato client in
 -- SuggestRestaurantSheet.jsx valida già MIME + size, questa è defense-in-depth.
+--
+-- Le policy INSERT su `storage.objects` sono in OR fra loro: per rendere
+-- effettivo il check serve droppare ogni vecchia policy permissiva sullo
+-- stesso bucket. La policy storica "Users can upload suggestion photos"
+-- usava solo `auth.uid() IS NOT NULL` e va rimossa.
+DROP POLICY IF EXISTS "Users can upload suggestion photos" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated upload suggestions" ON storage.objects;
 CREATE POLICY "Authenticated upload suggestions"
   ON storage.objects FOR INSERT
