@@ -26,6 +26,12 @@ export default function ChiediPage() {
   const [pendingMessage, setPendingMessage] = useState(null)
   const [isTypingActive, setIsTypingActive] = useState(false)
   const [displayedTyping, setDisplayedTyping] = useState('')
+  // userLocation: { lat, lng } | null. Si attiva al click del 📍 nell'input bar.
+  // Se attivo, viene incluso in /api/ai così Bi può citare i minuti a piedi
+  // e usare il filtro near_me.
+  const [userLocation, setUserLocation] = useState(null)
+  const [locationError, setLocationError] = useState(null)
+  const [locationPending, setLocationPending] = useState(false)
 
   const bodyRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -124,6 +130,7 @@ export default function ChiediPage() {
         body: JSON.stringify({
           prompt: text,
           conversation_id: convId || undefined,
+          user_location: userLocation || undefined,
         }),
       })
       const data = await resp.json().catch(() => ({}))
@@ -166,7 +173,34 @@ export default function ChiediPage() {
     } finally {
       setLoading(false)
     }
-  }, [convId, loading, navigate, user])
+  }, [convId, loading, navigate, user, userLocation])
+
+  /* ---- Geolocation toggle ---- */
+  const requestLocation = useCallback(() => {
+    if (userLocation) {
+      // Già attivo → toggle off
+      setUserLocation(null)
+      setLocationError(null)
+      return
+    }
+    if (!('geolocation' in navigator)) {
+      setLocationError('Il tuo browser non supporta la geolocalizzazione.')
+      return
+    }
+    setLocationPending(true)
+    setLocationError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setLocationPending(false)
+      },
+      (err) => {
+        setLocationPending(false)
+        setLocationError(err.code === 1 ? 'Permesso negato — abilitalo nelle impostazioni del browser.' : 'Non riesco a leggere la posizione.')
+      },
+      { maximumAge: 5 * 60 * 1000, timeout: 8000, enableHighAccuracy: false },
+    )
+  }, [userLocation])
 
   /* ---- Initial message from Home / post-login state ---- */
   useEffect(() => {
@@ -212,6 +246,19 @@ export default function ChiediPage() {
 
       <form className="cp-input-bar" onSubmit={handleSubmit}>
         <div className="cp-input-row">
+          <button
+            type="button"
+            className={`cp-geo${userLocation ? ' is-on' : ''}${locationPending ? ' is-pending' : ''}`}
+            onClick={requestLocation}
+            disabled={locationPending}
+            aria-label={userLocation ? 'Disattiva la posizione' : 'Condividi la posizione'}
+            title={userLocation ? 'Posizione attiva · tap per disattivare' : 'Condividi la posizione per ottenere risposte vicino a te'}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z" />
+              <circle cx="12" cy="9" r="2.5" />
+            </svg>
+          </button>
           <div className="cp-input-wrap">
             <textarea
               ref={textareaRef}
@@ -236,6 +283,9 @@ export default function ChiediPage() {
             </svg>
           </button>
         </div>
+        {locationError && (
+          <div className="cp-geo-err" role="alert">{locationError}</div>
+        )}
       </form>
 
       {/* Striscia opaca sotto al tab bar mobile, blocca lo scroll-through
@@ -471,6 +521,7 @@ function ResultCard({ restaurant, photoUrl }) {
   const meta = [
     restaurant.category,
     restaurant.zone,
+    restaurant.walk_minutes ? `${restaurant.walk_minutes} min a piedi` : null,
     restaurant.closes_at ? `aperto fino a ${restaurant.closes_at}` : null,
   ].filter(Boolean).join(' · ')
 
