@@ -356,6 +356,54 @@ const MOCK_RESTAURANTS = [
   },
 ]
 
+/**
+ * Mapping fra le label "umbrella" usate dai bubble della Home / dal selettore
+ * /esplora e i segnali concreti del DB. Cause del bug pre-fix: "Colazione",
+ * "Carne", "Vegano" non sono mai categorie storate (zero match), e "Pesce"
+ * ne ha 1 sola. Risolviamo allargando il match a moments / recommended_for
+ * / hint testuali nei nostri testi editoriali.
+ *
+ * Per ogni label la regola è OR fra:
+ *   - categories: ANY di queste presente in restaurants.category
+ *   - moments:    ANY di questi presente in restaurants.moments
+ *   - recommendedFor: ANY presente in restaurants.recommended_for
+ *   - textHints:  ANY trovato (case-insensitive) in our_review|our_tip|tagline
+ *
+ * Le label che non sono qui ricadono sul comportamento legacy (match esatto
+ * su category/cuisine_type) — necessario per le categorie admin dinamiche.
+ */
+const HOME_CATEGORY_MAP = {
+  Aperitivo:  { categories: ['Aperitivo'], moments: ['aperitivo'], recommendedFor: ['Aperitivo'] },
+  Piemontese: { categories: ['Piemontese'] },
+  Pizza:      { categories: ['Pizza'] },
+  Giapponese: { categories: ['Giapponese', 'Sushi', 'Ramen'] },
+  Pesce:      { categories: ['Pesce'], textHints: ['pesce', 'crudo di pesce', 'tartare di tonno', 'gambero', 'ostriche', 'frittura di paranza'] },
+  Colazione:  { categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'], moments: ['colazione'], recommendedFor: ['Brunch'] },
+  Carne:      { categories: ['Barbecue', 'Carne'], recommendedFor: ['Carne'], textHints: ['fassona', 'bistecca', 'tartare di fassona', 'tagliata', 'manzo', 'maiale', 'agnello'] },
+  Italiana:   { categories: ['Italiana', 'Piemontese', 'Pasta'] },
+  Vegano:     { categories: ['Vegano'], recommendedFor: ['Vegetariano'], textHints: ['vegano', 'vegana', 'vegetariano', 'vegetariana', 'plant-based'] },
+  Cocktail:   { categories: ['Cocktail', 'Vino'], moments: ['aperitivo', 'dopocena'], textHints: ['miscelati', 'cocktail', 'vermouth', 'amaro'] },
+}
+
+export function matchesHomeCategory(restaurant, label) {
+  if (!label) return true
+  const map = HOME_CATEGORY_MAP[label]
+  const cats = restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : [])
+  if (!map) {
+    // Fallback: label custom (es. da admin) → match esatto come prima.
+    return cats.includes(label)
+  }
+  if (map.categories?.some(c => cats.includes(c))) return true
+  if (map.moments?.some(m => (restaurant.moments || []).includes(m))) return true
+  if (map.recommendedFor?.some(t => (restaurant.recommended_for || []).includes(t))) return true
+  if (map.textHints?.length) {
+    const blob = [restaurant.our_review, restaurant.our_tip, restaurant.tagline, restaurant.name]
+      .filter(Boolean).join(' ').toLowerCase()
+    if (map.textHints.some(h => blob.includes(h.toLowerCase()))) return true
+  }
+  return false
+}
+
 export function useRestaurants(userPosition = null) {
   const cachedRestaurants = typeof window !== 'undefined' ? readRestaurantsCache() : null
   const [allRestaurants, setAllRestaurants] = useState(cachedRestaurants || [])
@@ -446,10 +494,7 @@ export function useRestaurants(userPosition = null) {
 
     if (filters.category) {
       const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
-      result = result.filter(r => {
-        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-        return selected.some(s => cats.includes(s))
-      })
+      result = result.filter(r => selected.some(s => matchesHomeCategory(r, s)))
     }
 
     if (filters.priceRange) {
