@@ -547,10 +547,26 @@ function mapZoneToAddressPatterns(zoneRaw) {
   const zone = String(zoneRaw).toLowerCase().trim().replace(/[%,]/g, '')
   if (!zone) return null
 
+  // CAP Torino centro/semi-centro:
+  //   10121 Cittadella/Solferino · 10122 Quadrilatero/Porta Susa
+  //   10123 Centro storico/Po · 10124 Vanchiglia/Po · 10125 San Salvario
+  //   10128 Crocetta. Indicizzati sull'address via ILIKE — più affidabili
+  //   delle vie singole perché beccano tutti i locali della zona.
   const ALIASES = {
-    'centro': ['crocetta', 'san salvario', 'quadrilatero', 'porta nuova', 'porta palazzo', 'centro storico', 'piazza castello', 'via po', 'via roma', 'piazza vittorio', 'piazza san carlo', 'carlina', 'romana'],
-    'centro storico': ['quadrilatero', 'porta palazzo', 'piazza castello', 'via po', 'via roma', 'piazza san carlo'],
-    'centro città': ['crocetta', 'san salvario', 'quadrilatero', 'porta nuova'],
+    'centro': [
+      '10121', '10122', '10123', '10124', '10125', '10128',
+      'crocetta', 'san salvario', 'quadrilatero', 'porta nuova', 'porta palazzo',
+      'centro storico', 'piazza castello', 'via po', 'via roma', 'via po,',
+      'piazza vittorio', 'piazza san carlo', 'piazza carlina', 'piazza carlo emanuele',
+      'piazza corpus domini', 'via bertola', 'via mercanti', 'via maria vittoria',
+      'via doria', 'via giulio', 'via bonafous', 'via sant',
+    ],
+    'centro storico': ['10122', '10123', 'quadrilatero', 'porta palazzo', 'piazza castello', 'via po', 'via roma', 'piazza san carlo', 'via mercanti'],
+    'centro città': ['10121', '10122', '10123', '10125', 'crocetta', 'san salvario', 'quadrilatero', 'porta nuova'],
+    'quadrilatero': ['10122', 'quadrilatero', 'via mercanti', 'via bertola', 'piazza corpus domini', 'via doria', 'via giulio'],
+    'vanchiglia': ['10124', 'vanchiglia', 'via bonafous', 'via sant'],
+    'san salvario': ['10125', 'san salvario', 'via morgari', 'via berthollet', 'via baretti', 'via principe tommaso'],
+    'crocetta': ['10128', 'crocetta', 'via legnano', 'via villar', 'corso einaudi'],
   }
 
   const patterns = ALIASES[zone] || [zone]
