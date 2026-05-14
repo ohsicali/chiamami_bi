@@ -516,7 +516,7 @@ function MaintenanceTile() {
             Sincronizza orari Google
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--color-ink-70, rgba(34,24,28,0.7))', lineHeight: 1.45 }}>
-            Aggiorna gli orari di apertura (regolari + festivi della settimana) per tutti i locali pubblicati. Lo cron settimanale lo fa già di domenica, ma puoi forzarlo qui se hai appena aggiunto locali.
+            Aggiorna gli orari di apertura (regolari + festivi della settimana) per tutti i locali pubblicati dai dati Google. Sincronizza fino a 50 locali per click — il cron settimanale GitHub Actions lo fa di domenica, qui puoi forzarlo a mano.
           </div>
         </div>
 
