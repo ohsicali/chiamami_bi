@@ -15,7 +15,7 @@
       "maxDuration": 30,
       "includeFiles": "api/_{fonts,assets}/**"
     },
-    "api/places-refresh.js": {
+    "api/places-details.js": {
       "maxDuration": 60
     }
   },

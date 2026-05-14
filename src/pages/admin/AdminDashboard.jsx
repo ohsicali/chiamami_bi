@@ -481,7 +481,7 @@ function MaintenanceTile() {
         setResult({ error: 'Sessione scaduta, rifai login' })
         return
       }
-      const resp = await fetch('/api/places-refresh', {
+      const resp = await fetch('/api/places-details', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
