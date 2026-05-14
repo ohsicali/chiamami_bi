@@ -183,12 +183,11 @@ export default function App() {
         </Routes>
         </div>
       )}
+    {/* Mobile Tab Bar */}
+    {showTabBar && <MobileTabBar />}
     </Suspense>
     </MaintenanceGate>
     </ErrorBoundary>
-
-    {/* Mobile Tab Bar */}
-    {showTabBar && <MobileTabBar />}
 
     {/* Cookie Banner GDPR — deferred to idle to protect LCP */}
     {showCookieBanner && (
