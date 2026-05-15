@@ -12,7 +12,11 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // can paint the previous list immediately while a fresh fetch runs in the
 // background, eliminating the "Caricamento…" flash on the home and list pages.
 // Bump the key version when the select shape or mapping changes.
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v3'
+// v4: bump per invalidare il cache dopo l'introduzione del mapping permissivo
+// delle categorie home (matchesHomeCategory). Senza bump, i client che già
+// avevano i dati in localStorage continuavano a vedere la vecchia logica
+// applicata su record cached, mostrando 1 risultato per "Pesce" invece di 15.
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v4'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
