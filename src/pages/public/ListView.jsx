@@ -12,6 +12,7 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 
@@ -75,7 +76,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
   const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 900 }) : null
   // Hero is the LCP on /list — keep srcset tight (3 widths) to limit cold-cache misses.
   const photoSrcSet = proxyImgSrcSet(photoRaw, [600, 900, 1400])
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+  const categories = getPublicCategoryNames(restaurant)
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
 
@@ -207,7 +208,7 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
   // for such a small slot (avoids extra cold cache transforms on /api/img).
   const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 250 }) : null
   const isAboveFold = index < 3
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+  const categories = getPublicCategoryNames(restaurant)
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const category = categories[0]
 
