@@ -12,11 +12,11 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // can paint the previous list immediately while a fresh fetch runs in the
 // background, eliminating the "Caricamento…" flash on the home and list pages.
 // Bump the key version when the select shape or mapping changes.
-// v4: bump per invalidare il cache dopo l'introduzione del mapping permissivo
-// delle categorie home (matchesHomeCategory). Senza bump, i client che già
-// avevano i dati in localStorage continuavano a vedere la vecchia logica
-// applicata su record cached, mostrando 1 risultato per "Pesce" invece di 15.
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v4'
+// v5: bump dopo aver tolto i textHints (matching su free-text generava
+// falsi positivi: il filtro "Pesce" pescava brunch/pizza solo perché la
+// recensione menzionava "salmone" o "pesce"). Ora il match si basa solo su
+// categories + recommended_for (tag strutturati lato admin).
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v5'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
@@ -361,65 +361,35 @@ const MOCK_RESTAURANTS = [
 ]
 
 /**
- * Mapping fra le label "umbrella" usate dai bubble della Home / dal selettore
- * /esplora e i segnali concreti del DB. Cause del bug pre-fix: "Colazione",
- * "Carne", "Vegano" non sono mai categorie storate (zero match), e "Pesce"
- * ne ha 1 sola. Risolviamo allargando il match a moments / recommended_for
- * / hint testuali nei nostri testi editoriali.
+ * Mapping fra le label "umbrella" dei bubble della Home / del selettore
+ * /esplora e i segnali strutturati del DB.
  *
  * Per ogni label la regola è OR fra:
- *   - categories: ANY di queste presente in restaurants.category
- *   - moments:    ANY di questi presente in restaurants.moments
+ *   - categories:     ANY presente in restaurants.category
  *   - recommendedFor: ANY presente in restaurants.recommended_for
- *   - textHints:  ANY trovato (case-insensitive) in our_review|our_tip|tagline
+ *
+ * Niente match su free-text (our_review/tip/tagline/name): generava falsi
+ * positivi grossolani — es. il filtro "Pesce" pescava una brunch room solo
+ * perché la recensione menzionava "salmone", "Carne" pescava bar/aperitivo
+ * solo per un "tartare" o "manzo" di passaggio. Niente match su moments:
+ * sono indicatori di orario (un giapponese aperto in aperitivo non è un
+ * cocktail bar).
  *
  * Le label che non sono qui ricadono sul comportamento legacy (match esatto
  * su category/cuisine_type) — necessario per le categorie admin dinamiche.
  */
 const HOME_CATEGORY_MAP = {
-  Aperitivo:  { categories: ['Aperitivo'], moments: ['aperitivo'], recommendedFor: ['Aperitivo'] },
+  Aperitivo:  { categories: ['Aperitivo'],                          recommendedFor: ['Aperitivo'] },
   Piemontese: { categories: ['Piemontese'] },
   Pizza:      { categories: ['Pizza'] },
   Giapponese: { categories: ['Giapponese', 'Sushi', 'Ramen'] },
-  Pesce:      {
-    categories: ['Pesce'],
-    textHints: [
-      'pesce', 'crudo di pesce', 'tartare di tonno', 'gambero', 'gamberi',
-      'ostriche', 'frittura di paranza', 'cozze', 'vongole', 'polpo',
-      'baccalà', 'baccala', 'spigola', 'orata', 'salmone', 'tonno',
-      'sashimi', 'nigiri',
-    ],
-  },
-  Colazione: {
-    categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'],
-    moments: ['colazione'],
-    recommendedFor: ['Brunch'],
-    textHints: ['cappuccino', 'brioche', 'cornetto', 'specialty coffee', 'pastry', 'pasticceria'],
-  },
-  Carne: {
-    categories: ['Barbecue', 'Carne'],
-    recommendedFor: ['Carne'],
-    textHints: [
-      'fassona', 'bistecca', 'tartare di fassona', 'tartare', 'tagliata',
-      'manzo', 'maiale', 'agnello', 'vitello', 'brasato', 'carne cruda',
-      'salumi', 'cotechino', 'stinco', 'costata', 'hamburger', 'filetto',
-    ],
-  },
-  // "Italiana" è un cappello ampio: include tutto ciò che è cucina italiana
-  // in senso lato (regionale, pizza, panineria, street food italiano).
-  Italiana: {
-    categories: ['Italiana', 'Piemontese', 'Pasta', 'Pizza', 'Panineria', 'Piadina', 'Tramezzini', 'Street Food'],
-  },
-  Vegano: {
-    categories: ['Vegano'],
-    recommendedFor: ['Vegetariano'],
-    textHints: ['vegano', 'vegana', 'vegetariano', 'vegetariana', 'plant-based', 'plant based', 'tofu', 'seitan'],
-  },
-  Cocktail: {
-    categories: ['Cocktail', 'Vino'],
-    moments: ['aperitivo', 'dopocena'],
-    textHints: ['cocktail', 'negroni', 'spritz', 'aperol', 'gin tonic', 'vermouth', 'miscelati', 'amaro'],
-  },
+  Pesce:      { categories: ['Pesce'] },
+  Colazione:  { categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'], recommendedFor: ['Brunch'] },
+  Carne:      { categories: ['Barbecue', 'Carne'],                  recommendedFor: ['Carne'] },
+  // "Italiana" è un cappello regionale: pizza/panineria hanno il loro bubble.
+  Italiana:   { categories: ['Italiana', 'Piemontese', 'Pasta', 'Piadina', 'Tramezzini'] },
+  Vegano:     { categories: ['Vegano'],                             recommendedFor: ['Vegetariano'] },
+  Cocktail:   { categories: ['Cocktail'] },
 }
 
 export function matchesHomeCategory(restaurant, label) {
@@ -431,13 +401,7 @@ export function matchesHomeCategory(restaurant, label) {
     return cats.includes(label)
   }
   if (map.categories?.some(c => cats.includes(c))) return true
-  if (map.moments?.some(m => (restaurant.moments || []).includes(m))) return true
   if (map.recommendedFor?.some(t => (restaurant.recommended_for || []).includes(t))) return true
-  if (map.textHints?.length) {
-    const blob = [restaurant.our_review, restaurant.our_tip, restaurant.tagline, restaurant.name]
-      .filter(Boolean).join(' ').toLowerCase()
-    if (map.textHints.some(h => blob.includes(h.toLowerCase()))) return true
-  }
   return false
 }
 
