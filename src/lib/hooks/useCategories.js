@@ -10,8 +10,41 @@ export const CATEGORY_GROUPS = [
   { key: 'dieta',     label: 'Dieta',     emoji: '🥬' },
 ]
 
+// Visibilità categorie:
+// - PUBLIC_GROUPS: categoria principale mostrata su card/scheda/filtri pubblici
+// - DIET_GROUPS: mostrate sulla scheda come "anche piatti …" con disclaimer
+// - INTERNAL_GROUPS: solo admin + chat AI, mai mostrate pubblicamente
+export const PUBLIC_GROUPS = ['cucina']
+export const DIET_GROUPS = ['dieta']
+export const INTERNAL_GROUPS = ['atmosfera', 'occasione', 'servizi']
+
 export function getGroupLabel(key) {
   return CATEGORY_GROUPS.find((g) => g.key === key)?.label || 'Cucina'
+}
+
+// Splits a category names array into public / diet / internal buckets using
+// the cached categories table. Names without a match fallback to public.
+export function splitCategoriesByVisibility(names) {
+  const out = { public: [], diet: [], internal: [] }
+  if (!Array.isArray(names)) return out
+  for (const name of names) {
+    const cat = _cachedCategories.find((c) => c.name === name)
+    const group = cat?.group_key || 'cucina'
+    if (INTERNAL_GROUPS.includes(group)) out.internal.push(name)
+    else if (DIET_GROUPS.includes(group)) out.diet.push(name)
+    else out.public.push(name)
+  }
+  return out
+}
+
+export function getPublicCategoryNames(restaurant) {
+  const raw = restaurant?.category || (restaurant?.cuisine_type ? [restaurant.cuisine_type] : [])
+  return splitCategoriesByVisibility(raw).public
+}
+
+export function getDietCategoryNames(restaurant) {
+  const raw = restaurant?.category || []
+  return splitCategoriesByVisibility(raw).diet
 }
 
 // Default categories (used as fallback if DB is empty or unavailable)

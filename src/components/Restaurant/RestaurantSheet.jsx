@@ -11,6 +11,7 @@ import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
@@ -283,7 +284,9 @@ export default function RestaurantSheet({
 
   if (!restaurant) return null
 
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+  const categories = getPublicCategoryNames(restaurant)
+    .map(name => getCategoryInfo(name)).filter(Boolean)
+  const dietCategories = getDietCategoryNames(restaurant)
     .map(name => getCategoryInfo(name)).filter(Boolean)
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
   const mapsUrl = restaurant.google_maps_url || (restaurant.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}` : null)
@@ -678,6 +681,49 @@ export default function RestaurantSheet({
                   </span>
                 )}
               </motion.div>
+
+              {/* "Anche piatti" — dieta categories with disclaimer.
+                  Non significa che TUTTO il locale sia vegano/vegetariano/GF:
+                  segnala solo che hanno opzioni in menù. */}
+              {dietCategories.length > 0 && (
+                <motion.div className="sec-diet" variants={itemVariants} style={{
+                  marginBottom: 20,
+                  padding: '12px 14px',
+                  background: 'var(--color-green-wash, #E8F5D8)',
+                  borderRadius: 14,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  textAlign: 'left',
+                }}>
+                  <div style={{
+                    fontSize: 11, fontWeight: 800, letterSpacing: '0.05em',
+                    textTransform: 'uppercase', color: '#2C7A4A',
+                  }}>
+                    Hanno anche piatti
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {dietCategories.map((cat) => (
+                      <span key={cat.name} style={{
+                        fontSize: 12, fontWeight: 700,
+                        color: '#2C7A4A',
+                        background: '#fff',
+                        border: '1px solid #C7E2A5',
+                        padding: '5px 11px', borderRadius: 999,
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                      }}>
+                        {cat.emoji} {cat.name}
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{
+                    fontSize: 11, color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                    lineHeight: 1.4, fontWeight: 500,
+                  }}>
+                    ⚠️ Verifica sempre con il locale per esigenze specifiche (allergie, contaminazioni, certificazioni).
+                  </div>
+                </motion.div>
+              )}
 
               {/* Divider */}
               <div className="sec-divider" style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 20 }} />

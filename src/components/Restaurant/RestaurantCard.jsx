@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { memo, useState } from 'react'
 import SaveButton from './SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 
@@ -32,7 +33,7 @@ function RestaurantCard({
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
 
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+  const categories = getPublicCategoryNames(restaurant)
     .map(name => getCategoryInfo(name))
     .filter(Boolean)
   const category = categories[0]

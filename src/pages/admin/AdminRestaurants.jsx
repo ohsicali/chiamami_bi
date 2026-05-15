@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { useCategories } from '../../lib/hooks/useCategories'
+import { useCategories, CATEGORY_GROUPS } from '../../lib/hooks/useCategories'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
@@ -140,6 +140,11 @@ export default function AdminRestaurants() {
   // `r.moments`. Il map viene popolato pigramente.
   const [momentsOverrides, setMomentsOverrides] = useState({})
   const [momentsSaving, setMomentsSaving] = useState(null) // `${id}:${key}` mentre salva
+  // Optimistic local override per `category` array — stessa logica dei moments.
+  const [categoryOverrides, setCategoryOverrides] = useState({})
+  const [categorySaving, setCategorySaving] = useState(null) // restaurant id che sta salvando
+  // Popover state: restaurant id aperto + posizione (relative to row click)
+  const [categoryPopover, setCategoryPopover] = useState(null) // { id, x, y } | null
 
   const toggleMoment = async (restaurant, key) => {
     if (!isSupabaseConfigured()) return
@@ -162,6 +167,45 @@ export default function AdminRestaurants() {
     }
     setMomentsSaving((s) => (s === tag ? null : s))
   }
+
+  const getCategoriesFor = (restaurant) =>
+    categoryOverrides[restaurant.id] ??
+    (Array.isArray(restaurant.category)
+      ? restaurant.category
+      : (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+
+  const toggleCategory = async (restaurant, name) => {
+    if (!isSupabaseConfigured()) return
+    const current = getCategoriesFor(restaurant)
+    const next = current.includes(name)
+      ? current.filter((n) => n !== name)
+      : [...current, name]
+    setCategorySaving(restaurant.id)
+    setCategoryOverrides((prev) => ({ ...prev, [restaurant.id]: next }))
+    // Keep `cuisine_type` in sync with the first category for back-compat
+    // (some legacy queries still read cuisine_type).
+    const { error } = await supabase
+      .from('restaurants')
+      .update({
+        category: next,
+        cuisine_type: next[0] || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', restaurant.id)
+    if (error) {
+      setCategoryOverrides((prev) => ({ ...prev, [restaurant.id]: current }))
+      console.error('toggleCategory failed', error)
+    }
+    setCategorySaving((s) => (s === restaurant.id ? null : s))
+  }
+
+  // Close popover on Escape or outside click
+  useEffect(() => {
+    if (!categoryPopover) return
+    const onKey = (e) => { if (e.key === 'Escape') setCategoryPopover(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [categoryPopover])
 
   // Click a row → navigate to full-page edit (replaces drawer overlay).
   // Back-compat: if the URL still carries ?edit=ID (from older bookmarks
@@ -496,6 +540,11 @@ export default function AdminRestaurants() {
                     views={viewsMap[r.slug] || 0}
                     moments={momentsOverrides[r.id] ?? (Array.isArray(r.moments) ? r.moments : [])}
                     momentsSaving={momentsSaving}
+                    categoriesValue={getCategoriesFor(r)}
+                    categorySaving={categorySaving === r.id}
+                    onOpenCategoryEdit={(rect) =>
+                      setCategoryPopover({ id: r.id, x: rect.left, y: rect.bottom + 4 })
+                    }
                     onToggleMoment={(key) => toggleMoment(r, key)}
                     onDelete={() => setDeleteId(r.id)}
                     onEdit={() => openEdit(r.id)}
@@ -507,6 +556,24 @@ export default function AdminRestaurants() {
           </div>
         )}
       </div>
+
+      {/* ── Category popover (inline edit categorie per riga) ── */}
+      {categoryPopover && (() => {
+        const restaurant = restaurants.find((r) => r.id === categoryPopover.id)
+        if (!restaurant) return null
+        const selected = getCategoriesFor(restaurant)
+        return (
+          <CategoryPopover
+            x={categoryPopover.x}
+            y={categoryPopover.y}
+            selected={selected}
+            categories={categories}
+            saving={categorySaving === categoryPopover.id}
+            onToggle={(name) => toggleCategory(restaurant, name)}
+            onClose={() => setCategoryPopover(null)}
+          />
+        )
+      })()}
 
       {/* ── Delete modal ── */}
       <AnimatePresence>
@@ -641,9 +708,12 @@ function MomentQuickToggles({ moments, onToggle, saving, restaurantId }) {
   )
 }
 
-function RestaurantRow({ r, idx, discount, views, moments, momentsSaving, onToggleMoment, onDelete, onEdit }) {
-  const cats = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map((n) => getCategoryInfo(n)).filter(Boolean)
-  const firstCat = cats[0]
+function RestaurantRow({
+  r, idx, discount, views, moments, momentsSaving,
+  categoriesValue, categorySaving, onOpenCategoryEdit,
+  onToggleMoment, onDelete, onEdit,
+}) {
+  const cats = (categoriesValue || []).map((n) => getCategoryInfo(n)).filter(Boolean)
   const isPublished = r.is_published !== false
   const thumb = proxyImg(pickThumb(r))
   const isDrop = discount?.drop_time != null
@@ -685,7 +755,48 @@ function RestaurantRow({ r, idx, discount, views, moments, momentsSaving, onTogg
           </div>
         </div>
       </Td>
-      <Td>{firstCat ? <CategoryTag name={firstCat.name} colorKey={categoryTagColor(idx)} /> : '—'}</Td>
+      <Td>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            const rect = e.currentTarget.getBoundingClientRect()
+            onOpenCategoryEdit(rect)
+          }}
+          title="Modifica categorie"
+          style={{
+            border: 'none',
+            background: 'transparent',
+            padding: 0,
+            cursor: categorySaving ? 'wait' : 'pointer',
+            opacity: categorySaving ? 0.55 : 1,
+            display: 'inline-flex',
+            flexWrap: 'wrap',
+            gap: 4,
+            maxWidth: 220,
+            textAlign: 'left',
+          }}
+        >
+          {cats.length === 0 && (
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+              border: '1px dashed var(--color-line, #EAE3D7)',
+              padding: '3px 9px',
+              borderRadius: 999,
+            }}>+ aggiungi</span>
+          )}
+          {cats.slice(0, 3).map((c, i) => (
+            <CategoryTag key={c.name} name={c.name} colorKey={categoryTagColor(idx + i)} />
+          ))}
+          {cats.length > 3 && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', alignSelf: 'center' }}>
+              +{cats.length - 3}
+            </span>
+          )}
+        </button>
+      </Td>
       <Td>
         <MomentQuickToggles
           moments={moments}
@@ -833,6 +944,154 @@ function pageNumbers(current, total) {
   if (current <= 3) return [1, 2, 3, 4, '…', total]
   if (current >= total - 2) return [1, '…', total - 3, total - 2, total - 1, total]
   return [1, '…', current - 1, current, current + 1, '…', total]
+}
+
+function CategoryPopover({ x, y, selected, categories, saving, onToggle, onClose }) {
+  // Compute a safe position so the popover never overflows the viewport.
+  const W = 360
+  const maxH = Math.min(480, window.innerHeight - 40)
+  const left = Math.max(12, Math.min(x, window.innerWidth - W - 12))
+  const top = Math.min(y, window.innerHeight - maxH - 12)
+
+  // Group categories by group_key in the canonical order
+  const grouped = CATEGORY_GROUPS.map((g) => ({
+    ...g,
+    items: categories
+      .filter((c) => (c.group_key || 'cucina') === g.key)
+      .sort((a, b) => a.name.localeCompare(b.name, 'it')),
+  })).filter((g) => g.items.length > 0)
+
+  return (
+    <>
+      {/* Click-outside backdrop (transparent) */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 90,
+          background: 'transparent',
+        }}
+      />
+      <div
+        role="dialog"
+        aria-label="Modifica categorie"
+        style={{
+          position: 'fixed',
+          left,
+          top,
+          width: W,
+          maxHeight: maxH,
+          background: '#fff',
+          border: '1px solid var(--color-line, #EAE3D7)',
+          borderRadius: 14,
+          boxShadow: '0 16px 40px rgba(34,24,28,0.18)',
+          zIndex: 100,
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: 'var(--font-sans)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{
+          padding: '12px 14px',
+          borderBottom: '1px solid var(--color-line, #EAE3D7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-ink)' }}>Categorie & filtri</div>
+            <div style={{ fontSize: 10.5, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', marginTop: 2 }}>
+              {selected.length} selezionate · {saving ? 'salvataggio…' : 'salva auto'}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Chiudi"
+            style={{
+              width: 26, height: 26, borderRadius: 8, border: 0,
+              background: 'var(--color-cream, #F5F0E4)',
+              cursor: 'pointer', color: 'var(--color-ink)',
+              display: 'grid', placeItems: 'center',
+            }}
+          >×</button>
+        </div>
+
+        <div style={{ overflowY: 'auto', padding: '10px 14px 14px' }}>
+          {grouped.map((g) => (
+            <div key={g.key} style={{ marginTop: 10 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                marginBottom: 6,
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <span>{g.emoji} {g.label}</span>
+                {(g.key === 'atmosfera' || g.key === 'occasione' || g.key === 'servizi') && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 800, letterSpacing: '0.05em',
+                    background: 'var(--color-ink-05)', color: 'var(--color-ink-55)',
+                    padding: '2px 6px', borderRadius: 999,
+                  }}>solo AI</span>
+                )}
+                {g.key === 'dieta' && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 800, letterSpacing: '0.05em',
+                    background: 'var(--color-green-wash, #E8F5D8)', color: '#2C7A4A',
+                    padding: '2px 6px', borderRadius: 999,
+                  }}>anche piatti</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {g.items.map((c) => {
+                  const active = selected.includes(c.name)
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => onToggle(c.name)}
+                      disabled={saving}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: 999,
+                        border: active
+                          ? '1.5px solid var(--color-corallo, #E8453C)'
+                          : '1.5px solid var(--color-line, #EAE3D7)',
+                        background: active ? 'var(--color-corallo, #E8453C)' : '#fff',
+                        color: active ? '#fff' : 'var(--color-ink)',
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        cursor: saving ? 'wait' : 'pointer',
+                        fontFamily: 'inherit',
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        opacity: saving ? 0.7 : 1,
+                      }}
+                    >
+                      <span>{c.emoji}</span>
+                      <span>{c.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          <div style={{
+            marginTop: 14,
+            padding: '8px 10px',
+            background: 'var(--color-cream, #F5F0E4)',
+            borderRadius: 10,
+            fontSize: 10.5,
+            color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+            lineHeight: 1.45,
+          }}>
+            La <b>prima categoria di Cucina</b> diventa quella mostrata sulla mappa e nelle card.
+            Atmosfera / Occasione / Servizi servono solo all'AI per consigli mirati.
+          </div>
+        </div>
+      </div>
+    </>
+  )
 }
 
 function LoadingScreen() {

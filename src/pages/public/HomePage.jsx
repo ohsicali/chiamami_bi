@@ -14,6 +14,7 @@ import SaveButton from '../../components/Restaurant/SaveButton'
 import Navbar from '../../components/Layout/Navbar'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -42,8 +43,7 @@ const CAROUSEL_INITIAL = 4
 const CAROUSEL_STEP = 4
 
 function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, onSave, onClick, style }) {
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
-    .map(name => getCategoryInfo(name))
+  const categories = getPublicCategoryNames(restaurant).map(name => getCategoryInfo(name))
   const category = categories[0]
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0
     ? restaurant.photos[0] : null

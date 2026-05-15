@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
+import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -452,7 +453,7 @@ function SectionHead({ title, kicker, subtitle, trailing }) {
 }
 
 function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }) {
-  const cat = getCategoryInfo(restaurant.cuisine_type || (restaurant.category && restaurant.category[0]))
+  const cat = getCategoryInfo(getPublicCategoryNames(restaurant)[0] || restaurant.cuisine_type)
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
   // Card is 72% viewport width on mobile (~280px), 16:11 ratio → 600w covers DPR 2.
   // Keep srcset tight (2 widths) so we minimize unique /api/img cold-cache misses.
@@ -571,7 +572,7 @@ export default function HomeFeedV4() {
     // Keep srcset to 3 widths (mobile / desktop / retina) — fewer cold-cache misses.
     const photoSrcSet = proxyImgSrcSet(photoRaw, [600, 900, 1400])
     const label = formatDiscountValue(drop)
-    const catName = r.category?.[0] || r.cuisine_type || ''
+    const catName = getPublicCategoryNames(r)[0] || r.cuisine_type || ''
     const catInfo = getCategoryInfo(catName)
     const neighborhood = r.address ? r.address.split(',')[0].trim() : ''
     const tagline = r.tagline || ''
