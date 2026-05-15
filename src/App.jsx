@@ -56,6 +56,7 @@ const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
 const MyChatPage = lazy(() => import('./pages/public/MyChatPage'))
+const MyPreferencesPage = lazy(() => import('./pages/public/MyPreferencesPage'))
 const ChiediPage = lazy(() => import('./pages/public/ChiediPage'))
 const DealsPage = lazy(() => import('./pages/public/SconteRedesignPage'))
 const SavedPage = lazy(() => import('./pages/public/SavedPage'))
@@ -154,6 +155,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/chat" element={<MyChatPage />} />
+          <Route path="/profile/preferences" element={<MyPreferencesPage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AnalyticsPage />} />
@@ -183,12 +185,11 @@ export default function App() {
         </Routes>
         </div>
       )}
+    {/* Mobile Tab Bar */}
+    {showTabBar && <MobileTabBar />}
     </Suspense>
     </MaintenanceGate>
     </ErrorBoundary>
-
-    {/* Mobile Tab Bar */}
-    {showTabBar && <MobileTabBar />}
 
     {/* Cookie Banner GDPR — deferred to idle to protect LCP */}
     {showCookieBanner && (

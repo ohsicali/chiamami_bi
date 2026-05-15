@@ -12,7 +12,11 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // can paint the previous list immediately while a fresh fetch runs in the
 // background, eliminating the "Caricamento…" flash on the home and list pages.
 // Bump the key version when the select shape or mapping changes.
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v3'
+// v5: bump dopo aver tolto i textHints (matching su free-text generava
+// falsi positivi: il filtro "Pesce" pescava brunch/pizza solo perché la
+// recensione menzionava "salmone" o "pesce"). Ora il match si basa solo su
+// categories + recommended_for (tag strutturati lato admin).
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v5'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
@@ -356,6 +360,51 @@ const MOCK_RESTAURANTS = [
   },
 ]
 
+/**
+ * Mapping fra le label "umbrella" dei bubble della Home / del selettore
+ * /esplora e i segnali strutturati del DB.
+ *
+ * Per ogni label la regola è OR fra:
+ *   - categories:     ANY presente in restaurants.category
+ *   - recommendedFor: ANY presente in restaurants.recommended_for
+ *
+ * Niente match su free-text (our_review/tip/tagline/name): generava falsi
+ * positivi grossolani — es. il filtro "Pesce" pescava una brunch room solo
+ * perché la recensione menzionava "salmone", "Carne" pescava bar/aperitivo
+ * solo per un "tartare" o "manzo" di passaggio. Niente match su moments:
+ * sono indicatori di orario (un giapponese aperto in aperitivo non è un
+ * cocktail bar).
+ *
+ * Le label che non sono qui ricadono sul comportamento legacy (match esatto
+ * su category/cuisine_type) — necessario per le categorie admin dinamiche.
+ */
+const HOME_CATEGORY_MAP = {
+  Aperitivo:  { categories: ['Aperitivo'],                          recommendedFor: ['Aperitivo'] },
+  Piemontese: { categories: ['Piemontese'] },
+  Pizza:      { categories: ['Pizza'] },
+  Giapponese: { categories: ['Giapponese', 'Sushi', 'Ramen'] },
+  Pesce:      { categories: ['Pesce'] },
+  Colazione:  { categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'], recommendedFor: ['Brunch'] },
+  Carne:      { categories: ['Barbecue', 'Carne'],                  recommendedFor: ['Carne'] },
+  // "Italiana" è un cappello regionale: pizza/panineria hanno il loro bubble.
+  Italiana:   { categories: ['Italiana', 'Piemontese', 'Pasta', 'Piadina', 'Tramezzini'] },
+  Vegano:     { categories: ['Vegano'],                             recommendedFor: ['Vegetariano'] },
+  Cocktail:   { categories: ['Cocktail'] },
+}
+
+export function matchesHomeCategory(restaurant, label) {
+  if (!label) return true
+  const map = HOME_CATEGORY_MAP[label]
+  const cats = restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : [])
+  if (!map) {
+    // Fallback: label custom (es. da admin) → match esatto come prima.
+    return cats.includes(label)
+  }
+  if (map.categories?.some(c => cats.includes(c))) return true
+  if (map.recommendedFor?.some(t => (restaurant.recommended_for || []).includes(t))) return true
+  return false
+}
+
 export function useRestaurants(userPosition = null) {
   const cachedRestaurants = typeof window !== 'undefined' ? readRestaurantsCache() : null
   const [allRestaurants, setAllRestaurants] = useState(cachedRestaurants || [])
@@ -446,10 +495,7 @@ export function useRestaurants(userPosition = null) {
 
     if (filters.category) {
       const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
-      result = result.filter(r => {
-        const cats = r.category || (r.cuisine_type ? [r.cuisine_type] : [])
-        return selected.some(s => cats.includes(s))
-      })
+      result = result.filter(r => selected.some(s => matchesHomeCategory(r, s)))
     }
 
     if (filters.priceRange) {

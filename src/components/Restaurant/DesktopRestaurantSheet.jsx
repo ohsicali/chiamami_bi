@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
+import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import HoursPill from '../HoursPill'
@@ -97,10 +98,12 @@ export default function DesktopRestaurantSheet({
     ? getPhotoUrl(photos[photoIndex], { w: 1800 })
     : proxyImg(restaurant.image, { w: 1800 }) || null
 
-  const categories = (restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : []))
+  const categories = getPublicCategoryNames(restaurant)
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const firstCat = categories[0]
   const categoryChip = firstCat ? `${firstCat.emoji} ${firstCat.name}` : '🍽️ Ristorante'
+  const dietCategories = getDietCategoryNames(restaurant)
+    .map(n => getCategoryInfo(n)).filter(Boolean)
 
   const priceLabel = PRICE_LABELS[restaurant.price_range] || ''
   const mapsUrl = restaurant.google_maps_url ||
@@ -327,6 +330,39 @@ export default function DesktopRestaurantSheet({
               )}
             </div>
 
+            {/* "Anche piatti" — dieta categories with disclaimer */}
+            {dietCategories.length > 0 && (
+              <div style={{
+                marginBottom: 22,
+                padding: '14px 16px',
+                background: 'var(--color-green-wash, #E8F5D8)',
+                borderRadius: 16,
+                display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 800, letterSpacing: '0.05em',
+                  textTransform: 'uppercase', color: '#2C7A4A',
+                }}>
+                  Hanno anche piatti
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {dietCategories.map((cat) => (
+                    <span key={cat.name} style={{
+                      fontSize: 12.5, fontWeight: 700, color: '#2C7A4A',
+                      background: '#fff', border: '1px solid #C7E2A5',
+                      padding: '6px 12px', borderRadius: 999,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                    }}>
+                      {cat.emoji} {cat.name}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ fontSize: 12, color: INK70, lineHeight: 1.4 }}>
+                  ⚠️ Verifica sempre con il locale per esigenze specifiche (allergie, contaminazioni, certificazioni).
+                </div>
+              </div>
+            )}
+
             {/* CTA row */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
               {mapsUrl && (
@@ -540,7 +576,7 @@ export default function DesktopRestaurantSheet({
                   </h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {nearby.map(r => {
-                      const catName = (r.category || [])[0] || r.cuisine_type
+                      const catName = getPublicCategoryNames(r)[0] || r.cuisine_type
                       const cat = catName ? getCategoryInfo(catName) : null
                       const photoRaw = Array.isArray(r.photos) && r.photos.length > 0
                         ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.thumb_url || r.photos[0]?.photo_url)

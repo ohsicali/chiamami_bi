@@ -14,6 +14,9 @@
     "api/discount-pdf.js": {
       "maxDuration": 30,
       "includeFiles": "api/_{fonts,assets}/**"
+    },
+    "api/places-details.js": {
+      "maxDuration": 60
     }
   },
   "headers": [
@@ -21,6 +24,13 @@
       "source": "/api/img",
       "headers": [
         { "key": "Cache-Control", "value": "public, s-maxage=31536000, max-age=604800, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
       ]
     },
     {
