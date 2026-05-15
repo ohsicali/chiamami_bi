@@ -377,12 +377,45 @@ const HOME_CATEGORY_MAP = {
   Piemontese: { categories: ['Piemontese'] },
   Pizza:      { categories: ['Pizza'] },
   Giapponese: { categories: ['Giapponese', 'Sushi', 'Ramen'] },
-  Pesce:      { categories: ['Pesce'], textHints: ['pesce', 'crudo di pesce', 'tartare di tonno', 'gambero', 'ostriche', 'frittura di paranza'] },
-  Colazione:  { categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'], moments: ['colazione'], recommendedFor: ['Brunch'] },
-  Carne:      { categories: ['Barbecue', 'Carne'], recommendedFor: ['Carne'], textHints: ['fassona', 'bistecca', 'tartare di fassona', 'tagliata', 'manzo', 'maiale', 'agnello'] },
-  Italiana:   { categories: ['Italiana', 'Piemontese', 'Pasta'] },
-  Vegano:     { categories: ['Vegano'], recommendedFor: ['Vegetariano'], textHints: ['vegano', 'vegana', 'vegetariano', 'vegetariana', 'plant-based'] },
-  Cocktail:   { categories: ['Cocktail', 'Vino'], moments: ['aperitivo', 'dopocena'], textHints: ['miscelati', 'cocktail', 'vermouth', 'amaro'] },
+  Pesce:      {
+    categories: ['Pesce'],
+    textHints: [
+      'pesce', 'crudo di pesce', 'tartare di tonno', 'gambero', 'gamberi',
+      'ostriche', 'frittura di paranza', 'cozze', 'vongole', 'polpo',
+      'baccalà', 'baccala', 'spigola', 'orata', 'salmone', 'tonno',
+      'sashimi', 'nigiri',
+    ],
+  },
+  Colazione: {
+    categories: ['Brunch', 'Bar', 'Matcha', 'Dolce', 'Gelateria'],
+    moments: ['colazione'],
+    recommendedFor: ['Brunch'],
+    textHints: ['cappuccino', 'brioche', 'cornetto', 'specialty coffee', 'pastry', 'pasticceria'],
+  },
+  Carne: {
+    categories: ['Barbecue', 'Carne'],
+    recommendedFor: ['Carne'],
+    textHints: [
+      'fassona', 'bistecca', 'tartare di fassona', 'tartare', 'tagliata',
+      'manzo', 'maiale', 'agnello', 'vitello', 'brasato', 'carne cruda',
+      'salumi', 'cotechino', 'stinco', 'costata', 'hamburger', 'filetto',
+    ],
+  },
+  // "Italiana" è un cappello ampio: include tutto ciò che è cucina italiana
+  // in senso lato (regionale, pizza, panineria, street food italiano).
+  Italiana: {
+    categories: ['Italiana', 'Piemontese', 'Pasta', 'Pizza', 'Panineria', 'Piadina', 'Tramezzini', 'Street Food'],
+  },
+  Vegano: {
+    categories: ['Vegano'],
+    recommendedFor: ['Vegetariano'],
+    textHints: ['vegano', 'vegana', 'vegetariano', 'vegetariana', 'plant-based', 'plant based', 'tofu', 'seitan'],
+  },
+  Cocktail: {
+    categories: ['Cocktail', 'Vino'],
+    moments: ['aperitivo', 'dopocena'],
+    textHints: ['cocktail', 'negroni', 'spritz', 'aperol', 'gin tonic', 'vermouth', 'miscelati', 'amaro'],
+  },
 }
 
 export function matchesHomeCategory(restaurant, label) {
