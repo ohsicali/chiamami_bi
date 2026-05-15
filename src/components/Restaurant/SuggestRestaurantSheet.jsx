@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
+import Turnstile from '../Turnstile'
 
 const TAGS = [
   { emoji: '🍝', label: 'Cibo pazzesco' },
@@ -11,6 +12,16 @@ const TAGS = [
   { emoji: '👨‍🍳', label: 'Servizio' },
   { emoji: '📸', label: 'Instagrammabile' },
 ]
+
+const ACCEPTED_PHOTO_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024 // 8 MB
+const EXT_BY_MIME = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
+}
 
 function StepDots({ current, total = 3 }) {
   return (
@@ -50,6 +61,8 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -76,19 +89,42 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!ACCEPTED_PHOTO_MIME.has(file.type)) {
+      setError('Formato non supportato. Carica una foto JPG, PNG, WebP o HEIC.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setError('La foto è troppo grande. Massimo 8 MB.')
+      e.target.value = ''
+      return
+    }
+    setError('')
     setPhoto(file)
     setPhotoPreview(URL.createObjectURL(file))
   }
 
   const handleSubmit = async () => {
+    if (captchaRequired && !captchaToken) {
+      setError('Attendi qualche secondo: la verifica anti-spam è in corso, poi riprova.')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
       let photoUrl = null
       if (photo && !isAnon) {
-        const ext = photo.name.split('.').pop()
+        // Re-validate at submit time (defense-in-depth: handleFileChange may
+        // have been bypassed by a malicious client). Derive extension from
+        // MIME type, never from filename — prevents `.exe` renamed to `.jpg`.
+        if (!ACCEPTED_PHOTO_MIME.has(photo.type) || photo.size > MAX_PHOTO_BYTES) {
+          throw new Error('Foto non valida (tipo o dimensione)')
+        }
+        const ext = EXT_BY_MIME[photo.type] || 'jpg'
         const path = `suggestions/${userId}/${Date.now()}.${ext}`
-        const { error: uploadErr } = await supabase.storage.from('suggestions').upload(path, photo)
+        const { error: uploadErr } = await supabase.storage
+          .from('suggestions')
+          .upload(path, photo, { contentType: photo.type, upsert: false })
         if (!uploadErr) {
           const { data: { publicUrl } } = supabase.storage.from('suggestions').getPublicUrl(path)
           photoUrl = publicUrl
@@ -139,6 +175,7 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
               nome_utente: senderName,
               email_utente: recipientEmail,
               id: inserted?.id,
+              captcha_token: captchaToken,
             }),
           }),
         ]).catch(() => {})
@@ -457,6 +494,10 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
                     borderRadius: 12, marginBottom: 12,
                   }}>{error}</p>
                 )}
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                  <Turnstile onToken={setCaptchaToken} action="suggest-restaurant" />
+                </div>
 
                 <ButtonRow>
                   <GhostButton onClick={() => setStep(2)}>Indietro</GhostButton>

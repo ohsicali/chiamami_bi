@@ -32,6 +32,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
+import { applyCors } from './_cors.js'
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000  // 24 ore
 const PLACES_FIELDS = [
@@ -48,11 +49,7 @@ const BULK_THROTTLE_MS = 200
 const BULK_TIME_BUDGET_MS = 50_000   // lascia ~10s di margine sotto maxDuration
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  if (applyCors(req, res, { methods: 'GET, POST, OPTIONS' })) return
   if (req.method === 'POST') return handleBulkRefresh(req, res)
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' })
 

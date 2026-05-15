@@ -5,6 +5,7 @@ import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import Turnstile from '../../components/Turnstile'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -72,6 +73,8 @@ export default function PartnerLandingPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
 
   const [siteConfig, setSiteConfig] = useState({
     partner_founding_year: '2024',
@@ -104,12 +107,16 @@ export default function PartnerLandingPage() {
       setError('Compila tutti i campi obbligatori')
       return
     }
+    if (captchaRequired && !captchaToken) {
+      setError('Attendi qualche secondo: la verifica anti-spam è in corso, poi riprova.')
+      return
+    }
     setSubmitting(true)
     try {
       const resp = await fetch('/api/partner-application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, captcha_token: captchaToken }),
       })
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}))
@@ -427,6 +434,10 @@ export default function PartnerLandingPage() {
                   {error}
                 </motion.div>
               )}
+
+              <div style={{ gridColumn: isDesktop ? '1 / -1' : 'auto', display: 'flex', justifyContent: 'center' }}>
+                <Turnstile onToken={setCaptchaToken} action="partner-application" />
+              </div>
 
               <motion.button
                 type="submit" disabled={submitting}

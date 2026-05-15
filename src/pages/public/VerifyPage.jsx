@@ -8,7 +8,6 @@ import SuccessResult from '../../components/Verify/SuccessResult'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
-const RESTAURANT_COLS = 'id, name, slug, address, city, category, cuisine_type, restaurant_photos(photo_url, thumb_url, sort_order)'
 
 function normalizeRestaurant(r) {
   if (!r) return null
@@ -175,20 +174,17 @@ export default function VerifyPage() {
       }
       const token = cookieToken
       try {
-        const { data } = await supabase
-          .from('verified_devices')
-          .select(`restaurant_id, restaurants:restaurants(${RESTAURANT_COLS})`)
-          .eq('device_token', token)
-          .maybeSingle()
+        // The "Public read by token" policy on verified_devices was dropped
+        // by the 2026-05 hardening — read via SECURITY DEFINER RPC instead.
+        // The RPC also touches last_used_at, so no separate verify_touch_device
+        // call is needed here.
+        const { data } = await supabase.rpc('verify_get_restaurant_by_token', {
+          p_device_token: token,
+        })
         if (cancelled) return
-        if (data?.restaurants) {
-          setRestaurant(normalizeRestaurant(data.restaurants))
+        if (data) {
+          setRestaurant(normalizeRestaurant(data))
           setStatus('authed')
-          // Touch last_used_at in background via RPC (direct UPDATE on the
-          // table is no longer allowed for anon/auth — see hardening SQL).
-          supabase
-            .rpc('verify_touch_device', { p_device_token: token })
-            .then(() => {}, () => {})
         } else {
           deleteCookie(COOKIE_NAME)
           setStatus('pin')
@@ -293,10 +289,10 @@ export default function VerifyPage() {
     const token = getCookie(COOKIE_NAME)
     deleteCookie(COOKIE_NAME)
     if (token && isSupabaseConfigured()) {
+      // Anon DELETE on verified_devices is not allowed (and never was) — use
+      // the SECURITY DEFINER RPC added by hotfix-verify-token-rpcs-2026-05-14.
       supabase
-        .from('verified_devices')
-        .delete()
-        .eq('device_token', token)
+        .rpc('verify_logout_device', { p_device_token: token })
         .then(() => {}, () => {})
     }
     setRestaurant(null)
