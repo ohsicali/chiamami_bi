@@ -138,8 +138,10 @@
 .cp-body {
   flex: 1;
   overflow-y: auto;
-  /* padding-bottom mobile: tab bar (86+safe) + input bar (~64) + breathing */
-  padding: 24px 18px calc(170px + env(safe-area-inset-bottom));
+  /* padding-bottom mobile: input bar (~76) + breathing room. La tab bar è
+     nascosta su /chiedi (vedi App.jsx: showTabBar && !isChiedi), quindi
+     l'input bar siede direttamente sopra la safe-area. */
+  padding: 24px 18px calc(110px + env(safe-area-inset-bottom));
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
@@ -646,12 +648,10 @@
 }
 
 /* ========================= INPUT BAR ========================= */
-/* Mobile: barra fissa sopra il tab bar floating (bottom 18+safe + height 68
-   = 86+safe). z-index 60 > tab bar 50 così l'ombra upward del tab bar non
-   invade la barra. Tra input e tab bar resta un piccolo gap dove il tab
-   bar conserva il suo liquid glass (contenuto scrolla dietro). Sotto il
-   tab bar usiamo una `cp-bottom-strip` opaca per bloccare lo scroll-
-   through nella safe-area. */
+/* Mobile: barra fissa appoggiata sopra la safe-area. La MobileTabBar è
+   nascosta sulla pagina /chiedi (vedi App.jsx) così l'input bar non deve
+   convivere con un'altra barra fissa — niente gap strani, niente strip
+   opaca dietro al tab bar. Layout chat standard (WhatsApp / ChatGPT). */
 .cp-input-bar {
   position: fixed;
   left: 0;
@@ -663,8 +663,7 @@
 }
 @media (max-width: 767px) {
   .cp-input-bar {
-    bottom: calc(86px + env(safe-area-inset-bottom));
-    padding: 12px 14px 14px;
+    padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
   }
 }
 @media (min-width: 768px) {
@@ -688,54 +687,6 @@
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
-  }
-}
-
-/* Pannello cream opaco DIETRO al tab bar (solo mobile) — copre tutta
-   l'area sotto la input bar (gap laterali del tab bar floating + safe
-   area). Il tab bar (z 50, white pill) galleggia sopra questo pannello;
-   la input bar (z 60) sta sopra a tutto. Risultato: una "sezione" unica
-   cream dall'input bar fino in fondo, con il tab bar bianco al centro. */
-.cp-bottom-strip {
-  display: none;
-}
-@media (max-width: 767px) {
-  .cp-bottom-strip {
-    display: block;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* fino al top del tab bar floating: bottom 18 + height 68 = 86 */
-    height: calc(86px + env(safe-area-inset-bottom));
-    background: var(--cp-page);
-    z-index: 40;
-    pointer-events: none;
-  }
-}
-
-/* ============================================================
-   Tab bar override SOLO su /chiedi mobile.
-   La classe 'is-chiedi-page' viene messa su body da ChiediPage
-   con un useEffect. Qui togliamo il liquid glass e mettiamo lo
-   stesso fondo solid della input bar (--color-page) così le due
-   barre formano una "sezione" continua.
-   ============================================================ */
-@media (max-width: 767px) {
-  body.is-chiedi-page .bottom-nav {
-    background: #fff !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    /* Token globale (--color-line), NON --cp-line: quest'ultima è scoped
-       dentro .chiedi-page e qui targettiamo .bottom-nav che è sibling.
-       Doppio mechanism (border + inset box-shadow) per ovviare al bug
-       Safari iOS sui border 1px su pill border-radius 999 + overflow. */
-    border: 1px solid var(--color-line, #EAE3D7) !important;
-    box-shadow: none !important;
-  }
-  /* Riflesso speculare interno disattivato qui — non serve senza vetro */
-  body.is-chiedi-page .bottom-nav::before {
-    display: none !important;
   }
 }
 

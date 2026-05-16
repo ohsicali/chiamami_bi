@@ -40,12 +40,6 @@ export default function ChiediPage() {
 
   const isEmpty = messages.length === 0 && !loading
 
-  /* ---- Body class: tab bar mobile va resa solid (no glass) qui ---- */
-  useEffect(() => {
-    document.body.classList.add('is-chiedi-page')
-    return () => document.body.classList.remove('is-chiedi-page')
-  }, [])
-
   /* ---- Scroll to bottom on new content ---- */
   useEffect(() => {
     if (isEmpty) return
@@ -330,10 +324,6 @@ export default function ChiediPage() {
           <div className="cp-geo-err" role="alert">{locationError}</div>
         )}
       </form>
-
-      {/* Striscia opaca sotto al tab bar mobile, blocca lo scroll-through
-         nella safe-area sotto al tab bar floating. */}
-      <div className="cp-bottom-strip" aria-hidden="true" />
 
       {showAuthGate && (
         <AuthGate
