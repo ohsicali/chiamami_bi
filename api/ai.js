@@ -211,6 +211,18 @@ export default async function handler(req, res) {
     res.setHeader('X-Accel-Buffering', 'no')
     res.flushHeaders?.()
 
+    // Primo byte subito: il round 1 (search tool) può durare 3-8s e in quel
+    // tempo Vercel/CDN potrebbero buffering la response. Una SSE comment
+    // line (": ...") è ignorata dal client ma forza il flush del primo
+    // chunk → il browser vede che lo stream è vivo e non lo droppa.
+    try { res.write(': ok\n\n') } catch { /* connection closed early */ }
+
+    // Heartbeat ogni 4s mentre aspettiamo Claude: tiene aperta la
+    // connessione su proxy aggressivi e dà al client un segnale "vivo".
+    const heartbeat = setInterval(() => {
+      try { res.write(': hb\n\n') } catch { /* ignore */ }
+    }, 4000)
+
     try {
       const result = await streamAskClaude({
         apiKey, admin, res,
@@ -225,10 +237,11 @@ export default async function handler(req, res) {
         return null
       })
       sseEvent(res, 'done', { conversation_id: finalConversationId })
-      res.end()
     } catch (err) {
       console.error('ai stream error:', err)
       sseEvent(res, 'error', { message: err?.message || 'AI error' })
+    } finally {
+      clearInterval(heartbeat)
       res.end()
     }
     return
