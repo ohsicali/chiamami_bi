@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import Footer from '../../components/Layout/Footer'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Turnstile from '../../components/Turnstile'
+import MetaTags from '../../components/SEO/MetaTags'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -205,6 +206,7 @@ export default function LoginPage() {
       className="flex flex-col min-h-dvh md:min-h-[calc(100dvh-80px)]"
       style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}
     >
+      <MetaTags title="Accedi — ChiamamiBi" noindex />
       {/* ─── HEADER — wordmark + Esplora la mappa (mobile only) ─── */}
       <header
         className="md:hidden"

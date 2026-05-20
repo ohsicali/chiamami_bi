@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom'
 import { LogoFull } from '../../components/UI/Logo'
 import Footer from '../../components/Layout/Footer'
+import MetaTags from '../../components/SEO/MetaTags'
 
 export default function TermsPage() {
   return (
     <div className="min-h-dvh md:min-h-[calc(100dvh-80px)] bg-bg flex flex-col">
+      <MetaTags
+        title="Termini e Condizioni — ChiamamiBi"
+        description="Termini di utilizzo del servizio ChiamamiBi: regole di accesso, contenuti, sconti e responsabilità."
+        url="https://chiamamibi.com/terms"
+        canonical="https://chiamamibi.com/terms"
+      />
       {/* Header */}
       <nav className="sticky top-0 z-40 glass">
         <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">

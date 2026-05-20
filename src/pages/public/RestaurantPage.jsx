@@ -115,25 +115,60 @@ export default function RestaurantPage() {
     )
   }
 
-  const restaurantUrl = `https://chiamamibi.com/restaurant/${restaurant.slug || slugify(restaurant.name)}`
+  const resolvedSlug = restaurant.slug || slugify(restaurant.name)
+  const restaurantUrl = `https://chiamamibi.com/restaurant/${resolvedSlug}`
+  const firstPhoto = restaurant.photos?.[0]
+  const ogImage =
+    (firstPhoto && (firstPhoto.photo_url || firstPhoto.thumb_url)) ||
+    restaurant.image ||
+    '/og-image.png'
+  const photoImages = (restaurant.photos || [])
+    .map(p => p.photo_url || p.thumb_url)
+    .filter(Boolean)
+    .slice(0, 6)
+  const seoDescription =
+    restaurant.tagline ||
+    (restaurant.our_review || '').slice(0, 240) ||
+    restaurant.description ||
+    `Scopri ${restaurant.name} a ${restaurant.city || 'Torino'}: orari, indirizzo e la recensione di Bi su ChiamamiBi.`
+  const seoTitle = `${restaurant.name}${
+    restaurant.cuisine_type ? ' · ' + restaurant.cuisine_type : ''
+  } a ${restaurant.city || 'Torino'} — ChiamamiBi`
 
   return (
     <>
       <MetaTags
-        title={`${restaurant.name} — ChiamamiBi`}
-        description={restaurant.description || `Scopri ${restaurant.name} su ChiamamiBi`}
-        image={restaurant.image || '/og-image.png'}
+        title={seoTitle}
+        description={seoDescription}
+        image={ogImage}
         url={restaurantUrl}
-        type="restaurant"
+        canonical={restaurantUrl}
+        type="restaurant.restaurant"
       />
       <JsonLd
         name={restaurant.name}
+        description={seoDescription}
         address={restaurant.address}
+        city={restaurant.city}
+        country={restaurant.country}
         telephone={restaurant.phone}
         url={restaurantUrl}
-        priceRange={restaurant.priceRange}
-        servesCuisine={restaurant.cuisine}
-        image={restaurant.image}
+        priceRange={restaurant.price_range || restaurant.priceRange}
+        servesCuisine={restaurant.cuisine_type || restaurant.cuisine}
+        image={photoImages.length ? photoImages : ogImage}
+        latitude={restaurant.latitude}
+        longitude={restaurant.longitude}
+        sameAs={[restaurant.website, restaurant.google_maps_url, restaurant.tiktok_url, restaurant.instagram_reel].filter(Boolean)}
+        hoursCache={restaurant.hours_cache}
+        rating={restaurant.our_rating}
+      />
+      <JsonLd
+        type="breadcrumb"
+        items={[
+          { name: 'Home', url: 'https://chiamamibi.com/' },
+          { name: 'Ristoranti', url: 'https://chiamamibi.com/list' },
+          { name: restaurant.name, url: restaurantUrl },
+        ]}
       />
       {isDesktop ? (
         <DesktopRestaurantSheet

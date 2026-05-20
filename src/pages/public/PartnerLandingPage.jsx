@@ -6,6 +6,7 @@ import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import Turnstile from '../../components/Turnstile'
+import MetaTags from '../../components/SEO/MetaTags'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -194,6 +195,13 @@ export default function PartnerLandingPage() {
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--color-page)', overflowX: 'hidden' }}>
+      <MetaTags
+        title="Diventa partner ChiamamiBi — Porta il tuo ristorante nella guida di Bi"
+        description="Vuoi entrare nella guida ristoranti di Bi a Torino? Candidati come partner: visibilità a 3M+ persone al mese, recensione curata, sconti e drop dedicati."
+        url="https://chiamamibi.com/partner"
+        canonical="https://chiamamibi.com/partner"
+        type="website"
+      />
       {!isDesktop && <MobileLogoHeader />}
 
       <main style={{
