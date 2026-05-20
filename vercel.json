@@ -18,7 +18,7 @@
     "api/places-details.js": {
       "maxDuration": 60
     },
-    "api/sitemap.xml.js": {
+    "api/sitemap.js": {
       "maxDuration": 10
     },
     "api/og-restaurant.js": {
@@ -86,7 +86,7 @@
   ],
   "rewrites": [
     { "source": "/api/verify-recovery-otp", "destination": "/api/recovery-otp" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     {
       "source": "/restaurant/:slug",
       "has": [
