@@ -12,6 +12,19 @@ export default defineConfig({
     sourcemap: false,
     // Bigger chunks are fine if they cache well; suppress the noisy warning.
     chunkSizeWarningLimit: 800,
+    // Vite/rolldown speculatively `modulepreload`s every chunk reachable from
+    // the entry's transitive graph, even when behind a `lazy()` import.
+    // Strip the ones that are admin- / verify-only so mobile users on the
+    // public home don't download ~130 kB they'll never use.
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter(d => {
+          if (/\/qr-[A-Za-z0-9_-]+\.js$/.test(d)) return false
+          if (/\/dnd-kit-[A-Za-z0-9_-]+\.js$/.test(d)) return false
+          return true
+        })
+      },
+    },
     rollupOptions: {
       output: {
         // Group third-party deps into stable, well-cached chunks. Each chunk
