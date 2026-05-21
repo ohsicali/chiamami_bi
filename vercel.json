@@ -87,17 +87,6 @@
   "rewrites": [
     { "source": "/api/verify-recovery-otp", "destination": "/api/recovery-otp" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    {
-      "source": "/restaurant/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(?:.*)(?:facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|SkypeUriPreview|redditbot|Applebot|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|GPTBot|ClaudeBot|PerplexityBot|Google-Extended)(?:.*)"
-        }
-      ],
-      "destination": "/api/og-restaurant?slug=:slug"
-    },
     { "source": "/((?!api/).*)", "destination": "/" }
   ]
 }
