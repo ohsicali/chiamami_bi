@@ -8,6 +8,8 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { getCurrentMoment } from '../../lib/hours'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
+import MetaTags from '../../components/SEO/MetaTags'
+import JsonLd from '../../components/SEO/JsonLd'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import SponsorBanner from '../../components/Home/SponsorBanner'
@@ -618,6 +620,17 @@ export default function HomeFeedV4() {
 
   const onCardClick = (r) => navigate(`/restaurant/${r.slug}`)
 
+  const topRestaurants = useMemo(
+    () => (restaurants || [])
+      .filter(r => r.slug || r.name)
+      .slice(0, 20)
+      .map(r => ({
+        name: r.name,
+        url: `https://chiamamibi.com/restaurant/${r.slug || ''}`,
+      })),
+    [restaurants]
+  )
+
   return (
     <div
       className="hfv4-root"
@@ -628,6 +641,34 @@ export default function HomeFeedV4() {
         flexDirection: 'column',
       }}
     >
+      <MetaTags
+        title="Dove mangiare a Torino — I migliori ristoranti consigliati da ChiamamiBi"
+        description="La guida personale di Bi ai migliori ristoranti, bar e locali di Torino. Mappa interattiva, recensioni curate, sconti esclusivi e i drop del giorno."
+        url="https://chiamamibi.com/"
+        canonical="https://chiamamibi.com/"
+        type="website"
+      />
+      {topRestaurants.length > 0 && (
+        <JsonLd
+          type="itemList"
+          items={topRestaurants}
+        />
+      )}
+      <h1
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        Dove mangiare a Torino — Guida ai migliori ristoranti consigliati da Bi
+      </h1>
       <style>{`
         @keyframes hero-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }

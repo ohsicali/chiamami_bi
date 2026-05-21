@@ -422,6 +422,7 @@ function SconteRedesignPageInner() {
         title="Sconti ristoranti Torino · Bi Club | ChiamamiBi"
         description="Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club."
         url="https://chiamamibi.com/sconti"
+        canonical="https://chiamamibi.com/sconti"
       />
       <SconteSchemaOrg drops={dropsAvailable} conv={convAvailable} />
       {!isDesktop && <MobileLogoHeader />}

@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom'
 import { LogoFull } from '../../components/UI/Logo'
 import Footer from '../../components/Layout/Footer'
+import MetaTags from '../../components/SEO/MetaTags'
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-dvh md:min-h-[calc(100dvh-80px)] bg-bg flex flex-col">
+      <MetaTags
+        title="Privacy Policy — ChiamamiBi"
+        description="Informativa sulla privacy di ChiamamiBi: come trattiamo i dati personali in conformità al GDPR."
+        url="https://chiamamibi.com/privacy"
+        canonical="https://chiamamibi.com/privacy"
+      />
       {/* Header */}
       <nav className="sticky top-0 z-40 glass">
         <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
