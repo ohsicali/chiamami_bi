@@ -1,15 +1,17 @@
 /**
- * Vercel Serverless Function — sitemap.xml dinamico
+ * Vercel Edge Function — sitemap.xml dinamico
  *
  * Espone https://chiamamibi.com/sitemap.xml (via rewrite in vercel.json).
- * Include rotte statiche pubbliche + tutti i ristoranti pubblicati,
- * con `lastmod` dal campo `updated_at`. Cache CDN 1h, SWR 24h.
+ * Include rotte statiche pubbliche + tutti i ristoranti pubblicati.
+ * Edge runtime: NON conta nel limite 12 Serverless del piano Hobby.
  *
  * Env richieste:
  *   - VITE_SUPABASE_URL
- *   - VITE_SUPABASE_ANON_KEY (sufficiente, restaurants pubblicati sono leggibili via RLS)
+ *   - VITE_SUPABASE_ANON_KEY
  */
 import { createClient } from '@supabase/supabase-js'
+
+export const config = { runtime: 'edge' }
 
 const SITE_URL = 'https://chiamamibi.com'
 
@@ -41,9 +43,7 @@ function urlEntry({ loc, lastmod, priority, changefreq }) {
   return `  <url>\n${parts.join('\n')}\n  </url>`
 }
 
-export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'application/xml; charset=utf-8')
-
+export default async function handler() {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
@@ -86,9 +86,11 @@ export default async function handler(req, res) {
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`
 
-  res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=3600, stale-while-revalidate=86400'
-  )
-  res.status(200).send(body)
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+    },
+  })
 }

@@ -1,19 +1,15 @@
 /**
- * Vercel Serverless Function — Pre-render meta tags per /restaurant/:slug
+ * Vercel Edge Function — Pre-render meta tags per /restaurant/:slug
  *
  * Servita SOLO ai bot social / crawler (matching User-Agent in vercel.json).
  * Per gli utenti reali la rewrite catch-all serve sempre la SPA.
- *
- * Cosa fa:
- *  - Estrae slug dalla query (rewrite "/restaurant/:slug" → "/api/og-restaurant?slug=:slug")
- *  - Carica il ristorante da Supabase (RLS pubblica)
- *  - Restituisce HTML con title/description/OG/Twitter/JSON-LD specifici
- *  - Include un meta refresh + script di redirect verso la pagina reale per
- *    eventuali user agent che non sono bot e capitano qui
+ * Edge runtime: NON conta nel limite 12 Serverless del piano Hobby.
  *
  * Cache CDN 10 minuti.
  */
 import { createClient } from '@supabase/supabase-js'
+
+export const config = { runtime: 'edge' }
 
 const SITE_URL = 'https://chiamamibi.com'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`
@@ -109,17 +105,18 @@ function buildHtml({ restaurant, slug }) {
 </html>`
 }
 
-export default async function handler(req, res) {
-  const slug = (req.query?.slug || '').toString().trim()
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=600, stale-while-revalidate=86400'
-  )
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url)
+  const slug = (searchParams.get('slug') || '').trim()
 
   if (!slug) {
-    res.status(200).send(buildHtml({ restaurant: null, slug: '' }))
-    return
+    return new Response(buildHtml({ restaurant: null, slug: '' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=86400',
+      },
+    })
   }
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
@@ -152,5 +149,11 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).send(buildHtml({ restaurant, slug }))
+  return new Response(buildHtml({ restaurant, slug }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=86400',
+    },
+  })
 }
