@@ -93,14 +93,12 @@ function buildHtml({ restaurant, slug }) {
     <meta name="twitter:description" content="${htmlEscape(description)}" />
     <meta name="twitter:image" content="${htmlEscape(image)}" />
 
-    <meta http-equiv="refresh" content="0; url=${htmlEscape(url)}" />
     <script type="application/ld+json">${jsonEscape(jsonLd)}</script>
   </head>
   <body>
     <h1>${htmlEscape(name)}</h1>
     <p>${htmlEscape(description)}</p>
     <p><a href="${htmlEscape(url)}">Apri ${htmlEscape(name)} su ChiamamiBi</a></p>
-    <script>window.location.replace(${jsonEscape(url)})</script>
   </body>
 </html>`
 }
