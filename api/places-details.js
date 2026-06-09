@@ -69,6 +69,32 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'restaurantId or placeId required' })
   }
 
+  // The restaurantId path is public and DB-cached (cheap). A direct placeId
+  // lookup bypasses the cache and bills the Google Places API per call, so it
+  // is admin-only — no public client uses it.
+  if (placeIdParam && !restaurantId) {
+    const auth = req.headers.authorization || ''
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+    let isAdmin = false
+    if (anonKey && auth.startsWith('Bearer ')) {
+      const token = auth.replace('Bearer ', '')
+      const anon = createClient(supabaseUrl, anonKey)
+      const { data: { user } = {} } = await anon.auth.getUser(token)
+      if (user) {
+        const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+        const { data: prof } = await adminClient
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .maybeSingle()
+        isAdmin = prof?.is_admin === true
+      }
+    }
+    if (!isAdmin) return res.status(401).json({ ok: false, error: 'unauthorized' })
+  }
+
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })

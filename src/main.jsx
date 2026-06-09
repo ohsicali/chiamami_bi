@@ -7,6 +7,16 @@ import App from './App'
 import { ToastProvider } from './components/UI/Toast'
 import { CityProvider } from './lib/CityContext'
 import { AuthProvider } from './lib/hooks/useAuth'
+// Self-hosted fonts (latin subset). Served from our own origin with immutable
+// caching instead of the Google Fonts CDN — same glyphs/weights, no extra
+// preconnect + render-blocking request chain to fonts.googleapis.com.
+import '@fontsource/poppins/latin-400.css'
+import '@fontsource/poppins/latin-500.css'
+import '@fontsource/poppins/latin-600.css'
+import '@fontsource/poppins/latin-700.css'
+import '@fontsource/poppins/latin-800.css'
+import '@fontsource/poppins/latin-900.css'
+import '@fontsource/caveat/latin-400.css'
 import './lib/i18n'
 import './styles/globals.css'
 

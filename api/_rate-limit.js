@@ -15,11 +15,15 @@ const buckets = new Map()
 
 function clientIp(req) {
   const h = req.headers || {}
+  // Prefer headers set by the Vercel edge (not client-controllable) over the
+  // raw x-forwarded-for, whose first segment an attacker can spoof to reset
+  // their bucket. x-real-ip / x-vercel-forwarded-for are platform-populated.
   const fwd = (h['x-forwarded-for'] || h['X-Forwarded-For'] || '').toString().split(',')[0].trim()
   return (
-    fwd ||
     h['x-real-ip'] ||
+    h['x-vercel-forwarded-for'] ||
     h['cf-connecting-ip'] ||
+    fwd ||
     (req.socket && req.socket.remoteAddress) ||
     'unknown'
   )

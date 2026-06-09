@@ -4,8 +4,8 @@
    Loading from Google Fonts CDN proved unreliable on some mobile browsers
    (privacy/adblock layers, slow networks): the wordmark would fall back to
    the generic serif and render as a thin/wrong typeface. Self-hosting from
-   our own origin sidesteps that. The Google Fonts <link> in index.html is
-   kept as a secondary source for Poppins and Caveat. */
+   our own origin sidesteps that. Poppins and Caveat are likewise self-hosted
+   via @fontsource (imported in main.jsx); no Google Fonts CDN is used. */
 @font-face {
   font-family: 'Alfa Slab One';
   font-style: normal;
