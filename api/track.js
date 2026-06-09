@@ -12,17 +12,29 @@
  */
 
 import { applyCors } from './_cors.js'
+import { rateLimit } from './_rate-limit.js'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const {
-    path,
-    user_id = null,
-    session_id,
-    referrer = null,
-  } = req.body || {}
+  // This endpoint writes with the service role and is unauthenticated, so cap
+  // abusive flooding (analytics spam / table poisoning). Generous limit: a real
+  // visitor never approaches it; dropping an over-limit event is harmless.
+  const limited = rateLimit(req, { key: 'track', max: 120, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
+
+  const body = req.body || {}
+
+  // Constrain attacker-controlled fields: cap lengths and only accept a
+  // well-formed UUID for user_id (otherwise events could be attributed to
+  // arbitrary users).
+  const path = typeof body.path === 'string' ? body.path.slice(0, 512) : null
+  const session_id = typeof body.session_id === 'string' ? body.session_id.slice(0, 128) : null
+  const referrer = typeof body.referrer === 'string' ? body.referrer.slice(0, 512) : null
+  const user_id = typeof body.user_id === 'string' && UUID_RE.test(body.user_id) ? body.user_id : null
 
   if (!path || !session_id) {
     return res.status(400).json({ error: 'Missing path or session_id' })

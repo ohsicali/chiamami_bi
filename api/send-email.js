@@ -46,6 +46,9 @@ async function handleUserWelcome(req, res) {
 
   const { email, name } = req.body || {}
   if (!email) return res.status(400).json({ error: 'Email required' })
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+    return res.status(400).json({ error: 'Invalid email address' })
+  }
 
   const firstName = (name || '').split(' ')[0] || 'there'
 

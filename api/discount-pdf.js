@@ -485,11 +485,12 @@ export default async function handler(req, res) {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', buffer.length)
     res.setHeader('Cache-Control', 'private, no-store')
-    // Debug: stato della foto leggibile da DevTools → Network → Response
-    // Headers, senza dover andare nei log Vercel.
-    res.setHeader('X-Photo-Status', photoDebug.status || 'unknown')
-    if (photoDebug.url) res.setHeader('X-Photo-Url', encodeURIComponent(photoDebug.url).slice(0, 800))
-    res.setHeader('X-Photos-Found', String(photos?.length || 0))
+    // Photo resolution status is logged server-side only; it was previously
+    // exposed via X-Photo-Url/X-Photo-Status response headers, which leaked
+    // internal storage URLs to the client.
+    if (photoDebug.status !== 'ok') {
+      console.warn('[pdf] photo status:', photoDebug.status, photoDebug.url || '')
+    }
     res.status(200).end(buffer)
   } catch (err) {
     console.error('[pdf] react-pdf render failed:', err && err.stack ? err.stack : err)
