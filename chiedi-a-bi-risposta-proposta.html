@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiedi a Bi · lo stato risposta — proposta</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#22181c;--corallo:#e8453c;--page:#faf7f2;--cream:#f5f0e4;--verde:#3f9d63;--line:rgba(34,24,28,.10)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Poppins',sans-serif;background:var(--page);color:var(--ink);padding:48px 28px 70px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo)}
+  h1{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:8px 0 6px}
+  .lead{font-size:14px;color:rgba(34,24,28,.65);max-width:740px;line-height:1.65;margin-bottom:36px}
+  .row{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:520px;flex:none;max-width:100%}
+  .lab{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(34,24,28,.45);margin-bottom:12px}
+  .lab.now{color:#b45309}.lab.reco{color:var(--verde)}
+  .cap{margin-top:14px;font-size:12.5px;line-height:1.6;color:rgba(34,24,28,.7)}
+  .cap b{color:var(--ink)}
+
+  .chat{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 24px 60px -38px rgba(34,24,28,.28)}
+  .bub-u{margin-left:auto;width:fit-content;max-width:85%;background:var(--ink);color:#fff;border-radius:16px 16px 4px 16px;padding:11px 16px;font-size:13px}
+  .turn{display:flex;gap:10px;margin-top:14px;align-items:flex-end}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--corallo);color:#fff;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none}
+  .bub-bi{background:var(--page);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:13px 16px;font-size:13px;line-height:1.6;max-width:88%}
+  .bub-bi p+p{margin-top:8px}
+
+  .rcards{margin:12px 0 2px;display:flex;flex-direction:column;gap:9px}
+  .rcard{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px;cursor:pointer;transition:.15s}
+  .rcard:hover{border-color:rgba(232,69,60,.4);box-shadow:0 6px 18px -10px rgba(34,24,28,.25)}
+  .rcard .pic{width:62px;height:62px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;overflow:hidden}
+  .g1{background:linear-gradient(135deg,#f3c9a5,#d98e63)}
+  .g2{background:linear-gradient(135deg,#e8d9c2,#bba180)}
+  .rcard .t b{font-size:13.5px;display:block}
+  .rcard .t .m{font-size:11px;color:rgba(34,24,28,.6);margin-top:1px}
+  .rcard .t .why{font-size:11px;color:var(--verde);font-weight:600;margin-top:3px}
+  .rcard .go{margin-left:auto;flex:none;width:30px;height:30px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:13px}
+  .open-pill{position:absolute;left:4px;bottom:4px;background:rgba(255,255,255,.94);color:var(--verde);font-size:8px;font-weight:800;border-radius:99px;padding:2px 6px;z-index:2}
+
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{border:1.5px solid rgba(232,69,60,.45);color:var(--corallo);background:#fff;border-radius:999px;padding:8px 15px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+  .chip:hover{background:var(--corallo);color:#fff}
+
+  .input{display:flex;align-items:center;gap:10px;margin-top:18px;border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 18px;background:var(--page)}
+  .input .ph-txt{flex:1;font-size:13px;color:rgba(34,24,28,.4)}
+  .input .send{width:38px;height:38px;border-radius:50%;background:var(--corallo);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+
+  .points{margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;max-width:1100px}
+  .pt{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;font-size:13px;line-height:1.65}
+  .pt b.h{display:block;font-size:14px;margin-bottom:6px}
+  .pt .tagok{display:inline-block;background:#e9f5ee;color:var(--verde);font-size:10px;font-weight:800;border-radius:99px;padding:3px 9px;margin-bottom:8px;letter-spacing:.06em}
+  .pt .tagko{display:inline-block;background:#fde8e7;color:#dc2626;font-size:10px;font-weight:800;border-radius:99px;padding:3px 9px;margin-bottom:8px;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kicker">Chiedi a Bi · test reale del 10 giu, 23:50 · 2 turni di conversazione</span>
+  <h1>La voce è perfetta. Manca l'ultimo metro: l'azione.</h1>
+  <p class="lead">Ho chiesto "un giapponese economico aperto stasera in zona Vanchiglia" e poi ho alzato il budget. Bi risponde con onestà rara e tono giusto — ma solo a parole: niente card, niente scorciatoie, e i bug dei dati (orari, quartieri) la sabotano da sotto. Qui lo stato risposta come lo proporrei.</p>
+
+  <div class="row">
+    <div class="col">
+      <div class="lab reco">Proposta · risposta con risultati</div>
+      <div class="chat">
+        <div class="bub-u">va bene anche €€€, basta che sia buono e in zona</div>
+        <div class="turn">
+          <div class="avatar">Bi</div>
+          <div class="bub-bi">
+            <p>Allora ti dico io: a Vanchiglia con €€€ il mio preferito è <b>Bomaki Murazzi</b> — sushi brasiliano nel dehor sul Po, e stasera c'è pure il −20% al banco. Se vuoi restare sul classico, <b>Sushi del Maslè</b> è a 5 minuti.</p>
+            <div class="rcards">
+              <div class="rcard">
+                <div class="pic g1">🍣<span class="open-pill">● APERTO</span></div>
+                <div class="t"><b>Bomaki Murazzi</b><div class="m">Sushi brasiliano · €€€ · Vanchiglia</div><div class="why">−20% al banco stasera · dehor sul Po</div></div>
+                <div class="go">→</div>
+              </div>
+              <div class="rcard">
+                <div class="pic g2">🍱<span class="open-pill">● APERTO</span></div>
+                <div class="t"><b>Sushi del Maslè</b><div class="m">Sushi · €€€ · Vanchiglia</div><div class="why">a 5 min a piedi · omakase del giorno</div></div>
+                <div class="go">→</div>
+              </div>
+            </div>
+            <p>Vuoi che ti dica cosa ordinare da Bomaki?</p>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip">Cosa ordino da Bomaki?</span>
+          <span class="chip">Allarga la zona</span>
+          <span class="chip">Solo con sconto</span>
+        </div>
+        <div class="input"><span class="ph-txt">Continua a chiedermi…</span><span class="send">➤</span></div>
+      </div>
+      <p class="cap"><b>Tre aggiunte, zero stravolgimenti:</b> ① card dei locali dentro la risposta — tap e sei sulla scheda, con il "perché" di Bi in verde · ② quick-reply chips che continuano la conversazione senza tastiera (su mobile valgono oro) · ③ stato "aperto" sulla card, così la promessa "chi è aperto adesso" diventa visibile.</p>
+    </div>
+
+    <div class="col" style="width:560px">
+      <div class="lab">Cosa ho visto nel test (e come lo leggo)</div>
+      <div class="points" style="margin-top:0;grid-template-columns:1fr">
+        <div class="pt"><span class="tagok">PROMOSSO</span><b class="h">La voce e l'onestà</b>"È un buco difficile — non ho niente che mi convince a passartelo… dimmi tu come vuoi muoverti." Nessun assistente food parla così: ammette il vuoto, propone alternative, chiude con una domanda. Questa è l'anima del prodotto e va protetta.</div>
+        <div class="pt"><span class="tagko">CRITICO</span><b class="h">I bug dei dati la sabotano da sotto</b>Bi mi ha detto che a Vanchiglia non ha <i>nessun</i> giapponese — ma <b>Bomaki Murazzi è sushi a Vanchiglia</b>, nel suo stesso database. Perché? Gli orari di Bomaki risultano "Chiuso 7/7" (bug B4) quindi il filtro "aperto adesso" lo elimina, e la zona vive solo nella stringa raw dell'indirizzo (bug B3), quindi "Vanchiglia" non matcha. <b>Chiedi a Bi vale quanto i suoi dati:</b> sistemare B3+B4 migliora le risposte più di qualsiasi prompt.</div>
+        <div class="pt"><span class="tagko">BUG</span><b class="h">Risposta troncata a metà frase</b>Il secondo turno finisce con "…dimmi se vuoi esplorare altro tipo di cucina a" — tagliato (limite token?). Da sistemare lato backend.</div>
+        <div class="pt"><span class="tagko">DESIGN</span><b class="h">Tutto testo, nessuna azione</b>Anche quando Bi dice "ho qualcosa che vale la pena verso il centro", non me lo mostra: niente card, niente link, devo riscrivere a mano. E le sue domande binarie ("allargo la zona?") sono perfette per i chips — invece devo digitare. Il mockup a sinistra risolve entrambe.</div>
+        <div class="pt"><span class="tagko">MICRO</span><b class="h">"Ti rispondo in 3 secondi"</b>Misurati: 10-15s a risposta. Meglio "ti rispondo in qualche secondo" + typing indicator con micro-copy di Bi ("sto sfogliando la guida…"): l'attesa percepita si dimezza.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drop banner applicato alla home mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#22181c;--corallo:#e8453c;--page:#faf7f2;--cream:#f5f0e4;--verde:#3f9d63;--line:rgba(34,24,28,.10)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Poppins',sans-serif;background:var(--page);color:var(--ink);padding:48px 28px 70px}
+  .wrap{max-width:1280px;margin:0 auto}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo)}
+  h1{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:8px 0 6px}
+  .lead{font-size:14px;color:rgba(34,24,28,.65);max-width:720px;line-height:1.65;margin-bottom:36px}
+  .row{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .lab{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(34,24,28,.45);margin-bottom:12px;text-align:center}
+  .lab.now{color:#b45309}.lab.reco{color:var(--verde)}
+  .cap{margin-top:14px;font-size:12.5px;line-height:1.6;color:rgba(34,24,28,.7);max-width:350px}
+  .cap b{color:var(--ink)}
+
+  .phone{width:350px;background:#fff;border:1px solid var(--line);border-radius:38px;overflow:hidden;box-shadow:0 30px 70px -40px rgba(34,24,28,.35);flex:none}
+  .notch{height:26px;display:flex;align-items:center;justify-content:center;background:var(--page)}
+  .notch i{width:104px;height:16px;background:var(--ink);border-radius:99px;font-style:normal}
+  .scr{height:660px;overflow:hidden;position:relative;background:var(--page)}
+
+  .m-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+  .m-nav .logo{font-weight:800;color:var(--corallo);font-size:12.5px;letter-spacing:.3px}
+  .m-nav .logo small{display:block;font-size:6.5px;letter-spacing:.18em;color:rgba(34,24,28,.45);font-weight:600}
+  .m-nav .ask{background:var(--cream);border-radius:99px;padding:6px 11px;font-weight:700;font-size:10px;display:flex;align-items:center;gap:5px}
+  .m-nav .ask i{width:16px;height:16px;border-radius:50%;background:var(--corallo);color:#fff;font-style:normal;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:800}
+
+  .ph{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(34,24,28,.07))}
+  .g1{background:linear-gradient(135deg,#f3c9a5,#d98e63)}
+  .g2{background:linear-gradient(135deg,#e8d9c2,#bba180)}
+  .g3{background:linear-gradient(135deg,#f6e3d0,#e0b18b)}
+  .live{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border-radius:999px;padding:5px 11px;font-size:8.5px;font-weight:700;letter-spacing:.09em}
+  .live i{width:5px;height:5px;border-radius:50%;background:#aef3c2;font-style:normal}
+  .bar{height:5px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+  .bar i{display:block;width:6%;height:100%;background:#fff;border-radius:99px;font-style:normal}
+
+  /* sotto il banner: categorie + ultimi aggiunti + tab bar (uguali nei 3 telefoni) */
+  .cats{display:flex;gap:9px;padding:13px 14px 2px;overflow:hidden}
+  .cat{text-align:center;font-size:8.5px;color:rgba(34,24,28,.7);flex:none}
+  .cat i{width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;font-style:normal;margin:0 auto 3px}
+  .sec-t{padding:12px 16px 0;font-size:15px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+  .sec-t i{width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;font-style:normal}
+  .cards{display:flex;gap:10px;padding:9px 14px}
+  .ccard{flex:1;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .ccard .pic{height:84px;font-size:28px}
+  .ccard .b{padding:8px 9px;font-size:10.5px}
+  .ccard .b b{display:block;font-size:11px}
+  .ccard .b span{font-size:9px;color:rgba(34,24,28,.55)}
+  .m-tab{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:16px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:8.5px;font-weight:600;color:rgba(34,24,28,.6);box-shadow:0 8px 26px rgba(34,24,28,.16);white-space:nowrap}
+  .m-tab .it{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .m-tab .it i{font-size:12px;font-style:normal}
+  .m-tab .it.on{background:rgba(34,24,28,.08);outline:1.5px solid rgba(34,24,28,.5);border-radius:99px;padding:3px 9px;color:var(--ink)}
+
+  /* ---- banner OGGI ---- */
+  .b-old{margin:8px 13px 0;background:var(--corallo);border-radius:18px;color:#fff;padding:15px;position:relative}
+  .b-old .grid{display:flex;gap:11px;margin-top:10px}
+  .b-old .t{font-size:21px;font-weight:800;line-height:1.1;flex:1}
+  .b-old .pic{width:96px;border-radius:11px;flex:none;font-size:30px}
+  .b-old .meta{font-size:9px;opacity:.9;margin-top:6px;line-height:1.5}
+  .b-old .chips{display:flex;gap:7px;margin-top:10px}
+  .b-old .chips span{background:rgba(255,255,255,.14);border-radius:99px;padding:4px 10px;font-size:8.5px;font-weight:600}
+  .b-old .cta{display:flex;align-items:center;gap:11px;margin-top:11px}
+  .b-old .circle{width:64px;height:64px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;font-size:8.5px;font-weight:700;line-height:1.25}
+  .b-old .scopri{background:rgba(255,255,255,.16);border-radius:99px;padding:9px 15px;font-size:10px;font-weight:600}
+
+  /* ---- banner B ---- */
+  .b-new{margin:8px 13px 0;background:var(--corallo);border-radius:18px;color:#fff;overflow:hidden;position:relative}
+  .b-new .photo{height:128px;font-size:44px;border-radius:0}
+  .b-new .badge{position:absolute;top:102px;right:14px;background:#aef3c2;color:var(--ink);font-weight:800;font-size:13px;border-radius:999px;padding:6px 11px;border:3px solid var(--corallo);z-index:3}
+  .b-new .body{padding:12px 15px 15px}
+  .b-new h3{font-size:18px;font-weight:800;line-height:1.1;margin-top:7px}
+  .b-new .perk{font-size:13px;font-weight:700;margin-top:3px}
+  .b-new .perk small{display:block;font-size:9px;font-weight:500;opacity:.85;margin-top:1px}
+  .b-new .meta{display:flex;justify-content:space-between;font-size:8.5px;margin-top:5px;opacity:.9}
+  .b-new .cta{display:flex;gap:8px;margin-top:11px}
+  .b-new .b1{flex:1;text-align:center;background:var(--ink);border-radius:99px;padding:10px;font-size:10.5px;font-weight:700}
+  .b-new .b2{background:rgba(255,255,255,.16);border-radius:99px;padding:10px 14px;font-size:10.5px;font-weight:600}
+
+  /* ---- banner C ticket ---- */
+  .b-tic{margin:8px 13px 0;background:var(--corallo);border-radius:18px;color:#fff;position:relative;display:flex;overflow:hidden}
+  .b-tic .main{flex:1;padding:13px 11px 13px 15px}
+  .b-tic .stub{width:82px;flex:none;border-left:2px dashed rgba(255,255,255,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .b-tic .stub .pct{font-size:22px;font-weight:800}
+  .b-tic .stub .lbl{font-size:7.5px;font-weight:700;letter-spacing:.08em;opacity:.85;text-align:center}
+  .b-tic::before,.b-tic::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:var(--page);right:73px;z-index:2}
+  .b-tic::before{top:-9px}.b-tic::after{bottom:-9px}
+  .b-tic h3{font-size:16px;font-weight:800;line-height:1.1;margin-top:7px}
+  .b-tic .perk{font-size:12.5px;font-weight:700;margin-top:2px}
+  .b-tic .meta{font-size:8.5px;opacity:.9;margin-top:4px}
+  .b-tic .cta{margin-top:10px;display:inline-flex;gap:6px;background:var(--ink);border-radius:99px;padding:8px 13px;font-size:9.5px;font-weight:700}
+  .b-tic .bar{margin-top:9px;width:88%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kicker">Home mobile · banner drop in contesto · 390px</span>
+  <h1>Le varianti applicate alla pagina</h1>
+  <p class="lead">Stessa home, cambia solo il banner. Guarda due cose: quanto spazio verticale ruba ogni versione prima di "Ultimi aggiunti", e dove cade l'occhio appena apri.</p>
+
+  <div class="row">
+
+    <!-- ============ OGGI ============ -->
+    <div>
+      <div class="lab now">Oggi (dal live)</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr">
+        <div class="m-nav"><span class="logo">LA GUIDA DI BI<small>BY CHIAMAMI BI</small></span><span class="ask"><i>Bi</i> Chiedi a Bi</span></div>
+        <div class="b-old">
+          <span class="live"><i></i> DROP LIVE · 20G 16H</span>
+          <div class="grid">
+            <div class="t">2%<br>da Gelateria Borghese
+              <div class="meta">Gelateria · Largo Orbassano 62 · Gelateria siciliana<br>Gelato a 2€</div>
+            </div>
+            <div class="pic ph g3">🍨</div>
+          </div>
+          <div class="chips"><span>1 riscatti</span><span>—</span><span>20 posti</span></div>
+          <div class="cta"><div class="circle">Sblocca<br>sconto →</div><div class="scopri">Scopri</div></div>
+        </div>
+        <div class="cats">
+          <div class="cat"><i>🥂</i>Aperitivo</div><div class="cat"><i>🍷</i>Piemontese</div><div class="cat"><i>🍕</i>Pizza</div><div class="cat"><i>🍣</i>Giapponese</div><div class="cat"><i>🐟</i>Pesce</div>
+        </div>
+        <div class="sec-t">Ultimi aggiunti <i>→</i></div>
+        <div class="cards">
+          <div class="ccard"><div class="pic ph g1">🍝</div><div class="b"><b>Birrificio Casa del Popolo</b><span>Birreria · €€</span></div></div>
+          <div class="ccard"><div class="pic ph g2">🥟</div><div class="b"><b>Osteria Vanchiglia</b><span>Piemontese · €€</span></div></div>
+        </div>
+        <div class="m-tab"><span class="it on"><i>🏠</i>Home</span><span class="it"><i>📍</i>Esplora</span><span class="it"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+      </div></div>
+      <p class="cap">Il banner mangia ~340px e l'occhio atterra sul "2%". Il cerchio nero è sotto il pollice ma piccolo; "Ultimi aggiunti" si vede appena.</p>
+    </div>
+
+    <!-- ============ VARIANTE B ============ -->
+    <div>
+      <div class="lab reco">Variante B applicata (consigliata)</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr">
+        <div class="m-nav"><span class="logo">LA GUIDA DI BI<small>BY CHIAMAMI BI</small></span><span class="ask"><i>Bi</i> Chiedi a Bi</span></div>
+        <div class="b-new">
+          <div class="photo ph g3">🍨</div>
+          <span class="badge">−2%</span>
+          <div class="body">
+            <span class="live"><i></i> DROP LIVE · SCADE IN 20G 16H</span>
+            <h3>Gelateria Borghese</h3>
+            <div class="perk">Gelato a 2€<small>Gelateria siciliana · Largo Orbassano 62</small></div>
+            <div class="bar" style="margin-top:8px"><i></i></div>
+            <div class="meta"><span>1 preso</span><span><b>19 rimasti</b></span></div>
+            <div class="cta"><span class="b1">🔓 Sblocca sconto</span><span class="b2">Scopri</span></div>
+          </div>
+        </div>
+        <div class="cats">
+          <div class="cat"><i>🥂</i>Aperitivo</div><div class="cat"><i>🍷</i>Piemontese</div><div class="cat"><i>🍕</i>Pizza</div><div class="cat"><i>🍣</i>Giapponese</div><div class="cat"><i>🐟</i>Pesce</div>
+        </div>
+        <div class="sec-t">Ultimi aggiunti <i>→</i></div>
+        <div class="cards">
+          <div class="ccard"><div class="pic ph g1">🍝</div><div class="b"><b>Birrificio Casa del Popolo</b><span>Birreria · €€</span></div></div>
+          <div class="ccard"><div class="pic ph g2">🥟</div><div class="b"><b>Osteria Vanchiglia</b><span>Piemontese · €€</span></div></div>
+        </div>
+        <div class="m-tab"><span class="it on"><i>🏠</i>Home</span><span class="it"><i>📍</i>Esplora</span><span class="it"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+      </div></div>
+      <p class="cap">Ingombro quasi identico ma l'occhio fa foto → nome → <b>"Gelato a 2€" in Poppins bold bianco</b> (niente corsivo: il vantaggio deve leggersi in mezzo secondo). La % è un badge: regge anche numeri piccoli. CTA larga sotto il pollice, progress bar con "19 rimasti".</p>
+    </div>
+
+    <!-- ============ VARIANTE C ============ -->
+    <div>
+      <div class="lab">Variante C applicata (biglietto)</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr">
+        <div class="m-nav"><span class="logo">LA GUIDA DI BI<small>BY CHIAMAMI BI</small></span><span class="ask"><i>Bi</i> Chiedi a Bi</span></div>
+        <div class="b-tic">
+          <div class="main">
+            <span class="live"><i></i> DROP · 20G 16H</span>
+            <h3>Gelateria Borghese</h3>
+            <div class="perk">Gelato a 2€</div>
+            <div class="meta">Largo Orbassano 62 · siciliana</div>
+            <div class="bar"><i></i></div>
+            <div class="cta">🔓 Strappa il biglietto</div>
+          </div>
+          <div class="stub">
+            <span class="pct">2%</span>
+            <span class="lbl">19 SU 20<br>DISPONIBILI</span>
+          </div>
+        </div>
+        <div class="cats">
+          <div class="cat"><i>🥂</i>Aperitivo</div><div class="cat"><i>🍷</i>Piemontese</div><div class="cat"><i>🍕</i>Pizza</div><div class="cat"><i>🍣</i>Giapponese</div><div class="cat"><i>🐟</i>Pesce</div>
+        </div>
+        <div class="sec-t">Ultimi aggiunti <i>→</i></div>
+        <div class="cards">
+          <div class="ccard"><div class="pic ph g1">🍝</div><div class="b"><b>Birrificio Casa del Popolo</b><span>Birreria · €€</span></div></div>
+          <div class="ccard"><div class="pic ph g2">🥟</div><div class="b"><b>Osteria Vanchiglia</b><span>Piemontese · €€</span></div></div>
+        </div>
+        <div class="m-tab"><span class="it on"><i>🏠</i>Home</span><span class="it"><i>📍</i>Esplora</span><span class="it"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+      </div></div>
+      <p class="cap">Il più compatto dei tre: la home respira e "Ultimi aggiunti" sale sopra la piega. Niente foto però — il gelato non si vede. Distintivo, da tenere per quando i drop saranno un rito.</p>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

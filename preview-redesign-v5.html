@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChiamamiBi · Preview redesign — audit 9 giu 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22181c; --corallo:#e8453c; --page:#faf7f2; --cream:#f5f0e4;
+    --oro:#8e6b3e; --verde:#3f9d63; --line:rgba(34,24,28,.10);
+    --warn:#f59e0b; --bad:#dc2626;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Poppins',sans-serif;background:var(--page);color:var(--ink)}
+
+  /* ===== topbar ===== */
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(250,247,242,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .brand{font-weight:800;font-size:15px;letter-spacing:-.2px}
+  .brand span{color:var(--corallo)}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{border:1px solid transparent;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:rgba(34,24,28,.6);padding:8px 15px;border-radius:999px;cursor:pointer;transition:.15s}
+  .tab:hover{color:var(--ink)}
+  .tab.on{background:var(--ink);color:#fff}
+  .panel{display:none;max-width:1280px;margin:0 auto;padding:44px 32px 80px}
+  .panel.on{display:block}
+
+  h1.big{font-size:36px;font-weight:800;letter-spacing:-.6px}
+  .lead{color:rgba(34,24,28,.65);font-size:15px;line-height:1.65;max-width:680px;margin-top:10px}
+  .kicker{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--corallo);margin-bottom:10px}
+  h2.sec{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:0 0 6px}
+  .sub{font-size:13.5px;color:rgba(34,24,28,.55);margin-bottom:20px}
+
+  /* ===== segmented toggle ===== */
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;margin:18px 0 22px;gap:2px}
+  .seg button{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;padding:9px 22px;border-radius:999px;cursor:pointer;color:rgba(34,24,28,.55)}
+  .seg button.on{background:var(--corallo);color:#fff}
+  .seg button.on.today{background:var(--ink)}
+  .view{display:none}.view.on{display:block}
+
+  /* ===== frames ===== */
+  .browser{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 30px 70px -40px rgba(34,24,28,.3);position:relative}
+  .chromebar{display:flex;align-items:center;gap:8px;background:var(--cream);padding:10px 16px;border-bottom:1px solid var(--line)}
+  .chromebar i{width:10px;height:10px;border-radius:50%;background:rgba(34,24,28,.14);font-style:normal}
+  .chromebar .url{margin-left:10px;background:#fff;border-radius:8px;font-size:11.5px;color:rgba(34,24,28,.5);padding:5px 14px;flex:1;max-width:420px}
+  .phone{width:340px;background:#fff;border:1px solid var(--line);border-radius:36px;overflow:hidden;box-shadow:0 30px 70px -40px rgba(34,24,28,.35);position:relative;flex:none}
+  .notch{height:28px;display:flex;align-items:center;justify-content:center}
+  .notch i{width:110px;height:18px;background:var(--ink);border-radius:99px;font-style:normal}
+
+  /* ===== callouts ===== */
+  .anno{position:relative}
+  .dotn{position:absolute;z-index:8;width:26px;height:26px;border-radius:50%;background:var(--corallo);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(232,69,60,.25);cursor:default}
+  .dotn.dark{background:var(--ink);box-shadow:0 0 0 4px rgba(34,24,28,.18)}
+  .legend{margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px}
+  .legend .li{display:flex;gap:11px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;font-size:13px;line-height:1.55}
+  .legend .li b.n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--corallo);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px}
+  .legend .li.fix b.n{background:var(--verde)}
+  .legend .li span b{font-weight:700}
+
+  .vuoto{outline:3px dashed rgba(220,38,38,.5);outline-offset:-3px;background:repeating-linear-gradient(45deg,rgba(220,38,38,.04),rgba(220,38,38,.04) 12px,transparent 12px,transparent 24px);display:flex;align-items:center;justify-content:center;color:rgba(220,38,38,.65);font-size:13px;font-weight:700;border-radius:14px}
+
+  /* ===== bug cards ===== */
+  .buggrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;margin-top:8px}
+  .bug{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px}
+  .bug .head{display:flex;align-items:center;gap:10px}
+  .bug .head b{font-size:15px}
+  .sev{font-size:10.5px;font-weight:800;letter-spacing:.08em;border-radius:99px;padding:4px 10px;text-transform:uppercase;flex:none}
+  .sev.alta{background:#fde8e7;color:var(--bad)}
+  .sev.media{background:#fef3d9;color:#b45309}
+  .sev.bassa{background:#e9f5ee;color:var(--verde)}
+  .bug p{font-size:13px;line-height:1.6;color:rgba(34,24,28,.7)}
+  .bug .fix{font-size:12.5px;line-height:1.55;background:var(--page);border-radius:12px;padding:10px 13px}
+  .bug .fix b{color:var(--verde)}
+  .bugdemo{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+
+  /* ===== shared mock pieces ===== */
+  .mock-nav{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--line);background:#fff}
+  .mock-nav .logo{font-weight:800;color:var(--corallo);font-size:14px;letter-spacing:.4px}
+  .mock-nav .links{display:flex;gap:16px;font-size:12px;font-weight:600;color:rgba(34,24,28,.6)}
+  .mock-nav .links b{color:var(--ink)}
+  .ph{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(34,24,28,.07))}
+  .g1{background:linear-gradient(135deg,#f3c9a5,#d98e63)} .g2{background:linear-gradient(135deg,#e8d9c2,#bba180)}
+  .g3{background:linear-gradient(135deg,#f6e3d0,#e0b18b)} .g4{background:linear-gradient(135deg,#ddc9b8,#a98a72)}
+  .gray{background:#e5e2dc;color:rgba(34,24,28,.35)}
+  .btn-ink{background:var(--ink);color:#fff;border:none;border-radius:999px;font-family:inherit;font-weight:600;font-size:13px;padding:10px 18px;cursor:pointer}
+  .tagp{font-size:11.5px;font-weight:600;border:1px solid var(--line);background:var(--page);border-radius:999px;padding:5px 11px}
+  .firma{font-family:'Caveat',cursive;font-size:22px;color:rgba(34,24,28,.7)}
+
+  /* scheda OGGI */
+  .so-hero{height:230px;font-size:15px}
+  .so-body{display:grid;grid-template-columns:1fr 340px;gap:34px;padding:22px 26px 30px}
+  .so-main h1{font-size:30px;font-weight:800}
+  .so-addr{font-size:12.5px;color:rgba(34,24,28,.55);margin-top:3px}
+  .so-green{margin-top:16px;background:linear-gradient(90deg,#bdebc9,#8fdca6);border-radius:13px;padding:13px 16px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+  .so-sb{font-size:13.5px;line-height:1.6;margin-top:14px}
+  .so-tip{margin-top:14px;background:linear-gradient(135deg,#8e6b3e,#6e5230);color:#fff;border-radius:13px;padding:14px 16px;font-family:'Caveat',cursive;font-size:18px}
+  .so-orari{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px}
+  .so-orari .r{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px dashed var(--line);color:rgba(34,24,28,.7)}
+  .so-orari .r:last-child{border:none}
+  .so-sticky{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;background:#fff;border:1px solid var(--line);border-radius:99px;box-shadow:0 10px 30px rgba(34,24,28,.18);display:flex;align-items:center;gap:14px;padding:9px 10px 9px 18px;font-size:12px;width:62%}
+  .so-sticky .btn-ink{padding:8px 16px;flex:none;margin-left:auto}
+
+  /* scheda PROPOSTA (riusa stile file precedente, compattato) */
+  .mosaic{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:130px 130px;gap:8px;padding:12px}
+  .mosaic .ph{border-radius:13px;font-size:34px}
+  .mosaic .big{grid-row:span 2;font-size:58px}
+  .count{position:absolute;right:9px;bottom:9px;background:rgba(34,24,28,.78);color:#fff;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 9px;z-index:2}
+  .sp-body{display:grid;grid-template-columns:1fr 330px;gap:34px;padding:10px 26px 28px}
+  .sp-main h1{font-size:32px;font-weight:800;letter-spacing:-.5px}
+  .sp-addr{font-size:13px;color:rgba(34,24,28,.6);margin-top:3px}
+  .sp-h3{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(34,24,28,.45);margin:20px 0 8px}
+  .sp-sb{font-size:14px;line-height:1.65}
+  .sp-tip{margin-top:16px;background:linear-gradient(135deg,#8e6b3e,#6e5230);color:#fff;border-radius:15px;padding:16px 19px}
+  .sp-tip .h{font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;opacity:.75;margin-bottom:6px}
+  .sp-tip p{font-family:'Caveat',cursive;font-size:19px;line-height:1.35}
+  .sp-sconto{margin-top:16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#bdebc9,#8fdca6);border-radius:14px;padding:13px 16px}
+  .sp-sconto b{font-size:13.5px}
+  .sp-sconto small{display:block;font-size:11px;color:rgba(34,24,28,.6)}
+  .side-card{border:1px solid var(--line);border-radius:15px;background:#fff;padding:16px;margin-bottom:11px}
+  .open-row{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--verde);flex:none}
+  .open-row small{font-weight:500;color:rgba(34,24,28,.55);font-size:11.5px}
+  .orari-toggle{margin-top:9px;font-size:11.5px;color:rgba(34,24,28,.6);border-top:1px dashed var(--line);padding-top:9px}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .act{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--page);border-radius:11px;padding:9px;font-size:11.5px;font-weight:600}
+  .act.primary{grid-column:span 2;background:var(--ink);color:#fff;border-color:var(--ink)}
+  .vicini{padding:0 26px 24px}
+  .vicini h3{font-size:15px;font-weight:800;margin-bottom:10px}
+  .vrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .vcard{border:1px solid var(--line);border-radius:13px;background:#fff;overflow:hidden}
+  .vcard .ph{height:64px;font-size:26px;border-radius:0}
+  .vcard .t{padding:8px 10px;font-size:11px;color:rgba(34,24,28,.55)}
+  .vcard .t b{display:block;font-size:12px;color:var(--ink)}
+
+  /* BI CLUB */
+  .bc-old{display:grid;grid-template-columns:330px 1fr;gap:20px;padding:24px}
+  .bc-card{background:var(--corallo);border-radius:18px;color:#fff;overflow:hidden}
+  .bc-card .ph{height:150px;font-size:44px;border-radius:0}
+  .bc-card .b{padding:16px}
+  .bc-card .b b{font-size:16px}
+  .bc-card .meta{font-size:11px;opacity:.85;margin-top:3px}
+  .bc-card .bar{height:5px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:12px}
+  .bc-card .bar i{display:block;width:6%;height:100%;background:#fff;border-radius:99px}
+  .bc-card .cta{display:flex;gap:8px;margin-top:14px}
+  .drop-hero{display:grid;grid-template-columns:1.15fr 1fr;background:var(--corallo);border-radius:18px;overflow:hidden;color:#fff;min-height:230px;margin:20px}
+  .dh-l{padding:26px 30px;display:flex;flex-direction:column;justify-content:center}
+  .live{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);border-radius:999px;padding:5px 12px;font-size:10.5px;font-weight:700;letter-spacing:.09em;width:fit-content}
+  .live i{width:6px;height:6px;border-radius:50%;background:#aef3c2;font-style:normal}
+  .dh-l h2{font-size:32px;font-weight:800;letter-spacing:-.7px;line-height:1.05;margin:12px 0 5px}
+  .dh-l .s{font-size:12.5px;opacity:.92}
+  .dh-l .bar{height:6px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:16px;overflow:hidden}
+  .dh-l .bar i{display:block;width:6%;height:100%;background:#fff;font-style:normal}
+  .dh-l .meta{display:flex;justify-content:space-between;font-size:11px;margin-top:6px;opacity:.9}
+  .dh-l .cta{display:flex;gap:9px;margin-top:16px}
+  .btn-w{background:var(--ink);color:#fff;border:none;border-radius:999px;font-family:inherit;font-weight:700;font-size:12.5px;padding:11px 20px}
+  .btn-gh{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:999px;font-family:inherit;font-weight:600;font-size:12.5px;padding:11px 18px}
+  .dh-r{display:flex;align-items:center;justify-content:center;font-size:72px;position:relative}
+  .dh-r .badge{position:absolute;left:-20px;top:50%;transform:translateY(-50%);background:#aef3c2;color:var(--ink);font-weight:800;font-size:16px;border-radius:999px;padding:8px 14px;border:3px solid #fff}
+  .conv3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 20px 22px}
+  .conv{border:1px solid var(--line);border-radius:15px;background:#fff;padding:12px;display:flex;gap:11px;align-items:center}
+  .conv .ph{width:58px;height:58px;border-radius:12px;flex:none;font-size:24px}
+  .conv .pc{position:absolute;left:-5px;bottom:-5px;background:#aef3c2;font-size:9.5px;font-weight:800;border-radius:99px;padding:2px 7px;border:2px solid #fff;z-index:2}
+  .conv b{font-size:12.5px;display:block}
+  .conv .m{font-size:10.5px;color:rgba(34,24,28,.55)}
+  .conv .v{font-size:9.5px;font-weight:700;color:var(--verde);margin-top:3px}
+  .conv .btn-ink{margin-left:auto;padding:8px 13px;font-size:11px;flex:none}
+  .conv2old{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .convempty{min-height:120px}
+
+  /* ESPLORA cards */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start}
+  .col-label{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;color:rgba(34,24,28,.45)}
+  .col-label.after{color:var(--corallo)}
+  .card-old,.card-new{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;max-width:330px}
+  .card-old .ph{height:200px;font-size:13px}
+  .card-old .b,.card-new .b{padding:13px 15px}
+  .card-old b{font-size:15.5px}
+  .card-old .s{font-size:12px;color:rgba(34,24,28,.6);margin:2px 0 7px}
+  .card-old .a{font-size:11px;color:rgba(34,24,28,.5)}
+  .card-new .ph{height:135px;font-size:40px}
+  .card-new .open{position:absolute;left:9px;top:9px;background:rgba(255,255,255,.94);color:var(--verde);font-size:10px;font-weight:700;border-radius:99px;padding:3px 9px;z-index:2}
+  .card-new .heart{position:absolute;top:9px;right:9px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:13px;z-index:2}
+  .card-new .r1{display:flex;align-items:center;justify-content:space-between}
+  .card-new b{font-size:14.5px}
+  .pillsc{background:var(--corallo);color:#fff;font-size:10.5px;font-weight:800;border-radius:99px;padding:3px 8px}
+  .card-new .s{font-size:12px;color:rgba(34,24,28,.6);margin:2px 0 7px}
+  .mrow{display:flex;align-items:center;gap:7px;font-size:10.5px;color:rgba(34,24,28,.65)}
+  .mrow .cat{background:var(--cream);border-radius:99px;padding:3px 9px;font-weight:600}
+
+  /* MOBILE mock pieces */
+  .m-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-size:11px}
+  .m-nav .logo{font-weight:800;color:var(--corallo);font-size:12px}
+  .m-tab{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:18px;background:rgba(255,255,255,.82);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;padding:9px 20px;font-size:9px;font-weight:600;color:rgba(34,24,28,.6);box-shadow:0 8px 26px rgba(34,24,28,.14)}
+  .m-tab .it{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .m-tab .it i{font-size:13px;font-style:normal}
+  .m-tab .it.on{background:rgba(34,24,28,.08);outline:1.5px solid rgba(34,24,28,.5);border-radius:99px;padding:3px 10px;color:var(--ink)}
+  .phones{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .phone .scr{height:600px;overflow:hidden;position:relative;background:var(--page)}
+  .ph-cap{margin:12px 4px 0;font-size:12.5px;color:rgba(34,24,28,.6);max-width:340px;line-height:1.55}
+  .ph-cap b{color:var(--ink)}
+  .m-gal{height:200px;position:relative}
+  .m-gal .ph{height:100%;font-size:54px;border-radius:0}
+  .m-body{padding:16px}
+  .m-body h1{font-size:21px;font-weight:800}
+  .m-addr{font-size:11px;color:rgba(34,24,28,.6);margin-top:2px}
+  .m-tags{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .m-tags .tagp{font-size:10px;padding:4px 9px}
+  .m-open{display:flex;align-items:center;gap:7px;font-weight:700;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 13px;margin-top:12px}
+  .m-open small{font-weight:500;color:rgba(34,24,28,.5);font-size:10px}
+  .m-open .chev{margin-left:auto;opacity:.4}
+  .m-sb{font-size:11.5px;line-height:1.6;margin-top:13px}
+  .m-sticky{position:absolute;bottom:64px;left:12px;right:12px;background:var(--ink);color:#fff;border-radius:99px;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;font-size:10.5px;box-shadow:0 10px 26px rgba(34,24,28,.3)}
+  .m-sticky b{font-size:11px}
+  .m-sticky .b{margin-left:auto;background:var(--corallo);border-radius:99px;padding:7px 13px;font-weight:700;font-size:10.5px;flex:none}
+
+  /* ADMIN */
+  .adm-row{display:grid;grid-template-columns:1.4fr 1fr .9fr .6fr;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 16px;font-size:12.5px;margin-bottom:9px}
+  .adm-row .nm b{display:block;font-size:13.5px}
+  .adm-row .nm span{font-size:10.5px;color:rgba(34,24,28,.45)}
+  .fold{display:flex;gap:5px}
+  .fold .e{opacity:1;font-size:15px}
+  .fold .e.off{opacity:.18}
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chips .c{background:var(--cream);border-radius:99px;font-size:10.5px;font-weight:700;padding:4px 10px}
+  .chips .c.off{display:none}
+  .stato{font-size:11px;font-weight:700;color:var(--verde)}
+  .arrow-note{font-size:12px;color:rgba(34,24,28,.55);margin:14px 0 8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+
+  /* summary */
+  .score{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:26px 0}
+  .sc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+  .sc .v{font-size:30px;font-weight:800}
+  .sc .l{font-size:12px;color:rgba(34,24,28,.55);margin-top:2px}
+  .sc .v.good{color:var(--verde)} .sc .v.mid{color:var(--warn)} .sc .v.bad{color:var(--bad)}
+  .plan{counter-reset:step;margin-top:10px}
+  .step{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px 18px;margin-bottom:10px;font-size:13.5px;line-height:1.6;align-items:flex-start}
+  .step::before{counter-increment:step;content:counter(step);flex:none;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+  .step b{font-weight:700}
+  .step .eta{margin-left:auto;flex:none;font-size:11px;font-weight:700;color:rgba(34,24,28,.45);background:var(--page);border-radius:99px;padding:4px 11px}
+  .note-i{background:var(--cream);border-radius:14px;padding:14px 18px;font-size:13px;line-height:1.6;margin-top:18px;max-width:760px}
+  hr.div{border:none;border-top:1.5px dashed var(--line);margin:44px 0}
+</style>
+</head>
+<body>
+
+<nav class="topbar"><div class="topbar-in">
+  <div class="brand">Chiamami<span>Bi</span> · preview redesign</div>
+  <div class="tabs">
+    <button class="tab on" data-p="p0">📋 Sintesi</button>
+    <button class="tab" data-p="p1">🐛 Bug critici</button>
+    <button class="tab" data-p="p2">🍣 Scheda</button>
+    <button class="tab" data-p="p3">🏷️ Bi Club</button>
+    <button class="tab" data-p="p4">🗺️ Esplora</button>
+    <button class="tab" data-p="p5">📱 Mobile</button>
+    <button class="tab" data-p="p6">⚙️ Admin</button>
+  </div>
+</div></nav>
+
+<!-- ================= P0 SINTESI ================= -->
+<section class="panel on" id="p0">
+  <span class="kicker">Audit completo · sito live + admin · desktop e mobile · 9 giugno 2026</span>
+  <h1 class="big">Il v4 regge. Serve un polish pass, non una rivoluzione.</h1>
+  <p class="lead">Ho navigato ogni pagina pubblica (desktop <b>e mobile</b>), l'admin loggato e i flussi sconto. Il brand è coerente e le pagine migliori (Home, Chiedi a Bi, admin) sono già a livello Neotaste. I problemi che fanno sembrare il sito "rotto" sono <b>bug di immagini e dati</b>, più <b>3 layout desktop deboli</b>. Ogni sezione qui sopra ha il confronto <b>Oggi → Proposta</b> con i numeri sui punti esatti.</p>
+
+  <div class="score">
+    <div class="sc"><div class="v good">9/10</div><div class="l">Brand & identità — corallo, Poppins, voce di Bi: coerenti ovunque</div></div>
+    <div class="sc"><div class="v good">8/10</div><div class="l">Home, Chiedi a Bi, admin, verify PIN — da non toccare</div></div>
+    <div class="sc"><div class="v mid">5/10</div><div class="l">Scheda, Bi Club desktop, card Esplora — layout da sistemare</div></div>
+    <div class="sc"><div class="v bad">3/10</div><div class="l">Qualità percepita — immagini grigie e dati sporchi rovinano tutto</div></div>
+  </div>
+
+  <h2 class="sec">Piano consigliato</h2>
+  <div class="plan">
+    <div class="step"><span><b>Immagini.</b> Thumbnail ottimizzate (transform Supabase <code>?width=400</code>), skeleton shimmer, fallback emoji su gradiente. È il fix che cambia la percezione dell'intero sito.</span><span class="eta">~1 giorno</span></div>
+    <div class="step"><span><b>Dati.</b> Indirizzi formattati "Via Bonafous 7 · Vanchiglia" al posto della stringa Google + badge città sulle card dei locali fuori Torino (che restano in guida).</span><span class="eta">~½ giorno</span></div>
+    <div class="step"><span><b>Micro-bug.</b> Copy [DEMO], doppio banner sconto, orari 7× "Chiuso", riga "€" orfana nel banner, flash di zeri in admin, padding sotto la tab bar mobile.</span><span class="eta">~½ giorno</span></div>
+    <div class="step"><span><b>Redesign scheda</b> (desktop + mobile) — la pagina più debole e più importante: è dove l'utente decide.</span><span class="eta">1 PR</span></div>
+    <div class="step"><span><b>Bi Club desktop</b> — drop hero orizzontale + griglia convenzioni.</span><span class="eta">1 PR piccola</span></div>
+    <div class="step"><span><b>Card Esplora + admin micro-fix</b> — densità lista, badge città, skeleton KPI.</span><span class="eta">1 PR piccola</span></div>
+  </div>
+
+  <div class="note-i">💡 <b>Metodo di lettura:</b> in ogni sezione trovi il toggle <b>Oggi / Proposta</b>. I pallini <b style="color:var(--corallo)">corallo</b> numerati segnano i problemi su "Oggi" e le soluzioni su "Proposta"; la legenda sotto ogni mockup spiega ogni numero. Tutto ricostruito fedelmente da screenshot reali del sito live presi oggi.</div>
+</section>
+
+<!-- ================= P1 BUG ================= -->
+<section class="panel" id="p1">
+  <span class="kicker">Da fare prima di qualsiasi redesign</span>
+  <h2 class="sec">Bug e qualità percepita</h2>
+  <p class="sub">Verificati dal vivo oggi, desktop e mobile. Ordinati per impatto.</p>
+
+  <div class="buggrid">
+    <div class="bug">
+      <div class="head"><span class="sev alta">Alta</span><b>B1 · Immagini mai caricate</b></div>
+      <div class="bugdemo" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:var(--page)">
+        <div class="ph gray" style="height:70px;border-radius:8px;font-size:11px">grigio piatto</div>
+        <div class="ph g1" style="height:70px;border-radius:8px;font-size:24px">🍣</div>
+      </div>
+      <p>Gallery scheda grigia, /salvati con 3 card su 6 senza foto, drop card Bi Club e convenzioni senza immagine, vicini grigi. Alcune caricano dopo 5-10s, altre <b>mai</b> (URL morti?).</p>
+      <div class="fix"><b>Fix:</b> transform Supabase (<code>?width=400&quality=75</code>) o resize all'upload · skeleton shimmer · fallback emoji categoria su gradiente caldo (a destra nel demo), mai grigio piatto · audit URL morti in DB.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev media">Media</span><b>B2 · Locali fuori Torino senza etichetta</b></div>
+      <p>I locali fuori città (Arezzo, Milano, Roma, Ravenna…) <b>restano in guida — giusto così</b>. Il problema è solo di comunicazione: l'header dice "72 locali a Torino" e la card non dice in che città sei, quindi Azabu10 sembra un locale torinese sbagliato.</p>
+      <div class="fix"><b>Fix:</b> header onesto ("72 locali · la guida di Bi") · badge città sulla card quando ≠ città selezionata (es. <b>📍 Milano</b>) · ordinamento: prima la città attiva, poi il resto. Zero rimozioni.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev alta">Alta</span><b>B3 · Indirizzi raw Google</b></div>
+      <p>"Via Alfonso Bonafous 7, 10123 Torino Turin, Italy" — ovunque: card, scheda, salvati, mappa. "Torino Turin, Italy" è rumore che fa sciatto.</p>
+      <div class="fix"><b>Fix:</b> parser alla scrittura: <b>Via Bonafous 7 · Vanchiglia</b>. Il quartiere vale più del CAP per scegliere dove andare.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev media">Media</span><b>B4 · Orari 7× "Chiuso"</b></div>
+      <p>Bomaki Murazzi mostra Chiuso tutti i giorni (e chip "Chiuso ora" in testa). O il sync Places è rotto per quel record o il dato manca: così sembra che il locale abbia chiuso per sempre.</p>
+      <div class="fix"><b>Fix:</b> se tutti i giorni sono Chiuso → mostra "Orari non disponibili · chiama" e logga il record per re-sync.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev media">Media</span><b>B5 · "[DEMO]" in produzione</b></div>
+      <p>"[DEMO] Sconto del 20% per chi sceglie il bancone" visibile a tutti sulla scheda Bomaki, desktop e mobile.</p>
+      <div class="fix"><b>Fix:</b> ripulire il copy o spegnere lo sconto demo.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev media">Media</span><b>B6 · Doppio banner sconto in scheda</b></div>
+      <p>Blocco verde inline + barra sticky in basso con lo stesso identico contenuto, visibili insieme. Confermato anche su mobile.</p>
+      <div class="fix"><b>Fix:</b> solo sticky su mobile, solo inline su desktop (mockup nella sezione Scheda).</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev media">Media</span><b>B7 · Contenuto sotto la tab bar (mobile)</b></div>
+      <p>Su Bi Club mobile l'ultima convenzione finisce sotto la tab bar glass. Manca il padding-bottom di sicurezza.</p>
+      <div class="fix"><b>Fix:</b> <code>padding-bottom: calc(96px + env(safe-area-inset-bottom))</code> sui container scrollabili.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev bassa">Bassa</span><b>B8 · Riga "€" orfana nel banner sponsor</b></div>
+      <p>Nel banner "Gelateria Borghese" sotto "Gelato a 2€" appare una riga con solo "€" (campo prezzo vuoto renderizzato). Desktop e mobile.</p>
+      <div class="fix"><b>Fix:</b> render condizionale del campo.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev bassa">Bassa</span><b>B9 · CTA drop mobile che va a capo</b></div>
+      <p>In home mobile il bottone nero circolare contiene "Sblocca sconto →" su 3 righe: cramped e poco leggibile accanto a "Scopri".</p>
+      <div class="fix"><b>Fix:</b> pill larga "🔓 Sblocca sconto" + ghost "Scopri", come nel drop hero proposto.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev bassa">Bassa</span><b>B10 · About: colonna stretta + fade lenti</b></div>
+      <p>Su desktop la colonna è ~580px su schermi da 1456: ai lati resta deserto. I fade-in lasciano la pagina semivuota al primo paint.</p>
+      <div class="fix"><b>Fix:</b> max-width 720px · animazioni più rapide o solo above-the-fold.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= P2 SCHEDA ================= -->
+<section class="panel" id="p2">
+  <span class="kicker">Redesign A · la pagina più importante</span>
+  <h2 class="sec">Scheda ristorante — desktop</h2>
+  <p class="sub">È dove l'utente decide se andare. Oggi metà pagina è vuota e gli orari occupano più spazio del racconto di Bi.</p>
+
+  <div class="seg" data-views="p2">
+    <button class="on today" data-v="oggi">Oggi (dal live)</button>
+    <button data-v="prop">Proposta</button>
+  </div>
+
+  <!-- OGGI -->
+  <div class="view on" data-view="p2-oggi">
+    <div class="browser anno">
+      <div class="chromebar"><i></i><i></i><i></i><div class="url">chiamamibi.com/restaurant/bomaki-murazzi</div></div>
+      <div class="mock-nav"><span class="logo">LA GUIDA DI BI</span><div class="links">Home · <b>Esplora</b> · Club · Salvati</div></div>
+      <div class="so-hero ph gray">carosello 1/4 — prima foto spesso grigia <span class="dotn" style="top:14px;left:14px">1</span></div>
+      <div class="so-body">
+        <div class="so-main">
+          <h1>Bomaki Murazzi</h1>
+          <div class="so-addr">📍 Via Alfonso Bonafous 7, 10123 Torino Turin, Italy <span class="dotn" style="margin-left:6px;position:static;display:inline-flex">2</span></div>
+          <div style="display:flex;gap:7px;margin-top:10px"><span class="tagp">🍣 Sushi</span><span class="tagp">🐟 Pesce</span><span class="tagp">€€€</span></div>
+          <div class="so-green anno">
+            <span><b>−20% al banco sushi</b> · [DEMO] Sconto del 20%…<span class="dotn" style="top:-12px;right:-10px;left:auto">3</span></span>
+            <button class="btn-ink" style="flex:none">Usa sconto →</button>
+          </div>
+          <p class="so-sb"><b style="font-size:12px;letter-spacing:.1em;color:rgba(34,24,28,.45)">SECONDO BI</b><br>Sushi in stile brasiliano con accostamenti particolari, in assoluto uno dei miei sushi preferiti…</p>
+          <div class="so-tip">🍴 Salmon Wasabi, Astice gratinato al mango, sashimi misto…</div>
+          <div class="vuoto" style="height:170px;margin-top:18px">enorme vuoto fino al footer <span class="dotn" style="position:static;margin-left:10px">4</span></div>
+        </div>
+        <div>
+          <div class="so-orari anno">
+            <span class="dotn" style="top:-10px;right:-10px">5</span>
+            <div style="font-size:12px;font-weight:700;margin-bottom:6px">● Chiuso ora · Orari</div>
+            <div class="r"><span>Lunedì</span><span>Chiuso</span></div>
+            <div class="r"><span><b>Martedì (oggi)</b></span><span><b>Chiuso</b></span></div>
+            <div class="r"><span>Mercoledì</span><span>Chiuso</span></div>
+            <div class="r"><span>Giovedì</span><span>Chiuso</span></div>
+            <div class="r"><span>Venerdì</span><span>Chiuso</span></div>
+            <div class="r"><span>Sabato</span><span>Chiuso</span></div>
+            <div class="r"><span>Domenica</span><span>Chiuso</span></div>
+          </div>
+          <div class="so-orari anno" style="margin-top:12px">
+            <span class="dotn" style="top:-10px;right:-10px">6</span>
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px">Ristoranti vicini</div>
+            <div style="display:flex;gap:9px;align-items:center;margin-bottom:8px"><div class="ph gray" style="width:42px;height:42px;border-radius:9px;font-size:8px"></div><div style="font-size:11.5px"><b>Via Beirut</b><br><span style="color:rgba(34,24,28,.5)">89m</span></div></div>
+            <div style="display:flex;gap:9px;align-items:center;margin-bottom:8px"><div class="ph gray" style="width:42px;height:42px;border-radius:9px;font-size:8px"></div><div style="font-size:11.5px"><b>Padellino Factory</b><br><span style="color:rgba(34,24,28,.5)">166m</span></div></div>
+            <div style="display:flex;gap:9px;align-items:center"><div class="ph gray" style="width:42px;height:42px;border-radius:9px;font-size:8px"></div><div style="font-size:11.5px"><b>Sushi del Maslè</b><br><span style="color:rgba(34,24,28,.5)">389m</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="so-sticky anno"><span>● <b>−20% al banco sushi</b> · [DEMO] Sconto del 20% per chi sceglie il bancone</span><button class="btn-ink">Usa sconto</button><span class="dotn" style="top:-13px;right:8px;left:auto">7</span></div>
+      <div style="height:54px"></div>
+    </div>
+    <div class="legend">
+      <div class="li"><b class="n">1</b><span><b>Hero carosello cieco:</b> la prima foto spesso non carica → primo impatto grigio.</span></div>
+      <div class="li"><b class="n">2</b><span><b>Indirizzo raw Google</b> con "Torino Turin, Italy".</span></div>
+      <div class="li"><b class="n">3</b><span><b>Copy "[DEMO]"</b> in produzione, dentro il banner verde.</span></div>
+      <div class="li"><b class="n">4</b><span><b>La colonna principale finisce a metà pagina:</b> sotto il blocco caramello c'è solo bianco fino al footer.</span></div>
+      <div class="li"><b class="n">5</b><span><b>Muro di orari 7× "Chiuso":</b> occupa più spazio del racconto di Bi e comunica "locale morto".</span></div>
+      <div class="li"><b class="n">6</b><span><b>Vicini in sidebar:</b> thumbnail grigie, card anonime, schiacciate.</span></div>
+      <div class="li"><b class="n">7</b><span><b>Sticky bar duplicata:</b> stesso contenuto del banner verde, visibili insieme.</span></div>
+    </div>
+  </div>
+
+  <!-- PROPOSTA -->
+  <div class="view" data-view="p2-prop">
+    <div class="browser anno">
+      <div class="chromebar"><i></i><i></i><i></i><div class="url">chiamamibi.com/restaurant/bomaki-murazzi</div></div>
+      <div class="mock-nav"><span class="logo">LA GUIDA DI BI</span><div class="links">Home · <b>Esplora</b> · Club · Salvati</div></div>
+      <div class="mosaic anno">
+        <span class="dotn" style="top:20px;left:20px">1</span>
+        <div class="ph big g1">🍣</div><div class="ph g2">🥢</div><div class="ph g3">🍹</div><div class="ph g4">🌊</div>
+        <div class="ph g2" style="position:relative">📸<span class="count">+6 foto</span></div>
+      </div>
+      <div class="sp-body">
+        <div class="sp-main">
+          <h1>Bomaki Murazzi</h1>
+          <div class="sp-addr anno" style="display:inline-block">📍 <b>Via Bonafous 7</b> · Vanchiglia, lungo Po <span class="dotn" style="position:static;display:inline-flex;margin-left:6px">2</span></div>
+          <div style="display:flex;gap:7px;margin-top:10px"><span class="tagp">🍣 Sushi</span><span class="tagp">🐟 Pesce</span><span class="tagp" style="background:#fff">€€€</span></div>
+          <div class="sp-sconto anno" style="margin-top:14px">
+            <div><b>−20% al banco sushi</b><small>Sconto attivo per te · scheda aggiornata da Bi</small></div>
+            <button class="btn-ink">Usa sconto →</button>
+            <span class="dotn" style="top:-12px;right:-10px;left:auto">3</span>
+          </div>
+          <div class="sp-h3">Secondo Bi</div>
+          <p class="sp-sb">Sushi in stile brasiliano con accostamenti particolari, in assoluto uno dei miei sushi preferiti perché diverso da tutti gli altri. Mangiare nel dehor affacciati sul Po un bel piattone di roll con un drink al maracujà dovrebbe essere l'ottava meraviglia del mondo.</p>
+          <div class="firma">— Bi</div>
+          <div class="sp-tip">
+            <div class="h">🍴 Cosa ti consiglio di prendere</div>
+            <p>Salmon Wasabi (chiedetelo!), Astice gratinato al mango, sashimi misto, gamberi al lime, spicy tonno</p>
+          </div>
+        </div>
+        <aside>
+          <div class="side-card anno">
+            <span class="dotn" style="top:-10px;right:-10px">4</span>
+            <div class="open-row"><span class="dot"></span> Aperto ora <small>· chiude alle 00:00</small></div>
+            <div class="orari-toggle">Tutti gli orari ▾ <span style="float:right;opacity:.6">Google · auto</span></div>
+          </div>
+          <div class="side-card acts" style="display:grid">
+            <button class="act primary">🧭 Indicazioni</button>
+            <button class="act">📞 Chiama</button>
+            <button class="act">🌐 Sito</button>
+          </div>
+          <div class="side-card" style="background:var(--cream);border-color:transparent;font-size:12px;line-height:1.55"><b>Ciao, sono Bi.</b> Ho mangiato qui davvero. Niente stelle, niente sponsor.</div>
+        </aside>
+      </div>
+      <div class="vicini anno">
+        <span class="dotn" style="top:-6px;left:110px">5</span>
+        <h3>Qui vicino</h3>
+        <div class="vrow">
+          <div class="vcard"><div class="ph g3">🥙</div><div class="t"><b>Via Beirut</b>Internazionale · 89 m</div></div>
+          <div class="vcard"><div class="ph g1">🍕</div><div class="t"><b>Padellino Factory</b>Pizza · 166 m</div></div>
+          <div class="vcard"><div class="ph g4">🍣</div><div class="t"><b>Sushi del Maslè</b>Sushi · 389 m</div></div>
+          <div class="vcard"><div class="ph g2">🍺</div><div class="t"><b>Hops Torino</b>Birreria · 420 m</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="li fix"><b class="n">1</b><span><b>Mosaico 1+4:</b> tutte le foto visibili subito, fallback emoji su gradiente se manca la foto. Niente carosello cieco.</span></div>
+      <div class="li fix"><b class="n">2</b><span><b>Indirizzo umano:</b> via + quartiere. Il CAP va solo nelle Indicazioni.</span></div>
+      <div class="li fix"><b class="n">3</b><span><b>Sconto subito sotto i tag, above the fold</b> — resta la prima cosa che vedi dopo nome e foto. Cambia solo che esiste <b>una volta sola</b>: sparisce la sticky bar duplicata in fondo (su desktop).</span></div>
+      <div class="li fix"><b class="n">4</b><span><b>"Aperto ora · chiude alle 00:00"</b> in una riga; il dettaglio orari collassa. Se i dati mancano: "Orari non disponibili · chiama".</span></div>
+      <div class="li fix"><b class="n">5</b><span><b>Vicini full-width</b> con foto e categoria: invitano a esplorare, non riempiono la sidebar.</span></div>
+      <div class="li fix"><b class="n">✓</b><span><b>La colonna principale è piena:</b> Secondo Bi + firma + consiglio + sconto. Zero vuoto.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= P3 BI CLUB ================= -->
+<section class="panel" id="p3">
+  <span class="kicker">Redesign B · desktop</span>
+  <h2 class="sec">Bi Club</h2>
+  <p class="sub">Su mobile funziona già. Su desktop la drop card verticale resta sola con metà schermo vuota.</p>
+
+  <div class="seg" data-views="p3">
+    <button class="on today" data-v="oggi">Oggi (dal live)</button>
+    <button data-v="prop">Proposta</button>
+  </div>
+
+  <div class="view on" data-view="p3-oggi">
+    <div class="browser anno">
+      <div class="chromebar"><i></i><i></i><i></i><div class="url">chiamamibi.com/sconti</div></div>
+      <div class="mock-nav"><span class="logo">LA GUIDA DI BI</span><div class="links">Home · Esplora · <b>Club</b> · Salvati</div></div>
+      <div style="padding:20px 24px 6px"><b style="font-size:20px">Bi Club</b><div style="font-size:11.5px;color:rgba(34,24,28,.55)">Sconti e vantaggi nei ristoranti di Torino</div></div>
+      <div class="bc-old">
+        <div class="bc-card anno">
+          <span class="dotn" style="top:12px;right:12px;left:auto">1</span>
+          <div class="ph gray" style="color:rgba(34,24,28,.3);font-size:12px">foto drop mai caricata</div>
+          <div class="b">
+            <b>Gelateria Borghese</b> <span style="font-size:10px;opacity:.8">| Gelateria siciliana</span>
+            <div class="meta">Gelateria | Torino | € · 1 presi · 19 rimasti</div>
+            <div class="bar"><i></i></div>
+            <div class="cta"><button class="btn-gh" style="font-size:11px;padding:8px 14px">Dettagli</button><button class="btn-w" style="font-size:11px;padding:8px 14px">🔓 Sblocca sconto</button></div>
+          </div>
+        </div>
+        <div class="vuoto anno">metà schermo vuota <span class="dotn" style="position:static;margin-left:10px">2</span></div>
+      </div>
+      <div style="padding:0 24px 8px"><b style="font-size:14px">Convenzioni</b> <span style="font-family:'Caveat',cursive;font-size:14px;color:rgba(34,24,28,.55)">3 sempre valide</span></div>
+      <div class="conv2old anno" style="padding:0 24px 24px">
+        <span class="dotn" style="right:24px;top:-4px;left:auto">3</span>
+        <div class="conv"><div class="ph gray" style="width:58px;height:58px;border-radius:12px;font-size:9px"></div><div><b>Bomaki Murazzi</b><div class="m">Sushi · Torino · €€€</div><div class="v">● Valido ora</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="conv"><div class="ph g2" style="width:58px;height:58px;border-radius:12px">☕</div><div><b>Caffè dell'Orologio</b><div class="m">Piemontese · €€€</div><div class="v">● Valido ora</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="conv" style="grid-column:1"><div class="ph gray" style="width:58px;height:58px;border-radius:12px;font-size:9px"></div><div><b>Kintsugi tea & cakes</b><div class="m">Matcha · €€</div><div class="v">● Valido ora</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="vuoto convempty">riga spezzata</div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="li"><b class="n">1</b><span><b>Foto drop assente</b> (di nuovo B1) dentro la card più importante della pagina.</span></div>
+      <div class="li"><b class="n">2</b><span><b>Card verticale mobile-first piazzata su desktop:</b> tutto lo spazio a destra resta deserto.</span></div>
+      <div class="li"><b class="n">3</b><span><b>Griglia 2 colonne con 3 elementi:</b> la riga spezzata sembra un errore.</span></div>
+    </div>
+  </div>
+
+  <div class="view" data-view="p3-prop">
+    <div class="browser anno">
+      <div class="chromebar"><i></i><i></i><i></i><div class="url">chiamamibi.com/sconti</div></div>
+      <div class="mock-nav"><span class="logo">LA GUIDA DI BI</span><div class="links">Home · Esplora · <b>Club</b> · Salvati</div></div>
+      <div style="padding:20px 24px 0"><b style="font-size:20px">Bi Club</b><div style="font-size:11.5px;color:rgba(34,24,28,.55)">Sconti e vantaggi nei ristoranti di Torino</div></div>
+      <div class="drop-hero anno">
+        <span class="dotn dark" style="top:14px;right:14px;left:auto">1</span>
+        <div class="dh-l">
+          <span class="live"><i></i> DROP LIVE · SCADE IN 20G 16H</span>
+          <h2>2% da Gelateria Borghese.</h2>
+          <div class="s">Gelateria siciliana · Largo Orbassano 62 · Gelato a 2€</div>
+          <div class="bar"><i></i></div>
+          <div class="meta"><span>1 preso</span><span>19 rimasti</span></div>
+          <div class="cta"><button class="btn-w">🔓 Sblocca sconto</button><button class="btn-gh">Vai alla scheda →</button></div>
+        </div>
+        <div class="dh-r g3">🍨<span class="badge">2%</span></div>
+      </div>
+      <div style="padding:0 20px 8px"><b style="font-size:14px">Convenzioni</b> <span style="font-family:'Caveat',cursive;font-size:14px;color:rgba(34,24,28,.55)">3 sempre valide</span></div>
+      <div class="conv3 anno">
+        <span class="dotn" style="right:20px;top:-6px;left:auto">2</span>
+        <div class="conv"><div class="ph g1">🍣<span class="pc">20%</span></div><div><b>Bomaki Murazzi</b><div class="m">Sushi · €€€</div><div class="v">● Valido ora</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="conv"><div class="ph g2">☕<span class="pc">4€</span></div><div><b>Caffè dell'Orologio</b><div class="m">Piemontese · €€€</div><div class="v">● Valido ora</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="conv"><div class="ph g3">🍵<span class="pc">10%</span></div><div><b>Kintsugi tea & cakes</b><div class="m">Matcha · €€</div><div class="v">● Valido ora</div></div><button class="btn-ink">Sblocca</button></div>
+      </div>
+    </div>
+
+    <div class="arrow-note" style="margin-top:26px">E con più drop attivi? Layout adattivo</div>
+    <div class="browser anno">
+      <div class="chromebar"><i></i><i></i><i></i><div class="url">chiamamibi.com/sconti — esempio con 3 drop live</div></div>
+      <div class="drop-hero anno" style="min-height:200px">
+        <span class="dotn dark" style="top:14px;right:14px;left:auto">3</span>
+        <div class="dh-l">
+          <span class="live"><i></i> DROP IN EVIDENZA · SCADE IN 2G 4H</span>
+          <h2 style="font-size:27px">2% da Gelateria Borghese.</h2>
+          <div class="s">Gelateria siciliana · Largo Orbassano 62</div>
+          <div class="bar"><i style="width:64%"></i></div>
+          <div class="meta"><span>13 presi</span><span>7 rimasti</span></div>
+          <div class="cta"><button class="btn-w">🔓 Sblocca sconto</button></div>
+        </div>
+        <div class="dh-r g3" style="font-size:56px">🍨<span class="badge">2%</span></div>
+      </div>
+      <div class="conv3 anno" style="padding-top:0">
+        <span class="dotn" style="right:20px;top:-6px;left:auto">4</span>
+        <div class="conv" style="border-color:rgba(232,69,60,.35)"><div class="ph g1" style="position:relative">🍕<span class="pc">15%</span></div><div><b>Pizzeria La Perla</b><div class="m" style="color:var(--corallo);font-weight:700">● LIVE · 12g 8h</div><div class="v">9 / 30 presi</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="conv" style="border-color:rgba(232,69,60,.35)"><div class="ph g4" style="position:relative">🍜<span class="pc">2×1</span></div><div><b>Xi Ramen a mano</b><div class="m" style="color:var(--corallo);font-weight:700">● LIVE · 18g 2h</div><div class="v">2 / 15 presi</div></div><button class="btn-ink">Sblocca</button></div>
+        <div class="conv" style="opacity:.55"><div class="ph g2" style="position:relative">🥐</div><div><b>Prossimo drop</b><div class="m">in arrivo venerdì</div><div class="v" style="color:rgba(34,24,28,.4)">🔔 Avvisami</div></div></div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="li fix"><b class="n">1</b><span><b>Drop hero orizzontale full-width</b> — stesso pattern dell'hero in Home: coerenza, urgenza (countdown + progress), zero vuoto.</span></div>
+      <div class="li fix"><b class="n">2</b><span><b>Convenzioni su una riga da 3,</b> percentuale ancorata alla foto, fallback emoji.</span></div>
+      <div class="li fix"><b class="n">3</b><span><b>Con più drop, l'hero è solo il drop in evidenza</b> (quello che scade prima, o scelto da te in admin). Più compatto: lascia spazio alla riga sotto.</span></div>
+      <div class="li fix"><b class="n">4</b><span><b>Gli altri drop usano la stessa card delle convenzioni</b> con bordo corallo + countdown: stessa densità di prima (3+ per riga), nessun componente nuovo. Lo slot "Prossimo drop" crea attesa.</span></div>
+      <div class="li fix"><b class="n">✓</b><span>Su <b>mobile non cambia nulla</b>: la card verticale attuale resta; con più drop diventa un carosello swipe.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= P4 ESPLORA ================= -->
+<section class="panel" id="p4">
+  <span class="kicker">Redesign C · lista + card</span>
+  <h2 class="sec">Esplora</h2>
+  <p class="sub">Mappa con pin emoji: ottima, non si tocca. Il problema è la card della lista e i dati che ci finiscono dentro.</p>
+
+  <div class="compare">
+    <div>
+      <div class="col-label">Oggi (dal live)</div>
+      <div class="card-old anno">
+        <span class="dotn" style="top:10px;left:10px">1</span>
+        <div class="ph gray">foto 1:1 — spesso placeholder</div>
+        <div class="b">
+          <b>Azabu10</b>
+          <div class="s">Omakase giapponese</div>
+          <div class="a anno" style="display:inline-block">Via San Glicerio 6, 20126 Milano Milan, Italy <span class="dotn" style="position:static;display:inline-flex;margin-left:4px;width:22px;height:22px;font-size:11px">2</span></div>
+        </div>
+      </div>
+      <div class="legend" style="grid-template-columns:1fr">
+        <div class="li"><b class="n">1</b><span><b>Foto quadrata enorme</b> (spesso grigia): ~2,5 card per schermata, poca scelta percepita.</span></div>
+        <div class="li"><b class="n">2</b><span><b>Indirizzo raw e nessuna indicazione della città:</b> Azabu10 è a Milano ma nulla lo dice — sembra un errore invece che una scelta.</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="col-label after">Proposta</div>
+      <div class="card-new anno">
+        <div class="ph g1" style="position:relative">🍣
+          <span class="open">● Aperto</span>
+          <span class="heart">🤍</span>
+          <span class="dotn dark" style="bottom:8px;left:10px;top:auto">1</span>
+        </div>
+        <div class="b">
+          <div class="r1"><b>Bomaki Murazzi</b><span class="pillsc">−20%</span></div>
+          <div class="s">Sushi brasiliano</div>
+          <div class="mrow"><span class="cat">🍣 Sushi</span><span>€€€</span><span>·</span><span>Via Bonafous 7 · Vanchiglia</span></div>
+        </div>
+      </div>
+      <div class="legend" style="grid-template-columns:1fr">
+        <div class="li fix"><b class="n">1</b><span><b>Foto 4:3 + "Aperto" in overlay:</b> +1 card visibile per schermata, lo stato si vede senza aprire la scheda.</span></div>
+        <div class="li fix"><b class="n">✓</b><span><b>Sconto pill corallo accanto al nome</b> (non nascosto sull'angolo) · indirizzo umano con quartiere · fallback emoji.</span></div>
+        <div class="li fix"><b class="n">✓</b><span><b>Città sempre dichiarata:</b> badge "📍 Milano" sulle card fuori dalla città attiva; la guida resta completa, l'utente capisce subito dove si trova il locale.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= P5 MOBILE ================= -->
+<section class="panel" id="p5">
+  <span class="kicker">Audit mobile · viewport 390px reale</span>
+  <h2 class="sec">Mobile</h2>
+  <p class="sub">La base è buona: tab bar glass con active pill grigia, drop card in home, Chiedi a Bi. Qui i fix specifici mobile + la scheda proposta.</p>
+
+  <div class="phones">
+
+    <div>
+      <div class="phone">
+        <div class="notch"><i></i></div>
+        <div class="scr anno">
+          <div class="m-nav"><span class="logo">LA GUIDA DI BI</span><span style="background:var(--cream);border-radius:99px;padding:5px 10px;font-weight:700;font-size:10px">🔴 Chiedi a Bi</span></div>
+          <div style="margin:10px 14px;background:var(--corallo);border-radius:18px;color:#fff;padding:16px;position:relative">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.1em;background:rgba(255,255,255,.16);border-radius:99px;padding:4px 10px">● DROP LIVE · 20G 16H</span>
+            <div style="display:flex;gap:12px;margin-top:12px">
+              <div style="flex:1">
+                <div style="font-size:24px;font-weight:800;line-height:1.05">2%<br>da Gelateria Borghese</div>
+                <div style="font-size:10px;opacity:.9;margin-top:6px">Gelato a 2€ · Largo Orbassano 62</div>
+              </div>
+              <div class="ph g3" style="width:90px;border-radius:12px;font-size:30px;flex:none">🍨</div>
+            </div>
+            <div style="height:5px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:12px"><i style="display:block;width:6%;height:100%;background:#fff;border-radius:99px"></i></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <span style="flex:1;text-align:center;background:var(--ink);border-radius:99px;padding:10px;font-size:11px;font-weight:700">🔓 Sblocca sconto</span>
+              <span style="background:rgba(255,255,255,.16);border-radius:99px;padding:10px 14px;font-size:11px;font-weight:600">Scopri</span>
+            </div>
+            <span class="dotn dark" style="bottom:8px;left:50%;top:auto">1</span>
+          </div>
+          <div style="display:flex;gap:10px;padding:4px 14px;overflow:hidden">
+            <div style="text-align:center;font-size:9px"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px">🥂</div>Aperitivo</div>
+            <div style="text-align:center;font-size:9px"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px">🍷</div>Piemontese</div>
+            <div style="text-align:center;font-size:9px"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div>Pizza</div>
+            <div style="text-align:center;font-size:9px"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px">🍣</div>Giapponese</div>
+            <div style="text-align:center;font-size:9px"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:19px">🐟</div>Pesce</div>
+          </div>
+          <div style="padding:10px 14px 0"><b style="font-size:15px">Ultimi aggiunti</b></div>
+          <div style="display:flex;gap:10px;padding:8px 14px">
+            <div style="flex:1;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff"><div class="ph g1" style="height:74px;font-size:26px">🍝</div><div style="padding:8px;font-size:10.5px"><b>Birrificio Casa del Popolo</b></div></div>
+            <div style="flex:1;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff"><div class="ph g2" style="height:74px;font-size:26px">🥟</div><div style="padding:8px;font-size:10.5px"><b>Osteria Vanchiglia</b></div></div>
+          </div>
+          <div class="m-tab"><span class="it on"><i>🏠</i>Home</span><span class="it"><i>📍</i>Esplora</span><span class="it"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+        </div>
+      </div>
+      <p class="ph-cap"><b>Home — fix B9:</b> ① la CTA del drop diventa una pill larga (oggi è un cerchio nero con il testo su 3 righe). Il resto della home mobile non si tocca: drop card, momenti e tab bar funzionano.</p>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="notch"><i></i></div>
+        <div class="scr anno">
+          <div class="m-gal">
+            <div class="ph g1">🍣</div>
+            <span style="position:absolute;right:10px;bottom:10px;background:rgba(34,24,28,.78);color:#fff;font-size:9.5px;font-weight:600;border-radius:999px;padding:3px 9px;z-index:2">1 / 4 · scorri</span>
+            <span style="position:absolute;left:10px;bottom:10px;background:linear-gradient(90deg,#bdebc9,#8fdca6);color:var(--ink);font-size:10px;font-weight:800;border-radius:999px;padding:4px 10px;z-index:2">−20% attivo</span>
+            <span class="dotn" style="top:10px;left:10px">1</span>
+            <span style="position:absolute;top:10px;right:10px;display:flex;gap:7px;z-index:2"><span style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:12px">↗</span><span style="width:28px;height:28px;border-radius:50%;background:var(--corallo);display:flex;align-items:center;justify-content:center;font-size:12px">❤️</span></span>
+          </div>
+          <div class="m-body">
+            <h1>Bomaki Murazzi</h1>
+            <div class="m-addr anno" style="display:inline-block">📍 <b>Via Bonafous 7</b> · Vanchiglia <span class="dotn" style="position:static;display:inline-flex;width:20px;height:20px;font-size:10px;margin-left:4px">2</span></div>
+            <div class="m-tags"><span class="tagp">🍣 Sushi</span><span class="tagp">🐟 Pesce</span><span class="tagp">€€€</span></div>
+            <div class="m-open anno"><span class="dot"></span> Aperto ora <small>· chiude alle 00:00</small><span class="chev">▾</span><span class="dotn" style="top:-10px;right:-8px;left:auto;width:22px;height:22px;font-size:11px">3</span></div>
+            <p class="m-sb"><b style="font-size:9.5px;letter-spacing:.12em;color:rgba(34,24,28,.45)">SECONDO BI</b><br>Sushi in stile brasiliano con accostamenti particolari, uno dei miei preferiti perché diverso da tutti gli altri. Il dehor sul Po…</p>
+            <div style="margin-top:10px;background:linear-gradient(135deg,#8e6b3e,#6e5230);color:#fff;border-radius:13px;padding:12px;font-family:'Caveat',cursive;font-size:15px">🍴 Salmon Wasabi, astice al mango, spicy tonno…</div>
+          </div>
+          <div class="m-sticky anno"><span><b>−20% al banco sushi</b> · attivo per te</span><span class="b">Usa →</span><span class="dotn" style="top:-12px;right:6px;left:auto;width:22px;height:22px;font-size:11px">4</span></div>
+          <div class="m-tab"><span class="it"><i>🏠</i>Home</span><span class="it on"><i>📍</i>Esplora</span><span class="it"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+        </div>
+      </div>
+      <p class="ph-cap"><b>Scheda mobile — proposta:</b> ① gallery swipe con contatore, fallback emoji e <b>badge "−20% attivo" già sulla foto</b> (lo sconto si vede al primo pixel) · ② indirizzo umano · ③ "Aperto ora" in una riga espandibile al posto del muro 7× Chiuso · ④ la sticky bar resta <b>sempre visibile</b> mentre scrolli: l'attenzione sullo sconto aumenta, sparisce solo il doppione inline (fix B6).</p>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="notch"><i></i></div>
+        <div class="scr anno">
+          <div class="m-nav"><span class="logo">LA GUIDA DI BI</span></div>
+          <div style="padding:2px 16px"><b style="font-size:17px">Bi Club</b><div style="font-size:10px;color:rgba(34,24,28,.55)">Sconti e vantaggi nei ristoranti di Torino</div></div>
+          <div style="margin:10px 14px;background:var(--corallo);border-radius:16px;color:#fff;overflow:hidden">
+            <div class="ph g3" style="height:104px;font-size:36px;border-radius:0">🍨</div>
+            <div style="padding:12px 14px">
+              <b style="font-size:13px">Gelateria Borghese</b> <span style="font-size:9px;opacity:.85">· 2% · 19 rimasti</span>
+              <div style="height:4px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:8px"><i style="display:block;width:6%;height:100%;background:#fff;border-radius:99px"></i></div>
+              <div style="display:flex;gap:7px;margin-top:10px"><span style="flex:1;text-align:center;background:var(--ink);border-radius:99px;padding:8px;font-size:10px;font-weight:700">🔓 Sblocca</span><span style="background:rgba(255,255,255,.16);border-radius:99px;padding:8px 12px;font-size:10px">Dettagli</span></div>
+            </div>
+          </div>
+          <div style="padding:0 16px"><b style="font-size:12px">Convenzioni</b></div>
+          <div style="margin:8px 14px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:13px;padding:9px"><div class="ph g1" style="width:46px;height:46px;border-radius:10px;font-size:19px;position:relative">🍣<span class="pc" style="position:absolute;left:-4px;bottom:-4px;background:#aef3c2;font-size:8px;font-weight:800;border-radius:99px;padding:2px 6px;border:2px solid #fff">20%</span></div><div style="font-size:11px"><b>Bomaki Murazzi</b><div style="font-size:9px;color:rgba(34,24,28,.55)">Sushi · €€€ · ● valido ora</div></div><span class="btn-ink" style="margin-left:auto;padding:7px 11px;font-size:9.5px">Sblocca</span></div>
+            <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:13px;padding:9px"><div class="ph g2" style="width:46px;height:46px;border-radius:10px;font-size:19px">☕</div><div style="font-size:11px"><b>Caffè dell'Orologio</b><div style="font-size:9px;color:rgba(34,24,28,.55)">Piemontese · €€€ · ● valido ora</div></div><span class="btn-ink" style="margin-left:auto;padding:7px 11px;font-size:9.5px">Sblocca</span></div>
+            <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:13px;padding:9px"><div class="ph g3" style="width:46px;height:46px;border-radius:10px;font-size:19px">🍵</div><div style="font-size:11px"><b>Kintsugi tea & cakes</b><div style="font-size:9px;color:rgba(34,24,28,.55)">Matcha · €€ · ● valido ora</div></div><span class="btn-ink" style="margin-left:auto;padding:7px 11px;font-size:9.5px">Sblocca</span></div>
+            <div class="anno" style="height:34px;display:flex;align-items:center;justify-content:center;font-size:9.5px;color:rgba(34,24,28,.4)">spazio di sicurezza sotto la lista <span class="dotn" style="position:static;margin-left:8px;width:20px;height:20px;font-size:10px">1</span></div>
+          </div>
+          <div class="m-tab"><span class="it"><i>🏠</i>Home</span><span class="it"><i>📍</i>Esplora</span><span class="it on"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+        </div>
+      </div>
+      <p class="ph-cap"><b>Bi Club mobile — fix B7:</b> ① padding-bottom <code>calc(96px + safe-area)</code> così l'ultima card non finisce mai sotto la tab bar glass (oggi succede). Layout invariato + foto con fallback.</p>
+    </div>
+
+  </div>
+
+  <div class="note-i">✅ <b>Cosa NON cambia su mobile:</b> tab bar liquid-glass con active pill grigia e icone nere · drop card in home · momenti con l'orologio · Chiedi a Bi · mappa Esplora col bottom sheet "Lista". Sono già giusti.</div>
+</section>
+
+<!-- ================= P6 ADMIN ================= -->
+<section class="panel" id="p6">
+  <span class="kicker">PR15 promosso · micro-fix</span>
+  <h2 class="sec">Admin</h2>
+  <p class="sub">Sidebar dark, KPI, form edit con "la voce di Bi": professionale. Tre dettagli da sistemare.</p>
+
+  <div class="buggrid" style="grid-template-columns:1fr;max-width:860px">
+    <div class="bug">
+      <div class="head"><span class="sev bassa">OK così</span><b>A1 · Colonna "Fasce" — resta a emoji</b></div>
+      <p>Valutata l'ipotesi chip testuali, <b>scartata</b>: le emoji occupano meno spazio e per chi usa l'admin ogni giorno sono più rapide. Unico ritocco facoltativo: alzare il contrasto tra fascia attiva e spenta (spente al 15-20% di opacità) così lo stato si legge a colpo d'occhio.</p>
+      <div class="arrow-note">Resta così (con opacità più marcata sulle spente)</div>
+      <div class="adm-row">
+        <div class="nm"><b>Caffè dell'Orologio</b><span>caffedellorologio.net</span></div>
+        <div class="fold"><span class="e off">🥐</span><span class="e">🍝</span><span class="e">🥂</span><span class="e">🍷</span><span class="e off">🍸</span></div>
+        <div style="font-size:11px;color:rgba(34,24,28,.5)">Torino</div>
+        <div class="stato">● Pubblicato</div>
+      </div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev media">Media</span><b>A2 · Flash di "0" sulle KPI al load</b></div>
+      <p>La dashboard renderizza 0 ristoranti / 0 utenti / 0 sconti per 1-2 secondi prima che arrivino i dati (visto dal vivo: 0 → 72). Sembra che il sito abbia perso tutto.</p>
+      <div class="fix"><b>Fix:</b> skeleton bar al posto degli zeri finché la query non risponde.</div>
+    </div>
+
+    <div class="bug">
+      <div class="head"><span class="sev bassa">Bassa</span><b>A3 · Colonna thumbnail vuota + zone "estere"</b></div>
+      <p>La prima colonna della tabella è uno spazio bianco (thumbnail mai renderizzata).</p>
+      <div class="fix"><b>Fix:</b> thumbnail vera (riusa le immagini ottimizzate di B1) o rimuovere la colonna. La colonna Zona con Roma/Ravenna va benissimo: in admin serve.</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // tab nav
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      document.getElementById(t.dataset.p).classList.add('on');
+      window.scrollTo({top:0});
+    });
+  });
+  // segmented oggi/proposta
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const group=seg.dataset.views;
+    seg.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click',()=>{
+        seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        document.querySelectorAll(`[data-view^="${group}-"]`).forEach(v=>v.classList.remove('on'));
+        document.querySelector(`[data-view="${group}-${b.dataset.v}"]`).classList.add('on');
+      });
+    });
+  });
+</script>
+</body>
+</html>
