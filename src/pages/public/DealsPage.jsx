@@ -14,6 +14,13 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import Footer from '../../components/Layout/Footer'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import { proxyImg } from '../../lib/supabase'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
+
+// Emoji categoria per il fallback foto (Blocco A1): mai grigio piatto.
+function catEmoji(r) {
+  const name = (Array.isArray(r?.category) && r.category[0]) || r?.cuisine_type
+  return (name && getCategoryInfo(name)?.emoji) || '🍽️'
+}
 
 function slugify(name) {
   return name.toLowerCase()
@@ -123,12 +130,8 @@ function DropMini({ deal, onTap, kind = 'live' }) {
       boxShadow: '0 1px 2px rgba(34,24,28,.04),0 4px 12px rgba(34,24,28,.04)',
       cursor: 'pointer', scrollSnapAlign: 'start',
     }}>
-      <div style={{ width: 54, height: 54, flex: '0 0 54px', borderRadius: 10, overflow: 'hidden', background: '#ddd' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: 'var(--color-cream-deep, #F1EBE0)', fontSize: 22 }}>🍽️</div>
-        )}
+      <div style={{ width: 54, height: 54, flex: '0 0 54px', borderRadius: 10, overflow: 'hidden', background: '#ddd', fontSize: 22 }}>
+        <PhotoOrEmoji src={photo} alt={r?.name} emoji={catEmoji(r)} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -186,11 +189,9 @@ function LiveDropCard({ deal, onClaim, locked, onLogin, claiming, myRedemption, 
     }}>
       {/* Photo 110px */}
       <div style={{ position: 'relative', height: 110, overflow: 'hidden' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #F0EBE3, #e0d8cc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>🍽️</div>
-        )}
+        <div style={{ position: 'absolute', inset: 0, fontSize: 32 }}>
+          <PhotoOrEmoji src={photo} alt={r?.name} emoji={catEmoji(r)} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+        </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)' }} />
 
         {/* LIVE badge */}
@@ -322,11 +323,9 @@ function UpcomingDropCard({ deal, reminded, onRemind, locked, onLogin }) {
     }}>
       {/* Photo 110px dimmed */}
       <div style={{ position: 'relative', height: 110, overflow: 'hidden' }}>
-        {photo ? (
-          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: '#2e2228', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, opacity: 0.5 }}>🍽️</div>
-        )}
+        <div style={{ position: 'absolute', inset: 0, fontSize: 32, opacity: 0.5 }}>
+          <PhotoOrEmoji src={photo} alt={r?.name} emoji={catEmoji(r)} gradient="#2e2228" imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
+        </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, var(--color-primary), transparent)' }} />
 
         {/* PRESTO badge */}
@@ -562,14 +561,8 @@ function CompactDealCard({ deal, onTap, alreadyUsed }) {
         display: 'grid', gridTemplateColumns: '54px 1fr auto', gap: 12,
         alignItems: 'center', padding: '12px 14px',
       }}>
-        <div style={{ width: 54, height: 54, borderRadius: 10, overflow: 'hidden', background: '#ddd' }}>
-          {photo ? (
-            <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: 'var(--color-cream-deep, #F1EBE0)', fontSize: 22 }}>
-              {category?.emoji || '🍽️'}
-            </div>
-          )}
+        <div style={{ width: 54, height: 54, borderRadius: 10, overflow: 'hidden', background: '#ddd', fontSize: 22 }}>
+          <PhotoOrEmoji src={photo} alt={r?.name} emoji={category?.emoji || '🍽️'} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{
@@ -621,7 +614,7 @@ function FeaturedDealCard({ deal, onTap, saved, onSaveToggle, alreadyUsed }) {
       {/* Background */}
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)' }}>
         {photo && (
-          <img src={photo} alt={r?.name} loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
+          <img src={photo} alt={r?.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(232, 69, 60,0.12), transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(176,137,84,0.1), transparent 50%)' }} />
@@ -935,7 +928,7 @@ function DealBottomSheet({ deal, onClose, onClaim, locked, onLogin, claiming, my
                   }}
                 >
                   {allPhotos.map((url, i) => (
-                    <img key={i} src={url} alt={`${r?.name} ${i + 1}`} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0, userSelect: 'none', WebkitUserDrag: 'none' }} draggable={false} />
+                    <img key={i} src={url} alt={`${r?.name} ${i + 1}`} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0, userSelect: 'none', WebkitUserDrag: 'none' }} draggable={false} />
                   ))}
                 </div>
                 {/* Dots on photo */}

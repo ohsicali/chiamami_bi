@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { proxyImg } from '../../lib/supabase'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
 function slugify(name) {
@@ -81,11 +82,8 @@ function DropCard({ deal, onClick }) {
       </div>
       {/* Body */}
       <div style={{ padding: '14px 18px 16px', display: 'grid', gridTemplateColumns: '72px 1fr', gap: 12 }}>
-        <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 12, overflow: 'hidden' }}>
-          {photo
-            ? <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-            : <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>{catInfo.emoji}</div>
-          }
+        <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 12, overflow: 'hidden', fontSize: 26 }}>
+          <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={catInfo.emoji} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div>
           <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.02em', lineHeight: 1.2 }}>{r?.name}</div>
@@ -153,11 +151,8 @@ function DiscountCard({ deal, isUsed, redemptionDate, onClick }) {
         {deal.title || discountText}
       </div>
       {/* Photo */}
-      <div style={{ aspectRatio: '16/9', background: '#ddd', overflow: 'hidden', filter: isUsed ? 'grayscale(.6)' : 'none' }}>
-        {photo
-          ? <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-          : <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>{catInfo.emoji}</div>
-        }
+      <div style={{ aspectRatio: '16/9', background: '#ddd', overflow: 'hidden', filter: isUsed ? 'grayscale(.6)' : 'none', fontSize: 40 }}>
+        <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={catInfo.emoji} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
       {/* Body */}
       <div style={{ padding: '14px 16px 16px', opacity: isUsed ? .65 : 1 }}>

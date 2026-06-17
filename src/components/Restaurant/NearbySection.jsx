@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg } from '../../lib/supabase'
+import SmartImage from '../UI/SmartImage'
 
 const cardVariants = {
   hidden: { opacity: 0, x: 40 },
@@ -52,20 +53,14 @@ function NearbyCard({ restaurant, index, onSelect }) {
       onClick={() => onSelect?.(restaurant)}
     >
       {/* Photo */}
-      <div className="relative h-24 w-full overflow-hidden bg-accent-light">
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt={`${restaurant.name}${restaurant.city ? ` - ${restaurant.city}` : ''}`}
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl">
-            {category?.emoji || '🍽️'}
-          </div>
-        )}
-      </div>
+      <SmartImage
+        className="relative h-24 w-full overflow-hidden bg-accent-light"
+        src={photoUrl}
+        alt={`${restaurant.name}${restaurant.city ? ` - ${restaurant.city}` : ''}`}
+        emoji={category?.emoji || '🍽️'}
+        gradient={category?.color ? `linear-gradient(135deg, ${category.color}55, ${category.color}22)` : undefined}
+        fallbackFontSize="1.6em"
+      />
 
       {/* Info */}
       <div className="flex flex-col gap-1 p-2.5 flex-1">

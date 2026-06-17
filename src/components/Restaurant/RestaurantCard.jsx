@@ -32,6 +32,7 @@ function RestaurantCard({
   variant = 'default', // 'default' | 'hero'
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   const categories = getPublicCategoryNames(restaurant)
     .map(name => getCategoryInfo(name))
@@ -56,6 +57,8 @@ function RestaurantCard({
   const photoSizes = isHero ? '(max-width: 768px) 100vw, 720px' : undefined
   // First few cards (index < 3) are above the fold in most lists — load eagerly.
   const isAboveFold = index < 3
+  // Mostra la foto solo se l'URL esiste e non ha dato errore (404 → fallback).
+  const showPhoto = photoUrl && !imgError
 
   const distance =
     userPosition && restaurant.latitude && restaurant.longitude
@@ -79,7 +82,12 @@ function RestaurantCard({
       >
         {/* Background */}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #1e1520, #2e2228, #22181C)' }}>
-          {photoUrl && (
+          {!showPhoto && (
+            <div className="absolute inset-0 flex items-center justify-center" style={{ fontSize: 64, opacity: 0.28 }}>
+              {category?.emoji || '🍽️'}
+            </div>
+          )}
+          {showPhoto && (
             <img
               src={photoUrl}
               srcSet={photoSrcSet}
@@ -89,6 +97,7 @@ function RestaurantCard({
               fetchpriority={index === 0 ? 'high' : 'auto'}
               decoding="async"
               onLoad={() => setImageLoaded(true)}
+              onError={() => setImgError(true)}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-40' : 'opacity-0'}`}
             />
           )}
@@ -242,7 +251,10 @@ function RestaurantCard({
           className="absolute inset-0"
           style={{ background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'linear-gradient(135deg, #e8d5c0, #d4c0a8)' }}
         />
-        {photoUrl ? (
+        {showPhoto && !imageLoaded && (
+          <div className="skeleton absolute inset-0" aria-hidden="true" />
+        )}
+        {showPhoto ? (
           <img
             src={photoUrl}
             srcSet={photoSrcSet}
@@ -252,6 +264,7 @@ function RestaurantCard({
             fetchpriority={index === 0 ? 'high' : 'auto'}
             decoding="async"
             onLoad={() => setImageLoaded(true)}
+            onError={() => setImgError(true)}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
         ) : (

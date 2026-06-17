@@ -5,6 +5,7 @@ import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts
 import { useCity } from '../../lib/CityContext'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { proxyImg } from '../../lib/supabase'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
@@ -711,14 +712,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
       style={isUsed ? { opacity: 0.55 } : undefined}
     >
       <div className="sc-ph">
-        {photo ? (
-          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 32,
-          }}>🍽️</div>
-        )}
+        <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 32 }} />
         <span className="sc-badge-live">live</span>
         {time && <span className="sc-badge-time">{time}</span>}
         <span className="sc-drop-pct-photo">{dealBadgeText(deal)}</span>
@@ -808,14 +802,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onInfo() }}
     >
       <div className="sc-ph">
-        {photo ? (
-          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 30,
-          }}>{categoryEmoji(cuisine)}</div>
-        )}
+        <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 30 }} />
         <span className={`sc-badge-pct ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
       </div>
       <div className="sc-body-c">
@@ -918,14 +905,7 @@ function MineRow({ redemption, onOpenQR, onClick }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
       <div className="sc-ph-mini">
-        {photo ? (
-          <img src={photo} alt="" loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 22,
-          }}>🍽️</div>
-        )}
+        <PhotoOrEmoji src={photo} alt="" emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 22 }} />
         {pctBadge && <span className="sc-pct-corner">{pctBadge}</span>}
       </div>
       <div className="sc-info">
@@ -1038,14 +1018,7 @@ function UsedRow({ redemption, isDesktop, onClick }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
       <div className="sc-ph-mini">
-        {photo ? (
-          <img src={photo} alt="" loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 18,
-          }}>🍽️</div>
-        )}
+        <PhotoOrEmoji src={photo} alt="" emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 18 }} />
       </div>
       <div className="sc-info">
         <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
@@ -1116,11 +1089,13 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
 
         {/* HERO: foto full-width con overlay gradient + badge + identità locale */}
         <div className="sc-info-hero">
-          {photo ? (
-            <img className="sc-info-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-          ) : (
-            <div className="sc-info-hero-fallback">{categoryEmoji(cuisine)}</div>
-          )}
+          <PhotoOrEmoji
+            src={photo}
+            alt={r?.name || ''}
+            emoji={categoryEmoji(cuisine)}
+            imgClassName="sc-info-hero-img"
+            fallbackClassName="sc-info-hero-fallback"
+          />
           <div className="sc-info-hero-overlay" aria-hidden="true" />
           <span className={`sc-info-hero-badge ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
           <div className="sc-info-hero-id">
@@ -1252,11 +1227,13 @@ function DropInfoSheet({ deal, claiming, onClaim, onClose }) {
 
         {/* HERO drop scuro con foto in fondo + live pulse */}
         <div className="sc-drop-hero">
-          {photo ? (
-            <img className="sc-drop-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-          ) : (
-            <div className="sc-drop-hero-fallback">🍽️</div>
-          )}
+          <PhotoOrEmoji
+            src={photo}
+            alt={r?.name || ''}
+            emoji={categoryEmoji(cuisine)}
+            imgClassName="sc-drop-hero-img"
+            fallbackClassName="sc-drop-hero-fallback"
+          />
           <div className="sc-drop-hero-overlay" aria-hidden="true" />
           <span className="sc-drop-hero-live"><i />LIVE</span>
           <div className="sc-drop-hero-pct">{badge}</div>
