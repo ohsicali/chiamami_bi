@@ -16,3 +16,15 @@ ALTER TABLE public.restaurants
 
 COMMENT ON COLUMN public.restaurants.neighborhood IS
   'Quartiere/rione (es. "Vanchiglia"). Derivato da Google Places address_components (neighborhood/sublocality) in fase di sync. Usato per indirizzi formattati e match zona in Chiedi a Bi. Null = non ancora sincronizzato.';
+
+-- IMPORTANTE: il ruolo `anon` ha GRANT SELECT a livello di COLONNA su
+-- public.restaurants (hardening PIN/token in #201: solo le colonne pubbliche
+-- sono leggibili). Una colonna nuova NON eredita il grant, quindi senza la
+-- riga sotto QUALSIASI query pubblica che seleziona `neighborhood` fallisce
+-- con "42501 permission denied" e la lista locali si svuota.
+-- `authenticated` ha già il grant (SELECT a livello di tabella).
+GRANT SELECT (neighborhood) ON public.restaurants TO anon;
+
+-- Ricarica la cache schema di PostgREST così la REST API vede subito la
+-- nuova colonna (altrimenti il client riceve errore finché la cache scade).
+NOTIFY pgrst, 'reload schema';
