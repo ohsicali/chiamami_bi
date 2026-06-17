@@ -10,6 +10,10 @@ import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg } from '../../lib/supabase'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
+import { formatAddress } from '../../lib/utils/formatAddress'
+import { useCity } from '../../lib/CityContext'
+import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
@@ -29,7 +33,7 @@ const PIN_SVG = (
 
 const HEART_PATH = "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
 
-function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, userPosition, onSelect, onSave }) {
+function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, userPosition, onSelect, onSave, activeCity = 'Torino' }) {
   const cats = restaurant.category || (restaurant.cuisine_type ? [restaurant.cuisine_type] : [])
   const catInfo = getCategoryInfo(cats[0])
   const firstPhoto = Array.isArray(restaurant.photos) && restaurant.photos.length > 0 ? restaurant.photos[0] : null
@@ -60,11 +64,8 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
       onMouseLeave={e => { if (!isActive) { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = 'var(--color-ink-05)' } }}
     >
       {/* Photo */}
-      <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-        {photoUrl
-          ? <img src={photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-          : <div style={{ width: '100%', height: '100%', background: '#E8E5DE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>{catInfo.emoji}</div>
-        }
+      <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 12, overflow: 'hidden', position: 'relative', fontSize: 32 }}>
+        <PhotoOrEmoji src={photoUrl} alt={restaurant.name || ''} emoji={catInfo.emoji} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         {/* Heart */}
         <button
           aria-label={isSaved ? 'Rimuovi dai salvati' : 'Salva'}
@@ -106,6 +107,7 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
             letterSpacing: '-0.025em', lineHeight: 1.15, color: 'var(--color-ink)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
           }}>{restaurant.name}</div>
+          <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />
           {dist != null && (
             <span style={{
               fontSize: 10.5, fontWeight: 700, color: 'var(--color-ink-70)',
@@ -141,7 +143,7 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
             <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
           </svg>
-          {restaurant.address}
+          {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
         </div>
       </div>
     </div>
@@ -222,6 +224,8 @@ export default function DesktopExplorePage() {
   const location = useLocation()
   const { position, locate } = useGeolocation()
   const { user } = useAuth()
+  const { city } = useCity()
+  const activeCity = city?.name || 'Torino'
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
 
@@ -261,6 +265,8 @@ export default function DesktopExplorePage() {
   if (showDealsOnly) {
     filteredRestaurants = filteredRestaurants.filter(r => discountRestaurantIds.has(r.id))
   }
+  // Locali della città attiva prima, poi gli altri (ordine interno invariato).
+  filteredRestaurants = sortByActiveCity(filteredRestaurants, activeCity)
 
   const selectedRestaurant = selectedId ? allRestaurants.find(r => r.id === selectedId) : null
 
@@ -330,7 +336,7 @@ export default function DesktopExplorePage() {
         {/* Count row */}
         <div style={{ padding: '8px 22px 14px', borderBottom: '1px solid var(--color-ink-05)', flexShrink: 0 }}>
           <h2 style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>
-            {loading ? '…' : `${filteredRestaurants.length} locali a Torino`}
+            {loading ? '…' : `${filteredRestaurants.length} locali · la guida di Bi`}
           </h2>
           <div style={{ color: 'var(--color-ink-70)', fontSize: 12.5, marginTop: 4 }}>
             Ordinati per distanza
@@ -355,6 +361,7 @@ export default function DesktopExplorePage() {
                 hasDiscount={discountRestaurantIds.has(r.id)}
                 discountLabel={discountLabelMap[r.id]}
                 userPosition={position}
+                activeCity={activeCity}
                 onSelect={handleCardSelect}
                 onSave={(id) => user ? toggleSave(id) : navigate('/login')}
               />

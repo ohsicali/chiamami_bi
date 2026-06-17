@@ -9,6 +9,7 @@ import HoursPill from '../HoursPill'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { proxyImg } from '../../lib/supabase'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { formatAddress } from '../../lib/utils/formatAddress'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 
 /* ── design tokens ── */
@@ -112,8 +113,8 @@ export default function DesktopRestaurantSheet({
   const reviewText = restaurant.our_review || ''
   const tipText = restaurant.our_tip || null
 
-  /* address + zone */
-  const addrLine = [restaurant.address, restaurant.zone].filter(Boolean).join(' · ')
+  /* address + zone (quartiere se disponibile, fallback al vecchio campo zone) */
+  const addrLine = formatAddress(restaurant.address, restaurant.neighborhood || restaurant.zone) || restaurant.address
 
   /* discount text */
   const discountMainText = discount

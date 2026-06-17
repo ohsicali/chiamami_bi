@@ -15,6 +15,9 @@ import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
+import SmartImage from '../../components/UI/SmartImage'
+import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
+import { useCity } from '../../lib/CityContext'
 import MetaTags from '../../components/SEO/MetaTags'
 
 function slugify(name) {
@@ -71,8 +74,9 @@ function getPhotoRaw(restaurant) {
 /* ============================================
    HERO CARD — Featured restaurant (first one)
    ============================================ */
-function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onClick }) {
+function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onClick, activeCity = 'Torino' }) {
   const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const photoRaw = getPhotoRaw(restaurant)
   const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 900 }) : null
   // Hero is the LCP on /list — keep srcset tight (3 widths) to limit cold-cache misses.
@@ -97,7 +101,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
     >
       {/* Background image or fallback */}
       <div style={{ position: 'absolute', inset: 0, background: '#2a1f18' }}>
-        {photoUrl && (
+        {photoUrl && !imgError && (
           <img
             src={photoUrl}
             srcSet={photoSrcSet}
@@ -107,6 +111,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
             fetchpriority="high"
             decoding="async"
             onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
             style={{
               position: 'absolute', inset: 0, width: '100%', height: '100%',
               objectFit: 'cover', opacity: imgLoaded ? 1 : 0,
@@ -114,7 +119,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
             }}
           />
         )}
-        {!photoUrl && (
+        {(!photoUrl || imgError) && (
           <div style={{
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 56, opacity: 0.4, background: `linear-gradient(135deg, ${category?.color || '#8A8680'}33, ${category?.color || '#8A8680'}11)`,
@@ -180,6 +185,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           display: 'flex', alignItems: 'center', gap: 10,
           fontSize: 12, color: 'rgba(255,255,255,0.7)',
         }}>
+          <CityBadge city={restaurant.city} activeCity={activeCity} />
           {category && (
             <>
               <span>{category.name}</span>
@@ -202,8 +208,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
 /* ============================================
    HORIZONTAL CARD — Compact restaurant row
    ============================================ */
-function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, saved, onSave, onClick }) {
-  const [imgLoaded, setImgLoaded] = useState(false)
+function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, saved, onSave, onClick, activeCity = 'Torino' }) {
   const photoRaw = getPhotoRaw(restaurant)
   // 88×88 CSS slot — a single 250w variant covers DPR ~3. No srcset needed
   // for such a small slot (avoids extra cold cache transforms on /api/img).
@@ -230,46 +235,20 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
       }}
     >
       {/* Image */}
-      <div style={{
-        width: 88, height: 88, borderRadius: 14,
-        flexShrink: 0, position: 'relative', overflow: 'hidden',
-      }}>
-        {photoUrl ? (
-          <>
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
-            }} />
-            <img
-              src={photoUrl}
-              width={88}
-              height={88}
-              alt={restaurant.name}
-              loading={isAboveFold ? 'eager' : 'lazy'}
-              fetchpriority={isAboveFold ? 'high' : 'auto'}
-              decoding="async"
-              onLoad={() => setImgLoaded(true)}
-              style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%',
-                objectFit: 'cover', opacity: imgLoaded ? 1 : 0,
-                transition: 'opacity 0.4s',
-              }}
-            />
-          </>
-        ) : (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 32, opacity: 0.6,
-            background: `linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`,
-          }}>
-            {category?.emoji || '🍽️'}
-          </div>
-        )}
+      <SmartImage
+        src={photoUrl}
+        alt={restaurant.name}
+        emoji={category?.emoji || '🍽️'}
+        gradient={`linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`}
+        eager={isAboveFold}
+        fetchPriority={isAboveFold ? 'high' : 'auto'}
+        fallbackFontSize="2em"
+        style={{ width: 88, height: 88, borderRadius: 14, flexShrink: 0 }}
+      >
         {/* Discount badge on image */}
         {discountValue && (
           <div style={{
-            position: 'absolute', top: 6, left: 6,
+            position: 'absolute', top: 6, left: 6, zIndex: 2,
             background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
             fontSize: 9, fontWeight: 800,
             padding: '2px 7px', borderRadius: 6,
@@ -278,7 +257,7 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
             -{discountValue}%
           </div>
         )}
-      </div>
+      </SmartImage>
 
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
@@ -295,6 +274,7 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
           fontSize: 12, color: '#8A8680', fontWeight: 500,
           marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
         }}>
+          <CityBadge city={restaurant.city} activeCity={activeCity} />
           {category?.name || restaurant.cuisine_type || 'Ristorante'}
           {restaurant.description && (
             <>
@@ -337,7 +317,7 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
 /* ============================================
    VIRTUALIZED LIST — uses window scroll
    ============================================ */
-function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSaved, onSave, onClick }) {
+function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSaved, onSave, onClick, activeCity = 'Torino' }) {
   const parentRef = useRef(null)
   const [scrollMargin, setScrollMargin] = useState(0)
 
@@ -387,6 +367,7 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
               saved={isSaved(r.id)}
               onSave={() => onSave(r.id)}
               onClick={onClick}
+              activeCity={activeCity}
             />
           </div>
         )
@@ -401,6 +382,8 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
 export default function ListView() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { city } = useCity()
+  const activeCity = city?.name || 'Torino'
   const { position } = useGeolocation()
   const {
     restaurants,
@@ -474,7 +457,11 @@ export default function ListView() {
   const featuredRestaurant = restaurantsWithDiscount.length > 0
     ? restaurantsWithDiscount[heroSeed % restaurantsWithDiscount.length]
     : displayedRestaurants.filter(r => !featuredDiscountRestaurantIds.has(r.id))[0] || displayedRestaurants[0]
-  const otherRestaurants = displayedRestaurants.filter(r => r.id !== featuredRestaurant?.id)
+  // Locali della città attiva prima, poi gli altri (ordine interno invariato).
+  const otherRestaurants = sortByActiveCity(
+    displayedRestaurants.filter(r => r.id !== featuredRestaurant?.id),
+    activeCity,
+  )
 
   return (
     <div
@@ -539,6 +526,7 @@ export default function ListView() {
                 saved={isSaved(featuredRestaurant.id)}
                 onSave={() => handleSave(featuredRestaurant.id)}
                 onClick={handleCardClick}
+                activeCity={activeCity}
               />
             )}
 
@@ -551,6 +539,7 @@ export default function ListView() {
                 isSaved={isSaved}
                 onSave={handleSave}
                 onClick={handleCardClick}
+                activeCity={activeCity}
               />
             )}
           </>

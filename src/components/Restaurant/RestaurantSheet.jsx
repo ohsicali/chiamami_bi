@@ -15,6 +15,7 @@ import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/us
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { formatAddress } from '../../lib/utils/formatAddress'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
@@ -629,7 +630,7 @@ export default function RestaurantSheet({
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap',
               }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>{restaurant.address}</span>
+                <span>{formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}</span>
                 {distance != null && (
                   <span style={{ color: 'var(--color-ink-40)' }}> · {formatDistance(distance)}</span>
                 )}
