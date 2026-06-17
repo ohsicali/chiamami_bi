@@ -93,6 +93,10 @@ export default function GoogleMapsImportBlock({
         if (data.latitude) patch.latitude = String(data.latitude)
         if (data.longitude) patch.longitude = String(data.longitude)
         if (data.resolved_url && data.resolved_url !== u) patch.google_maps_url = data.resolved_url
+        // Città e quartiere strutturati da address_components (più affidabili
+        // del parsing della stringa raw).
+        if (data.city) patch.city = data.city
+        if (data.neighborhood) patch.neighborhood = data.neighborhood
       }
 
       if (!patch.name && !patch.latitude) {
@@ -114,8 +118,9 @@ export default function GoogleMapsImportBlock({
         }
       }
 
-      // Estrai la città dall'indirizzo (anziché lasciare il default "Torino")
-      if (patch.address) {
+      // Fallback: se address_components non ha dato la città, ricavala dalla
+      // stringa indirizzo (anziché lasciare il default "Torino").
+      if (!patch.city && patch.address) {
         const city = extractCityFromAddress(patch.address)
         if (city) patch.city = city
       }
