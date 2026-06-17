@@ -10,10 +10,10 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import MetaTags from '../../components/SEO/MetaTags'
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
 }
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }
 
 function useSiteConfig() {
   const [config, setConfig] = useState({
@@ -89,7 +89,7 @@ export default function AboutPage() {
       <main style={{
         flex: 1,
         width: '100%',
-        maxWidth: 760,
+        maxWidth: 720,
         margin: '0 auto',
         padding: isDesktop ? '32px 32px 60px' : '8px 18px 36px',
       }}>

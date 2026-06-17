@@ -122,7 +122,8 @@ function RestaurantVariant({ p }) {
   const status = getHoursStatus(r.hours_cache)
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const zone = (r.address || '').split(',')[0].trim()
-  const priceLabel = '€'.repeat(r.price_range || 2)
+  // B8: niente riga "€" orfana — mostra il prezzo solo se valorizzato.
+  const priceLabel = r.price_range ? '€'.repeat(r.price_range) : null
 
   const hasDiscount = p.variant === 'restaurant_discount' && p.discount
   const discountLabel = hasDiscount ? formatDiscountValue(p.discount) : null
@@ -221,15 +222,13 @@ function RestaurantVariant({ p }) {
               {subtitle}
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, fontSize: 11, color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>
-            {priceLabel}
-            {status.state !== 'unknown' && (
-              <>
-                <span style={{ opacity: 0.4 }}>·</span>
-                <span>{status.message}</span>
-              </>
-            )}
-          </div>
+          {(priceLabel || status.state !== 'unknown') && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, fontSize: 11, color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>
+              {priceLabel}
+              {priceLabel && status.state !== 'unknown' && <span style={{ opacity: 0.4 }}>·</span>}
+              {status.state !== 'unknown' && <span>{status.message}</span>}
+            </div>
+          )}
 
           {/* CTAs */}
           <div

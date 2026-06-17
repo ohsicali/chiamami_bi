@@ -418,7 +418,7 @@ function SconteRedesignPageInner() {
   }, [user])
 
   return (
-    <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : TAB_BAR_HEIGHT + 16 }}>
+    <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : `calc(${TAB_BAR_HEIGHT + 28}px + env(safe-area-inset-bottom, 0px))` }}>
       <MetaTags
         title="Sconti ristoranti Torino · Bi Club | ChiamamiBi"
         description="Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club."

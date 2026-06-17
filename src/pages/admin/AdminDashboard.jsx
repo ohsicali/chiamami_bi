@@ -126,6 +126,7 @@ export default function AdminDashboard() {
   const [activeDrop, setActiveDrop] = useState(null)
   const [inboxApps, setInboxApps] = useState([])
   const [liveVisitors, setLiveVisitors] = useState(null)
+  const [metricsLoading, setMetricsLoading] = useState(true)
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !user) return
@@ -310,6 +311,8 @@ export default function AdminDashboard() {
         }
       } catch (err) {
         console.warn('Dashboard load error:', err?.message || err)
+      } finally {
+        if (!cancelled) setMetricsLoading(false)
       }
     }
 
@@ -412,6 +415,7 @@ export default function AdminDashboard() {
             delta={`${metrics.restaurants} totali`}
             deltaDir="up"
             sparkline={sparklines.restaurants}
+            loading={metricsLoading}
           />
           <KpiCard
             label="Utenti registrati"
@@ -419,6 +423,7 @@ export default function AdminDashboard() {
             delta={metrics.usersLastWeek > 0 ? `+${metrics.usersLastWeek} · 7gg` : '— · 7gg'}
             deltaDir="up"
             sparkline={sparklines.users}
+            loading={metricsLoading}
           />
           <KpiCard
             label="Sconti attivi"
@@ -426,6 +431,7 @@ export default function AdminDashboard() {
             delta={metrics.dropsActive > 0 ? `${metrics.dropsActive} drop live` : 'Nessun drop live'}
             deltaDir="up"
             sparkline={sparklines.discounts}
+            loading={metricsLoading}
           />
           <KpiCard
             label="Redenzioni QR (30gg)"
@@ -433,6 +439,7 @@ export default function AdminDashboard() {
             delta={redemptionsDelta ? `${redemptionsDelta.pct >= 0 ? '+' : ''}${redemptionsDelta.pct}% vs mese prec.` : null}
             deltaDir={redemptionsDelta?.dir || 'up'}
             sparkline={sparklines.redemptions}
+            loading={metricsLoading}
           />
         </div>
 
