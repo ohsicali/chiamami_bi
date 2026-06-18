@@ -8,6 +8,7 @@ import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 
 const PAGE_SIZE = 20
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000
@@ -695,7 +696,8 @@ function MomentQuickToggles({ moments, onToggle, saving, restaurantId }) {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: isSaving ? 'wait' : 'pointer',
-              opacity: isSaving ? 0.55 : 1,
+              // C6: fasce spente più trasparenti così lo stato attivo si legge.
+              opacity: isSaving ? 0.55 : active ? 1 : 0.25,
               transition: 'all 0.12s',
               padding: 0,
             }}
@@ -734,19 +736,14 @@ function RestaurantRow({
       </Td>
       <Td>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {thumb ? (
-            <img src={thumb} alt="" loading="lazy" decoding="async" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-          ) : (
-            <div
-              style={{
-                width: 56,
-                height: 40,
-                borderRadius: 8,
-                background: 'linear-gradient(135deg, #d8cfc1, #ad9b80)',
-                flexShrink: 0,
-              }}
+          <div style={{ width: 56, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0, fontSize: 18 }}>
+            <PhotoOrEmoji
+              src={thumb}
+              alt={r.name}
+              emoji={cats[0]?.emoji || '🍽️'}
+              imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-          )}
+          </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-ink)' }}>{r.name}</div>
             <div style={{ fontWeight: 600, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', fontSize: 11, marginTop: 2 }}>
