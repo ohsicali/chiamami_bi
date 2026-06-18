@@ -14,6 +14,7 @@ import { SkeletonCard } from '../../components/UI/LoadingSpinner'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { getHoursStatus } from '../../lib/hours'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SmartImage from '../../components/UI/SmartImage'
 import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
@@ -221,6 +222,8 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
   const dist = userPosition && restaurant.latitude
     ? formatDistance(getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude))
     : null
+  // C4: stato "aperto" reale per l'overlay sulla foto.
+  const isOpen = ['open', 'closing_soon'].includes(getHoursStatus(restaurant.hours_cache).state)
 
   return (
     <button
@@ -245,16 +248,16 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
         fallbackFontSize="2em"
         style={{ width: 88, height: 88, borderRadius: 14, flexShrink: 0 }}
       >
-        {/* Discount badge on image */}
-        {discountValue && (
+        {/* C4: stato aperto reale, overlay alto-sx */}
+        {isOpen && (
           <div style={{
             position: 'absolute', top: 6, left: 6, zIndex: 2,
-            background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
-            fontSize: 9, fontWeight: 800,
-            padding: '2px 7px', borderRadius: 6,
-            boxShadow: '0 2px 6px rgba(74,222,128,0.3)',
+            display: 'inline-flex', alignItems: 'center', gap: 3,
+            background: 'rgba(255,255,255,.94)', color: '#2E7D5B',
+            fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 999,
+            boxShadow: '0 2px 6px rgba(0,0,0,.12)',
           }}>
-            -{discountValue}%
+            <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#2E7D5B' }} /> Aperto
           </div>
         )}
       </SmartImage>
@@ -274,6 +277,12 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
           fontSize: 12, color: '#8A8680', fontWeight: 500,
           marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
         }}>
+          {discountValue && (
+            <span style={{
+              background: 'var(--color-corallo, #E8453C)', color: '#fff',
+              fontWeight: 800, fontSize: 10, padding: '2px 7px', borderRadius: 999, flexShrink: 0,
+            }}>-{discountValue}%</span>
+          )}
           <CityBadge city={restaurant.city} activeCity={activeCity} />
           {category?.name || restaurant.cuisine_type || 'Ristorante'}
           {restaurant.description && (

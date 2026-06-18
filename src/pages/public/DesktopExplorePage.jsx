@@ -9,6 +9,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { getHoursStatus } from '../../lib/hours'
 import { proxyImg } from '../../lib/supabase'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { formatAddress } from '../../lib/utils/formatAddress'
@@ -43,6 +44,8 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
   const priceStr = restaurant.price_range ? '€'.repeat(restaurant.price_range) : null
   const dist = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude) : null
+  // C4: stato "aperto" reale (dopo fix B4) per l'overlay sulla foto.
+  const isOpen = ['open', 'closing_soon'].includes(getHoursStatus(restaurant.hours_cache).state)
 
   return (
     <div
@@ -64,8 +67,20 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
       onMouseLeave={e => { if (!isActive) { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = 'var(--color-ink-05)' } }}
     >
       {/* Photo */}
-      <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 12, overflow: 'hidden', position: 'relative', fontSize: 32 }}>
+      <div style={{ aspectRatio: '4/3', background: '#ddd', borderRadius: 12, overflow: 'hidden', position: 'relative', fontSize: 32 }}>
         <PhotoOrEmoji src={photoUrl} alt={restaurant.name || ''} emoji={catInfo.emoji} imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {/* C4: stato aperto reale, overlay alto-sx */}
+        {isOpen && (
+          <span style={{
+            position: 'absolute', top: 6, left: 6, zIndex: 2,
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: 'rgba(255,255,255,.94)', color: '#2E7D5B',
+            fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 8px',
+            boxShadow: '0 2px 6px rgba(0,0,0,.12)',
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#2E7D5B' }} /> Aperto
+          </span>
+        )}
         {/* Heart */}
         <button
           aria-label={isSaved ? 'Rimuovi dai salvati' : 'Salva'}
@@ -87,15 +102,6 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
             <path d={HEART_PATH} />
           </svg>
         </button>
-        {/* Discount badge */}
-        {hasDiscount && discountLabel && (
-          <span style={{
-            position: 'absolute', bottom: 6, left: 6,
-            background: 'linear-gradient(135deg,#A3E635,#4ADE80)', color: 'var(--color-ink)',
-            fontWeight: 800, fontSize: 10, letterSpacing: '-0.01em',
-            padding: '3px 7px', borderRadius: 999, boxShadow: '0 2px 6px rgba(0,0,0,.14)',
-          }}>{discountLabel}</span>
-        )}
       </div>
 
       {/* Info */}
@@ -107,6 +113,14 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
             letterSpacing: '-0.025em', lineHeight: 1.15, color: 'var(--color-ink)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
           }}>{restaurant.name}</div>
+          {hasDiscount && discountLabel && (
+            <span style={{
+              flexShrink: 0,
+              background: 'var(--color-corallo, #E8453C)', color: '#fff',
+              fontWeight: 800, fontSize: 10, letterSpacing: '-0.01em',
+              padding: '3px 8px', borderRadius: 999,
+            }}>{discountLabel}</span>
+          )}
           <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />
           {dist != null && (
             <span style={{
