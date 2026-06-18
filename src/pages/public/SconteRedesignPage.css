@@ -524,12 +524,15 @@
 }
 @media (min-width: 768px) {
   .sc-conv-list {
-    /* §12 mockup desktop: grid 2-col, gap 14, card compatte (non full-width). */
+    /* C3: griglia 3-col uniforme (prima 2-col con 3 elementi = riga spezzata). */
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
     padding: 0;
   }
+}
+@media (min-width: 768px) and (max-width: 1100px) {
+  .sc-conv-list { grid-template-columns: 1fr 1fr; }
 }
 .sc-conv {
   background: var(--sc-paper);
