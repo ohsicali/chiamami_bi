@@ -247,3 +247,66 @@ Commit range: `72a556f…e2114bb…` (PR #69)
   su tutti i file pubblici e admin (§2). MaintenanceGate `#E8604C` → `#E8453C`
 - **PIN lockout** 5 tentativi / 10 min (§5.1): localStorage-backed, timer
   countdown visibile su button, reset a successo, sia mobile che desktop
+
+---
+
+## PR24 — Polish design + upgrade design system (2026-06 → 09)
+
+Branch: `claude/awesome-pasteur-stj12x` · PR #202 (draft)
+Documento sorgente: `HANDOFF-PR24-POLISH-DESIGN.md`
+
+### ✅ Blocco A — dati & immagini
+- `src/components/UI/SmartImage.jsx` — helper condiviso: `SmartImage` (box con
+  skeleton) + `PhotoOrEmoji` (single-element per container CSS-driven).
+  Skeleton shimmer + fallback emoji categoria su gradiente caldo su onError.
+  Riusa `proxyImg` → `/api/img` (NON il render-transform Supabase).
+- Colonna `neighborhood` + cattura `address_components` in `resolve-maps.js`.
+- `formatAddress()` → "Via Bonafous 7 · Vanchiglia"; `CityBadge` + ordinamento
+  città-attiva-first; header "N locali · la guida di Bi".
+
+⚠️ **LEZIONE — grant a livello di colonna.** Il ruolo `anon` ha GRANT SELECT
+per COLONNA su `restaurants` (hardening PIN #201). Una colonna nuova NON
+eredita il grant: senza `GRANT SELECT (neighborhood) TO anon` ogni query
+pubblica falliva con 42501 e **la lista locali si svuotava**. Vale per
+qualsiasi colonna futura. Vedi `supabase/add-neighborhood-2026-06-17.sql`.
+
+### ✅ Blocco B — bug minori
+B4 orari 7×Chiuso → "Orari non disponibili · chiama"; B5 rimosso "[DEMO]" da 6
+sconti (DB prod); B7 padding tab bar safe-area; B8 riga "€" orfana; B10 About
+720px + fade rapidi; B-Chiedi `max_tokens` 1500→2048; B-Admin skeleton KPI.
+
+### 🟡 Blocco C — parziale
+Fatti: C3 convenzioni 3 col · C4 card Esplora ("● Aperto" reale, sconto pill,
+4:3) · C6 admin (fasce spente 0.25, thumbnail con fallback).
+**Rimandati** (redesign visivi, richiedono verifica a schermo): C1 scheda
+(mosaico 1+4, 2 col, sidebar sticky, banner singolo/B6) · C2 drop home
+Variante B · C3 drop hero adattivo 1-vs-N · C5 Chiedi a Bi (card + chips).
+
+### ✅ Upgrade design system (da audit misurato su 114 file / 46.617 righe)
+Adesione ai token PRIMA: colore 38%, raggi 11%, ombre 18%, tipografia 0%.
+
+- **Step 1** — `:focus-visible` globale (prima 0 regole), `prefers-reduced-motion`
+  globale (prima 3 guardie su 305 animazioni), pinch-zoom sbloccato.
+  Rimosse **4.680 righe morte**: `DealsPage.jsx`, `DesktopDiscountsPage.jsx`,
+  `RestaurantForm.jsx` (in `App.jsx` `DealsPage` è un *alias* di
+  `SconteRedesignPage`: il file omonimo non lo importava nessuno).
+- **Step 2** — token nuovi in `@theme`: `--color-cta` (#C53A33), semantici
+  danger/ok/warn, `--color-ink-64`, scala tipografica `--fs-xs…--fs-3xl`
+  (nome `--fs-*` per non collidere con le utility `text-*` di Tailwind).
+  `Button`/`Badge` riscritti sui token v4 (erano fermi a `#FF5757` pre-v4:
+  ecco perché nessuno li importava).
+- **Step 3** — 21 CTA con testo bianco migrati a `var(--color-cta)`.
+  I corallo **decorativi** (pallini, cerchi icona, logo) restano brillanti.
+
+**Regola da tenere:** `#E8453C` = superficie/brand; `--color-cta` #C53A33 =
+qualunque fill che porti testo bianco (3.93:1 → 5.21:1).
+
+### Prossimi passi consigliati
+1. `<RestaurantCard>` unica con varianti — oggi **19 implementazioni** e 9
+   geometrie foto diverse. È il punto che fa sembrare il sito scritto da mani
+   diverse, e ciò su cui i redesign C1/C2 dovrebbero appoggiarsi.
+2. Unificare le 4 coppie di pagine gemelle desktop/mobile rimaste (~5.100
+   righe): HomePage/DesktopExplorePage, RestaurantSheet/Desktop…,
+   ProfilePage/Desktop…, SavedPage/Desktop….
+3. Poi i redesign C1/C2/C3/C5, costruiti sulle primitive.
+4. Tema scuro: quasi gratis una volta che i colori passano dai token.
