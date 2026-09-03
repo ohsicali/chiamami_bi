@@ -243,7 +243,7 @@ function RestaurantVariant({ p }) {
               to={`/restaurant/${r.slug}`}
               style={{
                 padding: '13px 14px',
-                background: hasDiscount ? 'var(--color-corallo)' : '#fff',
+                background: hasDiscount ? 'var(--color-cta)' : '#fff',
                 color: hasDiscount ? '#fff' : 'var(--color-ink)',
                 borderRadius: 999,
                 fontSize: 13,

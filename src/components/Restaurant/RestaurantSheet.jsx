@@ -1049,7 +1049,7 @@ export default function RestaurantSheet({
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                 flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
                 fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                background: '#E8453C', color: '#fff', border: 'none',
+                background: 'var(--color-cta)', color: '#fff', border: 'none',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
