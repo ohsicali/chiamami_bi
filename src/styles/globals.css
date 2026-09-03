@@ -137,6 +137,26 @@ body {
   overflow-x: clip;
 }
 
+/* ── Accessibilità globale (audit design 2026-06) ─────────────────────
+   Focus visibile per chi naviga da tastiera: prima non esisteva NESSUNA
+   regola :focus-visible. Usiamo il corallo scuro (contrasto AA) e lo
+   mostriamo solo con :focus-visible così il mouse non vede l'anello. */
+:focus-visible {
+  outline: 2.5px solid var(--color-corallo-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Rispetta "Riduci movimento" del sistema: prima 305 elementi animati,
+   3 sole guardie. Azzera animazioni/transizioni per chi lo chiede. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 
 #root {
   min-height: 100dvh;

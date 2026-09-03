@@ -49,9 +49,6 @@ const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'))
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 const NewRestaurant = lazy(() => import('./pages/admin/NewRestaurant'))
 const EditRestaurant = lazy(() => import('./pages/admin/EditRestaurant'))
-// NOTE: RestaurantForm.jsx is the legacy full-page edit form. Replaced by
-// EditRestaurant.jsx (PR15g.2, same 6 shared tabs used in NewRestaurant).
-// The file is preserved as dead code but will be removed in a cleanup PR.
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
