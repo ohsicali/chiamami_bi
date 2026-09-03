@@ -127,7 +127,7 @@ export default function AboutPage() {
           variants={fadeUp}
           style={{
             position: 'relative', overflow: 'hidden',
-            background: 'var(--color-corallo)', color: '#fff',
+            background: 'var(--color-cta)', color: '#fff',
             borderRadius: isDesktop ? 28 : 22,
             padding: isDesktop ? 28 : 22,
             display: 'grid',
@@ -457,7 +457,7 @@ export default function AboutPage() {
               onClick={() => setShowSuggest(true)}
               style={{
                 padding: isDesktop ? '12px 18px' : '12px 16px',
-                background: 'var(--color-corallo)', color: '#fff',
+                background: 'var(--color-cta)', color: '#fff',
                 borderRadius: 999, fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em',
                 whiteSpace: 'nowrap', position: 'relative', zIndex: 1,
                 border: 'none', cursor: 'pointer', fontFamily: 'inherit',

@@ -167,7 +167,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
         {restaurant.our_rating >= 4.5 && (
           <div style={{
             display: 'inline-flex', alignItems: 'center',
-            background: 'var(--color-corallo)', color: '#fff',
+            background: 'var(--color-cta)', color: '#fff',
             fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
             textTransform: 'uppercase',
             padding: '4px 10px', borderRadius: 999, marginBottom: 10,

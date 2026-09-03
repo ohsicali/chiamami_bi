@@ -296,7 +296,7 @@ export default function CategoryManager() {
                 <button
                   onClick={handleAdd}
                   disabled={!addForm.name.trim() || saving}
-                  style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, background: '#E8453C', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: (!addForm.name.trim() || saving) ? 0.5 : 1 }}
+                  style={{ padding: '7px 14px', fontSize: 12, fontWeight: 600, background: 'var(--color-cta)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: (!addForm.name.trim() || saving) ? 0.5 : 1 }}
                 >
                   {saving ? '...' : 'Aggiungi'}
                 </button>

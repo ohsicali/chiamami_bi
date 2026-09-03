@@ -14,7 +14,7 @@ const inputStyle = {
 }
 
 const btnAccent = {
-  background: 'var(--color-corallo)', color: '#fff', borderRadius: 'var(--radius-md)',
+  background: 'var(--color-cta)', color: '#fff', borderRadius: 'var(--radius-md)',
   padding: '13px 20px', fontSize: 13, fontWeight: 600,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 }
@@ -63,7 +63,7 @@ function DeleteAccountModal({ onConfirm, onClose }) {
                 border: 'none', fontSize: 13, fontWeight: 600, color: 'var(--color-ink-55)', cursor: 'pointer',
               }}>Annulla</button>
               <button onClick={() => setStep(2)} style={{
-                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-corallo)',
+                flex: 1, padding: '12px 0', borderRadius: 14, background: 'var(--color-cta)',
                 border: 'none', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer',
               }}>Continua</button>
             </div>

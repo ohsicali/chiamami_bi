@@ -125,7 +125,7 @@ function PinGate({ onUnlock }) {
           <div
             style={{
               display: 'inline-block',
-              background: '#E8453C',
+              background: 'var(--color-cta)',
               color: '#ffffff',
               padding: '10px 22px',
               borderRadius: 999,

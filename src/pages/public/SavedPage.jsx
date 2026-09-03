@@ -340,7 +340,7 @@ export default function SavedPage() {
             <button
               onClick={() => navigate('/')}
               style={{
-                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-cta)', color: '#fff', borderRadius: 14,
                 padding: '14px 28px', fontSize: 14, fontWeight: 600, marginTop: 20,
                 border: 'none', cursor: 'pointer',
               }}
@@ -358,7 +358,7 @@ export default function SavedPage() {
             <button
               onClick={() => setCityPickerOpen(true)}
               style={{
-                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-cta)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
                 border: 'none', cursor: 'pointer',
               }}
@@ -381,7 +381,7 @@ export default function SavedPage() {
                 navigate('/', { state: { initialCategory: cat } })
               }}
               style={{
-                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-cta)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
                 border: 'none', cursor: 'pointer',
               }}
@@ -423,7 +423,7 @@ export default function SavedPage() {
                       {discount && (
                         <span style={{
                           position: 'absolute', top: 8, left: 8,
-                          background: 'var(--color-corallo)', color: '#fff',
+                          background: 'var(--color-cta)', color: '#fff',
                           fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
                           borderRadius: 999, letterSpacing: '-0.01em',
                         }}>{discount.title || formatDiscountValue(discount) || 'SCONTO'}</span>
@@ -435,7 +435,7 @@ export default function SavedPage() {
                         style={{
                           position: 'absolute', top: 8, right: 8,
                           width: 26, height: 26, borderRadius: '50%',
-                          background: 'var(--color-corallo)', color: '#fff',
+                          background: 'var(--color-cta)', color: '#fff',
                           display: 'grid', placeItems: 'center', fontSize: 12,
                           border: 0, cursor: 'pointer',
                         }}

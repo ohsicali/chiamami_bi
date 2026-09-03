@@ -522,7 +522,7 @@ function SuggestCard() {
           type="button"
           onClick={() => setShowSuggest(true)}
           className="hfv4-suggest-cta"
-          style={{ width: '100%', padding: '12px 16px', background: 'var(--color-corallo)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', position: 'relative', zIndex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 14px rgba(232,69,60,.35)' }}
+          style={{ width: '100%', padding: '12px 16px', background: 'var(--color-cta)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', position: 'relative', zIndex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 14px rgba(232,69,60,.35)' }}
         >
           Suggerisci →
         </button>
