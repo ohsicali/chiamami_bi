@@ -313,9 +313,26 @@ arrow function inline nel JSX). Salvati desktop e mobile ora rendono la stessa
 card. −125 righe di duplicato.
 
 **Da migrare ancora**: `LCard` (DesktopExplorePage), `HorizontalCard`/`HeroCard`
-(ListView), `MiniCard` (HomePage), `NearbyCard`, `Rcard`/`Lcard`
-(HomeFeedV4 + MomentResultsGrid — copia-incolla identici, ma sono Home:
-da fare con verifica visiva).
+(ListView), `MiniCard` (HomePage).
+
+⚠️ **Due candidati verificati e scartati** (l'audit li dava per duplicati, il
+codice dice altro — non rifare l'analisi da zero):
+- `NearbyCard` mostra anche un estratto di `our_review`: migrarla al tile
+  generico **perderebbe contenuto**. È una card con un ruolo diverso, non un
+  duplicato. Usa già SmartImage e i token.
+- `Rcard` (HomeFeedV4) e `Lcard` (MomentResultsGrid): condividono geometria e
+  commento, ma i corpi sono **divergenti** (uno ha pill sconto + SaveButton,
+  l'altro l'orario e un `<a href>`): 135 righe di differenza. Unificarli non è
+  a costo zero, e sono in Home.
+
+### ✅ Step 4c/4d — duplicazioni di logica
+- `src/lib/utils/price.js` → `formatPrice()`. Il prezzo era riscritto in 8
+  file (11 punti) con 3 guardie diverse; una (`price_range || 2`) **inventava
+  "€€" per i locali senza prezzo**. Ora ritorna null e la UI non lo rende.
+- `src/lib/utils/slug.js` → `slugify(name, fallback)`. Era in 12 file e
+  **7 copie non avevano guardia sul null** (TypeError se il nome mancava).
+  Migrati i 10 usi pubblici. La variante admin (NFD + troncamento) resta
+  separata di proposito: *genera* lo slug salvato nel DB.
 
 ### Prossimi passi consigliati
 1. Completare la migrazione delle card rimanenti (vedi sopra).
