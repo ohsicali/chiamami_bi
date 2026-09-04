@@ -111,6 +111,21 @@ export default function App() {
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isEsplora = location.pathname === '/esplora' || isRestaurantDetail
+
+  // La mappa resta montata sotto la scheda di un locale per non perderne
+  // posizione e zoom quando la scheda si apre e si chiude — ma questo ha senso
+  // solo se ci si è passati davvero. Su un arrivo diretto a /restaurant/...
+  // (Google, link condiviso, Bi Club) non c'è nessuno stato da conservare, e
+  // montarla costerebbe 1,67 MB di Mapbox (456 KB gzip) per non mostrare nulla:
+  // la scheda copre tutto lo schermo. Da lì "indietro" porta a `/`, il feed,
+  // che la mappa non la usa.
+  // NB: `isEsplora` non va toccato — governa anche il blocco <Routes>, e
+  // /restaurant/:slug non ha una Route propria: finirebbe sul redirect "*".
+  // È `state` e non `ref` di proposito: il valore decide cosa renderizzare, e
+  // un ref cambiato non farebbe ri-renderizzare (lo segnala anche eslint).
+  const [mapWasVisited, setMapWasVisited] = useState(location.pathname === '/esplora')
+  if (location.pathname === '/esplora' && !mapWasVisited) setMapWasVisited(true)
+  const showMap = location.pathname === '/esplora' || (isRestaurantDetail && mapWasVisited)
   const isAdmin = location.pathname.startsWith('/admin')
   const isPartner = location.pathname === '/partner'
   const isVerify = location.pathname === '/verify'
@@ -127,8 +142,9 @@ export default function App() {
     {showDesktopNav && <DesktopNavbar />}
 
     <Suspense fallback={<PageLoader />}>
-      {/* Map page stays mounted when viewing restaurant detail */}
-      {isEsplora && <HomePage />}
+      {/* Map page stays mounted when viewing restaurant detail — but only if
+          the map was actually visited in this session (see `showMap` above) */}
+      {showMap && <HomePage />}
 
       {/* Restaurant detail overlays on top */}
       {isRestaurantDetail && <RestaurantPage />}
