@@ -301,10 +301,24 @@ Adesione ai token PRIMA: colore 38%, raggi 11%, ombre 18%, tipografia 0%.
 **Regola da tenere:** `#E8453C` = superficie/brand; `--color-cta` #C53A33 =
 qualunque fill che porti testo bianco (3.93:1 → 5.21:1).
 
+### 🚧 Step 4 — card unica (in corso)
+`RestaurantCard` è ora il componente unico con 3 varianti:
+`default` (row) · `tile` (foto 4:3 in alto, con flag `dense` per griglie
+strette) · `hero`. Il tile usa SmartImage, i token raggio/ombra, la scala
+`--fs-*`, CityBadge, `formatAddress` e la pill sconto in `--color-cta`.
+
+Migrate finora (2 di ~19): `DesktopSavedPage` (aveva una card locale chiamata
+anch'essa `RestaurantCard` — collisione di nome) e `SavedPage` mobile (era una
+arrow function inline nel JSX). Salvati desktop e mobile ora rendono la stessa
+card. −125 righe di duplicato.
+
+**Da migrare ancora**: `LCard` (DesktopExplorePage), `HorizontalCard`/`HeroCard`
+(ListView), `MiniCard` (HomePage), `NearbyCard`, `Rcard`/`Lcard`
+(HomeFeedV4 + MomentResultsGrid — copia-incolla identici, ma sono Home:
+da fare con verifica visiva).
+
 ### Prossimi passi consigliati
-1. `<RestaurantCard>` unica con varianti — oggi **19 implementazioni** e 9
-   geometrie foto diverse. È il punto che fa sembrare il sito scritto da mani
-   diverse, e ciò su cui i redesign C1/C2 dovrebbero appoggiarsi.
+1. Completare la migrazione delle card rimanenti (vedi sopra).
 2. Unificare le 4 coppie di pagine gemelle desktop/mobile rimaste (~5.100
    righe): HomePage/DesktopExplorePage, RestaurantSheet/Desktop…,
    ProfilePage/Desktop…, SavedPage/Desktop….
