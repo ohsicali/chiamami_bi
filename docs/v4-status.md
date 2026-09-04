@@ -347,10 +347,57 @@ codice dice altro — non rifare l'analisi da zero):
   Migrati i 10 usi pubblici. La variante admin (NFD + troncamento) resta
   separata di proposito: *genera* lo slug salvato nel DB.
 
+### ✅ Prestazioni — peso scaricato dal telefono
+
+Due interventi **misurati**, non stimati. Entrambi verificati con Chromium reale
+e dati veri, e con diff pixel-per-pixel degli screenshot: **0 pixel diversi**.
+
+**1. I gemelli desktop non pesano più sui telefoni**
+Le 4 pagine con una versione desktop separata la importavano staticamente, così
+chi apriva il sito dal telefono scaricava anche il codice desktop:
+
+| rotta | prima (gzip) | dopo, da mobile |
+|---|---|---|
+| RestaurantPage | 18,53 kB | 13,06 kB (−29%) |
+| HomePage | 8,46 kB | 5,88 kB (−31%) |
+| ProfilePage | 8,71 kB | 6,90 kB (−21%) |
+| SavedPage | 5,80 kB | 5,30 kB (−9%) |
+
+Ora sono `lazy()` con `<Suspense>` esplicito. Su desktop i byte totali sono gli
+stessi, in due richieste invece di una. `useIsDesktop` legge `matchMedia` in
+modo sincrono al primo render, quindi il ramo è deciso subito: niente
+sfarfallio.
+
+**2. Niente Mapbox sulle schede locale aperte da un link — 456 kB gzip**
+`App.jsx` teneva la mappa montata sotto la scheda di un locale **sempre**, per
+conservarne posizione e zoom al ritorno. Ma chi arriva dritto su
+`/restaurant/...` (Google, link condiviso, Bi Club) non ha stato da conservare
+e si scaricava 1,67 MB di Mapbox per una mappa che la scheda copre del tutto.
+Ora la mappa si monta lì solo se `/esplora` è stata visitata nella sessione.
+
+> ⚠️ **`isEsplora` non va toccato** per ottenere questo: governa anche il blocco
+> `<Routes>`, e `/restaurant/:slug` non ha una Route propria — cambiarlo lo
+> farebbe cadere sul redirect `"*"` verso la home. La condizione `showMap` è
+> separata apposta.
+
+> ⚠️ `mapWasVisited` è **state, non ref**: il valore decide cosa renderizzare, e
+> un ref aggiornato non fa ri-renderizzare (`eslint react-hooks/refs`).
+
+**Come rifare le misure** (il sandbox resetta i tunnel TLS del browser, ma curl
+passa): servire `npm run build` con `vite preview`, e in Playwright intercettare
+`**://*.supabase.co/**` inoltrando la richiesta con `curl -D header -o body`
+(con un proxy, `curl -i` antepone anche il blocco "Connection established" e
+rompe i parser a blocco unico). Il token Mapbox in locale non c'è: la mappa non
+renderizza, ed è normale — non è una regressione.
+
 ### Prossimi passi consigliati
-1. Completare la migrazione delle card rimanenti (vedi sopra).
+1. Completare la migrazione delle card rimanenti (vedi sopra). **Nota: è
+   pulizia, non prestazioni** — quelle card stanno già in chunk lazy per rotta,
+   e la migrazione comporta un rischio visivo. Da fare con revisione a schermo.
 2. Unificare le 4 coppie di pagine gemelle desktop/mobile rimaste (~5.100
    righe): HomePage/DesktopExplorePage, RestaurantSheet/Desktop…,
-   ProfilePage/Desktop…, SavedPage/Desktop….
-3. Poi i redesign C1/C2/C3/C5, costruiti sulle primitive.
-4. Tema scuro: quasi gratis una volta che i colori passano dai token.
+   ProfilePage/Desktop…, SavedPage/Desktop…. Il beneficio di *peso* è già stato
+   incassato con il `lazy()` qui sopra: quel che resta è manutenibilità.
+3. Tema scuro: quasi gratis una volta che i colori passano dai token.
+4. Backfill `neighborhood` sui 73 locali esistenti (oggi tutti NULL: il campo si
+   popola solo al prossimo sync Places, quindi il quartiere non si vede ancora).
