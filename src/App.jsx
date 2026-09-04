@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useRef, useState, Component } from 'react'
-import { LoadingSpinner } from './components/UI/LoadingSpinner'
+import { PageLoader } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
@@ -74,14 +74,6 @@ const SettingsPage = lazy(() => import('./pages/public/SettingsPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
-
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
-      <LoadingSpinner />
-    </div>
-  )
-}
 
 export default function App() {
   const location = useLocation()

@@ -1,5 +1,4 @@
-import DesktopSavedPage from './DesktopSavedPage'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
@@ -19,6 +18,10 @@ import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
+import { PageLoader } from '../../components/UI/LoadingSpinner'
+
+// Caricata solo su desktop: da telefono questo codice non viene scaricato.
+const DesktopSavedPage = lazy(() => import('./DesktopSavedPage'))
 
 
 export default function SavedPage() {
@@ -164,7 +167,7 @@ export default function SavedPage() {
   }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
-  if (isDesktop) return <DesktopSavedPage />
+  if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopSavedPage /></Suspense>
 
   const handleClick = (restaurant) => {
     navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name || '')}`)

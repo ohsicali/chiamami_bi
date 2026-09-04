@@ -1,7 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useLocation, matchPath } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
-import DesktopRestaurantSheet from '../../components/Restaurant/DesktopRestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
@@ -11,6 +10,21 @@ import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
 import { proxyImg } from '../../lib/supabase'
 import { slugify } from '../../lib/utils/slug'
+
+// Caricata solo su desktop: da telefono questo codice non viene scaricato.
+// È il gemello più pesante (35 KB di sorgente), quindi è anche il risparmio
+// maggiore per chi apre una scheda locale dal telefono.
+const DesktopRestaurantSheet = lazy(() => import('../../components/Restaurant/DesktopRestaurantSheet'))
+
+// Stesso identico spinner dello stato `loading` qui sotto: passando da "carico
+// i dati" a "carico il codice desktop" l'utente non vede due schermate diverse.
+function SheetLoader() {
+  return (
+    <div className="fixed inset-0 z-50 bg-bg flex items-center justify-center">
+      <LogoLoader size={48} />
+    </div>
+  )
+}
 
 
 export default function RestaurantPage() {
@@ -161,14 +175,16 @@ export default function RestaurantPage() {
         ]}
       />
       {isDesktop ? (
-        <DesktopRestaurantSheet
-          restaurant={restaurant}
-          onClose={handleBack}
-          allRestaurants={allRestaurants}
-          onSelectNearby={handleSelectNearby}
-          saved={isSaved(restaurant.id)}
-          onSaveToggle={handleSaveToggle}
-        />
+        <Suspense fallback={<SheetLoader />}>
+          <DesktopRestaurantSheet
+            restaurant={restaurant}
+            onClose={handleBack}
+            allRestaurants={allRestaurants}
+            onSelectNearby={handleSelectNearby}
+            saved={isSaved(restaurant.id)}
+            onSaveToggle={handleSaveToggle}
+          />
+        </Suspense>
       ) : (
         <RestaurantSheet
           restaurant={restaurant}
