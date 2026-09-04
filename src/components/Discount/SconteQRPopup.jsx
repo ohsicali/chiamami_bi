@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { supabase } from '../../lib/supabase'
+import { slugify } from '../../lib/utils/slug'
 
 function QRCanvas({ value, size }) {
   const ref = useRef(null)
@@ -15,12 +16,6 @@ function QRCanvas({ value, size }) {
   return <canvas ref={ref} />
 }
 
-function slugify(name) {
-  return (name || 'sconto').toLowerCase()
-    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sconto'
-}
 
 export default function SconteQRPopup({
   redemptionId,
@@ -83,7 +78,7 @@ export default function SconteQRPopup({
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `sconto-${slugify(restaurantName)}.pdf`
+      a.download = `sconto-${slugify(restaurantName, 'sconto')}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()

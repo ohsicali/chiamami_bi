@@ -18,13 +18,8 @@ import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
+import { slugify } from '../../lib/utils/slug'
 
-function slugify(name) {
-  return name.toLowerCase()
-    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-}
 
 const PIN_SVG = (
   <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

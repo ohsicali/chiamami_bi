@@ -11,13 +11,8 @@ import { getDistance } from '../../lib/utils/distance'
 import { supabase } from '../../lib/supabase'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import { slugify } from '../../lib/utils/slug'
 
-function slugify(name) {
-  return name.toLowerCase()
-    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-}
 
 export default function DesktopSavedPage() {
   const { user, loading: authLoading } = useAuth()

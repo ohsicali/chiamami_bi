@@ -21,14 +21,9 @@ import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
 import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
 import { formatPrice } from '../../lib/utils/price'
+import { slugify } from '../../lib/utils/slug'
 
 /* ---------- helpers ---------- */
-function slugify(name) {
-  return (name || '').toLowerCase()
-    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-}
 
 function getPhoto(restaurant, opts) {
   const p = restaurant?.photos?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]

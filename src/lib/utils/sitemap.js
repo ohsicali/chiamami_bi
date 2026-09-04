@@ -1,18 +1,8 @@
+import { slugify } from './slug'
 const BASE_URL = 'https://chiamamibi.com'
 
 const STATIC_ROUTES = ['/', '/about', '/deals', '/login']
 
-function slugify(name) {
-  return name
-    .toLowerCase()
-    .replace(/[àáâãäå]/g, 'a')
-    .replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o')
-    .replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
 
 export function generateSitemapXml(restaurants = []) {
   const today = new Date().toISOString().split('T')[0]

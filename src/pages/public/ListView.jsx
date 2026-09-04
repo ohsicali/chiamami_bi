@@ -20,18 +20,8 @@ import SmartImage from '../../components/UI/SmartImage'
 import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import { useCity } from '../../lib/CityContext'
 import MetaTags from '../../components/SEO/MetaTags'
+import { slugify } from '../../lib/utils/slug'
 
-function slugify(name) {
-  return name
-    .toLowerCase()
-    .replace(/[àáâãäå]/g, 'a')
-    .replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o')
-    .replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
 
 /* ── Heart SVG ── */
 const HeartIcon = ({ filled, size = 16 }) => (

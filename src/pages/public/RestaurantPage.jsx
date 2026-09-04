@@ -10,18 +10,8 @@ import { LogoLoader } from '../../components/UI/Logo'
 import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
 import { proxyImg } from '../../lib/supabase'
+import { slugify } from '../../lib/utils/slug'
 
-function slugify(name) {
-  return name
-    .toLowerCase()
-    .replace(/[àáâãäå]/g, 'a')
-    .replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o')
-    .replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
 
 export default function RestaurantPage() {
   const location = useLocation()
