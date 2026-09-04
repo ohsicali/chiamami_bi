@@ -10,6 +10,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { proxyImg } from '../../lib/supabase'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
+import SmartImage from '../UI/SmartImage'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 
 /* ── design tokens ── */
@@ -78,6 +79,7 @@ export default function DesktopRestaurantSheet({
   const navigate = useNavigate()
   const { user } = useAuth()
   const [photoIndex, setPhotoIndex] = useState(0)
+  const [lightbox, setLightbox] = useState(false)
   const [inlineGenerating, setInlineGenerating] = useState(false)
   const [inlineShowQR, setInlineShowQR] = useState(false)
   const { handleShare } = useShare(restaurant)
@@ -103,6 +105,7 @@ export default function DesktopRestaurantSheet({
     .map(n => getCategoryInfo(n)).filter(Boolean)
   const firstCat = categories[0]
   const categoryChip = firstCat ? `${firstCat.emoji} ${firstCat.name}` : '🍽️ Ristorante'
+  const heroEmoji = firstCat?.emoji || '🍽️'
   const dietCategories = getDietCategoryNames(restaurant)
     .map(n => getCategoryInfo(n)).filter(Boolean)
 
@@ -159,84 +162,83 @@ export default function DesktopRestaurantSheet({
 
       <style>{`
         @keyframes dskPulse{0%,100%{box-shadow:0 0 0 3px rgba(163,230,53,.18)}50%{box-shadow:0 0 0 6px rgba(163,230,53,.08)}}
+        /* B6 — su desktop lo sconto vive SOLO nel banner inline above-the-fold.
+           Prima la sticky pill compariva anche qui, duplicando lo stesso
+           contenuto due volte nella stessa schermata. */
         .dsk-sticky-pill{display:none}
-        @media(min-width:768px){.dsk-sticky-pill{display:flex}}
       `}</style>
 
-      {/* ── HERO ── */}
+      {/* ── HERO: mosaico 1+4 (C1) ── */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '100px 40px 28px', width: '100%' }}>
-        <div style={{
-          height: 520, borderRadius: 24, overflow: 'hidden',
-          position: 'relative', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
-          background: '#e0d8cc',
-        }}>
-          {heroUrl && (
-            <img
-              src={heroUrl}
-              alt={restaurant.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+        <div style={{ position: 'relative' }}>
+          {photoCount > 1 ? (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '2fr 1fr 1fr',
+              gridTemplateRows: '242px 242px',
+              gap: 10,
+              borderRadius: 24,
+              overflow: 'hidden',
+              boxShadow: '0 8px 24px rgba(34,24,28,.08)',
+            }}>
+              {photos.slice(0, 5).map((p, i) => {
+                const isBig = i === 0
+                const isLastTile = i === Math.min(photoCount, 5) - 1
+                const extra = photoCount - 5
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => { setPhotoIndex(i); setLightbox(true) }}
+                    aria-label={`Apri foto ${i + 1} di ${photoCount}`}
+                    style={{
+                      position: 'relative', border: 0, padding: 0, cursor: 'pointer',
+                      gridRow: isBig ? 'span 2' : undefined,
+                      overflow: 'hidden', background: 'transparent',
+                    }}
+                  >
+                    <SmartImage
+                      src={getPhotoUrl(p, { w: isBig ? 1200 : 600 })}
+                      alt={`${restaurant.name} — foto ${i + 1}`}
+                      emoji={heroEmoji}
+                      eager={isBig}
+                      fetchPriority={isBig ? 'high' : 'auto'}
+                      fallbackFontSize={isBig ? '3.4em' : '2em'}
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                    {isLastTile && extra > 0 && (
+                      <span style={{
+                        position: 'absolute', inset: 0, zIndex: 2,
+                        background: 'rgba(34,24,28,.55)', color: '#fff',
+                        display: 'grid', placeItems: 'center',
+                        fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em',
+                      }}>
+                        +{extra} foto
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div style={{
+              height: 520, borderRadius: 24, overflow: 'hidden',
+              boxShadow: '0 8px 24px rgba(34,24,28,.08)',
+            }}>
+              <SmartImage
+                src={heroUrl}
+                alt={restaurant.name}
+                emoji={heroEmoji}
+                eager
+                fetchPriority="high"
+                fallbackFontSize="4em"
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
           )}
-
-          {/* invisible click zones (left/right) — keep for accessibility,
-              the visible arrow buttons sit on top */}
-          {photoCount > 1 && (
-            <>
-              <button onClick={prev} aria-label="Foto precedente" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '35%', background: 'transparent', border: 0, cursor: 'pointer', zIndex: 3 }} />
-              <button onClick={next} aria-label="Foto successiva" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '35%', background: 'transparent', border: 0, cursor: 'pointer', zIndex: 3 }} />
-
-              {/* Visible arrow buttons (desktop) */}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); prev() }}
-                aria-label="Foto precedente"
-                style={{
-                  position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
-                  width: 44, height: 44, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.92)', border: 'none',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', zIndex: 4,
-                  transition: 'transform 0.15s ease, background 0.15s ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1.06)'; e.currentTarget.style.background = '#fff' }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.92)' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); next() }}
-                aria-label="Foto successiva"
-                style={{
-                  position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
-                  width: 44, height: 44, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.92)', border: 'none',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', zIndex: 4,
-                  transition: 'transform 0.15s ease, background 0.15s ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1.06)'; e.currentTarget.style.background = '#fff' }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.92)' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            </>
-          )}
-
-          {/* gradient overlay */}
-          <div style={{
-            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-            background: 'linear-gradient(180deg,rgba(0,0,0,.25) 0%,transparent 30%,transparent 70%,rgba(0,0,0,.6) 100%)',
-          }} />
 
           {/* action buttons — top right */}
-          <div style={{ position: 'absolute', top: 20, right: 24, display: 'flex', gap: 10, zIndex: 4 }}>
+          <div style={{ position: 'absolute', top: 20, right: 24, display: 'flex', gap: 10, zIndex: 5 }}>
             <button onClick={onClose} style={GLASS_BTN} aria-label="Indietro">
               <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke={INK} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0zM15 9l-3 3 3 3M9 12h6" />
@@ -259,20 +261,17 @@ export default function DesktopRestaurantSheet({
             </button>
           </div>
 
-          {/* bottom meta */}
-          <div style={{
-            position: 'absolute', left: 32, bottom: 24, right: 32, zIndex: 3,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20,
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.85)', marginBottom: 10 }}>
+          {/* categoria — in basso a sinistra sulla foto grande */}
+          {categoryChip && (
+            <div style={{
+              position: 'absolute', left: 24, bottom: 20, zIndex: 4,
+              fontSize: 11, fontWeight: 800, letterSpacing: '.14em',
+              textTransform: 'uppercase', color: '#fff',
+              textShadow: '0 1px 6px rgba(0,0,0,.5)', pointerEvents: 'none',
+            }}>
               {categoryChip}
             </div>
-            {photoCount > 1 && (
-              <span style={{ background: 'rgba(0,0,0,.5)', padding: '5px 12px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                📷 {photoIndex + 1} / {photoCount}
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
@@ -710,6 +709,78 @@ export default function DesktopRestaurantSheet({
               <path d="M5 12h14M13 5l7 7-7 7" />
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* ── LIGHTBOX foto (aperto dal mosaico) ── */}
+      {lightbox && photoCount > 0 && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Foto di ${restaurant.name}`}
+          onClick={() => setLightbox(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setLightbox(false)
+            if (e.key === 'ArrowLeft') prev()
+            if (e.key === 'ArrowRight') next()
+          }}
+          tabIndex={-1}
+          ref={(el) => el?.focus()}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(20,14,16,.94)',
+            display: 'grid', placeItems: 'center', padding: 40,
+          }}
+        >
+          <img
+            src={getPhotoUrl(photos[photoIndex], { w: 1800 })}
+            alt={`${restaurant.name} — foto ${photoIndex + 1} di ${photoCount}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 12 }}
+          />
+
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightbox(false) }}
+            aria-label="Chiudi"
+            style={{ ...GLASS_BTN, position: 'absolute', top: 28, right: 32 }}
+          >
+            <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke={INK} strokeWidth={2.2} strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+
+          {photoCount > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); prev() }}
+                aria-label="Foto precedente"
+                style={{ ...GLASS_BTN, position: 'absolute', left: 32, top: '50%', transform: 'translateY(-50%)' }}
+              >
+                <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke={INK} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); next() }}
+                aria-label="Foto successiva"
+                style={{ ...GLASS_BTN, position: 'absolute', right: 32, top: '50%', transform: 'translateY(-50%)' }}
+              >
+                <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke={INK} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              <span style={{
+                position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(0,0,0,.55)', color: '#fff', borderRadius: 999,
+                padding: '6px 14px', fontSize: 12.5, fontWeight: 700,
+              }}>
+                {photoIndex + 1} / {photoCount}
+              </span>
+            </>
+          )}
         </div>
       )}
     </div>
