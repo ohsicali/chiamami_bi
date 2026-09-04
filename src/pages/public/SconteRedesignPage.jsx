@@ -629,7 +629,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
             <strong>Drop a tempo</strong>
             <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'}</small>
           </div>
-          <div className="sc-drop-track">
+          <div className={`sc-drop-track${drops.length === 1 ? ' is-single' : ''}`}>
             {drops.map((d) => {
               const redemption = redemptionByDealId?.get(d.id) || null
               return (

@@ -235,6 +235,44 @@
   }
 }
 
+/* C3 — drop hero adattivo.
+   Con UN SOLO drop la card verticale restava sola a 1/3 di larghezza, con
+   metà schermo vuota accanto. Qui diventa un hero orizzontale full-width:
+   testo a sinistra, foto a destra. Con più drop resta la griglia da 3.
+   `.sc-drop` ha esattamente due figli (.sc-ph e .sc-body-c), quindi bastano
+   due colonne senza toccare il markup. */
+.sc-drop-track.is-single .sc-drop { flex: 0 0 100%; }
+@media (min-width: 768px) {
+  .sc-drop-track.is-single { grid-template-columns: 1fr; }
+  .sc-drop-track.is-single .sc-drop {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    min-height: 264px;
+    align-items: stretch;
+  }
+  .sc-drop-track.is-single .sc-drop .sc-ph {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+  .sc-drop-track.is-single .sc-drop .sc-ph img,
+  .sc-drop-track.is-single .sc-drop .sc-ph > div:first-child {
+    border-radius: 0;
+  }
+  .sc-drop-track.is-single .sc-drop .sc-body-c {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 26px 30px;
+  }
+}
+
 /* ============= drop card ============= */
 /* Drop card §12.1: rossa, foto top + body bottom, Alfa Slab per nome.
    Mobile: carousel orizzontale (78% width, scroll-snap). Desktop: griglia. */
