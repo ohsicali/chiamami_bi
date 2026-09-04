@@ -292,7 +292,7 @@ function HeroPromo({ featured }) {
             {featured.discountLabel}
           </div>
           <div className="hfv4-mob-loc" style={{ display: 'none', fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 24, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 10, opacity: 0.95 }}>
-            da {featured.restaurantName}
+            {featured.restaurantName}
           </div>
           {featured.restLine && (
             <div className="hfv4-hero-rest-line" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.9)', marginBottom: 6 }}>
@@ -367,6 +367,23 @@ function HeroPromo({ featured }) {
             />
           )}
           <span aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(34,24,28,.75) 100%)' }} />
+
+          {/* Variante B — la percentuale come badge menta sulla foto: regge
+              anche numeri piccoli ("2%") che come titolone si perderebbero. */}
+          {featured.discountLabel && (
+            <span
+              className="hfv4-mob-badge"
+              style={{
+                display: 'none', position: 'absolute', right: 12, bottom: 10, zIndex: 4,
+                background: '#aef3c2', color: 'var(--color-ink)',
+                fontWeight: 800, fontSize: 13, letterSpacing: '-0.01em',
+                borderRadius: 999, padding: '5px 11px',
+                boxShadow: '0 2px 8px rgba(34,24,28,.25)',
+              }}
+            >
+              {featured.discountLabel}
+            </span>
+          )}
 
           {/* Mobile-only: countdown pill top-right */}
           {mobCountdown && (
@@ -696,22 +713,35 @@ export default function HomeFeedV4() {
 
         /* Mobile <1024px: hero compatto, foto quadrata a destra, body a sinistra. */
         @media (max-width: 1023px) {
+          /* C2 — Variante B: foto piena in alto, poi il corpo. La gerarchia
+             diventa foto → nome → vantaggio, con la % come badge sulla foto. */
           .hfv4-hero-card {
             display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 14px !important;
-            padding: 16px !important;
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+            padding: 0 !important;
             align-items: stretch !important;
           }
           .hfv4-hero-photo {
             order: 0 !important;
             width: 100% !important;
-            height: auto !important;
+            height: 140px !important;
             min-height: 0 !important;
             align-self: stretch !important;
-            border-radius: 14px !important;
+            border-radius: 0 !important;
           }
-          .hfv4-hero-body { padding: 0 !important; min-width: 0 !important; }
+          .hfv4-mob-badge { display: inline-flex !important; }
+          .hfv4-hero-body { padding: 12px 15px 15px !important; min-width: 0 !important; }
+          /* la percentuale ora è il badge sulla foto */
+          .hfv4-mob-pct { display: none !important; }
+          /* il vantaggio ("Gelato a 2€") va letto in mezzo secondo:
+             Poppins bold bianco, niente corsivo, niente Caveat. */
+          .hfv4-hero-sub {
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            color: #fff !important;
+            margin-bottom: 10px !important;
+          }
           .hfv4-hero-chip {
             position: static !important;
             margin-bottom: 8px !important;
@@ -721,7 +751,7 @@ export default function HomeFeedV4() {
           }
           .hfv4-hero-title { display: none !important; }
           .hfv4-mob-pct { display: block !important; font-size: 30px !important; margin-bottom: 2px !important; }
-          .hfv4-mob-loc { display: block !important; font-size: 17px !important; margin-bottom: 6px !important; }
+          .hfv4-mob-loc { display: block !important; font-size: 19px !important; margin-bottom: 4px !important; }
           .hfv4-hero-progress { display: none !important; }
           .hfv4-mob-progress { display: flex !important; }
           .hfv4-hero-sub { max-width: none !important; -webkit-line-clamp: 2 !important; display: -webkit-box !important; overflow: hidden !important; }
