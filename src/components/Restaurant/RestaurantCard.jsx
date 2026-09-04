@@ -5,6 +5,9 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
+import SmartImage from '../UI/SmartImage'
+import { CityBadge } from '../UI/CityBadge'
+import { formatAddress } from '../../lib/utils/formatAddress'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -29,7 +32,8 @@ function RestaurantCard({
   onSaveToggle,
   hasDiscount,
   discountTitle,
-  variant = 'default', // 'default' | 'hero'
+  activeCity = 'Torino',
+  variant = 'default', // 'default' (row) | 'tile' | 'hero'
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -52,7 +56,9 @@ function RestaurantCard({
   // so the browser doesn't pull a 1200w image into a 72px slot. For the
   // tiny default slot a single 300w variant covers DPR 3 — no srcset.
   const isHero = variant === 'hero'
-  const photoUrl = proxyImg(photoRaw, { w: isHero ? 900 : 300 })
+  // tile = foto 4:3 a piena larghezza colonna (~280-360px) → 600w copre DPR 2.
+  const photoWidth = isHero ? 900 : variant === 'tile' ? 600 : 300
+  const photoUrl = proxyImg(photoRaw, { w: photoWidth })
   const photoSrcSet = isHero ? proxyImgSrcSet(photoRaw, [600, 900, 1400]) : undefined
   const photoSizes = isHero ? '(max-width: 768px) 100vw, 720px' : undefined
   // First few cards (index < 3) are above the fold in most lists — load eagerly.
@@ -66,6 +72,108 @@ function RestaurantCard({
       : null
 
   const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
+
+  // TILE VARIANT — foto 4:3 in alto, corpo sotto.
+  // Unifica le card verticali che ogni pagina si era riscritta (Salvati,
+  // vicini, griglie risultati): una sola proporzione foto, un solo raggio,
+  // skeleton + fallback emoji da SmartImage.
+  if (variant === 'tile') {
+    return (
+      <motion.button
+        className="w-full text-left relative"
+        style={{
+          background: 'var(--color-card)',
+          border: '1px solid var(--color-ink-05)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-sm)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          cursor: 'pointer',
+        }}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={index}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onClick?.(restaurant)}
+      >
+        <SmartImage
+          src={photoUrl}
+          alt={restaurant.name}
+          emoji={category?.emoji || '🍽️'}
+          gradient={category?.color
+            ? `linear-gradient(135deg, ${category.color}44, ${category.color}18)`
+            : undefined}
+          eager={isAboveFold}
+          fetchPriority={index === 0 ? 'high' : 'auto'}
+          fallbackFontSize="2.6em"
+          style={{ width: '100%', aspectRatio: '4 / 3' }}
+        >
+          {onSaveToggle && (
+            <div
+              className="absolute"
+              style={{ top: 8, right: 8, zIndex: 2 }}
+              onClick={(e) => { e.stopPropagation(); onSaveToggle() }}
+            >
+              <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
+            </div>
+          )}
+        </SmartImage>
+
+        <div style={{ padding: '13px 15px 15px', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, minWidth: 0 }}>
+            <h3 style={{
+              fontFamily: 'var(--font-sans)', fontWeight: 800,
+              fontSize: 'var(--fs-base)', letterSpacing: '-0.02em',
+              color: 'var(--color-ink)', lineHeight: 1.2, flex: 1, minWidth: 0,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {restaurant.name}
+            </h3>
+            {hasDiscount && discountTitle && (
+              <span style={{
+                flexShrink: 0, background: 'var(--color-cta)', color: '#fff',
+                fontSize: 'var(--fs-xs)', fontWeight: 800, letterSpacing: '-0.01em',
+                padding: '3px 8px', borderRadius: 'var(--radius-pill)',
+              }}>
+                {discountTitle}
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <CityBadge city={restaurant.city} activeCity={activeCity} />
+            {category && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '3px 8px', borderRadius: 'var(--radius-pill)',
+                background: 'var(--color-corallo-soft)', color: 'var(--color-corallo-ink)',
+                fontSize: 'var(--fs-xs)', fontWeight: 700,
+              }}>
+                {category.emoji} {category.name}
+              </span>
+            )}
+            {priceStr && (
+              <span style={{ fontWeight: 700, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{priceStr}</span>
+            )}
+            {distance != null && (
+              <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{formatDistance(distance)}</span>
+            )}
+          </div>
+
+          {restaurant.address && (
+            <div style={{
+              fontSize: 'var(--fs-sm)', color: 'var(--color-ink-64)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
+            </div>
+          )}
+        </div>
+      </motion.button>
+    )
+  }
 
   // HERO VARIANT — dark featured card
   if (variant === 'hero') {
