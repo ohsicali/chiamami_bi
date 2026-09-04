@@ -275,12 +275,25 @@ B4 orari 7×Chiuso → "Orari non disponibili · chiama"; B5 rimosso "[DEMO]" da
 sconti (DB prod); B7 padding tab bar safe-area; B8 riga "€" orfana; B10 About
 720px + fade rapidi; B-Chiedi `max_tokens` 1500→2048; B-Admin skeleton KPI.
 
-### 🟡 Blocco C — parziale
-Fatti: C3 convenzioni 3 col · C4 card Esplora ("● Aperto" reale, sconto pill,
-4:3) · C6 admin (fasce spente 0.25, thumbnail con fallback).
-**Rimandati** (redesign visivi, richiedono verifica a schermo): C1 scheda
-(mosaico 1+4, 2 col, sidebar sticky, banner singolo/B6) · C2 drop home
-Variante B · C3 drop hero adattivo 1-vs-N · C5 Chiedi a Bi (card + chips).
+### ✅ Blocco C — completo
+- **C1 scheda** — desktop: hero a **mosaico 1+4** + lightbox (Esc/←/→), "Qui
+  vicino" full-width con `RestaurantCard variant="tile"`. Mobile: badge sconto
+  sulla gallery. **B6 risolto su entrambe**: desktop = solo banner inline,
+  mobile = solo sticky bar (prima comparivano insieme su tutte e due).
+- **C2 drop Home mobile → Variante B**: foto piena in alto, % come badge menta
+  sulla foto, nome locale come titolo, vantaggio in Poppins bold bianco.
+- **C3 Bi Club**: convenzioni 3 col + **drop hero adattivo** — con un solo drop
+  la card diventa hero orizzontale full-width (prima restava a 1/3 di larghezza
+  con metà schermo vuota). Con N drop resta la griglia da 3.
+- **C4 card Esplora**: "● Aperto" reale, sconto come pill, foto 4:3.
+- **C5 Chiedi a Bi**: le card dei locali nella risposta **c'erano già**;
+  aggiunti quick-reply chips (derivati lato client, nessun endpoint nuovo),
+  stato "● Aperto", fallback foto e micro-copy attesa onesta.
+- **C6 admin**: fasce spente a 0.25 (restano emoji), thumbnail con fallback.
+
+**Non fatto di proposito**: con N drop, "hero solo per il drop in evidenza +
+gli altri come card convenzione" — la griglia da 3 non soffre del vuoto, quindi
+non era il problema segnalato.
 
 ### ✅ Upgrade design system (da audit misurato su 114 file / 46.617 righe)
 Adesione ai token PRIMA: colore 38%, raggi 11%, ombre 18%, tipografia 0%.
