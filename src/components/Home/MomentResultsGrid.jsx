@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { isOpenForMoment, MOMENT_SLOTS } from '../../lib/hours'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
+import { formatPrice } from '../../lib/utils/price'
 
 /**
  * MomentResultsGrid · card scroll orizzontale filtrate per momento giornata.
@@ -178,7 +179,7 @@ function Lcard({ r, index = 0, hoursLabel, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
-  const priceLabel = '€'.repeat(r.price_range || 2)
+  const priceLabel = formatPrice(r.price_range)
   // Card is 72% viewport on mobile (~280px), 16:11 ratio.
   const photoRaw = r.photos?.[0]?.thumb_url || r.photos?.[0]?.photo_url
   const photo = proxyImg(photoRaw, { w: 600 })

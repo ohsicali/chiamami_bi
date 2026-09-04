@@ -17,6 +17,7 @@ import { isOpenForMoment } from '../../lib/hours'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import { formatPrice } from '../../lib/utils/price'
 
 function slugify(name) {
   return name.toLowerCase().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
@@ -463,7 +464,7 @@ export default function SavedPage() {
                 const category = categories[0]
                 const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
                 const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
-                const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
+                const priceStr = formatPrice(r.price_range)
 
                 return (
                   <div

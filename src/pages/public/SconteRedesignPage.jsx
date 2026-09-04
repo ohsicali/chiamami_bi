@@ -20,6 +20,7 @@ import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
 import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
+import { formatPrice } from '../../lib/utils/price'
 
 /* ---------- helpers ---------- */
 function slugify(name) {
@@ -687,7 +688,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
   const remaining = Math.max(0, max - claimed)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const location = r?.neighborhood || r?.city
-  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
+  const priceStr = formatPrice(r?.price_range)
 
   const status = redemption?.status
   const isSaved = status === 'generated'
@@ -786,7 +787,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
   const badge = formatDiscountValue(deal)
   const location = r?.neighborhood || r?.city
-  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
+  const priceStr = formatPrice(r?.price_range)
   const validityStatus = checkValidity(deal)
   const validityPill = formatShortPill(deal, validityStatus)
   const daysShort = (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7)
@@ -891,7 +892,7 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const expired = isDealExpired(deal)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const location = r?.neighborhood || r?.city
-  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
+  const priceStr = formatPrice(r?.price_range)
   const validityStatus = expired ? 'expired' : checkValidity(deal)
   const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
   const pctBadge = dealBadgeText(deal) || freebieLabel(deal)

@@ -8,6 +8,7 @@ import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SmartImage from '../UI/SmartImage'
 import { CityBadge } from '../UI/CityBadge'
 import { formatAddress } from '../../lib/utils/formatAddress'
+import { formatPrice } from '../../lib/utils/price'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -72,7 +73,7 @@ function RestaurantCard({
       ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
       : null
 
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
+  const priceStr = formatPrice(restaurant.price_range)
 
   // TILE VARIANT — foto 4:3 in alto, corpo sotto.
   // Unifica le card verticali che ogni pagina si era riscritta (Salvati,

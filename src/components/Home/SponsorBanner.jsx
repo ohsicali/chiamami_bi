@@ -4,6 +4,7 @@ import { proxyImg } from '../../lib/supabase'
 import { useSponsoredPlacement } from '../../lib/hooks/useSponsoredPlacement'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatPrice } from '../../lib/utils/price'
 
 /**
  * SponsorBanner · 3 variant (DB-driven da sponsored_placements):
@@ -123,7 +124,7 @@ function RestaurantVariant({ p }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const zone = (r.address || '').split(',')[0].trim()
   // B8: niente riga "€" orfana — mostra il prezzo solo se valorizzato.
-  const priceLabel = r.price_range ? '€'.repeat(r.price_range) : null
+  const priceLabel = formatPrice(r.price_range)
 
   const hasDiscount = p.variant === 'restaurant_discount' && p.discount
   const discountLabel = hasDiscount ? formatDiscountValue(p.discount) : null

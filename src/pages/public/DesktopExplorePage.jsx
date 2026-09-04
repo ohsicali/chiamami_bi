@@ -17,6 +17,7 @@ import { useCity } from '../../lib/CityContext'
 import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatPrice } from '../../lib/utils/price'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -41,7 +42,7 @@ function LCard({ restaurant, isActive, isSaved, hasDiscount, discountLabel, user
   const photoUrl = proxyImg(firstPhoto
     ? typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url
     : null, { w: 800 })
-  const priceStr = restaurant.price_range ? '€'.repeat(restaurant.price_range) : null
+  const priceStr = formatPrice(restaurant.price_range)
   const dist = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude) : null
   // C4: stato "aperto" reale (dopo fix B4) per l'overlay sulla foto.
@@ -203,8 +204,8 @@ function MapPopup({ restaurant, hasDiscount, discountLabel, onClose, onNavigate 
           <span style={{ padding: '3px 8px', background: 'var(--color-corallo-soft)', color: 'var(--color-corallo-ink)', borderRadius: 999, fontSize: 10, fontWeight: 700 }}>
             {catInfo.emoji} {catInfo.name}
           </span>
-          {restaurant.price_range && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-70)' }}>{'€'.repeat(restaurant.price_range)}</span>
+          {formatPrice(restaurant.price_range) && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-70)' }}>{formatPrice(restaurant.price_range)}</span>
           )}
         </div>
         <button

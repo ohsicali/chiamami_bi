@@ -19,6 +19,7 @@ import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatPrice } from '../../lib/utils/price'
 
 function formatCountdown(endsAt) {
   if (!endsAt) return null
@@ -464,7 +465,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
   const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 800])
   // First card visible on screen → eager load so it doesn't pop in.
   const isAboveFold = index < 2
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
+  const priceStr = formatPrice(restaurant.price_range)
   const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
   return (
     <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>

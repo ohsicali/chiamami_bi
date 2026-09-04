@@ -25,6 +25,7 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatPrice } from '../../lib/utils/price'
 
 function slugify(name) {
   return name
@@ -54,7 +55,7 @@ function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, o
     : null
   const photoUrl = proxyImg(photoRaw, { w: 200 })
   const isAboveFold = index < 2
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
+  const priceStr = formatPrice(restaurant.price_range)
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
     : null
