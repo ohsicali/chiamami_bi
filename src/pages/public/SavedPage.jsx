@@ -16,6 +16,7 @@ import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 
 function slugify(name) {
   return name.toLowerCase().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
@@ -393,69 +394,21 @@ export default function SavedPage() {
           <>
             {/* Mobile: sv-lists chips + sv-head + sv-grid */}
             {!isDesktop && (() => {
-              const renderSvCard = (r) => {
+              const renderSvCard = (r, i) => {
                 const discount = activeDiscounts[r.id]
-                const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
-                const category = categories[0]
-                const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
-                const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
                 return (
-                  <div
+                  <RestaurantCard
                     key={r.id}
-                    role="button"
-                    tabIndex={0}
+                    variant="tile"
+                    dense
+                    restaurant={r}
+                    index={i}
+                    saved
+                    hasDiscount={!!discount}
+                    discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
+                    onSaveToggle={() => handleSave(r.id)}
                     onClick={() => handleClick(r)}
-                    style={{
-                      background: '#fff', borderRadius: 14, overflow: 'hidden',
-                      border: '1px solid var(--color-ink-05)', position: 'relative',
-                      cursor: 'pointer', textDecoration: 'none', color: 'inherit',
-                    }}
-                  >
-                    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#ddd', overflow: 'hidden' }}>
-                      {photoUrl ? (
-                        <img src={photoUrl} alt={r.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'var(--color-cream-deep)', opacity: 0.6 }}>
-                          {category?.emoji || '🍽️'}
-                        </div>
-                      )}
-                      {discount && (
-                        <span style={{
-                          position: 'absolute', top: 8, left: 8,
-                          background: 'var(--color-cta)', color: '#fff',
-                          fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
-                          borderRadius: 999, letterSpacing: '-0.01em',
-                        }}>{discount.title || formatDiscountValue(discount) || 'SCONTO'}</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleSave(r.id) }}
-                        aria-label="Rimuovi dai salvati"
-                        style={{
-                          position: 'absolute', top: 8, right: 8,
-                          width: 26, height: 26, borderRadius: '50%',
-                          background: 'var(--color-cta)', color: '#fff',
-                          display: 'grid', placeItems: 'center', fontSize: 12,
-                          border: 0, cursor: 'pointer',
-                        }}
-                      >♥</button>
-                    </div>
-                    <div style={{ padding: '8px 10px 10px' }}>
-                      <div style={{
-                        fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
-                        letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>{r.name}</div>
-                      <div style={{
-                        fontSize: 10.5, color: 'var(--color-ink-70)', marginTop: 3,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {r.neighborhood || r.city}
-                        {priceStr && <> | {priceStr}</>}
-                      </div>
-                    </div>
-                  </div>
+                  />
                 )
               }
               const sortLabel = sortMode === 'recent' ? 'Recente' : sortMode === 'name' ? 'Nome' : 'Vicino'

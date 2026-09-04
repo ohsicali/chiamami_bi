@@ -34,6 +34,7 @@ function RestaurantCard({
   discountTitle,
   activeCity = 'Torino',
   variant = 'default', // 'default' (row) | 'tile' | 'hero'
+  dense = false, // tile: versione compatta per griglie strette (mobile 2 col)
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -84,7 +85,7 @@ function RestaurantCard({
         style={{
           background: 'var(--color-card)',
           border: '1px solid var(--color-ink-05)',
-          borderRadius: 'var(--radius-lg)',
+          borderRadius: dense ? 'var(--radius-md)' : 'var(--radius-lg)',
           boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden',
           display: 'flex',
@@ -121,11 +122,14 @@ function RestaurantCard({
           )}
         </SmartImage>
 
-        <div style={{ padding: '13px 15px 15px', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+        <div style={{
+          padding: dense ? '9px 11px 11px' : '13px 15px 15px',
+          display: 'flex', flexDirection: 'column', gap: dense ? 4 : 6, minWidth: 0,
+        }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, minWidth: 0 }}>
             <h3 style={{
               fontFamily: 'var(--font-sans)', fontWeight: 800,
-              fontSize: 'var(--fs-base)', letterSpacing: '-0.02em',
+              fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.02em',
               color: 'var(--color-ink)', lineHeight: 1.2, flex: 1, minWidth: 0,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
@@ -162,7 +166,7 @@ function RestaurantCard({
             )}
           </div>
 
-          {restaurant.address && (
+          {!dense && restaurant.address && (
             <div style={{
               fontSize: 'var(--fs-sm)', color: 'var(--color-ink-64)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
