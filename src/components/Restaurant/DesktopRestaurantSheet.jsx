@@ -11,6 +11,7 @@ import { proxyImg } from '../../lib/supabase'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import SmartImage from '../UI/SmartImage'
+import RestaurantCard from './RestaurantCard'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 
 /* ── design tokens ── */
@@ -560,68 +561,42 @@ export default function DesktopRestaurantSheet({
               </button>
             </div>
 
-            {/* ── Ristoranti vicini ── */}
-            {(() => {
-              if (!restaurant.latitude || !restaurant.longitude) return null
-              const nearby = allRestaurants
-                .filter(r => r.id !== restaurant.id && r.latitude && r.longitude)
-                .map(r => ({ ...r, _dist: getDistance(restaurant.latitude, restaurant.longitude, r.latitude, r.longitude) }))
-                .sort((a, b) => a._dist - b._dist)
-                .slice(0, 3)
-              if (!nearby.length) return null
-              return (
-                <div>
-                  <h4 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 15, letterSpacing: '-.02em', marginBottom: 12, marginTop: 0, color: INK }}>
-                    Ristoranti vicini
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {nearby.map(r => {
-                      const catName = getPublicCategoryNames(r)[0] || r.cuisine_type
-                      const cat = catName ? getCategoryInfo(catName) : null
-                      const photoRaw = Array.isArray(r.photos) && r.photos.length > 0
-                        ? (typeof r.photos[0] === 'string' ? r.photos[0] : r.photos[0]?.thumb_url || r.photos[0]?.photo_url)
-                        : null
-                      const photoSrc = proxyImg(photoRaw)
-                      return (
-                        <button
-                          key={r.id}
-                          onClick={() => onSelectNearby?.(r)}
-                          style={{
-                            display: 'grid', gridTemplateColumns: '56px 1fr', gap: 10,
-                            padding: 10, background: '#fff', border: `1px solid ${INK05}`,
-                            borderRadius: 14, cursor: 'pointer', textAlign: 'left',
-                          }}
-                        >
-                          <div style={{ aspectRatio: '1/1', background: '#ddd', borderRadius: 10, overflow: 'hidden' }}>
-                            {photoSrc
-                              ? <img src={photoSrc} alt={r.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 20 }}>{cat?.emoji || '🍽️'}</div>
-                            }
-                          </div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 800, fontSize: 14, letterSpacing: '-.02em', lineHeight: 1.15, color: INK }}>
-                              {r.name}
-                            </div>
-                            <div style={{ fontSize: 10.5, color: INK70, marginTop: 3, display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
-                              {cat && (
-                                <span style={{ padding: '2px 6px', background: '#FDEBEA', color: CORALLO_INK, borderRadius: 999, fontSize: 9.5, fontWeight: 700 }}>
-                                  {cat.emoji} {cat.name}
-                                </span>
-                              )}
-                              <span>{formatDistance(r._dist)}</span>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })()}
-
           </div>
 
         </div>
+
+        {/* ── QUI VICINO — riga full-width (C1) ── */}
+        {(() => {
+          if (!restaurant.latitude || !restaurant.longitude) return null
+          const nearby = allRestaurants
+            .filter(r => r.id !== restaurant.id && r.latitude && r.longitude)
+            .map(r => ({ ...r, _dist: getDistance(restaurant.latitude, restaurant.longitude, r.latitude, r.longitude) }))
+            .sort((a, b) => a._dist - b._dist)
+            .slice(0, 4)
+          if (!nearby.length) return null
+          return (
+            <section style={{ marginTop: 56 }}>
+              <h3 style={{
+                fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 20,
+                letterSpacing: '-.02em', margin: '0 0 14px', color: INK,
+              }}>
+                Qui vicino
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                {nearby.map((r, i) => (
+                  <RestaurantCard
+                    key={r.id}
+                    variant="tile"
+                    restaurant={r}
+                    index={i}
+                    userPosition={{ lat: restaurant.latitude, lng: restaurant.longitude }}
+                    onClick={() => onSelectNearby?.(r)}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        })()}
       </div>
 
       {/* ── FOOTER ── */}
