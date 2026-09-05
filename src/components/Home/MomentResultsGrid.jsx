@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { isOpenForMoment, MOMENT_SLOTS } from '../../lib/hours'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils/price'
+import { STAGGER, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/motion'
 
 /**
  * MomentResultsGrid · card scroll orizzontale filtrate per momento giornata.
@@ -18,6 +20,7 @@ export default function MomentResultsGrid({
   toggleSave,
 }) {
   const slot = MOMENT_SLOTS[activeMoment]
+  const reduce = useReducedMotion()
 
   const filtered = useMemo(() => {
     if (!Array.isArray(restaurants)) return []
@@ -86,24 +89,38 @@ export default function MomentResultsGrid({
         </span>
       </div>
 
-      <div
-        className="hfv4-results-row"
-        style={{
-          display: 'flex',
-          gap: 12,
-          overflowX: 'auto',
-          padding: '0 20px 12px 20px',
-          scrollSnapType: 'x mandatory',
-          scrollPaddingLeft: 20,
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-        }}
-      >
+      {/* Cambiando fascia oraria l'intera riga si sostituisce. Senza
+          niente in mezzo tre card diverse compaiono di colpo al posto
+          delle precedenti e non si capisce se la pagina ha risposto al
+          tap o si è ricaricata. `mode="wait"` fa uscire il gruppo
+          vecchio prima di far entrare il nuovo — 180ms in uscita,
+          280ms in entrata: l'uscita è più rapida perché è la parte che
+          l'utente ha già smesso di guardare. */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeMoment}
+          className="hfv4-results-row"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduce ? 0.15 : 0.18, ease: TR_REVEAL.ease }}
+          style={{
+            display: 'flex',
+            gap: 12,
+            overflowX: 'auto',
+            padding: '0 20px 12px 20px',
+            scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: 20,
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+          }}
+        >
         {visibleCards.map(({ r, match }, i) => (
           <Lcard
             key={r.id}
             r={r}
             index={i}
+            reduce={reduce}
             hoursLabel={hoursDisplay(match)}
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
@@ -113,7 +130,7 @@ export default function MomentResultsGrid({
 
         <Link
           to={`/esplora?moment=${activeMoment}`}
-          className="hfv4-results-more"
+          className="hfv4-results-more press"
           style={{
             flex: '0 0 60%',
             scrollSnapAlign: 'start',
@@ -170,12 +187,13 @@ export default function MomentResultsGrid({
             Sulla mappa
           </span>
         </Link>
-      </div>
+        </motion.div>
+      </AnimatePresence>
     </section>
   )
 }
 
-function Lcard({ r, index = 0, hoursLabel, onClick, saved, onToggleSave }) {
+function Lcard({ r, index = 0, reduce = false, hoursLabel, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
@@ -187,12 +205,19 @@ function Lcard({ r, index = 0, hoursLabel, onClick, saved, onToggleSave }) {
   const isAboveFold = index < 2
 
   return (
-    <a
+    <motion.a
       href={`/restaurant/${r.slug}`}
       onClick={(e) => {
         e.preventDefault()
         onClick?.()
       }}
+      // Le card entrano sfalsate di 50ms: si legge che sono una lista
+      // ordinata e non tre blocchi apparsi insieme. Il tetto a 150ms
+      // tiene la terza card dentro la stessa occhiata della prima.
+      initial={riseFrom(10, reduce).from}
+      animate={riseFrom(10, reduce).to}
+      transition={{ ...TR_REVEAL, delay: staggerDelay(index, STAGGER, 0.15) }}
+      whileTap={reduce ? undefined : { transform: 'scale(0.985)' }}
       className="hfv4-lcard"
       style={{
         flex: '0 0 72%',
@@ -285,7 +310,7 @@ function Lcard({ r, index = 0, hoursLabel, onClick, saved, onToggleSave }) {
           {priceLabel}
         </div>
       </div>
-    </a>
+    </motion.a>
   )
 }
 

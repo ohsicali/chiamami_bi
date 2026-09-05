@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -13,7 +14,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: TR_REVEAL,
   },
 }
 
@@ -734,8 +735,8 @@ export default function LoginPage() {
             <motion.button
               type="submit"
               disabled={submitting}
-              whileTap={{ scale: 0.98 }}
-              whileHover={{ y: -1 }}
+              className="hover-lift-sm"
+              whileTap={{ transform: 'scale(0.98)' }}
               style={{
                 width: '100%',
                 background: submitting ? 'var(--color-ink-15)' : 'var(--color-corallo)',

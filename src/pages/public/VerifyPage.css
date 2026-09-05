@@ -41,8 +41,11 @@
   to   { stroke-dashoffset: 0; }
 }
 
+/* Partiva da scale(0). È il momento "prima volta / celebrazione",
+   l'unico posto dove un rimbalzo è concesso — ma anche qui il segno di
+   spunta deve arrivare, non materializzarsi dal nulla. */
 @keyframes verifyCheckPop {
-  0%   { transform: scale(0);    opacity: 0; }
+  0%   { transform: scale(0.5);  opacity: 0; }
   35%  { transform: scale(1.25); opacity: 1; }
   55%  { transform: scale(0.92); }
   100% { transform: scale(1); }
@@ -216,7 +219,7 @@
   background: transparent;
   border: 0;
   letter-spacing: -0.01em;
-  transition: all 0.15s;
+  transition: background-color var(--dur-pop) var(--ease-out), color var(--dur-pop) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out);
 }
 .v4-tab.on {
   background: var(--color-ink);
@@ -510,7 +513,7 @@
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: background-color var(--dur-pop) var(--ease-out), color var(--dur-pop) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out);
 }
 .v4-range-preset.on {
   background: var(--color-ink);
@@ -1118,11 +1121,14 @@
   letter-spacing: -0.01em;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(232, 69, 60, 0.24);
-  transition: all 0.15s;
+  transition: transform var(--dur-pop) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out), background-color var(--dur-pop) var(--ease-out), color var(--dur-pop) var(--ease-out);
 }
-.v4-set-save:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(232, 69, 60, 0.3);
+/* (hover: hover): su touch il tap lascia l'elemento sollevato. */
+@media (hover: hover) and (pointer: fine) {
+  .v4-set-save:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(232, 69, 60, 0.3);
+  }
 }
 .v4-set-save:disabled {
   background: var(--color-line);

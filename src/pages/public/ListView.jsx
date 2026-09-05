@@ -216,7 +216,14 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
   const isOpen = ['open', 'closing_soon'].includes(getHoursStatus(restaurant.hours_cache).state)
 
   return (
+    // Niente animazione di ENTRATA qui, di proposito: la lista è
+    // virtualizzata, le righe vengono riciclate mentre scorri e ognuna
+    // ripartirebbe da capo — l'elenco lampeggerebbe a ogni scroll.
+    // Resta solo l'affondamento al tocco (.press), che prima mancava:
+    // era l'unica lista del sito dove toccare una card non dava
+    // nessuna risposta finché la scheda non si apriva.
     <button
+      className="press"
       onClick={() => onClick?.(restaurant)}
       style={{
         display: 'flex', gap: 14, padding: 14, marginBottom: 12,

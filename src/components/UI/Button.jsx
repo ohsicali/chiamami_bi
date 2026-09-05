@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
+import { SPRING_SNAP } from '../../lib/motion'
 
 /**
  * Button — primitivo v4 (audit design 2026-06).
@@ -43,11 +44,20 @@ export default function Button({
   const Tag = as === 'a' ? motion.a : motion.button
   const v = VARIANTS[variant] || VARIANTS.primary
   const s = SIZES[size] || SIZES.md
+  const reduce = useReducedMotion()
 
   return (
     <Tag
-      className={className}
-      whileTap={disabled ? undefined : { scale: 0.97 }}
+      className={`btn-v4 ${className}`}
+      // Il tap affonda del 3% e la molla lo riporta su: è l'unico
+      // feedback che conferma che il tocco è stato registrato prima
+      // che la pagina risponda. `whileTap` è una transizione, quindi
+      // due tap ravvicinati non accodano animazioni.
+      // L'hover NON sta qui: whileHover scatta anche al tocco e lascia
+      // il bottone ingrandito dopo il tap. Sta nel CSS di .btn-v4,
+      // dietro a (hover: hover) and (pointer: fine).
+      whileTap={disabled || reduce ? undefined : { transform: 'scale(0.97)' }}
+      transition={SPRING_SNAP}
       aria-disabled={as === 'a' ? disabled || undefined : undefined}
       disabled={as === 'button' ? disabled : undefined}
       style={{
@@ -56,6 +66,8 @@ export default function Button({
         borderRadius: 'var(--radius-pill)', cursor: disabled ? 'not-allowed' : 'pointer',
         textDecoration: 'none', whiteSpace: 'nowrap',
         opacity: disabled ? 0.5 : 1,
+        transition: 'opacity var(--dur-menu) var(--ease-out), filter var(--dur-menu) var(--ease-out)',
+        WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
         width: fullWidth ? '100%' : undefined,
         ...v, ...s, ...style,
       }}

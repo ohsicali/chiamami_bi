@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
@@ -85,7 +86,7 @@ export default function ResetPasswordPage() {
         className="w-full max-w-sm flex flex-col items-center gap-8"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={TR_REVEAL}
       >
         <LogoFull height={36} />
 

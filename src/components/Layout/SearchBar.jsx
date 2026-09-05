@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { TR_POP } from '../../lib/motion'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 
@@ -69,7 +70,7 @@ export default function SearchBar({ value, onChange, onFocus, onBlur }) {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.15 }}
+            transition={TR_POP}
             onClick={handleClear}
             type="button"
             style={{

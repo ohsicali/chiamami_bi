@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TR_REVEAL } from '../../lib/motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Footer from '../../components/Layout/Footer'
@@ -11,7 +12,7 @@ import MetaTags from '../../components/SEO/MetaTags'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  visible: { opacity: 1, y: 0, transition: TR_REVEAL },
 }
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }
 
