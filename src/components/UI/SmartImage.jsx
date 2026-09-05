@@ -52,9 +52,15 @@ export function PhotoOrEmoji({
   fallbackClassName,
   gradient,
 }) {
-  const [failed, setFailed] = useState(!src)
+  // ⚠️ Lo stato tiene l'URL che ha fallito, non un booleano.
+  // `useState(!src)` si inizializzava al PRIMO render e non si aggiornava
+  // mai piu: una card nata senza foto (src null, foto caricata dopo — è il
+  // caso delle card di "Chiedi a Bi") restava sul fallback per sempre anche
+  // quando l'URL arrivava. Confrontando l'URL, un src nuovo riparte pulito.
+  const [failedSrc, setFailedSrc] = useState(null)
+  const failed = !src || failedSrc === src
 
-  if (failed || !src) {
+  if (failed) {
     return (
       <div
         className={fallbackClassName}
@@ -79,7 +85,7 @@ export function PhotoOrEmoji({
       className={imgClassName}
       loading="lazy"
       decoding="async"
-      onError={() => { warnDeadUrl(src); setFailed(true) }}
+      onError={() => { warnDeadUrl(src); setFailedSrc(src) }}
       style={imgStyle}
     />
   )
@@ -109,7 +115,14 @@ export default function SmartImage({
   children,
 }) {
   const raw = src !== undefined ? src : firstPhotoUrl(photos)
-  const [state, setState] = useState(raw ? 'loading' : 'empty') // loading | loaded | error | empty
+  // Come in PhotoOrEmoji: lo stato è ancorato all'URL, così se `raw` cambia
+  // (foto che arriva dopo il primo render) la nuova immagine riparte da
+  // 'loading' invece di ereditare l'esito della precedente.
+  const [loadedSrc, setLoadedSrc] = useState(null)
+  const [errorSrc, setErrorSrc] = useState(null)
+  const state = !raw ? 'empty'
+    : errorSrc === raw ? 'error'
+      : loadedSrc === raw ? 'loaded' : 'loading'
   const failed = !raw || state === 'error'
 
   // Se `src` è passato è già risolto; con `photos` proxiamo noi.
@@ -141,8 +154,8 @@ export default function SmartImage({
           loading={eager ? 'eager' : 'lazy'}
           fetchpriority={fetchPriority}
           decoding="async"
-          onLoad={() => setState('loaded')}
-          onError={() => { warnDeadUrl(raw); setState('error') }}
+          onLoad={() => setLoadedSrc(raw)}
+          onError={() => { warnDeadUrl(raw); setErrorSrc(raw) }}
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%', objectFit: 'cover',

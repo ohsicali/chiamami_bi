@@ -66,8 +66,17 @@ import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
 
-const CLAUDE_MODEL = 'claude-sonnet-4-6'
+// Sonnet 5: italiano piu naturale e latenza piu bassa di 4.6, che era il
+// motivo per cui le risposte suonavano da assistente e arrivavano lente.
+// Se l'account non ce l'ha ancora abilitato, `claudeFetch` scala da solo al
+// modello precedente invece di far fallire la chat.
+const CLAUDE_MODEL = 'claude-sonnet-5'
+const CLAUDE_MODEL_FALLBACK = 'claude-sonnet-4-6'
+let activeModel = CLAUDE_MODEL
 const ANTHROPIC_VERSION = '2023-06-01'
+// Bi risponde in 1-2 frasi + la tool call dei picks: 1024 bastano e
+// impediscono a un turno impazzito di far aspettare l'utente.
+const MAX_OUTPUT_TOKENS = 1024
 const MAX_HISTORY_MSGS = 10
 const MAX_RESULTS = 3
 const MAX_PROMPT_LEN = 500
@@ -234,7 +243,7 @@ export default async function handler(req, res) {
           conversation_id: finalConversationId,
           role: 'assistant',
           content: { text: message, results },
-          metadata: { model: CLAUDE_MODEL },
+          metadata: { model: activeModel },
         },
       ])
     }
@@ -486,12 +495,24 @@ async function runConversation({
         })
         continue
       }
+      // L'attesa piu lunga è qui. Un'etichetta onesta sotto i puntini vale
+      // piu di tre puntini muti: l'utente vede che Bi sta lavorando.
+      if (streaming) {
+        sseEvent(res, 'status', {
+          text: searchedAtLeastOnce
+            ? 'Allargo la ricerca…'
+            : 'Sto guardando tra i miei locali…',
+        })
+      }
       searchedAtLeastOnce = true
       const toolOutput = await executeSearch(admin, call.input || {}, searchCtx)
       for (const c of (toolOutput.candidates || [])) candidatesById.set(c.id, c)
       toolResults.push({
         type: 'tool_result', tool_use_id: call.id,
-        content: JSON.stringify(toolOutput),
+        content: JSON.stringify({
+          ...toolOutput,
+          candidates: (toolOutput.candidates || []).map(slimCandidateForClaude),
+        }),
       })
     }
 
@@ -556,24 +577,7 @@ async function callClaudeTurn({ apiKey, system, messages, tools }) {
  * così il loop può rimandare il turno a Claude senza saperne la provenienza.
  */
 async function streamClaudeTurn({ apiKey, system, messages, tools, res }) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': ANTHROPIC_VERSION,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 2048,
-      system, tools, messages,
-      stream: true,
-    }),
-  })
-  if (!response.ok) {
-    const errBody = await response.text().catch(() => '')
-    throw new Error(`Claude HTTP ${response.status}: ${errBody.slice(0, 200)}`)
-  }
+  const response = await claudeFetch(apiKey, { system, messages, tools, stream: true })
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
@@ -667,6 +671,31 @@ function cleanupText(text) {
   return t.slice(0, 1600)
 }
 
+/**
+ * Proiezione del candidato che vede Claude. Il record completo resta lato
+ * server in `candidatesById` per ricostruire le card: qui togliamo quello che
+ * a Claude non serve per scegliere (slug, foto, flag interni). Meno token in
+ * ingresso = round 2 più rapido, ed è il round che l'utente aspetta.
+ */
+function slimCandidateForClaude(c) {
+  return {
+    id: c.id,
+    name: c.name,
+    zone: c.zone,
+    city: c.city,
+    out_of_city: c.out_of_city,
+    price: c.price,
+    category: c.category,
+    open_now: c.open_now,
+    closes_at: c.closes_at,
+    tagline: c.tagline,
+    recommended_for: c.recommended_for,
+    editorial: c.editorial,
+    ...(c.walk_minutes != null ? { walk_minutes: c.walk_minutes } : {}),
+    ...(c.active_discount ? { active_discount: c.active_discount } : {}),
+  }
+}
+
 function buildResultsFromPicks(picks, candidatesById) {
   if (!Array.isArray(picks)) return []
   const out = []
@@ -689,6 +718,7 @@ function buildResultsFromPicks(picks, candidatesById) {
       closes_at: c.closes_at,
       city: c.city,
       out_of_city: c.out_of_city === true,
+      photo_url: c.photo_url || null,
       why: String(pick?.why || '').trim().slice(0, 120),
       // Geo + sconto: il frontend mostra il pill se valorizzati.
       distance_km: c.distance_km ?? null,
@@ -699,26 +729,51 @@ function buildResultsFromPicks(picks, candidatesById) {
   return out
 }
 
-async function callClaude(apiKey, { system, messages, tools }) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': ANTHROPIC_VERSION,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 2048,
-      system,
-      tools,
-      messages,
-    }),
-  })
-  if (!response.ok) {
-    const errBody = await response.text()
+/**
+ * Chiamata all'API Anthropic con fallback di modello.
+ *
+ * Se il modello preferito non è disponibile su questo account, l'API risponde
+ * 404 (o 400 citando il modello): invece di rompere la chat scendiamo una
+ * volta sola al modello precedente e ce lo ricordiamo per le chiamate
+ * successive dello stesso processo.
+ */
+async function claudeFetch(apiKey, { system, messages, tools, stream = false }) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const model = activeModel
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        system, tools, messages,
+        ...(stream ? { stream: true } : {}),
+      }),
+    })
+    if (response.ok) return response
+
+    const errBody = await response.text().catch(() => '')
+    if (isModelUnavailable(response.status, errBody) && model !== CLAUDE_MODEL_FALLBACK) {
+      console.warn(`[ai] modello ${model} non disponibile, passo a ${CLAUDE_MODEL_FALLBACK}`)
+      activeModel = CLAUDE_MODEL_FALLBACK
+      continue
+    }
     throw new Error(`Claude HTTP ${response.status}: ${errBody.slice(0, 200)}`)
   }
+  throw new Error('Claude: nessun modello disponibile')
+}
+
+function isModelUnavailable(status, body) {
+  if (status === 404) return true
+  return status === 400 && /model/i.test(body || '')
+}
+
+async function callClaude(apiKey, { system, messages, tools }) {
+  const response = await claudeFetch(apiKey, { system, messages, tools })
   return await response.json()
 }
 
@@ -831,10 +886,21 @@ async function executeSearch(admin, filters, ctx = {}) {
 
   for (const stage of stages) {
     const out = await runSearchOnce(admin, stage.filters, ctx)
-    if (out.error) { lastError = out.error; continue }
+    if (out.error) {
+      // Mai in silenzio: un filtro malformato somiglia in tutto e per tutto a
+      // "nessun risultato", e per mesi ha nascosto la zona rotta.
+      console.warn('[ai] ricerca fallita, passo allo stage successivo:', out.error)
+      lastError = out.error
+      continue
+    }
     if (out.candidates.length > 0) {
+      // Foto e sconti solo sullo stage vincente e solo sui candidati che
+      // Claude vedrà davvero: prima si pagavano due query per ogni stage
+      // scartato.
+      const top = out.candidates.slice(0, MAX_CANDIDATES)
+      await enrichCandidates(admin, top, { skipDiscounts: out.discountsAttached })
       return {
-        candidates: out.candidates,
+        candidates: top,
         total: out.total,
         ...(stage.dropped.length ? { relaxed: true, dropped: stage.dropped } : {}),
       }
@@ -850,6 +916,19 @@ async function executeSearch(admin, filters, ctx = {}) {
  * (in italiano, per Claude) di cosa è stato lasciato cadere rispetto alla
  * richiesta originale.
  */
+/** true se il testo cercato ha piu di un termine (token di almeno 3 lettere). */
+function hasMultipleTerms(text) {
+  return splitSearchTerms(text).length > 1
+}
+
+function splitSearchTerms(text) {
+  if (typeof text !== 'string') return []
+  return text
+    .split(/\s+/)
+    .map((t) => t.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter((t) => t.length > 2)
+}
+
 function buildRelaxStages(filters) {
   const f = { ...filters }
   const stages = [{ filters: f, dropped: [] }]
@@ -858,6 +937,12 @@ function buildRelaxStages(filters) {
     const next = { ...prev.filters, ...patch }
     stages.push({ filters: next, dropped: [...prev.dropped, ...dropped] })
   }
+
+  // Il full-text di Postgres mette i termini in AND: "agnolotti del plin" non
+  // matcha nessun documento anche quando "agnolotti" ne matcha uno. Prima di
+  // toccare gli altri filtri proviamo lo stesso testo in OR — resta una
+  // ricerca sul piatto, quindi non è una perdita da dichiarare.
+  if (hasMultipleTerms(f.search_text)) add({ search_mode: 'or' }, [])
 
   if (f.zone || f.open_now || f.near_me) {
     add({ zone: null, open_now: false, near_me: false },
@@ -874,7 +959,10 @@ function buildRelaxStages(filters) {
         typeof f.price_max === 'number' && f.price_max > 0 ? 'budget' : null].filter(Boolean),
     )
   }
-  if (f.search_text) {
+  // Mollare il testo si può SOLO se resta la categoria a dare un senso al
+  // risultato. Senza, "agnolotti" tornava 63 locali a caso e Bi ne consigliava
+  // tre che con gli agnolotti non c'entravano niente: meglio zero e dirlo.
+  if (f.search_text && f.category) {
     add({ zone: null, open_now: false, near_me: false, moment: null, recommended_for: null, price_max: null, search_text: null },
       ['ricerca testuale'])
   }
@@ -936,8 +1024,17 @@ async function runSearchOnce(admin, filters, ctx) {
   }
   if (typeof filters.search_text === 'string' && filters.search_text.trim()) {
     const safe = filters.search_text.trim().slice(0, 100)
-    // Italian websearch su colonna generata: matcha morfologia (agnolotti↔agnolotto).
-    query = query.textSearch('search_tsv', safe, { type: 'websearch', config: 'italian' })
+    if (filters.search_mode === 'or') {
+      // tsquery esplicito coi termini in OR: "agnolotti | plin" trova le piole
+      // che ne citano almeno uno. Stemming italiano comunque attivo.
+      const terms = splitSearchTerms(safe)
+      if (terms.length > 0) {
+        query = query.textSearch('search_tsv', terms.join(' | '), { config: 'italian' })
+      }
+    } else {
+      // Italian websearch su colonna generata: matcha morfologia (agnolotti↔agnolotto).
+      query = query.textSearch('search_tsv', safe, { type: 'websearch', config: 'italian' })
+    }
   }
 
   const { data, error } = await query
@@ -980,7 +1077,7 @@ async function runSearchOnce(admin, filters, ctx) {
       moments: Array.isArray(r.moments) ? r.moments : [],
       recommended_for: Array.isArray(r.recommended_for) ? r.recommended_for : [],
       editorial: {
-        review_excerpt: truncate(r.our_review, 280),
+        review_excerpt: truncate(r.our_review, 200),
         tip: r.our_tip || '',
       },
       // Geo (null se l'utente non ha condiviso la posizione)
@@ -1008,46 +1105,98 @@ async function runSearchOnce(admin, filters, ctx) {
       .sort((a, b) => (a.distance_km ?? 9e9) - (b.distance_km ?? 9e9))
   }
 
-  // Discounts attivi (query batch). Se l'utente vuole solo sconti → filtro;
-  // altrimenti li espongo come campo informativo per il why di Bi.
-  if (filtered.length > 0) {
-    const ids = filtered.map((r) => r.id)
-    const nowIso = new Date().toISOString()
-    const { data: drops } = await admin
-      .from('discounts')
-      .select('restaurant_id, discount_percent, title, ends_at')
-      .eq('is_active', true)
-      .lte('starts_at', nowIso)
-      .gte('ends_at', nowIso)
-      .in('restaurant_id', ids)
-    const dropByRest = new Map()
-    for (const d of (drops || [])) {
-      // Tieni il primo (= maggiore percentuale se ce ne fossero più di uno).
-      if (!dropByRest.has(d.restaurant_id) ||
-          (d.discount_percent || 0) > (dropByRest.get(d.restaurant_id).discount_percent || 0)) {
-        dropByRest.set(d.restaurant_id, d)
-      }
-    }
-    for (const c of filtered) {
-      const d = dropByRest.get(c.id)
-      if (d) {
-        c.active_discount = {
-          percent: d.discount_percent || null,
-          title: d.title || null,
-          ends_at: d.ends_at || null,
-        }
-      }
-    }
-    if (filters.discount_only === true) {
-      filtered = filtered.filter((r) => r.active_discount)
-    }
+  // "Solo sconti" deve filtrare PRIMA del cap, quindi qui gli sconti servono
+  // per forza. Negli altri casi l'arricchimento avviene una volta sola, sullo
+  // stage vincente (vedi executeSearch).
+  let discountsAttached = false
+  if (filters.discount_only === true && filtered.length > 0) {
+    await attachDiscounts(admin, filtered)
+    filtered = filtered.filter((r) => r.active_discount)
+    discountsAttached = true
   }
 
-  // Cap a MAX_CANDIDATES per response (paga il context window di Claude).
   // L'ordine è già quello editoriale (our_rating desc) o per distanza se
-  // near_me è attivo, quindi il taglio è sensato e non casuale.
-  const top = filtered.slice(0, MAX_CANDIDATES)
-  return { candidates: top, total: filtered.length }
+  // near_me è attivo: il taglio a MAX_CANDIDATES lo fa executeSearch.
+  return { candidates: filtered, total: filtered.length, discountsAttached }
+}
+
+/**
+ * Foto + sconti sui candidati finali, in parallelo. Le foto NON vengono
+ * mostrate a Claude (token sprecati): restano sul candidato lato server e
+ * finiscono nelle card via buildResultsFromPicks, così la card nasce già con
+ * l'immagine invece di aspettare un secondo giro di rete dal browser.
+ */
+async function enrichCandidates(admin, candidates, { skipDiscounts = false } = {}) {
+  if (!candidates || candidates.length === 0) return candidates
+  await Promise.all([
+    attachPhotos(admin, candidates),
+    skipDiscounts ? Promise.resolve() : attachDiscounts(admin, candidates),
+  ])
+  return candidates
+}
+
+async function attachPhotos(admin, candidates) {
+  const { data, error } = await admin
+    .from('restaurant_photos')
+    .select('restaurant_id, photo_url, thumb_url, sort_order')
+    .in('restaurant_id', candidates.map((r) => r.id))
+    .order('sort_order', { ascending: true })
+  if (error) { console.warn('[ai] foto non caricate:', error.message); return }
+  const byRest = new Map()
+  for (const p of (data || [])) {
+    if (!byRest.has(p.restaurant_id)) byRest.set(p.restaurant_id, p.thumb_url || p.photo_url || null)
+  }
+  for (const c of candidates) c.photo_url = byRest.get(c.id) || null
+}
+
+/**
+ * Sconti attivi sui candidati.
+ *
+ * ⚠️ Le colonne interrogate qui erano `discount_percent`, `starts_at` e
+ * `ends_at`: NESSUNA delle tre esiste. La tabella ha `discount_value` +
+ * `discount_type` e `valid_from` / `valid_until`. La query falliva sempre, e
+ * l'errore non veniva nemmeno letto — quindi il badge "−X%" non è mai
+ * comparso e `discount_only` (il prompt "Sconti attivi stasera" in home)
+ * tornava sempre zero.
+ *
+ * "Attivo" usa la stessa definizione del resto dell'app (useDiscounts):
+ * `is_active` e `valid_until` nel futuro.
+ */
+async function attachDiscounts(admin, candidates) {
+  const nowIso = new Date().toISOString()
+  const { data, error } = await admin
+    .from('discounts')
+    .select('restaurant_id, title, discount_type, discount_value, valid_until')
+    .eq('is_active', true)
+    .gt('valid_until', nowIso)
+    .in('restaurant_id', candidates.map((r) => r.id))
+  if (error) { console.warn('[ai] sconti non caricati:', error.message); return }
+
+  const byRest = new Map()
+  for (const d of (data || [])) {
+    const prev = byRest.get(d.restaurant_id)
+    // A parità, tieni la percentuale più alta.
+    if (!prev || (discountPercent(d) || 0) > (discountPercent(prev) || 0)) {
+      byRest.set(d.restaurant_id, d)
+    }
+  }
+  for (const c of candidates) {
+    const d = byRest.get(c.id)
+    if (d) {
+      c.active_discount = {
+        percent: discountPercent(d),
+        title: d.title || null,
+        ends_at: d.valid_until || null,
+      }
+    }
+  }
+}
+
+/** Percentuale dello sconto, o null se è a importo fisso o illeggibile. */
+function discountPercent(d) {
+  if (d?.discount_type !== 'percentage') return null
+  const n = Number(d.discount_value)
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null
 }
 
 function normCity(c) {
@@ -1080,7 +1229,7 @@ function mapZoneToAddressPatterns(zoneRaw) {
     'centro': [
       '10121', '10122', '10123', '10124', '10125', '10128',
       'crocetta', 'san salvario', 'quadrilatero', 'porta nuova', 'porta palazzo',
-      'centro storico', 'piazza castello', 'via po', 'via roma', 'via po,',
+      'centro storico', 'piazza castello', 'via po', 'via roma',
       'piazza vittorio', 'piazza san carlo', 'piazza carlina', 'piazza carlo emanuele',
       'piazza corpus domini', 'via bertola', 'via mercanti', 'via maria vittoria',
       'via doria', 'via giulio', 'via bonafous', 'via sant',
@@ -1093,8 +1242,15 @@ function mapZoneToAddressPatterns(zoneRaw) {
     'crocetta': ['10128', 'crocetta', 'via legnano', 'via villar', 'corso einaudi'],
   }
 
-  const patterns = ALIASES[zone] || [zone]
-  return patterns.map(p => `address.ilike.%${p}%`).join(',')
+  // ⚠️ I pattern vanno ripuliti da virgole e % come l'input: la lista `or=` è
+  // separata da virgole, e un alias tipo "via po," spezzava il logic tree →
+  // PGRST100 su OGNI ricerca con zona. L'errore veniva ingoiato in silenzio e
+  // la zona finiva sempre rilassata: "in centro" non ha mai filtrato niente.
+  const patterns = (ALIASES[zone] || [zone])
+    .map((p) => String(p).replace(/[%,()]/g, '').trim())
+    .filter(Boolean)
+  if (patterns.length === 0) return null
+  return patterns.map((p) => `address.ilike.%${p}%`).join(',')
 }
 
 function computeOpenStatus(hours, now) {
@@ -1255,9 +1411,13 @@ const STATIC_SYSTEM_PROMPT = `Sei Bi, la voce della guida ChiamamiBi.com. In pri
 2. Mai "il migliore", mai classifiche, mai stelle. La promessa è "io ti seleziono", non "io ti classifico".
 3. Mai chiedere o citare recensioni utenti / rating utenti. Esiste solo il MIO giudizio editoriale (campo our_review + our_tip).
 4. Italiano naturale, prima persona singolare, parlato. "Ho", "ti dico", "vai", "te lo metto in mano", "non te lo classifico". Mai "Ecco i risultati", "Posso aiutarti", "Sicuramente troverai", "I migliori che ho trovato".
-5. Nel testo della tua bolla NON elencare i nomi dei locali in lista bullet o numerata: i nomi vanno nelle card (picks). Il tuo testo è una frase introduttiva piena, 1-3 frasi.
+5. Nel testo della tua bolla NON elencare i nomi dei locali, né le loro categorie, zone o indirizzi: sono già nelle card. Il tuo testo introduce, non riassume.
 6. Massimo 3 picks per risposta. Per domanda puntuale (un piatto specifico) anche solo 1-2.
-7. Città: cerco di default nella città attiva della sessione (te la dico nel contesto) e nella sua cintura. Se un candidato ha \`out_of_city: true\` è FUORI da quella città: o lo scarti, o lo dici chiaramente nel testo ("questo però è a Rivoli, non in centro"). Mai passarlo per un locale in città.
+7. Città: cerco di default nella città attiva della sessione (te la dico nel contesto) e nella sua cintura. \`out_of_city: true\` = fuori da quella città. Se ne consigli uno, dillo nel testo ("questo però è a Rivoli"). Se lo scarti, NON dirlo: chi non consigli non esiste.
+8. **CORTO.** Massimo 2 frasi, sotto le 35 parole. Una risposta lunga suona da assistente, e Bi non è un assistente.
+9. Mai chiedere il permesso di cercare ancora, mai offrire alternative di ricerca, mai rimandare la palla. VIETATE: "se vuoi posso…", "vuoi che…", "dimmi tu…", "fammi sapere…", "come preferisci…", "posso allargare…". Se serve allargare, il tool l'ha già fatto: presenta quello che hai. Se non hai niente, chiudi in una frase.
+10. Mai raccontare come stai lavorando né cosa hai scartato. VIETATE: "il candidato da X lo salto", "ho cercato e…", "tra gli altri…", "fammi guardare". L'utente vede il risultato, non il tuo processo.
+11. Niente punti esclamativi. Niente entusiasmo di servizio.
 
 # STRATEGIA DI RICERCA
 Procedi così:
@@ -1265,13 +1425,15 @@ Procedi così:
 2. Per piatti o caratteristiche evocative (es. "agnolotti", "tartare", "vermouth", "silenzioso") usa search_text — stemming italiano, matcha singolare/plurale.
 3. Per intenzioni ("romantico", "con gli amici", "tradizionale", "vegetariano") usa recommended_for col tag corrispondente. Non confondere con category.
 4. Il tool rilassa già i filtri da solo, per gradi, quando la ricerca esatta è vuota. Quando lo fa te lo dice: nella risposta trovi \`relaxed: true\` e \`dropped: [...]\` con l'elenco di cosa ha mollato ("zona", "momento", "budget", "città"). USALO NEL TESTO, è la tua onestà: "a Vanchiglia non ce l'ho, questo è a due fermate", "sforo un pelo il budget che mi avevi dato". Se \`dropped\` include "città" i locali sono di un'altra città: dillo.
+   Mezza frase, non un paragrafo: "questo però è a due fermate", "sforo un pelo il budget". Poi passa ai picks.
    Rilancia search_restaurants a mano UNA volta sola, e solo se hai capito che il primo giro aveva un filtro sbagliato (categoria errata, zona scambiata per città). Se il tool torna comunque zero, chiudi a parole: NON continuare a cercare.
 5. Quando hai ≥1 candidato, leggi davvero i campi editorial.review_excerpt e editorial.tip per scegliere e per scrivere il "why". Non scegliere a caso.
 
 # COME SCRIVI LA TUA RISPOSTA
 Dopo aver letto i candidati, rispondi nella stessa risposta con DUE blocchi nell'ordine:
 
-A) BLOCCO TESTO (la "bolla" di Bi): 1-3 frasi in prosa naturale italiana, prima persona, voce calda e asciutta. Niente nomi di locali qui (li mette già la card). Niente JSON, niente bullet, niente "ecco". Apri spesso con una contestualizzazione corta ("Allora", "Per il pranzo lì", "Su questo ti dico subito che…").
+A) BLOCCO TESTO (la "bolla" di Bi): **1-2 frasi, sotto le 35 parole.** Prima persona, voce calda e asciutta, parlata. Niente nomi di locali (li mette la card), niente JSON, niente bullet, niente "ecco". Chiudi con i due punti quando presenti dei picks.
+Se hai dovuto accontentarti (niente napoletana, zona allargata, budget sforato), dillo in mezza frase e passa oltre — non ci costruisci sopra un paragrafo.
 Se l'utente ha condiviso la posizione (i candidati hanno walk_minutes valorizzato) puoi citare la prossimità nel testo: "Il più vicino a te è a 6 minuti." Se NON ha condiviso e ti ha chiesto "vicino", suggeriscigli di toccare il 📍 in basso per condividere la posizione.
 
 B) CHIAMATA al tool present_picks con i tuoi 1-3 picks. Ogni pick deve avere:
@@ -1303,28 +1465,35 @@ Se anche dopo il retry il tool torna 0 candidati validi: NON chiamare present_pi
 - Città diverse da Torino: cerca lo stesso. Se non hai locali in quella città, dillo onestamente in una frase.
 
 # ESEMPI
+Guarda la lunghezza, non solo il tono: è quella il punto.
 
 [Aperitivo a Vanchiglia, 3 candidati]
-TESTO: "Allora a Vanchiglia per l'aperitivo ci sei nel posto giusto. Te ne dico tre dove andrei io, gusti diversi:"
+TESTO: "A Vanchiglia per l'aperitivo sei nel posto giusto. Te ne dico tre dove andrei io:"
 PICKS: 3 con why specifici tipo "I tarallini caldi alle 18.", "Vermouth selezionati a mano.", "Tagliere generoso, vino vero."
 
-[Cinese a Vanchiglia → 0 candidati dopo retry]
-TESTO: "Cinese a Vanchiglia non ce l'ho, te lo dico subito — è zona da italiano e da bistrot. Se ti sposti a 5 minuti di tram qualcosa ti dico, va bene?"
+[Pizza napoletana in centro → napoletana non c'è, altre pizze sì]
+TESTO: "Napoletana in senso stretto in centro non ce l'ho. Altre pizze buone sì, e queste te le firmo:"
+PICKS: 2-3.
+✗ SBAGLIATO (troppo lungo, elenca le categorie, racconta cosa ha scartato): "Napoletana in senso stretto non ce l'ho in centro, ma hai due/tre alternative di tutto rispetto — teglia romana, padellino torinese, pane e pizza d'autore. Il candidato da Collegno lo salto, non è in centro. Tra gli altri, ecco dove mi fido davvero:"
+
+[Cinese a Vanchiglia → 0 candidati dopo il rilassamento]
+TESTO: "Cinese a Vanchiglia non ce l'ho — è zona da italiano e da bistrot."
 PICKS: (nessuno)
+✗ SBAGLIATO (chiede il permesso, rimanda la palla): "Se vuoi posso cercare senza il vincolo cinese e vedo cos'altro ho, oppure se allarghi la zona posso trovare qualcosa in più — dimmi tu come preferisci muoverti!"
 
 [Agnolotti del plin]
-TESTO: "Gli agnolotti li fanno bene in un paio dei miei, dove la pasta è fresca a mano:"
+TESTO: "Gli agnolotti li fanno a mano in un paio dei miei:"
 PICKS: 2 con why tipo "Il plin è la specialità della casa."
 
 [Query ambigua: "consigliami qualcosa"]
-TESTO: "Aiutami un attimo: che voglia hai? Pesce, pizza, asiatico, tradizione? E in che zona ti muovi?"
+TESTO: "Che voglia hai? Pesce, pizza, asiatico, tradizione — e in che zona ti muovi?"
 PICKS: (nessuno)
 
 [Richiesta classifica: "il miglior pesce di Torino"]
-TESTO: "Non te lo classifico in 'migliori', non è il mio mestiere. Però tra i miei per pesce te ne dico due:"
+TESTO: "Non te li classifico in migliori, non è il mio mestiere. Per pesce però te ne dico due:"
 PICKS: 1-2.
 
-Ricorda: il testo è la TUA voce, i picks sono le card. Una sola chiamata a present_picks alla fine. Se mai dovessi essere indeciso fra dire qualcosa di generico o dire la verità, di' sempre la verità.`
+Ricorda: il testo è la TUA voce, i picks sono le card. Una sola chiamata a present_picks alla fine. Se mai dovessi essere indeciso fra dire qualcosa di generico o dire la verità, di' sempre la verità — in due frasi.`
 
 /* ------------------------------------------------------------------ */
 /*  Export per i test (node --test tests/ai-engine.test.mjs).           */
@@ -1339,4 +1508,6 @@ export const __testables = {
   expandCity,
   cleanupText,
   buildResultsFromPicks,
+  mapZoneToAddressPatterns,
+  splitSearchTerms,
 }

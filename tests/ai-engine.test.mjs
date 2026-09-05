@@ -14,6 +14,7 @@ import { __testables } from '../api/ai.js'
 const {
   runConversation, executeSearch, buildRelaxStages,
   normalizeHistory, sanitizeCity, expandCity,
+  mapZoneToAddressPatterns, splitSearchTerms,
 } = __testables
 
 /* ---------------- finto Supabase ---------------- */
@@ -43,6 +44,16 @@ function row({ id, name, city, address, cuisine_type, category, our_rating, open
 }
 
 /** Query builder minimo: registra i filtri e li applica in memoria. */
+// Colonne vere della tabella discounts (non discount_percent/starts_at/ends_at).
+const DISCOUNTS = [
+  { restaurant_id: 'r1', title: 'Sconto pizza', discount_type: 'percentage', discount_value: '20', valid_until: '2099-01-01T00:00:00Z' },
+  { restaurant_id: 'r2', title: 'Cinque euro', discount_type: 'fixed', discount_value: '5', valid_until: '2099-01-01T00:00:00Z' },
+]
+const PHOTOS = [
+  { restaurant_id: 'r1', photo_url: 'https://x/r1.webp', thumb_url: 'https://x/r1-thumb.webp', sort_order: 0 },
+  { restaurant_id: 'r2', photo_url: 'https://x/r2.webp', thumb_url: null, sort_order: 0 },
+]
+
 function fakeAdmin(rows = RESTAURANTS) {
   const builder = (table) => {
     const state = { table, eqs: [], ins: [], contains: [], lte: [], ors: [], textSearch: null, limit: Infinity }
@@ -53,6 +64,8 @@ function fakeAdmin(rows = RESTAURANTS) {
       eq: (col, val) => { state.eqs.push([col, val]); return api },
       lte: (col, val) => { state.lte.push([col, val]); return api },
       gte: () => api,
+      gt: () => api,
+      lt: () => api,
       in: (col, vals) => { state.ins.push([col, vals]); return api },
       contains: (col, vals) => { state.contains.push([col, vals]); return api },
       or: (expr) => { state.ors.push(expr); return api },
@@ -62,7 +75,8 @@ function fakeAdmin(rows = RESTAURANTS) {
     return api
   }
   const run = (state) => {
-    if (state.table === 'discounts') return { data: [], error: null }
+    if (state.table === 'discounts') return { data: DISCOUNTS, error: null }
+    if (state.table === 'restaurant_photos') return { data: PHOTOS, error: null }
     let out = rows.filter((r) => r.is_published)
     for (const [col, vals] of state.ins) out = out.filter((r) => vals.includes(r[col]))
     for (const [col, val] of state.lte) out = out.filter((r) => r[col] <= val)
@@ -336,4 +350,82 @@ test('due tool call nello stesso turno ricevono entrambe il loro tool_result', a
   const second = calls[1].messages.at(-1)
   assert.equal(second.role, 'user')
   assert.deepEqual(second.content.map((c) => c.tool_use_id), ['a', 'b'])
+})
+
+test('gli sconti usano le colonne vere e la percentuale giusta', async () => {
+  // Le colonne erano discount_percent/starts_at/ends_at: nessuna esiste, la
+  // query falliva sempre in silenzio e il badge "−X%" non compariva mai.
+  const out = await executeSearch(fakeAdmin(), { category: 'pizza' }, { sessionCity: 'Torino' })
+  const byName = Object.fromEntries(out.candidates.map((c) => [c.name, c]))
+  assert.equal(byName['Pizzeria Centro'].active_discount.percent, 20)
+  assert.equal(byName['Pizzeria Centro'].active_discount.title, 'Sconto pizza')
+  // Importo fisso: nessuna percentuale da mostrare, ma lo sconto c'è.
+  assert.equal(byName['Pizzeria Chiusa'].active_discount.percent, null)
+})
+
+test('discount_only tiene solo chi ha davvero uno sconto', async () => {
+  const out = await executeSearch(fakeAdmin(), { discount_only: true }, { sessionCity: 'Torino' })
+  const names = out.candidates.map((c) => c.name).sort()
+  assert.deepEqual(names, ['Pizzeria Centro', 'Pizzeria Chiusa'])
+})
+
+test('la foto arriva col candidato, senza secondo giro dal browser', async () => {
+  const out = await executeSearch(fakeAdmin(), { category: 'pizza' }, { sessionCity: 'Torino' })
+  const centro = out.candidates.find((c) => c.name === 'Pizzeria Centro')
+  assert.equal(centro.photo_url, 'https://x/r1-thumb.webp', 'preferisce la thumb')
+  const chiusa = out.candidates.find((c) => c.name === 'Pizzeria Chiusa')
+  assert.equal(chiusa.photo_url, 'https://x/r2.webp', 'ripiega sulla foto piena')
+})
+
+test('photo_url finisce nelle card dei picks', async () => {
+  stubFetch([
+    [{ type: 'tool', id: 't1', name: 'search_restaurants', input: { category: 'pizza' } }],
+    [
+      { type: 'text', chunks: ['Questa.'] },
+      { type: 'tool', id: 't2', name: 'present_picks', input: { picks: [{ restaurant_id: 'r1', why: 'Impasto vero.' }] } },
+    ],
+  ])
+  const out = await runConversation({
+    apiKey: 'x', admin: fakeAdmin(), history: [], userPrompt: 'pizza',
+    currentMoment: null, userLocation: null, userPreferences: null,
+    sessionCity: 'Torino', res: fakeRes(),
+  })
+  assert.equal(out.results[0].photo_url, 'https://x/r1-thumb.webp')
+  assert.equal(out.results[0].discount_percent, 20)
+})
+
+test('i pattern di zona non contengono virgole (rompevano il filtro or=)', () => {
+  // Una virgola dentro un pattern spezza la lista `or=` di PostgREST: la
+  // query moriva con PGRST100 e "in centro" non filtrava mai niente.
+  for (const zona of ['centro', 'centro storico', 'quadrilatero', 'vanchiglia', 'san salvario', 'crocetta']) {
+    const expr = mapZoneToAddressPatterns(zona)
+    assert.ok(expr, `${zona} deve produrre un filtro`)
+    for (const clause of expr.split(',')) {
+      assert.match(clause, /^address\.ilike\.%.+%$/, `clausola malformata in "${zona}": ${clause}`)
+    }
+  }
+})
+
+test('il full-text multi-termine viene prima allargato in OR, non buttato', () => {
+  const stages = buildRelaxStages({ search_text: 'agnolotti del plin' })
+  assert.equal(stages[1].filters.search_mode, 'or')
+  assert.deepEqual(stages[1].dropped, [], 'cercare in OR non è una perdita da dichiarare')
+  // Senza categoria il testo non si molla mai: meglio zero che locali a caso.
+  assert.ok(stages.every((st) => st.filters.search_text === 'agnolotti del plin'))
+})
+
+test('senza categoria il testo non viene mai mollato', () => {
+  const conCategoria = buildRelaxStages({ category: 'piemontese', search_text: 'agnolotti' })
+  assert.ok(conCategoria.some((st) => st.filters.search_text === null))
+  const senza = buildRelaxStages({ search_text: 'agnolotti' })
+  assert.ok(senza.every((st) => st.filters.search_text === 'agnolotti'))
+})
+
+test('splitSearchTerms scarta rumore e punteggiatura', () => {
+  // "del" resta: le stopword le toglie il dizionario italiano di Postgres,
+  // qui togliamo solo i token troppo corti e la punteggiatura.
+  assert.deepEqual(splitSearchTerms('agnolotti del plin'), ['agnolotti', 'del', 'plin'])
+  assert.deepEqual(splitSearchTerms('a di e ramen!'), ['ramen'])
+  assert.deepEqual(splitSearchTerms('  '), [])
+  assert.deepEqual(splitSearchTerms(null), [])
 })

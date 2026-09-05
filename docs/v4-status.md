@@ -451,3 +451,85 @@ Anthropic e Supabase sono stubbati, quindi gira offline. Copre il doppio
 - Le righe `ai_messages` con testo vuoto restano in DB: `normalizeHistory` le
   scarta, ma se si vuole ripulire →
   `delete from ai_messages where role='assistant' and coalesce(content->>'text','')='';`
+
+
+## Chiedi a Bi — secondo giro: tono, velocità, foto (2026-09-05)
+
+Feedback Augusto dopo il test sul preview: risposte poco naturali, lente, e
+niente foto sulle card. Testando davvero la ricerca contro il DB di produzione
+sono usciti tre bug che dalla UI non si vedevano.
+
+### Le foto — `PhotoOrEmoji` si congelava al primo render
+`const [failed, setFailed] = useState(!src)` si inizializzava una volta sola.
+Le card della chat nascono **senza** foto (i picks arrivano dallo stream, la
+query foto dopo), quindi `failed` restava `true` per sempre e l'immagine non
+compariva mai, nemmeno quando l'URL arrivava. Altrove nell'app la foto è nella
+stessa query del locale, ecco perché si rompeva solo qui.
+Ora lo stato tiene *quale URL* ha fallito, non un booleano: un `src` nuovo
+riparte pulito. Stesso difetto e stessa cura in `SmartImage`.
+In più `/api/ai` manda `photo_url` dentro il pick: la card nasce completa,
+senza il secondo giro di rete.
+
+### La zona non ha MAI filtrato — `PGRST100` ingoiato in silenzio
+L'alias `'via po,'` di "centro" contiene una virgola. La lista `or=` di
+PostgREST è separata da virgole → `failed to parse logic tree`, query morta.
+L'errore non veniva letto: sembrava "nessun risultato" e si cadeva sullo stage
+rilassato. Misurato prima/dopo sui dati veri:
+
+| domanda | prima | dopo |
+|---|---|---|
+| pizza in centro | 6 candidati, zona rilassata, 2 fuori Torino | **3 pizzerie in centro**, zona rispettata |
+| piemontese in centro | 7, zona rilassata | **6 in centro**, zona rispettata |
+
+Ora i pattern sono ripuliti e gli errori di stage vengono loggati.
+
+### Gli agnolotti — full-text in AND + rilassamento che buttava il piatto
+`websearch_to_tsquery` mette i termini in AND: "agnolotti del plin" → 0
+documenti (ma "agnolotti" → 1, "plin" → 2). Il vecchio rilassamento mollava del
+tutto `search_text` e Bi si ritrovava **63 locali a caso**: consigliava un
+africano a chi chiedeva gli agnolotti.
+Ora: prima si riprova lo stesso testo in OR (`agnolotti | del | plin` → 3 piole
+piemontesi vere), e il testo si molla solo se resta la categoria a dare senso al
+risultato. Senza categoria si torna zero e Bi lo dice.
+
+### Gli sconti — tre colonne inesistenti
+La query usava `discount_percent`, `starts_at`, `ends_at`. La tabella ha
+`discount_value` + `discount_type` e `valid_from` / `valid_until`. Falliva
+sempre, e l'errore non veniva letto: il badge "−X%" non è mai comparso e
+`discount_only` (il prompt "Sconti attivi stasera" in home) tornava sempre zero.
+"Attivo" ora usa la stessa definizione del resto dell'app (`is_active` +
+`valid_until` futuro).
+
+> ⚠️ **Contenuto, non codice**: in `discounts` c'è **una sola riga**, disattivata
+> e scaduta il 24/05/2026. Finché non ci sono sconti attivi, "Sconti attivi
+> stasera" resta legittimamente vuoto ovunque, chat compresa.
+
+### Velocità
+- Modello: `claude-sonnet-5` (era `claude-sonnet-4-6`), con fallback automatico
+  al precedente se l'account non ce l'ha — la chat non si rompe.
+- Ricerca: **da ~950-2100 ms a ~280-720 ms** (misurato su 8 domande reali).
+  Foto e sconti si caricano una volta sola, sullo stage vincente e solo sui
+  candidati che Claude vedrà, e in parallelo. Prima due query per ogni stage
+  scartato.
+- Meno token in ingresso: a Claude va una proiezione snella del candidato
+  (niente slug, foto, flag interni), excerpt 280 → 200 caratteri.
+- `max_tokens` 2048 → 1024.
+- L'attesa ora si vede: evento SSE `status` ("Sto guardando tra i miei
+  locali…") dentro la bolla. Prima i puntini **non comparivano mai** — la
+  bolla assistant esiste già in streaming, quindi si vedeva solo un cursore
+  lampeggiante nel vuoto.
+
+### Tono
+Regole nuove nel system prompt, con esempi di cosa NON scrivere presi dalle
+risposte vere del preview: max 2 frasi sotto le 35 parole; mai chiedere il
+permesso di cercare ancora ("se vuoi posso…", "dimmi tu…"); mai raccontare il
+proprio processo o i candidati scartati ("il candidato da Collegno lo salto");
+niente punti esclamativi; non ripetere nel testo categorie e zone che stanno
+già nelle card.
+
+### Come ho testato
+`npm test` → 22 test (node --test, offline, Anthropic e Supabase stubbati).
+In più uno script usa e getta che ha eseguito la **vera** `executeSearch` contro
+il DB di produzione con la chiave anon, su 8 domande reali: è così che sono
+saltati fuori zona, full-text e sconti. Non riproducibile in CI (serve la rete),
+ma ripetibile: bastano `executeSearch` + un client anon.
