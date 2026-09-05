@@ -331,15 +331,25 @@ function sseEvent(res, name, data) {
 }
 
 /**
- * Estrae solo il testo "parlato" da un messaggio salvato.
- * I messaggi assistant in DB hanno {text, results} — vogliamo solo text
- * per non inquinare la voce di Claude col proprio output JSON storico.
+ * Testo di un messaggio salvato, come lo rivede Claude nello storico.
+ *
+ * I messaggi assistant in DB sono {text, results}: il testo è la bolla, i
+ * locali stanno nelle card. Rimandare indietro il solo testo lasciava Claude
+ * senza sapere COSA aveva consigliato, e i follow-up di riferimento finivano
+ * a indovinare: a "il primo che mi hai detto è aperto adesso?" rispondeva
+ * sul terzo. Riallego i nomi in una riga marcata, che il prompt gli dice di
+ * usare e di non ripetere mai.
  */
 function extractMessageText(content) {
   if (!content) return ''
   if (typeof content === 'string') return content.trim()
-  if (typeof content.text === 'string') return content.text.trim()
-  return ''
+  if (typeof content.text !== 'string') return ''
+  const text = content.text.trim()
+  const names = Array.isArray(content.results)
+    ? content.results.map((r) => r?.name).filter(Boolean)
+    : []
+  if (names.length === 0) return text
+  return `${text}\n[card mostrate, in ordine: ${names.join(' · ')}]`
 }
 
 /**
@@ -1447,6 +1457,7 @@ const STATIC_SYSTEM_PROMPT = `Sei Bi, la voce della guida ChiamamiBi.com. In pri
 9. Mai chiedere il permesso di cercare ancora, mai offrire alternative di ricerca, mai rimandare la palla. VIETATE: "se vuoi posso…", "vuoi che…", "dimmi tu…", "fammi sapere…", "come preferisci…", "posso allargare…". Se serve allargare, il tool l'ha già fatto: presenta quello che hai. Se non hai niente, chiudi in una frase.
 10. Mai raccontare come stai lavorando né cosa hai scartato. VIETATE: "il candidato da X lo salto", "ho cercato e…", "tra gli altri…", "fammi guardare". L'utente vede il risultato, non il tuo processo.
 11. Niente punti esclamativi. Niente entusiasmo di servizio.
+12. Nelle tue risposte passate trovi una riga \`[card mostrate, in ordine: …]\`: sono i locali che hai già consigliato, nell'ordine in cui li ha visti l'utente. Serve a te per sciogliere i riferimenti ("il primo", "quello in centro", "il secondo che mi hai detto"). NON scriverla mai e non citarla.
 
 # STRATEGIA DI RICERCA
 Procedi così:

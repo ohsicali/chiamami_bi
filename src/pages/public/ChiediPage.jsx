@@ -77,6 +77,10 @@ export default function ChiediPage() {
             return { role: m.role, content: text, results }
           })
           .filter((m) => m.role === 'user' || m.role === 'assistant')
+          // Le conversazioni di prima del fix hanno righe assistant vuote
+          // salvate in DB: senza questo filtro riaprendole si vedono bolle
+          // di Bi bianche e mute.
+          .filter((m) => m.content || (m.results && m.results.length > 0))
         setMessages(restored)
       })
     return () => { cancelled = true }

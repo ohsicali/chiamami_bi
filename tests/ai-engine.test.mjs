@@ -452,3 +452,23 @@ test('splitSearchTerms scarta rumore e punteggiatura', () => {
   assert.deepEqual(splitSearchTerms('  '), [])
   assert.deepEqual(splitSearchTerms(null), [])
 })
+
+test('lo storico riporta i nomi delle card, non solo il testo', () => {
+  // Senza i nomi Claude non sa cosa ha consigliato: a "il primo che mi hai
+  // detto" rispondeva sul terzo.
+  const rows = [
+    { role: 'assistant', content: { text: 'Eccoti tre piole:', results: [{ name: 'Locanda Bellezia' }, { name: 'Piola da Cianci' }, { name: "Caffè dell'Orologio" }] } },
+    { role: 'user', content: { text: 'qualcosa di piemontese' } },
+  ]
+  const [, assistant] = normalizeHistory(rows)
+  assert.match(assistant.content, /^Eccoti tre piole:/)
+  assert.match(assistant.content, /\[card mostrate, in ordine: Locanda Bellezia · Piola da Cianci · Caffè dell'Orologio\]/)
+})
+
+test('senza card lo storico resta il solo testo', () => {
+  const rows = [
+    { role: 'assistant', content: { text: 'Che voglia hai?', results: [] } },
+    { role: 'user', content: { text: 'consigliami qualcosa' } },
+  ]
+  assert.equal(normalizeHistory(rows)[1].content, 'Che voglia hai?')
+})
