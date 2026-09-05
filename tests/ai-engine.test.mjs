@@ -352,6 +352,29 @@ test('due tool call nello stesso turno ricevono entrambe il loro tool_result', a
   assert.deepEqual(second.content.map((c) => c.tool_use_id), ['a', 'b'])
 })
 
+test('il giro di pianificazione non puo parlare, solo cercare', async () => {
+  // Senza tool_choice il modello rapido rispondeva di suo e inventava
+  // ("non ho gelaterie in archivio" — ne ho due). Forzando la tool call,
+  // qualunque parola rivolta all'utente nasce dal modello principale dopo
+  // aver visto i candidati veri.
+  const calls = stubFetch([
+    [{ type: 'tool', id: 't1', name: 'search_restaurants', input: { category: 'gelato' } }],
+    [
+      { type: 'text', chunks: ['Due indirizzi seri.'] },
+      { type: 'tool', id: 't2', name: 'present_picks', input: { picks: [{ restaurant_id: 'r1', why: 'Pistacchio vero.' }] } },
+    ],
+  ])
+  await runConversation({
+    apiKey: 'x', admin: fakeAdmin(), history: [], userPrompt: 'dove mangio un gelato',
+    currentMoment: null, userLocation: null, userPreferences: null,
+    sessionCity: 'Torino', res: fakeRes(),
+  })
+  assert.deepEqual(calls[0].tool_choice, { type: 'tool', name: 'search_restaurants' })
+  assert.match(calls[0].model, /haiku/, 'il primo giro usa il modello rapido')
+  assert.equal(calls[1].tool_choice, undefined, 'il giro che parla sceglie da solo')
+  assert.doesNotMatch(calls[1].model, /haiku/, 'la voce di Bi resta sul modello principale')
+})
+
 test('gli sconti usano le colonne vere e la percentuale giusta', async () => {
   // Le colonne erano discount_percent/starts_at/ends_at: nessuna esiste, la
   // query falliva sempre in silenzio e il badge "−X%" non compariva mai.

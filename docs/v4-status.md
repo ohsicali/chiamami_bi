@@ -533,3 +533,49 @@ In più uno script usa e getta che ha eseguito la **vera** `executeSearch` contr
 il DB di produzione con la chiave anon, su 8 domande reali: è così che sono
 saltati fuori zona, full-text e sconti. Non riproducibile in CI (serve la rete),
 ma ripetibile: bastano `executeSearch` + un client anon.
+
+
+## Chiedi a Bi — terzo giro: provata sul serio con la chiave API (2026-09-05)
+
+Con `ANTHROPIC_API_KEY` ho eseguito il loop vero (`runConversation`) contro il
+DB di produzione, sulle domande della screenshot e dei log. Non piu solo test
+stubbati: risposte vere, tempi veri.
+
+### Modello: pianificatore rapido, voce sul modello grosso
+
+Il primo giro non parla all'utente — legge la domanda e sceglie i filtri. Ora lo
+fa **Haiku 4.5** (`CLAUDE_MODEL_PLANNER`), la risposta resta a **Sonnet 5**.
+
+⚠️ Il primo tentativo, col rapido lasciato libero, ha **peggiorato la qualita**:
+su "dove mangio un gelato" Haiku ha risposto di suo senza cercare, inventando
+*"non ho gelaterie in archivio"* — ne ho due — in 42 parole e chiudendo con
+"Vuoi che ti dica dove?". Risolto alla radice con
+`tool_choice: {type:'tool', name:'search_restaurants'}` sul primo giro: il
+pianificatore **non puo** parlare, puo solo cercare. Qualunque parola rivolta
+all'utente nasce da Sonnet 5 dopo aver visto i candidati veri.
+
+Override senza deploy: `AI_MODEL` e `AI_MODEL_FAST` (vuoto = tutto sul grosso).
+
+### Tempi misurati (stesse 7 domande)
+
+| domanda | prima (tutto Sonnet 5) | dopo | 1° token |
+|---|---|---|---|
+| pizza napoletana in centro | 7351 ms | **5643 ms** | 5648 → 4011 |
+| pizza in centro | 5889 ms | **4945 ms** | 3195 → 2462 |
+| aperitivo a Vanchiglia | 6736 ms | 7000 ms | 2961 → 2052 |
+| agnolotti del plin | 5704 ms | **4489 ms** | 2734 → 1955 |
+| quadrilatero all'aperto | 13811 ms | **5921 ms** | 8799 → 2885 |
+| gelato | 5791 ms | **4296 ms** | 3637 → 2118 |
+| miglior pesce | 7827 ms | **5486 ms** | 3317 → 2109 |
+
+Primo giro da 1,5-3,8 s a 0,8-1,4 s. `MAX_CANDIDATES` 10 → 6 (round 2 legge meno).
+Timeline per richiesta nei log Vercel: `[ai] round1(...) Xms · search(N) Yms · round2(...) Zms · picks N`.
+
+### Tono: verificato sulle risposte vere
+Tutte fra 14 e 25 parole (limite 35), 1-2 frasi, nessun "se vuoi posso…",
+nessun punto esclamativo, nessun racconto di cosa e stato scartato. I casi
+limite reggono: *"consigliami qualcosa"* chiede cosa vuoi **senza card**, *"il
+miglior pesce"* rifiuta la classifica, la napoletana dichiara che e a Rivoli.
+Foto presenti su tutte le card di tutte le prove.
+
+> La chiave API e stata usata solo in sessione, mai scritta su file. Va revocata.

@@ -70,8 +70,12 @@ import { applyCors } from './_cors.js'
 // motivo per cui le risposte suonavano da assistente e arrivavano lente.
 // Se l'account non ce l'ha ancora abilitato, `claudeFetch` scala da solo al
 // modello precedente invece di far fallire la chat.
-const CLAUDE_MODEL = 'claude-sonnet-5'
+const CLAUDE_MODEL = process.env.AI_MODEL || 'claude-sonnet-5'
 const CLAUDE_MODEL_FALLBACK = 'claude-sonnet-4-6'
+// Il primo giro non produce voce: Claude legge la domanda e sceglie i filtri.
+// Non serve il modello grosso, e sono secondi che l'utente aspetta guardando
+// una bolla vuota. Override con AI_MODEL_FAST (vuoto = usa sempre il grosso).
+const CLAUDE_MODEL_PLANNER = process.env.AI_MODEL_FAST ?? 'claude-haiku-4-5-20251001'
 let activeModel = CLAUDE_MODEL
 const ANTHROPIC_VERSION = '2023-06-01'
 // Bi risponde in 1-2 frasi + la tool call dei picks: 1024 bastano e
@@ -82,7 +86,7 @@ const MAX_RESULTS = 3
 const MAX_PROMPT_LEN = 500
 const MAX_TOOL_ITERATIONS = 4
 const DEFAULT_CITY = 'Torino'
-const MAX_CANDIDATES = 10
+const MAX_CANDIDATES = 6
 
 // Comuni della cintura torinese: chi chiede "Torino" accetta volentieri un
 // locale a Collegno o Moncalieri, non uno a Marsala. Gli alias servono a
@@ -469,7 +473,20 @@ async function runConversation({
 
   // Round 1 sempre sincrono: di norma è solo la tool call di ricerca e non
   // produce voce, quindi non c'è niente da streamare e il parsing è più semplice.
-  let turn = await callClaudeTurn({ apiKey, system, messages, tools })
+  const t0 = Date.now()
+  const timeline = []
+  const mark = (what) => timeline.push(`${what} ${Date.now() - t0}ms`)
+
+  // Il primo giro è SOLO pianificazione: `tool_choice` obbliga la ricerca.
+  // Senza questo vincolo il modello rapido a volte rispondeva di suo,
+  // inventando ("non ho gelaterie in archivio" — ne ho due). Così non può:
+  // qualunque parola rivolta all'utente nasce dal modello principale, dopo
+  // aver visto i candidati veri.
+  let turn = await callClaudeTurn({
+    apiKey, system, messages, tools, planner: true,
+    toolChoice: { type: 'tool', name: 'search_restaurants' },
+  })
+  mark(`round1(${turn.model})`)
   let claudeCalls = 1
 
   for (;;) {
@@ -506,6 +523,7 @@ async function runConversation({
       }
       searchedAtLeastOnce = true
       const toolOutput = await executeSearch(admin, call.input || {}, searchCtx)
+      mark(`search(${(toolOutput.candidates || []).length})`)
       for (const c of (toolOutput.candidates || [])) candidatesById.set(c.id, c)
       toolResults.push({
         type: 'tool_result', tool_use_id: call.id,
@@ -533,6 +551,7 @@ async function runConversation({
     turn = streaming
       ? await streamClaudeTurn({ apiKey, system, messages, tools, res })
       : await callClaudeTurn({ apiKey, system, messages, tools })
+    mark(`round${claudeCalls}(${turn.model})`)
   }
 
   // Rete di sicurezza: mai una bolla vuota. Se Claude ha esaurito i giri
@@ -547,9 +566,10 @@ async function runConversation({
     if (streaming) sseEvent(res, 'delta', { text: fallback })
   }
 
+  console.log(`[ai] ${timeline.join(' · ')} · picks ${results.length}`)
   const message = cleanupText(accText)
   if (streaming) sseEvent(res, 'picks', results)
-  return { message, results }
+  return { message, results, timeline }
 }
 
 /**
@@ -557,10 +577,11 @@ async function runConversation({
  * { text, toolUses:[{id,name,input}], content } dove `content` è il blocco
  * assistant da rimandare a Claude nel turno successivo.
  */
-async function callClaudeTurn({ apiKey, system, messages, tools }) {
-  const resp = await callClaude(apiKey, { system, messages, tools })
+async function callClaudeTurn({ apiKey, system, messages, tools, planner = false, toolChoice = null }) {
+  const resp = await callClaude(apiKey, { system, messages, tools, planner, toolChoice })
   const content = Array.isArray(resp.content) ? resp.content : []
   return {
+    model: resp._model,
     text: extractTextBlocks(content),
     toolUses: content
       .filter((c) => c.type === 'tool_use')
@@ -577,7 +598,7 @@ async function callClaudeTurn({ apiKey, system, messages, tools }) {
  * così il loop può rimandare il turno a Claude senza saperne la provenienza.
  */
 async function streamClaudeTurn({ apiKey, system, messages, tools, res }) {
-  const response = await claudeFetch(apiKey, { system, messages, tools, stream: true })
+  const { response, model } = await claudeFetch(apiKey, { system, messages, tools, stream: true })
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
@@ -650,7 +671,7 @@ async function streamClaudeTurn({ apiKey, system, messages, tools, res }) {
     }
   }
 
-  return { text: text.trim(), toolUses, content, streamed: true }
+  return { text: text.trim(), toolUses, content, streamed: true, model }
 }
 
 function extractTextBlocks(content) {
@@ -737,9 +758,12 @@ function buildResultsFromPicks(picks, candidatesById) {
  * volta sola al modello precedente e ce lo ricordiamo per le chiamate
  * successive dello stesso processo.
  */
-async function claudeFetch(apiKey, { system, messages, tools, stream = false }) {
+async function claudeFetch(apiKey, { system, messages, tools, stream = false, planner = false, toolChoice = null }) {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const model = activeModel
+    // Il planner non fa fallback: se non c'è, si usa il modello principale.
+    const model = (planner && activeModel === CLAUDE_MODEL && CLAUDE_MODEL_PLANNER)
+      ? CLAUDE_MODEL_PLANNER
+      : activeModel
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -751,12 +775,17 @@ async function claudeFetch(apiKey, { system, messages, tools, stream = false }) 
         model,
         max_tokens: MAX_OUTPUT_TOKENS,
         system, tools, messages,
+        ...(toolChoice ? { tool_choice: toolChoice } : {}),
         ...(stream ? { stream: true } : {}),
       }),
     })
-    if (response.ok) return response
+    if (response.ok) return { response, model }
 
     const errBody = await response.text().catch(() => '')
+    if (isModelUnavailable(response.status, errBody) && model === CLAUDE_MODEL_PLANNER && planner) {
+      console.warn(`[ai] planner ${model} non disponibile, uso ${activeModel}`)
+      return { response: await claudeFetch(apiKey, { system, messages, tools, stream, toolChoice }).then((r) => r.response), model: activeModel }
+    }
     if (isModelUnavailable(response.status, errBody) && model !== CLAUDE_MODEL_FALLBACK) {
       console.warn(`[ai] modello ${model} non disponibile, passo a ${CLAUDE_MODEL_FALLBACK}`)
       activeModel = CLAUDE_MODEL_FALLBACK
@@ -772,9 +801,9 @@ function isModelUnavailable(status, body) {
   return status === 400 && /model/i.test(body || '')
 }
 
-async function callClaude(apiKey, { system, messages, tools }) {
-  const response = await claudeFetch(apiKey, { system, messages, tools })
-  return await response.json()
+async function callClaude(apiKey, { system, messages, tools, planner = false, toolChoice = null }) {
+  const { response, model } = await claudeFetch(apiKey, { system, messages, tools, planner, toolChoice })
+  return { ...(await response.json()), _model: model }
 }
 
 /* ------------------------------------------------------------------ */
