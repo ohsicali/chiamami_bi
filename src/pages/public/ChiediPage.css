@@ -135,26 +135,21 @@
 }
 
 /* ========================= BODY ========================= */
-/* Niente overflow-y/scroll proprio: lo scroll è quello nativo della
-   pagina (html/body). Con .cp-input-bar `position: sticky` invece di
-   `fixed`, la barra segue il vero visual viewport calcolato dal browser
-   — su iOS, un elemento `fixed` viene ancorato al layout viewport e non
-   si aggiorna quando si apre la tastiera (il layout viewport non si
-   restringe, solo quello visivo), mentre il browser scrolla la pagina per
-   portare in vista il campo attivo: risultato, la barra "fissa" restava
-   sotto la tastiera mentre lo scroll ne mostrava un'altra copia più in
-   alto. `sticky`, essendo parte del flusso, segue lo scroll reale invece
-   di uno stantio. */
 .cp-body {
   flex: 1;
-  padding: 24px 18px 20px;
+  overflow-y: auto;
+  /* padding-bottom mobile: input bar (~76) + breathing room. La tab bar è
+     nascosta su /chiedi (vedi App.jsx: showTabBar && !isChiedi), quindi
+     l'input bar siede direttamente sopra la safe-area. */
+  padding: 24px 18px calc(110px + env(safe-area-inset-bottom));
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
+  -webkit-overflow-scrolling: touch;
 }
 @media (min-width: 768px) {
   .cp-body {
-    padding: 28px 24px 24px;
+    padding: 28px 24px 140px;
   }
 }
 
@@ -659,15 +654,26 @@
 }
 
 /* ========================= INPUT BAR ========================= */
-/* `sticky` invece di `fixed`: essendo l'ultimo elemento nel normale
-   flusso della pagina (che scrolla nativamente, vedi .cp-body sopra),
-   resta sempre visibile in fondo — sia a conversazione corta (il body
-   flex:1 la spinge giù) sia lunga (si aggancia scrollando) — e niente
-   bug di posizionamento quando si apre la tastiera su iOS. La
-   MobileTabBar è nascosta sulla pagina /chiedi (vedi App.jsx) così
-   l'input bar non deve convivere con un'altra barra fissa. */
+/* Mobile: barra fissa appoggiata sopra la safe-area. La MobileTabBar è
+   nascosta sulla pagina /chiedi (vedi App.jsx) così l'input bar non deve
+   convivere con un'altra barra fissa — niente gap strani, niente strip
+   opaca dietro al tab bar. Layout chat standard (WhatsApp / ChatGPT).
+   NB: `sticky` è stato provato al posto di `fixed` per il bug della
+   tastiera iOS (v. sotto), ma rompe l'altra proprietà che serve a un
+   input di chat — restare SEMPRE ancorato al fondo visibile — perché uno
+   `sticky` si aggancia solo dopo aver scrollato oltre tutto il contenuto:
+   nella empty state, che ha più prompt di quanti ne stiano in uno
+   schermo, la barra restava a metà pagina con altre card sotto. `fixed`
+   è la semantica giusta; il bug vero si risolve con la viewport meta
+   (index.html: interactive-widget=resizes-content), che fa restringere
+   davvero il layout viewport quando appare la tastiera invece di
+   lasciarlo intatto (comportamento default di iOS/Android, che ancorava
+   la barra sotto la tastiera mentre il browser scrollava la pagina per
+   mostrare il campo attivo). */
 .cp-input-bar {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   background: var(--cp-page);
   border-top: 1px solid var(--cp-line);
