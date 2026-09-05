@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -20,7 +20,7 @@ import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
-import { STAGGER, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/motion'
+import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 
@@ -278,14 +278,15 @@ function HeroPromo({ featured }) {
   return (
     // L'hero è il primo blocco sotto la barra e arriva quando i dati dei
     // drop rispondono, cioè dopo il primo paint: senza entrata comparirebbe
-    // di scatto spingendo giù tutto il resto. 280ms, sale di 12px: basta a
-    // leggere l'arrivo, non abbastanza da far aspettare chi vuole scorrere.
-    <motion.div
-      className="hfv4-hero-wrap"
-      initial={riseFrom(12).from}
-      animate={riseFrom(12).to}
-      transition={TR_REVEAL}
-      style={{ padding: '4px 20px 22px' }}
+    // di scatto spingendo giù tutto il resto. CSS e non Framer: è
+    // un'entrata UNA VOLTA SOLA al mount, senza gesti né interruzioni —
+    // il caso da manuale per un'animazione predeterminata. Gira sul
+    // motore nativo del browser invece che nel loop di React, quindi
+    // resta fluida anche se in quel momento la pagina sta ancora
+    // montando bolle categoria e caricando le foto.
+    <div
+      className="hfv4-hero-wrap hfv4-rise"
+      style={{ padding: '4px 20px 22px', '--rise-y': '12px' }}
     >
       <div
         className="hfv4-hero-card"
@@ -467,7 +468,7 @@ function HeroPromo({ featured }) {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -477,30 +478,32 @@ function CategoryBubbles({ onSelect, onAltro }) {
   const labelStyle = () => ({ fontSize:11, fontWeight:700, color:'var(--color-ink)', maxWidth:72, textAlign:'center', lineHeight:1.15 })
   const btnStyle = { flex:'0 0 auto', display:'flex', flexDirection:'column', alignItems:'center', gap:6, background:'transparent', border:'none', scrollSnapAlign:'start', cursor:'pointer', padding:0 }
 
-  // Le bolle entrano da sinistra a destra, 40ms l'una dall'altra: la fila
-  // si legge come una fila, e il taglio a destra dice da solo che si
-  // scrolla. Il tetto a 240ms tiene tutto dentro una sola occhiata.
-  // `.press` (globals.css) dà l'affondamento al tocco: erano dieci
-  // bottoni senza nessuna reazione al tap.
-  const enter = (i) => ({
-    initial: riseFrom(10, reduce).from,
-    animate: riseFrom(10, reduce).to,
-    transition: { ...TR_REVEAL, delay: staggerDelay(i, 0.04) },
+  // Le bolle entrano da sinistra a destra, 40ms l'una dall'altra — CSS
+  // (.hfv4-rise), non Framer. Con 11 bottoni che animano nello stesso
+  // istante in cui la pagina sta ancora montando, 11 animazioni JS in
+  // parallelo perdevano frame: misurato, gruppi di bolle che saltavano
+  // da 0 a 0.11 di colpo invece di seguire il proprio ritardo. React
+  // sceglie qui solo i due numeri (quanto sale, quanto aspetta), il
+  // motore CSS del browser fa il resto. `.press` (globals.css) dà
+  // l'affondamento al tocco in pura CSS, niente whileTap.
+  const rise = (i) => ({
+    '--rise-y': reduce ? '0px' : '10px',
+    '--rise-delay': `${Math.round(staggerDelay(i, 0.04) * 1000)}ms`,
   })
 
   return (
     <div className="hfv4-cats-wrap">
       <div className="hfv4-cats-row" style={{ display:'flex', gap:10, overflowX:'auto', padding:'6px 20px 20px 20px', WebkitOverflowScrolling:'touch', scrollSnapType:'x mandatory', scrollPaddingLeft:20, scrollbarWidth:'none' }}>
         {CATEGORIES.map((c, i) => (
-          <motion.button key={c.key} onClick={() => onSelect?.(c)} className="press" style={btnStyle} {...enter(i)}>
+          <button key={c.key} onClick={() => onSelect?.(c)} className="press hfv4-rise" style={{ ...btnStyle, ...rise(i) }}>
             <span className="hfv4-cat-bubble" style={bubbleStyle()}>{c.emoji}</span>
             <span className="hfv4-cat-label" style={labelStyle()}>{c.label}</span>
-          </motion.button>
+          </button>
         ))}
-        <motion.button onClick={onAltro} className="press" style={btnStyle} {...enter(CATEGORIES.length)}>
+        <button onClick={onAltro} className="press hfv4-rise" style={{ ...btnStyle, ...rise(CATEGORIES.length) }}>
           <span className="hfv4-cat-bubble" style={{ width:64, height:64, borderRadius:'50%', background:'var(--color-ink-05)', display:'grid', placeItems:'center', fontSize:22, fontWeight:800, color:'var(--color-ink)' }}>+</span>
           <span className="hfv4-cat-label" style={labelStyle()}>Altro</span>
-        </motion.button>
+        </button>
       </div>
     </div>
   )
@@ -532,13 +535,15 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
   const priceStr = formatPrice(restaurant.price_range)
   const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
   return (
-    <motion.button
-      className="hfv4-rcard press"
+    // CSS, non Framer: questa card è dentro <Reveal> (whileInView), che
+    // essendo la sezione sopra la piega scatta nello stesso istante del
+    // mount — due orchestrazioni JS sullo stesso pezzo di schermo, per
+    // fino a 8 card in fila. `.hfv4-rise` gira sul motore nativo del
+    // browser e non compete con il resto del mount.
+    <button
+      className="hfv4-rcard press hfv4-rise"
       onClick={() => onClick?.(restaurant)}
-      initial={riseFrom(10).from}
-      animate={riseFrom(10).to}
-      transition={{ ...TR_REVEAL, delay: staggerDelay(index, STAGGER, 0.2) }}
-      style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+      style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit', '--rise-delay': `${Math.round(staggerDelay(index, STAGGER, 0.2) * 1000)}ms` }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
         {photoUrl
           ? <img src={photoUrl} srcSet={photoSrcSet} sizes="(max-width: 768px) 72vw, 320px" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading={isAboveFold ? 'eager' : 'lazy'} fetchpriority={isAboveFold ? 'high' : 'auto'} decoding="async" />
@@ -566,7 +571,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           </div>
         )}
       </div>
-    </motion.button>
+    </button>
   )
 }
 
@@ -1013,8 +1018,15 @@ export default function HomeFeedV4() {
           Non è decorazione: il feed carica in modo asincrono e questi
           blocchi comparivano di colpo, spostando quello che c'era sotto.
           `once` è true — si vedono scendendo, non ogni volta che si
-          risale, altrimenti diventano rumore. */}
-      <Reveal as="section" className="hfv4-section" style={{ padding: '8px 0 4px' }}>
+          risale, altrimenti diventano rumore.
+
+          ECCEZIONE: "Ultimi aggiunti" non è dentro <Reveal>. È la prima
+          sezione sotto la hero, quindi praticamente sempre già in vista
+          al mount — whileInView scattava nello stesso istante in cui
+          ogni sua card animava già per conto proprio (CSS, sotto), due
+          orchestrazioni sullo stesso pezzo di schermo. Le card bastano
+          da sole. */}
+      <section className="hfv4-section" style={{ padding: '8px 0 4px' }}>
         <SectionHead
           kicker="Nuovi in guida"
           title="Ultimi aggiunti"
@@ -1032,7 +1044,7 @@ export default function HomeFeedV4() {
             ))}
           </div>
         )}
-      </Reveal>
+      </section>
 
       {/* Sponsor banner: full-width su desktop, fuori dalla griglia 2-col */}
       <Reveal className="hfv4-spon-outer">

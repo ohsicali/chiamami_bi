@@ -618,6 +618,36 @@ body {
   }
 }
 
+/* Entrata "predeterminata" per ciò che compare al mount della home
+   (bolle categoria, hero, card di "Ultimi aggiunti"). Prima erano N
+   animazioni Framer Motion parallele orchestrate in JS: con 11 bolle +
+   una hero + fino a 8 card che animano tutte nello stesso istante in
+   cui la pagina sta ancora montando e le foto stanno caricando, il
+   thread principale perdeva frame — misurato: gruppi di bolle che
+   saltavano da 0 a 0.11 di opacità di colpo invece di seguire il
+   proprio ritardo individuale, invece di uno scorrimento continuo.
+   Una animazione CSS gira sul motore nativo del browser (compositor),
+   non in un ciclo requestAnimationFrame guidato da React: resta fluida
+   anche a thread occupato — esattamente il caso "predetermined motion
+   that must stay smooth while the page is busy loading". JS sceglie
+   solo i due numeri (quanto sale, quanto aspetta) via custom
+   property, non anima più nulla lui stesso. */
+@keyframes hfv4-rise-in {
+  from { opacity: 0; transform: translateY(var(--rise-y, 14px)); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hfv4-rise {
+  animation: hfv4-rise-in var(--dur-reveal) var(--ease-out) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Copre .hfv4-rise dove nessun JS ha già azzerato --rise-y (Rcard non
+     controlla useReducedMotion, si affida al default CSS di 14px). Lo
+     spostamento sparisce, la dissolvenza resta — "riduci", non "azzera". */
+  .hfv4-rise { --rise-y: 0px; }
+}
+
 /* Cuore "salva": l'hover vive qui e non in Framer, perché whileHover
    scatta anche al tocco e lascia la card ingrandita dopo il tap. */
 @media (hover: hover) and (pointer: fine) {
