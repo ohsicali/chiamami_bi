@@ -1,4 +1,3 @@
-import DesktopExplorePage from './DesktopExplorePage'
 import { useState, useCallback, useRef, useEffect, useMemo, memo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -20,23 +19,17 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
-import { SkeletonCard } from '../../components/UI/LoadingSpinner'
+import { SkeletonCard, PageLoader } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatPrice } from '../../lib/utils/price'
+import { slugify } from '../../lib/utils/slug'
 
-function slugify(name) {
-  return name
-    .toLowerCase()
-    .replace(/[àáâãäå]/g, 'a')
-    .replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o')
-    .replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
+// Caricata solo su desktop: da telefono questo codice non viene scaricato.
+const DesktopExplorePage = lazy(() => import('./DesktopExplorePage'))
+
 
 
 const CAROUSEL_INITIAL = 4
@@ -54,7 +47,7 @@ function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, o
     : null
   const photoUrl = proxyImg(photoRaw, { w: 200 })
   const isAboveFold = index < 2
-  const priceStr = restaurant.price_range != null ? '€'.repeat(restaurant.price_range) : null
+  const priceStr = formatPrice(restaurant.price_range)
   const distance = userPosition && restaurant.latitude && restaurant.longitude
     ? getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude)
     : null
@@ -408,7 +401,7 @@ export default function HomePage() {
   }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
 
   // ── Desktop: delegate entirely to split-view layout ──
-  if (isDesktop) return <DesktopExplorePage />
+  if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopExplorePage /></Suspense>
 
   /* Shared list content — used by mobile sheet */
   const listContent = (

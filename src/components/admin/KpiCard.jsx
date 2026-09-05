@@ -10,7 +10,7 @@
  *   sparkline  → array of 6-10 numbers 0..100 (bar heights in %)
  *                last bar renders with corallo accent ("hot")
  */
-export default function KpiCard({ label, value, delta, deltaDir, sparkline }) {
+export default function KpiCard({ label, value, delta, deltaDir, sparkline, loading = false }) {
   return (
     <div
       style={{
@@ -31,20 +31,29 @@ export default function KpiCard({ label, value, delta, deltaDir, sparkline }) {
       >
         {label}
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontWeight: 900,
-          fontSize: 34,
-          letterSpacing: '-0.03em',
-          marginTop: 8,
-          lineHeight: 1,
-          color: 'var(--color-ink, #22181C)',
-        }}
-      >
-        {value}
-      </div>
-      {delta && (
+      {loading ? (
+        // B-Admin: skeleton al posto del flash "0" finché la query non risponde.
+        <div
+          className="skeleton"
+          aria-hidden="true"
+          style={{ width: 72, height: 34, borderRadius: 8, marginTop: 8 }}
+        />
+      ) : (
+        <div
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 900,
+            fontSize: 34,
+            letterSpacing: '-0.03em',
+            marginTop: 8,
+            lineHeight: 1,
+            color: 'var(--color-ink, #22181C)',
+          }}
+        >
+          {value}
+        </div>
+      )}
+      {!loading && delta && (
         <div
           style={{
             marginTop: 6,

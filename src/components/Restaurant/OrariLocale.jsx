@@ -72,6 +72,31 @@ export default function OrariLocale({ restaurant }) {
   const openNow = status?.openNow === true
   const closesAt = status?.closesAt
 
+  // B4 — se NESSUN giorno ha periodi (muro 7× "Chiuso"), il dato Places è
+  // mancante/rotto: non mostrare il muro che comunica "locale morto".
+  // Mostra un fallback discreto e logga il record per il re-sync.
+  if (byDay.size === 0) {
+    if (typeof console !== 'undefined') {
+      console.warn('[OrariLocale] orari assenti (7/7 chiuso) — re-sync Places:', restaurant?.id, restaurant?.name)
+    }
+    return (
+      <div style={{
+        background: '#fff',
+        border: '1px solid var(--color-ink-05, rgba(34,24,28,.06))',
+        borderRadius: 14,
+        padding: '12px 14px',
+        fontFamily: 'var(--font-sans)',
+        display: 'flex', alignItems: 'center', gap: 8,
+        color: 'var(--color-ink-70, rgba(34,24,28,.7))',
+      }}>
+        <ClockIcon />
+        <span style={{ fontWeight: 700, fontSize: 12.5 }}>
+          Orari non disponibili{restaurant?.phone ? ' · chiama il locale' : ''}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div style={{
       background: '#fff',

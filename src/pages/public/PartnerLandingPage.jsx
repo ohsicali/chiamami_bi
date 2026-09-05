@@ -242,7 +242,7 @@ export default function PartnerLandingPage() {
           variants={fadeUp}
           style={{
             position: 'relative', overflow: 'hidden',
-            background: 'var(--color-corallo)', color: '#fff',
+            background: 'var(--color-cta)', color: '#fff',
             borderRadius: isDesktop ? 28 : 22,
             padding: isDesktop ? '28px 30px' : '22px',
             boxShadow: '0 8px 24px rgba(34,24,28,.08)',
@@ -364,7 +364,7 @@ export default function PartnerLandingPage() {
               >
                 <div style={{
                   width: 32, minWidth: 32, height: 32, borderRadius: '50%',
-                  background: 'var(--color-corallo)', color: '#fff',
+                  background: 'var(--color-cta)', color: '#fff',
                   fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 14,
                   display: 'grid', placeItems: 'center', flexShrink: 0,
                 }}>

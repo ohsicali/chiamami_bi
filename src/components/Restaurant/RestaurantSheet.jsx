@@ -15,6 +15,7 @@ import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/us
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
+import { formatAddress } from '../../lib/utils/formatAddress'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
@@ -230,7 +231,6 @@ export default function RestaurantSheet({
   const [photoIndex, setPhotoIndex] = useState(0)
   const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [inlineShowQR, setInlineShowQR] = useState(false)
-  const [inlineGenerating, setInlineGenerating] = useState(false)
   const [newsletterStatus, setNewsletterStatus] = useState(null)
   const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
@@ -503,6 +503,20 @@ export default function RestaurantSheet({
           {!isDesktop && (
             <div ref={photoRef} className="rs-photo-area" style={{ height: '45vh', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
               <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
+              {/* C1 mobile — lo sconto si vede dal primo pixel, già sulla foto,
+                  senza dover scrollare fino alla sticky bar. */}
+              {discount && (
+                <span style={{
+                  position: 'absolute', left: 12, bottom: 12, zIndex: 3,
+                  background: 'linear-gradient(90deg,#bdebc9,#8fdca6)',
+                  color: 'var(--color-ink)',
+                  fontSize: 11, fontWeight: 800, letterSpacing: '-0.01em',
+                  borderRadius: 999, padding: '5px 11px',
+                  boxShadow: '0 2px 8px rgba(34,24,28,.18)',
+                }}>
+                  {discount.title || discount.discount_value} attivo
+                </span>
+              )}
             </div>
           )}
 
@@ -629,7 +643,7 @@ export default function RestaurantSheet({
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap',
               }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span>{restaurant.address}</span>
+                <span>{formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}</span>
                 {distance != null && (
                   <span style={{ color: 'var(--color-ink-40)' }}> · {formatDistance(distance)}</span>
                 )}
@@ -773,81 +787,12 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* ── Sconto banner (mockup §289-302 `.sconto-link`) ── */}
-              {discount && (
-                <motion.button
-                  className="sec-sconto"
-                  variants={itemVariants}
-                  onClick={async () => {
-                    if (!user) {
-                      navigate('/login', { state: { from: window.location.pathname, discount: true } })
-                      return
-                    }
-                    if (inlineRedemption?.status === 'redeemed') return
-                    if (inlineRedemption?.status === 'generated') {
-                      setInlineShowQR(true)
-                      return
-                    }
-                    setInlineGenerating(true)
-                    try {
-                      const result = await inlineGenerateRedemption()
-                      if (result) setInlineShowQR(true)
-                    } finally {
-                      setInlineGenerating(false)
-                    }
-                  }}
-                  style={{
-                    display: 'block', width: '100%',
-                    border: '1px solid var(--color-ink-05)', background: '#fff',
-                    borderRadius: 14, overflow: 'hidden',
-                    boxShadow: 'var(--shadow-sm)', cursor: 'pointer',
-                    textAlign: 'left', padding: 0, marginBottom: 20,
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                >
-                  {/* Banner verde 135° 2-stop */}
-                  <div style={{
-                    height: 48, padding: '0 16px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
-                    color: 'var(--color-ink)', fontWeight: 800, fontSize: 16, letterSpacing: '-0.01em',
-                  }}>
-                    <span>{discount.title || discount.discount_value}</span>
-                    {discount.valid_days_label && (
-                      <span style={{
-                        fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-                        background: 'rgba(255,255,255,0.55)', color: 'var(--color-ink)',
-                        padding: '3px 8px', borderRadius: 999,
-                      }}>
-                        {discount.valid_days_label}
-                      </span>
-                    )}
-                  </div>
-                  {/* Body */}
-                  <div style={{ padding: '11px 16px 13px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-ink)', letterSpacing: '-0.01em' }}>
-                        {discount.description || 'Sconto attivo'}
-                      </div>
-                      {inlineRedemption?.status === 'redeemed' && (
-                        <div style={{ fontSize: 11, color: 'var(--color-ink-70)', marginTop: 2, fontWeight: 500 }}>
-                          Già utilizzato
-                        </div>
-                      )}
-                    </div>
-                    <span style={{
-                      fontSize: 14, fontWeight: 800, color: 'var(--color-ink)',
-                      display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
-                    }}>
-                      {inlineRedemption?.status === 'redeemed'
-                        ? '✓'
-                        : inlineRedemption?.status === 'generated'
-                          ? 'Mostra →'
-                          : 'Usa →'}
-                    </span>
-                  </div>
-                </motion.button>
-              )}
+              {/* ── Sconto: NIENTE banner inline su mobile (fix B6) ──
+                  Qui comparivano insieme il banner inline E la sticky bar in
+                  fondo, con lo stesso identico contenuto. Su mobile lo sconto
+                  vive solo nella sticky bar (<FloatingDiscountBar/>), che resta
+                  visibile durante lo scroll. Su desktop vale il contrario:
+                  solo il banner inline (vedi DesktopRestaurantSheet). */}
 
               {/* ── Secondo Bi ── */}
               {reviewText && (
@@ -1048,7 +993,7 @@ export default function RestaurantSheet({
               <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                 flex: 1, padding: '12px 0', borderRadius: 12, textAlign: 'center',
                 fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                background: '#E8453C', color: '#fff', border: 'none',
+                background: 'var(--color-cta)', color: '#fff', border: 'none',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

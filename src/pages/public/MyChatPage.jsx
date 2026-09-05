@@ -99,7 +99,7 @@ export default function MyChatPage() {
               alignItems: 'center',
               gap: 8,
               padding: '10px 16px',
-              background: 'var(--color-corallo)',
+              background: 'var(--color-cta)',
               color: '#fff',
               borderRadius: 999,
               fontSize: 13,
@@ -237,7 +237,7 @@ function EmptyState() {
         style={{
           display: 'inline-flex',
           padding: '10px 18px',
-          background: 'var(--color-corallo)',
+          background: 'var(--color-cta)',
           color: '#fff',
           borderRadius: 999,
           fontSize: 13,

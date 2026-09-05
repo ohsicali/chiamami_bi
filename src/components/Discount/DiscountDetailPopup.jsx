@@ -12,16 +12,11 @@ import {
 import ValidityPill from './ValidityPill'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import './DiscountDetailPopup.css'
+import { slugify } from '../../lib/utils/slug'
 
 /* ============================================================================
    Helpers
    ============================================================================ */
-function slugify(name) {
-  return (name || 'sconto').toLowerCase()
-    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sconto'
-}
 
 function shortAddress(addr) {
   if (!addr) return ''
@@ -131,7 +126,7 @@ export default function DiscountDetailPopup({
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `sconto-${slugify(deal?.restaurant?.name)}.pdf`
+      a.download = `sconto-${slugify(deal?.restaurant?.name, 'sconto')}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()

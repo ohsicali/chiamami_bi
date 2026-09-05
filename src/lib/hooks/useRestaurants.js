@@ -430,7 +430,7 @@ export function useRestaurants(userPosition = null) {
         // `*` pulled ~30+ unused fields per row, including long text columns
         // (`our_review`, etc.) that aren't read on list views.
         const RESTAURANT_COLUMNS = [
-          'id', 'name', 'slug', 'city', 'country', 'address',
+          'id', 'name', 'slug', 'city', 'country', 'address', 'neighborhood',
           'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
           'category', 'cuisine_type', 'price_range', 'our_rating',
           'our_review', 'our_tip', 'recommended_for', 'tagline',

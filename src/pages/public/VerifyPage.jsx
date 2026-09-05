@@ -431,7 +431,7 @@ function PinView({
         <PinLogo />
         <div style={{
           margin: '40px auto 18px', width: 84, height: 84, borderRadius: 26,
-          background: 'var(--color-corallo)', color: '#fff',
+          background: 'var(--color-cta)', color: '#fff',
           display: 'grid', placeItems: 'center', fontSize: 34,
           boxShadow: '0 14px 32px rgba(232,69,60,.32)',
         }}>🔒</div>
@@ -459,7 +459,7 @@ function PinView({
         }}>
           <div style={{
             width: 40, height: 40, borderRadius: '50%',
-            background: 'var(--color-corallo)', color: '#fff',
+            background: 'var(--color-cta)', color: '#fff',
             display: 'grid', placeItems: 'center',
             fontFamily: 'var(--font-mark)', fontSize: 15, flexShrink: 0,
           }}>B</div>
@@ -1465,7 +1465,7 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
                 onClick={() => setMode('manual')}
                 style={{
                   marginTop: 18, padding: '14px 22px', borderRadius: 14,
-                  background: 'var(--color-corallo)', color: '#fff', border: 0,
+                  background: 'var(--color-cta)', color: '#fff', border: 0,
                   fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 14,
                   letterSpacing: '-0.01em', cursor: 'pointer',
                 }}

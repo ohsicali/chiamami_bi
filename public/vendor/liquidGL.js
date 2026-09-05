@@ -71,6 +71,19 @@
    * ------------------------------------------------*/
   class liquidGLRenderer {
     constructor(snapshotSelector, snapshotResolution = 1.0) {
+      // PATCH ChiamamiBi — spostata qui dal fondo del costruttore.
+      // Il costruttore installa listener di scroll/resize che possono far
+      // partire il primo snapshot PRIMA che questa riga venisse eseguita: in
+      // quel caso `this._snapshotResolution` era undefined, quindi
+      // `Math.min(undefined, ...)` dava NaN e html2canvas riceveva `scale:NaN`.
+      // Il vecchio html2canvas non validava le opzioni e tirava dritto; la
+      // versione `pro` lo rifiuta, ed è così che il difetto è saltato fuori.
+      // Assegnarla per prima costa nulla: dipende solo dall'argomento.
+      this._snapshotResolution = Math.max(
+        0.1,
+        Math.min(3.0, snapshotResolution)
+      );
+
       this.canvas = document.createElement("canvas");
       this.canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;`;
       this.canvas.setAttribute("data-liquid-ignore", "");
@@ -172,10 +185,8 @@
 
       this.canvas.style.opacity = "0";
 
-      this._snapshotResolution = Math.max(
-        0.1,
-        Math.min(3.0, snapshotResolution)
-      );
+      // (`this._snapshotResolution` è ora assegnata in cima al costruttore —
+      //  vedi la PATCH ChiamamiBi lì sopra.)
 
       this.useExternalTicker = false;
 

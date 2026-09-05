@@ -376,7 +376,7 @@ export default function FilterChips({ filters, onFilterChange, onNearbyClick, sh
                     onClick={() => setModalOpen(false)}
                     style={{
                       width: '100%', padding: '14px', borderRadius: 14,
-                      background: '#E8453C', color: '#fff',
+                      background: 'var(--color-cta)', color: '#fff',
                       fontSize: 14, fontWeight: 700,
                       border: 'none', cursor: 'pointer',
                       boxShadow: '0 4px 16px rgba(232, 69, 60,0.3)',

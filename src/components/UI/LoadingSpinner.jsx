@@ -4,6 +4,19 @@ export function LoadingSpinner({ size = 48, className = "" }) {
   return <LogoLoader size={size} className={className} />
 }
 
+/**
+ * Fallback a schermo intero per i confini <Suspense> di rotta.
+ * È lo stesso che App.jsx mostra mentre carica una pagina lazy: usarlo anche
+ * per i gemelli desktop evita che l'utente veda due spinner diversi.
+ */
+export function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-bg">
+      <LoadingSpinner />
+    </div>
+  )
+}
+
 export function SkeletonCard({ className = "" }) {
   return (
     <div

@@ -247,3 +247,157 @@ Commit range: `72a556f…e2114bb…` (PR #69)
   su tutti i file pubblici e admin (§2). MaintenanceGate `#E8604C` → `#E8453C`
 - **PIN lockout** 5 tentativi / 10 min (§5.1): localStorage-backed, timer
   countdown visibile su button, reset a successo, sia mobile che desktop
+
+---
+
+## PR24 — Polish design + upgrade design system (2026-06 → 09)
+
+Branch: `claude/awesome-pasteur-stj12x` · PR #202 (draft)
+Documento sorgente: `HANDOFF-PR24-POLISH-DESIGN.md`
+
+### ✅ Blocco A — dati & immagini
+- `src/components/UI/SmartImage.jsx` — helper condiviso: `SmartImage` (box con
+  skeleton) + `PhotoOrEmoji` (single-element per container CSS-driven).
+  Skeleton shimmer + fallback emoji categoria su gradiente caldo su onError.
+  Riusa `proxyImg` → `/api/img` (NON il render-transform Supabase).
+- Colonna `neighborhood` + cattura `address_components` in `resolve-maps.js`.
+- `formatAddress()` → "Via Bonafous 7 · Vanchiglia"; `CityBadge` + ordinamento
+  città-attiva-first; header "N locali · la guida di Bi".
+
+⚠️ **LEZIONE — grant a livello di colonna.** Il ruolo `anon` ha GRANT SELECT
+per COLONNA su `restaurants` (hardening PIN #201). Una colonna nuova NON
+eredita il grant: senza `GRANT SELECT (neighborhood) TO anon` ogni query
+pubblica falliva con 42501 e **la lista locali si svuotava**. Vale per
+qualsiasi colonna futura. Vedi `supabase/add-neighborhood-2026-06-17.sql`.
+
+### ✅ Blocco B — bug minori
+B4 orari 7×Chiuso → "Orari non disponibili · chiama"; B5 rimosso "[DEMO]" da 6
+sconti (DB prod); B7 padding tab bar safe-area; B8 riga "€" orfana; B10 About
+720px + fade rapidi; B-Chiedi `max_tokens` 1500→2048; B-Admin skeleton KPI.
+
+### ✅ Blocco C — completo
+- **C1 scheda** — desktop: hero a **mosaico 1+4** + lightbox (Esc/←/→), "Qui
+  vicino" full-width con `RestaurantCard variant="tile"`. Mobile: badge sconto
+  sulla gallery. **B6 risolto su entrambe**: desktop = solo banner inline,
+  mobile = solo sticky bar (prima comparivano insieme su tutte e due).
+- **C2 drop Home mobile → Variante B**: foto piena in alto, % come badge menta
+  sulla foto, nome locale come titolo, vantaggio in Poppins bold bianco.
+- **C3 Bi Club**: convenzioni 3 col + **drop hero adattivo** — con un solo drop
+  la card diventa hero orizzontale full-width (prima restava a 1/3 di larghezza
+  con metà schermo vuota). Con N drop resta la griglia da 3.
+- **C4 card Esplora**: "● Aperto" reale, sconto come pill, foto 4:3.
+- **C5 Chiedi a Bi**: le card dei locali nella risposta **c'erano già**;
+  aggiunti quick-reply chips (derivati lato client, nessun endpoint nuovo),
+  stato "● Aperto", fallback foto e micro-copy attesa onesta.
+- **C6 admin**: fasce spente a 0.25 (restano emoji), thumbnail con fallback.
+
+**Non fatto di proposito**: con N drop, "hero solo per il drop in evidenza +
+gli altri come card convenzione" — la griglia da 3 non soffre del vuoto, quindi
+non era il problema segnalato.
+
+### ✅ Upgrade design system (da audit misurato su 114 file / 46.617 righe)
+Adesione ai token PRIMA: colore 38%, raggi 11%, ombre 18%, tipografia 0%.
+
+- **Step 1** — `:focus-visible` globale (prima 0 regole), `prefers-reduced-motion`
+  globale (prima 3 guardie su 305 animazioni), pinch-zoom sbloccato.
+  Rimosse **4.680 righe morte**: `DealsPage.jsx`, `DesktopDiscountsPage.jsx`,
+  `RestaurantForm.jsx` (in `App.jsx` `DealsPage` è un *alias* di
+  `SconteRedesignPage`: il file omonimo non lo importava nessuno).
+- **Step 2** — token nuovi in `@theme`: `--color-cta` (#C53A33), semantici
+  danger/ok/warn, `--color-ink-64`, scala tipografica `--fs-xs…--fs-3xl`
+  (nome `--fs-*` per non collidere con le utility `text-*` di Tailwind).
+  `Button`/`Badge` riscritti sui token v4 (erano fermi a `#FF5757` pre-v4:
+  ecco perché nessuno li importava).
+- **Step 3** — 21 CTA con testo bianco migrati a `var(--color-cta)`.
+  I corallo **decorativi** (pallini, cerchi icona, logo) restano brillanti.
+
+**Regola da tenere:** `#E8453C` = superficie/brand; `--color-cta` #C53A33 =
+qualunque fill che porti testo bianco (3.93:1 → 5.21:1).
+
+### 🚧 Step 4 — card unica (in corso)
+`RestaurantCard` è ora il componente unico con 3 varianti:
+`default` (row) · `tile` (foto 4:3 in alto, con flag `dense` per griglie
+strette) · `hero`. Il tile usa SmartImage, i token raggio/ombra, la scala
+`--fs-*`, CityBadge, `formatAddress` e la pill sconto in `--color-cta`.
+
+Migrate finora (2 di ~19): `DesktopSavedPage` (aveva una card locale chiamata
+anch'essa `RestaurantCard` — collisione di nome) e `SavedPage` mobile (era una
+arrow function inline nel JSX). Salvati desktop e mobile ora rendono la stessa
+card. −125 righe di duplicato.
+
+**Da migrare ancora**: `LCard` (DesktopExplorePage), `HorizontalCard`/`HeroCard`
+(ListView), `MiniCard` (HomePage).
+
+⚠️ **Due candidati verificati e scartati** (l'audit li dava per duplicati, il
+codice dice altro — non rifare l'analisi da zero):
+- `NearbyCard` mostra anche un estratto di `our_review`: migrarla al tile
+  generico **perderebbe contenuto**. È una card con un ruolo diverso, non un
+  duplicato. Usa già SmartImage e i token.
+- `Rcard` (HomeFeedV4) e `Lcard` (MomentResultsGrid): condividono geometria e
+  commento, ma i corpi sono **divergenti** (uno ha pill sconto + SaveButton,
+  l'altro l'orario e un `<a href>`): 135 righe di differenza. Unificarli non è
+  a costo zero, e sono in Home.
+
+### ✅ Step 4c/4d — duplicazioni di logica
+- `src/lib/utils/price.js` → `formatPrice()`. Il prezzo era riscritto in 8
+  file (11 punti) con 3 guardie diverse; una (`price_range || 2`) **inventava
+  "€€" per i locali senza prezzo**. Ora ritorna null e la UI non lo rende.
+- `src/lib/utils/slug.js` → `slugify(name, fallback)`. Era in 12 file e
+  **7 copie non avevano guardia sul null** (TypeError se il nome mancava).
+  Migrati i 10 usi pubblici. La variante admin (NFD + troncamento) resta
+  separata di proposito: *genera* lo slug salvato nel DB.
+
+### ✅ Prestazioni — peso scaricato dal telefono
+
+Due interventi **misurati**, non stimati. Entrambi verificati con Chromium reale
+e dati veri, e con diff pixel-per-pixel degli screenshot: **0 pixel diversi**.
+
+**1. I gemelli desktop non pesano più sui telefoni**
+Le 4 pagine con una versione desktop separata la importavano staticamente, così
+chi apriva il sito dal telefono scaricava anche il codice desktop:
+
+| rotta | prima (gzip) | dopo, da mobile |
+|---|---|---|
+| RestaurantPage | 18,53 kB | 13,06 kB (−29%) |
+| HomePage | 8,46 kB | 5,88 kB (−31%) |
+| ProfilePage | 8,71 kB | 6,90 kB (−21%) |
+| SavedPage | 5,80 kB | 5,30 kB (−9%) |
+
+Ora sono `lazy()` con `<Suspense>` esplicito. Su desktop i byte totali sono gli
+stessi, in due richieste invece di una. `useIsDesktop` legge `matchMedia` in
+modo sincrono al primo render, quindi il ramo è deciso subito: niente
+sfarfallio.
+
+**2. Niente Mapbox sulle schede locale aperte da un link — 456 kB gzip**
+`App.jsx` teneva la mappa montata sotto la scheda di un locale **sempre**, per
+conservarne posizione e zoom al ritorno. Ma chi arriva dritto su
+`/restaurant/...` (Google, link condiviso, Bi Club) non ha stato da conservare
+e si scaricava 1,67 MB di Mapbox per una mappa che la scheda copre del tutto.
+Ora la mappa si monta lì solo se `/esplora` è stata visitata nella sessione.
+
+> ⚠️ **`isEsplora` non va toccato** per ottenere questo: governa anche il blocco
+> `<Routes>`, e `/restaurant/:slug` non ha una Route propria — cambiarlo lo
+> farebbe cadere sul redirect `"*"` verso la home. La condizione `showMap` è
+> separata apposta.
+
+> ⚠️ `mapWasVisited` è **state, non ref**: il valore decide cosa renderizzare, e
+> un ref aggiornato non fa ri-renderizzare (`eslint react-hooks/refs`).
+
+**Come rifare le misure** (il sandbox resetta i tunnel TLS del browser, ma curl
+passa): servire `npm run build` con `vite preview`, e in Playwright intercettare
+`**://*.supabase.co/**` inoltrando la richiesta con `curl -D header -o body`
+(con un proxy, `curl -i` antepone anche il blocco "Connection established" e
+rompe i parser a blocco unico). Il token Mapbox in locale non c'è: la mappa non
+renderizza, ed è normale — non è una regressione.
+
+### Prossimi passi consigliati
+1. Completare la migrazione delle card rimanenti (vedi sopra). **Nota: è
+   pulizia, non prestazioni** — quelle card stanno già in chunk lazy per rotta,
+   e la migrazione comporta un rischio visivo. Da fare con revisione a schermo.
+2. Unificare le 4 coppie di pagine gemelle desktop/mobile rimaste (~5.100
+   righe): HomePage/DesktopExplorePage, RestaurantSheet/Desktop…,
+   ProfilePage/Desktop…, SavedPage/Desktop…. Il beneficio di *peso* è già stato
+   incassato con il `lazy()` qui sopra: quel che resta è manutenibilità.
+3. Tema scuro: quasi gratis una volta che i colori passano dai token.
+4. Backfill `neighborhood` sui 73 locali esistenti (oggi tutti NULL: il campo si
+   popola solo al prossimo sync Places, quindi il quartiere non si vede ancora).

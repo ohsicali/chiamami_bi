@@ -104,7 +104,7 @@ function ensureLiquidGLLoaded() {
 
   window.__liquidGLLoading = (async () => {
     try {
-      await loadScript('/vendor/html2canvas.min.js')
+      await loadScript('/vendor/html2canvas-pro.min.js')
       await loadScript('/vendor/liquidGL.js')
       window.__liquidGLReady = typeof window.liquidGL === 'function'
       return window.__liquidGLReady

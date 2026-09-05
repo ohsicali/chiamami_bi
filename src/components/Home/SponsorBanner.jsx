@@ -4,6 +4,7 @@ import { proxyImg } from '../../lib/supabase'
 import { useSponsoredPlacement } from '../../lib/hooks/useSponsoredPlacement'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatPrice } from '../../lib/utils/price'
 
 /**
  * SponsorBanner · 3 variant (DB-driven da sponsored_placements):
@@ -122,7 +123,8 @@ function RestaurantVariant({ p }) {
   const status = getHoursStatus(r.hours_cache)
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const zone = (r.address || '').split(',')[0].trim()
-  const priceLabel = '€'.repeat(r.price_range || 2)
+  // B8: niente riga "€" orfana — mostra il prezzo solo se valorizzato.
+  const priceLabel = formatPrice(r.price_range)
 
   const hasDiscount = p.variant === 'restaurant_discount' && p.discount
   const discountLabel = hasDiscount ? formatDiscountValue(p.discount) : null
@@ -221,15 +223,13 @@ function RestaurantVariant({ p }) {
               {subtitle}
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, fontSize: 11, color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>
-            {priceLabel}
-            {status.state !== 'unknown' && (
-              <>
-                <span style={{ opacity: 0.4 }}>·</span>
-                <span>{status.message}</span>
-              </>
-            )}
-          </div>
+          {(priceLabel || status.state !== 'unknown') && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, fontSize: 11, color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>
+              {priceLabel}
+              {priceLabel && status.state !== 'unknown' && <span style={{ opacity: 0.4 }}>·</span>}
+              {status.state !== 'unknown' && <span>{status.message}</span>}
+            </div>
+          )}
 
           {/* CTAs */}
           <div
@@ -244,7 +244,7 @@ function RestaurantVariant({ p }) {
               to={`/restaurant/${r.slug}`}
               style={{
                 padding: '13px 14px',
-                background: hasDiscount ? 'var(--color-corallo)' : '#fff',
+                background: hasDiscount ? 'var(--color-cta)' : '#fff',
                 color: hasDiscount ? '#fff' : 'var(--color-ink)',
                 borderRadius: 999,
                 fontSize: 13,

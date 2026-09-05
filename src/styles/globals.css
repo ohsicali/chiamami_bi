@@ -73,6 +73,31 @@
   --shadow-sm: 0 1px 3px rgba(34, 24, 28, 0.06);
   --shadow-md: 0 4px 14px rgba(34, 24, 28, 0.08);
   --shadow-lg: 0 12px 32px rgba(34, 24, 28, 0.12);
+
+  /* CTA — corallo a contrasto AA per TESTO bianco sopra (il corallo brillante
+     #E8453C fallisce WCAG 4.5:1 come fill testuale: 3.93. Questo dà 5.21).
+     Il corallo brillante resta per superfici/banner senza testo piccolo. */
+  --color-cta: #C53A33;
+
+  /* Colori semantici di stato (audit: prima ad-hoc #DC2626/#2C7A4A/#F59E0B) */
+  --color-danger: #B3261E;
+  --color-danger-bg: #FBEAE8;
+  --color-ok: #2C7A4A;
+  --color-ok-bg: #E7F2EA;
+  --color-warn: #8A5A12;
+  --color-warn-bg: #FBF0DC;
+  /* Testo secondario/meta a contrasto AA (ink-55 = 3.82 fallisce; questo 4.6) */
+  --color-ink-64: rgba(34, 24, 28, 0.64);
+
+  /* Scala tipografica — 7 gradini (~1.2). Nome --fs-* per NON collidere con
+     le utility text-* di Tailwind. Prima: 33 misure ad-hoc, nessuna scala. */
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: 36px;
 }
 
 :root {
@@ -135,6 +160,26 @@ body {
   min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
   overflow-x: clip;
+}
+
+/* ── Accessibilità globale (audit design 2026-06) ─────────────────────
+   Focus visibile per chi naviga da tastiera: prima non esisteva NESSUNA
+   regola :focus-visible. Usiamo il corallo scuro (contrasto AA) e lo
+   mostriamo solo con :focus-visible così il mouse non vede l'anello. */
+:focus-visible {
+  outline: 2.5px solid var(--color-corallo-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Rispetta "Riduci movimento" del sistema: prima 305 elementi animati,
+   3 sole guardie. Azzera animazioni/transizioni per chi lo chiede. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 

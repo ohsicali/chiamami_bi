@@ -1,5 +1,4 @@
-import DesktopSavedPage from './DesktopSavedPage'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
@@ -16,12 +15,14 @@ import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import { formatPrice } from '../../lib/utils/price'
+import { slugify } from '../../lib/utils/slug'
+import { PageLoader } from '../../components/UI/LoadingSpinner'
 
-function slugify(name) {
-  return name.toLowerCase().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-}
+// Caricata solo su desktop: da telefono questo codice non viene scaricato.
+const DesktopSavedPage = lazy(() => import('./DesktopSavedPage'))
+
 
 export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
@@ -166,7 +167,7 @@ export default function SavedPage() {
   }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
-  if (isDesktop) return <DesktopSavedPage />
+  if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopSavedPage /></Suspense>
 
   const handleClick = (restaurant) => {
     navigate(`/restaurant/${restaurant.slug || slugify(restaurant.name || '')}`)
@@ -340,7 +341,7 @@ export default function SavedPage() {
             <button
               onClick={() => navigate('/')}
               style={{
-                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-cta)', color: '#fff', borderRadius: 14,
                 padding: '14px 28px', fontSize: 14, fontWeight: 600, marginTop: 20,
                 border: 'none', cursor: 'pointer',
               }}
@@ -358,7 +359,7 @@ export default function SavedPage() {
             <button
               onClick={() => setCityPickerOpen(true)}
               style={{
-                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-cta)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
                 border: 'none', cursor: 'pointer',
               }}
@@ -381,7 +382,7 @@ export default function SavedPage() {
                 navigate('/', { state: { initialCategory: cat } })
               }}
               style={{
-                background: 'var(--color-corallo)', color: '#fff', borderRadius: 14,
+                background: 'var(--color-cta)', color: '#fff', borderRadius: 14,
                 padding: '12px 24px', fontSize: 13, fontWeight: 600, marginTop: 16,
                 border: 'none', cursor: 'pointer',
               }}
@@ -393,69 +394,21 @@ export default function SavedPage() {
           <>
             {/* Mobile: sv-lists chips + sv-head + sv-grid */}
             {!isDesktop && (() => {
-              const renderSvCard = (r) => {
+              const renderSvCard = (r, i) => {
                 const discount = activeDiscounts[r.id]
-                const categories = (r.category || (r.cuisine_type ? [r.cuisine_type] : [])).map(name => getCategoryInfo(name)).filter(Boolean)
-                const category = categories[0]
-                const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
-                const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
-                const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
                 return (
-                  <div
+                  <RestaurantCard
                     key={r.id}
-                    role="button"
-                    tabIndex={0}
+                    variant="tile"
+                    dense
+                    restaurant={r}
+                    index={i}
+                    saved
+                    hasDiscount={!!discount}
+                    discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
+                    onSaveToggle={() => handleSave(r.id)}
                     onClick={() => handleClick(r)}
-                    style={{
-                      background: '#fff', borderRadius: 14, overflow: 'hidden',
-                      border: '1px solid var(--color-ink-05)', position: 'relative',
-                      cursor: 'pointer', textDecoration: 'none', color: 'inherit',
-                    }}
-                  >
-                    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#ddd', overflow: 'hidden' }}>
-                      {photoUrl ? (
-                        <img src={photoUrl} alt={r.name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: category?.color ? `linear-gradient(135deg, ${category.color}40, ${category.color}20)` : 'var(--color-cream-deep)', opacity: 0.6 }}>
-                          {category?.emoji || '🍽️'}
-                        </div>
-                      )}
-                      {discount && (
-                        <span style={{
-                          position: 'absolute', top: 8, left: 8,
-                          background: 'var(--color-corallo)', color: '#fff',
-                          fontWeight: 800, fontSize: 10, padding: '2.5px 6px',
-                          borderRadius: 999, letterSpacing: '-0.01em',
-                        }}>{discount.title || formatDiscountValue(discount) || 'SCONTO'}</span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleSave(r.id) }}
-                        aria-label="Rimuovi dai salvati"
-                        style={{
-                          position: 'absolute', top: 8, right: 8,
-                          width: 26, height: 26, borderRadius: '50%',
-                          background: 'var(--color-corallo)', color: '#fff',
-                          display: 'grid', placeItems: 'center', fontSize: 12,
-                          border: 0, cursor: 'pointer',
-                        }}
-                      >♥</button>
-                    </div>
-                    <div style={{ padding: '8px 10px 10px' }}>
-                      <div style={{
-                        fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 13,
-                        letterSpacing: '-0.01em', lineHeight: 1.2, color: 'var(--color-ink)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>{r.name}</div>
-                      <div style={{
-                        fontSize: 10.5, color: 'var(--color-ink-70)', marginTop: 3,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {r.neighborhood || r.city}
-                        {priceStr && <> | {priceStr}</>}
-                      </div>
-                    </div>
-                  </div>
+                  />
                 )
               }
               const sortLabel = sortMode === 'recent' ? 'Recente' : sortMode === 'name' ? 'Nome' : 'Vicino'
@@ -510,7 +463,7 @@ export default function SavedPage() {
                 const category = categories[0]
                 const firstPhoto = Array.isArray(r.photos) && r.photos.length > 0 ? r.photos[0] : null
                 const photoUrl = proxyImg(firstPhoto ? (typeof firstPhoto === 'string' ? firstPhoto : firstPhoto?.thumb_url || firstPhoto?.photo_url) : null, { w: 800 })
-                const priceStr = r.price_range != null ? '€'.repeat(r.price_range) : null
+                const priceStr = formatPrice(r.price_range)
 
                 return (
                   <div

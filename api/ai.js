@@ -459,7 +459,7 @@ async function streamFinalRound({ apiKey, system, messages, tools, candidatesByI
     },
     body: JSON.stringify({
       model: CLAUDE_MODEL,
-      max_tokens: 1500,
+      max_tokens: 2048,
       system, tools, messages,
       stream: true,
     }),
@@ -587,7 +587,7 @@ async function callClaude(apiKey, { system, messages, tools }) {
     },
     body: JSON.stringify({
       model: CLAUDE_MODEL,
-      max_tokens: 1500,
+      max_tokens: 2048,
       system,
       tools,
       messages,

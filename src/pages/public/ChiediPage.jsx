@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import BiLogoMark from '../../components/UI/BiLogoMark'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import './ChiediPage.css'
 
 /**
@@ -276,7 +277,7 @@ export default function ChiediPage() {
         {isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
-          <Conversation messages={messages} loading={loading} />
+          <Conversation messages={messages} loading={loading} onChip={sendMessage} />
         )}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
@@ -357,7 +358,7 @@ function ChiediHeader({ hasConversation, onNewChat }) {
         <div className="cp-h-mark"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
         <div className="cp-h-text">
           <strong>Chiedi a Bi</strong>
-          <small><span className="cp-dot" />in linea · ti rispondo in 3 secondi</small>
+          <small><span className="cp-dot" />in linea · ti rispondo in qualche secondo</small>
         </div>
       </div>
 
@@ -472,7 +473,7 @@ function EmptyState({ onPromptClick }) {
 /* ============================================================ */
 /*  Conversation                                                  */
 /* ============================================================ */
-function Conversation({ messages, loading }) {
+function Conversation({ messages, loading, onChip }) {
   const allRestaurantIds = messages.flatMap((m) =>
     Array.isArray(m.results) ? m.results.map((r) => r.restaurant_id).filter(Boolean) : [],
   )
@@ -536,6 +537,30 @@ function Conversation({ messages, loading }) {
         )
       })}
 
+      {/* Quick-reply chips (C5): continuano la conversazione senza tastiera —
+          su mobile valgono oro. Compaiono solo sotto l'ultima risposta di Bi,
+          a streaming finito. */}
+      {(() => {
+        if (loading) return null
+        const last = messages[messages.length - 1]
+        if (!last || last.role !== 'assistant' || last.streaming || last.error) return null
+        const firstResult = Array.isArray(last.results) && last.results[0]
+        const chips = [
+          firstResult?.name ? `Cosa ordino da ${firstResult.name}?` : null,
+          'Allarga la zona',
+          'Solo con sconto',
+        ].filter(Boolean)
+        return (
+          <div className="cp-chips">
+            {chips.map((c) => (
+              <button key={c} type="button" className="cp-chip" onClick={() => onChip?.(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* Typing dots: solo se NON c'è una bolla assistant attiva — evita doppia
           indicazione (cursore + dots) durante lo streaming. */}
       {loading && !messages.some((m) => m.role === 'assistant' && m.streaming) && (
@@ -567,7 +592,13 @@ function ResultCard({ restaurant, photoUrl }) {
       className="cp-rcard"
     >
       <div className="cp-ph">
-        {finalPhoto && <img src={finalPhoto} alt="" loading="lazy" />}
+        <PhotoOrEmoji
+          src={finalPhoto}
+          alt=""
+          emoji="🍽️"
+          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+        {restaurant.closes_at && <span className="cp-open-pill">● Aperto</span>}
       </div>
       <div className="cp-info">
         <div>

@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, matchPath, Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useRef, useState, Component } from 'react'
-import { LoadingSpinner } from './components/UI/LoadingSpinner'
+import { PageLoader } from './components/UI/LoadingSpinner'
 import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
@@ -49,9 +49,6 @@ const AnalyticsPage = lazy(() => import('./pages/admin/AnalyticsPage'))
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 const NewRestaurant = lazy(() => import('./pages/admin/NewRestaurant'))
 const EditRestaurant = lazy(() => import('./pages/admin/EditRestaurant'))
-// NOTE: RestaurantForm.jsx is the legacy full-page edit form. Replaced by
-// EditRestaurant.jsx (PR15g.2, same 6 shared tabs used in NewRestaurant).
-// The file is preserved as dead code but will be removed in a cleanup PR.
 const CategoryManager = lazy(() => import('./pages/admin/CategoryManager'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const ProfilePage = lazy(() => import('./pages/public/ProfilePage'))
@@ -77,14 +74,6 @@ const SettingsPage = lazy(() => import('./pages/public/SettingsPage'))
 
 // Preload RestaurantPage chunk so it's ready instantly when a pin is tapped
 const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
-
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
-      <LoadingSpinner />
-    </div>
-  )
-}
 
 export default function App() {
   const location = useLocation()
@@ -122,6 +111,21 @@ export default function App() {
 
   const isRestaurantDetail = matchPath('/restaurant/:slug', location.pathname)
   const isEsplora = location.pathname === '/esplora' || isRestaurantDetail
+
+  // La mappa resta montata sotto la scheda di un locale per non perderne
+  // posizione e zoom quando la scheda si apre e si chiude — ma questo ha senso
+  // solo se ci si è passati davvero. Su un arrivo diretto a /restaurant/...
+  // (Google, link condiviso, Bi Club) non c'è nessuno stato da conservare, e
+  // montarla costerebbe 1,67 MB di Mapbox (456 KB gzip) per non mostrare nulla:
+  // la scheda copre tutto lo schermo. Da lì "indietro" porta a `/`, il feed,
+  // che la mappa non la usa.
+  // NB: `isEsplora` non va toccato — governa anche il blocco <Routes>, e
+  // /restaurant/:slug non ha una Route propria: finirebbe sul redirect "*".
+  // È `state` e non `ref` di proposito: il valore decide cosa renderizzare, e
+  // un ref cambiato non farebbe ri-renderizzare (lo segnala anche eslint).
+  const [mapWasVisited, setMapWasVisited] = useState(location.pathname === '/esplora')
+  if (location.pathname === '/esplora' && !mapWasVisited) setMapWasVisited(true)
+  const showMap = location.pathname === '/esplora' || (isRestaurantDetail && mapWasVisited)
   const isAdmin = location.pathname.startsWith('/admin')
   const isPartner = location.pathname === '/partner'
   const isVerify = location.pathname === '/verify'
@@ -138,8 +142,9 @@ export default function App() {
     {showDesktopNav && <DesktopNavbar />}
 
     <Suspense fallback={<PageLoader />}>
-      {/* Map page stays mounted when viewing restaurant detail */}
-      {isEsplora && <HomePage />}
+      {/* Map page stays mounted when viewing restaurant detail — but only if
+          the map was actually visited in this session (see `showMap` above) */}
+      {showMap && <HomePage />}
 
       {/* Restaurant detail overlays on top */}
       {isRestaurantDetail && <RestaurantPage />}

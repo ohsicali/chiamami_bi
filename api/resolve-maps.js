@@ -217,9 +217,11 @@ export default async function handler(req, res) {
       })
     }
 
-    // Step 5: Get full place details
+    // Step 5: Get full place details — includiamo address_components per
+    // ricavare città (locality) e quartiere (neighborhood/sublocality)
+    // strutturati, senza dover fare parsing della stringa raw.
     const detailsRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,address_components,geometry,formatted_phone_number,website,url&key=${apiKey}&language=it`
     )
     const detailsData = await detailsRes.json()
     const place = detailsData.result
@@ -227,19 +229,52 @@ export default async function handler(req, res) {
     let finalName = place?.name || searchQuery || ''
     if (/^\d+$/.test(finalName)) finalName = ''
 
+    const { city, neighborhood } = parseAddressComponents(place?.address_components)
+
     return res.status(200).json({
       resolved_url: place?.url || resolvedUrl,
       name: finalName,
       latitude: place?.geometry?.location?.lat ?? lat,
       longitude: place?.geometry?.location?.lng ?? lng,
       address: place?.formatted_address || '',
+      city: city || '',
+      neighborhood: neighborhood || '',
       phone: place?.formatted_phone_number || '',
       website: place?.website || '',
-      _debug: { resolvedUrl, searchQuery, placeId, placeName: place?.name || null },
+      _debug: { resolvedUrl, searchQuery, placeId, placeName: place?.name || null, city, neighborhood },
     })
   } catch (err) {
     return res.status(200).json({ error: `Errore: ${err.message}` })
   }
+}
+
+/**
+ * Estrae città e quartiere dai Google Places `address_components`.
+ * - città: locality → postal_town → administrative_area_level_3
+ * - quartiere: neighborhood → sublocality (e livelli) → null
+ * Restituisce { city, neighborhood } (stringhe vuote se assenti).
+ */
+function parseAddressComponents(components) {
+  const out = { city: '', neighborhood: '' }
+  if (!Array.isArray(components)) return out
+
+  const byType = (type) =>
+    components.find((c) => Array.isArray(c.types) && c.types.includes(type))?.long_name || ''
+
+  out.city =
+    byType('locality') ||
+    byType('postal_town') ||
+    byType('administrative_area_level_3') ||
+    ''
+
+  out.neighborhood =
+    byType('neighborhood') ||
+    byType('sublocality') ||
+    byType('sublocality_level_1') ||
+    byType('sublocality_level_2') ||
+    ''
+
+  return out
 }
 
 /** Extract useful data from Google Maps HTML */

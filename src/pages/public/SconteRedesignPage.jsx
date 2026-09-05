@@ -5,6 +5,7 @@ import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts
 import { useCity } from '../../lib/CityContext'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { proxyImg } from '../../lib/supabase'
+import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
@@ -19,14 +20,10 @@ import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
 import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
+import { formatPrice } from '../../lib/utils/price'
+import { slugify } from '../../lib/utils/slug'
 
 /* ---------- helpers ---------- */
-function slugify(name) {
-  return (name || '').toLowerCase()
-    .replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-}
 
 function getPhoto(restaurant, opts) {
   const p = restaurant?.photos?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
@@ -417,7 +414,7 @@ function SconteRedesignPageInner() {
   }, [user])
 
   return (
-    <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : TAB_BAR_HEIGHT + 16 }}>
+    <div className="sc-page" style={{ paddingBottom: isDesktop ? 0 : `calc(${TAB_BAR_HEIGHT + 28}px + env(safe-area-inset-bottom, 0px))` }}>
       <MetaTags
         title="Sconti ristoranti Torino · Bi Club | ChiamamiBi"
         description="Sconti e vantaggi nei ristoranti che ho selezionato a Torino. Drop a tempo, convenzioni sempre valide e promozioni riservate ai membri del Bi Club."
@@ -632,7 +629,7 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
             <strong>Drop a tempo</strong>
             <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'}</small>
           </div>
-          <div className="sc-drop-track">
+          <div className={`sc-drop-track${drops.length === 1 ? ' is-single' : ''}`}>
             {drops.map((d) => {
               const redemption = redemptionByDealId?.get(d.id) || null
               return (
@@ -686,7 +683,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
   const remaining = Math.max(0, max - claimed)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const location = r?.neighborhood || r?.city
-  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
+  const priceStr = formatPrice(r?.price_range)
 
   const status = redemption?.status
   const isSaved = status === 'generated'
@@ -711,14 +708,7 @@ function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onIn
       style={isUsed ? { opacity: 0.55 } : undefined}
     >
       <div className="sc-ph">
-        {photo ? (
-          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 32,
-          }}>🍽️</div>
-        )}
+        <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 32 }} />
         <span className="sc-badge-live">live</span>
         {time && <span className="sc-badge-time">{time}</span>}
         <span className="sc-drop-pct-photo">{dealBadgeText(deal)}</span>
@@ -792,7 +782,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
   const badge = formatDiscountValue(deal)
   const location = r?.neighborhood || r?.city
-  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
+  const priceStr = formatPrice(r?.price_range)
   const validityStatus = checkValidity(deal)
   const validityPill = formatShortPill(deal, validityStatus)
   const daysShort = (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7)
@@ -808,14 +798,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onInfo() }}
     >
       <div className="sc-ph">
-        {photo ? (
-          <img src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 30,
-          }}>{categoryEmoji(cuisine)}</div>
-        )}
+        <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 30 }} />
         <span className={`sc-badge-pct ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
       </div>
       <div className="sc-body-c">
@@ -904,7 +887,7 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const expired = isDealExpired(deal)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const location = r?.neighborhood || r?.city
-  const priceStr = r?.price_range != null ? '€'.repeat(r.price_range) : null
+  const priceStr = formatPrice(r?.price_range)
   const validityStatus = expired ? 'expired' : checkValidity(deal)
   const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
   const pctBadge = dealBadgeText(deal) || freebieLabel(deal)
@@ -918,14 +901,7 @@ function MineRow({ redemption, onOpenQR, onClick }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
       <div className="sc-ph-mini">
-        {photo ? (
-          <img src={photo} alt="" loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 22,
-          }}>🍽️</div>
-        )}
+        <PhotoOrEmoji src={photo} alt="" emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 22 }} />
         {pctBadge && <span className="sc-pct-corner">{pctBadge}</span>}
       </div>
       <div className="sc-info">
@@ -1038,14 +1014,7 @@ function UsedRow({ redemption, isDesktop, onClick }) {
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
     >
       <div className="sc-ph-mini">
-        {photo ? (
-          <img src={photo} alt="" loading="lazy" decoding="async" />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%', display: 'grid', placeItems: 'center',
-            background: '#F1ECE3', fontSize: 18,
-          }}>🍽️</div>
-        )}
+        <PhotoOrEmoji src={photo} alt="" emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 18 }} />
       </div>
       <div className="sc-info">
         <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
@@ -1116,11 +1085,13 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
 
         {/* HERO: foto full-width con overlay gradient + badge + identità locale */}
         <div className="sc-info-hero">
-          {photo ? (
-            <img className="sc-info-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-          ) : (
-            <div className="sc-info-hero-fallback">{categoryEmoji(cuisine)}</div>
-          )}
+          <PhotoOrEmoji
+            src={photo}
+            alt={r?.name || ''}
+            emoji={categoryEmoji(cuisine)}
+            imgClassName="sc-info-hero-img"
+            fallbackClassName="sc-info-hero-fallback"
+          />
           <div className="sc-info-hero-overlay" aria-hidden="true" />
           <span className={`sc-info-hero-badge ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
           <div className="sc-info-hero-id">
@@ -1252,11 +1223,13 @@ function DropInfoSheet({ deal, claiming, onClaim, onClose }) {
 
         {/* HERO drop scuro con foto in fondo + live pulse */}
         <div className="sc-drop-hero">
-          {photo ? (
-            <img className="sc-drop-hero-img" src={photo} alt={r?.name || ''} loading="lazy" decoding="async" />
-          ) : (
-            <div className="sc-drop-hero-fallback">🍽️</div>
-          )}
+          <PhotoOrEmoji
+            src={photo}
+            alt={r?.name || ''}
+            emoji={categoryEmoji(cuisine)}
+            imgClassName="sc-drop-hero-img"
+            fallbackClassName="sc-drop-hero-fallback"
+          />
           <div className="sc-drop-hero-overlay" aria-hidden="true" />
           <span className="sc-drop-hero-live"><i />LIVE</span>
           <div className="sc-drop-hero-pct">{badge}</div>

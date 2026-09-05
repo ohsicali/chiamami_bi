@@ -1,5 +1,4 @@
-import DesktopProfilePage from './DesktopProfilePage'
-import { useState, useEffect, cloneElement } from 'react'
+import { useState, useEffect, cloneElement, lazy, Suspense } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -12,6 +11,10 @@ import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestauran
 import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
+import { PageLoader } from '../../components/UI/LoadingSpinner'
+
+// Caricata solo su desktop: da telefono questo codice non viene scaricato.
+const DesktopProfilePage = lazy(() => import('./DesktopProfilePage'))
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -85,7 +88,7 @@ export default function ProfilePage() {
   }
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
-  if (isDesktop) return <DesktopProfilePage />
+  if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopProfilePage /></Suspense>
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   const email = user?.email || ''
