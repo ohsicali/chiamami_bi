@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-04-20
+Ultima modifica: 2026-09-05
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -401,3 +401,181 @@ renderizza, ed è normale — non è una regressione.
 3. Tema scuro: quasi gratis una volta che i colori passano dai token.
 4. Backfill `neighborhood` sui 73 locali esistenti (oggi tutti NULL: il campo si
    popola solo al prossimo sync Places, quindi il quartiere non si vede ancora).
+
+
+---
+
+## Chiedi a Bi — fix chat (2026-09-05)
+
+Branch: `claude/chiedi-a-bi-chat-fix-sx4pa5`
+
+### Il sintomo
+Dai log in `ai_messages`: da metà giugno **quasi ogni risposta era una bolla
+vuota con zero card** ("pizza in centro", "piemontese in centro", "sono in
+quadrilatero…", "pesce in centro"). Il client mostrava il fallback "Eccomi.".
+
+### La causa
+`streamFinalRound` eseguiva **solo la prima** `search_restaurants`. Nel round
+streamato Claude ne chiede spesso una seconda (rilassa i filtri quando il primo
+giro rende poco): quel `tool_use` non veniva mai eseguito, il turno finiva senza
+testo e senza `present_picks` → messaggio vuoto, `results: []`, riga vuota
+persistita in DB.
+
+Ora c'è **un solo motore** (`runConversation`) per streaming e non-streaming, e
+ogni tool call viene eseguita fino a `MAX_TOOL_ITERATIONS`.
+
+### Gli altri bug trovati strada facendo
+| | Bug | Effetto |
+|--|--|--|
+| Città | nessun filtro su `city` | 94 locali in **28 città** (Marsala, Ibiza, Milano…): Bi consigliava un pesce a Marsala a chi guardava Torino. Ora filtro sulla città attiva + cintura torinese, con `out_of_city` sui candidati fuori. |
+| History | `order(ascending: true).limit(10)` | prendeva i **primi** 10 messaggi, non gli ultimi: nelle chat lunghe Claude non vedeva mai i turni recenti. |
+| History | nessuna normalizzazione | poteva iniziare con un turno `assistant` (l'API vuole `user`) e lasciare turni appaiati dopo aver scartato i vuoti. |
+| `open_now` | guardia `r.open_now \|\| r.closes_at == null` | per un locale **chiuso** `closes_at` è null → passava lo stesso: "aperto adesso" non filtrava nulla. Ora `open_now !== false` (null = orari ignoti). |
+| Retry | ricorsione che rilassava solo zone/open_now/prezzo | "agnolotti a pranzo" tornava zero anche con locali validi. Ora scalini espliciti fino a mollare testo e città, e `dropped: [...]` dice a Bi cosa ha lasciato cadere così può essere onesta. |
+| Query | `.limit(40)` **senza ORDER BY** su 94 righe | sottoinsieme arbitrario e non deterministico, poi filtrato client-side. Ora ordine editoriale (`our_rating desc`) e cap a 10 candidati scelti, non a caso. |
+| Tool call | un solo `tool_result` per turno | se Claude chiamava due tool in parallelo, la richiesta dopo veniva rifiutata. |
+| Client | `current_moment` e `city` mai inviati | l'endpoint li supportava: Bi ragionava sempre "Torino, ora imprecisata". |
+| Client | pill "● Aperto" su `closes_at` | compariva sbagliata; ora su `open_now === true`. |
+| Client | chip "Allarga la zona"/"Solo con sconto" | mostrate anche con zero risultati, dove non hanno senso. |
+| Testo | `cleanupText` tagliava a 600 char | il client vedeva tutto lo stream ma il DB salvava troncato: ricaricando `/chiedi/:id` il messaggio cambiava. Ora 1600. |
+| Copy | "Sono ~200 ristoranti" / prompt "circa 70 a Torino" | i locali sono 94, 58 a Torino. Allineati entrambi. |
+
+### Test
+`npm test` → `tests/ai-engine.test.mjs` (node --test, nessuna dipendenza nuova).
+Anthropic e Supabase sono stubbati, quindi gira offline. Copre il doppio
+`search_restaurants` in streaming, il "mai una bolla vuota", il filtro città,
+`open_now`, gli scalini di rilassamento e la history.
+
+### Da verificare in produzione
+- `ANTHROPIC_API_KEY` è l'unica env var necessaria e c'era già.
+- Le righe `ai_messages` con testo vuoto restano in DB: `normalizeHistory` le
+  scarta, ma se si vuole ripulire →
+  `delete from ai_messages where role='assistant' and coalesce(content->>'text','')='';`
+
+
+## Chiedi a Bi — secondo giro: tono, velocità, foto (2026-09-05)
+
+Feedback Augusto dopo il test sul preview: risposte poco naturali, lente, e
+niente foto sulle card. Testando davvero la ricerca contro il DB di produzione
+sono usciti tre bug che dalla UI non si vedevano.
+
+### Le foto — `PhotoOrEmoji` si congelava al primo render
+`const [failed, setFailed] = useState(!src)` si inizializzava una volta sola.
+Le card della chat nascono **senza** foto (i picks arrivano dallo stream, la
+query foto dopo), quindi `failed` restava `true` per sempre e l'immagine non
+compariva mai, nemmeno quando l'URL arrivava. Altrove nell'app la foto è nella
+stessa query del locale, ecco perché si rompeva solo qui.
+Ora lo stato tiene *quale URL* ha fallito, non un booleano: un `src` nuovo
+riparte pulito. Stesso difetto e stessa cura in `SmartImage`.
+In più `/api/ai` manda `photo_url` dentro il pick: la card nasce completa,
+senza il secondo giro di rete.
+
+### La zona non ha MAI filtrato — `PGRST100` ingoiato in silenzio
+L'alias `'via po,'` di "centro" contiene una virgola. La lista `or=` di
+PostgREST è separata da virgole → `failed to parse logic tree`, query morta.
+L'errore non veniva letto: sembrava "nessun risultato" e si cadeva sullo stage
+rilassato. Misurato prima/dopo sui dati veri:
+
+| domanda | prima | dopo |
+|---|---|---|
+| pizza in centro | 6 candidati, zona rilassata, 2 fuori Torino | **3 pizzerie in centro**, zona rispettata |
+| piemontese in centro | 7, zona rilassata | **6 in centro**, zona rispettata |
+
+Ora i pattern sono ripuliti e gli errori di stage vengono loggati.
+
+### Gli agnolotti — full-text in AND + rilassamento che buttava il piatto
+`websearch_to_tsquery` mette i termini in AND: "agnolotti del plin" → 0
+documenti (ma "agnolotti" → 1, "plin" → 2). Il vecchio rilassamento mollava del
+tutto `search_text` e Bi si ritrovava **63 locali a caso**: consigliava un
+africano a chi chiedeva gli agnolotti.
+Ora: prima si riprova lo stesso testo in OR (`agnolotti | del | plin` → 3 piole
+piemontesi vere), e il testo si molla solo se resta la categoria a dare senso al
+risultato. Senza categoria si torna zero e Bi lo dice.
+
+### Gli sconti — tre colonne inesistenti
+La query usava `discount_percent`, `starts_at`, `ends_at`. La tabella ha
+`discount_value` + `discount_type` e `valid_from` / `valid_until`. Falliva
+sempre, e l'errore non veniva letto: il badge "−X%" non è mai comparso e
+`discount_only` (il prompt "Sconti attivi stasera" in home) tornava sempre zero.
+"Attivo" ora usa la stessa definizione del resto dell'app (`is_active` +
+`valid_until` futuro).
+
+> ⚠️ **Contenuto, non codice**: in `discounts` c'è **una sola riga**, disattivata
+> e scaduta il 24/05/2026. Finché non ci sono sconti attivi, "Sconti attivi
+> stasera" resta legittimamente vuoto ovunque, chat compresa.
+
+### Velocità
+- Modello: `claude-sonnet-5` (era `claude-sonnet-4-6`), con fallback automatico
+  al precedente se l'account non ce l'ha — la chat non si rompe.
+- Ricerca: **da ~950-2100 ms a ~280-720 ms** (misurato su 8 domande reali).
+  Foto e sconti si caricano una volta sola, sullo stage vincente e solo sui
+  candidati che Claude vedrà, e in parallelo. Prima due query per ogni stage
+  scartato.
+- Meno token in ingresso: a Claude va una proiezione snella del candidato
+  (niente slug, foto, flag interni), excerpt 280 → 200 caratteri.
+- `max_tokens` 2048 → 1024.
+- L'attesa ora si vede: evento SSE `status` ("Sto guardando tra i miei
+  locali…") dentro la bolla. Prima i puntini **non comparivano mai** — la
+  bolla assistant esiste già in streaming, quindi si vedeva solo un cursore
+  lampeggiante nel vuoto.
+
+### Tono
+Regole nuove nel system prompt, con esempi di cosa NON scrivere presi dalle
+risposte vere del preview: max 2 frasi sotto le 35 parole; mai chiedere il
+permesso di cercare ancora ("se vuoi posso…", "dimmi tu…"); mai raccontare il
+proprio processo o i candidati scartati ("il candidato da Collegno lo salto");
+niente punti esclamativi; non ripetere nel testo categorie e zone che stanno
+già nelle card.
+
+### Come ho testato
+`npm test` → 22 test (node --test, offline, Anthropic e Supabase stubbati).
+In più uno script usa e getta che ha eseguito la **vera** `executeSearch` contro
+il DB di produzione con la chiave anon, su 8 domande reali: è così che sono
+saltati fuori zona, full-text e sconti. Non riproducibile in CI (serve la rete),
+ma ripetibile: bastano `executeSearch` + un client anon.
+
+
+## Chiedi a Bi — terzo giro: provata sul serio con la chiave API (2026-09-05)
+
+Con `ANTHROPIC_API_KEY` ho eseguito il loop vero (`runConversation`) contro il
+DB di produzione, sulle domande della screenshot e dei log. Non piu solo test
+stubbati: risposte vere, tempi veri.
+
+### Modello: pianificatore rapido, voce sul modello grosso
+
+Il primo giro non parla all'utente — legge la domanda e sceglie i filtri. Ora lo
+fa **Haiku 4.5** (`CLAUDE_MODEL_PLANNER`), la risposta resta a **Sonnet 5**.
+
+⚠️ Il primo tentativo, col rapido lasciato libero, ha **peggiorato la qualita**:
+su "dove mangio un gelato" Haiku ha risposto di suo senza cercare, inventando
+*"non ho gelaterie in archivio"* — ne ho due — in 42 parole e chiudendo con
+"Vuoi che ti dica dove?". Risolto alla radice con
+`tool_choice: {type:'tool', name:'search_restaurants'}` sul primo giro: il
+pianificatore **non puo** parlare, puo solo cercare. Qualunque parola rivolta
+all'utente nasce da Sonnet 5 dopo aver visto i candidati veri.
+
+Override senza deploy: `AI_MODEL` e `AI_MODEL_FAST` (vuoto = tutto sul grosso).
+
+### Tempi misurati (stesse 7 domande)
+
+| domanda | prima (tutto Sonnet 5) | dopo | 1° token |
+|---|---|---|---|
+| pizza napoletana in centro | 7351 ms | **5643 ms** | 5648 → 4011 |
+| pizza in centro | 5889 ms | **4945 ms** | 3195 → 2462 |
+| aperitivo a Vanchiglia | 6736 ms | 7000 ms | 2961 → 2052 |
+| agnolotti del plin | 5704 ms | **4489 ms** | 2734 → 1955 |
+| quadrilatero all'aperto | 13811 ms | **5921 ms** | 8799 → 2885 |
+| gelato | 5791 ms | **4296 ms** | 3637 → 2118 |
+| miglior pesce | 7827 ms | **5486 ms** | 3317 → 2109 |
+
+Primo giro da 1,5-3,8 s a 0,8-1,4 s. `MAX_CANDIDATES` 10 → 6 (round 2 legge meno).
+Timeline per richiesta nei log Vercel: `[ai] round1(...) Xms · search(N) Yms · round2(...) Zms · picks N`.
+
+### Tono: verificato sulle risposte vere
+Tutte fra 14 e 25 parole (limite 35), 1-2 frasi, nessun "se vuoi posso…",
+nessun punto esclamativo, nessun racconto di cosa e stato scartato. I casi
+limite reggono: *"consigliami qualcosa"* chiede cosa vuoi **senza card**, *"il
+miglior pesce"* rifiuta la classifica, la napoletana dichiara che e a Rivoli.
+Foto presenti su tutte le card di tutte le prove.
+
+> La chiave API e stata usata solo in sessione, mai scritta su file. Va revocata.

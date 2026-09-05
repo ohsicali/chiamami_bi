@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useCity } from '../../lib/CityContext'
+import { getCurrentMoment } from '../../lib/hours'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
@@ -15,6 +17,7 @@ import './ChiediPage.css'
  */
 export default function ChiediPage() {
   const { user } = useAuth()
+  const { city } = useCity()
   const navigate = useNavigate()
   const location = useLocation()
   const { conversationId: routeConvId } = useParams()
@@ -30,6 +33,10 @@ export default function ChiediPage() {
   // userLocation: { lat, lng } | null. Si attiva al click del 📍 nell'input bar.
   // Se attivo, viene incluso in /api/ai così Bi può citare i minuti a piedi
   // e usare il filtro near_me.
+  // Etichetta di avanzamento inviata dal server (evento SSE "status") mentre
+  // Bi cerca: l'attesa piu lunga è quella, e tre puntini muti la fanno
+  // sembrare piu lunga di quanto sia.
+  const [status, setStatus] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
   const [locationError, setLocationError] = useState(null)
   const [locationPending, setLocationPending] = useState(false)
@@ -70,6 +77,10 @@ export default function ChiediPage() {
             return { role: m.role, content: text, results }
           })
           .filter((m) => m.role === 'user' || m.role === 'assistant')
+          // Le conversazioni di prima del fix hanno righe assistant vuote
+          // salvate in DB: senza questo filtro riaprendole si vedono bolle
+          // di Bi bianche e mute.
+          .filter((m) => m.content || (m.results && m.results.length > 0))
         setMessages(restored)
       })
     return () => { cancelled = true }
@@ -103,6 +114,7 @@ export default function ChiediPage() {
     ])
     setInput('')
     setLoading(true)
+    setStatus(null)
 
     const failWithError = (msg) => {
       setMessages((m) => {
@@ -129,6 +141,11 @@ export default function ChiediPage() {
           prompt: text,
           conversation_id: convId || undefined,
           user_location: userLocation || undefined,
+          // Fascia oraria e città attiva: l'endpoint le supportava già ma
+          // nessuno gliele passava, così Bi ragionava sempre "Torino, ora
+          // imprecisata" anche col CityPicker su un'altra città.
+          current_moment: getCurrentMoment().active || undefined,
+          city: city?.name || undefined,
           stream: true,
         }),
       })
@@ -170,8 +187,11 @@ export default function ChiediPage() {
           let parsed
           try { parsed = JSON.parse(data) } catch { continue }
 
-          if (evt === 'delta') {
+          if (evt === 'status') {
+            setStatus(typeof parsed?.text === 'string' ? parsed.text : null)
+          } else if (evt === 'delta') {
             gotAnyDelta = true
+            setStatus(null)
             setMessages((m) => m.map((msg, i) =>
               i === m.length - 1 && msg.role === 'assistant'
                 ? { ...msg, content: (msg.content || '') + (parsed.text || '') }
@@ -203,7 +223,7 @@ export default function ChiediPage() {
       if (!gotAnyDelta) {
         setMessages((m) => m.map((msg, i) =>
           i === m.length - 1 && msg.role === 'assistant' && !msg.content
-            ? { ...msg, content: 'Eccomi.', streaming: false }
+            ? { ...msg, content: 'Non mi è arrivata la risposta. Riprova a chiedermelo?', streaming: false }
             : msg,
         ))
       }
@@ -212,8 +232,9 @@ export default function ChiediPage() {
       failWithError('Mmh, qualcosa non gira. Riprova tra un secondo?')
     } finally {
       setLoading(false)
+      setStatus(null)
     }
-  }, [convId, loading, navigate, user, userLocation])
+  }, [city?.name, convId, loading, navigate, user, userLocation])
 
   /* ---- Geolocation toggle ---- */
   const requestLocation = useCallback(() => {
@@ -277,7 +298,7 @@ export default function ChiediPage() {
         {isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
-          <Conversation messages={messages} loading={loading} onChip={sendMessage} />
+          <Conversation messages={messages} loading={loading} status={status} onChip={sendMessage} />
         )}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
@@ -420,7 +441,8 @@ function EmptyState({ onPromptClick }) {
             <p>
               Ti consiglio dove andare tra i locali che ho selezionato io a Torino.
               Cucina, zona, momento della giornata, piatti specifici, sconti attivi,
-              chi è aperto adesso. Sono ~200 ristoranti, tutti validati da me.
+              chi è aperto adesso. Sono quasi cento locali, tutti validati da me —
+              il grosso a Torino, qualcuno in giro per l'Italia.
             </p>
           </div>
         </div>
@@ -473,9 +495,13 @@ function EmptyState({ onPromptClick }) {
 /* ============================================================ */
 /*  Conversation                                                  */
 /* ============================================================ */
-function Conversation({ messages, loading, onChip }) {
+function Conversation({ messages, loading, status, onChip }) {
+  // /api/ai manda gia photo_url dentro il pick: qui restano solo i risultati
+  // delle conversazioni vecchie, salvate prima che lo facesse.
   const allRestaurantIds = messages.flatMap((m) =>
-    Array.isArray(m.results) ? m.results.map((r) => r.restaurant_id).filter(Boolean) : [],
+    Array.isArray(m.results)
+      ? m.results.filter((r) => r.restaurant_id && !r.photo_url).map((r) => r.restaurant_id)
+      : [],
   )
   const [photos, setPhotos] = useState({})
 
@@ -513,13 +539,29 @@ function Conversation({ messages, loading, onChip }) {
         // Mostriamo il cursore lampeggiante mentre msg.streaming è true.
         const isStreaming = m.streaming === true
         const hasResults = Array.isArray(m.results) && m.results.length > 0
+        // Finché non arriva il primo delta la bolla è vuota: lì dentro vanno i
+        // puntini e l'etichetta di stato. Prima si vedeva solo un cursore
+        // lampeggiante nel vuoto — l'attesa sembrava molto piu lunga di quanto
+        // fosse (i .cp-typing sotto non compaiono mai: questa bolla esiste già).
+        const isWaiting = isStreaming && !m.content
         return (
           <div key={i}>
             <div className="cp-bi-row">
               <div className="cp-av-mini"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
               <div className={`cp-bubble cp-bi${m.error ? ' cp-error' : ''}`}>
                 {m.content}
-                {isStreaming && <span className="cp-cursor" aria-hidden="true" />}
+                {isWaiting ? (
+                  <span className="cp-thinking">
+                    <span className="cp-tdot" />
+                    <span className="cp-tdot" />
+                    <span className="cp-tdot" />
+                    {i === messages.length - 1 && status && (
+                      <span className="cp-tstatus">{status}</span>
+                    )}
+                  </span>
+                ) : isStreaming ? (
+                  <span className="cp-cursor" aria-hidden="true" />
+                ) : null}
               </div>
             </div>
             {hasResults && (
@@ -528,7 +570,7 @@ function Conversation({ messages, loading, onChip }) {
                   <ResultCard
                     key={r.restaurant_id || r.slug || `${i}-${j}`}
                     restaurant={r}
-                    photoUrl={r.restaurant_id ? photos[r.restaurant_id] : null}
+                    photoUrl={r.photo_url || (r.restaurant_id ? photos[r.restaurant_id] : null)}
                   />
                 ))}
               </div>
@@ -545,11 +587,19 @@ function Conversation({ messages, loading, onChip }) {
         const last = messages[messages.length - 1]
         if (!last || last.role !== 'assistant' || last.streaming || last.error) return null
         const firstResult = Array.isArray(last.results) && last.results[0]
-        const chips = [
-          firstResult?.name ? `Cosa ordino da ${firstResult.name}?` : null,
-          'Allarga la zona',
-          'Solo con sconto',
-        ].filter(Boolean)
+        // Senza risultati "Allarga la zona"/"Solo con sconto" non hanno senso:
+        // lì servono chip che aiutino a riformulare la domanda.
+        const chips = firstResult
+          ? [
+              `Cosa ordino da ${firstResult.name}?`,
+              'Allarga la zona',
+              'Solo con sconto',
+            ]
+          : [
+              'Fammi altri esempi',
+              'Cambia zona',
+              'Qualcosa di economico',
+            ]
         return (
           <div className="cp-chips">
             {chips.map((c) => (
@@ -570,6 +620,7 @@ function Conversation({ messages, loading, onChip }) {
             <span className="cp-tdot" />
             <span className="cp-tdot" />
             <span className="cp-tdot" />
+            {status && <span className="cp-tstatus">{status}</span>}
           </div>
         </div>
       )}
@@ -579,11 +630,17 @@ function Conversation({ messages, loading, onChip }) {
 
 function ResultCard({ restaurant, photoUrl }) {
   const finalPhoto = photoUrl ? proxyImg(photoUrl) : null
+  // `open_now` è tri-stato: true aperto, false chiuso, null orari sconosciuti.
+  // La pill verde va solo sul true (prima si basava su closes_at, che è null
+  // anche per i locali chiusi).
+  const isOpen = restaurant.open_now === true
   const meta = [
     restaurant.category,
-    restaurant.zone,
+    // La guida non è solo torinese: se il locale è fuori dalla città che stai
+    // guardando, la card lo dice invece di far finta di niente.
+    restaurant.out_of_city && restaurant.city ? restaurant.city : restaurant.zone,
     restaurant.walk_minutes ? `${restaurant.walk_minutes} min a piedi` : null,
-    restaurant.closes_at ? `aperto fino a ${restaurant.closes_at}` : null,
+    isOpen && restaurant.closes_at ? `aperto fino a ${restaurant.closes_at}` : null,
   ].filter(Boolean).join(' · ')
 
   return (
@@ -598,7 +655,7 @@ function ResultCard({ restaurant, photoUrl }) {
           emoji="🍽️"
           imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
-        {restaurant.closes_at && <span className="cp-open-pill">● Aperto</span>}
+        {isOpen && <span className="cp-open-pill">● Aperto</span>}
       </div>
       <div className="cp-info">
         <div>
