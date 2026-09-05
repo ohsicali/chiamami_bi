@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useCity } from '../../lib/CityContext'
+import { getCurrentMoment } from '../../lib/hours'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
@@ -15,6 +17,7 @@ import './ChiediPage.css'
  */
 export default function ChiediPage() {
   const { user } = useAuth()
+  const { city } = useCity()
   const navigate = useNavigate()
   const location = useLocation()
   const { conversationId: routeConvId } = useParams()
@@ -129,6 +132,11 @@ export default function ChiediPage() {
           prompt: text,
           conversation_id: convId || undefined,
           user_location: userLocation || undefined,
+          // Fascia oraria e città attiva: l'endpoint le supportava già ma
+          // nessuno gliele passava, così Bi ragionava sempre "Torino, ora
+          // imprecisata" anche col CityPicker su un'altra città.
+          current_moment: getCurrentMoment().active || undefined,
+          city: city?.name || undefined,
           stream: true,
         }),
       })
@@ -203,7 +211,7 @@ export default function ChiediPage() {
       if (!gotAnyDelta) {
         setMessages((m) => m.map((msg, i) =>
           i === m.length - 1 && msg.role === 'assistant' && !msg.content
-            ? { ...msg, content: 'Eccomi.', streaming: false }
+            ? { ...msg, content: 'Non mi è arrivata la risposta. Riprova a chiedermelo?', streaming: false }
             : msg,
         ))
       }
@@ -213,7 +221,7 @@ export default function ChiediPage() {
     } finally {
       setLoading(false)
     }
-  }, [convId, loading, navigate, user, userLocation])
+  }, [city?.name, convId, loading, navigate, user, userLocation])
 
   /* ---- Geolocation toggle ---- */
   const requestLocation = useCallback(() => {
@@ -420,7 +428,8 @@ function EmptyState({ onPromptClick }) {
             <p>
               Ti consiglio dove andare tra i locali che ho selezionato io a Torino.
               Cucina, zona, momento della giornata, piatti specifici, sconti attivi,
-              chi è aperto adesso. Sono ~200 ristoranti, tutti validati da me.
+              chi è aperto adesso. Sono quasi cento locali, tutti validati da me —
+              il grosso a Torino, qualcuno in giro per l'Italia.
             </p>
           </div>
         </div>
@@ -545,11 +554,19 @@ function Conversation({ messages, loading, onChip }) {
         const last = messages[messages.length - 1]
         if (!last || last.role !== 'assistant' || last.streaming || last.error) return null
         const firstResult = Array.isArray(last.results) && last.results[0]
-        const chips = [
-          firstResult?.name ? `Cosa ordino da ${firstResult.name}?` : null,
-          'Allarga la zona',
-          'Solo con sconto',
-        ].filter(Boolean)
+        // Senza risultati "Allarga la zona"/"Solo con sconto" non hanno senso:
+        // lì servono chip che aiutino a riformulare la domanda.
+        const chips = firstResult
+          ? [
+              `Cosa ordino da ${firstResult.name}?`,
+              'Allarga la zona',
+              'Solo con sconto',
+            ]
+          : [
+              'Fammi altri esempi',
+              'Cambia zona',
+              'Qualcosa di economico',
+            ]
         return (
           <div className="cp-chips">
             {chips.map((c) => (
@@ -579,11 +596,17 @@ function Conversation({ messages, loading, onChip }) {
 
 function ResultCard({ restaurant, photoUrl }) {
   const finalPhoto = photoUrl ? proxyImg(photoUrl) : null
+  // `open_now` è tri-stato: true aperto, false chiuso, null orari sconosciuti.
+  // La pill verde va solo sul true (prima si basava su closes_at, che è null
+  // anche per i locali chiusi).
+  const isOpen = restaurant.open_now === true
   const meta = [
     restaurant.category,
-    restaurant.zone,
+    // La guida non è solo torinese: se il locale è fuori dalla città che stai
+    // guardando, la card lo dice invece di far finta di niente.
+    restaurant.out_of_city && restaurant.city ? restaurant.city : restaurant.zone,
     restaurant.walk_minutes ? `${restaurant.walk_minutes} min a piedi` : null,
-    restaurant.closes_at ? `aperto fino a ${restaurant.closes_at}` : null,
+    isOpen && restaurant.closes_at ? `aperto fino a ${restaurant.closes_at}` : null,
   ].filter(Boolean).join(' · ')
 
   return (
@@ -598,7 +621,7 @@ function ResultCard({ restaurant, photoUrl }) {
           emoji="🍽️"
           imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
-        {restaurant.closes_at && <span className="cp-open-pill">● Aperto</span>}
+        {isOpen && <span className="cp-open-pill">● Aperto</span>}
       </div>
       <div className="cp-info">
         <div>

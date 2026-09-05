@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-04-20
+Ultima modifica: 2026-09-05
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -401,3 +401,53 @@ renderizza, ed è normale — non è una regressione.
 3. Tema scuro: quasi gratis una volta che i colori passano dai token.
 4. Backfill `neighborhood` sui 73 locali esistenti (oggi tutti NULL: il campo si
    popola solo al prossimo sync Places, quindi il quartiere non si vede ancora).
+
+
+---
+
+## Chiedi a Bi — fix chat (2026-09-05)
+
+Branch: `claude/chiedi-a-bi-chat-fix-sx4pa5`
+
+### Il sintomo
+Dai log in `ai_messages`: da metà giugno **quasi ogni risposta era una bolla
+vuota con zero card** ("pizza in centro", "piemontese in centro", "sono in
+quadrilatero…", "pesce in centro"). Il client mostrava il fallback "Eccomi.".
+
+### La causa
+`streamFinalRound` eseguiva **solo la prima** `search_restaurants`. Nel round
+streamato Claude ne chiede spesso una seconda (rilassa i filtri quando il primo
+giro rende poco): quel `tool_use` non veniva mai eseguito, il turno finiva senza
+testo e senza `present_picks` → messaggio vuoto, `results: []`, riga vuota
+persistita in DB.
+
+Ora c'è **un solo motore** (`runConversation`) per streaming e non-streaming, e
+ogni tool call viene eseguita fino a `MAX_TOOL_ITERATIONS`.
+
+### Gli altri bug trovati strada facendo
+| | Bug | Effetto |
+|--|--|--|
+| Città | nessun filtro su `city` | 94 locali in **28 città** (Marsala, Ibiza, Milano…): Bi consigliava un pesce a Marsala a chi guardava Torino. Ora filtro sulla città attiva + cintura torinese, con `out_of_city` sui candidati fuori. |
+| History | `order(ascending: true).limit(10)` | prendeva i **primi** 10 messaggi, non gli ultimi: nelle chat lunghe Claude non vedeva mai i turni recenti. |
+| History | nessuna normalizzazione | poteva iniziare con un turno `assistant` (l'API vuole `user`) e lasciare turni appaiati dopo aver scartato i vuoti. |
+| `open_now` | guardia `r.open_now \|\| r.closes_at == null` | per un locale **chiuso** `closes_at` è null → passava lo stesso: "aperto adesso" non filtrava nulla. Ora `open_now !== false` (null = orari ignoti). |
+| Retry | ricorsione che rilassava solo zone/open_now/prezzo | "agnolotti a pranzo" tornava zero anche con locali validi. Ora scalini espliciti fino a mollare testo e città, e `dropped: [...]` dice a Bi cosa ha lasciato cadere così può essere onesta. |
+| Query | `.limit(40)` **senza ORDER BY** su 94 righe | sottoinsieme arbitrario e non deterministico, poi filtrato client-side. Ora ordine editoriale (`our_rating desc`) e cap a 10 candidati scelti, non a caso. |
+| Tool call | un solo `tool_result` per turno | se Claude chiamava due tool in parallelo, la richiesta dopo veniva rifiutata. |
+| Client | `current_moment` e `city` mai inviati | l'endpoint li supportava: Bi ragionava sempre "Torino, ora imprecisata". |
+| Client | pill "● Aperto" su `closes_at` | compariva sbagliata; ora su `open_now === true`. |
+| Client | chip "Allarga la zona"/"Solo con sconto" | mostrate anche con zero risultati, dove non hanno senso. |
+| Testo | `cleanupText` tagliava a 600 char | il client vedeva tutto lo stream ma il DB salvava troncato: ricaricando `/chiedi/:id` il messaggio cambiava. Ora 1600. |
+| Copy | "Sono ~200 ristoranti" / prompt "circa 70 a Torino" | i locali sono 94, 58 a Torino. Allineati entrambi. |
+
+### Test
+`npm test` → `tests/ai-engine.test.mjs` (node --test, nessuna dipendenza nuova).
+Anthropic e Supabase sono stubbati, quindi gira offline. Copre il doppio
+`search_restaurants` in streaming, il "mai una bolla vuota", il filtro città,
+`open_now`, gli scalini di rilassamento e la history.
+
+### Da verificare in produzione
+- `ANTHROPIC_API_KEY` è l'unica env var necessaria e c'era già.
+- Le righe `ai_messages` con testo vuoto restano in DB: `normalizeHistory` le
+  scarta, ma se si vuole ripulire →
+  `delete from ai_messages where role='assistant' and coalesce(content->>'text','')='';`
