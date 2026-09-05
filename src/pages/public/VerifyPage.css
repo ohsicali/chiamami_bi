@@ -41,8 +41,11 @@
   to   { stroke-dashoffset: 0; }
 }
 
+/* Partiva da scale(0). È il momento "prima volta / celebrazione",
+   l'unico posto dove un rimbalzo è concesso — ma anche qui il segno di
+   spunta deve arrivare, non materializzarsi dal nulla. */
 @keyframes verifyCheckPop {
-  0%   { transform: scale(0);    opacity: 0; }
+  0%   { transform: scale(0.5);  opacity: 0; }
   35%  { transform: scale(1.25); opacity: 1; }
   55%  { transform: scale(0.92); }
   100% { transform: scale(1); }

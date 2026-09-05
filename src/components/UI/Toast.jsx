@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { SPRING_SNAP } from "../../lib/motion";
+import { SPRING_SNAP, TR_EXIT } from "../../lib/motion";
 
 const ToastContext = createContext(null);
 
@@ -57,7 +57,9 @@ export function ToastProvider({ children }) {
           diversi per lo stesso oggetto. Una molla e non dei keyframe
           perché i toast si accavallano — la molla riparte dal valore
           corrente, i keyframe ricomincerebbero da zero. `layout` fa
-          scorrere gli altri al posto liberato invece di farli saltare. */}
+          scorrere gli altri al posto liberato invece di farli saltare.
+          L'uscita è più rapida dell'entrata (180ms contro la molla):
+          un toast che se ne va non ha più niente da farti leggere. */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-2 pointer-events-none">
         <AnimatePresence mode="popLayout">
           {toasts.map((toast) => (
@@ -66,7 +68,7 @@ export function ToastProvider({ children }) {
               layout
               initial={{ opacity: 0, y: reduce ? 0 : -24, scale: reduce ? 1 : 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: reduce ? 0 : -24, scale: reduce ? 1 : 0.96 }}
+              exit={{ opacity: 0, y: reduce ? 0 : -24, scale: reduce ? 1 : 0.96, transition: TR_EXIT }}
               transition={SPRING_SNAP}
               className={`pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-xs ${typeStyles[toast.type]}`}
               onClick={() => removeToast(toast.id)}

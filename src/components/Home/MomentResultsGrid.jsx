@@ -5,7 +5,7 @@ import { isOpenForMoment, MOMENT_SLOTS } from '../../lib/hours'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils/price'
-import { STAGGER, TR_REVEAL, staggerDelay } from '../../lib/motion'
+import { STAGGER, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/motion'
 
 /**
  * MomentResultsGrid · card scroll orizzontale filtrate per momento giornata.
@@ -214,10 +214,10 @@ function Lcard({ r, index = 0, reduce = false, hoursLabel, onClick, saved, onTog
       // Le card entrano sfalsate di 50ms: si legge che sono una lista
       // ordinata e non tre blocchi apparsi insieme. Il tetto a 150ms
       // tiene la terza card dentro la stessa occhiata della prima.
-      initial={{ opacity: 0, y: reduce ? 0 : 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={riseFrom(10, reduce).from}
+      animate={riseFrom(10, reduce).to}
       transition={{ ...TR_REVEAL, delay: staggerDelay(index, STAGGER, 0.15) }}
-      whileTap={reduce ? undefined : { scale: 0.985 }}
+      whileTap={reduce ? undefined : { transform: 'scale(0.985)' }}
       className="hfv4-lcard"
       style={{
         flex: '0 0 72%',

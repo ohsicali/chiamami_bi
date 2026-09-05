@@ -13,10 +13,10 @@ import SmartImage from '../UI/SmartImage'
 // 280ms, 50ms di sfalsamento e il ritardo si ferma a 240ms. La curva
 // era easeInOutQuad — una ease-in-out su un'entrata; ora ease-out.
 const cardVariants = {
-  hidden: { opacity: 0, x: 24 },
+  hidden: { opacity: 0, transform: 'translateX(24px)' },
   visible: (i) => ({
     opacity: 1,
-    x: 0,
+    transform: 'translateX(0px)',
     transition: {
       delay: staggerDelay(i),
       duration: DUR.reveal,

@@ -39,10 +39,21 @@ export const SPRING_SOFT = { type: 'spring', duration: 0.45, bounce: 0.2 }
 export const SPRING_DRAWER = { type: 'spring', duration: 0.42, bounce: 0 }
 
 // ── Transizioni pronte ─────────────────────────────────────────────
+/**
+ * L'uscita è più rapida dell'entrata. Non è asimmetria per capriccio:
+ * entrando l'utente sta ancora leggendo cosa è arrivato, uscendo ha già
+ * deciso e sta aspettando la prossima schermata. Stessa direzione
+ * dell'entrata (l'oggetto se ne va da dove è venuto), tempo più corto.
+ */
+export const TR_EXIT = { duration: DUR.pop, ease: EASE_OUT }
+
 export const TR_POP = { duration: DUR.pop, ease: EASE_OUT }
 export const TR_MENU = { duration: DUR.menu, ease: EASE_OUT }
 export const TR_REVEAL = { duration: DUR.reveal, ease: EASE_OUT }
 export const TR_SHEET = { duration: DUR.sheet, ease: EASE_DRAWER }
+/* Uscita dello sheet: stessa strada, 240ms invece di 320. Chi chiude ha
+   già deciso e sta aspettando la schermata sotto. */
+export const TR_SHEET_EXIT = { duration: 0.24, ease: EASE_DRAWER }
 
 /**
  * Stagger: 30–80ms fra un elemento e il successivo. Meno non si legge,
@@ -79,3 +90,34 @@ export function staggerParent(step = STAGGER, delayChildren = 0) {
  *  e fatti partire quando l'elemento è entrato per davvero (non al
  *  primo pixel), altrimenti l'animazione finisce fuori campo. */
 export const REVEAL_VIEWPORT = { once: true, amount: 0.15, margin: '0px 0px -10% 0px' }
+
+/**
+ * Le scorciatoie x/y/scale di Motion NON sono accelerate: girano in
+ * requestAnimationFrame sul thread principale e perdono frame proprio
+ * quando il thread è occupato — cioè mentre la home carica le foto e
+ * l'utente scrolla, che è esattamente quando queste entrate partono.
+ * La stringa `transform` completa finisce invece sulla GPU.
+ *
+ *   <motion.div animate={{ y: 0 }} />                      ← perde frame
+ *   <motion.div animate={{ transform: 'translateY(0px)' }} /> ← GPU
+ *
+ * Da NON usare dove Motion scrive già il transform per conto suo
+ * (`layout`, `layoutId`): lì la stringa sovrascriverebbe il transform
+ * calcolato dall'animazione di layout e l'elemento salterebbe.
+ */
+export function riseFrom(px, reduce = false) {
+  return {
+    from: { opacity: 0, transform: `translateY(${reduce ? 0 : px}px)` },
+    to: { opacity: 1, transform: 'translateY(0px)' },
+  }
+}
+
+export function slideFrom(px, reduce = false) {
+  return {
+    from: { opacity: 0, transform: `translateX(${reduce ? 0 : px}px)` },
+    to: { opacity: 1, transform: 'translateX(0px)' },
+  }
+}
+
+/** Pressione: stessa ragione, stringa invece della scorciatoia `scale`. */
+export const pressTo = (v) => ({ transform: `scale(${v})` })

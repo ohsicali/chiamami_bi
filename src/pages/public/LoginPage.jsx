@@ -735,8 +735,8 @@ export default function LoginPage() {
             <motion.button
               type="submit"
               disabled={submitting}
-              whileTap={{ scale: 0.98 }}
-              whileHover={{ y: -1 }}
+              className="hover-lift-sm"
+              whileTap={{ transform: 'scale(0.98)' }}
               style={{
                 width: '100%',
                 background: submitting ? 'var(--color-ink-15)' : 'var(--color-corallo)',

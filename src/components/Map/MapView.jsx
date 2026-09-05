@@ -56,13 +56,18 @@ function ensureStyles() {
       box-shadow: 0 0 0 4px ${ACCENT_COLOR}33, 0 4px 20px rgba(232, 69, 60,0.5);
     }
     .cb-inner {
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: transform var(--dur-press) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out);
     }
-    .cb-marker:hover .cb-inner { transform: scale(1.15); }
+    @media (hover: hover) and (pointer: fine) {
+      .cb-marker:hover .cb-inner { transform: scale(1.15); }
+    }
     .cb-marker:active .cb-inner { transform: scale(0.92); }
+    /* Partiva da scale(0): il pin sbucava dal nulla. Niente al mondo
+       appare da niente — anche un palloncino sgonfio ha una forma.
+       Da 0.4 + opacity il pin "arriva" invece di materializzarsi. */
     @keyframes cb-bounce {
-      0% { transform: scale(0); }
-      50% { transform: scale(1.15); }
+      0% { transform: scale(0.4); opacity: 0; }
+      50% { transform: scale(1.15); opacity: 1; }
       70% { transform: scale(0.9); }
       85% { transform: scale(1.05); }
       100% { transform: scale(1); }

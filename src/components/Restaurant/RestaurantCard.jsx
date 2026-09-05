@@ -16,10 +16,10 @@ import { formatPrice } from '../../lib/utils/price'
 // iniziato a scorrere. Ora 280ms con lo stagger che si ferma a 240ms —
 // abbastanza da leggere l'ordine, non abbastanza da aspettare.
 const cardVariants = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 0, transform: 'translateY(14px)' },
   visible: (i) => ({
     opacity: 1,
-    y: 0,
+    transform: 'translateY(0px)',
     transition: {
       delay: staggerDelay(i),
       duration: DUR.reveal,
@@ -102,7 +102,7 @@ function RestaurantCard({
         initial="hidden"
         animate="visible"
         custom={index}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ transform: 'scale(0.98)' }}
         transition={SPRING_SNAP}
         onClick={() => onClick?.(restaurant)}
       >
@@ -199,7 +199,7 @@ function RestaurantCard({
         initial="hidden"
         animate="visible"
         custom={index}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ transform: 'scale(0.98)' }}
         transition={SPRING_SNAP}
         onClick={() => onClick?.(restaurant)}
       >
@@ -350,7 +350,7 @@ function RestaurantCard({
       initial="hidden"
       animate="visible"
       custom={index}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ transform: 'scale(0.98)' }}
       transition={SPRING_SNAP}
       onClick={() => onClick?.(restaurant)}
     >

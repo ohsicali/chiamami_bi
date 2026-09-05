@@ -56,7 +56,7 @@ export default function Button({
       // L'hover NON sta qui: whileHover scatta anche al tocco e lascia
       // il bottone ingrandito dopo il tap. Sta nel CSS di .btn-v4,
       // dietro a (hover: hover) and (pointer: fine).
-      whileTap={disabled || reduce ? undefined : { scale: 0.97 }}
+      whileTap={disabled || reduce ? undefined : { transform: 'scale(0.97)' }}
       transition={SPRING_SNAP}
       aria-disabled={as === 'a' ? disabled || undefined : undefined}
       disabled={as === 'button' ? disabled : undefined}

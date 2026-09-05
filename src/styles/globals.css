@@ -157,10 +157,15 @@
 .hfv4-cards-row,
 .hfv4-results,
 .hfv4-results-row,
-.hfv4-moment-tabs {
+.hfv4-moment-tabs-scroll {
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* NB: il vincolo sta sul contenitore che scrolla, non sulla fila
+   interna: la fila DEVE poter essere più larga del viewport, è quello
+   che la rende scorrevole. Prima .hfv4-moment-tabs era il contenitore,
+   ora è la fila. */
 
 /* Grid cell: min-width:auto di default espande la colonna 1fr oltre il viewport */
 .hfv4-zone-a,
@@ -584,6 +589,26 @@ body {
 }
 .press-sm:active {
   transform: scale(0.94);
+}
+
+/* Hover spostati QUI da whileHover di Framer. whileHover scatta anche
+   al tocco: su mobile il tap lasciava il bottone ingrandito finché non
+   toccavi altrove. Dietro al media query non esiste proprio su touch. */
+@media (hover: hover) and (pointer: fine) {
+  .map-ctrl-btn {
+    transition: transform var(--dur-press) var(--ease-out);
+  }
+  .map-ctrl-btn:hover {
+    transform: scale(1.05);
+  }
+  .hover-lift-sm {
+    transition: transform var(--dur-press) var(--ease-out),
+                filter var(--dur-pop) var(--ease-out);
+  }
+  .hover-lift-sm:not([disabled]):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+  }
 }
 
 /* Primitivo Button — hover solo dove esiste un puntatore vero. */

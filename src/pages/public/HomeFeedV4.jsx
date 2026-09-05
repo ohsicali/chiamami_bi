@@ -20,7 +20,7 @@ import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
-import { STAGGER, TR_REVEAL, staggerDelay } from '../../lib/motion'
+import { STAGGER, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/motion'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 
@@ -282,8 +282,8 @@ function HeroPromo({ featured }) {
     // leggere l'arrivo, non abbastanza da far aspettare chi vuole scorrere.
     <motion.div
       className="hfv4-hero-wrap"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={riseFrom(12).from}
+      animate={riseFrom(12).to}
       transition={TR_REVEAL}
       style={{ padding: '4px 20px 22px' }}
     >
@@ -483,8 +483,8 @@ function CategoryBubbles({ onSelect, onAltro }) {
   // `.press` (globals.css) dà l'affondamento al tocco: erano dieci
   // bottoni senza nessuna reazione al tap.
   const enter = (i) => ({
-    initial: { opacity: 0, y: reduce ? 0 : 10 },
-    animate: { opacity: 1, y: 0 },
+    initial: riseFrom(10, reduce).from,
+    animate: riseFrom(10, reduce).to,
     transition: { ...TR_REVEAL, delay: staggerDelay(i, 0.04) },
   })
 
@@ -535,8 +535,8 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
     <motion.button
       className="hfv4-rcard press"
       onClick={() => onClick?.(restaurant)}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={riseFrom(10).from}
+      animate={riseFrom(10).to}
       transition={{ ...TR_REVEAL, delay: staggerDelay(index, STAGGER, 0.2) }}
       style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
@@ -750,7 +750,7 @@ export default function HomeFeedV4() {
           60% { box-shadow: 0 0 0 5px rgba(255,255,255,.0); }
         }
         .hfv4-results-row::-webkit-scrollbar,
-        .hfv4-moment-tabs::-webkit-scrollbar,
+        .hfv4-moment-tabs-scroll::-webkit-scrollbar,
         .hfv4-cats-row::-webkit-scrollbar,
         .hfv4-cards-row::-webkit-scrollbar { display: none; }
 
@@ -950,10 +950,14 @@ export default function HomeFeedV4() {
           .hfv4-time-box .hfv4-timehero-clock { grid-column: 1; grid-row: 2 / 4; align-self: center; font-size: 88px !important; margin-bottom: 0 !important; }
           .hfv4-time-box .hfv4-timehero-q { grid-column: 2; grid-row: 2; align-self: end; font-size: 28px !important; max-width: none !important; }
           .hfv4-time-box .hfv4-timehero-sub { grid-column: 2; grid-row: 3; align-self: start; max-width: none; margin-top: 6px; }
-          .hfv4-time-box .hfv4-moment-tabs {
+          .hfv4-time-box .hfv4-moment-tabs-scroll {
             overflow-x: visible !important;
-            flex-wrap: wrap !important;
             padding: 0 !important;
+          }
+          /* Le due file sovrapposte devono avere layout IDENTICO, quindi
+             ogni regola qui vale per entrambe (.mt-row le prende tutte). */
+          .hfv4-time-box .mt-row {
+            flex-wrap: wrap !important;
             gap: 10px !important;
           }
           .hfv4-time-box .hfv4-moment-tab {
@@ -963,6 +967,8 @@ export default function HomeFeedV4() {
             padding: 12px 18px !important;
             border-radius: 999px !important;
           }
+          /* Il ritaglio della pill segue il raggio della pill stessa. */
+          .hfv4-time-box .hfv4-moment-tabs { --mt-radius: 999px; }
 
           /* === SuggestCard full-width e grande === */
           .hfv4-suggest-outer {

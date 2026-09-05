@@ -188,9 +188,8 @@ export default function DiscountBanner({ restaurantId }) {
             <motion.button
               onClick={handleUnlock}
               disabled={generating}
-              className="w-full rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
-              whileTap={{ scale: 0.97 }}
-              whileHover={{ scale: 1.01 }}
+              className="w-full rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-50 hover-lift-sm"
+              whileTap={{ transform: 'scale(0.97)' }}
             >
               {generating ? t('discount.generating') : `🔓 ${t('discount.unlock')}`}
             </motion.button>

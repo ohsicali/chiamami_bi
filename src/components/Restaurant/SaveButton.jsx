@@ -59,7 +59,7 @@ export default function SaveButton({
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
       }}
-      whileTap={reduce ? undefined : { scale: 0.85 }}
+      whileTap={reduce ? undefined : { transform: 'scale(0.85)' }}
       transition={SPRING_SOFT}
       aria-pressed={saved}
       aria-label={saved ? 'Rimuovi dai salvati' : 'Salva ristorante'}
@@ -77,7 +77,7 @@ export default function SaveButton({
         strokeLinecap="round"
         strokeLinejoin="round"
         style={{ transition: `fill ${TR_MENU.duration}s, stroke ${TR_MENU.duration}s` }}
-        animate={{ scale: saved && !reduce ? 1.08 : 1 }}
+        animate={{ transform: `scale(${saved && !reduce ? 1.08 : 1})` }}
         transition={SPRING_SOFT}
       >
         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />

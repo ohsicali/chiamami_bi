@@ -19,7 +19,7 @@ import { formatAddress } from '../../lib/utils/formatAddress'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
-import { DUR, EASE_OUT, STAGGER, TR_SHEET } from '../../lib/motion'
+import { DUR, EASE_OUT, STAGGER, TR_SHEET, TR_SHEET_EXIT } from '../../lib/motion'
 
 /* ── animation variants ──
    La curva era easeInOutQuad [.25,.46,.45,.94]: una ease-in-out usata su
@@ -280,7 +280,7 @@ export default function RestaurantSheet({
       ? animateSheet(sheetScope.current, { opacity: 0, y: 8 }, { duration: DUR.pop, ease: EASE_OUT })
       : Promise.all([
           animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: DUR.pop, ease: EASE_OUT }),
-          animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, TR_SHEET),
+          animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, TR_SHEET_EXIT),
         ])
     await exitAnim
     onClose()
@@ -441,10 +441,12 @@ export default function RestaurantSheet({
         className="relative flex flex-1 flex-col overflow-hidden bg-white rs-sheet"
         initial={isDesktop ? { opacity: 0, y: 12 } : { y: '100%', opacity: 0 }}
         animate={isDesktop ? { opacity: 1, y: 0 } : { y: 0, opacity: 1 }}
-        // Mobile: curva sheet iOS (--ease-drawer), la stessa in uscita —
-        // la scheda se ne va per la strada da cui è arrivata. Prima
-        // entrava con una molla e usciva con [0.4,0,0.7,0.2], che è una
-        // ease-IN: partiva lenta proprio nel momento del tocco.
+        // Mobile: curva sheet iOS (--ease-drawer). Stessa STRADA in
+        // uscita — la scheda se ne va da dove è arrivata — ma più
+        // rapida (240 vs 320ms): entrando stai ancora leggendo cosa è
+        // arrivato, uscendo hai già deciso. Prima entrava con una molla
+        // e usciva con [0.4,0,0.7,0.2], che è una ease-IN: partiva
+        // lenta proprio nel momento del tocco.
         transition={isDesktop ? { duration: DUR.reveal, ease: EASE_OUT } : TR_SHEET}
       >
         {/* Back button — above scroll content (hidden once sticky header appears) */}

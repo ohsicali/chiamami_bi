@@ -55,14 +55,16 @@ function MinusIcon() {
 // scale 0.8 in entrata era troppo: un bottone da 44px che cresce del 25%
 // si legge come un pop-up, non come un controllo che si presenta. 0.9 +
 // opacity è la partenza standard (mai da scale(0): niente nasce dal nulla).
-// `hover` resta perché su una mappa il puntatore c'è quasi sempre; su
-// touch Framer lo scatterebbe al tocco, ma qui il tap ha già la sua
-// variante e vince, quindi non resta appiccicato.
+//
+// L'hover NON è più qui. Prima me l'ero giustificato con "sulla mappa il
+// puntatore c'è quasi sempre", ma è falso: la mappa è soprattutto mobile,
+// e whileHover di Framer scatta anche al tocco lasciando il bottone
+// ingrandito dopo il tap. Sta in .map-ctrl-btn (globals.css), dietro a
+// (hover: hover) and (pointer: fine).
 const buttonVariants = {
-  initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1 },
-  tap: { scale: 0.92 },
-  hover: { scale: 1.05 },
+  initial: { opacity: 0, transform: 'scale(0.9)' },
+  animate: { opacity: 1, transform: 'scale(1)' },
+  tap: { transform: 'scale(0.92)' },
 }
 
 export default function MapControls({
@@ -95,7 +97,7 @@ export default function MapControls({
         initial="initial"
         animate="animate"
         whileTap="tap"
-        whileHover="hover"
+        className="map-ctrl-btn"
         transition={SPRING_SNAP}
         onClick={onLocateMe}
         aria-label="Vicino a me"
@@ -131,7 +133,7 @@ export default function MapControls({
         initial="initial"
         animate="animate"
         whileTap="tap"
-        whileHover="hover"
+        className="map-ctrl-btn"
         transition={{ ...SPRING_SNAP, delay: 0.05 }}
         onClick={onZoomIn}
         aria-label="Zoom avanti"
@@ -147,7 +149,7 @@ export default function MapControls({
         initial="initial"
         animate="animate"
         whileTap="tap"
-        whileHover="hover"
+        className="map-ctrl-btn"
         transition={{ ...SPRING_SNAP, delay: 0.1 }}
         onClick={onZoomOut}
         aria-label="Zoom indietro"

@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { REVEAL_VIEWPORT, TR_REVEAL, staggerDelay } from '../../lib/motion'
+import { REVEAL_VIEWPORT, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/motion'
 
 /**
  * Reveal — una sezione che entra quando arriva a schermo.
@@ -32,13 +32,17 @@ export default function Reveal({
 }) {
   const reduce = useReducedMotion()
   const Tag = motion[as] || motion.div
+  // Stringa `transform` e non la scorciatoia `y`: queste entrate partono
+  // mentre la home carica le foto e l'utente scrolla, cioè col thread
+  // principale occupato — la scorciatoia perderebbe frame lì.
+  const rise = riseFrom(y, reduce)
 
   return (
     <Tag
       className={className}
       style={style}
-      initial={{ opacity: 0, y: reduce ? 0 : y }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={rise.from}
+      whileInView={rise.to}
       viewport={REVEAL_VIEWPORT}
       transition={{ ...TR_REVEAL, delay: delay + staggerDelay(index) }}
       {...rest}
