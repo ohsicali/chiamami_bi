@@ -44,6 +44,7 @@ export default function ChiediPage() {
   const bodyRef = useRef(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
+  const inputBarRef = useRef(null)
   const initialMessageHandledRef = useRef(false)
 
   const isEmpty = messages.length === 0 && !loading
@@ -94,6 +95,34 @@ export default function ChiediPage() {
     el.style.height = Math.min(el.scrollHeight, 80) + 'px'
   }, [])
   useEffect(adjustTextarea, [input, adjustTextarea])
+
+  /* ---- Tieni la input bar sopra la tastiera su iOS/Android ----
+     .cp-input-bar è `position: fixed; bottom: 0`, ancorata al layout
+     viewport. Quando si apre la tastiera, mobile Safari/Chrome NON
+     restringono il layout viewport (solo il visual viewport si
+     rimpicciolisce) e scrollano la pagina per portare in vista il campo
+     focalizzato: il risultato è che la barra "fissa" resta sotto la
+     tastiera, fuori schermo, mentre lo scroll automatico mostra il resto
+     del contenuto sopra — sembra che la input bar appaia sia a metà pagina
+     che in fondo. La VisualViewport API ci dice esattamente quanto spazio
+     occupa la tastiera: traslo la barra di quella quantità per tenerla
+     ancorata sopra la tastiera in ogni momento. */
+  useEffect(() => {
+    const bar = inputBarRef.current
+    const vv = window.visualViewport
+    if (!bar || !vv) return
+    const reposition = () => {
+      const keyboardGap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      bar.style.transform = keyboardGap > 0 ? `translateY(-${keyboardGap}px)` : ''
+    }
+    vv.addEventListener('resize', reposition)
+    vv.addEventListener('scroll', reposition)
+    reposition()
+    return () => {
+      vv.removeEventListener('resize', reposition)
+      vv.removeEventListener('scroll', reposition)
+    }
+  }, [])
 
   /* ---- Send message (streaming SSE) ---- */
   const sendMessage = useCallback(async (rawText) => {
@@ -303,7 +332,7 @@ export default function ChiediPage() {
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
 
-      <form className="cp-input-bar" onSubmit={handleSubmit}>
+      <form className="cp-input-bar" ref={inputBarRef} onSubmit={handleSubmit}>
         <div className="cp-input-row">
           <button
             type="button"
