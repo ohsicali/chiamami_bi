@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { TR_SHEET } from '../../lib/motion'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
@@ -232,7 +233,7 @@ export default function SuggestRestaurantSheet({ userId = null, userEmail = null
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
-          transition={{ type: 'tween', duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+          transition={TR_SHEET}
           style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
             background: 'var(--color-page)',

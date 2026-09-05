@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { TAB_BAR_HEIGHT } from '../Layout/MobileTabBar'
+import { DUR, EASE_OUT, SPRING_SNAP } from '../../lib/motion'
 
 function getButtonStyle() {
   return {
@@ -51,8 +52,14 @@ function MinusIcon() {
   )
 }
 
+// scale 0.8 in entrata era troppo: un bottone da 44px che cresce del 25%
+// si legge come un pop-up, non come un controllo che si presenta. 0.9 +
+// opacity è la partenza standard (mai da scale(0): niente nasce dal nulla).
+// `hover` resta perché su una mappa il puntatore c'è quasi sempre; su
+// touch Framer lo scatterebbe al tocco, ma qui il tap ha già la sua
+// variante e vince, quindi non resta appiccicato.
 const buttonVariants = {
-  initial: { opacity: 0, scale: 0.8 },
+  initial: { opacity: 0, scale: 0.9 },
   animate: { opacity: 1, scale: 1 },
   tap: { scale: 0.92 },
   hover: { scale: 1.05 },
@@ -71,7 +78,7 @@ export default function MapControls({
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
+      transition={{ duration: DUR.reveal, ease: EASE_OUT, delay: 0.2 }}
       style={{
         position: 'absolute',
         right: 16,
@@ -89,7 +96,7 @@ export default function MapControls({
         animate="animate"
         whileTap="tap"
         whileHover="hover"
-        transition={{ duration: 0.2 }}
+        transition={SPRING_SNAP}
         onClick={onLocateMe}
         aria-label="Vicino a me"
         title="Vicino a me"
@@ -103,7 +110,10 @@ export default function MapControls({
         {isLocating && (
           <motion.div
             animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            // Loop di attesa: `linear` perché l'onda si ripete e una
+            // ease farebbe sembrare che riparta a ogni giro invece di
+            // pulsare. Finisce da sola quando isLocating diventa false.
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -122,7 +132,7 @@ export default function MapControls({
         animate="animate"
         whileTap="tap"
         whileHover="hover"
-        transition={{ duration: 0.2, delay: 0.05 }}
+        transition={{ ...SPRING_SNAP, delay: 0.05 }}
         onClick={onZoomIn}
         aria-label="Zoom avanti"
         title="Zoom avanti"
@@ -138,7 +148,7 @@ export default function MapControls({
         animate="animate"
         whileTap="tap"
         whileHover="hover"
-        transition={{ duration: 0.2, delay: 0.1 }}
+        transition={{ ...SPRING_SNAP, delay: 0.1 }}
         onClick={onZoomOut}
         aria-label="Zoom indietro"
         title="Zoom indietro"

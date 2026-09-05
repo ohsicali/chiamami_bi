@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -18,6 +19,8 @@ import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
 import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
+import Reveal from '../../components/UI/Reveal'
+import { STAGGER, TR_REVEAL, staggerDelay } from '../../lib/motion'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 
@@ -50,12 +53,33 @@ const CATEGORIES = [
 function TopBar() {
   // Scroll-aware: la pill destra parte espansa "Chiedi a Bi" e si comprime
   // sul B circolare appena l'utente scrolla (header diventa sticky).
+  //
+  // Il listener passa da un rAF: prima chiamava setScrolled a ogni evento
+  // di scroll (decine al secondo su iOS), e la pill anima gap/padding/
+  // max-width, cioè layout — la roba più cara da ricalcolare proprio
+  // mentre il thread principale sta già scrollando. Ora il valore viene
+  // letto una volta per frame e lo stato cambia solo quando la soglia
+  // viene davvero attraversata.
   const [scrolled, setScrolled] = useState(false)
+  const rafId = useRef(0)
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
-    onScroll()
+    const read = () => {
+      rafId.current = 0
+      setScrolled((prev) => {
+        const next = window.scrollY > 12
+        return next === prev ? prev : next
+      })
+    }
+    const onScroll = () => {
+      if (rafId.current) return
+      rafId.current = requestAnimationFrame(read)
+    }
+    read()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (rafId.current) cancelAnimationFrame(rafId.current)
+    }
   }, [])
 
   return (
@@ -129,7 +153,7 @@ function TopBar() {
           boxShadow: '0 6px 14px rgba(232,69,60,.35)',
           border: '2px solid #fff',
           flexShrink: 0,
-          transition: 'gap .3s cubic-bezier(.4,0,.2,1), padding .3s cubic-bezier(.4,0,.2,1)',
+          transition: 'gap var(--dur-menu) var(--ease-out), padding var(--dur-menu) var(--ease-out)',
           overflow: 'visible',
         }}
       >
@@ -159,7 +183,7 @@ function TopBar() {
               background: '#fff',
               color: 'var(--color-corallo, #E8453C)',
               opacity: scrolled ? 0 : 1,
-              transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
+              transition: 'opacity var(--dur-menu) var(--ease-out)',
             }}
           >
             <BiLogoMark style={{ width: '88%', height: '88%' }} />
@@ -176,7 +200,7 @@ function TopBar() {
               background: 'transparent',
               color: '#fff',
               opacity: scrolled ? 1 : 0,
-              transition: 'opacity .3s cubic-bezier(.4,0,.2,1)',
+              transition: 'opacity var(--dur-menu) var(--ease-out)',
             }}
           >
             <BiLogoMark style={{ width: '88%', height: '88%' }} />
@@ -219,7 +243,7 @@ function TopBar() {
             overflow: 'hidden',
             maxWidth: scrolled ? 0 : 120,
             opacity: scrolled ? 0 : 1,
-            transition: 'max-width .3s cubic-bezier(.4,0,.2,1), opacity .25s ease',
+            transition: 'max-width var(--dur-menu) var(--ease-out), opacity var(--dur-pop) var(--ease-out)',
           }}
         >
           Chiedi a Bi
@@ -252,7 +276,17 @@ function HeroPromo({ featured }) {
   ].filter(Boolean).join(' · ')
 
   return (
-    <div className="hfv4-hero-wrap" style={{ padding: '4px 20px 22px' }}>
+    // L'hero è il primo blocco sotto la barra e arriva quando i dati dei
+    // drop rispondono, cioè dopo il primo paint: senza entrata comparirebbe
+    // di scatto spingendo giù tutto il resto. 280ms, sale di 12px: basta a
+    // leggere l'arrivo, non abbastanza da far aspettare chi vuole scorrere.
+    <motion.div
+      className="hfv4-hero-wrap"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={TR_REVEAL}
+      style={{ padding: '4px 20px 22px' }}
+    >
       <div
         className="hfv4-hero-card"
         style={{
@@ -433,27 +467,40 @@ function HeroPromo({ featured }) {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 function CategoryBubbles({ onSelect, onAltro }) {
+  const reduce = useReducedMotion()
   const bubbleStyle = () => ({ width:64, height:64, borderRadius:'50%', background:'var(--color-ink-05)', display:'grid', placeItems:'center', fontSize:28 })
   const labelStyle = () => ({ fontSize:11, fontWeight:700, color:'var(--color-ink)', maxWidth:72, textAlign:'center', lineHeight:1.15 })
   const btnStyle = { flex:'0 0 auto', display:'flex', flexDirection:'column', alignItems:'center', gap:6, background:'transparent', border:'none', scrollSnapAlign:'start', cursor:'pointer', padding:0 }
+
+  // Le bolle entrano da sinistra a destra, 40ms l'una dall'altra: la fila
+  // si legge come una fila, e il taglio a destra dice da solo che si
+  // scrolla. Il tetto a 240ms tiene tutto dentro una sola occhiata.
+  // `.press` (globals.css) dà l'affondamento al tocco: erano dieci
+  // bottoni senza nessuna reazione al tap.
+  const enter = (i) => ({
+    initial: { opacity: 0, y: reduce ? 0 : 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { ...TR_REVEAL, delay: staggerDelay(i, 0.04) },
+  })
+
   return (
     <div className="hfv4-cats-wrap">
       <div className="hfv4-cats-row" style={{ display:'flex', gap:10, overflowX:'auto', padding:'6px 20px 20px 20px', WebkitOverflowScrolling:'touch', scrollSnapType:'x mandatory', scrollPaddingLeft:20, scrollbarWidth:'none' }}>
-        {CATEGORIES.map((c) => (
-          <button key={c.key} onClick={() => onSelect?.(c)} style={btnStyle}>
+        {CATEGORIES.map((c, i) => (
+          <motion.button key={c.key} onClick={() => onSelect?.(c)} className="press" style={btnStyle} {...enter(i)}>
             <span className="hfv4-cat-bubble" style={bubbleStyle()}>{c.emoji}</span>
             <span className="hfv4-cat-label" style={labelStyle()}>{c.label}</span>
-          </button>
+          </motion.button>
         ))}
-        <button onClick={onAltro} style={btnStyle}>
+        <motion.button onClick={onAltro} className="press" style={btnStyle} {...enter(CATEGORIES.length)}>
           <span className="hfv4-cat-bubble" style={{ width:64, height:64, borderRadius:'50%', background:'var(--color-ink-05)', display:'grid', placeItems:'center', fontSize:22, fontWeight:800, color:'var(--color-ink)' }}>+</span>
           <span className="hfv4-cat-label" style={labelStyle()}>Altro</span>
-        </button>
+        </motion.button>
       </div>
     </div>
   )
@@ -485,7 +532,13 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
   const priceStr = formatPrice(restaurant.price_range)
   const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
   return (
-    <button className="hfv4-rcard" onClick={() => onClick?.(restaurant)} style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
+    <motion.button
+      className="hfv4-rcard press"
+      onClick={() => onClick?.(restaurant)}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...TR_REVEAL, delay: staggerDelay(index, STAGGER, 0.2) }}
+      style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit' }}>
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
         {photoUrl
           ? <img src={photoUrl} srcSet={photoSrcSet} sizes="(max-width: 768px) 72vw, 320px" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading={isAboveFold ? 'eager' : 'lazy'} fetchpriority={isAboveFold ? 'high' : 'auto'} decoding="async" />
@@ -513,7 +566,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           </div>
         )}
       </div>
-    </button>
+    </motion.button>
   )
 }
 
@@ -539,7 +592,7 @@ function SuggestCard() {
         <button
           type="button"
           onClick={() => setShowSuggest(true)}
-          className="hfv4-suggest-cta"
+          className="hfv4-suggest-cta press"
           style={{ width: '100%', padding: '12px 16px', background: 'var(--color-cta)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', position: 'relative', zIndex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 14px rgba(232,69,60,.35)' }}
         >
           Suggerisci →
@@ -950,13 +1003,18 @@ export default function HomeFeedV4() {
         onAltro={() => navigate('/esplora')}
       />
 
-      <section className="hfv4-section" style={{ padding: '8px 0 4px' }}>
+      {/* Da qui in giù le sezioni entrano quando arrivano a schermo.
+          Non è decorazione: il feed carica in modo asincrono e questi
+          blocchi comparivano di colpo, spostando quello che c'era sotto.
+          `once` è true — si vedono scendendo, non ogni volta che si
+          risale, altrimenti diventano rumore. */}
+      <Reveal as="section" className="hfv4-section" style={{ padding: '8px 0 4px' }}>
         <SectionHead
           kicker="Nuovi in guida"
           title="Ultimi aggiunti"
           subtitle="Gli ultimi posti che ho provato e inserito in guida."
           trailing={
-            <Link to="/list" className="hfv4-sec-head-all" style={{ width:32, height:32, borderRadius:'50%', background:'var(--color-ink-05)', display:'grid', placeItems:'center', fontSize:14, fontWeight:700, color:'var(--color-ink)', textDecoration:'none' }}>→</Link>
+            <Link to="/list" className="hfv4-sec-head-all press" style={{ width:32, height:32, borderRadius:'50%', background:'var(--color-ink-05)', display:'grid', placeItems:'center', fontSize:14, fontWeight:700, color:'var(--color-ink)', textDecoration:'none' }}>→</Link>
           }
         />
         {loading ? (
@@ -968,21 +1026,21 @@ export default function HomeFeedV4() {
             ))}
           </div>
         )}
-      </section>
+      </Reveal>
 
       {/* Sponsor banner: full-width su desktop, fuori dalla griglia 2-col */}
-      <div className="hfv4-spon-outer">
+      <Reveal className="hfv4-spon-outer">
         <SponsorBanner />
-      </div>
+      </Reveal>
 
       <div className="hfv4-main">
         {/* Zone A: contenuto principale sopra la chat */}
         <div className="hfv4-zone-a">
           {/* Box bianco orologio + tabs su desktop */}
-          <div className="hfv4-time-box">
+          <Reveal className="hfv4-time-box">
             <TimeContextHero activeMomentKey={activeMoment} />
             <MomentTabs activeKey={activeMoment} onChange={setActiveMoment} />
-          </div>
+          </Reveal>
 
           {loading ? (
             <div style={{ padding: '20px', color: 'var(--color-ink-70)' }}>Caricamento…</div>
@@ -1004,9 +1062,9 @@ export default function HomeFeedV4() {
       </div>
 
       {/* SuggestCard full-width sotto la griglia */}
-      <div className="hfv4-suggest-outer">
+      <Reveal className="hfv4-suggest-outer">
         <SuggestCard />
-      </div>
+      </Reveal>
 
       <div style={{ marginTop: 'auto' }}>
         <Footer />

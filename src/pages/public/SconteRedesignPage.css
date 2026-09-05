@@ -522,13 +522,17 @@
 .sc-drop .sc-progress .sc-bar i::after {
   content: '';
   position: absolute;
-  top: 0; left: -60%; width: 40%; height: 100%;
+  top: 0; left: 0; width: 40%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-  animation: scShimmer 2.2s ease-in-out infinite;
+  /* translateX e non `left`: `left` è layout, e questo gira all'infinito
+     dentro una lista che scorre. `linear` perché il riflesso attraversa
+     a velocità costante — un'accelerazione lo farebbe sembrare un
+     movimento intenzionale invece di un riflesso. */
+  animation: scShimmer 2.2s linear infinite;
 }
 @keyframes scShimmer {
-  0%   { left: -60%; }
-  100% { left: 120%; }
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(300%); }
 }
 .sc-cta {
   background: var(--sc-ink);
@@ -544,7 +548,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-pop) var(--ease-out);
   letter-spacing: -0.1px;
 }
 .sc-cta:hover:not(:disabled) { transform: translateY(-1px); }
@@ -583,7 +587,7 @@
   gap: 11px;
   padding: 11px;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--dur-pop) var(--ease-out), border-color var(--dur-pop) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out);
 }
 @media (min-width: 768px) {
   .sc-conv {
@@ -612,7 +616,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: scOverlayIn 0.22s ease;
+  animation: scOverlayIn var(--dur-menu) var(--ease-out);
 }
 @keyframes scOverlayIn { from { opacity: 0; } to { opacity: 1; } }
 @media (min-width: 768px) {
@@ -626,7 +630,7 @@
   border-radius: 28px 28px 0 0;
   padding: 0 0 0;
   position: relative;
-  animation: scInfoSlide 0.32s cubic-bezier(.2,.8,.25,1);
+  animation: scInfoSlide var(--dur-sheet) var(--ease-drawer);
   box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
@@ -638,7 +642,7 @@
     border-radius: 24px;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
     max-height: 90dvh;
-    animation: scInfoFade 0.22s ease;
+    animation: scInfoFade var(--dur-menu) var(--ease-out);
   }
 }
 @keyframes scInfoSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -659,7 +663,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-press) var(--ease-out);
 }
 .sc-info-sheet .sc-close:hover { transform: scale(1.06); }
 
@@ -891,7 +895,7 @@
   cursor: pointer;
   border: 0;
   letter-spacing: -0.1px;
-  transition: transform 0.12s ease, opacity 0.12s ease;
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) var(--ease-out);
 }
 .sc-info-actions .sc-btn-secondary {
   background: var(--sc-grigio-bg);
@@ -935,7 +939,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-pop) var(--ease-out), border-color var(--dur-pop) var(--ease-out);
 }
 .sc-drop-actions .sc-cta-info:hover {
   background: rgba(255, 255, 255, 0.12);
@@ -959,7 +963,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: scOverlayIn 0.22s ease;
+  animation: scOverlayIn var(--dur-menu) var(--ease-out);
 }
 @media (min-width: 768px) {
   .sc-drop-overlay { align-items: center; padding: 30px; }
@@ -971,7 +975,7 @@
   background: var(--sc-paper);
   border-radius: 28px 28px 0 0;
   position: relative;
-  animation: scInfoSlide 0.32s cubic-bezier(.2,.8,.25,1);
+  animation: scInfoSlide var(--dur-sheet) var(--ease-drawer);
   box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
@@ -983,7 +987,7 @@
     border-radius: 24px;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
     max-height: 90dvh;
-    animation: scInfoFade 0.22s ease;
+    animation: scInfoFade var(--dur-menu) var(--ease-out);
   }
 }
 
@@ -1217,7 +1221,7 @@
   height: 100%;
   background: linear-gradient(90deg, var(--sc-corallo) 0%, #FF6A60 100%);
   border-radius: 99px;
-  transition: width 0.4s ease;
+  transition: width var(--dur-menu) var(--ease-out);
 }
 @media (min-width: 768px) {
   .sc-drop-progress { padding: 16px 18px; border-radius: 18px; }
@@ -1451,7 +1455,7 @@
   padding: 11px;
   position: relative;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color var(--dur-pop) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 .sc-mine-row:hover {
   border-color: var(--sc-ink-3);
@@ -1589,7 +1593,7 @@
   align-items: center;
   gap: 11px;
   padding: 11px 13px;
-  transition: background 0.15s ease;
+  transition: background-color var(--dur-pop) var(--ease-out);
 }
 .sc-used-row + .sc-used-row {
   border-top: 1px solid var(--sc-line);
@@ -1695,7 +1699,7 @@
   align-items: flex-end;
   justify-content: center;
   padding: 0;
-  animation: scFadeIn 0.18s ease;
+  animation: scFadeIn var(--dur-pop) var(--ease-out);
 }
 @keyframes scFadeIn { from { opacity: 0 } to { opacity: 1 } }
 @media (min-width: 768px) {
@@ -1710,7 +1714,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: scSlideUp 0.3s ease;
+  animation: scSlideUp var(--dur-sheet) var(--ease-drawer);
   max-width: 100%;
 }
 @keyframes scSlideUp {
@@ -1723,7 +1727,7 @@
     border-radius: 24px;
     padding: 30px 36px 32px;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
-    animation: scPop 0.22s ease;
+    animation: scPop var(--dur-menu) var(--ease-out);
   }
   @keyframes scPop {
     from { transform: scale(0.92); opacity: 0; }
@@ -1914,7 +1918,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.18s ease;
+  transition: border-color var(--dur-pop) var(--ease-out), color var(--dur-pop) var(--ease-out);
 }
 .sc-action-btn:hover {
   border-color: var(--sc-corallo);
@@ -1945,7 +1949,7 @@
   place-items: center;
   z-index: 110;
   padding: 24px;
-  animation: scFadeIn 0.2s ease;
+  animation: scFadeIn var(--dur-pop) var(--ease-out);
 }
 .sc-auth-gate-card {
   background: var(--sc-paper);
@@ -2048,17 +2052,29 @@
   font-weight: 600;
   box-shadow: 0 12px 28px rgba(34, 24, 28, 0.25);
   z-index: 200;
-  animation: scFadeIn 0.2s ease;
+  animation: scFadeIn var(--dur-pop) var(--ease-out);
 }
 @media (min-width: 768px) {
   .sc-toast { bottom: 30px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sc-qr-overlay,
+  /* Ciò che SI SPOSTA sparisce: lo sheet non scivola più su, compare.
+     La dissolvenza dell'overlay invece resta — serve a capire che il
+     resto della pagina è passato dietro a un livello, e toglierla
+     rende il salto più brusco, non più gentile. */
   .sc-qr-sheet,
-  .sc-auth-gate,
+  .sc-auth-gate {
+    animation: none !important;
+  }
+  .sc-qr-overlay,
   .sc-toast {
+    animation: scFadeIn 150ms var(--ease-out) !important;
+  }
+  /* Lampeggi e shimmer che girano all'infinito: puro ornamento. */
+  .sc-badge-live::before,
+  .sc-drop .sc-progress .sc-bar i::after,
+  .sc-drop-hero-live i {
     animation: none !important;
   }
 }

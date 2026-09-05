@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDrag } from '@use-gesture/react'
+import { DUR, EASE_OUT } from '../../lib/motion'
 import { proxyImg } from '../../lib/supabase'
 
 const swipeThreshold = 50
@@ -103,7 +104,7 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: DUR.sheet, ease: EASE_OUT }}
             className="absolute inset-0"
           >
             {/* Low-res placeholder painted instantly behind the high-res
@@ -211,17 +212,32 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
       {/* Dot indicators */}
       {normalizedPhotos.length > 1 && !hideDots && (
         <div className={`absolute bottom-3 flex items-center gap-1.5 ${dotsPosition === 'right' ? 'right-4' : 'left-0 right-0 justify-center'}`}>
+          {/* Il pallino attivo si allunga con uno scaleX su una barra
+              larga 24px, non animando `width`: `transition-all` su una
+              width ricalcola il layout della riga a ogni frame, e qui
+              gira sopra a un carosello che sta già animando. Il
+              contenitore resta 24px per tutti, così i pallini non si
+              spostano di sotto quando cambi foto. */}
           {normalizedPhotos.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i, i > currentIndex ? 1 : -1)}
-              className="h-2 rounded-full transition-all duration-300 ease-out"
-              style={{
-                width: i === currentIndex ? 24 : 8,
-                backgroundColor: i === currentIndex ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.5)',
-              }}
+              className="h-2 grid place-items-center"
+              style={{ width: 24 }}
               aria-label={`Go to photo ${i + 1}`}
-            />
+            >
+              <span
+                aria-hidden="true"
+                className="h-2 rounded-full block"
+                style={{
+                  width: 24,
+                  transformOrigin: 'center',
+                  transform: i === currentIndex ? 'scaleX(1)' : 'scaleX(0.333)',
+                  backgroundColor: i === currentIndex ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.5)',
+                  transition: 'transform var(--dur-menu) var(--ease-out), background-color var(--dur-menu) var(--ease-out)',
+                }}
+              />
+            </button>
           ))}
         </div>
       )}

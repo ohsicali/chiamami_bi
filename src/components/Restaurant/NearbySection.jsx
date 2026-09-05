@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { DUR, EASE_OUT, staggerDelay } from '../../lib/motion'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -7,15 +8,19 @@ import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { proxyImg } from '../../lib/supabase'
 import SmartImage from '../UI/SmartImage'
 
+// Era 450ms con 100ms di stagger senza tetto: la sesta card entrava
+// mezzo secondo dopo che l'utente aveva già iniziato a scorrere. Ora
+// 280ms, 50ms di sfalsamento e il ritardo si ferma a 240ms. La curva
+// era easeInOutQuad — una ease-in-out su un'entrata; ora ease-out.
 const cardVariants = {
-  hidden: { opacity: 0, x: 40 },
+  hidden: { opacity: 0, x: 24 },
   visible: (i) => ({
     opacity: 1,
     x: 0,
     transition: {
-      delay: i * 0.1,
-      duration: 0.45,
-      ease: [0.25, 0.46, 0.45, 0.94],
+      delay: staggerDelay(i),
+      duration: DUR.reveal,
+      ease: EASE_OUT,
     },
   }),
 }

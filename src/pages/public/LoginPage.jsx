@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -13,7 +14,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: TR_REVEAL,
   },
 }
 

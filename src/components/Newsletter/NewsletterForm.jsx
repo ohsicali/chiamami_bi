@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { TR_REVEAL } from '../../lib/motion'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -46,7 +47,7 @@ export default function NewsletterForm() {
       }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={TR_REVEAL}
     >
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xl">📬</span>

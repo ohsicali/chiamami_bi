@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TR_REVEAL } from '../../lib/motion'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -91,7 +92,7 @@ export default function DiscountBanner({ restaurantId }) {
         className="relative overflow-hidden rounded-2xl"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={TR_REVEAL}
         style={{
           animation: justRedeemed ? 'usedFlash 1.2s ease-out' : 'none',
         }}

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { DUR, EASE_OUT, SPRING_SNAP, staggerDelay } from '../../lib/motion'
 import { memo, useState } from 'react'
 import SaveButton from './SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -10,15 +11,19 @@ import { CityBadge } from '../UI/CityBadge'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import { formatPrice } from '../../lib/utils/price'
 
+// Entrata della card. Era 500ms con stagger fino a 300ms: l'ultima card
+// di una riga arrivava 800ms dopo la prima, quando l'utente aveva già
+// iniziato a scorrere. Ora 280ms con lo stagger che si ferma a 240ms —
+// abbastanza da leggere l'ordine, non abbastanza da aspettare.
 const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 14 },
   visible: (i) => ({
     opacity: 1,
     y: 0,
     transition: {
-      delay: Math.min(i * 0.05, 0.3),
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1],
+      delay: staggerDelay(i),
+      duration: DUR.reveal,
+      ease: EASE_OUT,
     },
   }),
 }
@@ -98,6 +103,7 @@ function RestaurantCard({
         animate="visible"
         custom={index}
         whileTap={{ scale: 0.98 }}
+        transition={SPRING_SNAP}
         onClick={() => onClick?.(restaurant)}
       >
         <SmartImage
@@ -185,12 +191,16 @@ function RestaurantCard({
     return (
       <motion.button
         className="w-full text-left relative overflow-hidden h-[200px] md:h-[160px]"
+        // `data-motion-loop`: il respiro infinito dell'ombra è puro
+        // ornamento, quindi sparisce con "riduci movimento" (globals.css).
+        data-motion-loop
         style={{ borderRadius: 22, animation: 'hero-pulse 3s ease-in-out infinite' }}
         variants={cardVariants}
         initial="hidden"
         animate="visible"
         custom={index}
         whileTap={{ scale: 0.98 }}
+        transition={SPRING_SNAP}
         onClick={() => onClick?.(restaurant)}
       >
         {/* Background */}
@@ -341,6 +351,7 @@ function RestaurantCard({
       animate="visible"
       custom={index}
       whileTap={{ scale: 0.98 }}
+      transition={SPRING_SNAP}
       onClick={() => onClick?.(restaurant)}
     >
       {/* Discount strip on top (verde sfumato) */}

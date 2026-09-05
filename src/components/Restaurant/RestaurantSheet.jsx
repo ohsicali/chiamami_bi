@@ -19,15 +19,19 @@ import { formatAddress } from '../../lib/utils/formatAddress'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
+import { DUR, EASE_OUT, STAGGER, TR_SHEET } from '../../lib/motion'
 
-/* ── animation variants ── */
+/* ── animation variants ──
+   La curva era easeInOutQuad [.25,.46,.45,.94]: una ease-in-out usata su
+   un'entrata, quindi partiva lenta proprio nell'istante in cui l'utente
+   sta guardando arrivare la scheda. Chi entra usa ease-out. */
 const contentVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.08 } },
+  visible: { transition: { staggerChildren: STAGGER, delayChildren: 0.08 } },
 }
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
+  visible: { opacity: 1, y: 0, transition: { duration: DUR.reveal, ease: EASE_OUT } },
 }
 
 /* ── Share logic ── */
@@ -273,10 +277,10 @@ export default function RestaurantSheet({
 
   const handleClose = useCallback(async () => {
     const exitAnim = isDesktop
-      ? animateSheet(sheetScope.current, { opacity: 0, y: 8 }, { duration: 0.2, ease: [0.4, 0, 0.7, 0.2] })
+      ? animateSheet(sheetScope.current, { opacity: 0, y: 8 }, { duration: DUR.pop, ease: EASE_OUT })
       : Promise.all([
-          animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: 0.2, ease: 'easeOut' }),
-          animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, { duration: 0.28, ease: [0.4, 0, 0.7, 0.2] }),
+          animateBackdrop(backdropScope.current, { opacity: 0 }, { duration: DUR.pop, ease: EASE_OUT }),
+          animateSheet(sheetScope.current, { y: '100%', opacity: 0 }, TR_SHEET),
         ])
     await exitAnim
     onClose()
@@ -427,7 +431,7 @@ export default function RestaurantSheet({
         className="absolute inset-0 bg-black/50 rs-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: DUR.pop, ease: EASE_OUT }}
         onClick={handleClose}
       />
 
@@ -437,10 +441,11 @@ export default function RestaurantSheet({
         className="relative flex flex-1 flex-col overflow-hidden bg-white rs-sheet"
         initial={isDesktop ? { opacity: 0, y: 12 } : { y: '100%', opacity: 0 }}
         animate={isDesktop ? { opacity: 1, y: 0 } : { y: 0, opacity: 1 }}
-        transition={isDesktop
-          ? { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }
-          : { type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }
-        }
+        // Mobile: curva sheet iOS (--ease-drawer), la stessa in uscita —
+        // la scheda se ne va per la strada da cui è arrivata. Prima
+        // entrava con una molla e usciva con [0.4,0,0.7,0.2], che è una
+        // ease-IN: partiva lenta proprio nel momento del tocco.
+        transition={isDesktop ? { duration: DUR.reveal, ease: EASE_OUT } : TR_SHEET}
       >
         {/* Back button — above scroll content (hidden once sticky header appears) */}
         <button
@@ -457,7 +462,7 @@ export default function RestaurantSheet({
             border: '1px solid rgba(34, 24, 28, 0.08)', cursor: 'pointer', color: '#22181C',
             opacity: showStickyHeader ? 0 : 1,
             pointerEvents: showStickyHeader ? 'none' : 'auto',
-            transition: 'opacity 0.2s ease',
+            transition: `opacity var(--dur-pop) var(--ease-out)`,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

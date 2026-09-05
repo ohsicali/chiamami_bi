@@ -20,6 +20,17 @@ function getSnapHeights() {
   ]
 }
 
+/* Molla dello snap. Fisica esplicita (stiffness/damping) e non
+   duration/bounce perché qui la velocità del dito viene INIETTATA nella
+   molla: `velocity` continua il movimento invece di farlo ripartire da
+   fermo. Prima ogni snap partiva da velocità zero, così una spinta
+   decisa e uno sfioramento arrivavano identici — la sheet sembrava
+   ignorare quanto forte l'avevi lanciata.
+   damping 35 su stiffness 400 è appena sotto la critica: si ferma senza
+   rimbalzare, che è quello che serve a un pannello (il rimbalzo si tiene
+   per il drag-to-dismiss, non per lo snap). */
+const SNAP_SPRING = { type: 'spring', stiffness: 400, damping: 35 }
+
 function closestSnap(val, points) {
   let minDist = Infinity
   let idx = 0
@@ -53,25 +64,17 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
     function handleResize() {
       const pts = getSnapHeights()
       setSnapHeights(pts)
-      animate(sheetHeight, pts[snapIndex], {
-        type: 'spring',
-        stiffness: 400,
-        damping: 35,
-      })
+      animate(sheetHeight, pts[snapIndex], SNAP_SPRING)
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [snapIndex, sheetHeight])
 
   const snapTo = useCallback(
-    (index) => {
+    (index, velocity = 0) => {
       const clamped = Math.max(SNAP_PEEK, Math.min(SNAP_FULL, index))
       setSnapIndex(clamped)
-      animate(sheetHeight, snapHeights[clamped], {
-        type: 'spring',
-        stiffness: 400,
-        damping: 35,
-      })
+      animate(sheetHeight, snapHeights[clamped], { ...SNAP_SPRING, velocity })
       onSnapChange?.(clamped)
     },
     [snapHeights, sheetHeight, onSnapChange]
@@ -113,16 +116,21 @@ const BottomSheet = forwardRef(function BottomSheet({ children, onSnapChange }, 
         isDragging.current = false
         const VELOCITY_THRESHOLD = 0.5
 
+        // use-gesture dà la velocità in px/ms come modulo, il segno sta in
+        // `direction`. Framer la vuole in unità/secondo, e l'altezza
+        // cresce quando il dito sale: da qui il -1000.
+        const heightVelocity = -dy * vy * 1000
+
         if (Math.abs(vy) > VELOCITY_THRESHOLD) {
           // dy > 0 means dragging down = decrease height = lower snap
           if (dy > 0) {
-            snapTo(Math.max(SNAP_PEEK, snapIndex - 1))
+            snapTo(Math.max(SNAP_PEEK, snapIndex - 1), heightVelocity)
           } else {
-            snapTo(Math.min(SNAP_FULL, snapIndex + 1))
+            snapTo(Math.min(SNAP_FULL, snapIndex + 1), heightVelocity)
           }
         } else {
           const nearest = closestSnap(sheetHeight.get(), snapHeights)
-          snapTo(nearest)
+          snapTo(nearest, heightVelocity)
         }
       }
     },

@@ -74,6 +74,29 @@
   --shadow-md: 0 4px 14px rgba(34, 24, 28, 0.08);
   --shadow-lg: 0 12px 32px rgba(34, 24, 28, 0.12);
 
+  /* ── Scala di movimento ────────────────────────────────────────────
+     Prima: ogni componente si inventava la sua curva (Material
+     cubic-bezier(.4,0,.2,1), easeInOutQuad [.25,.46,.45,.94] usata
+     anche per le entrate, durate da 150ms a 500ms senza criterio).
+     Queste sono le UNICHE curve del sito. Sono nel namespace --ease-*
+     di Tailwind v4, quindi le utility `ease-out` / `ease-in-out`
+     esistenti prendono automaticamente la curva forte.
+
+     Regola: chi entra o esce usa ease-out. Chi si muove sullo schermo
+     usa ease-in-out. Mai ease-in su un elemento di UI — parte lento
+     proprio nell'istante in cui l'utente sta guardando. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Durate — la UI sta sotto i 300ms. Un dropdown a 180ms è percepito
+     più reattivo dello stesso a 400ms. */
+  --dur-press: 120ms;    /* feedback al tap di un bottone */
+  --dur-pop: 180ms;      /* tooltip, pill, popover piccoli */
+  --dur-menu: 220ms;     /* dropdown, select, chip */
+  --dur-reveal: 280ms;   /* entrata di card e sezioni */
+  --dur-sheet: 320ms;    /* bottom sheet, modali, drawer */
+
   /* CTA — corallo a contrasto AA per TESTO bianco sopra (il corallo brillante
      #E8453C fallisce WCAG 4.5:1 come fill testuale: 3.93. Questo dà 5.21).
      Il corallo brillante resta per superfici/banner senza testo piccolo. */
@@ -171,14 +194,40 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
-/* Rispetta "Riduci movimento" del sistema: prima 305 elementi animati,
-   3 sole guardie. Azzera animazioni/transizioni per chi lo chiede. */
+/* Rispetta "Riduci movimento" del sistema.
+   "Riduci", non "azzera": la versione precedente spegneva TUTTO a
+   0.001ms, comprese le dissolvenze che servono a capire che uno stato
+   è cambiato (un toast che appare di colpo è peggio, non meglio). Qui:
+   - i loop decorativi (shimmer, pulse, ring) spariscono del tutto;
+   - le animazioni di entrata restano ma corte e non si ripetono;
+   - le transizioni di colore/opacità restano;
+   - ciò che si SPOSTA (transform) viene neutralizzato.
+   Il lato JS fa lo stesso via useReducedMotion() in src/lib/motion.js. */
 @media (prefers-reduced-motion: reduce) {
+  /* 1. Movimento decorativo che gira all'infinito: via. */
+  .skeleton,
+  .progress-shine,
+  .bottom-nav,
+  [data-motion-loop] {
+    animation: none !important;
+  }
+
+  /* 2. Il resto si accorcia e non si ripete. */
   *, *::before, *::after {
-    animation-duration: 0.001ms !important;
+    animation-duration: 200ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-duration: 150ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* 3. Niente spostamenti: hover/press che traslano o scalano
+        diventano cambi di colore e basta. */
+  .rcard:hover,
+  .hfv4-rcard:active,
+  .press:active,
+  .press-sm:active,
+  [data-press]:active {
+    transform: none !important;
   }
 }
 
@@ -348,7 +397,10 @@ body {
     0 -2px 16px rgba(34, 24, 28, 0.06),
     0 -10px 36px rgba(34, 24, 28, 0.12);
 
-  animation: nav-reveal 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  /* La nav entra una volta sola al caricamento, con un filo di
+     overshoot: è il momento "rare/first-time", l'unico posto dove un
+     rimbalzo è concesso. */
+  animation: nav-reveal 0.45s cubic-bezier(0.34, 1.3, 0.64, 1) both;
   animation-delay: 0.12s;
 }
 
@@ -393,9 +445,22 @@ body {
   cursor: pointer;
   position: relative;
   z-index: 3;
-  transition: background 0.18s ease, box-shadow 0.18s ease;
+  transition: background-color var(--dur-pop) var(--ease-out),
+              box-shadow var(--dur-pop) var(--ease-out);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* Feedback al tocco sulla nav. La barra si tocca decine di volte per
+   sessione: qui si sta nel "quasi impercettibile o niente" — 92% per
+   120ms sulla sola icona, non sull'intera voce, così l'etichetta non
+   balla. Non c'è un indicatore che scorre da una voce all'altra: su un
+   controllo così frequente diventerebbe qualcosa da aspettare. */
+.bottom-nav .nav-item .nav-icon-wrap {
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.bottom-nav .nav-item:active .nav-icon-wrap {
+  transform: scale(0.92);
 }
 
 .bottom-nav .nav-item svg {
@@ -488,6 +553,73 @@ body {
 }
 
 /* ============================================================
+   MOVIMENTO — utility condivise
+   Feedback al tocco e hover. Solo transform/opacity: saltano layout
+   e paint e girano sulla GPU. Gli hover sono dietro
+   (hover: hover) and (pointer: fine) perché su touch un tap spara un
+   falso :hover che poi resta appiccicato finché non tocchi altrove.
+   ============================================================ */
+
+/* .press — qualunque cosa cliccabile: card, bubble, pill, chip.
+   Il tap "affonda" di poco (98%) e torna su. 120ms: sotto i ~100ms
+   non lo vedi, sopra i ~160ms sembra che il bottone risponda in ritardo. */
+.press {
+  transition: transform var(--dur-press) var(--ease-out),
+              box-shadow var(--dur-menu) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.press:active {
+  transform: scale(0.98);
+}
+
+/* .press-sm — target piccoli (icone, pill 32px): la stessa scala su un
+   elemento piccolo si legge appena, quindi si affonda un po' di più. */
+.press-sm {
+  transition: transform var(--dur-press) var(--ease-out),
+              background-color var(--dur-menu) var(--ease-out),
+              color var(--dur-menu) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.press-sm:active {
+  transform: scale(0.94);
+}
+
+/* Primitivo Button — hover solo dove esiste un puntatore vero. */
+@media (hover: hover) and (pointer: fine) {
+  .btn-v4:not([disabled]):not([aria-disabled="true"]):hover {
+    filter: brightness(1.06);
+  }
+}
+
+/* Cuore "salva": l'hover vive qui e non in Framer, perché whileHover
+   scatta anche al tocco e lascia la card ingrandita dopo il tap. */
+@media (hover: hover) and (pointer: fine) {
+  .save-btn {
+    transition: transform var(--dur-press) var(--ease-out),
+                background-color var(--dur-menu) var(--ease-out),
+                border-color var(--dur-menu) var(--ease-out);
+  }
+  .save-btn:hover {
+    transform: scale(1.08);
+  }
+}
+
+/* .lift — sollevamento all'hover per le card cliccabili su desktop.
+   Niente su touch. */
+@media (hover: hover) and (pointer: fine) {
+  .lift {
+    transition: transform var(--dur-menu) var(--ease-out),
+                box-shadow var(--dur-menu) var(--ease-out);
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* ============================================================
    DESKTOP REDESIGN — "LA GUIDA DI BI"
    Only applies at ≥768px. Mobile (<768px) is UNTOUCHED.
    ============================================================ */
@@ -501,12 +633,16 @@ body {
     box-shadow: none !important;
     margin: 0 0 10px 0 !important;
     width: 100% !important;
-    transition: transform .18s ease, box-shadow .2s ease, border-color .18s ease !important;
+    transition: transform var(--dur-pop) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out), border-color var(--dur-pop) var(--ease-out) !important;
     position: relative !important;
   }
-  .rcard:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 22px rgba(34,24,28,.07) !important;
+  /* Dietro a (hover: hover): su touch un tap spara un :hover che resta
+     appiccicato e la card rimane sollevata finché non tocchi altrove. */
+  @media (hover: hover) and (pointer: fine) {
+    .rcard:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 10px 22px rgba(34,24,28,.07) !important;
+    }
   }
   .rcard.active,
   .rcard[aria-selected="true"] {
