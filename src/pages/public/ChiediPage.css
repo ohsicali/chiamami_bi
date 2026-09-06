@@ -19,15 +19,52 @@
   --cp-oro: var(--color-oro, #B08954);
   --cp-oro-soft: #F0E4D2;
 
+  /* Scatola alta quanto l'area visibile, non un documento che scrolla.
+     L'altezza esatta la scrive il JS da visualViewport.height (vedi il
+     commento in testa a ChiediPage.jsx): 100dvh è solo il valore di
+     partenza, prima che il JS misuri e sui browser senza visualViewport.
+     Dentro: header e input bar a dimensione fissa, .cp-body l'unico
+     scroller. Nessun figlio `position: fixed` — è lì che iOS sbagliava. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100dvh;
   background: var(--cp-page);
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  position: relative;
+  overflow: hidden;
+}
+
+/* Documento bloccato mentre la chat è aperta (classe messa/tolta dal JS su
+   html e body, solo su mobile). Senza, iOS scrolla la pagina sotto la
+   scatola per portare in vista il campo attivo e si vede il contenuto
+   sfilare. */
+.cp-locked {
+  overflow: hidden !important;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+/* Desktop: niente tastiera virtuale da schivare, e la DesktopNavbar è
+   `sticky` nel flusso — una pagina `fixed` la coprirebbe. Qui la pagina
+   resta il documento normale di sempre, con la input bar ancorata al fondo
+   della finestra. Comportamento invariato rispetto a prima. */
+@media (min-width: 768px) {
+  .chiedi-page {
+    position: static;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
 }
 
 /* ========================= HEADER ========================= */
+/* Su mobile è un figlio flex fuori dallo scroller, quindi resta in cima da
+   sé e `sticky` è un no-op; serve però sul desktop, dove la pagina è un
+   documento normale che scrolla. */
 .cp-header {
+  flex: 0 0 auto;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -110,6 +147,7 @@
   display: flex;
   flex-direction: column;
   line-height: 1.1;
+  min-width: 0;
 }
 .cp-h-text strong {
   font-size: 15px;
@@ -124,6 +162,8 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  /* Su schermi stretti andava a capo su due righe e l'header cresceva. */
+  white-space: nowrap;
 }
 .cp-h-text small .cp-dot {
   width: 6px;
@@ -135,21 +175,30 @@
 }
 
 /* ========================= BODY ========================= */
+/* L'unico elemento che scrolla in tutta la pagina.
+   `min-height: 0` è obbligatorio: senza, un figlio flex non si restringe
+   sotto la dimensione del proprio contenuto e la scatola sborderebbe invece
+   di far scrollare qui dentro.
+   `overscroll-behavior: contain` impedisce che, arrivati in fondo, lo scroll
+   si propaghi al documento (rubber-band di iOS). */
 .cp-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  /* padding-bottom mobile: input bar (~76) + breathing room. La tab bar è
-     nascosta su /chiedi (vedi App.jsx: showTabBar && !isChiedi), quindi
-     l'input bar siede direttamente sopra la safe-area. */
-  padding: 24px 18px calc(110px + env(safe-area-inset-bottom));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* Niente più padding-bottom per "far spazio" alla barra: la barra ora
+     occupa spazio suo nel flusso, non ci passa sopra. */
+  padding: 20px 18px 16px;
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  -webkit-overflow-scrolling: touch;
 }
 @media (min-width: 768px) {
   .cp-body {
-    padding: 28px 24px 140px;
+    /* Desktop: la input bar torna `fixed` in fondo alla finestra, quindi
+       qui serve di nuovo lo spazio riservato perché non ci passi sopra. */
+    padding: 24px 24px 140px;
   }
 }
 
@@ -159,38 +208,38 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 14px 4px 18px;
+  padding: 4px 4px 16px;
 }
 .cp-av-iconic {
-  width: 100px;
-  height: 100px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--cp-corallo) 0%, var(--cp-corallo-ink) 100%);
   color: #fff;
   display: grid;
   place-items: center;
   font-family: var(--font-mark, 'Alfa Slab One', serif);
-  font-size: 44px;
+  font-size: 34px;
   box-shadow:
-    0 18px 44px rgba(232, 69, 60, 0.45),
+    0 14px 34px rgba(232, 69, 60, 0.4),
     inset 0 2px 0 rgba(255, 255, 255, 0.18);
   position: relative;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 @media (min-width: 768px) {
   .cp-av-iconic {
-    width: 120px;
-    height: 120px;
-    font-size: 54px;
-    margin-bottom: 22px;
+    width: 104px;
+    height: 104px;
+    font-size: 48px;
+    margin-bottom: 18px;
   }
 }
 .cp-av-iconic .cp-sp {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
   background: var(--cp-oro);
   border-radius: 50%;
   border: 3px solid var(--cp-page);
@@ -217,99 +266,99 @@
 
 .cp-hero h1 {
   font-family: var(--font-mark, 'Alfa Slab One', serif);
-  font-size: 30px;
+  font-size: 26px;
   letter-spacing: 0.3px;
   line-height: 1.1;
   color: var(--cp-ink);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 @media (min-width: 768px) {
-  .cp-hero h1 { font-size: 42px; letter-spacing: 0.4px; line-height: 1.05; margin-bottom: 10px; }
+  .cp-hero h1 { font-size: 38px; letter-spacing: 0.4px; line-height: 1.05; margin-bottom: 8px; }
 }
 .cp-hero .cp-sub {
   font-family: var(--font-hand, 'Caveat', cursive);
-  font-size: 23px;
+  font-size: 22px;
   color: var(--cp-corallo);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   line-height: 1.15;
 }
 @media (min-width: 768px) {
-  .cp-hero .cp-sub { font-size: 30px; line-height: 1.1; margin-bottom: 8px; }
+  .cp-hero .cp-sub { font-size: 28px; line-height: 1.1; margin-bottom: 6px; }
 }
 .cp-hero p {
   font-size: 13px;
   color: var(--cp-ink-2);
-  line-height: 1.55;
-  max-width: 280px;
+  line-height: 1.5;
+  max-width: 330px;
   margin: 0 auto;
+  /* Senza, l'ultima parola restava orfana su una riga da sola. */
+  text-wrap: balance;
 }
 @media (min-width: 768px) {
   .cp-hero p { font-size: 14.5px; max-width: 480px; }
 }
 
-/* didattico — explainer card oro-soft */
+/* Didattico — richiuso di default: è il patto di trasparenza con l'utente,
+   ma non deve stare tra lui e la prima domanda. */
 .cp-explainer {
   background: var(--cp-oro-soft);
   border: 1px dashed var(--cp-oro);
   border-radius: 14px;
-  padding: 16px;
-  margin: 24px 0 8px;
+  margin: 14px 0 4px;
+}
+.cp-explainer summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a5f33;
+  cursor: pointer;
+  list-style: none;
+}
+/* Safari mostra ancora il triangolino di default senza questo. */
+.cp-explainer summary::-webkit-details-marker { display: none; }
+.cp-explainer .cp-chev {
+  flex-shrink: 0;
+  transition: transform var(--dur-pop, 0.18s) var(--ease-out, ease);
+}
+.cp-explainer[open] .cp-chev { transform: rotate(180deg); }
+.cp-explainer-body {
+  padding: 0 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
-.cp-explainer-row {
-  display: flex;
-  gap: 12px;
-}
-.cp-explainer-row .cp-ic {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 13px;
-  color: #fff;
-}
-.cp-explainer-row .cp-ic-yes { background: #3FB955; }
-.cp-explainer-row .cp-ic-no  { background: var(--cp-oro); }
-.cp-explainer-row strong {
-  font-size: 14px;
-  color: var(--cp-ink);
-  display: block;
-  margin-bottom: 4px;
-}
-.cp-explainer-row p {
+.cp-explainer-body p {
   font-size: 13px;
   color: var(--cp-ink-2);
   line-height: 1.5;
 }
-
-.cp-section-hint {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 26px 4px 14px;
-}
-.cp-section-hint .cp-ln {
-  flex: 1;
-  height: 1px;
-  background: var(--cp-line);
-}
-.cp-section-hint span {
+/* Pallino ✓ / ~ allineato alla prima riga del paragrafo. */
+.cp-explainer-body .cp-ic {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 700;
   font-size: 11px;
-  color: var(--cp-ink-3);
-  text-transform: uppercase;
-  letter-spacing: 1.6px;
-  font-weight: 600;
+  color: #fff;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+.cp-explainer-body .cp-ic-yes { background: #3FB955; }
+.cp-explainer-body .cp-ic-no  { background: var(--cp-oro); }
+@media (prefers-reduced-motion: reduce) {
+  .cp-explainer .cp-chev { transition: none; }
 }
 
 .cp-prompts {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 @media (min-width: 768px) {
   .cp-prompts {
@@ -321,11 +370,11 @@
 .cp-pcard {
   background: var(--cp-paper);
   border: 1px solid var(--cp-line);
-  border-radius: 18px;
-  padding: 14px 16px;
+  border-radius: 16px;
+  padding: 11px 14px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   text-align: left;
   cursor: pointer;
   transition: transform var(--dur-pop) var(--ease-out), border-color var(--dur-pop) var(--ease-out), box-shadow var(--dur-pop) var(--ease-out);
@@ -342,14 +391,14 @@
   }
 }
 .cp-pcard .cp-ic {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
   background: var(--cp-corallo-soft);
   color: var(--cp-corallo-ink);
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 .cp-pcard .cp-tx { flex: 1; min-width: 0; }
@@ -370,27 +419,6 @@
 .cp-pcard .cp-ar {
   color: var(--cp-ink-3);
   flex-shrink: 0;
-}
-
-.cp-bi-tip {
-  margin-top: 22px;
-  padding: 14px 16px;
-  background: var(--cp-oro-soft);
-  border: 1px dashed var(--cp-oro);
-  border-radius: 14px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-.cp-bi-tip .cp-ic {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.cp-bi-tip p {
-  font-family: var(--font-hand, 'Caveat', cursive);
-  font-size: 17px;
-  color: #7a5f33;
-  line-height: 1.25;
 }
 
 /* ========================= CONVERSATION ========================= */
@@ -654,27 +682,16 @@
 }
 
 /* ========================= INPUT BAR ========================= */
-/* Mobile: barra fissa appoggiata sopra la safe-area. La MobileTabBar è
-   nascosta sulla pagina /chiedi (vedi App.jsx) così l'input bar non deve
-   convivere con un'altra barra fissa — niente gap strani, niente strip
-   opaca dietro al tab bar. Layout chat standard (WhatsApp / ChatGPT).
-   NB: `sticky` è stato provato al posto di `fixed` per il bug della
-   tastiera iOS (v. sotto), ma rompe l'altra proprietà che serve a un
-   input di chat — restare SEMPRE ancorato al fondo visibile — perché uno
-   `sticky` si aggancia solo dopo aver scrollato oltre tutto il contenuto:
-   nella empty state, che ha più prompt di quanti ne stiano in uno
-   schermo, la barra restava a metà pagina con altre card sotto. `fixed`
-   è la semantica giusta; il bug vero si risolve con la viewport meta
-   (index.html: interactive-widget=resizes-content), che fa restringere
-   davvero il layout viewport quando appare la tastiera invece di
-   lasciarlo intatto (comportamento default di iOS/Android, che ancorava
-   la barra sotto la tastiera mentre il browser scrollava la pagina per
-   mostrare il campo attivo). */
+/* Ultimo figlio flex della scatola, a dimensione fissa: sta in fondo
+   all'area visibile per costruzione, senza `fixed` né `sticky`.
+   Storia, per non riprovarci: `fixed` finiva a metà schermo quando si
+   apriva la tastiera su iOS (è ancorato al layout viewport, che non si
+   restringe); `sticky` teneva la posizione giusta ma si agganciava solo
+   dopo aver scrollato oltre TUTTO il contenuto, quindi nella empty state
+   restava in mezzo alle card. Qui non c'è niente da ancorare: la scatola
+   che la contiene è già alta esattamente quanto l'area visibile. */
 .cp-input-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 0 0 auto;
   background: var(--cp-page);
   border-top: 1px solid var(--cp-line);
   z-index: 60;
@@ -686,6 +703,12 @@
 }
 @media (min-width: 768px) {
   .cp-input-bar {
+    /* Desktop: ancorata al fondo della finestra sopra il contenuto che le
+       scorre sotto — da cui il gradiente di sfumatura. Come prima. */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: linear-gradient(180deg, rgba(250, 247, 242, 0) 0%, var(--cp-page) 28%);
     border-top: 0;
     /* horizontal padding identico alla DesktopNavbar (0 40px) */

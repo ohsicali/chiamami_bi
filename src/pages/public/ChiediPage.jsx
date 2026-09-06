@@ -9,11 +9,24 @@ import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import './ChiediPage.css'
 
 /**
- * /chiedi · "Chiedi a Bi" v1 — chat AI dedicata.
- * - Empty state: hero + 6 prompt + blocco didattico (cosa Bi sa / non sa).
+ * /chiedi · "Chiedi a Bi" — chat AI dedicata.
+ * - Empty state: hero breve + 6 prompt + blocco didattico richiudibile.
  * - Conversazione: bubble user/Bi + result-card + typing indicator.
  * - Auth gate: utenti anonimi possono visitare ma non chattare.
  * - URL persistente: /chiedi/:conversationId (replace dopo il primo invio).
+ *
+ * LAYOUT — leggere prima di toccare il CSS.
+ * La pagina è una SCATOLA alta esattamente quanto l'area visibile, non un
+ * documento che scrolla: `.chiedi-page` è `position: fixed` con altezza
+ * presa da `visualViewport.height` (vedi useEffect "viewport lock"), con un
+ * solo scroller interno (`.cp-body`) e la input bar come ultimo figlio flex.
+ * Il documento è bloccato (classe `.cp-locked` su html+body).
+ * Serve perché tre tentativi di tenere la barra `position: fixed` sopra la
+ * tastiera su iOS sono falliti: un elemento `fixed` è ancorato al LAYOUT
+ * viewport, che non si restringe quando la tastiera si apre, e Safari
+ * scrolla il documento per portare in vista il campo attivo — la barra
+ * finiva a metà schermo col contenuto che le scorreva sotto. Così non c'è
+ * nessun elemento `fixed` da sbagliare né documento da scrollare.
  */
 export default function ChiediPage() {
   const { user } = useAuth()
@@ -41,12 +54,63 @@ export default function ChiediPage() {
   const [locationError, setLocationError] = useState(null)
   const [locationPending, setLocationPending] = useState(false)
 
+  const pageRef = useRef(null)
   const bodyRef = useRef(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const initialMessageHandledRef = useRef(false)
 
   const isEmpty = messages.length === 0 && !loading
+
+  /* ---- Viewport lock (vedi il commento in testa al file) ----
+     `visualViewport` misura l'area davvero visibile: quando la tastiera si
+     apre, la sua `height` cala di colpo. Ci ridimensioniamo su quella, così
+     la scatola finisce sempre esattamente sopra la tastiera e la input bar,
+     essendo l'ultimo figlio flex, ci si appoggia da sola. `offsetTop` copre
+     il caso in cui iOS scrolli il visual viewport dentro il layout viewport
+     (pinch-zoom, e a volte la tastiera stessa). */
+  useEffect(() => {
+    const el = pageRef.current
+    const vv = window.visualViewport
+    const root = document.documentElement
+    // Solo mobile: sul desktop non esiste tastiera virtuale da schivare, e
+    // la DesktopNavbar è `sticky` nel flusso — una pagina `fixed` la
+    // coprirebbe. Lì la pagina resta un documento normale (vedi CSS).
+    const mq = window.matchMedia('(max-width: 767px)')
+
+    const unlock = () => {
+      root.classList.remove('cp-locked')
+      document.body.classList.remove('cp-locked')
+      if (el) {
+        el.style.height = ''
+        el.style.transform = ''
+      }
+    }
+
+    const sync = () => {
+      if (!el) return
+      if (!mq.matches) return unlock()
+      root.classList.add('cp-locked')
+      document.body.classList.add('cp-locked')
+      if (!vv) return
+      el.style.height = `${vv.height}px`
+      el.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : ''
+    }
+
+    sync()
+    vv?.addEventListener('resize', sync)
+    vv?.addEventListener('scroll', sync)
+    mq.addEventListener('change', sync)
+    window.addEventListener('orientationchange', sync)
+
+    return () => {
+      unlock()
+      vv?.removeEventListener('resize', sync)
+      vv?.removeEventListener('scroll', sync)
+      mq.removeEventListener('change', sync)
+      window.removeEventListener('orientationchange', sync)
+    }
+  }, [])
 
   /* ---- Scroll to bottom on new content ---- */
   useEffect(() => {
@@ -287,7 +351,7 @@ export default function ChiediPage() {
   }
 
   return (
-    <div className="chiedi-page">
+    <div className="chiedi-page" ref={pageRef}>
       <ChiediHeader hasConversation={!isEmpty} onNewChat={() => {
         setMessages([])
         setConvId(null)
@@ -379,7 +443,7 @@ function ChiediHeader({ hasConversation, onNewChat }) {
         <div className="cp-h-mark"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
         <div className="cp-h-text">
           <strong>Chiedi a Bi</strong>
-          <small><span className="cp-dot" />in linea · ti rispondo in qualche secondo</small>
+          <small><span className="cp-dot" />in linea · rispondo subito</small>
         </div>
       </div>
 
@@ -419,6 +483,11 @@ const PROMPTS = [
   { icon: '🏷️', title: 'Sconti attivi stasera vicino a me', sub: 'chi ha sconto + è aperto adesso',          query: 'Sconti attivi stasera' },
 ]
 
+/* L'empty state era tre schermate di testo prima di poter fare qualcosa:
+   hero lungo, due blocchi didattici fitti, sei card e un tip finale che
+   ripeteva il blocco didattico. Ora la prima cosa sotto il saluto sono le
+   cose da toccare; la parte didattica resta (è il patto di trasparenza con
+   l'utente) ma richiusa in un <details>, e il tip ridondante è sparito. */
 function EmptyState({ onPromptClick }) {
   return (
     <>
@@ -430,38 +499,7 @@ function EmptyState({ onPromptClick }) {
         </div>
         <h1>Ciao, sono Bi.</h1>
         <div className="cp-sub">Dimmi che voglia hai…</div>
-        <p>Ti consiglio dove andare tra i locali che ho selezionato io a Torino. Cucina, zona, momento, piatto. Quello che vuoi.</p>
-      </div>
-
-      <div className="cp-explainer" role="note">
-        <div className="cp-explainer-row">
-          <div className="cp-ic cp-ic-yes" aria-hidden="true">✓</div>
-          <div>
-            <strong>Cosa posso dirti</strong>
-            <p>
-              Ti consiglio dove andare tra i locali che ho selezionato io a Torino.
-              Cucina, zona, momento della giornata, piatti specifici, sconti attivi,
-              chi è aperto adesso. Sono quasi cento locali, tutti validati da me —
-              il grosso a Torino, qualcuno in giro per l'Italia.
-            </p>
-          </div>
-        </div>
-        <div className="cp-explainer-row">
-          <div className="cp-ic cp-ic-no" aria-hidden="true">~</div>
-          <div>
-            <strong>Cosa non so</strong>
-            <p>
-              Prezzi precisi, recensioni utenti, disponibilità di un tavolo stasera,
-              menu in tempo reale. Per quelle cose, ti passo il numero del locale.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="cp-section-hint">
-        <div className="cp-ln" />
-        <span>prova a chiedermi</span>
-        <div className="cp-ln" />
+        <p>Ti dico dove andare tra i locali che ho scelto io.</p>
       </div>
 
       <div className="cp-prompts">
@@ -484,10 +522,28 @@ function EmptyState({ onPromptClick }) {
         ))}
       </div>
 
-      <div className="cp-bi-tip">
-        <div className="cp-ic" aria-hidden="true">💡</div>
-        <p>Sono trasparente: se non ho la risposta te lo dico subito e ti propongo l'alternativa più vicina. Mai un nome di locale che non ho validato io.</p>
-      </div>
+      <details className="cp-explainer">
+        <summary>
+          Cosa so e cosa non so
+          <svg className="cp-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </summary>
+        <div className="cp-explainer-body">
+          <p>
+            <span className="cp-ic cp-ic-yes" aria-hidden="true">✓</span>
+            Quasi cento locali validati da me — il grosso a Torino, qualcuno in
+            giro per l'Italia. Chiedimi cucina, zona, momento, piatti specifici,
+            sconti attivi, chi è aperto adesso.
+          </p>
+          <p>
+            <span className="cp-ic cp-ic-no" aria-hidden="true">~</span>
+            Non so prezzi precisi, disponibilità di un tavolo o menu in tempo
+            reale: per quelli ti passo il numero del locale. E se non ho la
+            risposta te lo dico, invece di inventarmi un nome.
+          </p>
+        </div>
+      </details>
     </>
   )
 }
