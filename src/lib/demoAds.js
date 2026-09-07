@@ -69,7 +69,21 @@ export const DEMO_ADS = [
   },
 ]
 
-/** `?demo=ads` su qualsiasi pagina. */
+/** `?demo=ads` nella query corrente. */
 export function isDemoAds(search) {
   return new URLSearchParams(search || '').get('demo') === 'ads'
+}
+
+/**
+ * `?demo=ads` nell'indirizzo con cui è stata aperta l'app.
+ *
+ * Serve perché su `/esplora` la pagina mappa ricostruisce la query da zero
+ * per tenere i filtri in sincronia con l'URL (HomePage.jsx), e nel farlo
+ * butta via `demo` un istante dopo il caricamento: senza questo controllo la
+ * demo si spegnerebbe da sola proprio sulla pagina con la mappa. Letto una
+ * volta sola al mount del provider, resta valido per tutta la navigazione.
+ */
+export function isDemoAdsAtLoad() {
+  if (typeof window === 'undefined') return false
+  return isDemoAds(window.location.search)
 }

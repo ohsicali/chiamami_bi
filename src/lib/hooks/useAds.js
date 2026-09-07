@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../supabase'
 import { slotsForPath, MAX_ADS_PER_PAGE } from '../adSlots'
-import { DEMO_ADS, isDemoAds } from '../demoAds'
+import { DEMO_ADS, isDemoAds, isDemoAdsAtLoad } from '../demoAds'
 
 /**
  * Motore degli annunci.
@@ -119,7 +119,10 @@ export function useAdsValue() {
   const [ads, setAds] = useState([])
   const [loading, setLoading] = useState(() => isSupabaseConfigured())
   const { pathname, search } = useLocation()
-  const demo = isDemoAds(search)
+  // Sticky per tutta la sessione: alcune pagine riscrivono la query e
+  // butterebbero via il parametro (vedi isDemoAdsAtLoad).
+  const [demoAtLoad] = useState(isDemoAdsAtLoad)
+  const demo = demoAtLoad || isDemoAds(search)
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
