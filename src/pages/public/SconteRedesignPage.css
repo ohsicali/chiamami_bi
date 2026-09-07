@@ -2078,3 +2078,26 @@
     animation: none !important;
   }
 }
+
+/* ============================================
+   ANNUNCIO
+   ============================================ */
+
+/* Dentro la griglia delle convenzioni l'annuncio prende la riga intera: in una
+   cella da un terzo la riga compatta (logo + testo + azione) si stringerebbe
+   fino a spezzare le parole. */
+.sc-ad-slot {
+  margin: 2px 0;
+}
+.sc-ad-band {
+  padding: 0 16px;
+}
+@media (min-width: 768px) {
+  .sc-ad-slot {
+    grid-column: 1 / -1;
+    margin: 4px 0;
+  }
+  .sc-ad-band {
+    padding: 0;
+  }
+}

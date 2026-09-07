@@ -34,7 +34,7 @@ ALTER TABLE sponsored_placements
   ADD COLUMN IF NOT EXISTS notes       text;
 
 COMMENT ON COLUMN sponsored_placements.slot IS
-  'Posizione nel sito. Valori validi definiti in src/lib/adSlots.js (home_hero, home_feed, list_inline).';
+  'Posizione nel sito. Valori validi definiti in src/lib/adSlots.js (home_hero, list_inline, deals_mid).';
 COMMENT ON COLUMN sponsored_placements.weight IS
   'Peso nella rotazione casuale dentro lo slot (1-10). Percentuale = weight / somma dei pesi attivi nello slot.';
 COMMENT ON COLUMN sponsored_placements.link_type IS

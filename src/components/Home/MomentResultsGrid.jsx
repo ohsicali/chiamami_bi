@@ -6,9 +6,6 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils/price'
 import { STAGGER, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/motion'
-import { useMediaQuery } from '../../lib/hooks/useMediaQuery'
-import { useAdSlot } from '../../lib/hooks/useAds'
-import AdSlot from '../Ads/AdBanner'
 
 /**
  * MomentResultsGrid · card scroll orizzontale filtrate per momento giornata.
@@ -53,15 +50,7 @@ export default function MomentResultsGrid({
     return 'Aperto'
   }
 
-  // Su desktop la riga è una griglia a 4 colonne (card + card + card + "vedi
-  // tutti"). Infilandoci l'annuncio senza togliere una card il quinto elemento
-  // andrebbe a capo da solo: quando c'è un annuncio si scende a due card.
-  // Su mobile è uno scroll orizzontale, quindi il conto non cambia.
-  const { ad: feedAd } = useAdSlot('home_feed')
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const cardCount = feedAd && isDesktop ? 2 : 3
-
-  const visibleCards = filtered.slice(0, cardCount)
+  const visibleCards = filtered.slice(0, 3)
   const remaining = Math.max(0, filtered.length - visibleCards.length)
 
   return (
@@ -138,8 +127,6 @@ export default function MomentResultsGrid({
             onToggleSave={toggleSave ? () => toggleSave(r.id) : undefined}
           />
         ))}
-
-        <AdSlot slot="home_feed" />
 
         <Link
           to={`/esplora?moment=${activeMoment}`}

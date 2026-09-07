@@ -45,8 +45,8 @@ export const DEMO_ADS = [
   },
   {
     ...FOREVER,
-    id: 'demo-feed',
-    slot: 'home_feed',
+    id: 'demo-deals',
+    slot: 'deals_mid',
     variant: 'brand',
     link_type: 'external',
     cta_url: 'https://chiamamibi.com',
@@ -55,7 +55,6 @@ export const DEMO_ADS = [
     headline: '20% sulle Barbera biologiche',
     subtitle: 'Consegna in 24h a Torino · codice BI20',
     cta_label: 'Vai allo shop',
-    cover_image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80',
   },
   {
     ...FOREVER,

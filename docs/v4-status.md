@@ -17,7 +17,7 @@ dove siamo. Aggiorna a ogni step importante.
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
 | C3 — (TBD) | — | ⏳ Not started | |
-| Pubblicità — circuito banner | — | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero`, `home_feed`, `list_inline`), rotazione pesata tra più clienti, admin `/admin/placements` rifatto. **Richiede `supabase/ads-network-2026-09-07.sql`.** Slot definiti in `src/lib/adSlots.js`. |
+| Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 
 ## Env vars Vercel — già configurate
 

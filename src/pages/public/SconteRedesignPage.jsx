@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { Fragment, useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
@@ -18,6 +18,8 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
+import AdSlot from '../../components/Ads/AdBanner'
+import { LIST_AD_AFTER } from '../../lib/adSlots'
 import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
 import { formatPrice } from '../../lib/utils/price'
@@ -610,6 +612,10 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
     )
   }
 
+  // L'annuncio sta in mezzo alle convenzioni solo se l'elenco è abbastanza
+  // lungo da avere un "in mezzo".
+  const adInList = conv.length > LIST_AD_AFTER
+
   const empty = drops.length === 0 && conv.length === 0
   if (empty) {
     return (
@@ -656,17 +662,30 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
             <small>{conv.length} sempre {conv.length === 1 ? 'valida' : 'valide'}</small>
           </div>
           <div className="sc-conv-list">
-            {conv.map((d) => (
-              <ConvCard
-                key={d.id}
-                deal={d}
-                claiming={claiming === d.id}
-                onClaim={() => onClaim(d)}
-                onClick={() => onCardClick(d.restaurant)}
-                onInfo={() => onInfo(d)}
-              />
+            {conv.map((d, i) => (
+              <Fragment key={d.id}>
+                {adInList && i === LIST_AD_AFTER && (
+                  <div className="sc-ad-slot"><AdSlot slot="deals_mid" /></div>
+                )}
+                <ConvCard
+                  deal={d}
+                  claiming={claiming === d.id}
+                  onClaim={() => onClaim(d)}
+                  onClick={() => onCardClick(d.restaurant)}
+                  onInfo={() => onInfo(d)}
+                />
+              </Fragment>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Con poche convenzioni l'annuncio va in fondo invece che in mezzo:
+          occupa una riga intera e dentro una griglia ancora incompleta
+          lascerebbe delle celle vuote accanto alle ultime schede. */}
+      {!adInList && (
+        <section className="sc-section">
+          <div className="sc-ad-band"><AdSlot slot="deals_mid" /></div>
         </section>
       )}
     </>

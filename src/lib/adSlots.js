@@ -44,21 +44,21 @@ export const AD_SLOTS = {
     order: 1,
     paths: ['/'],
   },
-  home_feed: {
-    key: 'home_feed',
-    label: 'Home · dentro i risultati',
-    where: 'Home, tra le card dei locali aperti adesso',
-    format: 'inline',
-    order: 2,
-    paths: ['/'],
-  },
   list_inline: {
     key: 'list_inline',
     label: 'Elenco ristoranti',
-    where: 'Pagina /list e colonna sinistra della mappa, dopo il 6° locale',
+    where: 'Elenco da mobile e colonna di fianco alla mappa da desktop, dopo il 6° locale',
+    format: 'compact',
+    order: 2,
+    paths: ['/list', '/esplora'],
+  },
+  deals_mid: {
+    key: 'deals_mid',
+    label: 'Sconti · in mezzo all’elenco',
+    where: 'Pagina sconti, tra le convenzioni',
     format: 'compact',
     order: 3,
-    paths: ['/list', '/esplora'],
+    paths: ['/sconti', '/deals'],
   },
 }
 
@@ -81,7 +81,15 @@ export function slotsForPath(pathname) {
   return AD_SLOT_LIST.filter((s) => s.paths.includes(pathname))
 }
 
-/** Ogni quante schede infilare un annuncio negli elenchi lunghi. */
+/**
+ * Dopo quante schede infilare un annuncio negli elenchi.
+ *
+ * Sei non è un numero a caso: la griglia degli sconti su desktop è a 3 colonne
+ * (2 sotto i 1100px) e l'annuncio occupa una riga intera, quindi solo un
+ * multiplo di 6 lascia complete le righe che lo precedono in entrambi i casi.
+ * Sotto le sei schede l'annuncio va in fondo all'elenco invece che in mezzo,
+ * altrimenti lascerebbe dei buchi nella griglia.
+ */
 export const LIST_AD_AFTER = 6
 
 export function getSlot(key) {
