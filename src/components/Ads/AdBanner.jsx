@@ -4,6 +4,7 @@ import { getHoursStatus } from '../../lib/hours'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 import { useAdSlot, adHref } from '../../lib/hooks/useAds'
+import { useAdImpression, trackAdClick } from '../../lib/hooks/useAdTracking'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { getSlot } from '../../lib/adSlots'
 
@@ -33,9 +34,9 @@ export default function AdSlot({ slot }) {
   const content = resolveAd(ad)
   if (!content) return null
 
-  if (meta.format === 'hero') return <AdHero content={content} />
-  if (meta.format === 'inline') return <AdInline content={content} />
-  return <AdCompact content={content} />
+  if (meta.format === 'hero') return <AdHero content={content} slot={slot} />
+  if (meta.format === 'inline') return <AdInline content={content} slot={slot} />
+  return <AdCompact content={content} slot={slot} />
 }
 
 /* ============================================================
@@ -125,17 +126,19 @@ function AdLabel({ dark = true, floating = true }) {
  * Un link a pagamento verso l'esterno vuole rel="sponsored": senza, Google lo
  * legge come un endorsement editoriale e il sito ci rimette in reputazione.
  */
-function AdLink({ content, href, external, children, ...rest }) {
+function AdLink({ content, slot, href, external, children, ...rest }) {
   const target = href ?? content.href
   const isExternal = external ?? content.external
+  const onClick = () => trackAdClick(content.id, slot)
+
   if (isExternal) {
     return (
-      <a href={target} target="_blank" rel="sponsored noopener noreferrer" {...rest}>
+      <a href={target} target="_blank" rel="sponsored noopener noreferrer" onClick={onClick} {...rest}>
         {children}
       </a>
     )
   }
-  return <Link to={target} {...rest}>{children}</Link>
+  return <Link to={target} onClick={onClick} {...rest}>{children}</Link>
 }
 
 // Il fondo di riserva sta SOTTO la foto, non al suo posto: se l'immagine del
@@ -156,10 +159,11 @@ const coverBg = (cover) =>
    Formato 1 · Hero
    ============================================================ */
 
-function AdHero({ content }) {
+function AdHero({ content, slot }) {
   const { hours } = content
+  const ref = useAdImpression(content.id, slot)
   return (
-    <div className="hfv4-spon-wrap" style={{ padding: '8px 20px 18px' }}>
+    <div ref={ref} className="hfv4-spon-wrap" style={{ padding: '8px 20px 18px' }}>
       <div
         className="hfv4-spon-banner"
         style={{
@@ -239,6 +243,7 @@ function AdHero({ content }) {
           >
             <AdLink
               content={content}
+              slot={slot}
               className="press"
               style={{
                 padding: '13px 14px',
@@ -306,10 +311,13 @@ function AdHero({ content }) {
    Formato 2 · Card inline (stessa impronta delle card ristorante)
    ============================================================ */
 
-function AdInline({ content }) {
+function AdInline({ content, slot }) {
+  const ref = useAdImpression(content.id, slot)
   return (
     <AdLink
+      ref={ref}
       content={content}
+      slot={slot}
       className="hfv4-lcard hfv4-ad-inline press"
       style={{
         flex: '0 0 72%',
@@ -415,10 +423,13 @@ function AdInline({ content }) {
    Formato 3 · Riga compatta
    ============================================================ */
 
-function AdCompact({ content }) {
+function AdCompact({ content, slot }) {
+  const ref = useAdImpression(content.id, slot)
   return (
     <AdLink
+      ref={ref}
       content={content}
+      slot={slot}
       className="ad-compact press"
       style={{
         display: 'grid',

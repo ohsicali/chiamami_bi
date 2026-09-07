@@ -172,6 +172,7 @@ export default function PlacementManager() {
   const [restaurants, setRestaurants] = useState([])
   const [discounts, setDiscounts] = useState([])
   const [loading, setLoading] = useState(() => !!isSupabaseConfigured())
+  const [stats, setStats] = useState({})
   const [form, setForm] = useState(EMPTY_FORM)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -193,6 +194,13 @@ export default function PlacementManager() {
       setRestaurants(r.data || [])
       setDiscounts(d.data || [])
       setLoading(false)
+    })
+
+    // Metriche: se la migrazione ad-events non è ancora stata eseguita la
+    // funzione non esiste — la pagina resta identica, senza colonna numeri.
+    supabase.rpc('ad_stats', { days: 30 }).then(({ data, error }) => {
+      if (error || !data) return
+      setStats(Object.fromEntries(data.map((r) => [r.placement_id, r])))
     })
   }, [authLoading, isAdmin])
 
@@ -414,6 +422,7 @@ export default function PlacementManager() {
               <SlotSection
                 key={slot.key}
                 slot={slot}
+                stats={stats}
                 data={bySlot[slot.key] || { all: [], live: [] }}
                 onCreate={() => startCreate(slot.key)}
                 onEdit={startEdit}
@@ -433,7 +442,7 @@ export default function PlacementManager() {
                 </div>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {orphans.map((p) => (
-                    <Row key={p.id} p={p} share={null} onEdit={startEdit} onDuplicate={duplicate} onRemove={remove} onToggle={toggleActive} />
+                    <Row key={p.id} p={p} share={null} stat={stats[p.id]} onEdit={startEdit} onDuplicate={duplicate} onRemove={remove} onToggle={toggleActive} />
                   ))}
                 </div>
               </div>
@@ -449,7 +458,7 @@ export default function PlacementManager() {
    Sezione posizione
    ============================================ */
 
-function SlotSection({ slot, data, onCreate, onEdit, onDuplicate, onRemove, onToggle }) {
+function SlotSection({ slot, data, stats, onCreate, onEdit, onDuplicate, onRemove, onToggle }) {
   const format = AD_FORMATS[slot.format]
   const shares = rotationShares(data.live)
   const sorted = [...data.all].sort((a, b) => {
@@ -505,7 +514,7 @@ function SlotSection({ slot, data, onCreate, onEdit, onDuplicate, onRemove, onTo
       ) : (
         <div style={{ display: 'grid', gap: 1, background: 'var(--color-ink-05)' }}>
           {sorted.map((p) => (
-            <Row key={p.id} p={p} share={shares[p.id]} onEdit={onEdit} onDuplicate={onDuplicate} onRemove={onRemove} onToggle={onToggle} />
+            <Row key={p.id} p={p} share={shares[p.id]} stat={stats?.[p.id]} onEdit={onEdit} onDuplicate={onDuplicate} onRemove={onRemove} onToggle={onToggle} />
           ))}
         </div>
       )}
@@ -517,7 +526,7 @@ function campaignTitle(p) {
   return p.client_name || p.headline || p.brand_name || p.restaurant?.name || '—'
 }
 
-function Row({ p, share, onEdit, onDuplicate, onRemove, onToggle }) {
+function Row({ p, share, stat, onEdit, onDuplicate, onRemove, onToggle }) {
   const state = campaignState(p)
   const meta = STATE_META[state]
   const variantLabel = VARIANTS.find((v) => v.key === p.variant)?.label || p.variant
@@ -544,11 +553,57 @@ function Row({ p, share, onEdit, onDuplicate, onRemove, onToggle }) {
           {remaining && <span style={{ color: 'var(--color-oro-deep, #8E6B3E)', fontWeight: 700 }}>{' · '}{remaining}</span>}
         </div>
       </div>
+
+      <Metrics stat={stat} />
+
       <div style={{ display: 'flex', gap: 6 }}>
         <button type="button" onClick={() => onToggle(p)} style={toggleBtnStyle(p.active)}>{p.active ? 'Accesa' : 'Spenta'}</button>
         <button type="button" onClick={() => onEdit(p)} style={secondaryBtnStyle}>Modifica</button>
         <button type="button" onClick={() => onDuplicate(p)} style={secondaryBtnStyle} title="Rinnova con le stesse impostazioni">Rinnova</button>
         <button type="button" onClick={() => onRemove(p)} style={dangerBtnStyle} aria-label="Elimina">✕</button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Numeri degli ultimi 30 giorni. Restano nascosti finché non c'è niente da
+ * mostrare: una colonna di zeri su una campagna appena creata sembra un
+ * malfunzionamento, non un dato.
+ */
+function Metrics({ stat }) {
+  if (!stat || (!stat.impressions && !stat.clicks)) return null
+  const impressions = Number(stat.impressions) || 0
+  const clicks = Number(stat.clicks) || 0
+  const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0
+
+  return (
+    <div
+      title="Ultimi 30 giorni"
+      style={{
+        display: 'flex',
+        gap: 16,
+        padding: '6px 14px',
+        background: 'var(--color-cream, #F5F0E4)',
+        borderRadius: 10,
+        fontVariantNumeric: 'tabular-nums',
+      }}
+    >
+      <Metric label="Viste" value={impressions.toLocaleString('it-IT')} />
+      <Metric label="Click" value={clicks.toLocaleString('it-IT')} />
+      <Metric label="CTR" value={`${ctr.toFixed(1).replace('.', ',')}%`} strong />
+    </div>
+  )
+}
+
+function Metric({ label, value, strong }) {
+  return (
+    <div style={{ textAlign: 'right' }}>
+      <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--color-ink-70)' }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: strong ? 800 : 700, color: strong ? 'var(--color-corallo-ink, #C53A33)' : 'var(--color-ink)' }}>
+        {value}
       </div>
     </div>
   )

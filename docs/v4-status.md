@@ -35,10 +35,21 @@ dove siamo. Aggiorna a ogni step importante.
 - `supabase/add-google-places-fields-2026-04-19.sql` ✓ (Track C1)
 - `supabase/add-email-notifications-log-2026-04-19.sql` ✓ (Track C2)
 
-## SQL migrations DA ESEGUIRE
+- `supabase/ads-network-2026-09-07.sql` ✓ (Pubblicità) — verificata sul DB il
+  2026-09-07: colonne `slot`/`weight`/`link_type` e vincoli presenti.
+- `supabase/ad-events-2026-09-07.sql` ✓ (Pubblicità · metriche) — eseguita via
+  connettore Supabase il 2026-09-07.
 
-- `supabase/ads-network-2026-09-07.sql` ⚠️ (Pubblicità) — finché non gira,
-  la colonna `slot` non esiste e nessun banner viene mostrato. Idempotente.
+## Pubblicità — note operative
+
+- **`ad_events` non è scrivibile dal browser**, come `page_views`: le righe le
+  inserisce `api/ad-event.js` con il service role. Serve
+  `SUPABASE_SERVICE_ROLE_KEY` su Vercel (già configurata).
+  Motivo: su impression e click si fattura, e un contatore gonfiabile dal
+  browser renderebbe inutile il report al cliente.
+- Le posizioni sono definite in `src/lib/adSlots.js`, non in DB.
+- `?demo=ads` su qualsiasi pagina mostra campagne finte senza toccare il
+  database — preview e produzione condividono lo stesso DB.
 
 ## Resend
 
