@@ -13,7 +13,7 @@ import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
-import SponsorBanner from '../../components/Home/SponsorBanner'
+import AdSlot from '../../components/Ads/AdBanner'
 import TimeContextHero from '../../components/Home/TimeContextHero'
 import MomentTabs from '../../components/Home/MomentTabs'
 import MomentResultsGrid from '../../components/Home/MomentResultsGrid'
@@ -1046,9 +1046,9 @@ export default function HomeFeedV4() {
         )}
       </section>
 
-      {/* Sponsor banner: full-width su desktop, fuori dalla griglia 2-col */}
+      {/* Banner sponsor: full-width su desktop, fuori dalla griglia 2-col */}
       <Reveal className="hfv4-spon-outer">
-        <SponsorBanner />
+        <AdSlot slot="home_hero" />
       </Reveal>
 
       <div className="hfv4-main">

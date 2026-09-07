@@ -6,6 +6,7 @@ import MobileTabBar from './components/Layout/MobileTabBar'
 import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 import MaintenanceGate from './components/MaintenanceGate'
+import AdsProvider from './components/Ads/AdsProvider'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -138,6 +139,9 @@ export default function App() {
     <>
     <ErrorBoundary>
     <MaintenanceGate>
+    {/* Campagne pubblicitarie: un fetch per sessione, un'estrazione per pagina.
+        Sta qui dentro perché legge la route corrente per riestrarre. */}
+    <AdsProvider>
     {/* Desktop Navbar — hidden on mobile, hidden on admin */}
     {showDesktopNav && <DesktopNavbar />}
 
@@ -194,6 +198,7 @@ export default function App() {
     {/* Mobile Tab Bar */}
     {showTabBar && <MobileTabBar />}
     </Suspense>
+    </AdsProvider>
     </MaintenanceGate>
     </ErrorBoundary>
 

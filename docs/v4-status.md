@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-05
+Ultima modifica: 2026-09-07
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -17,6 +17,7 @@ dove siamo. Aggiorna a ogni step importante.
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
 | C3 — (TBD) | — | ⏳ Not started | |
+| Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 
 ## Env vars Vercel — già configurate
 
@@ -33,6 +34,22 @@ dove siamo. Aggiorna a ogni step importante.
 - `supabase/disable-user-reviews-2026-04-19.sql` ✓ (Track A)
 - `supabase/add-google-places-fields-2026-04-19.sql` ✓ (Track C1)
 - `supabase/add-email-notifications-log-2026-04-19.sql` ✓ (Track C2)
+
+- `supabase/ads-network-2026-09-07.sql` ✓ (Pubblicità) — verificata sul DB il
+  2026-09-07: colonne `slot`/`weight`/`link_type` e vincoli presenti.
+- `supabase/ad-events-2026-09-07.sql` ✓ (Pubblicità · metriche) — eseguita via
+  connettore Supabase il 2026-09-07.
+
+## Pubblicità — note operative
+
+- **`ad_events` non è scrivibile dal browser**, come `page_views`: le righe le
+  inserisce `api/track.js` (ramo `kind: 'ad_event'`) con il service role. Serve
+  `SUPABASE_SERVICE_ROLE_KEY` su Vercel (già configurata).
+  Motivo: su impression e click si fattura, e un contatore gonfiabile dal
+  browser renderebbe inutile il report al cliente.
+- Le posizioni sono definite in `src/lib/adSlots.js`, non in DB.
+- `?demo=ads` su qualsiasi pagina mostra campagne finte senza toccare il
+  database — preview e produzione condividono lo stesso DB.
 
 ## Resend
 

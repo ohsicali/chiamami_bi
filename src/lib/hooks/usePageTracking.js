@@ -12,7 +12,9 @@ function generateSessionId() {
   return `${ts}-${rand}`
 }
 
-function getOrCreateSessionId() {
+/** Esportata perché il tracking dei banner usa la stessa identità di sessione:
+ *  così impression e visite di pagina si possono incrociare. */
+export function getOrCreateSessionId() {
   try {
     const existing = sessionStorage.getItem(SESSION_KEY)
     const lastActivity = parseInt(sessionStorage.getItem(SESSION_TIMESTAMP_KEY) || '0', 10)

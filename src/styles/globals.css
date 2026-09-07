@@ -739,3 +739,25 @@ body {
     display: none !important;
   }
 }
+
+/* ============================================
+   PUBBLICITÀ
+   ============================================ */
+
+/* Editor campagne: sotto i 900px l'anteprima scende sotto il form invece di
+   spremersi in una colonna da 280px. */
+@media (max-width: 900px) {
+  .ad-editor-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Riga compatta negli elenchi: il tap sposta appena la card, come le schede
+   ristorante accanto a cui vive. */
+.ad-compact {
+  transition: transform var(--dur-press) var(--ease-out),
+              box-shadow var(--dur-pop) var(--ease-out);
+}
+.ad-compact:active {
+  transform: scale(0.985);
+}
