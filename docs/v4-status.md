@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-05
+Ultima modifica: 2026-09-07
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -17,6 +17,7 @@ dove siamo. Aggiorna a ogni step importante.
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
 | C3 — (TBD) | — | ⏳ Not started | |
+| Pubblicità — circuito banner | — | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero`, `home_feed`, `list_inline`), rotazione pesata tra più clienti, admin `/admin/placements` rifatto. **Richiede `supabase/ads-network-2026-09-07.sql`.** Slot definiti in `src/lib/adSlots.js`. |
 
 ## Env vars Vercel — già configurate
 
@@ -33,6 +34,11 @@ dove siamo. Aggiorna a ogni step importante.
 - `supabase/disable-user-reviews-2026-04-19.sql` ✓ (Track A)
 - `supabase/add-google-places-fields-2026-04-19.sql` ✓ (Track C1)
 - `supabase/add-email-notifications-log-2026-04-19.sql` ✓ (Track C2)
+
+## SQL migrations DA ESEGUIRE
+
+- `supabase/ads-network-2026-09-07.sql` ⚠️ (Pubblicità) — finché non gira,
+  la colonna `slot` non esiste e nessun banner viene mostrato. Idempotente.
 
 ## Resend
 

@@ -270,7 +270,7 @@ export function useUserRedemption(discountId, userId) {
  * Separates: activeDrops, upcomingDrops, featured, regular
  */
 // Module-scoped in-flight promise: when multiple components mount on the same
-// page (e.g. HomeFeedV4 + SponsorBanner) they share a single fetch instead of
+// page (e.g. HomeFeedV4 + il banner sponsor) they share a single fetch instead of
 // firing duplicate identical queries to Supabase.
 let activeDiscountsInFlight = null
 

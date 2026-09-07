@@ -21,6 +21,9 @@ import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import { useCity } from '../../lib/CityContext'
 import MetaTags from '../../components/SEO/MetaTags'
 import { slugify } from '../../lib/utils/slug'
+import AdSlot from '../../components/Ads/AdBanner'
+import { useAdSlot } from '../../lib/hooks/useAds'
+import { LIST_AD_AFTER } from '../../lib/adSlots'
 
 
 /* ── Heart SVG ── */
@@ -327,6 +330,17 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
   const parentRef = useRef(null)
   const [scrollMargin, setScrollMargin] = useState(0)
 
+  // L'annuncio non si può infilare nel DOM a mano: la lista è virtualizzata,
+  // quindi deve essere un elemento della sequenza come le schede, altrimenti
+  // il calcolo delle posizioni si sfalsa e lo scroll salta.
+  const { ad: listAd } = useAdSlot('list_inline')
+  const rows = useMemo(() => {
+    const cards = items.map((r) => ({ kind: 'card', key: r.id, restaurant: r }))
+    if (!listAd || cards.length <= LIST_AD_AFTER) return cards
+    cards.splice(LIST_AD_AFTER, 0, { kind: 'ad', key: `ad-${listAd.id}` })
+    return cards
+  }, [items, listAd])
+
   useLayoutEffect(() => {
     if (!parentRef.current) return
     const update = () => {
@@ -339,7 +353,7 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
   }, [])
 
   const virtualizer = useWindowVirtualizer({
-    count: items.length,
+    count: rows.length,
     estimateSize: () => 130,
     overscan: 6,
     scrollMargin,
@@ -351,10 +365,12 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
       style={{ position: 'relative', height: virtualizer.getTotalSize() }}
     >
       {virtualizer.getVirtualItems().map((vi) => {
-        const r = items[vi.index]
+        const row = rows[vi.index]
+        if (!row) return null
+        const r = row.restaurant
         return (
           <div
-            key={r.id}
+            key={row.key}
             data-index={vi.index}
             ref={virtualizer.measureElement}
             style={{
@@ -365,16 +381,22 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
               transform: `translateY(${vi.start - scrollMargin}px)`,
             }}
           >
-            <HorizontalCard
-              restaurant={r}
-              index={vi.index}
-              userPosition={userPosition}
-              discountValue={discountValueMap[r.id]}
-              saved={isSaved(r.id)}
-              onSave={() => onSave(r.id)}
-              onClick={onClick}
-              activeCity={activeCity}
-            />
+            {row.kind === 'ad' ? (
+              <div style={{ paddingBottom: 16 }}>
+                <AdSlot slot="list_inline" />
+              </div>
+            ) : (
+              <HorizontalCard
+                restaurant={r}
+                index={vi.index}
+                userPosition={userPosition}
+                discountValue={discountValueMap[r.id]}
+                saved={isSaved(r.id)}
+                onSave={() => onSave(r.id)}
+                onClick={onClick}
+                activeCity={activeCity}
+              />
+            )}
           </div>
         )
       })}

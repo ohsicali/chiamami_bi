@@ -19,6 +19,8 @@ import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
+import AdSlot from '../../components/Ads/AdBanner'
+import { LIST_AD_AFTER } from '../../lib/adSlots'
 
 
 const PIN_SVG = (
@@ -362,8 +364,16 @@ export default function DesktopExplorePage() {
             scrollbarWidth: 'none',
           }}
         >
-          {filteredRestaurants.map(r => (
+          {filteredRestaurants.map((r, i) => (
             <div key={r.id} ref={el => { cardRefs.current[r.id] = el }}>
+              {/* L'annuncio si infila dopo il sesto locale, come nella lista
+                  mobile: abbastanza in basso da non precedere i risultati,
+                  abbastanza in alto da essere raggiunto scorrendo. */}
+              {i === LIST_AD_AFTER && (
+                <div style={{ paddingBottom: 10 }}>
+                  <AdSlot slot="list_inline" />
+                </div>
+              )}
               <LCard
                 restaurant={r}
                 isActive={selectedId === r.id}

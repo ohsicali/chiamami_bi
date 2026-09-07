@@ -185,7 +185,7 @@ const MENU_SECTIONS = [
     items: [
       { to: '/admin/applications', label: 'Candidature', icon: ApplicationIcon, counterKey: 'applications' },
       { to: '/admin/partners', label: 'Partner', icon: PartnerIcon },
-      { to: '/admin/placements', label: 'Placements', icon: PlacementIcon },
+      { to: '/admin/placements', label: 'Pubblicità', icon: PlacementIcon },
       { to: '/admin/newsletter', label: 'Newsletter', icon: NewsletterIcon },
     ],
   },
