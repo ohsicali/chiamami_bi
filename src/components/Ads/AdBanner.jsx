@@ -450,11 +450,14 @@ function AdCompact({ content, slot }) {
           width: 64,
           height: 64,
           borderRadius: 12,
-          background: content.logo
-            ? `url(${content.logo}) center/cover, ${LOGO_FALLBACK}`
-            : LOGO_FALLBACK,
+          // Piastrella neutra + logo "contain": a differenza di un ritaglio a
+          // copertura, un logo orizzontale (simbolo + nome affiancati, il
+          // caso più comune) si vede intero invece di perdere i lati.
+          background: content.logo ? '#fff' : LOGO_FALLBACK,
+          border: content.logo ? '1px solid var(--color-ink-05)' : 'none',
           display: 'grid',
           placeItems: 'center',
+          padding: content.logo ? 6 : 0,
           fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
           fontSize: 20,
           color: 'var(--color-oro-deep, #8E6B3E)',
@@ -463,7 +466,15 @@ function AdCompact({ content, slot }) {
           letterSpacing: '0.02em',
         }}
       >
-        {!content.logo && content.initials}
+        {content.logo ? (
+          <img
+            src={content.logo}
+            alt=""
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+          />
+        ) : (
+          content.initials
+        )}
       </div>
 
       <div style={{ minWidth: 0 }}>
