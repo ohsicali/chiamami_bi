@@ -42,9 +42,9 @@ COMMENT ON TABLE ad_events IS
 -- =============================================================================
 -- 2) RLS: nessuna scrittura dal browser, lettura solo agli admin
 -- =============================================================================
--- Stessa impostazione di `page_views`: le righe le scrive `api/ad-event.js`
--- con il service role, che salta le RLS. Nessuna policy di INSERT, quindi la
--- chiave pubblica non può scrivere.
+-- Stessa impostazione di `page_views`: le righe le scrive `api/track.js`
+-- (ramo `kind: 'ad_event'`) con il service role, che salta le RLS. Nessuna
+-- policy di INSERT, quindi la chiave pubblica non può scrivere.
 --
 -- Non è pignoleria: su impression e click si fattura, e un contatore che
 -- chiunque può gonfiare dal browser rende il report al cliente carta straccia.

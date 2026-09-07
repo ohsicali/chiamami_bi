@@ -32,11 +32,15 @@ function logEvent(eventType, placementId, slot) {
   // La scrittura passa dall'endpoint server, non dal client: `ad_events` è
   // chiusa alla chiave pubblica come `page_views`, così nessuno può
   // fabbricare impression dal browser. Su questi numeri si fattura.
+  //
+  // Stessa funzione delle visite di pagina (`kind` distingue i due casi): il
+  // piano Vercel ammette 12 funzioni per deploy e siamo al limite.
   try {
-    fetch('/api/ad-event', {
+    fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        kind: 'ad_event',
         placement_id: placementId,
         slot,
         event_type: eventType,

@@ -1,5 +1,5 @@
 /**
- * Vercel Serverless Function — Page view tracking
+ * Vercel Serverless Function — Tracking (visite di pagina + banner)
  *
  * Receives page view events from the client and enriches them with
  * geo data (country, city) from Vercel edge headers before inserting
@@ -9,12 +9,22 @@
  * geolocation service.
  *
  * Also derives a simple device_type (mobile/tablet/desktop) from the UA.
+ *
+ * Gestisce anche impression e click sui banner (`kind: 'ad_event'`), per lo
+ * stesso motivo di sicurezza: la scrittura avviene con il service role, così
+ * `ad_events` resta chiusa alla chiave pubblica e nessuno può fabbricare
+ * impression dal browser — sono numeri su cui si fattura.
+ *
+ * I due eventi condividono una funzione invece di averne una a testa perché
+ * il piano Vercel del progetto ne ammette 12 per deploy, e siamo al limite:
+ * un file in più fa fallire il deploy dell'intero sito.
  */
 
 import { applyCors } from './_cors.js'
 import { rateLimit } from './_rate-limit.js'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const AD_EVENT_TYPES = new Set(['impression', 'click'])
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
@@ -27,6 +37,8 @@ export default async function handler(req, res) {
   if (limited) return res.status(429).json({ error: limited })
 
   const body = req.body || {}
+
+  if (body.kind === 'ad_event') return handleAdEvent(res, body)
 
   // Constrain attacker-controlled fields: cap lengths and only accept a
   // well-formed UUID for user_id (otherwise events could be attributed to
@@ -96,6 +108,54 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true })
   } catch (err) {
     console.error('track error:', err)
+    return res.status(500).json({ error: 'Server error' })
+  }
+}
+
+/**
+ * Impression e click sui banner. Stessa impostazione della visita di pagina:
+ * campi vincolati e scrittura con il service role.
+ */
+async function handleAdEvent(res, body) {
+  const placement_id = typeof body.placement_id === 'string' && UUID_RE.test(body.placement_id)
+    ? body.placement_id
+    : null
+  const slot = typeof body.slot === 'string' ? body.slot.slice(0, 64) : null
+  const event_type = AD_EVENT_TYPES.has(body.event_type) ? body.event_type : null
+  const session_id = typeof body.session_id === 'string' ? body.session_id.slice(0, 128) : null
+
+  if (!placement_id || !slot || !event_type) {
+    return res.status(400).json({ error: 'Missing placement_id, slot or event_type' })
+  }
+
+  try {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ error: 'Supabase not configured' })
+    }
+
+    const dbResponse = await fetch(`${supabaseUrl}/rest/v1/ad_events`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ placement_id, slot, event_type, session_id }),
+    })
+
+    if (!dbResponse.ok) {
+      const errText = await dbResponse.text()
+      console.error('ad_events insert failed:', dbResponse.status, errText)
+      return res.status(500).json({ error: 'DB insert failed' })
+    }
+
+    return res.status(200).json({ ok: true })
+  } catch (err) {
+    console.error('ad event error:', err)
     return res.status(500).json({ error: 'Server error' })
   }
 }

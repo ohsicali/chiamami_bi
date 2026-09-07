@@ -43,7 +43,7 @@ dove siamo. Aggiorna a ogni step importante.
 ## Pubblicità — note operative
 
 - **`ad_events` non è scrivibile dal browser**, come `page_views`: le righe le
-  inserisce `api/ad-event.js` con il service role. Serve
+  inserisce `api/track.js` (ramo `kind: 'ad_event'`) con il service role. Serve
   `SUPABASE_SERVICE_ROLE_KEY` su Vercel (già configurata).
   Motivo: su impression e click si fattura, e un contatore gonfiabile dal
   browser renderebbe inutile il report al cliente.
