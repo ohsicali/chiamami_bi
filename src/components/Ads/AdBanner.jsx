@@ -138,10 +138,19 @@ function AdLink({ content, href, external, children, ...rest }) {
   return <Link to={target} {...rest}>{children}</Link>
 }
 
+// Il fondo di riserva sta SOTTO la foto, non al suo posto: se l'immagine del
+// cliente non carica (link rotto, rete lenta) resta comunque una superficie
+// scura su cui la label "Annuncio" e il testo bianco si leggono.
+const OVERLAY = 'linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%)'
+const COVER_FALLBACK = 'linear-gradient(135deg,#C48E4E 0%,#7D5230 60%,#3C2312 100%)'
+
+const INLINE_FALLBACK = 'linear-gradient(140deg,#F0D9B8 0%,#D9A441 55%,#B08954 100%)'
+const LOGO_FALLBACK = 'linear-gradient(135deg,#F5F0E4,#E3D3B4)'
+
 const coverBg = (cover) =>
   cover
-    ? `linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%), url(${cover}) center/cover`
-    : 'linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(34,24,28,.85) 100%), linear-gradient(135deg,#C48E4E 0%,#7D5230 60%,#3C2312 100%)'
+    ? `${OVERLAY}, url(${cover}) center/cover, ${COVER_FALLBACK}`
+    : `${OVERLAY}, ${COVER_FALLBACK}`
 
 /* ============================================================
    Formato 1 · Hero
@@ -321,8 +330,8 @@ function AdInline({ content }) {
           width: '100%',
           aspectRatio: '16/11',
           background: content.cover
-            ? `url(${content.cover}) center/cover`
-            : 'linear-gradient(140deg,#F0D9B8 0%,#D9A441 55%,#B08954 100%)',
+            ? `url(${content.cover}) center/cover, ${INLINE_FALLBACK}`
+            : INLINE_FALLBACK,
         }}
       >
         <AdLabel dark />
@@ -431,8 +440,8 @@ function AdCompact({ content }) {
           height: 64,
           borderRadius: 12,
           background: content.logo
-            ? `url(${content.logo}) center/cover, #fff`
-            : 'linear-gradient(135deg,#F5F0E4,#E3D3B4)',
+            ? `url(${content.logo}) center/cover, ${LOGO_FALLBACK}`
+            : LOGO_FALLBACK,
           display: 'grid',
           placeItems: 'center',
           fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',

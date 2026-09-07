@@ -42,6 +42,7 @@ export const AD_SLOTS = {
     where: 'Home, sotto “Ultimi aggiunti”',
     format: 'hero',
     order: 1,
+    paths: ['/'],
   },
   home_feed: {
     key: 'home_feed',
@@ -49,6 +50,7 @@ export const AD_SLOTS = {
     where: 'Home, tra le card dei locali aperti adesso',
     format: 'inline',
     order: 2,
+    paths: ['/'],
   },
   list_inline: {
     key: 'list_inline',
@@ -56,6 +58,7 @@ export const AD_SLOTS = {
     where: 'Pagina /list e colonna sinistra della mappa, dopo il 6° locale',
     format: 'compact',
     order: 3,
+    paths: ['/list', '/esplora'],
   },
 }
 
@@ -68,6 +71,15 @@ export const AD_SLOT_LIST = Object.values(AD_SLOTS).sort((a, b) => a.order - b.o
  * più. Gli slot vengono riempiti in ordine di `order`.
  */
 export const MAX_ADS_PER_PAGE = 2
+
+/**
+ * Le posizioni presenti su una pagina. Serve al tetto di annunci: contando
+ * anche le posizioni non montate, il budget verrebbe consumato da slot
+ * invisibili e le posizioni in fondo alla lista non uscirebbero mai.
+ */
+export function slotsForPath(pathname) {
+  return AD_SLOT_LIST.filter((s) => s.paths.includes(pathname))
+}
 
 /** Ogni quante schede infilare un annuncio negli elenchi lunghi. */
 export const LIST_AD_AFTER = 6

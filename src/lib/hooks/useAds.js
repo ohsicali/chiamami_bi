@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../supabase'
-import { AD_SLOT_LIST, MAX_ADS_PER_PAGE } from '../adSlots'
+import { slotsForPath, MAX_ADS_PER_PAGE } from '../adSlots'
+import { DEMO_ADS, isDemoAds } from '../demoAds'
 
 /**
  * Motore degli annunci.
@@ -95,7 +96,10 @@ function drawForPage(ads, pathname, now) {
   const used = new Set()
   let shown = 0
 
-  for (const slot of AD_SLOT_LIST) {
+  // Solo le posizioni che esistono su questa pagina: contando anche le altre,
+  // il tetto verrebbe speso da slot non montati e le posizioni in fondo
+  // all'ordine (l'elenco ristoranti) non uscirebbero mai.
+  for (const slot of slotsForPath(pathname)) {
     if (shown >= MAX_ADS_PER_PAGE) break
     const pool = live.filter((ad) => ad.slot === slot.key && !used.has(ad.id))
     if (pool.length === 0) continue
@@ -114,7 +118,8 @@ function drawForPage(ads, pathname, now) {
 export function useAdsValue() {
   const [ads, setAds] = useState([])
   const [loading, setLoading] = useState(() => isSupabaseConfigured())
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  const demo = isDemoAds(search)
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
@@ -142,7 +147,10 @@ export function useAdsValue() {
   // Istante di riferimento per la finestra di validità: la query ha già
   // filtrato per date, questo è il secondo controllo lato client.
   const [mountedAt] = useState(() => Date.now())
-  const bySlot = useMemo(() => drawForPage(ads, pathname, mountedAt), [ads, pathname, mountedAt])
+  const bySlot = useMemo(
+    () => drawForPage(demo ? DEMO_ADS : ads, pathname, mountedAt),
+    [ads, demo, pathname, mountedAt]
+  )
 
   return useMemo(() => ({ bySlot, loading }), [bySlot, loading])
 }
