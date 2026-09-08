@@ -17,7 +17,8 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterActiveConventions, sortByExpiry } from '../../lib/discounts'
+import { filterActiveDrops, filterActiveConventions, sortByExpiry, msUntilEnd } from '../../lib/discounts'
+import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
 import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
@@ -51,18 +52,6 @@ function compactCountdown(targetIso) {
   if (d > 0) return `${d}g ${h}h`
   if (h > 0) return `${h}h ${m}m`
   return `${m}m`
-}
-
-function expiryLabel(deal) {
-  if (!deal) return null
-  if (deal.is_drop) return compactCountdown(dropDeadline(deal))
-  if (!deal.valid_until) return null
-  const d = new Date(deal.valid_until)
-  // if very far (e.g. > 365 days) treat as evergreen → no badge
-  const diffDays = (d.getTime() - Date.now()) / 86400000
-  if (diffDays > 365) return null
-  if (diffDays <= 0) return 'scaduto'
-  return `fino al ${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}`
 }
 
 function shortExpiryLine(deal) {
@@ -608,29 +597,14 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
   return (
     <>
       {drops.length > 0 && (
-        <section className="sc-section">
-          <div className="sc-section-head">
-            <strong>Drop a tempo</strong>
-            <small>{drops.length} {drops.length === 1 ? 'attivo' : 'attivi'}</small>
-          </div>
-          <div className={`sc-drop-track${drops.length === 1 ? ' is-single' : ''}`}>
-            {drops.map((d) => {
-              const redemption = redemptionByDealId?.get(d.id) || null
-              return (
-                <DropCard
-                  key={d.id}
-                  deal={d}
-                  redemption={redemption}
-                  claiming={claiming === d.id}
-                  onClaim={() => onClaim(d)}
-                  onOpenQR={() => onOpenQR({ ...redemption, discount: d })}
-                  onClick={() => onCardClick(d.restaurant)}
-                  onInfo={() => onInfo(d)}
-                />
-              )
-            })}
-          </div>
-        </section>
+        <DropSection
+          drops={drops}
+          claiming={claiming}
+          redemptionByDealId={redemptionByDealId}
+          onClaim={onClaim}
+          onOpenQR={onOpenQR}
+          onCardClick={onCardClick}
+        />
       )}
 
       {conv.length > 0 && (
@@ -670,87 +644,129 @@ function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onCl
   )
 }
 
-function DropCard({ deal, redemption, claiming, onClaim, onOpenQR, onClick, onInfo }) {
-  const r = deal.restaurant
-  const photo = getPhoto(r)
-  const time = expiryLabel(deal)
-  const claimed = deal.claimed_count || deal.total_redeemed || 0
-  const max = deal.max_quantity || deal.max_redemptions || 0
-  const pct = max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0
-  const remaining = Math.max(0, max - claimed)
-  const cuisine = r?.cuisine_type || r?.category?.[0]
-  const location = r?.neighborhood || r?.city
-  const priceStr = formatPrice(r?.price_range)
+/* ============================================================================
+   BLOCCO 4 — Bi Club, layout adattivo per N drop contemporanei.
 
-  const status = redemption?.status
-  const isSaved = status === 'generated'
-  const isUsed = status === 'redeemed'
+   Il layout cambia in base a quanti drop sono attivi; non è una griglia fissa
+   che si riempie male quando i drop sono pochi.
 
-  let ctaLabel = 'Sblocca sconto'
-  let ctaOnClick = onClaim
-  let ctaDisabled = !!claiming
-  if (claiming) ctaLabel = 'Un attimo…'
-  else if (isUsed) { ctaLabel = 'Già usato'; ctaDisabled = true; ctaOnClick = () => {} }
-  else if (isSaved) { ctaLabel = 'Apri QR'; ctaOnClick = onOpenQR }
-  const validityStatus = checkValidity(deal)
-  const validityPill = formatShortPill(deal, validityStatus)
+     1 drop    → card grande a tutta larghezza
+     2 drop    → due card affiancate, stessa dignità (nessuna gerarchia)
+     3 o più   → griglia da tre in versione compatta
+     6 o più   → paginazione, non scroll infinito: chi arriva in fondo deve
+                 capire che è finito
+
+   Su mobile sono SEMPRE impilate a tutta larghezza. Prima era uno scroll
+   orizzontale con snap: un carosello nasconde le card e obbliga a trascinare
+   per scoprire che esistono. Se ti viene voglia di rimettere `overflow-x`
+   qui, è la stessa idea che stiamo togliendo.
+
+   L'ordine è per scadenza (il più vicino a finire per primo) e arriva già
+   ordinato da `sortByExpiry` a monte.
+   ========================================================================= */
+
+const DROPS_PER_PAGE = 6
+
+function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick }) {
+  const [page, setPage] = useState(0)
+  const pageCount = Math.ceil(drops.length / DROPS_PER_PAGE)
+  const paginated = pageCount > 1
+  const visible = paginated
+    ? drops.slice(page * DROPS_PER_PAGE, (page + 1) * DROPS_PER_PAGE)
+    : drops
+
+  // La taglia della card segue il numero di drop TOTALI, non di quelli in
+  // pagina: se cambiasse pagina per pagina le card si ridimensionerebbero
+  // sotto le dita di chi naviga.
+  const size = drops.length === 1 ? 'large' : 'narrow'
+  const layout = drops.length === 1 ? 'single' : drops.length === 2 ? 'duo' : 'grid'
 
   return (
-    <div
-      className="sc-drop"
-      role="button"
-      tabIndex={0}
-      onClick={(e) => { if (!e.defaultPrevented) onClick() }}
-      onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
-      style={isUsed ? { opacity: 0.55 } : undefined}
-    >
-      <div className="sc-ph">
-        <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 32 }} />
-        <span className="sc-badge-live">live</span>
-        {time && <span className="sc-badge-time">{time}</span>}
-        <span className="sc-drop-pct-photo">{dealBadgeText(deal)}</span>
+    <section className="sc-section">
+      <div className="sc-section-head">
+        <strong>Drop a tempo</strong>
+        <small>{dropSectionSummary(drops)}</small>
       </div>
-      <div className="sc-body-c">
-        <div className="sc-drop-name-row">
-          <h4>{r?.name || deal.title}</h4>
-          {r?.tagline && <><span className="sc-sep">|</span><span className="sc-drop-tagline">{r.tagline}</span></>}
-        </div>
-        <div className="sc-meta sc-drop-meta">
-          {cuisine && <span>{cuisine}</span>}
-          {location && <><span className="sc-sep">|</span><span>{location}</span></>}
-          {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
-        </div>
-        {max > 0 && (
-          <div className="sc-progress">
-            <div className="sc-progress-labels">
-              <span>{claimed} presi</span>
-              <span className={remaining <= 3 ? 'sc-few' : ''}>{remaining > 0 ? `${remaining} rimasti` : 'Esauriti'}</span>
-            </div>
-            <div className="sc-bar"><i style={{ width: `${pct}%` }} /></div>
-          </div>
-        )}
-        <div className="sc-drop-actions">
+
+      <div className={`sc-drops sc-drops--${layout}`}>
+        {visible.map((d) => {
+          const redemption = redemptionByDealId?.get(d.id) || null
+          const status = redemption?.status
+          const isSaved = status === 'generated'
+          const isUsed = status === 'redeemed'
+          const busy = claiming === d.id
+
+          let label = '🔓 Sblocca sconto'
+          let action = () => onClaim(d)
+          let disabled = busy
+          if (busy) label = 'Un attimo…'
+          else if (isUsed) { label = 'Già usato'; disabled = true; action = () => {} }
+          else if (isSaved) { label = 'Apri il QR'; action = () => onOpenQR({ ...redemption, discount: d }) }
+
+          const validityStatus = checkValidity(d)
+
+          return (
+            <DropCard
+              key={d.id}
+              deal={d}
+              size={size}
+              // Con un solo drop la card occupa tutta la riga: su desktop
+              // passa a foto-a-sinistra, altrimenti la foto diventa una
+              // fascia vuota e il bottone si stira per tutto lo schermo.
+              split={layout === 'single'}
+              taken={isSaved || isUsed}
+              ctaLabel={label}
+              ctaDisabled={disabled}
+              validityNote={validityStatus === 'valid_now' ? null : formatShortPill(d, validityStatus)}
+              onUnlock={action}
+              onDiscover={() => onCardClick(d.restaurant)}
+            />
+          )
+        })}
+      </div>
+
+      {paginated && (
+        <nav className="sc-drops-pager" aria-label="Pagine dei drop">
           <button
             type="button"
-            className="sc-cta-info"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onInfo() }}
-            aria-label="Vedi dettagli drop"
+            className="sc-drops-pager-btn"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
           >
-            Dettagli
+            ← Precedenti
           </button>
+          <span className="sc-drops-pager-count">
+            {page + 1} di {pageCount}
+          </span>
           <button
             type="button"
-            className="sc-cta"
-            disabled={ctaDisabled}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); ctaOnClick() }}
+            className="sc-drops-pager-btn"
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            disabled={page >= pageCount - 1}
           >
-            {ctaLabel === 'Sblocca sconto' && <LockIcon />}
-            {ctaLabel}
+            Successivi →
           </button>
-        </div>
-      </div>
-    </div>
+        </nav>
+      )}
+    </section>
   )
+}
+
+/**
+ * "3 attivi · il primo scade tra 2 giorni" — il quadro prima di scorrere,
+ * così chi arriva sa quanti sono e quanto tempo ha senza contare le card.
+ */
+function dropSectionSummary(drops) {
+  const n = drops.length
+  const base = `${n} ${n === 1 ? 'attivo' : 'attivi'}`
+  // `drops` arriva ordinato per scadenza: il primo è il più vicino a finire.
+  const ms = msUntilEnd(drops[0])
+  if (ms === null || ms <= 0) return base
+  const hours = Math.floor(ms / 3_600_000)
+  if (hours < 1) return `${base} · il primo scade tra meno di un'ora`
+  if (hours < 24) return `${base} · il primo scade tra ${hours} ${hours === 1 ? 'ora' : 'ore'}`
+  const days = Math.round(hours / 24)
+  return `${base} · il primo scade tra ${days} ${days === 1 ? 'giorno' : 'giorni'}`
 }
 
 function LockIcon() {

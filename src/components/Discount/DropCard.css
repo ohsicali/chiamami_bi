@@ -346,3 +346,83 @@
   .dropcard__bar i { transition: none; }
   .dropcard__btn { transition: none; }
 }
+
+/* Validità: condizione d'uso, sta accanto al vantaggio non accanto al
+   countdown (vedi commento nel componente). */
+.dropcard__validity {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+.dropcard--mini .dropcard__validity { display: none; }
+
+/* ── Taglia grande a tutta larghezza: foto a sinistra, corpo a destra ──── */
+/*
+   Con un solo drop la card grande occupa tutta la riga, e su desktop la foto
+   in alto diventa una fascia larghissima e bassa che legge come spazio vuoto,
+   mentre il bottone principale si stira per 1500px. Sopra i 768px la card
+   passa quindi a due colonne: la foto torna di proporzioni sane e i bottoni
+   restano larghi quanto serve a premerli.
+
+   È solo una diversa disposizione degli stessi pezzi: nessun elemento
+   compare o sparisce rispetto alle altre taglie.
+*/
+@media (min-width: 768px) {
+  .dropcard--split {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 260px;
+  }
+
+  .dropcard--split .dropcard__photo {
+    height: 100%;
+    border-radius: 19px 0 0 19px;
+  }
+
+  /* La sfumatura ora è a destra, verso il corpo, non più in basso. */
+  .dropcard--split .dropcard__photo::after {
+    inset: 0 0 0 auto;
+    width: 56px;
+    height: auto;
+    background: linear-gradient(90deg, rgba(232, 69, 60, 0) 0%, var(--dc-corallo) 100%);
+  }
+
+  /* Il badge passa sulla giunzione verticale invece che su quella
+     orizzontale: stessa idea, altro asse. In alto e non in basso, perché in
+     basso finisce esattamente sopra "Sblocca sconto". */
+  .dropcard--split .dropcard__badge {
+    top: 22px;
+    bottom: auto;
+    right: auto;
+    left: calc(0.85 / 1.85 * 100%);
+    transform: translateX(-50%);
+  }
+
+  .dropcard--split .dropcard__body {
+    padding: 20px 22px 20px 18px;
+    justify-content: center;
+  }
+
+  /* Il badge sta a cavallo della giunzione e sporge dentro il corpo: la pill
+     di stato parte dopo, altrimenti le due si accavallano sulla stessa riga. */
+  .dropcard--split .dropcard__pill { margin-left: 40px; }
+
+  .dropcard--split .dropcard__name { font-size: 22px; padding-right: 0; }
+  .dropcard--split .dropcard__perk { font-size: 15px; }
+
+  /* I bottoni non si stirano per tutta la card: "Sblocca sconto" largo
+     mezzo metro non è più facile da premere, è solo più difficile da leggere. */
+  /* `margin-top: auto` spingerebbe i bottoni in fondo mentre il corpo è
+     centrato verticalmente: in split il distacco lo decide il padding. */
+  .dropcard--split .dropcard__cta { max-width: 420px; margin-top: 0; padding-top: 16px; }
+}

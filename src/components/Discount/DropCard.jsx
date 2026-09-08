@@ -27,7 +27,10 @@ export default function DropCard({
   onUnlock,
   onDiscover,
   taken = false,
+  split = false,
   ctaLabel,
+  ctaDisabled = false,
+  validityNote,
   className = '',
   style,
 }) {
@@ -46,6 +49,7 @@ export default function DropCard({
   const classes = [
     'dropcard',
     `dropcard--${size}`,
+    split ? 'dropcard--split' : '',
     taken ? 'dropcard--taken' : '',
     className,
   ].filter(Boolean).join(' ')
@@ -83,6 +87,12 @@ export default function DropCard({
           {view.subline && <small>{view.subline}</small>}
         </div>
 
+        {/* Validità (giorni/fasce, da PR23): sta qui e non in una pill sopra
+            perché è una condizione d'uso, non uno stato del drop — chi legge
+            "Solo a cena" lo deve leggere accanto al vantaggio, non accanto al
+            countdown. */}
+        {validityNote && <div className="dropcard__validity">{validityNote}</div>}
+
         {view.showProgress && (
           <div className="dropcard__progress">
             <div
@@ -108,7 +118,7 @@ export default function DropCard({
               type="button"
               className="dropcard__btn dropcard__btn--primary"
               onClick={(e) => { e.stopPropagation(); onUnlock?.(deal) }}
-              disabled={!onUnlock}
+              disabled={ctaDisabled || !onUnlock}
             >
               {ctaLabel || (taken ? 'Apri il QR' : '🔓 Sblocca sconto')}
             </button>
@@ -170,10 +180,12 @@ function buildView(deal, now) {
     formatAddress(r?.address, r?.neighborhood) || r?.city,
   ].filter(Boolean).join(' · ')
 
+  const valueLabel = formatDiscountValue(deal)
+
   return {
     restaurantName: r?.name || deal.title || 'Locale',
-    valueLabel: formatDiscountValue(deal),
-    perk: deal.title || deal.description || '',
+    valueLabel,
+    perk: pickPerk(deal, valueLabel),
     subline,
     pillLabel,
     photo: proxyImg(photoRaw, { w: 900 }),
@@ -187,6 +199,31 @@ function buildView(deal, now) {
     showProgress: max > 0 && remaining !== null,
     progressPct: max > 0 ? Math.min(100, Math.round((claimed / max) * 100)) : 0,
   }
+}
+
+/**
+ * Il vantaggio in chiaro, quello che si legge in mezzo secondo.
+ *
+ * Non è sempre il titolo: sul DB metà dei titoli sono la percentuale e basta
+ * ("50%", "20% sul pranzo"), e ripeterla sotto al badge che la mostra già
+ * spreca la riga più importante della card. In quel caso vale di più la
+ * condizione concreta ("Valido solo sull'acquisto del tramezzino base").
+ */
+function pickPerk(deal, valueLabel) {
+  const candidates = [deal.description, deal.title, deal.conditions]
+  const value = normalize(valueLabel)
+  for (const c of candidates) {
+    const text = String(c || '').trim()
+    if (!text) continue
+    // Scarta il candidato che è solo il valore già scritto nel badge.
+    if (value && normalize(text) === value) continue
+    return text
+  }
+  return deal.title || ''
+}
+
+function normalize(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
 function pickPhoto(r) {
