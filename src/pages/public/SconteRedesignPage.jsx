@@ -2,7 +2,6 @@ import { Fragment, useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
-import { useCity } from '../../lib/CityContext'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { proxyImg } from '../../lib/supabase'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
@@ -18,6 +17,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
+import { filterActiveDrops, filterActiveConventions, sortByExpiry } from '../../lib/discounts'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
 import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
@@ -110,7 +110,6 @@ function SconteRedesignPageInner() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isDesktop = useIsDesktop()
-  const { city: currentCity } = useCity()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const tab = (searchParams.get('tab') === 'miei') ? 'miei' : 'disponibili'
@@ -136,40 +135,19 @@ function SconteRedesignPageInner() {
     useActiveDiscounts()
   const { active: allMyActive, used: allMyUsed, loading: myLoading } = useMyDiscounts(user?.id)
 
-  const cityFilter = useCallback((deal) => {
-    if (!currentCity?.name) return true
-    return deal.restaurant?.city?.toLowerCase() === currentCity.name.toLowerCase()
-  }, [currentCity?.name])
-  const myFilter = useCallback((r) => {
-    if (!currentCity?.name) return true
-    return r.discount?.restaurant?.city?.toLowerCase() === currentCity.name.toLowerCase()
-  }, [currentCity?.name])
-
-  // Allineato alla logica della home: tutti gli sconti is_drop (non esauriti)
-  // sono drop. La spec §2.1 dice di nasconderli solo se sold-out (presi==totali).
-  // Non richiediamo drop_starts_at perché molti drop sul DB lo hanno null.
-  const allDropsLocal = useMemo(() => {
-    return (allRaw || []).filter((d) => {
-      if (!d.is_drop) return false
-      const claimed = d.claimed_count || d.total_redeemed || 0
-      const max = d.max_quantity || d.max_redemptions || 0
-      if (max > 0 && claimed >= max) return false
-      // se è già scaduto come timestamp, lo escludiamo
-      const end = d.drop_ends_at || d.valid_until
-      if (end && new Date(end).getTime() < Date.now()) return false
-      return true
-    })
-  }, [allRaw])
-  const allConvLocal = useMemo(() => {
-    return (allRaw || []).filter((d) => !d.is_drop)
-  }, [allRaw])
-
-  const drops = useMemo(() => allDropsLocal.filter(cityFilter), [allDropsLocal, cityFilter])
-  const conv = useMemo(() => allConvLocal.filter(cityFilter), [allConvLocal, cityFilter])
+  // BLOCCO 0 — nessun filtro città qui, ed è deliberato.
+  // Il Bi Club è il catalogo completo: ogni sconto attivo compare sempre,
+  // ovunque sia il locale. La città resta un badge informativo sulla card.
+  // Prima c'era un `cityFilter` che confrontava `restaurant.city` con la città
+  // selezionata: nascondeva Shoro (Poirino) e Birrificio (Anzola) a chi aveva
+  // Torino selezionata — 6 sconti attivi in admin, 4 visibili qui.
+  // La selezione è corretta solo in home (unica vetrina curata).
+  const drops = useMemo(() => sortByExpiry(filterActiveDrops(allRaw)), [allRaw])
+  const conv = useMemo(() => filterActiveConventions(allRaw), [allRaw])
   // Backward-compat per auto-claim post login
   void allActiveDrops; void allFeatured; void allRegular
-  const myActive = useMemo(() => allMyActive.filter(myFilter), [allMyActive, myFilter])
-  const myUsed = useMemo(() => allMyUsed.filter(myFilter), [allMyUsed, myFilter])
+  const myActive = allMyActive
+  const myUsed = allMyUsed
 
   // Index of redemptions by discount_id so the catalogue can show dynamic CTA
   // ("Apri QR" / "Già usato") instead of hiding entries the user already took.
