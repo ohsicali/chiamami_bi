@@ -288,7 +288,7 @@ export default function ChiediPage() {
 
   return (
     <div className="chiedi-page">
-      <ChiediHeader hasConversation={!isEmpty} onNewChat={() => {
+      <ChiediHeader loading={loading} status={status} hasConversation={!isEmpty} onNewChat={() => {
         setMessages([])
         setConvId(null)
         navigate('/chiedi', { replace: true })
@@ -373,7 +373,7 @@ export default function ChiediPage() {
 /* ============================================================ */
 /*  Header                                                        */
 /* ============================================================ */
-function ChiediHeader({ hasConversation, onNewChat }) {
+function ChiediHeader({ loading, status, hasConversation, onNewChat }) {
   const navigate = useNavigate()
   return (
     <header className="cp-header">
@@ -392,7 +392,14 @@ function ChiediHeader({ hasConversation, onNewChat }) {
         <div className="cp-h-mark"><BiLogoMark style={{ width: '88%', height: '88%' }} /></div>
         <div className="cp-h-text">
           <strong>Chiedi a Bi</strong>
-          <small><span className="cp-dot" />in linea · ti rispondo in qualche secondo</small>
+          {/* BLOCCO 7 — durante l'attesa l'header dice cosa sta succedendo.
+              "ti rispondo in qualche secondo" era fisso, e la risposta vera
+              ne impiega dieci o quindici: la frase creava un'aspettativa che
+              il prodotto non mantiene, ed è peggio del silenzio. */}
+          <small>
+            <span className="cp-dot" />
+            {loading ? (status || 'sto sfogliando la guida…') : 'in linea'}
+          </small>
         </div>
       </div>
 
