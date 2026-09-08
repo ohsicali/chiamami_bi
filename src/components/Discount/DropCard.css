@@ -310,6 +310,9 @@
   padding: 1px 0 1px 10px;
   justify-content: center;
   gap: 3px;
+  /* Senza questo il testo non si accorcia mai: un figlio flex ha min-width
+     auto, quindi si allarga oltre la card invece di troncare con l'ellissi. */
+  min-width: 0;
 }
 
 .dropcard--mini .dropcard__name {

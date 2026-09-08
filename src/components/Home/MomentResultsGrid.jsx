@@ -18,11 +18,21 @@ export default function MomentResultsGrid({
   onCardClick,
   isSaved,
   toggleSave,
+  // In home la riga sta sotto il blocco momento e sopra il drop: con le card
+  // intere è alta quasi 300px e da sola spinge il drop sotto la piega su uno
+  // schermo da 390px. In `compact` la card diventa foto quadrata a sinistra e
+  // due righe a destra — stessa informazione utile, un terzo dell'altezza.
+  compact = false,
 }) {
   const slot = MOMENT_SLOTS[activeMoment]
   const reduce = useReducedMotion()
 
-  const filtered = useMemo(() => {
+  // Tutti gli aperti nella fascia, senza taglio. Il taglio serve a decidere
+  // quante card entrano nella riga, non quanti locali dire che ci sono: prima
+  // `filtered` era già tagliato a 10 e l'intestazione annunciava "10 locali"
+  // mentre il blocco momento sopra ne dichiarava 78. Due numeri veri della
+  // stessa cosa, a mezzo centimetro di distanza.
+  const openNow = useMemo(() => {
     if (!Array.isArray(restaurants)) return []
     return restaurants
       .filter((r) => r.is_published !== false)
@@ -31,8 +41,9 @@ export default function MomentResultsGrid({
         return { r, match }
       })
       .filter(({ match }) => match.match)
-      .slice(0, 10)
   }, [restaurants, activeMoment])
+
+  const filtered = useMemo(() => openNow.slice(0, 10), [openNow])
 
   // Cosa mostra la pill verde per ogni fascia:
   //   colazione, aperitivo → solo "apre alle HH:MM"
@@ -51,7 +62,7 @@ export default function MomentResultsGrid({
   }
 
   const visibleCards = filtered.slice(0, 3)
-  const remaining = Math.max(0, filtered.length - visibleCards.length)
+  const remaining = Math.max(0, openNow.length - visibleCards.length)
 
   return (
     <section className="hfv4-results" style={{ paddingTop: 4 }}>
@@ -85,7 +96,7 @@ export default function MomentResultsGrid({
             letterSpacing: '0.04em',
           }}
         >
-          {filtered.length} locali
+          {openNow.length} locali
         </span>
       </div>
 
@@ -121,6 +132,7 @@ export default function MomentResultsGrid({
             r={r}
             index={i}
             reduce={reduce}
+            compact={compact}
             hoursLabel={hoursDisplay(match)}
             onClick={() => onCardClick?.(r)}
             saved={isSaved ? isSaved(r.id) : false}
@@ -130,7 +142,7 @@ export default function MomentResultsGrid({
 
         <Link
           to={`/esplora?moment=${activeMoment}`}
-          className="hfv4-results-more press"
+          className={`hfv4-results-more press${compact ? ' hfv4-results-more--compact' : ''}`}
           style={{
             flex: '0 0 60%',
             scrollSnapAlign: 'start',
@@ -193,7 +205,7 @@ export default function MomentResultsGrid({
   )
 }
 
-function Lcard({ r, index = 0, reduce = false, hoursLabel, onClick, saved, onToggleSave }) {
+function Lcard({ r, index = 0, reduce = false, compact = false, hoursLabel, onClick, saved, onToggleSave }) {
   const catName = (Array.isArray(r.category) && r.category[0]) || r.cuisine_type || ''
   const cat = getCategoryInfo(catName)
   const zone = (r.address || '').split(',')[0].trim()
@@ -203,6 +215,48 @@ function Lcard({ r, index = 0, reduce = false, hoursLabel, onClick, saved, onTog
   const photo = proxyImg(photoRaw, { w: 600 })
   const photoSrcSet = proxyImgSrcSet(photoRaw, [400, 800])
   const isAboveFold = index < 2
+
+  // Variante compatta: foto quadrata + nome + orario. Niente tagline, niente
+  // cuore — a 72px il cuore diventa un bersaglio che si preme per sbaglio, e
+  // per salvare c'è la scheda del locale a un tocco di distanza.
+  if (compact) {
+    return (
+      <motion.a
+        href={`/restaurant/${r.slug}`}
+        onClick={(e) => { e.preventDefault(); onClick?.() }}
+        initial={riseFrom(10, reduce).from}
+        animate={riseFrom(10, reduce).to}
+        transition={{ ...TR_REVEAL, delay: staggerDelay(index, STAGGER, 0.15) }}
+        whileTap={reduce ? undefined : { transform: 'scale(0.985)' }}
+        className="hfv4-lcard hfv4-lcard--compact"
+      >
+        <span
+          className="hfv4-lcard-photo"
+          style={{ background: `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.15) 100%)` }}
+        >
+          <span className="hfv4-lcard-emoji" aria-hidden>{cat?.emoji || '🍽️'}</span>
+          {photo && (
+            <img
+              src={photo}
+              srcSet={photoSrcSet}
+              sizes="72px"
+              alt=""
+              loading={isAboveFold ? 'eager' : 'lazy'}
+              decoding="async"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          )}
+        </span>
+        <span className="hfv4-lcard-body">
+          <span className="hfv4-lcard-name">{r.name}</span>
+          <span className="hfv4-lcard-meta">
+            <span className="hfv4-lcard-open">● {hoursLabel}</span>
+          </span>
+          <span className="hfv4-lcard-sub">{[cat?.name || catName, priceLabel].filter(Boolean).join(' · ')}</span>
+        </span>
+      </motion.a>
+    )
+  }
 
   return (
     <motion.a
@@ -232,7 +286,7 @@ function Lcard({ r, index = 0, reduce = false, hoursLabel, onClick, saved, onTog
         display: 'block',
       }}
     >
-      <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background: `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.15) 100%)`, overflow:'hidden' }}>
+      <div className="hfv4-lcard-photo" style={{ position:'relative', width:'100%', aspectRatio:'16/11', background: `linear-gradient(135deg, ${cat?.color || '#E8CFA8'} 0%, rgba(34,24,28,.15) 100%)`, overflow:'hidden' }}>
         {/* Fallback emoji SEMPRE sotto la foto — se img non carica, si vede */}
         <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center', fontSize:46, opacity:0.55 }}>
           {cat?.emoji || '🍽️'}
@@ -262,7 +316,7 @@ function Lcard({ r, index = 0, reduce = false, hoursLabel, onClick, saved, onTog
           </div>
         )}
       </div>
-      <div style={{ padding: '12px 14px 14px' }}>
+      <div className="hfv4-lcard-body" style={{ padding: '12px 14px 14px' }}>
         <div
           style={{
             fontFamily: 'var(--font-sans)',
