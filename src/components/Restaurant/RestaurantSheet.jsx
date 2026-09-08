@@ -76,7 +76,17 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
 
   const handleUnlock = async () => {
     if (!user) {
-      navigate('/login', { state: { from: window.location.pathname, discount: true } })
+      // `returnTo`, non `from`: LoginPage legge solo `returnTo`, quindi con
+      // `from` il default restava "/" e dopo la registrazione l'utente
+      // atterrava in home, lontano dal locale che stava guardando e dallo
+      // sconto che voleva prendere (Blocco 5, terza regola trasversale).
+      navigate('/login', {
+        state: {
+          returnTo: `${window.location.pathname}${window.location.search}`,
+          pendingDiscountId: discount?.id,
+          mode: 'register',
+        },
+      })
       return
     }
     setGenerating(true)

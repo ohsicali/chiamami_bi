@@ -1922,3 +1922,107 @@
     padding: 0;
   }
 }
+
+/* ============================================================================
+   BLOCCO 5 — gate del Bi Club: porta a vetri, non porta chiusa.
+
+   Le card restano visibili ma sfocate: si vede che ci sono e quante sono, e
+   questo è il motivo per registrarsi. Nascondendole del tutto si toglie
+   proprio l'informazione che convince.
+   ========================================================================= */
+
+.sc-catalogo.is-blurred {
+  filter: blur(7px);
+  /* saturate: senza, il blur da solo lascia i colori pieni e la pagina sembra
+     rotta invece che protetta. */
+  filter: blur(7px) saturate(0.85);
+  pointer-events: none;
+  user-select: none;
+  /* Il blur sfuma ai bordi e mostrerebbe i pixel esterni: contenere il
+     ridisegno evita l'alone chiaro attorno alla sezione. */
+  contain: paint;
+}
+
+.sc-club-gate {
+  padding: 0 16px 18px;
+}
+
+.sc-club-gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 22px 20px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid var(--color-line, #eae3d7);
+  box-shadow: 0 12px 32px rgba(34, 24, 28, 0.12);
+}
+
+.sc-club-gate-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--color-corallo-wash, #fdedeb);
+  color: var(--color-corallo-ink, #c53a33);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.sc-club-gate-card h3 {
+  margin: 2px 0 0;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--color-ink, #22181c);
+}
+
+.sc-club-gate-card p {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--color-ink-70, rgba(34, 24, 28, 0.7));
+  max-width: 34ch;
+}
+
+/* `.sc-btn-primary` esiste già ma è scoped alla card del modale e alle
+   azioni del popup: qui va vestito, se no il "Registrati gratis" del gate
+   esce come testo semplice e non sembra premibile. */
+.sc-club-gate-card .sc-btn-primary {
+  width: 100%;
+  max-width: 320px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 20px;
+  border-radius: 999px;
+  background: var(--color-ink, #22181c);
+  color: #fff;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.sc-club-gate-card .sc-btn-primary:active { transform: scale(0.98); }
+
+.sc-club-gate-login {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink-70, rgba(34, 24, 28, 0.7));
+  text-decoration: none;
+  padding: 6px;
+}
+
+@media (min-width: 768px) {
+  .sc-club-gate { padding: 0 0 22px; }
+  .sc-club-gate-card { padding: 26px 24px; }
+}

@@ -295,7 +295,9 @@ export default function ChiediPage() {
       }} />
 
       <div className="cp-body" ref={bodyRef}>
-        {isEmpty ? (
+        {isEmpty && !user ? (
+          <ChatGatePreview />
+        ) : isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
           <Conversation messages={messages} loading={loading} status={status} onChip={sendMessage} />
@@ -303,6 +305,16 @@ export default function ChiediPage() {
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
 
+      {/* BLOCCO 5 — il gate sta PRIMA, non dopo.
+          Fino a ieri si poteva scrivere la domanda, premere invia, e solo lì
+          scoprire che serviva un account: il messaggio spariva e si
+          ricominciava. È lo scenario peggiore — o mostri prima, o lasci
+          passare, mai in mezzo. Sopra il gate resta un esempio di risposta
+          vera, sfocato, per far vedere che Bi risponde con locali reali e non
+          con frasi generiche. */}
+      {!user ? (
+        <ChatGate />
+      ) : (
       <form className="cp-input-bar" onSubmit={handleSubmit}>
         <div className="cp-input-row">
           <button
@@ -346,6 +358,7 @@ export default function ChiediPage() {
           <div className="cp-geo-err" role="alert">{locationError}</div>
         )}
       </form>
+      )}
 
       {showAuthGate && (
         <AuthGate
@@ -678,6 +691,59 @@ function ResultCard({ restaurant, photoUrl }) {
 /* ============================================================ */
 /*  Auth Gate                                                     */
 /* ============================================================ */
+/* ============================================================================
+   BLOCCO 5 — il gate di Chiedi a Bi.
+
+   Due pezzi: un'anteprima sfocata di una risposta vera (per far vedere che Bi
+   risponde con locali, non con frasi fatte) e, al posto della barra di
+   scrittura, l'invito a registrarsi con il beneficio dichiarato — la memoria:
+   Bi si ricorda cosa ti piace e non te lo richiede ogni volta.
+
+   Il gate sta PRIMA di scrivere. Prima si poteva digitare la domanda,
+   premere invia e scoprire solo lì che serviva un account, perdendo il
+   messaggio: o si mostra prima, o si lascia passare, mai in mezzo.
+   ========================================================================= */
+function ChatGatePreview() {
+  return (
+    <div className="cp-gate-preview">
+      <p className="cp-gate-preview-label">Così ti rispondo:</p>
+      <div className="cp-gate-preview-blur" aria-hidden="true">
+        <div className="cp-bubble cp-bi">
+          <p>
+            Per una cena giapponese a Vanchiglia ti mando da Bomaki Murazzi:
+            aperto fino alle 23:30, sushi fusion, e con il sconto del Bi Club
+            paghi meno. Se vuoi qualcosa di più tranquillo, dimmelo.
+          </p>
+        </div>
+        <div className="cp-gate-preview-cards">
+          <span /><span />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ChatGate() {
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search}`
+  return (
+    <div className="cp-gate">
+      <div className="cp-gate-inner">
+        <strong>Registrati e chiedimi quello che vuoi</strong>
+        <p>Mi ricordo cosa ti piace e non te lo richiedo ogni volta. Gratis, 20 secondi.</p>
+        <div className="cp-gate-actions">
+          <Link to="/login" state={{ returnTo, mode: 'register' }} className="cp-gate-primary">
+            Registrati gratis
+          </Link>
+          <Link to="/login" state={{ returnTo }} className="cp-gate-secondary">
+            Ho già un account
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AuthGate({ pendingMessage, onClose }) {
   return (
     <div
