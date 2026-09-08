@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
+import AdSlot from '../Ads/AdBanner'
 import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
 import OrariLocale from './OrariLocale'
@@ -979,6 +980,12 @@ export default function RestaurantSheet({
                   allRestaurants={allRestaurants}
                   onSelect={onSelectNearby}
                 />
+                {/* BLOCCO 10 — la quarta posizione. Qui chi legge ha già
+                    scelto cucina, zona e prezzo: è il punto più vicino alla
+                    decisione, e finora non c'era niente in vendita. */}
+                <div style={{ marginTop: 18 }}>
+                  <AdSlot slot="restaurant_nearby" />
+                </div>
               </motion.div>
 
               {/* Footer */}

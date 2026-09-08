@@ -13,6 +13,7 @@ import { formatAddress } from '../../lib/utils/formatAddress'
 import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
+import AdSlot from '../Ads/AdBanner'
 
 /* ── design tokens ── */
 const INK = '#22181C'
@@ -607,6 +608,12 @@ export default function DesktopRestaurantSheet({
             </section>
           )
         })()}
+
+        {/* BLOCCO 10 — la quarta posizione, sotto "Qui vicino": chi è qui ha
+            già scelto cucina, zona e prezzo. */}
+        <div style={{ marginTop: 40 }}>
+          <AdSlot slot="restaurant_nearby" />
+        </div>
       </div>
 
       {/* ── FOOTER ── */}

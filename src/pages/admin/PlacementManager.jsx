@@ -418,6 +418,8 @@ export default function PlacementManager() {
           <div style={{ color: 'var(--color-ink-70)' }}>Caricamento…</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+            <InventoryBar bySlot={bySlot} now={now} />
+
             {AD_SLOT_LIST.map((slot) => (
               <SlotSection
                 key={slot.key}
@@ -457,6 +459,79 @@ export default function PlacementManager() {
 /* ============================================
    Sezione posizione
    ============================================ */
+
+/* ============================================================================
+   BLOCCO 10 — barra inventario.
+
+   Le sezioni sotto dicono tutto, ma una per volta: per sapere quanto c'è
+   ancora da vendere bisogna scorrerle e contare a mente. Questa riga dà il
+   quadro prima di scorrere — quante posizioni sono libere, quante campagne
+   girano, e quanto manca alla prima che scade.
+   ========================================================================= */
+function InventoryBar({ bySlot, now }) {
+  const total = AD_SLOT_LIST.length
+  const sold = AD_SLOT_LIST.filter((s) => (bySlot[s.key]?.live?.length || 0) > 0)
+  const free = total - sold.length
+  const liveCampaigns = AD_SLOT_LIST.reduce((n, s) => n + (bySlot[s.key]?.live?.length || 0), 0)
+
+  // La scadenza più vicina tra le campagne attive: è quella su cui bisogna
+  // muoversi per prima, non la media né l'ultima.
+  let nextEnd = null
+  for (const s of AD_SLOT_LIST) {
+    for (const c of bySlot[s.key]?.live || []) {
+      const end = c.end_at ? new Date(c.end_at).getTime() : null
+      if (end && end > now && (nextEnd === null || end < nextEnd)) nextEnd = end
+    }
+  }
+  const daysLeft = nextEnd === null ? null : Math.max(0, Math.round((nextEnd - now) / 86_400_000))
+
+  const parts = [
+    `${free} ${free === 1 ? 'posizione libera' : 'posizioni libere'} su ${total}`,
+    `${liveCampaigns} ${liveCampaigns === 1 ? 'campagna attiva' : 'campagne attive'}`,
+    daysLeft === null ? null : `la prima scade tra ${daysLeft} ${daysLeft === 1 ? 'giorno' : 'giorni'}`,
+  ].filter(Boolean)
+
+  return (
+    <div
+      style={{
+        background: '#fff',
+        border: '1px solid var(--color-line, #EAE3D7)',
+        borderRadius: 16,
+        padding: '14px 16px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-ink)' }}>
+        📣 {parts.join(' · ')}
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginLeft: 'auto' }}>
+        {AD_SLOT_LIST.map((slot) => {
+          const isSold = (bySlot[slot.key]?.live?.length || 0) > 0
+          return (
+            <span
+              key={slot.key}
+              title={slot.where}
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: '5px 10px',
+                borderRadius: 999,
+                background: isSold ? 'var(--color-corallo-wash, #FDEDEB)' : 'var(--color-cream, #F5F0E4)',
+                color: isSold ? 'var(--color-corallo-ink, #C53A33)' : 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {isSold ? '●' : '○'} {slot.label}
+            </span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function SlotSection({ slot, data, stats, onCreate, onEdit, onDuplicate, onRemove, onToggle }) {
   const format = AD_FORMATS[slot.format]
