@@ -188,3 +188,20 @@
   text-underline-offset: 3px;
 }
 .ris-cta-secondary:hover { color: #fff; }
+
+/* La condizione da applicare, per esteso (Blocco 9).
+   Non è decorazione: è l'unica riga che dice al ristoratore cosa fare
+   davvero al conto, e prima non compariva affatto. */
+.ris-success .ris-conditions {
+  max-width: 420px;
+  margin: 14px auto 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+}
