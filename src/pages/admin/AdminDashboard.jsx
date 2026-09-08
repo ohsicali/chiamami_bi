@@ -158,6 +158,7 @@ export default function AdminDashboard() {
     discountsActive: 0,
     dropsActive: 0,
     redemptions30d: 0,
+    generated30d: 0,
     redemptionsPrev30d: 0,
     inboxApplications: 0,
     activeDropsCount: 0,
@@ -213,6 +214,7 @@ export default function AdminDashboard() {
           usersWeek,
           discountRows,
           redemp30,
+          generated30,
           redempPrev30,
           pendApps,
           pendSugg,
@@ -239,6 +241,9 @@ export default function AdminDashboard() {
           // usano la stessa definizione (`isActiveDiscount` in lib/discounts).
           supabase.from('discounts').select('id, restaurant_id, title, discount_value, is_active, is_drop, drop_ends_at, valid_until, max_quantity, claimed_count, max_redemptions, total_redeemed, restaurants(name, city, slug, is_published)').eq('is_active', true),
           supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed').gte('redeemed_at', thirtyDaysAgo),
+          // Il denominatore: quanti QR sono stati presi, non solo quanti usati.
+          // "12" da solo non dice se è tanto o poco; "12 su 30 presi" sì.
+          supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).gte('generated_at', thirtyDaysAgo),
           supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed').gte('redeemed_at', sixtyDaysAgo).lt('redeemed_at', thirtyDaysAgo),
           supabase.from('partner_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('restaurant_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -291,6 +296,7 @@ export default function AdminDashboard() {
           discountsActive: activeDiscounts.length,
           dropsActive: activeDropsList.length,
           redemptions30d: redemp30.count || 0,
+          generated30d: generated30.count || 0,
           redemptionsPrev30d: redempPrev30.count || 0,
           inboxApplications: pendApps.count || 0,
           activeDropsCount: activeDropsList.length,
@@ -446,9 +452,14 @@ export default function AdminDashboard() {
           >
             <span>{formatDateLong()}</span>
             <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor' }} />
+            {/* Finché la query non risponde questa riga diceva "0 candidature
+                nuove, 0 drop attivi": zeri veri per un paio di secondi, e chi
+                apre la dashboard li legge come dati. Meglio non dire niente
+                che dire zero. */}
             <span style={{ textTransform: 'none' }}>
-              {metrics.inboxApplications} candidature nuove, {metrics.activeDropsCount} drop attivi
-              {metrics.openSuggestions > 0 ? `, ${metrics.openSuggestions} suggerimenti` : ''}
+              {metricsLoading
+                ? 'carico i numeri…'
+                : `${metrics.inboxApplications} candidature nuove, ${metrics.activeDropsCount} drop attivi${metrics.openSuggestions > 0 ? `, ${metrics.openSuggestions} suggerimenti` : ''}`}
             </span>
             {liveVisitors != null && liveVisitors > 0 && (
               <>
@@ -500,9 +511,11 @@ export default function AdminDashboard() {
             loading={metricsLoading}
           />
           <KpiCard
-            label="Redenzioni QR (30gg)"
+            label="QR usati · 30gg"
             value={metrics.redemptions30d.toLocaleString('it-IT')}
-            delta={redemptionsDelta ? `${redemptionsDelta.pct >= 0 ? '+' : ''}${redemptionsDelta.pct}% vs mese prec.` : null}
+            delta={metrics.generated30d > 0
+              ? `su ${metrics.generated30d} presi · 30gg`
+              : (redemptionsDelta ? `${redemptionsDelta.pct >= 0 ? '+' : ''}${redemptionsDelta.pct}% vs mese prec.` : 'nessun QR preso · 30gg')}
             deltaDir={redemptionsDelta?.dir || 'up'}
             sparkline={sparklines.redemptions}
             loading={metricsLoading}
