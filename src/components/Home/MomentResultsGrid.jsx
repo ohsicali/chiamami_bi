@@ -239,19 +239,19 @@ function Lcard({ r, index = 0, reduce = false, compact = false, hoursLabel, onCl
             <img
               src={photo}
               srcSet={photoSrcSet}
-              sizes="72px"
+              sizes="112px"
               alt=""
               loading={isAboveFold ? 'eager' : 'lazy'}
               decoding="async"
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
           )}
+          {/* La pill dell'orario sta SULLA foto, in alto a sinistra, come nel
+              mockup: sotto al nome rubava la riga della categoria. */}
+          <span className="hfv4-lcard-open">● {hoursLabel}</span>
         </span>
         <span className="hfv4-lcard-body">
           <span className="hfv4-lcard-name">{r.name}</span>
-          <span className="hfv4-lcard-meta">
-            <span className="hfv4-lcard-open">● {hoursLabel}</span>
-          </span>
           <span className="hfv4-lcard-sub">{[cat?.name || catName, priceLabel].filter(Boolean).join(' · ')}</span>
         </span>
       </motion.a>

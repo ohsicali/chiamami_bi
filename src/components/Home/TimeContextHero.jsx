@@ -33,17 +33,21 @@ export default function TimeContextHero({ activeMomentKey, openCount, city = 'To
   const slot = MOMENT_SLOTS[momentKey]
   const question = active ? MOMENT_QUESTIONS[active] : MOMENT_QUESTIONS.none
 
+  // Rende solo il contenuto: la card scura è il contenitore in HomeFeedV4,
+  // perché deve contenere anche le chip (nel mockup stanno dentro `.moment`).
   return (
-    <div className="hfv4-moment">
-      <div className="hfv4-moment-head">
-        {slot && (
-          <span className="hfv4-moment-tag">
-            <i aria-hidden />
-            {slot.label} · {city}
-          </span>
-        )}
-        <time className="hfv4-moment-clock" dateTime={time}>{time}</time>
-      </div>
+    <>
+      {/* Ordine del mockup: tag, poi l'orologio SOTTO, poi la domanda.
+          L'orologio non sta a destra del tag — è il numero grande che apre il
+          blocco, e messo di fianco al tag perde quel ruolo. */}
+      {slot && (
+        <p className="hfv4-moment-tag">
+          <i aria-hidden />
+          {slot.label} · {city}
+        </p>
+      )}
+
+      <time className="hfv4-moment-clock" dateTime={time}>{time}</time>
 
       <p className="hfv4-moment-q">{question}</p>
 
@@ -55,6 +59,6 @@ export default function TimeContextHero({ activeMomentKey, openCount, city = 'To
           {openCount} {openCount === 1 ? 'locale aperto' : 'locali aperti'} adesso, {openCount === 1 ? 'scelto' : 'scelti'} da me
         </p>
       )}
-    </div>
+    </>
   )
 }

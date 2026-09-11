@@ -571,66 +571,98 @@ export default function HomeFeedV4() {
         .hfv4-band { display: block; }
 
         /* Il momento: scuro, con un alone corallo che scalda l'angolo in
-           alto a destra senza illuminare il testo. */
+           alto a destra senza illuminare il testo.
+
+           È una CARD con i suoi margini, non una fascia a tutta larghezza:
+           nel mockup (.moment) sta dentro la pagina crema come il drop, e
+           i due blocchi pieni si leggono come due card sorelle. A tutta
+           larghezza sembrava invece un'intestazione di sistema. */
         .hfv4-moment {
+          /* Stessa scala del drop (vedi --dc-k in DropCard.css): il mockup
+             disegna il telefono a 314px, non a 390, quindi i suoi numeri
+             vanno moltiplicati per 390/314 = 1.24 per pesare sullo schermo
+             vero come pesano nel disegno. */
+          --mk: 1.24px;
           background: var(--color-ink, #22181c);
-          background-image: radial-gradient(120% 90% at 88% 0%, rgba(232,69,60,.38) 0%, rgba(232,69,60,0) 62%);
           color: #fff;
-          padding: 14px 20px 10px;
+          border-radius: calc(17 * var(--mk));
+          padding: calc(16 * var(--mk));
+          position: relative;
+          overflow: hidden;
         }
-        .hfv4-moment-head {
+        .hfv4-moment::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 85% 15%, rgba(232,69,60,.35), transparent 60%);
+        }
+        .hfv4-moment > * { position: relative; }
+
+        /* Testo mint, non una pill: il tag è una riga di contesto, e dentro
+           una pill diventa un bottone che non si può premere. */
+        .hfv4-moment-tag {
+          margin: 0;
+          font-size: calc(8.5 * var(--mk));
+          font-weight: 800;
+          letter-spacing: .14em;
+          text-transform: uppercase;
+          color: #aef3c2;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-        }
-        .hfv4-moment-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 5px 11px;
-          background: rgba(255,255,255,.12);
-          border-radius: 999px;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: .1em;
-          text-transform: uppercase;
-          white-space: nowrap;
+          gap: 6px;
         }
         .hfv4-moment-tag i {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--color-corallo, #e8453c);
-          animation: hero-pulse 1.6s infinite;
+          width: calc(5 * var(--mk)); height: calc(5 * var(--mk)); border-radius: 50%;
+          background: #aef3c2;
+          animation: dropcard-blink 1.5s infinite;
         }
         .hfv4-moment-clock {
+          display: block;
           font-family: var(--font-sans);
-          font-size: 34px;
-          font-weight: 900;
+          font-size: calc(38 * var(--mk));
+          font-weight: 800;
+          letter-spacing: calc(-1.5 * var(--mk));
           line-height: 1;
-          letter-spacing: -0.03em;
+          margin-top: calc(6 * var(--mk));
           font-variant-numeric: tabular-nums;
         }
         .hfv4-moment-q {
           font-family: var(--font-sans);
-          font-weight: 900;
-          font-size: 17px;
-          line-height: 1.15;
-          letter-spacing: -0.02em;
-          margin: 9px 0 0;
-          max-width: 24ch;
+          font-weight: 700;
+          font-size: calc(15 * var(--mk));
+          line-height: 1.25;
+          margin: calc(6 * var(--mk)) 0 0;
+          max-width: 26ch;
         }
         .hfv4-moment-sub {
-          margin: 6px 0 0;
-          font-size: 12.5px;
+          margin: calc(4 * var(--mk)) 0 0;
+          font-size: calc(10 * var(--mk));
           line-height: 1.35;
-          color: rgba(255,255,255,.72);
+          opacity: .75;
         }
 
         /* Le chip fascia stanno dentro il blocco scuro: sono il filtro del
            momento, non una barra a sé. */
-        .hfv4-band-moment { background: var(--color-ink, #22181c); }
-        .hfv4-band-moment .hfv4-moment-tabs-scroll { padding: 12px 20px 12px !important; }
-        .hfv4-band-moment .hfv4-moment-tab { padding: 8px 12px !important; }
+        .hfv4-band-moment { padding: 8px 12px 0; }
+        /* Le chip sono dentro la card scura, quindi la loro riga non ha
+           padding proprio: lo dà il padding della card. */
+        .hfv4-moment .hfv4-moment-tabs-scroll { padding: calc(11 * var(--mk)) 0 0 !important; overflow-x: auto; }
+        /* Dentro il blocco scuro le chip sono pillole in riga, non i
+           quadrotti con l'emoji sopra della barra chiara: nel mockup
+           (.moment .chips span) sono alte ~26px e stanno tutte e cinque
+           sulla larghezza dello schermo. Lo stesso override va su entrambi
+           i livelli (fila spenta + overlay ritagliato), altrimenti le due
+           file non misurano identiche e il clip-path taglia storto. */
+        .hfv4-moment .hfv4-moment-tab {
+          flex-direction: row !important;
+          align-items: center !important;
+          min-width: 0 !important;
+          gap: calc(5 * var(--mk)) !important;
+          padding: calc(6 * var(--mk)) calc(11 * var(--mk)) !important;
+          border-radius: 99px !important;
+        }
+        .hfv4-moment .hfv4-moment-tab > span:first-child { font-size: calc(11 * var(--mk)) !important; }
+        .hfv4-moment .hfv4-moment-tab > span:last-child { font-size: calc(9.5 * var(--mk)) !important; font-weight: 600 !important; }
 
         /* Le chip nascono per fondo chiaro: testo ink su ink-05, e la fascia
            attiva ink pieno su bianco. Sul blocco scuro sparivano tutte e
@@ -657,22 +689,30 @@ export default function HomeFeedV4() {
         .hfv4-band-open { padding-top: 10px; }
         .hfv4-band-open .hfv4-results { padding-top: 0 !important; }
 
+        /* Le mini-card dei locali aperti: VERTICALI come .mcard nel
+           mockup — foto sopra con la pill "aperto", nome e meta sotto.
+           Le avevo fatte orizzontali (foto a sinistra): ci stavano più
+           strette, ma non è quello che il progetto dice. */
         .hfv4-lcard--compact {
-          display: grid;
-          grid-template-columns: 72px minmax(0, 1fr);
-          align-items: stretch;
-          flex: 0 0 246px;
+          /* Stessa scala del momento e del drop: i numeri sono quelli di
+             .mcard nel mockup, il calc li porta dai 314px del telefono
+             disegnato ai 390 di quello vero. */
+          --mk: 1.24px;
+          display: flex;
+          flex-direction: column;
+          width: calc(112 * var(--mk));
+          flex: 0 0 calc(112 * var(--mk));
           scroll-snap-align: start;
           background: #fff;
-          border: 1px solid var(--color-ink-05);
-          border-radius: 14px;
+          border: 1px solid var(--color-line, rgba(34,24,28,.10));
+          border-radius: 13px;
           overflow: hidden;
           text-decoration: none;
           color: inherit;
-          box-shadow: 0 1px 2px rgba(34,24,28,.04), 0 4px 12px rgba(34,24,28,.04);
         }
         .hfv4-lcard--compact .hfv4-lcard-photo {
           position: relative;
+          height: calc(62 * var(--mk));
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -682,56 +722,59 @@ export default function HomeFeedV4() {
           width: 100%; height: 100%;
           object-fit: cover;
         }
-        .hfv4-lcard--compact .hfv4-lcard-emoji { font-size: 26px; opacity: .55; }
-        .hfv4-lcard--compact .hfv4-lcard-body {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          gap: 2px;
-          padding: 8px 11px;
-          min-width: 0;
-        }
-        .hfv4-lcard--compact .hfv4-lcard-name {
+        .hfv4-lcard--compact .hfv4-lcard-emoji { font-size: calc(22 * var(--mk)); opacity: .55; }
+        .hfv4-lcard--compact .hfv4-lcard-open {
+          position: absolute;
+          left: calc(5 * var(--mk)); top: calc(5 * var(--mk));
+          z-index: 2;
+          background: rgba(255,255,255,.94);
+          color: #3f9d63;
+          font-size: calc(7 * var(--mk));
           font-weight: 800;
-          font-size: 13.5px;
+          border-radius: 99px;
+          padding: calc(2 * var(--mk)) calc(6 * var(--mk));
+          max-width: calc(100% - 10px);
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .hfv4-lcard--compact .hfv4-lcard-body { padding: calc(7 * var(--mk)) calc(8 * var(--mk)); min-width: 0; }
+        .hfv4-lcard--compact .hfv4-lcard-name {
+          display: block;
+          font-size: calc(10 * var(--mk));
+          font-weight: 700;
           line-height: 1.2;
-          letter-spacing: -0.01em;
           color: var(--color-ink);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .hfv4-lcard--compact .hfv4-lcard-open {
-          font-size: 10.5px;
-          font-weight: 700;
-          color: #1c7c43;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        .hfv4-lcard--compact .hfv4-lcard-sub {
           display: block;
+          font-size: calc(8 * var(--mk));
+          color: rgba(34,24,28,.55);
+          margin-top: 1px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+
         /* La card "+N" nella riga compatta: senza questo il suo minHeight di
-           220px stira tutte le mini-card all'altezza sua, e il risparmio di
-           spazio sparisce. */
+           220px stira tutte le mini-card all'altezza sua. */
         .hfv4-results-more--compact {
           min-height: 0 !important;
-          flex: 0 0 156px !important;
-          border-radius: 14px !important;
-          padding: 10px 14px !important;
+          flex: 0 0 112px !important;
+          border-radius: 13px !important;
+          padding: 10px 8px !important;
           gap: 4px !important;
         }
         .hfv4-results-more--compact > span:first-child {
-          width: 26px !important; height: 26px !important;
-          font-size: 15px !important;
+          width: 24px !important; height: 24px !important;
+          font-size: 14px !important;
           box-shadow: none !important;
         }
-        .hfv4-results-more--compact > span:nth-child(2) { font-size: 12.5px !important; }
-        .hfv4-results-more--compact > span:nth-child(3) { font-size: 10px !important; }
-
-        .hfv4-lcard--compact .hfv4-lcard-sub {
-          font-size: 10.5px;
-          color: var(--color-ink-70);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .hfv4-results-more--compact > span:nth-child(2) { font-size: 10px !important; }
+        .hfv4-results-more--compact > span:nth-child(3) { font-size: 8px !important; }
 
         /* ── Il drop e gli altri sconti ────────────────────────────────── */
-        .hfv4-drop-wrap { padding: 6px 20px 20px; }
+
+        /* Il drop ha i margini della card (8px 12px nel mockup): senza,
+           tocca i bordi dello schermo e smette di leggersi come card. */
+        .hfv4-drop-wrap { padding: 8px 12px 0; }
 
         .hfv4-drop-others { margin-top: 16px; }
         .hfv4-drop-others-head {
@@ -739,16 +782,16 @@ export default function HomeFeedV4() {
           align-items: baseline;
           justify-content: space-between;
           gap: 12px;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         .hfv4-drop-others-head strong {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 800;
           letter-spacing: -0.01em;
           color: var(--color-ink);
         }
         .hfv4-drop-others-all {
-          font-size: 12.5px;
+          font-size: 9px;
           font-weight: 700;
           color: var(--color-corallo);
           text-decoration: none;
@@ -756,16 +799,14 @@ export default function HomeFeedV4() {
         }
         .hfv4-drop-others-row {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 0;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
           padding-bottom: 4px;
         }
         .hfv4-drop-others-row::-webkit-scrollbar { display: none; }
-        .hfv4-drop-others-row > * { scroll-snap-align: start; }
 
         /* Il gancio alla registrazione (Blocco 5): dice il beneficio e il
            costo — gratis, venti secondi — invece di "Registrati per
@@ -773,22 +814,21 @@ export default function HomeFeedV4() {
         .hfv4-drop-others-hook {
           display: block;
           margin-top: 12px;
-          padding: 11px 14px;
-          border-radius: 12px;
+          padding: 9px 10px;
+          border-radius: 10px;
           background: var(--color-cream, #f5f0e4);
-          border: 1px dashed rgba(34,24,28,.18);
-          font-size: 12.5px;
-          font-weight: 600;
-          color: var(--color-ink);
+          font-size: 9px;
+          font-weight: 700;
+          color: var(--color-oro-deep, #8e6b3e);
           text-decoration: none;
           text-align: center;
         }
 
         /* Mobile: nessuna griglia, esce nell'ordine del DOM. */
         .hfv4-lower { display: block; }
-        .hfv4-lower-deals { padding: 0 20px 4px; }
+        .hfv4-lower-deals { padding: 0 12px 4px; }
 
-        .hfv4-cats-wrap { position: relative; }
+        .hfv4-cats-wrap { position: relative; }        .hfv4-cats-wrap { position: relative; }
         .hfv4-cats-wrap::after {
           content: "";
           position: absolute;
@@ -908,9 +948,16 @@ export default function HomeFeedV4() {
            banda in cima (Blocco 2/3), e la colonna "a" non esiste più. */
         .hfv4-main { display: block; }
 
+        /* La barra con logo e "Chiedi a Bi" è quella mobile: la navbar vera
+           (DesktopNavbar) compare da 768px in su con md:block, e finché
+           questa spariva solo a 1024 su un iPad in verticale si vedevano
+           due intestazioni sovrapposte. */
+        @media (min-width: 768px) {
+          .hfv4-topbar { display: none !important; }
+        }
+
         @media (min-width: 1024px) {
           .hfv4-root { min-height: calc(100dvh - 80px) !important; }
-          .hfv4-topbar { display: none !important; }
           .hfv4-main {
             max-width: 760px;
             margin: 0 auto;
@@ -1053,8 +1100,84 @@ export default function HomeFeedV4() {
             flex-direction: column;
             overflow-x: visible;
             scroll-snap-type: none;
+            gap: 0;
           }
-          .hfv4-drop-others-row > .dropcard--mini { width: 100%; }
+
+          /* Nella colonna desktop la mini-card si stende in una RIGA di
+             lista (.sideli nel mockup): miniatura quadrata, nome e meta
+             accanto, freccia a destra, righe separate da un tratteggio.
+             Stessa card, stesso markup: cambia solo la disposizione.
+             Impilare le card verticali riempiva mezza colonna con tre foto
+             e basta. */
+          .hfv4-drop-others-row > .dropcard--mini {
+            --dc-k: 1px;
+            width: 100%;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            background: none;
+            border: 0;
+            border-bottom: 1px dashed var(--color-line, rgba(34,24,28,.10));
+            border-radius: 0;
+            box-shadow: none;
+            /* Il francobollo sconto sporge di 4px a sinistra della
+               miniatura: senza questo margine finisce tagliato dal bordo
+               della colonna. */
+            padding: 9px 0 9px 5px;
+          }
+          .hfv4-drop-others-row > .dropcard--mini:last-child { border-bottom: 0; }
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__photo {
+            width: 44px;
+            height: 44px;
+            flex: none;
+            border-radius: 9px;
+            font-size: 18px;
+          }
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__photo img { border-radius: 9px; }
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__badge {
+            left: -4px;
+            bottom: -4px;
+            font-size: 9.5px;
+            border-radius: 6px;
+            padding: 1px 5px;
+            border-width: 1.5px;
+          }
+          /* Nome e "dove" restano incolonnati a sinistra, lo stato si
+             sposta a destra sulla stessa riga: in una lista lo stato in
+             terza riga raddoppiava l'altezza di ogni voce. */
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__body {
+            padding: 0;
+            min-width: 0;
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas: "name status" "where status";
+            align-items: center;
+            column-gap: 10px;
+          }
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__name {
+            grid-area: name;
+            font-size: 13.5px;
+          }
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__where {
+            grid-area: where;
+            font-size: 11px;
+            margin-top: 2px;
+          }
+          .hfv4-drop-others-row > .dropcard--mini .dropcard__status {
+            grid-area: status;
+            margin: 0;
+            font-size: 11px;
+          }
+          /* La freccina di fine riga: è la lista a dire "si clicca", non
+             un bottone. */
+          .hfv4-drop-others-row > .dropcard--mini::after {
+            content: "›";
+            flex: none;
+            font-size: 15px;
+            line-height: 1;
+            opacity: .35;
+          }
 
           /* === SuggestCard full-width e grande === */
           .hfv4-suggest-outer {
@@ -1103,9 +1226,13 @@ export default function HomeFeedV4() {
           finisce sotto la piega su uno schermo da 390px. */}
       <div className="hfv4-band">
         <div className="hfv4-band-left">
+          {/* La card scura è qui e non dentro TimeContextHero perché deve
+              contenere anche le chip: nel mockup stanno dentro il blocco. */}
           <div className="hfv4-band-moment">
-            <TimeContextHero activeMomentKey={activeMoment} openCount={openNowCount} />
-            <MomentTabs activeKey={activeMoment} onChange={setActiveMoment} />
+            <div className="hfv4-moment">
+              <TimeContextHero activeMomentKey={activeMoment} openCount={openNowCount} />
+              <MomentTabs activeKey={activeMoment} onChange={setActiveMoment} />
+            </div>
           </div>
 
           <div className="hfv4-band-open">

@@ -54,6 +54,32 @@ export default function DropCard({
     className,
   ].filter(Boolean).join(' ')
 
+  // Mini: card bianca verticale, foto + nome + zona + stato. Niente pill,
+  // barra o bottoni — nel mockup (`.scard`) è una riga di richiamo, non una
+  // card operativa: si tocca e si va allo sconto.
+  if (isMini) {
+    return (
+      <button
+        type="button"
+        className={classes}
+        style={style}
+        onClick={() => (onUnlock || onDiscover)?.(deal)}
+      >
+        <span className="dropcard__photo">
+          {view.photo
+            ? <img src={view.photo} srcSet={view.photoSrcSet} sizes="132px" alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            : <span aria-hidden>{view.emoji}</span>}
+          {view.miniBadgeLabel && <span className="dropcard__badge">{view.miniBadgeLabel}</span>}
+        </span>
+        <span className="dropcard__body">
+          <span className="dropcard__name">{view.restaurantName}</span>
+          <span className="dropcard__where">{view.where}</span>
+          <span className="dropcard__status">{view.miniStatus}</span>
+        </span>
+      </button>
+    )
+  }
+
   const inner = (
     <>
       <div className="dropcard__photo">
@@ -62,9 +88,9 @@ export default function DropCard({
             <img
               src={view.photo}
               srcSet={view.photoSrcSet}
-              sizes={isMini ? '64px' : '(max-width: 768px) 100vw, 420px'}
+              sizes="(max-width: 768px) 100vw, 420px"
               alt=""
-              loading={isMini ? 'lazy' : 'eager'}
+              loading="eager"
               decoding="async"
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
@@ -72,7 +98,7 @@ export default function DropCard({
           : <span aria-hidden>{view.emoji}</span>}
       </div>
 
-      {view.valueLabel && <span className="dropcard__badge">{view.valueLabel}</span>}
+      {view.badgeLabel && <span className="dropcard__badge">{view.badgeLabel}</span>}
 
       <div className="dropcard__body">
         <span className="dropcard__pill">
@@ -112,7 +138,7 @@ export default function DropCard({
           </div>
         )}
 
-        {!isMini && (
+        {(
           <div className="dropcard__cta">
             <button
               type="button"
@@ -135,21 +161,6 @@ export default function DropCard({
       </div>
     </>
   )
-
-  // Nella taglia mini l'intera card è il bersaglio: un <button> vero, così
-  // funziona anche da tastiera senza reinventare focus e Invio a mano.
-  if (isMini) {
-    return (
-      <button
-        type="button"
-        className={classes}
-        style={style}
-        onClick={() => (onUnlock || onDiscover)?.(deal)}
-      >
-        {inner}
-      </button>
-    )
-  }
 
   return <div className={classes} style={style}>{inner}</div>
 }
@@ -180,13 +191,30 @@ function buildView(deal, now) {
     formatAddress(r?.address, r?.neighborhood) || r?.city,
   ].filter(Boolean).join(' · ')
 
+  // Nella mini la riga sotto al nome è "categoria · città" e non l'indirizzo:
+  // a 132px di larghezza una via non ci sta, e fuori Torino la città è
+  // l'informazione che serve davvero (è il badge "📍 Poirino" del mockup).
+  const city = r?.city || ''
+  const where = [
+    r?.cuisine_type || firstCategory(r),
+    city && city.toLowerCase() !== 'torino' ? `📍 ${city}` : city,
+  ].filter(Boolean).join(' · ')
+
+  // Lo stato in fondo alla mini: il countdown se è un drop, "Sempre valido"
+  // se è una convenzione.
+  const miniStatus = drop ? (countdown ? `Scade tra ${countdown}` : 'Drop live') : 'Sempre valido'
+
   const valueLabel = formatDiscountValue(deal)
 
   return {
     restaurantName: r?.name || deal.title || 'Locale',
     valueLabel,
+    badgeLabel: badgeValue(valueLabel),
+    miniBadgeLabel: miniBadgeValue(valueLabel),
     perk: pickPerk(deal, valueLabel),
     subline,
+    where,
+    miniStatus,
     pillLabel,
     photo: proxyImg(photoRaw, { w: 900 }),
     photoSrcSet: proxyImgSrcSet(photoRaw, [300, 600, 900]),
@@ -209,6 +237,33 @@ function buildView(deal, now) {
  * spreca la riga più importante della card. In quel caso vale di più la
  * condizione concreta ("Valido solo sull'acquisto del tramezzino base").
  */
+// Nel mockup il badge porta il segno meno davanti al valore secco
+// ("−50%", "−20%"): è lo sconto, non una quantità. Lo aggiungiamo solo
+// quando l'etichetta è davvero un valore ("50%", "8€") e non un titolo
+// ("Tramezzino omaggio"), e solo qui: `valueLabel` resta pulito per le
+// altre superfici che lo riusano dentro una frase.
+function badgeValue(label) {
+  const v = String(label || '').trim()
+  if (!v) return ''
+  return isBareValue(v) ? `\u2212${v}` : v
+}
+
+// Nella mini il badge è un francobollo sull'angolo della foto: ci sta un
+// valore, non un titolo. `formatDiscountValue` per un omaggio o un prezzo
+// speciale restituisce il titolo della promo ("Paghi 2 prendi 3 Veneziane"),
+// che lì dentro esce dalla card e nella lista desktop si mangia la riga.
+// Quando non c'è un valore secco il badge dice solo che c'è un'offerta: il
+// dettaglio sta nella scheda, a un tocco di distanza.
+function miniBadgeValue(label) {
+  const v = String(label || '').trim()
+  if (!v) return ''
+  return isBareValue(v) ? `\u2212${v}` : 'OFFERTA'
+}
+
+function isBareValue(v) {
+  return /^\d+([.,]\d+)?\s*[%€]$/.test(v)
+}
+
 function pickPerk(deal, valueLabel) {
   const candidates = [deal.description, deal.title, deal.conditions]
   const value = normalize(valueLabel)
