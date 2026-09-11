@@ -1,0 +1,540 @@
+/* ============================================================================
+   DropCard — la card del drop, unico componente in tre taglie (Blocco 1).
+   ============================================================================
+
+   Riferimento 1:1: docs/mockups/proposte-v10-home-momento-drop.html
+     · taglia grande   → classe `.dClean`  (sezione S0/S1 del mockup)
+     · taglia stretta  → classe `.dropD`   (sezione S2, colonna desktop)
+     · taglia mini     → classe `.scard`   (riga "altri sconti attivi")
+
+   I valori qui sotto sono ricopiati da lì, non reinterpretati: il mockup è la
+   spec. Se cambi un numero, cambialo prima nel mockup.
+
+   Struttura confermata dal cliente (v5, poi ripulita): card tutta corallo,
+   foto sopra, badge mint a cavallo in basso a destra, barra con il numero,
+   doppio bottone. Da NON reintrodurre: badge grande spostato a sinistra,
+   pannello nero separato per i codici, bottone singolo, cuore o live-pill
+   sovrapposti alla foto — direzione scartata esplicitamente.
+   ========================================================================= */
+
+.dropcard {
+  --dc-corallo: var(--color-corallo, #e8453c);
+  --dc-corallo-d: var(--color-corallo-ink, #c93a32);
+  --dc-mint: #aef3c2;
+  --dc-mint2: #7ee5a0;
+  --dc-ink: var(--color-ink, #22181c);
+  --dc-line: var(--color-line, rgba(34, 24, 28, 0.1));
+
+  /* Fattore di scala del mockup → schermo reale.
+     Nel mockup il telefono è largo 314px (.phone), non 390: tutte le misure
+     lì dentro sono disegnate a quella scala. Ricopiarle 1:1 su un 390 vero
+     rende ogni cosa ~20% più piccola del disegno — testo, foto e badge
+     perdono peso dentro una card più larga. Qui i numeri restano quelli del
+     mockup e la scala la fa il calc: 390 / 314 = 1.24.
+     Ha unità px così che `calc(19 * var(--dc-k))` produca dei px. */
+  --dc-k: 1.24px;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(168deg, var(--dc-corallo) 0%, var(--dc-corallo-d) 100%);
+  border-radius: calc(19 * var(--dc-k));
+  color: #fff;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  text-align: left;
+  overflow: hidden;
+  /* Ombra corallo, non grigia: la card è un blocco di colore e un'ombra
+     neutra sotto la fa sembrare incollata invece che appoggiata. */
+  box-shadow: 0 14px 30px -20px rgba(232, 69, 60, 0.7);
+}
+
+/* ── Foto ─────────────────────────────────────────────────────────────── */
+
+.dropcard__photo {
+  position: relative;
+  height: calc(128 * var(--dc-k));
+  flex: none;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f6e3d0, #e0b18b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(44 * var(--dc-k));
+}
+
+.dropcard__photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* La velatura che fonde la foto nel corallo sottostante. Copre tutta la foto
+   ma parte trasparente al 60%: senza, il taglio netto fa sembrare la foto
+   incollata sopra la card invece che parte della card. */
+.dropcard__photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(201, 58, 50, 0.5) 100%);
+  pointer-events: none;
+}
+
+/* ── Badge percentuale: in basso a destra, a cavallo foto/corpo ───────── */
+
+.dropcard__badge {
+  position: absolute;
+  top: calc(100 * var(--dc-k));
+  right: calc(13 * var(--dc-k));
+  z-index: 3;
+  background: linear-gradient(140deg, var(--dc-mint) 0%, var(--dc-mint2) 100%);
+  color: var(--dc-ink);
+  font-weight: 800;
+  font-size: calc(15 * var(--dc-k));
+  line-height: 1;
+  letter-spacing: calc(-0.3 * var(--dc-k));
+  /* Rettangolo arrotondato, NON una pillola: nel mockup il badge è squadrato
+     e questo è quello che lo distingue dalle pill di stato lì accanto. */
+  border-radius: calc(11 * var(--dc-k));
+  padding: calc(7 * var(--dc-k)) calc(12 * var(--dc-k));
+  /* Il bordo è dello stesso colore della card: è quello che fa sembrare il
+     badge ritagliato dentro la card invece che appoggiato sopra. */
+  border: 3px solid var(--dc-corallo);
+  box-shadow: 0 5px 12px rgba(34, 24, 28, 0.25);
+  white-space: nowrap;
+}
+
+/* ── Corpo ────────────────────────────────────────────────────────────── */
+
+.dropcard__body {
+  padding: calc(13 * var(--dc-k)) calc(15 * var(--dc-k)) calc(15 * var(--dc-k));
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.dropcard__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6 * var(--dc-k));
+  align-self: flex-start;
+  max-width: 100%;
+  padding: calc(5 * var(--dc-k)) calc(11 * var(--dc-k));
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  font-size: calc(9 * var(--dc-k));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Pallino mint, non bianco: è l'unico punto di verde sulla card insieme al
+   badge e alla barra, e lega i tre. */
+.dropcard__pill i {
+  width: calc(5 * var(--dc-k));
+  height: calc(5 * var(--dc-k));
+  border-radius: 50%;
+  background: var(--dc-mint);
+  flex: none;
+  animation: dropcard-blink 1.5s infinite;
+}
+
+/* Solo opacità, niente scala: un pallino che pulsa cambiando dimensione
+   sposta il testo accanto a ogni battito. */
+@keyframes dropcard-blink {
+  50% { opacity: 0.28; }
+}
+
+.dropcard__name {
+  font-size: calc(19 * var(--dc-k));
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: calc(-0.3 * var(--dc-k));
+  margin: calc(8 * var(--dc-k)) 0 0;
+  /* Il badge occupa l'angolo in alto a destra del corpo: senza questo, il
+     nome di un locale lungo ci finisce sotto. */
+  padding-right: calc(62 * var(--dc-k));
+}
+
+.dropcard__perk {
+  font-size: calc(12.5 * var(--dc-k));
+  font-weight: 700;
+  line-height: 1.4;
+  margin-top: calc(6 * var(--dc-k));
+}
+
+.dropcard__perk small {
+  display: block;
+  font-size: calc(9.5 * var(--dc-k));
+  font-weight: 500;
+  opacity: 0.85;
+  margin-top: calc(2 * var(--dc-k));
+  line-height: 1.4;
+}
+
+/* Validità (giorni/fasce, da PR23): condizione d'uso, sta accanto al
+   vantaggio non accanto al countdown. */
+.dropcard__validity {
+  font-size: calc(9.5 * var(--dc-k));
+  font-weight: 600;
+  opacity: 0.9;
+  margin-top: calc(6 * var(--dc-k));
+  display: inline-flex;
+  align-items: center;
+  gap: calc(5 * var(--dc-k));
+  padding: calc(4 * var(--dc-k)) calc(9 * var(--dc-k));
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+/* ── Barra di progresso + numero ──────────────────────────────────────── */
+/* Barra e numero, non gettoni: "7 rimasti" si legge, sette pallini vanno
+   contati. Il numero dei rimasti è in bold e più grande perché è quello che
+   spinge. */
+
+.dropcard__progress { margin-top: calc(11 * var(--dc-k)); }
+
+.dropcard__bar {
+  height: calc(6 * var(--dc-k));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+  overflow: hidden;
+}
+
+.dropcard__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--dc-mint), var(--dc-mint2));
+  transition: width 400ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.dropcard__counts {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(10 * var(--dc-k));
+  font-size: calc(10 * var(--dc-k));
+  margin-top: calc(6 * var(--dc-k));
+  opacity: 0.92;
+}
+
+.dropcard__counts b { font-size: calc(11 * var(--dc-k)); font-weight: 800; }
+
+/* ── CTA doppia ───────────────────────────────────────────────────────── */
+
+.dropcard__cta {
+  display: flex;
+  gap: calc(8 * var(--dc-k));
+  margin-top: auto;
+  padding-top: calc(12 * var(--dc-k));
+}
+
+.dropcard__btn {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  font-size: calc(11.5 * var(--dc-k));
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.dropcard__btn:active { transform: scale(0.97); }
+
+.dropcard__btn--primary {
+  flex: 1;
+  background: var(--dc-ink);
+  color: #fff;
+  text-align: center;
+  padding: calc(12 * var(--dc-k));
+  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(34, 24, 28, 0.28);
+}
+
+.dropcard__btn--ghost {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: calc(12 * var(--dc-k)) calc(15 * var(--dc-k));
+  font-weight: 600;
+  flex: none;
+}
+
+.dropcard__btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Il titolo della taglia larga non esiste finché la card non è larga. */
+.dropcard__headline { display: none; }
+
+/* Il wrapper che rende la card interrogabile dalle container query.
+   Non ha aspetto: esiste perché una container query non può misurare
+   l'elemento che la applica. */
+.dropcard-fit {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+}
+.dropcard-fit > .dropcard { width: 100%; }
+
+/* ── Taglia GRANDE ─────────────────────────────────────────────────────
+   È la taglia base: le regole qui sopra sono già la taglia grande. */
+
+.dropcard--large { width: 100%; }
+
+/* ── Taglia VERTICALE STRETTA (`.dropD` nel mockup) ────────────────────
+   Colonna desktop accanto al momento, Bi Club con 2-3 drop. Stessa
+   struttura, tutto più compatto: nessun elemento sparisce, una card che
+   perde la CTA o la barra non è più la stessa card. */
+
+/* La sezione desktop del mockup (.dropD) è disegnata su una finestra larga
+   quanto quella vera: qui i numeri valgono già 1:1, niente scala. */
+.dropcard--narrow { --dc-k: 1px; border-radius: 16px; }
+.dropcard--narrow .dropcard__photo { height: 118px; font-size: 38px; }
+.dropcard--narrow .dropcard__badge {
+  top: 92px;
+  right: 12px;
+  font-size: 13.5px;
+  border-radius: 10px;
+  padding: 6px 10px;
+  border-width: 2.5px;
+  box-shadow: 0 4px 10px rgba(34, 24, 28, 0.25);
+}
+.dropcard--narrow .dropcard__body { padding: 12px 13px 13px; }
+.dropcard--narrow .dropcard__pill { padding: 4px 9px; font-size: 8px; gap: 5px; }
+.dropcard--narrow .dropcard__pill i { width: 4px; height: 4px; }
+.dropcard--narrow .dropcard__name { font-size: 17px; margin-top: 7px; padding-right: 56px; }
+.dropcard--narrow .dropcard__perk { font-size: 11px; margin-top: 5px; }
+.dropcard--narrow .dropcard__perk small { font-size: 8.5px; margin-top: 1px; }
+.dropcard--narrow .dropcard__validity { font-size: 8.5px; margin-top: 5px; }
+.dropcard--narrow .dropcard__progress { margin-top: 9px; }
+.dropcard--narrow .dropcard__bar { height: 5px; }
+.dropcard--narrow .dropcard__counts { font-size: 9px; margin-top: 5px; }
+.dropcard--narrow .dropcard__counts b { font-size: 10px; }
+.dropcard--narrow .dropcard__cta { gap: 6px; padding-top: 9px; }
+.dropcard--narrow .dropcard__btn { font-size: 10px; }
+.dropcard--narrow .dropcard__btn--primary { padding: 9px; box-shadow: none; }
+.dropcard--narrow .dropcard__btn--ghost { padding: 9px 11px; }
+
+/* ── Taglia MINI (`.scard` nel mockup) ─────────────────────────────────
+   La riga "altri sconti attivi". Qui la card NON è corallo: è bianca, come
+   nel mockup. Tre card coralli in fila sotto la card corallo grande
+   diventerebbero una macchia sola e il drop in evidenza perderebbe il suo
+   ruolo di unico blocco pieno.
+
+   Verticale: foto sopra (64px), badge mint a cavallo del bordo inferiore
+   della foto in basso a SINISTRA, poi nome, categoria e stato. Niente
+   pill, niente barra, niente bottoni — l'intera card è cliccabile, perché
+   in una riga da scorrere un bottone da 10px è un bersaglio finto. */
+
+.dropcard--mini {
+  width: calc(132 * var(--dc-k));
+  flex: none;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--dc-line);
+  border-radius: calc(13 * var(--dc-k));
+  color: var(--dc-ink);
+  box-shadow: 0 4px 12px -8px rgba(34, 24, 28, 0.3);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  overflow: visible; /* il badge sborda sotto il bordo della foto */
+}
+
+.dropcard--mini .dropcard__photo {
+  height: calc(64 * var(--dc-k));
+  font-size: calc(23 * var(--dc-k));
+  border-radius: calc(13 * var(--dc-k)) calc(13 * var(--dc-k)) 0 0;
+  overflow: visible;
+}
+
+.dropcard--mini .dropcard__photo img { border-radius: calc(13 * var(--dc-k)) calc(13 * var(--dc-k)) 0 0; }
+
+/* Su fondo bianco la velatura corallo non ha niente da fondere. */
+.dropcard--mini .dropcard__photo::after { display: none; }
+
+.dropcard--mini .dropcard__badge {
+  top: auto;
+  bottom: calc(-9 * var(--dc-k));
+  left: calc(6 * var(--dc-k));
+  right: auto;
+  font-size: calc(11 * var(--dc-k));
+  border-radius: calc(8 * var(--dc-k));
+  padding: calc(3 * var(--dc-k)) calc(8 * var(--dc-k));
+  /* Bordo bianco: qui il fondo dietro il badge è la card bianca, non il
+     corallo. */
+  border: 2px solid #fff;
+  box-shadow: 0 3px 8px rgba(63, 157, 99, 0.3);
+}
+
+.dropcard--mini .dropcard__body { padding: calc(13 * var(--dc-k)) calc(8 * var(--dc-k)) calc(9 * var(--dc-k)); gap: 0; }
+.dropcard--mini .dropcard__name {
+  font-size: calc(10.5 * var(--dc-k));
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0;
+  margin: 0;
+  padding-right: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dropcard--mini .dropcard__where {
+  font-size: calc(8 * var(--dc-k));
+  color: rgba(34, 24, 28, 0.55);
+  margin-top: calc(1 * var(--dc-k));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dropcard--mini .dropcard__status {
+  font-size: calc(8.5 * var(--dc-k));
+  font-weight: 700;
+  color: var(--dc-corallo);
+  margin-top: calc(4 * var(--dc-k));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Stato "già preso": la card resta leggibile ma esce dal fuoco ─────── */
+
+.dropcard--taken { opacity: 0.62; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dropcard__pill i { animation: none; }
+  .dropcard__bar i { transition: none; }
+  .dropcard__btn { transition: none; }
+}
+
+/* ── Taglia LARGA: la card si sdraia ───────────────────────────────────
+   La taglia verticale è nata per una colonna da telefono. Sopra i ~420px
+   di contenitore la foto smette di essere una foto e diventa una banda
+   (a 740px: 740×159, cioè 4,6:1) e il corpo si stira per contenere 150px
+   di testo, lasciando vuoti da 40px ovunque. Da lì in su la card passa
+   orizzontale: testo a sinistra, foto a destra ad altezza piena.
+
+   La soglia è sul CONTENITORE, non sulla finestra: la stessa card sta in
+   una colonna da 400px su un desktop da 1440 e deve restare verticale lì,
+   e deve sdraiarsi su un tablet da 768 dove occupa tutta la riga.
+
+   Le misure sono in `cqi` (1% della larghezza del contenitore): così il
+   titolo cresce con lo spazio che ha invece di saltare a un breakpoint. */
+@container (min-width: 420px) {
+  .dropcard:not(.dropcard--mini) {
+    display: grid;
+    grid-template-columns: minmax(0, 52fr) minmax(0, 47fr);
+    align-items: stretch;
+    /* Tiene la foto sotto il 2:1 a ogni larghezza: a 1240 la colonna foto
+       è 583×421, a 740 è 348×300. */
+    min-height: clamp(300px, 34cqi, 520px);
+    overflow: hidden;
+  }
+
+  .dropcard:not(.dropcard--mini) .dropcard__photo {
+    grid-column: 2;
+    grid-row: 1;
+    height: auto;
+    font-size: clamp(38px, 6cqi, 64px);
+  }
+
+  /* La velatura passa dall'asse verticale a quello orizzontale: fonde la
+     foto verso il corpo, che ora è di fianco e non più sotto. */
+  .dropcard:not(.dropcard--mini) .dropcard__photo::after {
+    background: linear-gradient(90deg, rgba(201, 58, 50, 0.55) 0%, transparent 42%);
+  }
+
+  .dropcard:not(.dropcard--mini) .dropcard__body {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: center;
+    padding: clamp(26px, 3.4cqi, 52px) clamp(24px, 4.2cqi, 56px);
+    gap: 0;
+  }
+
+  /* Il badge sta a cavallo della giunzione verticale invece che di quella
+     orizzontale: stessa idea del mockup, altro asse. In alto e non in
+     mezzo, perché in mezzo finisce sopra il titolo. */
+  .dropcard:not(.dropcard--mini) .dropcard__badge {
+    top: clamp(22px, 2.6cqi, 36px);
+    right: auto;
+    bottom: auto;
+    left: calc(52 / 99 * 100%);
+    transform: translateX(-50%);
+    font-size: clamp(15px, 1.6cqi, 22px);
+    padding: clamp(7px, 0.8cqi, 10px) clamp(12px, 1.3cqi, 18px);
+    border-radius: clamp(11px, 1.2cqi, 15px);
+  }
+
+  .dropcard:not(.dropcard--mini) .dropcard__pill {
+    font-size: clamp(9px, 0.95cqi, 12.5px);
+    padding: clamp(5px, 0.55cqi, 8px) clamp(11px, 1.1cqi, 15px);
+    margin-bottom: clamp(10px, 1.4cqi, 20px);
+  }
+
+  /* Il nome del locale da solo non è il vantaggio: nella taglia larga il
+     titolo è il vantaggio e il locale sta sotto (vedi wideHeadline). */
+  .dropcard:not(.dropcard--mini) .dropcard__name { display: none; }
+  .dropcard:not(.dropcard--mini) .dropcard__headline {
+    display: block;
+    margin: 0;
+    white-space: pre-line;
+    font-size: clamp(30px, 5.6cqi, 68px);
+    font-weight: 800;
+    line-height: 0.99;
+    letter-spacing: -0.03em;
+    /* Il badge occupa l'angolo in alto sulla giunzione: senza questo, una
+       riga lunga del titolo ci finisce sotto. */
+    padding-right: clamp(0px, 2cqi, 28px);
+  }
+
+  .dropcard:not(.dropcard--mini) .dropcard__perk {
+    font-size: clamp(13px, 1.35cqi, 18px);
+    margin-top: clamp(10px, 1.4cqi, 18px);
+  }
+  .dropcard--perk-echo .dropcard__perk-text { display: none; }
+  .dropcard--perk-echo .dropcard__perk small { margin-top: 0; }
+  .dropcard:not(.dropcard--mini) .dropcard__perk small {
+    font-size: clamp(10.5px, 1.05cqi, 14px);
+    margin-top: clamp(4px, 0.5cqi, 7px);
+  }
+  .dropcard:not(.dropcard--mini) .dropcard__validity {
+    font-size: clamp(10.5px, 1.05cqi, 14px);
+    margin-top: clamp(6px, 0.7cqi, 10px);
+  }
+
+  .dropcard:not(.dropcard--mini) .dropcard__progress {
+    margin-top: clamp(14px, 1.8cqi, 26px);
+    /* La barra non si stira per mezza pagina: oltre una certa lunghezza
+       smette di leggersi come "quanti ne restano". */
+    max-width: 420px;
+  }
+  .dropcard:not(.dropcard--mini) .dropcard__bar { height: clamp(6px, 0.6cqi, 9px); }
+  .dropcard:not(.dropcard--mini) .dropcard__counts {
+    font-size: clamp(10px, 1cqi, 13px);
+    margin-top: clamp(6px, 0.7cqi, 10px);
+  }
+  .dropcard:not(.dropcard--mini) .dropcard__counts b { font-size: clamp(11px, 1.1cqi, 14px); }
+
+  /* I bottoni non si stirano per tutta la card: restano larghi quanto
+     serve a premerli. */
+  .dropcard:not(.dropcard--mini) .dropcard__cta {
+    margin-top: clamp(16px, 2cqi, 28px);
+    max-width: 420px;
+    gap: clamp(8px, 0.9cqi, 12px);
+  }
+  .dropcard:not(.dropcard--mini) .dropcard__btn { font-size: clamp(11.5px, 1.15cqi, 15px); }
+  .dropcard:not(.dropcard--mini) .dropcard__btn--primary { padding: clamp(12px, 1.3cqi, 17px); }
+  .dropcard:not(.dropcard--mini) .dropcard__btn--ghost {
+    padding: clamp(12px, 1.3cqi, 17px) clamp(15px, 1.7cqi, 24px);
+  }
+
+  .dropcard--narrow { border-radius: 19px; }
+}

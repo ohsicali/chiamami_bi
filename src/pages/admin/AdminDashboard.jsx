@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import KpiCard from '../../components/admin/KpiCard'
+import { filterActive, filterActiveDrops, sortByExpiry, findUnreachableDiscounts } from '../../lib/discounts'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -97,6 +98,53 @@ function ActivityIcon({ type }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Avviso sconti irraggiungibili (Blocco 8)                            */
+/*                                                                      */
+/*  Rete di sicurezza permanente: dopo il fix del Blocco 0 questa barra  */
+/*  non deve mai comparire. Se compare, un filtro è tornato o un locale  */
+/*  è stato spubblicato con uno sconto attivo sopra. Va lasciata nel     */
+/*  codice anche quando è vuota — è il sensore, non la toppa.            */
+/* ------------------------------------------------------------------ */
+function UnreachableDiscountsBar({ items }) {
+  if (!items || items.length === 0) return null
+  const names = items
+    .map((it) => it.discount?.restaurants?.name || it.discount?.title)
+    .filter(Boolean)
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+        padding: '13px 16px',
+        marginBottom: 20,
+        borderRadius: 12,
+        background: 'rgba(232,69,60,0.08)',
+        border: '1px solid rgba(232,69,60,0.35)',
+        color: 'var(--ink, #22181c)',
+        fontSize: 14,
+        lineHeight: 1.45,
+      }}
+      role="alert"
+    >
+      <span aria-hidden style={{ fontSize: 16, lineHeight: '20px' }}>⚠️</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <strong>
+          {items.length === 1
+            ? '1 sconto attivo non è raggiungibile dal sito.'
+            : `${items.length} sconti attivi non sono raggiungibili dal sito.`}
+        </strong>{' '}
+        {names.length > 0 && <span>{names.join(', ')} — </span>}
+        <span style={{ opacity: 0.85 }}>{items[0].reason}.</span>{' '}
+        <Link to="/admin/discounts" style={{ color: 'var(--corallo, #e8453c)', fontWeight: 600, textDecoration: 'none' }}>
+          Risolvi →
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Dashboard                                                     */
 /* ------------------------------------------------------------------ */
 export default function AdminDashboard() {
@@ -110,6 +158,7 @@ export default function AdminDashboard() {
     discountsActive: 0,
     dropsActive: 0,
     redemptions30d: 0,
+    generated30d: 0,
     redemptionsPrev30d: 0,
     inboxApplications: 0,
     activeDropsCount: 0,
@@ -124,6 +173,8 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState([])
   const [topRestaurants, setTopRestaurants] = useState([])
   const [activeDrop, setActiveDrop] = useState(null)
+  // Sconti attivi che il sito pubblico non mostrerebbe (Blocco 8, rete di sicurezza)
+  const [unreachable, setUnreachable] = useState([])
   const [inboxApps, setInboxApps] = useState([])
   const [liveVisitors, setLiveVisitors] = useState(null)
   const [metricsLoading, setMetricsLoading] = useState(true)
@@ -154,7 +205,6 @@ export default function AdminDashboard() {
       const thirtyDaysAgo = new Date(now - MONTH_MS).toISOString()
       const sixtyDaysAgo = new Date(now - 2 * MONTH_MS).toISOString()
       const eightDaysAgo = new Date(now - 8 * DAY_MS).toISOString()
-      const nowIso = new Date(now).toISOString()
 
       try {
         const [
@@ -162,9 +212,9 @@ export default function AdminDashboard() {
           restPub,
           usersTotal,
           usersWeek,
-          discActive,
-          dropsActive,
+          discountRows,
           redemp30,
+          generated30,
           redempPrev30,
           pendApps,
           pendSugg,
@@ -172,7 +222,6 @@ export default function AdminDashboard() {
           usersRecent,
           discRecent,
           redempRecent,
-          activeDropRow,
           actRedemptions,
           actApplications,
           actSuggestions,
@@ -185,9 +234,16 @@ export default function AdminDashboard() {
           supabase.from('restaurants').select('id', { count: 'exact', head: true }).eq('is_published', true),
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
-          supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true).gt('valid_until', nowIso),
-          supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true).gt('valid_until', nowIso).not('drop_time', 'is', null),
+          // BLOCCO 0/8 — una sola query di righe invece di due COUNT separate.
+          // Prima i drop si contavano con `.not('drop_time','is',null)`: campo
+          // legacy, oggi null su tutte le righe → la dashboard diceva "0 drop
+          // attivi" mentre in Bi Club ce n'erano 2. Ora admin e sito pubblico
+          // usano la stessa definizione (`isActiveDiscount` in lib/discounts).
+          supabase.from('discounts').select('id, restaurant_id, title, discount_value, is_active, is_drop, drop_ends_at, valid_until, max_quantity, claimed_count, max_redemptions, total_redeemed, restaurants(name, city, slug, is_published)').eq('is_active', true),
           supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed').gte('redeemed_at', thirtyDaysAgo),
+          // Il denominatore: quanti QR sono stati presi, non solo quanti usati.
+          // "12" da solo non dice se è tanto o poco; "12 su 30 presi" sì.
+          supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).gte('generated_at', thirtyDaysAgo),
           supabase.from('discount_redemptions').select('id', { count: 'exact', head: true }).eq('status', 'redeemed').gte('redeemed_at', sixtyDaysAgo).lt('redeemed_at', thirtyDaysAgo),
           supabase.from('partner_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('restaurant_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -195,17 +251,29 @@ export default function AdminDashboard() {
           supabase.from('profiles').select('created_at').gte('created_at', eightDaysAgo),
           supabase.from('discounts').select('created_at').gte('created_at', eightDaysAgo),
           supabase.from('discount_redemptions').select('redeemed_at').eq('status', 'redeemed').gte('redeemed_at', eightDaysAgo),
-          supabase.from('discounts').select('id, restaurant_id, title, discount_value, drop_time, valid_until, max_redemptions, total_redeemed').not('drop_time', 'is', null).eq('is_active', true).gt('valid_until', nowIso).order('drop_time', { ascending: true }).limit(1),
           supabase.from('discount_redemptions').select('id, status, redeemed_at, discount_id, user_id, discounts(title, discount_value, restaurants(name))').eq('status', 'redeemed').order('redeemed_at', { ascending: false }).limit(6),
           supabase.from('partner_applications').select('id, restaurant_name, city, status, created_at').order('created_at', { ascending: false }).limit(6),
           supabase.from('restaurant_suggestions').select('id, restaurant_name, status, created_at').order('created_at', { ascending: false }).limit(6),
           supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false }).limit(6),
-          supabase.from('discounts').select('id, title, drop_time, created_at, restaurants(name)').not('drop_time', 'is', null).order('created_at', { ascending: false }).limit(6),
+          supabase.from('discounts').select('id, title, created_at, restaurants(name)').eq('is_drop', true).order('created_at', { ascending: false }).limit(6),
           supabase.from('partner_applications').select('id, restaurant_name, city, message, created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(3),
           supabase.from('page_views').select('path').ilike('path', '/r/%').gte('created_at', sevenDaysAgo).limit(5000),
         ])
 
         if (cancelled) return
+
+        // ── Sconti: stessa definizione del sito pubblico (Blocco 0) ──
+        // `isActiveDiscount` è l'unica fonte di verità: se questi conteggi
+        // divergono da quelli di Bi Club, è un bug, non una scelta di prodotto.
+        const allDiscountRows = discountRows.data || []
+        const activeDiscounts = filterActive(allDiscountRows)
+        const activeDropsList = sortByExpiry(filterActiveDrops(allDiscountRows))
+
+        // Rete di sicurezza (Blocco 8): sconti attivi che per qualche motivo
+        // non sarebbero raggiungibili dal sito pubblico. Dopo il fix del
+        // Blocco 0 questa lista deve restare vuota — se si ripopola, il filtro
+        // è tornato da qualche parte e l'avviso lo dice in dashboard.
+        setUnreachable(findUnreachableDiscounts(activeDiscounts))
 
         // ── Sparklines ──
         const restBuckets = bucketByDay(restRecent.data || [], 'created_at')
@@ -225,16 +293,17 @@ export default function AdminDashboard() {
           restaurantsPublished: restPub.count || 0,
           users: usersTotal.count || 0,
           usersLastWeek: usersWeek.count || 0,
-          discountsActive: discActive.count || 0,
-          dropsActive: dropsActive.count || 0,
+          discountsActive: activeDiscounts.length,
+          dropsActive: activeDropsList.length,
           redemptions30d: redemp30.count || 0,
+          generated30d: generated30.count || 0,
           redemptionsPrev30d: redempPrev30.count || 0,
           inboxApplications: pendApps.count || 0,
-          activeDropsCount: dropsActive.count || 0,
+          activeDropsCount: activeDropsList.length,
           openSuggestions: pendSugg.count || 0,
         })
 
-        setActiveDrop(activeDropRow.data?.[0] || null)
+        setActiveDrop(activeDropsList[0] || null)
         setInboxApps(inboxRows.data || [])
 
         // ── Recent activity UNION ──
@@ -383,9 +452,14 @@ export default function AdminDashboard() {
           >
             <span>{formatDateLong()}</span>
             <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor' }} />
+            {/* Finché la query non risponde questa riga diceva "0 candidature
+                nuove, 0 drop attivi": zeri veri per un paio di secondi, e chi
+                apre la dashboard li legge come dati. Meglio non dire niente
+                che dire zero. */}
             <span style={{ textTransform: 'none' }}>
-              {metrics.inboxApplications} candidature nuove, {metrics.activeDropsCount} drop attivi
-              {metrics.openSuggestions > 0 ? `, ${metrics.openSuggestions} suggerimenti` : ''}
+              {metricsLoading
+                ? 'carico i numeri…'
+                : `${metrics.inboxApplications} candidature nuove, ${metrics.activeDropsCount} drop attivi${metrics.openSuggestions > 0 ? `, ${metrics.openSuggestions} suggerimenti` : ''}`}
             </span>
             {liveVisitors != null && liveVisitors > 0 && (
               <>
@@ -398,6 +472,9 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+
+        {/* ── AVVISO: sconti attivi non raggiungibili dal sito (Blocco 8) ── */}
+        <UnreachableDiscountsBar items={unreachable} />
 
         {/* ── 4 KPI ── */}
         <div
@@ -434,9 +511,11 @@ export default function AdminDashboard() {
             loading={metricsLoading}
           />
           <KpiCard
-            label="Redenzioni QR (30gg)"
+            label="QR usati · 30gg"
             value={metrics.redemptions30d.toLocaleString('it-IT')}
-            delta={redemptionsDelta ? `${redemptionsDelta.pct >= 0 ? '+' : ''}${redemptionsDelta.pct}% vs mese prec.` : null}
+            delta={metrics.generated30d > 0
+              ? `su ${metrics.generated30d} presi · 30gg`
+              : (redemptionsDelta ? `${redemptionsDelta.pct >= 0 ? '+' : ''}${redemptionsDelta.pct}% vs mese prec.` : 'nessun QR preso · 30gg')}
             deltaDir={redemptionsDelta?.dir || 'up'}
             sparkline={sparklines.redemptions}
             loading={metricsLoading}

@@ -15,9 +15,14 @@ export default function SuccessResult({ data, onReset, onClose }) {
   }, [])
 
   const value = formatDiscountValue(data?.discount)
-  const dateStr = new Date().toLocaleDateString('it-IT', {
-    day: 'numeric', month: 'long',
-  })
+  const now = new Date()
+  // Data E ora: chi applica lo sconto sta guardando la cassa, e l'ora è
+  // quello che gli serve per ritrovare la verifica nella lista di oggi.
+  const dateStr = `${now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} · ore ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  // La condizione è l'unica cosa che il ristoratore deve APPLICARE, e non
+  // c'era: si vedeva la percentuale e non "solo sul menu tapas". Per esteso,
+  // non troncata: qui si sbaglia il conto al cliente.
+  const conditions = data?.discount?.conditions
   // Solo percentage/fixed producono un badge corto adatto al numerone (es. "10%",
   // "5€"). freebie/special_price ritornano il titolo intero, che a 32px finisce
   // per spingere il resto del banner fuori dai bordi: in quel caso usiamo un
@@ -52,6 +57,10 @@ export default function SuccessResult({ data, onReset, onClose }) {
           </div>
         </div>
       ))}
+
+      {conditions && (
+        <p className="ris-conditions">{conditions}</p>
+      )}
 
       <button type="button" className="ris-cta" onClick={onReset}>
         Scansiona il prossimo →

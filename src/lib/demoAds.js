@@ -67,6 +67,17 @@ export const DEMO_ADS = [
     brand_name: 'Cascina Torricelli',
     brand_subtitle: 'Bianchi del Monferrato · vendita diretta',
   },
+  {
+    ...FOREVER,
+    id: 'demo-restaurant',
+    slot: 'restaurant_nearby',
+    variant: 'brand',
+    link_type: 'external',
+    cta_url: 'https://chiamamibi.com',
+    client_name: 'Demo',
+    brand_name: 'Acqua Lauretana',
+    brand_subtitle: 'L’acqua dei ristoranti piemontesi',
+  },
 ]
 
 /** `?demo=ads` nella query corrente. */

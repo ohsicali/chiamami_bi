@@ -78,9 +78,15 @@ const CLAUDE_MODEL_FALLBACK = 'claude-sonnet-4-6'
 const CLAUDE_MODEL_PLANNER = process.env.AI_MODEL_FAST ?? 'claude-haiku-4-5-20251001'
 let activeModel = CLAUDE_MODEL
 const ANTHROPIC_VERSION = '2023-06-01'
-// Bi risponde in 1-2 frasi + la tool call dei picks: 1024 bastano e
-// impediscono a un turno impazzito di far aspettare l'utente.
-const MAX_OUTPUT_TOKENS = 1024
+// Bi risponde in 1-2 frasi + la tool call dei picks.
+//
+// Erano 1024 sul presupposto che la prosa fosse breve, ma il tetto è condiviso
+// con la tool call: quando i picks portano tre locali con il "perché" di
+// ciascuno, la parte scritta finisce lo spazio e la risposta si tronca a metà
+// frase — verificato dal vivo, non è un problema di prompt. 2048 lascia
+// margine alla prosa e resta abbastanza basso da non far aspettare l'utente
+// per un turno impazzito.
+const MAX_OUTPUT_TOKENS = 2048
 const MAX_HISTORY_MSGS = 10
 const MAX_RESULTS = 3
 const MAX_PROMPT_LEN = 500
@@ -590,6 +596,12 @@ async function runConversation({
 async function callClaudeTurn({ apiKey, system, messages, tools, planner = false, toolChoice = null }) {
   const resp = await callClaude(apiKey, { system, messages, tools, planner, toolChoice })
   const content = Array.isArray(resp.content) ? resp.content : []
+  // Un troncamento da max_tokens arriva all'utente come frase lasciata a
+  // metà, senza nessun segnale altrove: senza questo log si scopre solo
+  // leggendo una risposta vera, che è come è stato trovato la prima volta.
+  if (resp.stop_reason === 'max_tokens') {
+    console.warn('[ai] risposta troncata da max_tokens — alzare MAX_OUTPUT_TOKENS o accorciare i picks')
+  }
   return {
     model: resp._model,
     text: extractTextBlocks(content),
@@ -655,8 +667,12 @@ async function streamClaudeTurn({ apiKey, system, messages, tools, res }) {
         } else if (data.delta?.type === 'input_json_delta') {
           b.json += data.delta.partial_json || ''
         }
+      } else if (evtName === 'message_delta' && data.delta?.stop_reason === 'max_tokens') {
+        // Stesso troncamento del ramo non-streamato: in streaming arriva qui,
+        // dentro message_delta, e senza questo passa del tutto inosservato.
+        console.warn('[ai] risposta streamata troncata da max_tokens — alzare MAX_OUTPUT_TOKENS o accorciare i picks')
       }
-      // message_start / content_block_stop / message_delta / message_stop: ignorati
+      // message_start / content_block_stop / message_stop: ignorati
     }
   }
 

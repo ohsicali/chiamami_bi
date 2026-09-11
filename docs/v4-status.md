@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-07
+Ultima modifica: 2026-09-08
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -17,7 +17,37 @@ dove siamo. Aggiorna a ogni step importante.
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
 | C3 — (TBD) | — | ⏳ Not started | |
+| HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
+
+## HANDOFF v10 — stato per blocco (PR #212)
+
+| Blocco | Stato | Note |
+|---|---|---|
+| 0 — Bi Club mostra tutti gli sconti | ✅ | Filtro città rimosso. Definizione unica in `src/lib/discounts.js`, usata da admin e sito pubblico. Test di regressione in `tests/discounts.test.mjs` (16 test). |
+| 1 — DropCard in 3 taglie | ✅ | `src/components/Discount/DropCard.jsx` + `.css`. Struttura v5. |
+| 2 — Home mobile | ✅ | Sequenza momento → aperti ora → drop → altri sconti → categorie → ultimi aggiunti. |
+| 3 — Home desktop | ✅ | Banda momento+drop, poi categorie, poi due colonne. |
+| 4 — Bi Club adattivo | ✅ | 1/2/3+ drop, paginazione da 6, mai carosello su mobile, convenzioni come righe. |
+| 5 — Gating registrazione | ✅ | Club sfocato col conteggio vero, sconto singolo interamente visibile, gate di Chiedi a Bi prima di scrivere. Corretto `returnTo` in 4 punti. |
+| 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. **Non provato loggato.** |
+| 7 — Chiedi a Bi | ⚠️ Parziale | Fatti i bug: troncamento `max_tokens` e stato dinamico in header. **Non fatto**: redesign schermata iniziale mobile, card locali dentro le risposte, chip di continuazione. |
+| 8 — Admin | ✅ | Riga sconto responsive 768-1100px, barra avviso sconti irraggiungibili, KPI con denominatore, niente flash di zeri. **Non verificato a schermo** (serve login admin). |
+| 9 — Ristoratore | ✅ | Condizione e ora nella schermata verde, saluto col nome, indirizzo ripulito, contatto non più attaccato. Il resto risultava già fatto da PR23. **Non verificato a schermo** (serve PIN). |
+| 10 — Pubblicità | ✅ | Quarta posizione su scheda ristorante + barra inventario. Tracking IntersectionObserver e anteprima live erano già in PR #211. |
+
+### Da fare prima del merge
+- Provare il flusso liste con un account vero (Blocco 6).
+- Aprire /admin/sconti su un iPad vero (Blocco 8).
+- Fare una scansione QR vera per vedere la schermata verde (Blocco 9).
+- Nota nota a parte: a 768px l'intestazione della home appare due volte
+  (barra desktop + logo mobile). È così anche su `main`, non è una
+  regressione di questa PR.
+
+## SQL eseguiti in questa sessione
+
+- `supabase/saved-lists-2026-09-08.sql` ✅ eseguito via connettore Supabase il
+  2026-09-08 (tabelle `saved_lists`, `saved_list_items`, RLS + grant).
 
 ## Env vars Vercel — già configurate
 

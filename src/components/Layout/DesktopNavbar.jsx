@@ -27,6 +27,19 @@ export default function DesktopNavbar() {
     location.pathname.startsWith('/restaurant/')
 
   return (
+    <>
+    {/* Sotto i 900px la barra è larga 688px e i tre gruppi non ci stanno:
+        il logo, che è la colonna "auto", andava a capo su tre righe
+        ("LA / GUIDA / DI BI"). Il logo non va mai a capo — a cedere sono
+        le spaziature dei link, che di margine ne hanno. */}
+    <style>{`
+      @media (max-width: 900px) {
+        .dnav-logo-mark { font-size: 15px; }
+        .dnav-logo-sub { font-size: 8px; letter-spacing: .12em; }
+        .dnav-links button { padding: 9px 10px !important; font-size: 13px !important; }
+        .dnav-right { gap: 6px !important; }
+      }
+    `}</style>
     <div
       className="hidden md:block"
       style={{
@@ -48,16 +61,18 @@ export default function DesktopNavbar() {
           borderRadius: 999,
           boxShadow: '0 8px 24px rgba(34,24,28,.08)',
           display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto',
+          gridTemplateColumns: 'auto minmax(0, 1fr) auto',
           alignItems: 'center',
           gap: 18,
           padding: '0 10px 0 22px',
         }}
       >
         {/* LEFT: Logo */}
-        <Link to="/" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.92, textDecoration: 'none' }}>
+        <Link to="/" className="dnav-logo" style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.92, textDecoration: 'none', flexShrink: 0 }}>
           <span
+            className="dnav-logo-mark"
             style={{
+              whiteSpace: 'nowrap',
               fontFamily: 'var(--font-mark, "Alfa Slab One", serif)',
               fontSize: 18,
               letterSpacing: '0.02em',
@@ -67,7 +82,9 @@ export default function DesktopNavbar() {
             LA GUIDA DI BI
           </span>
           <span
+            className="dnav-logo-sub"
             style={{
+              whiteSpace: 'nowrap',
               fontFamily: 'var(--font-sans)',
               fontWeight: 700,
               fontSize: 9,
@@ -82,7 +99,7 @@ export default function DesktopNavbar() {
         </Link>
 
         {/* CENTER: Navigation links */}
-        <div style={{ display: 'flex', gap: 2, justifySelf: 'center' }}>
+        <div className="dnav-links" style={{ display: 'flex', gap: 2, justifySelf: 'center' }}>
           {NAV_ITEMS.map((item) => {
             const active = item.match(location.pathname)
             const showDot = item.hasDot && hasDeals
@@ -100,6 +117,7 @@ export default function DesktopNavbar() {
                   padding: '10px 16px',
                   borderRadius: 999,
                   border: 'none',
+                  whiteSpace: 'nowrap',
                   background: active ? 'var(--color-ink-05)' : 'transparent',
                   color: active ? 'var(--color-ink)' : 'rgba(34,24,28,.7)',
                   fontSize: 14,
@@ -128,7 +146,7 @@ export default function DesktopNavbar() {
         </div>
 
         {/* RIGHT: Chiedi a Bi + City pill + Avatar */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="dnav-right" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* PR20b §2 — bottone "Chiedi a Bi" al posto della vecchia lente */}
           <button
             type="button"
@@ -273,5 +291,6 @@ export default function DesktopNavbar() {
         </div>
       </nav>
     </div>
+    </>
   )
 }

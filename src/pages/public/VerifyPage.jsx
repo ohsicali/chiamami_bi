@@ -5,6 +5,7 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 import SuccessResult from '../../components/Verify/SuccessResult'
+import { formatAddress } from '../../lib/utils/formatAddress'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
@@ -1740,9 +1741,16 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
   return (
     <>
       <div className="v4-dsk-crumb">
-        {restaurant?.name || '—'}{restaurant?.address ? ` · ${restaurant.address}` : ''}
+        {/* L'indirizzo grezzo di Google ("Via X 7, 10123 Torino Turin, Italy")
+            si ripulisce con lo stesso helper del sito pubblico. */}
+        {restaurant?.name || '—'}
+        {formatAddress(restaurant?.address, restaurant?.neighborhood)
+          ? ` · ${formatAddress(restaurant.address, restaurant.neighborhood)}`
+          : ''}
       </div>
-      <h1 className="v4-dsk-title">Ciao 👋</h1>
+      {/* Il nome del locale è già lì due righe sopra: salutare con "Ciao 👋"
+          e basta fa sembrare la pagina di chiunque. */}
+      <h1 className="v4-dsk-title">Ciao {restaurant?.name || ''} 👋</h1>
       <div className="v4-dsk-sub">
         <span>{dayLabel}</span>
         <span className="dot" />

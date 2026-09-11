@@ -4,6 +4,7 @@ import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { supabase, proxyImg } from '../../lib/supabase'
 import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
@@ -28,6 +29,8 @@ export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { lists: savedLists } = useSavedLists(user?.id)
+  const [activeListId, setActiveListId] = useState(null)
   const [restaurants, setRestaurants] = useState([])
   const [activeDiscounts, setActiveDiscounts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -113,6 +116,13 @@ export default function SavedPage() {
   const displayList = useMemo(() => {
     let list = [...restaurants]
 
+    // Lista selezionata: è un'etichetta, quindi filtra l'elenco senza
+    // toglierne niente altrove. Deselezionandola si torna a vedere tutto.
+    if (activeListId) {
+      const ids = new Set(savedLists.find((l) => l.id === activeListId)?.restaurantIds || [])
+      list = list.filter((r) => ids.has(r.id))
+    }
+
     // Filter by selected city
     if (currentCity.name) {
       list = list.filter(r => r.city?.toLowerCase() === currentCity.name.toLowerCase())
@@ -164,7 +174,7 @@ export default function SavedPage() {
     }
 
     return list
-  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name])
+  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name, activeListId, savedLists])
 
   if (!authLoading && !user) return <Navigate to="/login" replace />
   if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopSavedPage /></Suspense>
@@ -321,6 +331,15 @@ export default function SavedPage() {
 
       {/* Content */}
       <div className="flex-1 md:max-w-[940px] md:mx-auto md:w-full" style={{ padding: '8px 16px', paddingBottom: TAB_BAR_HEIGHT + 16 }}>
+        {/* BLOCCO 6 — le liste in alto come copertine, poi TUTTI i salvati in
+            ordine. Chi non usa le liste vede comunque tutto: le liste sono
+            etichette sopra l'elenco, non cartelle che lo sostituiscono. */}
+        <SavedListsStrip
+          lists={savedLists}
+          restaurants={restaurants}
+          activeListId={activeListId}
+          onSelect={setActiveListId}
+        />
         {loading ? (
           <div className="flex flex-col gap-3">
             {[120, 120, 120].map((h, i) => (
@@ -550,6 +569,84 @@ export default function SavedPage() {
       <Footer />
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
+    </div>
+  )
+}
+
+/* ============================================================================
+   BLOCCO 6 — la striscia delle liste sopra i salvati.
+
+   La copertina è automatica: la foto del primo locale della lista. Nessuna
+   scelta da fare — chiedere di scegliere una copertina è una decisione in più
+   per salvare un ristorante.
+
+   Le liste filtrano l'elenco sotto, non lo sostituiscono: ritoccando la lista
+   attiva si torna a vedere tutto. Se non ci sono liste la striscia non
+   compare affatto, invece di mostrare cartelle vuote.
+   ========================================================================= */
+function SavedListsStrip({ lists, restaurants, activeListId, onSelect }) {
+  if (!lists || lists.length === 0) return null
+  const byId = new Map((restaurants || []).map((r) => [r.id, r]))
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 10,
+        overflowX: 'auto',
+        paddingBottom: 14,
+        scrollbarWidth: 'none',
+      }}
+    >
+      {lists.map((l) => {
+        const first = (l.restaurantIds || []).map((id) => byId.get(id)).find(Boolean)
+        const photoRaw = first?.photos?.[0]?.thumb_url || first?.photos?.[0]?.photo_url
+        const cover = proxyImg(photoRaw, { w: 300 })
+        const isActive = activeListId === l.id
+        return (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => onSelect(isActive ? null : l.id)}
+            style={{
+              flex: '0 0 auto',
+              width: 116,
+              border: `2px solid ${isActive ? 'var(--color-corallo)' : 'transparent'}`,
+              borderRadius: 16,
+              padding: 0,
+              background: 'transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+            aria-pressed={isActive}
+          >
+            <div
+              style={{
+                width: '100%',
+                height: 78,
+                borderRadius: 14,
+                overflow: 'hidden',
+                background: 'linear-gradient(135deg, #E8CFA8 0%, rgba(34,24,28,.18) 100%)',
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: 26,
+              }}
+            >
+              {cover
+                ? <img src={cover} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span aria-hidden="true">{l.emoji || '📁'}</span>}
+            </div>
+            <div style={{ padding: '6px 4px 0' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {l.emoji ? `${l.emoji} ` : ''}{l.name}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+                {(l.restaurantIds || []).length}
+              </div>
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
