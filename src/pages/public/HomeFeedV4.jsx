@@ -257,7 +257,7 @@ function TopBar() {
 function HomeDrop({ featured, onUnlock, onDiscover }) {
   if (!featured) return null
   return (
-    <div className="hfv4-drop-wrap hfv4-rise" style={{ '--rise-y': '12px' }}>
+    <div className="hfv4-drop-wrap hfv4-rise" style={{ '--rise-y': '12px', '--rise-opacity': 0.55 }}>
       <DropCard
         deal={featured}
         size="large"
@@ -385,8 +385,14 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
         </div>
       </div>
-      <div style={{ padding:'10px 14px 14px' }}>
-        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{restaurant.name}</div>
+      {/* Colonna flessibile: l'indirizzo va in fondo con `margin-top: auto`,
+          così in griglia gli indirizzi di tutte le card si allineano fra
+          loro invece di seguire ognuno la propria tagline. */}
+      <div style={{ padding:'10px 14px 14px', display:'flex', flexDirection:'column', height:'100%' }}>
+        {/* Due righe e non una: "Pasticceria Caffetteria Duò" o "Duccio Smash
+            Mob" a una riga sola diventano "Pasticceria Caffe…", e il nome è
+            l'unica cosa che distingue una card dall'altra. */}
+        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{restaurant.name}</div>
         {restaurant.tagline && (
           <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:3, lineHeight:1.35, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{restaurant.tagline}</div>
         )}
@@ -395,7 +401,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           {priceStr && <span style={{ fontSize:11, fontWeight:700, color:'var(--color-ink-70)' }}>{priceStr}</span>}
         </div>
         {restaurant.address && (
-          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:'auto', paddingTop:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
             {restaurant.address.split(',')[0]}
           </div>
         )}
@@ -461,10 +467,12 @@ export default function HomeFeedV4() {
   )
   // Hook default-sorts by name; section is "Ultimi aggiunti" so sort
   // explicitly by created_at desc.
+  // Nove e non otto: su desktop la griglia è a tre colonne e con otto card
+  // l'ultima riga restava orfana, due card su tre.
   const recent = useMemo(
     () => [...(restaurants || [])]
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-      .slice(0, 8),
+      .slice(0, 9),
     [restaurants]
   )
 
@@ -476,8 +484,12 @@ export default function HomeFeedV4() {
     () => filterActiveDrops(activeDeals)[0] || activeDeals[0] || null,
     [activeDeals]
   )
+  // Tutti gli altri, non i primi otto: su desktop è una lista verticale che
+  // fa da spalla a "Ultimi aggiunti", e tagliarla lasciava la mezza pagina
+  // destra vuota per 300px. Su mobile è una riga che scorre, quindi la coda
+  // non costa altezza.
   const otherDeals = useMemo(
-    () => activeDeals.filter((d) => d.id !== featuredDrop?.id).slice(0, 8),
+    () => activeDeals.filter((d) => d.id !== featuredDrop?.id),
     [activeDeals, featuredDrop]
   )
 
@@ -586,7 +598,11 @@ export default function HomeFeedV4() {
           background: var(--color-ink, #22181c);
           color: #fff;
           border-radius: calc(17 * var(--mk));
-          padding: calc(16 * var(--mk));
+          /* Compatto per obbligo, non per gusto: su 390x844 il momento e la
+             riga dei locali aperti decidono se il bottone "Sblocca sconto"
+             del drop finisce sopra o sotto la piega. Misurato: con 16px di
+             padding e l'orologio a 38 la CTA cadeva 53px sotto. */
+          padding: calc(13 * var(--mk)) calc(15 * var(--mk));
           position: relative;
           overflow: hidden;
         }
@@ -619,24 +635,24 @@ export default function HomeFeedV4() {
         .hfv4-moment-clock {
           display: block;
           font-family: var(--font-sans);
-          font-size: calc(38 * var(--mk));
+          font-size: calc(31 * var(--mk));
           font-weight: 800;
           letter-spacing: calc(-1.5 * var(--mk));
           line-height: 1;
-          margin-top: calc(6 * var(--mk));
+          margin-top: calc(4 * var(--mk));
           font-variant-numeric: tabular-nums;
         }
         .hfv4-moment-q {
           font-family: var(--font-sans);
           font-weight: 700;
-          font-size: calc(15 * var(--mk));
+          font-size: calc(14 * var(--mk));
           line-height: 1.25;
-          margin: calc(6 * var(--mk)) 0 0;
+          margin: calc(5 * var(--mk)) 0 0;
           max-width: 26ch;
         }
         .hfv4-moment-sub {
-          margin: calc(4 * var(--mk)) 0 0;
-          font-size: calc(10 * var(--mk));
+          margin: calc(3 * var(--mk)) 0 0;
+          font-size: calc(9.5 * var(--mk));
           line-height: 1.35;
           opacity: .75;
         }
@@ -646,7 +662,7 @@ export default function HomeFeedV4() {
         .hfv4-band-moment { padding: 8px 12px 0; }
         /* Le chip sono dentro la card scura, quindi la loro riga non ha
            padding proprio: lo dà il padding della card. */
-        .hfv4-moment .hfv4-moment-tabs-scroll { padding: calc(11 * var(--mk)) 0 0 !important; overflow-x: auto; }
+        .hfv4-moment .hfv4-moment-tabs-scroll { padding: calc(8 * var(--mk)) 0 0 !important; overflow-x: auto; }
         /* Dentro il blocco scuro le chip sono pillole in riga, non i
            quadrotti con l'emoji sopra della barra chiara: nel mockup
            (.moment .chips span) sono alte ~26px e stanno tutte e cinque
@@ -658,7 +674,7 @@ export default function HomeFeedV4() {
           align-items: center !important;
           min-width: 0 !important;
           gap: calc(5 * var(--mk)) !important;
-          padding: calc(6 * var(--mk)) calc(11 * var(--mk)) !important;
+          padding: calc(5 * var(--mk)) calc(11 * var(--mk)) !important;
           border-radius: 99px !important;
         }
         .hfv4-moment .hfv4-moment-tab > span:first-child { font-size: calc(11 * var(--mk)) !important; }
@@ -686,8 +702,12 @@ export default function HomeFeedV4() {
         /* La riga "aperti adesso": mini-card orizzontali, una riga sola.
            Con le card intere (foto 16/11 + tagline + meta) la riga era alta
            quasi 300px e da sola spingeva il drop sotto la piega su 390px. */
-        .hfv4-band-open { padding-top: 10px; }
+        .hfv4-band-open { padding-top: 4px; }
         .hfv4-band-open .hfv4-results { padding-top: 0 !important; }
+        /* Stessa ragione del momento qui sopra: ogni riga tolta qui è una
+           riga di drop guadagnata sopra la piega. */
+        .hfv4-band-open .hfv4-results-head { padding: 0 20px 6px !important; }
+        .hfv4-band-open .hfv4-results-row { padding-bottom: 6px !important; }
 
         /* Le mini-card dei locali aperti: VERTICALI come .mcard nel
            mockup — foto sopra con la pill "aperto", nome e meta sotto.
@@ -712,7 +732,7 @@ export default function HomeFeedV4() {
         }
         .hfv4-lcard--compact .hfv4-lcard-photo {
           position: relative;
-          height: calc(62 * var(--mk));
+          height: calc(56 * var(--mk));
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -958,8 +978,15 @@ export default function HomeFeedV4() {
 
         @media (min-width: 1024px) {
           .hfv4-root { min-height: calc(100dvh - 80px) !important; }
+          /* Gli ultimi due blocchi stavano su una griglia tutta loro: 730 e
+             760px centrati in mezzo a una pagina larga 1240, con il resto
+             della home allineato al bordo. Sembravano di un'altra pagina.
+             width:100% serve perché .hfv4-root è una colonna flex e
+             centra i figli sulla loro larghezza di contenuto: senza, il
+             max-width non ha niente da limitare. */
           .hfv4-main {
-            max-width: 760px;
+            width: 100%;
+            max-width: 1240px;
             margin: 0 auto;
             padding: 8px 40px 40px;
           }
@@ -981,6 +1008,7 @@ export default function HomeFeedV4() {
 
           /* === Banner sponsor full-width === */
           .hfv4-spon-outer {
+            width: 100%;
             max-width: 1240px;
             margin: 0 auto;
             padding: 0 40px 24px;
@@ -994,79 +1022,144 @@ export default function HomeFeedV4() {
           .hfv4-spon-banner .spon-title { font-size: 48px !important; letter-spacing: -.025em !important; line-height: 1 !important; }
           .hfv4-spon-banner-body { padding: 40px 44px !important; justify-content: center !important; }
 
-          /* ── BLOCCO 3 — banda superiore: momento a sinistra, drop a
-             destra, entrambi sopra la piega ──────────────────────────────
-             Il momento è più largo (1.45fr) perché contiene anche la riga
-             dei locali aperti; il drop sta stretto e verticale accanto. */
+          /* ── BLOCCO 3 — la piega desktop, impilata ────────────────────
+             Prima erano due blocchi saturi affiancati: il momento scuro
+             (675×424) e il drop corallo (465×415), 1240×428 di colore pieno
+             tutto insieme. Su mobile funziona perché li vedi in sequenza; su
+             desktop li vedi nello stesso istante e si annullano — nessuno dei
+             due diventa il fuoco. E i locali aperti, annidati dentro il
+             blocco scuro, lo trasformavano in un contenitore affollato
+             invece che in un'affermazione.
+
+             Ora un fuoco alla volta, dall'alto: il momento apre leggero (è
+             un contesto, non un contenuto), i locali aperti danno subito
+             qualcosa di utile, il drop arriva dopo e ha lo spazio per essere
+             forte. */
           .hfv4-band {
-            display: grid;
-            grid-template-columns: 1.45fr 1fr;
-            gap: 20px;
-            /* start e non stretch: altrimenti la colonna del momento si allunga
-               fino all'altezza della lista sconti accanto e resta mezzo blocco
-               scuro vuoto sotto le mini-card. */
-            align-items: start;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
             max-width: 1240px;
             margin: 0 auto 28px;
             padding: 4px 40px 0;
           }
+          /* I due figli di .hfv4-band-left salgono nel flusso della banda:
+             il raggruppamento serve solo a mobile, dove momento e locali
+             aperti stanno nello stesso blocco scuro. */
+          .hfv4-band-left { display: contents; }
 
-          /* Su desktop i locali aperti stanno DENTRO il blocco scuro: sono la
-             risposta alla domanda del momento, non una sezione a parte. */
-          .hfv4-band-left {
-            background: var(--color-ink, #22181c);
-            background-image: radial-gradient(90% 80% at 92% 0%, rgba(232,69,60,.35) 0%, rgba(232,69,60,0) 60%);
-            border-radius: 28px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-          }
-          .hfv4-band-moment { background: transparent !important; }
+          /* 1. La striscia del momento: alta ~160px, tutto su una riga.
+                Orologio e tag a sinistra, domanda al centro, chip a destra.
+                Niente card dentro. */
+          .hfv4-band-moment { padding: 0 !important; }
           .hfv4-moment {
-            background: transparent;
-            background-image: none;
-            padding: 26px 28px 4px;
+            --mk: 1px;
+            display: grid;
+            grid-template-columns: auto minmax(190px, 1fr) auto;
+            grid-template-areas:
+              "tag   q    chips"
+              "clock sub  chips";
+            column-gap: 34px;
+            row-gap: 2px;
+            align-items: start;
+            padding: 26px 32px;
+            border-radius: 26px;
           }
-          .hfv4-moment-clock { font-size: 56px; }
-          .hfv4-moment-q { font-size: 26px; max-width: 20ch; }
-          .hfv4-moment-sub { font-size: 13.5px; }
-          .hfv4-band-moment .hfv4-moment-tabs-scroll { padding: 14px 28px 6px !important; }
-          .hfv4-band-moment .mt-row { flex-wrap: wrap !important; }
+          .hfv4-moment::before {
+            background: radial-gradient(60% 130% at 92% 10%, rgba(232,69,60,.38), transparent 62%);
+          }
+          .hfv4-moment-tag { grid-area: tag; align-self: end; font-size: 10.5px; }
+          .hfv4-moment-tag i { width: 6px; height: 6px; }
+          .hfv4-moment-clock { grid-area: clock; font-size: 56px; margin-top: 4px; }
+          .hfv4-moment-q {
+            grid-area: q;
+            align-self: end;
+            font-size: 25px;
+            max-width: 22ch;
+            margin: 0;
+          }
+          .hfv4-moment-sub { grid-area: sub; font-size: 13.5px; margin-top: 6px; }
+          .hfv4-band-moment .hfv4-moment-tabs-scroll {
+            grid-area: chips;
+            align-self: center;
+            padding: 0 !important;
+            overflow: visible !important;
+            /* Larga abbastanza da tenere le cinque fasce su una riga sola:
+               a 470px "Dopo cena" andava a capo da sola. */
+            max-width: 620px;
+          }
+          .hfv4-band-moment .mt-row { flex-wrap: wrap !important; justify-content: flex-end; }
+          .hfv4-moment .hfv4-moment-tab { padding: 9px 14px !important; }
+          .hfv4-moment .hfv4-moment-tab > span:first-child { font-size: 14px !important; }
+          .hfv4-moment .hfv4-moment-tab > span:last-child { font-size: 12px !important; }
+        }
 
-          .hfv4-band-open { padding: 6px 0 20px; }
-          .hfv4-band-open .hfv4-results-head { padding: 0 28px 10px !important; }
-          /* Più in alto c'è una regola che trasforma .hfv4-results-row in una
-             griglia da 4 colonne per la vecchia posizione di questa riga.
-             Dentro la banda resta una riga che scorre, se no le mini-card si
-             comprimono a 100px e il nome diventa "A…". */
+        /* Fra 1024 e 1279 la striscia è larga ~944px: orologio, domanda e
+           cinque chip non ci stanno alle misure piene e le chip andavano a
+           capo, portando la striscia a 177px. Qui tutto rientra su una riga
+           sola restando leggibile. */
+        @media (min-width: 1024px) and (max-width: 1279px) {
+          /* Le chip scendono su una riga propria, allineate a destra: a
+             questa larghezza, tenute di fianco, o andavano a capo loro o
+             mandavano a capo la domanda. Sotto ci stanno tutte e cinque e
+             la striscia resta dentro i 170px. */
+          .hfv4-moment {
+            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-areas:
+              "tag   q"
+              "clock sub"
+              "chips chips";
+            column-gap: 24px;
+            padding: 20px 26px;
+          }
+          .hfv4-moment-clock { font-size: 44px; }
+          .hfv4-moment-q { font-size: 21px; max-width: none; }
+          .hfv4-moment-sub { font-size: 12.5px; }
+          .hfv4-band-moment .hfv4-moment-tabs-scroll {
+            max-width: none;
+            justify-self: end;
+            padding-top: 14px !important;
+          }
+          .hfv4-moment .hfv4-moment-tab { padding: 8px 12px !important; gap: 5px !important; }
+          .hfv4-moment .hfv4-moment-tab > span:first-child { font-size: 13px !important; }
+          .hfv4-moment .hfv4-moment-tab > span:last-child { font-size: 11.5px !important; }
+        }
+
+        @media (min-width: 1024px) {
+
+          /* 2. I locali aperti escono dal blocco scuro e vivono sulla pagina:
+                card bianche su crema, a tutta larghezza, sei più il richiamo
+                alla mappa. Dentro il blocco erano una riga da trascinare in
+                un contenitore già pieno. */
+          .hfv4-band-open { padding: 0; }
+          .hfv4-band-open .hfv4-results { padding-top: 0 !important; }
+          .hfv4-band-open .hfv4-results-head { padding: 0 0 12px !important; }
           .hfv4-band-open .hfv4-results-row {
-            display: flex !important;
-            grid-template-columns: none !important;
-            padding: 0 28px 4px !important;
-            overflow-x: auto !important;
-            gap: 10px !important;
+            display: grid !important;
+            grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            gap: 14px !important;
           }
-          .hfv4-band-open .hfv4-lcard--compact { flex: 0 0 208px !important; }
-          .hfv4-band-open .hfv4-results-more--compact { flex: 0 0 132px !important; }
-          /* Le mini-card ora stanno sul fondo scuro: si scuriscono anche
-             loro, altrimenti sono tre rettangoli bianchi che bucano il
-             blocco invece di starci dentro. */
-          .hfv4-band-open .hfv4-results-head > *,
-          .hfv4-band-open .hfv4-results-head { color: rgba(255,255,255,.92) !important; }
-          .hfv4-lcard--compact {
-            background: rgba(255,255,255,.07);
-            border-color: rgba(255,255,255,.12);
-            box-shadow: none;
+          .hfv4-band-open .hfv4-lcard--compact {
+            --mk: 1px;
+            width: auto !important;
+            flex: 1 1 auto !important;
           }
-          .hfv4-lcard--compact .hfv4-lcard-name { color: #fff; }
-          .hfv4-lcard--compact .hfv4-lcard-sub { color: rgba(255,255,255,.6); }
-          .hfv4-lcard--compact .hfv4-lcard-open { color: #7fe6a4; }
-          .hfv4-results-more--compact {
-            background: rgba(255,255,255,.12) !important;
-            border-color: rgba(255,255,255,.16) !important;
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-photo { height: 96px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-name { font-size: 13px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-sub { font-size: 11px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-open { font-size: 9.5px; padding: 3px 7px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-body { padding: 10px 11px 12px; }
+          .hfv4-band-open .hfv4-results-more--compact {
+            flex: 1 1 auto !important;
+            width: auto !important;
+            padding: 14px 10px !important;
           }
 
-          .hfv4-band-drop { display: flex; }
+          /* 3. Il drop hero prende tutta la riga: la card si sdraia da sola
+                sopra i 420px di contenitore (vedi .dropcard in DropCard.css). */
+          .hfv4-band-drop { display: block; }
           .hfv4-drop-wrap { padding: 0; width: 100%; }
 
           /* Sotto la banda: categorie a tutta larghezza, poi due colonne —
@@ -1091,7 +1184,16 @@ export default function HomeFeedV4() {
           .hfv4-lower-recent .hfv4-cards-row {
             grid-template-columns: repeat(3, 1fr) !important;
           }
-          .hfv4-lower-deals { grid-area: deals; padding: 0; }
+          /* La colonna destra è più corta per natura (una lista contro una
+             griglia di card): ferma lasciava 310px di mezza pagina vuota
+             sotto di sé. Sticky la fa accompagnare lo scorrimento finché
+             la colonna sinistra non finisce. */
+          .hfv4-lower-deals {
+            grid-area: deals;
+            padding: 0;
+            position: sticky;
+            top: 96px;
+          }
 
           /* Gli altri sconti su desktop sono una LISTA verticale, non uno
              scorrimento: su schermo largo una lista si legge e si clicca
@@ -1181,6 +1283,7 @@ export default function HomeFeedV4() {
 
           /* === SuggestCard full-width e grande === */
           .hfv4-suggest-outer {
+            width: 100%;
             max-width: 1240px;
             margin: 0 auto;
             padding: 0 40px 60px;
@@ -1201,9 +1304,13 @@ export default function HomeFeedV4() {
             max-width: 520px !important;
             margin-top: 10px !important;
           }
+          /* Il bottone non si stira per 1160px: resta largo quanto serve a
+             premerlo, come tutti gli altri della pagina. */
           .hfv4-suggest-cta {
             padding: 16px 28px !important;
             font-size: 14px !important;
+            width: fit-content !important;
+            min-width: 260px;
           }
 
         }
@@ -1308,7 +1415,7 @@ export default function HomeFeedV4() {
       </div>
 
       {/* Banner sponsor: full-width su desktop, fuori dalla griglia 2-col */}
-      <Reveal className="hfv4-spon-outer">
+      <Reveal className="hfv4-spon-outer" fade={1} y={10}>
         <AdSlot slot="home_hero" />
       </Reveal>
 
@@ -1321,7 +1428,7 @@ export default function HomeFeedV4() {
       </div>
 
       {/* SuggestCard full-width sotto la griglia */}
-      <Reveal className="hfv4-suggest-outer">
+      <Reveal className="hfv4-suggest-outer" fade={1} y={10}>
         <SuggestCard />
       </Reveal>
 

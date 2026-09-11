@@ -27,7 +27,6 @@ export default function DropCard({
   onUnlock,
   onDiscover,
   taken = false,
-  split = false,
   ctaLabel,
   ctaDisabled = false,
   validityNote,
@@ -49,8 +48,11 @@ export default function DropCard({
   const classes = [
     'dropcard',
     `dropcard--${size}`,
-    split ? 'dropcard--split' : '',
     taken ? 'dropcard--taken' : '',
+    // Nella taglia larga il titolo è già il vantaggio: quando il vantaggio
+    // in parole non dice altro che il valore ("50%" → "50% di sconto") la
+    // riga sotto ripeterebbe il titolo, e il CSS la spegne.
+    view.perkEchoesHeadline ? 'dropcard--perk-echo' : '',
     className,
   ].filter(Boolean).join(' ')
 
@@ -106,10 +108,16 @@ export default function DropCard({
           {view.pillLabel}
         </span>
 
+        {/* Due titoli, uno solo visibile per volta: il CSS spegne quello
+            che non serve alla larghezza corrente (vedi .dropcard--wide).
+            Sono due nodi e non uno riscritto in JS perché il passaggio
+            verticale → largo dipende dal CONTENITORE, che il JS non
+            conosce senza un osservatore. */}
         <h3 className="dropcard__name">{view.restaurantName}</h3>
+        <h3 className="dropcard__headline">{view.wideHeadline}</h3>
 
         <div className="dropcard__perk">
-          {view.perk}
+          <span className="dropcard__perk-text">{view.perk}</span>
           {view.subline && <small>{view.subline}</small>}
         </div>
 
@@ -162,7 +170,17 @@ export default function DropCard({
     </>
   )
 
-  return <div className={classes} style={style}>{inner}</div>
+  // Il wrapper esiste per una ragione sola: una container query non può
+  // interrogare l'elemento che la applica, quindi la card ha bisogno di un
+  // genitore che dichiari `container-type`. Così la scelta verticale/larga
+  // la fa lo spazio che la card ha davvero, non la larghezza della finestra:
+  // la stessa card è verticale in una colonna da 400px e orizzontale in una
+  // fascia da 1240, senza che chi la usa debba dirglielo.
+  return (
+    <div className="dropcard-fit">
+      <div className={classes} style={style}>{inner}</div>
+    </div>
+  )
 }
 
 /* ------------------------------------------------------------------------ */
@@ -186,7 +204,10 @@ function buildView(deal, now) {
     ? (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE')
     : 'SEMPRE VALIDO'
 
+  // La riga piccola: prima la condizione d'uso, poi categoria e indirizzo.
+  // La condizione sta QUI e non nel vantaggio — è il vincolo, non il premio.
   const subline = [
+    String(deal.conditions || '').trim(),
     r?.cuisine_type || firstCategory(r),
     formatAddress(r?.address, r?.neighborhood) || r?.city,
   ].filter(Boolean).join(' · ')
@@ -205,13 +226,20 @@ function buildView(deal, now) {
   const miniStatus = drop ? (countdown ? `Scade tra ${countdown}` : 'Drop live') : 'Sempre valido'
 
   const valueLabel = formatDiscountValue(deal)
+  const restaurantName = r?.name || deal.title || 'Locale'
+  const perk = pickPerk(deal, valueLabel)
 
   return {
-    restaurantName: r?.name || deal.title || 'Locale',
+    restaurantName,
     valueLabel,
     badgeLabel: badgeValue(valueLabel),
     miniBadgeLabel: miniBadgeValue(valueLabel),
-    perk: pickPerk(deal, valueLabel),
+    perk,
+    // Il titolo della taglia larga: il vantaggio in grande, il locale sotto.
+    // Due righe separate da \n perché il CSS le tiene con `pre-line` e il
+    // ritorno a capo è una scelta tipografica, non il caso della larghezza.
+    wideHeadline: `${isBareValue(valueLabel) ? valueLabel : perk}\nda ${restaurantName}`,
+    perkEchoesHeadline: isBareValue(valueLabel) && normalize(perk) === normalize(`${valueLabel} di sconto`),
     subline,
     where,
     miniStatus,
@@ -265,16 +293,25 @@ function isBareValue(v) {
 }
 
 function pickPerk(deal, valueLabel) {
-  const candidates = [deal.description, deal.title, deal.conditions]
-  const value = normalize(valueLabel)
-  for (const c of candidates) {
-    const text = String(c || '').trim()
-    if (!text) continue
-    // Scarta il candidato che è solo il valore già scritto nel badge.
-    if (value && normalize(text) === value) continue
-    return text
+  const title = String(deal.title || '').trim()
+  const description = String(deal.description || '').trim()
+
+  // Omaggi e prezzi speciali: il titolo È il vantaggio, parola per parola
+  // ("Paghi 2 prendi 3 Veneziane"). Non c'è niente da comporre.
+  if (deal.discount_type === 'freebie' || deal.discount_type === 'special_price') {
+    return title || description || valueLabel || ''
   }
-  return deal.title || ''
+
+  // Il titolo, quando dice qualcosa in più del valore secco
+  // ("10% di sconto sulle vaschette", "Sconto Smashers -15%").
+  if (title && normalize(title) !== normalize(valueLabel)) return title
+  if (description) return description
+
+  // Sul DB metà dei titoli sono la percentuale e basta ("50%"): lì il
+  // vantaggio va scritto in parole, altrimenti resta solo nel badge e la
+  // card non dice da nessuna parte che cosa ci guadagni.
+  if (valueLabel) return `${valueLabel} di sconto`
+  return ''
 }
 
 function normalize(s) {

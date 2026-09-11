@@ -18,12 +18,20 @@ import { REVEAL_VIEWPORT, TR_REVEAL, riseFrom, staggerDelay } from '../../lib/mo
  *
  * @param {number} index  posizione nella lista, per lo stagger
  * @param {number} y      quanto sale entrando (14px default)
+ * @param {number} fade   opacità di partenza: 0 per i contenuti su fondo
+ *                        chiaro, 1 (nessuna dissolvenza, solo lo
+ *                        spostamento) per i blocchi a colore pieno —
+ *                        un ink o un corallo che salgono da zero su una
+ *                        pagina crema passano per una fase in cui leggono
+ *                        grigio e rosa, e se l'osservatore non scatta
+ *                        restano lì
  * @param {string} as     tag da renderizzare (div, section, li…)
  */
 export default function Reveal({
   children,
   index = 0,
   y = 14,
+  fade = 0,
   delay = 0,
   as = 'div',
   className = '',
@@ -35,7 +43,7 @@ export default function Reveal({
   // Stringa `transform` e non la scorciatoia `y`: queste entrate partono
   // mentre la home carica le foto e l'utente scrolla, cioè col thread
   // principale occupato — la scorciatoia perderebbe frame lì.
-  const rise = riseFrom(y, reduce)
+  const rise = riseFrom(y, reduce, fade)
 
   return (
     <Tag

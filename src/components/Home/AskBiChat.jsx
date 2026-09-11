@@ -123,7 +123,9 @@ export default function AskBiChat({ currentMoment }) {
             </div>
           </div>
 
-          <p style={{ fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.5, margin: '0 0 14px', position: 'relative' }}>
+          {/* La card si allarga con la pagina, la riga di testo no: oltre
+              ~75 caratteri l'occhio perde il capo riga. */}
+          <p className="hfv4-ai-intro" style={{ fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.5, margin: '0 0 14px', position: 'relative', maxWidth: '72ch' }}>
             Scrivimi di cosa hai voglia.{' '}
             <strong>Sushi? Pizza? Un piemontese economico in centro? Un locale per bere con gli amici?</strong>{' '}
             Scrivi qua sotto e ti suggerisco i locali più adatti.

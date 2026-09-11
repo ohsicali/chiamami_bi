@@ -723,10 +723,6 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
               key={d.id}
               deal={d}
               size={size}
-              // Con un solo drop la card occupa tutta la riga: su desktop
-              // passa a foto-a-sinistra, altrimenti la foto diventa una
-              // fascia vuota e il bottone si stira per tutto lo schermo.
-              split={layout === 'single'}
               taken={isSaved || isUsed}
               ctaLabel={label}
               ctaDisabled={disabled}

@@ -61,7 +61,11 @@ export default function MomentResultsGrid({
     return 'Aperto'
   }
 
-  const visibleCards = filtered.slice(0, 3)
+  // Sei e non tre: su desktop la riga è larga 1240px e tre card lasciavano
+  // due terzi di riga vuota; su mobile la riga scorre, quindi le altre non
+  // occupano spazio — si raggiungono scorrendo invece che passando dalla
+  // mappa.
+  const visibleCards = filtered.slice(0, 6)
   const remaining = Math.max(0, openNow.length - visibleCards.length)
 
   return (
