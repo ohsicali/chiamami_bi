@@ -25,6 +25,12 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
 
   if (!restaurant) return null
   const all = [...lists, ...suggestions]
+  // Il foglio si apre in due momenti diversi: subito dopo il primo
+  // salvataggio, e più tardi dai Salvati per cambiare idea. "Vuoi metterlo
+  // in una lista?" è la domanda giusta solo la prima volta — la seconda il
+  // locale in una lista ci sta già, e chiederlo suona come se non lo
+  // sapessimo.
+  const giaDentro = all.some((l) => l.restaurantIds?.includes(restaurant.id))
 
   const handleToggle = async (list) => {
     setBusy(list.id || list.name)
@@ -56,7 +62,7 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
       <div className="stl-sheet">
         <div className="stl-grab" aria-hidden="true" />
         <p className="stl-saved">🤍 Salvato — {restaurant.name}</p>
-        <h3 className="stl-title">Vuoi metterlo in una lista?</h3>
+        <h3 className="stl-title">{giaDentro ? 'Le liste di questo locale' : 'Vuoi metterlo in una lista?'}</h3>
 
         <div className="stl-lists">
           {all.map((l) => {

@@ -11,7 +11,8 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SaveButton from '../../components/Restaurant/SaveButton'
-import SavedListsStrip from '../../components/Restaurant/SavedListsStrip'
+import SavedListsStrip, { SavedListsFooter } from '../../components/Restaurant/SavedListsStrip'
+import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
@@ -30,8 +31,11 @@ export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
-  const { lists: savedLists, renameList, deleteList } = useSavedLists(user?.id)
+  const { lists: savedLists, suggestions: listSuggestions, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
   const [activeListId, setActiveListId] = useState(null)
+  // Il locale di cui si stanno scegliendo le liste. È lo stesso foglio che
+  // compare dopo il primo salvataggio: qui si può riaprire quando si vuole.
+  const [listSheetFor, setListSheetFor] = useState(null)
   const [restaurants, setRestaurants] = useState([])
   const [activeDiscounts, setActiveDiscounts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -339,6 +343,10 @@ export default function SavedPage() {
             etichette sopra l'elenco, non cartelle che lo sostituiscono. */}
         <SavedListsStrip
           lists={savedLists}
+          /* I tre suggerimenti solo quando c'è già qualcosa di salvato: a
+             chi apre la pagina vuota servono i locali, non tre etichette da
+             riempire. */
+          suggestions={restaurants.length > 0 ? listSuggestions : []}
           restaurants={restaurants}
           activeListId={activeListId}
           onSelect={setActiveListId}
@@ -432,6 +440,14 @@ export default function SavedPage() {
                     discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
                     onSaveToggle={() => handleSave(r.id)}
                     onClick={() => handleClick(r)}
+                    footer={
+                      <SavedListsFooter
+                        lists={savedLists}
+                        restaurantId={r.id}
+                        restaurantName={r.name}
+                        onOpen={() => setListSheetFor(r)}
+                      />
+                    }
                   />
                 )
               }
@@ -574,6 +590,17 @@ export default function SavedPage() {
       <Footer />
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
+
+      {/* Il foglio tiene una sua copia delle liste: alla chiusura questa
+          pagina le rilegge, se no la striscia in cima e le righe sotto le
+          card resterebbero ferme a com'erano prima del tocco. */}
+      {listSheetFor && (
+        <SaveToListSheet
+          userId={user?.id}
+          restaurant={listSheetFor}
+          onClose={() => { setListSheetFor(null); reloadLists() }}
+        />
+      )}
     </div>
   )
 }

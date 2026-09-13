@@ -25,6 +25,7 @@ import { LIST_EMOJI } from '../../lib/hooks/useSavedLists'
 
 export default function SavedListsStrip({
   lists,
+  suggestions = [],
   restaurants,
   activeListId,
   onSelect,
@@ -34,8 +35,10 @@ export default function SavedListsStrip({
 }) {
   const [editing, setEditing] = useState(null)   // la lista in modifica
   const [confirming, setConfirming] = useState(null)
+  const [hint, setHint] = useState(null)         // il suggerimento toccato
 
-  if (!lists || lists.length === 0) return null
+  const real = lists || []
+  if (real.length === 0 && suggestions.length === 0) return null
   const byId = new Map((restaurants || []).map((r) => [r.id, r]))
   const active = lists.find((l) => l.id === activeListId) || null
   const canEdit = typeof onRename === 'function' && typeof onDelete === 'function'
@@ -51,7 +54,7 @@ export default function SavedListsStrip({
           scrollbarWidth: 'none',
         }}
       >
-        {lists.map((l) => {
+        {real.map((l) => {
           const first = (l.restaurantIds || []).map((id) => byId.get(id)).find(Boolean)
           const photoRaw = first?.photos?.[0]?.thumb_url || first?.photos?.[0]?.photo_url
           const cover = proxyImg(photoRaw, { w: 300 })
@@ -109,7 +112,67 @@ export default function SavedListsStrip({
             </button>
           )
         })}
+
+        {/* Le tre liste pronte, finché nessuno le usa. Non sono cartelle
+            vuote da riordinare: sono l'unico posto in cui si scopre che le
+            liste esistono. Prima comparivano solo dentro il foglio che si
+            apre al primo salvataggio, che si chiude con un tocco fuori e non
+            torna mai più — chi lo saltava non aveva alcun modo di sapere
+            di averlo saltato. */}
+        {suggestions.map((sug) => {
+          const on = hint === sug.name
+          return (
+            <button
+              key={`sug-${sug.name}`}
+              type="button"
+              onClick={() => setHint(on ? null : sug.name)}
+              aria-expanded={on}
+              style={{
+                flex: '0 0 auto',
+                width: tileWidth,
+                border: '2px solid transparent',
+                borderRadius: 16,
+                padding: 0,
+                background: 'transparent',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: 78,
+                  borderRadius: 14,
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 26,
+                  // Tratteggiata e senza sfondo: si legge come "qui ci può
+                  // andare qualcosa" invece che come una lista che hai già.
+                  border: `1.5px dashed ${on ? 'var(--color-corallo)' : 'var(--color-ink-15, rgba(34,24,28,.15))'}`,
+                  opacity: on ? 1 : .75,
+                }}
+              >
+                <span aria-hidden="true">{sug.emoji}</span>
+              </div>
+              <div style={{ padding: '6px 4px 0' }}>
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--color-ink-70)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {sug.name}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+                  da usare
+                </div>
+              </div>
+            </button>
+          )
+        })}
       </div>
+
+      {hint && (
+        <p style={{ ...boxStyle, fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-70)', margin: '0 0 14px' }}>
+          &ldquo;{hint}&rdquo; nasce quando ci metti dentro il primo locale.
+          Qui sotto, su un locale salvato, tocca <strong>Metti in una lista</strong>.
+        </p>
+      )}
 
       {canEdit && active && !editing && !confirming && (
         <div style={{ display: 'flex', gap: 16, paddingBottom: 12 }}>
@@ -157,6 +220,62 @@ export default function SavedListsStrip({
         />
       )}
     </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+
+/**
+ * La riga in fondo alla card di un locale salvato: le liste in cui sta, e il
+ * modo per cambiarle.
+ *
+ * Senza di lei le liste erano un vicolo cieco. Si sceglievano una volta sola,
+ * nel foglio facoltativo che compare subito dopo il primo salvataggio; quel
+ * foglio si chiude toccando fuori e non torna più, e da lì in avanti non
+ * esisteva un punto in tutto il sito da cui rimettere mano alle liste di un
+ * locale già salvato. Qui il punto c'è, ed è dove uno guarda i suoi
+ * salvati.
+ */
+export function SavedListsFooter({ lists, restaurantId, restaurantName, onOpen }) {
+  const dentro = (lists || []).filter((l) => (l.restaurantIds || []).includes(restaurantId))
+  const vuoto = dentro.length === 0
+  // Due etichette e poi un numero: le card stanno in griglia e prendono
+  // l'altezza della più alta, quindi un locale in cinque liste alzerebbe
+  // tutta la riga per far posto a nomi che nessuno sta leggendo.
+  const mostrate = dentro.slice(0, 2)
+  const altre = dentro.length - mostrate.length
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={vuoto ? `Metti ${restaurantName} in una lista` : `Cambia le liste di ${restaurantName}`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap',
+        width: '100%', marginTop: 8, paddingTop: 8, border: 'none',
+        borderTop: '1px solid var(--color-ink-05)',
+        background: 'none', cursor: 'pointer', fontFamily: 'inherit',
+        fontSize: 11.5, fontWeight: 700, textAlign: 'left',
+        color: vuoto ? 'var(--color-ink-55)' : 'var(--color-ink-70)',
+      }}
+    >
+      {vuoto ? (
+        <><span aria-hidden="true" style={{ fontSize: 13 }}>+</span> Metti in una lista</>
+      ) : (
+        mostrate.map((l) => (
+          <span
+            key={l.id}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              background: 'var(--color-ink-05)', borderRadius: 999, padding: '2px 7px',
+              maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}
+          >
+            <span aria-hidden="true">{l.emoji || '📁'}</span>{l.name}
+          </span>
+        ))
+      )}
+      {altre > 0 && <span>+{altre}</span>}
+    </button>
   )
 }
 

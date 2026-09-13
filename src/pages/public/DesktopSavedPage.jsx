@@ -11,7 +11,8 @@ import { getDistance } from '../../lib/utils/distance'
 import { supabase } from '../../lib/supabase'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
-import SavedListsStrip from '../../components/Restaurant/SavedListsStrip'
+import SavedListsStrip, { SavedListsFooter } from '../../components/Restaurant/SavedListsStrip'
+import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
 import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { slugify } from '../../lib/utils/slug'
 
@@ -22,7 +23,7 @@ export default function DesktopSavedPage() {
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   // Le liste esistevano solo sul telefono: chi le creava lì, da computer non
   // le ritrovava più. Sono le stesse righe, lo stesso componente.
-  const { lists: savedLists, renameList, deleteList } = useSavedLists(user?.id)
+  const { lists: savedLists, suggestions: listSuggestions, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
@@ -32,6 +33,9 @@ export default function DesktopSavedPage() {
   const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
   const [showDealsOnly, setShowDealsOnly] = useState(false)
   const [activeListId, setActiveListId] = useState(null)
+  // Lo stesso foglio del telefono: le liste di un locale già salvato si
+  // cambiano da qui, non solo nell'istante in cui lo si salva.
+  const [listSheetFor, setListSheetFor] = useState(null)
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountLabelMap = Object.fromEntries(
@@ -137,6 +141,7 @@ export default function DesktopSavedPage() {
         {restaurants.length > 0 && (
           <SavedListsStrip
             lists={savedLists}
+            suggestions={listSuggestions}
             restaurants={restaurants}
             activeListId={activeListId}
             onSelect={setActiveListId}
@@ -211,6 +216,14 @@ export default function DesktopSavedPage() {
                 discountTitle={discountLabelMap[r.id]}
                 onSaveToggle={() => toggleSave(r.id)}
                 onClick={handleRestaurantClick}
+                footer={
+                  <SavedListsFooter
+                    lists={savedLists}
+                    restaurantId={r.id}
+                    restaurantName={r.name}
+                    onOpen={() => setListSheetFor(r)}
+                  />
+                }
               />
             ))}
           </div>
@@ -218,6 +231,17 @@ export default function DesktopSavedPage() {
       </div>
 
       <Footer />
+
+      {/* Il foglio ha la sua copia delle liste: alla chiusura questa pagina
+          le rilegge, se no striscia e righe sotto le card resterebbero
+          ferme a prima del tocco. */}
+      {listSheetFor && (
+        <SaveToListSheet
+          userId={user?.id}
+          restaurant={listSheetFor}
+          onClose={() => { setListSheetFor(null); reloadLists() }}
+        />
+      )}
     </div>
   )
 }

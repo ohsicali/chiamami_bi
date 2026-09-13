@@ -41,6 +41,10 @@ function RestaurantCard({
   activeCity = 'Torino',
   variant = 'default', // 'default' (row) | 'tile' | 'hero'
   dense = false, // tile: versione compatta per griglie strette (mobile 2 col)
+  // Riga in fondo alla card, decisa da chi la usa. Serve ai Salvati, che ci
+  // mettono le liste in cui sta il locale: la card non sa cosa sia una lista
+  // e non deve saperlo, riceve del contenuto e gli lascia il posto.
+  footer = null,
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -190,6 +194,10 @@ function RestaurantCard({
               {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
             </div>
           )}
+          {/* Sopra al bottone-lenzuolo che apre la scheda, se no il tocco
+              finirebbe lì sotto e aprirebbe il ristorante invece di fare
+              quello che c'è scritto. */}
+          {footer && <div style={{ position: 'relative', zIndex: 2 }}>{footer}</div>}
         </div>
       </motion.div>
     )
