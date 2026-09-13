@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { authErrorMessage } from '../../lib/utils/authErrors'
 import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
@@ -77,6 +77,7 @@ export default function LoginPage() {
 
   // 'login' | 'register' | 'confirm_signup' | 'forgot'
   //   | 'recovery_forgot' | 'recovery_otp' | 'recovery_newpwd'
+  const reduceMotion = useReducedMotion()
   const [mode, setMode] = useState(() => location.state?.mode === 'register' ? 'register' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -110,6 +111,28 @@ export default function LoginPage() {
     if (user) redirectAfterAuth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  /**
+   * Cambiando passo si torna in cima.
+   *
+   * Ogni modalità mostra campi diversi, e passando da "registrati" a
+   * "conferma la tua email" la pagina si accorcia parecchio: spariscono
+   * nome, email, password, Google e i due riquadri. Chi aveva scrollato in
+   * fondo per premere il bottone resta con lo sguardo dove il bottone non
+   * c'è più, e la schermata nuova — titolo compreso — è tutta sopra di lui.
+   * Da fuori sembra che non sia successo niente.
+   *
+   * Il primo render è escluso: chi arriva da un link con `state.mode` non
+   * deve vedere la pagina saltare appena si apre.
+   */
+  const primoRender = useRef(true)
+  useEffect(() => {
+    if (primoRender.current) {
+      primoRender.current = false
+      return
+    }
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' })
+  }, [mode, reduceMotion])
 
   /**
    * Il benvenuto di Bi, che è cosa nostra e passa da Resend — da non
