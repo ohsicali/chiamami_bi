@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-13
+Ultima modifica: 2026-09-13 (sera)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -36,10 +36,38 @@ dove siamo. Aggiorna a ogni step importante.
 | 9 — Ristoratore | ✅ | Condizione e ora nella schermata verde, saluto col nome, indirizzo ripulito, contatto non più attaccato. Il resto risultava già fatto da PR23. **Non verificato a schermo** (serve PIN). |
 | 10 — Pubblicità | ✅ | Quarta posizione su scheda ristorante + barra inventario. Tracking IntersectionObserver e anteprima live erano già in PR #211. |
 
+## Registrazione — sistemata la sera del 13/09
+
+**L'SMTP di Supabase era rotto** (535) e bloccava ogni registrazione: l'utente
+ha messo Resend (smtp.resend.com:465, utente `resend`, password = API key) e
+adesso funziona. Verificato: `POST /auth/v1/signup` non risponde più 500.
+
+Attenzione per chi riprende: **per provare il signup non usare indirizzi
+`@example.com`**. È un dominio riservato senza MX, Resend lo rifiuta, e
+Supabase restituisce lo stesso `500 "Error sending confirmation email"` che dà
+quando le credenziali sono sbagliate. I due casi da fuori sono
+indistinguibili, e questo ha già fatto perdere un giro di diagnosi.
+
+Sopra a quello, quattro lavori:
+
+| Cosa | Stato | Note |
+|---|---|---|
+| Logo e font nelle email | ✅ | Il logo non era quello del sito: stessa scritta, carattere diverso (grazie squadrate contro lettere tonde). Rigenerato da `public/logo-guida-bi.png`. Georgia sostituito da Poppins, self-hosted in `public/fonts` (8KB a peso). Su Gmail e Outlook i webfont non si caricano e resta un sans di sistema: non è aggirabile. |
+| Conferma password | ✅ | Secondo campo che compare dopo la prima, con riscontro dal vivo. Stato separato da `confirmPassword`, che appartiene al recupero. |
+| Codice a 6 cifre | ⚠️ Serve un passaggio manuale | `verifySignupOtp` / `resendSignupOtp` in `useAuth`, modalità `confirm_signup` in LoginPage. **Il template "Confirm signup" su Supabase deve mandare `{{ .Token }}` e non il link** — finché non è fatto arriva ancora il link e la schermata del codice non serve a niente. |
+| Animazione di conferma | ✅ | `RegistrationDone` in fondo a LoginPage.jsx. Dura quanto il rimando (1,6s). Rispetta "riduci animazioni". |
+
+Perché il codice e non il link: sul telefono il link apre un browser diverso da
+quello della registrazione e si finisce confermati ma sloggati; gli scanner di
+posta pre-caricano i link e confermano l'account senza che una persona abbia
+fatto niente; e il sito già usava il codice per il recupero password.
+
 ### Da fare prima del merge
+- **Incollare il template della mail di conferma su Supabase** (vedi sopra).
 - Provare il flusso liste con un account vero (Blocco 6).
 - Aprire /admin/sconti su un iPad vero (Blocco 8).
 - Fare una scansione QR vera per vedere la schermata verde (Blocco 9).
+- Provare la registrazione intera con un indirizzo vero: codice, conferma, animazione, benvenuto.
 - Nota nota a parte: a 768px l'intestazione della home appare due volte
   (barra desktop + logo mobile). È così anche su `main`, non è una
   regressione di questa PR.
