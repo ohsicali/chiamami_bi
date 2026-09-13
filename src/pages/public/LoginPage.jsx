@@ -950,7 +950,7 @@ export default function LoginPage() {
               {submitting
                 ? '...'
                 : mode === 'confirm_signup'
-                  ? 'Conferma e entra'
+                  ? 'Conferma ed entra'
                 : mode === 'forgot'
                   ? 'Invia link di reset'
                   : mode === 'recovery_forgot'
@@ -1149,7 +1149,7 @@ function RegistrationDone({ name }) {
           {primo ? `Ci sei, ${primo}.` : 'Ci sei.'}
         </h2>
         <p style={{ fontSize: 14.5, color: 'var(--color-ink-70)', margin: 0 }}>
-          Account confermato. Ti porto dentro\u2026
+          Account confermato. Ti porto dentro…
         </p>
       </motion.div>
     </motion.div>
