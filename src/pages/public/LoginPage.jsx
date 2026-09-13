@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { authErrorMessage } from '../../lib/utils/authErrors'
 import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import Footer from '../../components/Layout/Footer'
@@ -53,7 +53,7 @@ const GATE_REASONS = {
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, signIn, signUp, signInWithGoogle, resetPasswordForEmail } = useAuth()
+  const { user, signIn, signUp, verifySignupOtp, resendSignupOtp, signInWithGoogle, resetPasswordForEmail } = useAuth()
 
   // Continuità "Chiedi a Bi" (PR20 §8.2): se atterriamo qui da AuthGate
   // o dalla Home con uno state, dopo login portiamo l'utente a returnTo
@@ -75,7 +75,9 @@ export default function LoginPage() {
     }
   }
 
-  const [mode, setMode] = useState(() => location.state?.mode === 'register' ? 'register' : 'login') // 'login', 'register', 'forgot', 'recovery_forgot', 'recovery_otp', 'recovery_newpwd'
+  // 'login' | 'register' | 'confirm_signup' | 'forgot'
+  //   | 'recovery_forgot' | 'recovery_otp' | 'recovery_newpwd'
+  const [mode, setMode] = useState(() => location.state?.mode === 'register' ? 'register' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -91,6 +93,14 @@ export default function LoginPage() {
   // che appartiene al recupero: due percorsi diversi che non devono passarsi
   // valori addosso quando si cambia schermata.
   const [registerConfirm, setRegisterConfirm] = useState('')
+  // Codice di conferma della registrazione, separato da `recoveryOtp`: sono
+  // due codici diversi, con due scadenze diverse, e mescolarli vorrebbe dire
+  // mandare a verificare quello sbagliato.
+  const [signupOtp, setSignupOtp] = useState('')
+  const [resending, setResending] = useState(false)
+  // Acceso solo dopo che il codice è stato accettato: tiene l'animazione di
+  // conferma finché non si passa alla pagina successiva.
+  const [confirmed, setConfirmed] = useState(false)
   const [maskedRecovery, setMaskedRecovery] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
   const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
@@ -100,6 +110,38 @@ export default function LoginPage() {
     if (user) redirectAfterAuth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  /**
+   * Il benvenuto di Bi, che è cosa nostra e passa da Resend — da non
+   * confondere con la mail del codice, che la manda Supabase.
+   *
+   * Parte senza essere attesa: se Resend è lento o giù, la persona deve
+   * comunque entrare. Un benvenuto mancato è un fastidio, una registrazione
+   * bloccata è un utente perso.
+   */
+  const sendWelcomeEmail = () => {
+    fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'user',
+        email,
+        name: fullName || email.split('@')[0],
+      }),
+    }).catch(() => {})
+  }
+
+  const handleResendOtp = async () => {
+    setResending(true)
+    setError('')
+    try {
+      await resendSignupOtp(email)
+      setSuccess('Codice rimandato. Controlla la posta.')
+    } catch (err) {
+      setError(authErrorMessage(err, 'Non sono riuscito a rimandare il codice. Riprova fra poco.'))
+    }
+    setResending(false)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -183,23 +225,20 @@ export default function LoginPage() {
             setError(data.error || 'Codice non valido o scaduto')
           }
         }
+      } else if (mode === 'confirm_signup') {
+        await verifySignupOtp(email, signupOtp)
+        // Il benvenuto parte adesso e non alla registrazione: chi non
+        // conferma non è un iscritto, e non ha senso dargli il benvenuto.
+        sendWelcomeEmail()
+        setConfirmed(true)
+        // Il tempo dell'animazione, poi si va avanti.
+        setTimeout(() => redirectAfterAuth(), 1600)
       } else if (mode === 'login') {
         await signIn(email, password)
         redirectAfterAuth()
       } else {
-        await signUp(email, password, fullName)
-        setSuccess('Registrazione completata! Controlla la tua email per confermare.')
-        // Welcome email (fire-and-forget — non blocca il signup)
-        fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'user',
-            email,
-            name: fullName || email.split('@')[0],
-          }),
-        }).catch(() => {})
-        // Newsletter auto-subscribe se l'utente ha accettato
+        const { needsConfirmation } = await signUp(email, password, fullName)
+        // Newsletter: dipende dalla spunta, non dalla conferma dell'indirizzo.
         if (newsletterOptIn) {
           supabase
             .from('newsletter_subscribers')
@@ -209,6 +248,17 @@ export default function LoginPage() {
             )
             .then(() => {})
             .catch(() => {})
+        }
+        if (needsConfirmation) {
+          // Niente "controlla la tua email" e basta: si resta qui e si
+          // scrive il codice, così la sessione è la stessa da cui si è
+          // partiti e alla fine si è già dentro.
+          setSignupOtp('')
+          setMode('confirm_signup')
+        } else {
+          // Conferma disattivata su Supabase: si è già dentro.
+          sendWelcomeEmail()
+          redirectAfterAuth()
         }
       }
     } catch (err) {
@@ -229,6 +279,7 @@ export default function LoginPage() {
 
   const titleText =
     mode === 'forgot' ? 'Password dimenticata?'
+    : mode === 'confirm_signup' ? 'Conferma la tua email'
     : mode === 'recovery_forgot' ? 'Recupero account'
     : mode === 'recovery_otp' ? 'Inserisci il codice'
     : mode === 'recovery_newpwd' ? 'Nuova password'
@@ -237,6 +288,7 @@ export default function LoginPage() {
 
   const subtitleText =
     mode === 'forgot' ? 'Inserisci la tua email e ti invieremo un link per reimpostarla'
+    : mode === 'confirm_signup' ? `Ti ho mandato un codice a ${email}. Scrivilo qui sotto e sei dentro.`
     : mode === 'recovery_forgot' ? 'Ti invieremo un codice sull\u2019email di recupero'
     : mode === 'recovery_otp' ? `Abbiamo inviato un codice a ${maskedRecovery || 'la tua email di recupero'}`
     : mode === 'recovery_newpwd' ? 'Scegli una nuova password per il tuo account'
@@ -248,6 +300,9 @@ export default function LoginPage() {
       className="flex flex-col min-h-dvh md:min-h-[calc(100dvh-80px)]"
       style={{ background: 'var(--color-bg)', overflowX: 'hidden' }}
     >
+      <AnimatePresence>
+        {confirmed && <RegistrationDone key="registration-done" name={fullName} />}
+      </AnimatePresence>
       <MetaTags title="Accedi — ChiamamiBi" noindex />
       {/* ─── HEADER — wordmark + Esplora la mappa (mobile only) ─── */}
       <header
@@ -549,14 +604,16 @@ export default function LoginPage() {
               )}
             </AnimatePresence>
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ ...inputStyle, marginBottom: (mode === 'login' || mode === 'register') ? 12 : 18 }}
-              required
-            />
+            {mode !== 'confirm_signup' && (
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ ...inputStyle, marginBottom: (mode === 'login' || mode === 'register') ? 12 : 18 }}
+                required
+              />
+            )}
 
             {/* Password — login / register */}
             <AnimatePresence mode="wait">
@@ -671,6 +728,52 @@ export default function LoginPage() {
                     }}
                   >
                     Non ho accesso all'email
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Codice di conferma della registrazione */}
+            <AnimatePresence mode="wait">
+              {mode === 'confirm_signup' && (
+                <motion.div
+                  key="signup-otp-field"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{ marginBottom: 14 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Codice a 6 cifre"
+                    value={signupOtp}
+                    onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    aria-label="Codice di conferma a 6 cifre"
+                    autoFocus
+                    style={{
+                      ...inputStyle,
+                      textAlign: 'center',
+                      letterSpacing: 8,
+                      fontFamily: 'monospace',
+                      fontSize: 18,
+                      marginBottom: 12,
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resending}
+                    style={{
+                      display: 'block', margin: '0 auto', background: 'none', border: 'none',
+                      padding: 4, cursor: resending ? 'default' : 'pointer',
+                      fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700,
+                      color: 'var(--color-ink-70)', textDecoration: 'underline',
+                    }}
+                  >
+                    {resending ? 'Rimando\u2026' : 'Non \u00e8 arrivato? Rimandamelo'}
                   </button>
                 </motion.div>
               )}
@@ -846,6 +949,8 @@ export default function LoginPage() {
             >
               {submitting
                 ? '...'
+                : mode === 'confirm_signup'
+                  ? 'Conferma e entra'
                 : mode === 'forgot'
                   ? 'Invia link di reset'
                   : mode === 'recovery_forgot'
@@ -870,7 +975,18 @@ export default function LoginPage() {
               marginBottom: 28,
             }}
           >
-            {(mode === 'forgot' || mode === 'recovery_forgot' || mode === 'recovery_otp' || mode === 'recovery_newpwd') ? (
+            {mode === 'confirm_signup' ? (
+              <>
+                Hai sbagliato indirizzo?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('register'); setError(''); setSuccess(''); setSignupOtp('') }}
+                  style={{ color: 'var(--color-corallo-ink)', fontWeight: 800, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Ricomincia
+                </button>
+              </>
+            ) : (mode === 'forgot' || mode === 'recovery_forgot' || mode === 'recovery_otp' || mode === 'recovery_newpwd') ? (
               <>
                 Ricordi la password?{' '}
                 <button
@@ -958,5 +1074,84 @@ export default function LoginPage() {
         <Footer />
       </div>
     </div>
+  )
+}
+
+/* ============================================================================
+   La conferma che la registrazione è andata.
+
+   Sta su tutto lo schermo e non è un messaggio verde in mezzo al modulo: è
+   la fine di un percorso di cinque campi più un codice preso dalla posta, e
+   merita di essere detta chiaramente una volta sola invece di essere cercata
+   fra le righe di un form.
+
+   Dura quanto il rimando alla pagina successiva (1,6s): non c'è niente da
+   leggere oltre due parole, e trattenere qualcuno davanti a un'animazione
+   dopo che ha finito è farlo aspettare per il nostro gusto, non per il suo.
+
+   Con "riduci animazioni" attivo resta tutto, ma fermo: chi ha chiesto meno
+   movimento vuole meno movimento, non meno informazioni.
+   ========================================================================= */
+function RegistrationDone({ name }) {
+  const reduce = useReducedMotion()
+  const primo = String(name || '').trim().split(/\s+/)[0]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reduce ? 0 : 0.25 }}
+      role="status"
+      aria-live="assertive"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 3000,
+        background: 'var(--color-bg, #FAF7F2)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 22,
+        padding: 24, textAlign: 'center',
+      }}
+    >
+      <motion.div
+        initial={reduce ? false : { scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+        style={{
+          width: 96, height: 96, borderRadius: '50%',
+          background: 'var(--color-corallo, #E8453C)',
+          display: 'grid', placeItems: 'center',
+          boxShadow: '0 10px 30px rgba(232,69,60,.32)',
+        }}
+      >
+        <svg width="48" height="48" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+          <motion.path
+            d="M14 27.5 L22.5 36 L38 18"
+            stroke="#fff"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={reduce ? false : { pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ delay: reduce ? 0 : 0.18, duration: reduce ? 0 : 0.35, ease: 'easeOut' }}
+          />
+        </svg>
+      </motion.div>
+
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: reduce ? 0 : 0.3, duration: reduce ? 0 : 0.3 }}
+      >
+        <h2 style={{
+          fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 28,
+          letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: '0 0 6px',
+        }}>
+          {primo ? `Ci sei, ${primo}.` : 'Ci sei.'}
+        </h2>
+        <p style={{ fontSize: 14.5, color: 'var(--color-ink-70)', margin: 0 }}>
+          Account confermato. Ti porto dentro\u2026
+        </p>
+      </motion.div>
+    </motion.div>
   )
 }
