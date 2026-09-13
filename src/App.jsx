@@ -68,6 +68,7 @@ const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager')
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const SuggestionsManager = lazy(() => import('./pages/admin/SuggestionsManager'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
+const EmailPreferencesPage = lazy(() => import('./pages/public/EmailPreferencesPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
@@ -189,6 +190,7 @@ export default function App() {
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/preferenze-email" element={<EmailPreferencesPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

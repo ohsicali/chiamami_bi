@@ -71,3 +71,38 @@ export function formatDiscountBadgeShort(deal) {
 export function isBareDiscountValue(v) {
   return /^\d+([.,]\d+)?\s*[%€]$/.test(String(v || '').trim())
 }
+
+
+/**
+ * Il vantaggio in chiaro: quello che si legge in mezzo secondo.
+ *
+ * Stava dentro DropCard, ma lo usano anche le email: se le due copie
+ * divergono, la card del sito e la ricevuta nella posta raccontano due cose
+ * diverse dello stesso sconto. Qui ce n'è una sola.
+ *
+ * Non guarda MAI `conditions`: quello è il vincolo, non il premio.
+ */
+export function pickPerk(deal, valueLabel = formatDiscountValue(deal)) {
+  if (!deal) return ''
+  const title = String(deal.title || '').trim()
+  const description = String(deal.description || '').trim()
+
+  // Omaggi e prezzi speciali: il titolo È il vantaggio, parola per parola
+  // ("Paghi 2 prendi 3 Veneziane"). Non c'è niente da comporre.
+  if (deal.discount_type === 'freebie' || deal.discount_type === 'special_price') {
+    return title || description || valueLabel || ''
+  }
+
+  // Il titolo, quando dice qualcosa in più del valore secco.
+  if (title && normalizeValue(title) !== normalizeValue(valueLabel)) return title
+  if (description) return description
+
+  // Sul DB metà dei titoli sono la percentuale e basta ("50%"): lì il
+  // vantaggio va scritto in parole, altrimenti resta solo nel badge.
+  if (valueLabel) return `${valueLabel} di sconto`
+  return ''
+}
+
+export function normalizeValue(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}

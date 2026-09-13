@@ -517,6 +517,9 @@ export default function DiscountManager() {
   // Notify subscribers: map of `${type}:${id}` -> { sent_at, sent_count }
   const [notifyLogs, setNotifyLogs] = useState({})
   const [notifyingId, setNotifyingId] = useState(null)
+  // L'esito dell'annuncio partito da solo al salvataggio: si vede in un
+  // avviso che sparisce, senza fermare chi sta lavorando.
+  const [autoNotice, setAutoNotice] = useState(null)
 
   const [form, setForm] = useState(EMPTY_FORM)
 
@@ -768,8 +771,56 @@ export default function DiscountManager() {
       setShowForm(false)
       resetForm()
       if (pendingPin) setPinPopup(pendingPin)
+
+      // L'annuncio parte da solo quando lo sconto nasce già attivo.
+      // Solo alla creazione: su una modifica manderebbe una seconda email
+      // per lo stesso sconto a chi l'ha già ricevuta. E comunque il server
+      // tiene il registro (email_notifications_log) e rifiuta il doppione,
+      // questo è il primo dei due sbarramenti.
+      if (!editing && result.data.is_active) {
+        notifyOnPublish(result.data)
+      }
     }
     setSaving(false)
+  }
+
+  /**
+   * Manda l'annuncio senza chiedere niente e senza bloccare il salvataggio.
+   *
+   * Non usa `handleNotify` perché quello è il bottone manuale: mostra
+   * finestre di conferma e chiede "vuoi mandarlo di nuovo?", cose che
+   * durante un salvataggio automatico non hanno senso. Qui un fallimento
+   * finisce in un avviso discreto: lo sconto è comunque salvato, e il
+   * bottone "Notifica" resta lì per riprovare a mano.
+   */
+  const notifyOnPublish = async (d) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ type: d.is_drop ? 'drop' : 'discount', id: d.id }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setNotifyLogs((prev) => ({
+          ...prev,
+          [`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]: {
+            sent_at: new Date().toISOString(), sent_count: json.sent,
+          },
+        }))
+        setAutoNotice({ kind: 'ok', text: `Annuncio inviato a ${json.sent} iscritti.` })
+      } else if (res.status !== 409) {
+        setAutoNotice({ kind: 'err', text: `Sconto salvato, ma l'annuncio non è partito: ${json.error || 'errore invio'}. Puoi mandarlo col bottone Notifica.` })
+      }
+    } catch (err) {
+      setAutoNotice({ kind: 'err', text: `Sconto salvato, ma l'annuncio non è partito: ${err.message}` })
+    }
+    setTimeout(() => setAutoNotice(null), 7000)
   }
 
   const handleDelete = async (id) => {
@@ -999,6 +1050,26 @@ export default function DiscountManager() {
             subtitle={filter === 'all' ? 'Crea il primo sconto per un ristorante partner.' : 'Cambia filtro per vedere altri sconti.'}
             cta={filter === 'all' ? { label: '+ Nuovo drop', onClick: () => { resetForm(); setShowForm(true) } } : null}
           />
+        )}
+
+        {/* Esito dell'annuncio partito da solo dopo il salvataggio. */}
+        {autoNotice && (
+          <div
+            role="status"
+            style={{
+              padding: '11px 16px',
+              borderRadius: 12,
+              marginBottom: 12,
+              fontSize: 13,
+              fontWeight: 600,
+              lineHeight: 1.45,
+              background: autoNotice.kind === 'ok' ? '#E9F8EF' : '#FDEDEB',
+              color: autoNotice.kind === 'ok' ? '#1A4731' : '#8A2B25',
+              border: `1px solid ${autoNotice.kind === 'ok' ? '#BFE9CF' : '#F6C9C4'}`,
+            }}
+          >
+            {autoNotice.text}
+          </div>
         )}
 
         {/* ── Bulk action bar — appears when items are selected ── */}

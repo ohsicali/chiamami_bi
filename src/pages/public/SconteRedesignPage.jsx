@@ -197,6 +197,29 @@ function SconteRedesignPageInner() {
     navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)
   }
 
+  /**
+   * Manda per email il codice appena preso.
+   *
+   * Chiama il server e non Resend direttamente: la chiave API non può
+   * stare nel browser, e l'email va costruita con i dati letti dal
+   * database — non con quelli che il browser potrebbe aver alterato.
+   */
+  const sendClaimReceipt = async (redemptionId) => {
+    if (!redemptionId) return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ type: 'discount-claimed', redemptionId }),
+      })
+    } catch { /* la ricevuta è un di più: lo sconto è già preso */ }
+  }
+
   const claimDeal = useCallback(async (deal) => {
     if (claiming) return
     if (!user) {
@@ -265,6 +288,12 @@ function SconteRedesignPageInner() {
         return
       }
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
+
+      // La ricevuta con il codice, per email. Parte e basta: se la posta non
+      // esce, lo sconto è comunque preso e il QR è già sullo schermo — non
+      // deve essere l'email a bloccare il riscatto. Il server tiene il
+      // registro e non manda due volte la stessa ricevuta.
+      sendClaimReceipt(data.id)
 
       setQrPopup({ redemption: { ...data, discount_id: deal.id }, deal })
     } catch (e) {

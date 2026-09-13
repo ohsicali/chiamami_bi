@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountValue, pickPerk, normalizeValue } from '../../lib/utils/discountFormat'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import { claimedCount, maxQuantity, remainingCount, formatCountdown, isDrop } from '../../lib/discounts'
 import './DropCard.css'
@@ -239,7 +239,7 @@ function buildView(deal, now) {
     // Due righe separate da \n perché il CSS le tiene con `pre-line` e il
     // ritorno a capo è una scelta tipografica, non il caso della larghezza.
     wideHeadline: `${isBareValue(valueLabel) ? valueLabel : perk}\nda ${restaurantName}`,
-    perkEchoesHeadline: isBareValue(valueLabel) && normalize(perk) === normalize(`${valueLabel} di sconto`),
+    perkEchoesHeadline: isBareValue(valueLabel) && normalizeValue(perk) === normalizeValue(`${valueLabel} di sconto`),
     subline,
     where,
     miniStatus,
@@ -292,31 +292,6 @@ function isBareValue(v) {
   return /^\d+([.,]\d+)?\s*[%€]$/.test(v)
 }
 
-function pickPerk(deal, valueLabel) {
-  const title = String(deal.title || '').trim()
-  const description = String(deal.description || '').trim()
-
-  // Omaggi e prezzi speciali: il titolo È il vantaggio, parola per parola
-  // ("Paghi 2 prendi 3 Veneziane"). Non c'è niente da comporre.
-  if (deal.discount_type === 'freebie' || deal.discount_type === 'special_price') {
-    return title || description || valueLabel || ''
-  }
-
-  // Il titolo, quando dice qualcosa in più del valore secco
-  // ("10% di sconto sulle vaschette", "Sconto Smashers -15%").
-  if (title && normalize(title) !== normalize(valueLabel)) return title
-  if (description) return description
-
-  // Sul DB metà dei titoli sono la percentuale e basta ("50%"): lì il
-  // vantaggio va scritto in parole, altrimenti resta solo nel badge e la
-  // card non dice da nessuna parte che cosa ci guadagni.
-  if (valueLabel) return `${valueLabel} di sconto`
-  return ''
-}
-
-function normalize(s) {
-  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-}
 
 function pickPhoto(r) {
   const photos = Array.isArray(r?.photos) ? r.photos : []

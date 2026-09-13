@@ -26,4 +26,14 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Le funzioni serverless girano su Node: senza questo, ogni
+    // `process.env` in api/ risulta "not defined" e il rumore copre gli
+    // errori veri.
+    files: ['api/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.node },
+      sourceType: 'module',
+    },
+  },
 ])

@@ -1164,6 +1164,16 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
       }
       if (resp.status === 'success') {
         try { navigator.vibrate?.([40, 60, 40]) } catch { /* no-op */ }
+        // Conferma per email a chi ha usato lo sconto. Non blocca la
+        // schermata verde: chi è al bancone deve vedere subito l'esito, e
+        // l'email è un di più che arriva quando arriva. L'autorizzazione è
+        // il codice stesso — averlo letto vuol dire avere il telefono del
+        // cliente davanti.
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'discount-used', qrCode: trimmed }),
+        }).catch(() => {})
       }
       if (resp.status === 'unauthorized') {
         deleteCookie(COOKIE_NAME)
