@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useMediaQuery } from '../../lib/hooks/useMediaQuery'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { isOpenForMoment, MOMENT_SLOTS } from '../../lib/hours'
@@ -61,11 +62,17 @@ export default function MomentResultsGrid({
     return 'Aperto'
   }
 
-  // Sei e non tre: su desktop la riga è larga 1240px e tre card lasciavano
-  // due terzi di riga vuota; su mobile la riga scorre, quindi le altre non
-  // occupano spazio — si raggiungono scorrendo invece che passando dalla
-  // mappa.
-  const visibleCards = filtered.slice(0, 6)
+  // Quante card stanno in riga dipende da quanto sono grandi, e su desktop
+  // sono diventate grandi come quelle di "Ultimi aggiunti": quattro più il
+  // riquadro scuro riempiono i 1240px senza stringere niente. Su mobile la
+  // riga scorre, quindi le altre non occupano spazio e restano sei.
+  //
+  // Il numero va deciso qui e non nascondendo le card in più con il CSS,
+  // perché "Vedi gli altri N" si conta da quante se ne mostrano: nascoste
+  // di là, il conto rimaneva quello di sei e prometteva meno locali di
+  // quanti ce ne fossero davvero.
+  const isWide = useMediaQuery('(min-width: 1024px)')
+  const visibleCards = filtered.slice(0, isWide ? 4 : 6)
   const remaining = Math.max(0, openNow.length - visibleCards.length)
 
   return (
