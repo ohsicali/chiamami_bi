@@ -780,7 +780,8 @@ export default function LoginPage() {
                       qualcuno tocca quel campo. */}
                   <input
                     type="text"
-                    placeholder="Il codice che hai ricevuto"
+                    className="otp-field"
+                    placeholder="Scrivi il codice"
                     value={signupOtp}
                     onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     inputMode="numeric"
@@ -826,6 +827,7 @@ export default function LoginPage() {
                 >
                   <input
                     type="text"
+                    className="otp-field"
                     placeholder="Codice a 6 cifre"
                     value={recoveryOtp}
                     onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
