@@ -226,6 +226,11 @@ export default function LoginPage() {
           }
         }
       } else if (mode === 'confirm_signup') {
+        if (signupOtp.length < 6) {
+          setError('Il codice è più corto di quello che ti ho mandato. Ricontrollalo.')
+          setSubmitting(false)
+          return
+        }
         await verifySignupOtp(email, signupOtp)
         // Il benvenuto parte adesso e non alla registrazione: chi non
         // conferma non è un iscritto, e non ha senso dargli il benvenuto.
@@ -743,14 +748,21 @@ export default function LoginPage() {
                   exit={{ opacity: 0, height: 0 }}
                   style={{ marginBottom: 14 }}
                 >
+                  {/* Quanto è lungo il codice lo decide Supabase, non noi:
+                      l'impostazione "Email OTP Length" sta nel suo dashboard e
+                      va da 6 a 10. Fissare 6 qui dentro vuol dire tagliare le
+                      cifre in più e far fallire una conferma valida — è
+                      successo davvero con un codice da 8. Accettiamo l'intero
+                      intervallo, così la cosa non si rompe più se un domani
+                      qualcuno tocca quel campo. */}
                   <input
                     type="text"
-                    placeholder="Codice a 6 cifre"
+                    placeholder="Il codice che hai ricevuto"
                     value={signupOtp}
-                    onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    aria-label="Codice di conferma a 6 cifre"
+                    aria-label="Codice di conferma ricevuto per email"
                     autoFocus
                     style={{
                       ...inputStyle,
