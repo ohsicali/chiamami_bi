@@ -141,7 +141,7 @@ export default function PhotoCarousel({ photos = [], height = '300px', restauran
                     sizes="(max-width: 768px) 100vw, 1200px"
                     alt={altText}
                     loading={currentIndex === 0 ? 'eager' : 'lazy'}
-                    fetchpriority={currentIndex === 0 ? 'high' : 'auto'}
+                    fetchPriority={currentIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
                     onLoad={() => handleImageLoad(currentIndex)}
                     className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${

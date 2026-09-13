@@ -39,11 +39,15 @@ function NearbyCard({ restaurant, index, onSelect }) {
     { w: 400 }
   )
 
-  // Short description: first ~60 chars of our_review
-  const shortDesc = restaurant.our_review
-    ? restaurant.our_review.length > 60
-      ? restaurant.our_review.slice(0, 60).trimEnd() + '…'
-      : restaurant.our_review
+  // Una riga per capire che posto è. La recensione di Bi quando c'è, la
+  // tagline altrimenti: i locali senza recensione mostravano una card muta,
+  // nome e categoria e basta, anche quando la tagline diceva la cosa giusta
+  // in cinque parole ("Cucina Afghana").
+  const rawDesc = restaurant.our_review || restaurant.tagline || null
+  const shortDesc = rawDesc
+    ? rawDesc.length > 60
+      ? rawDesc.slice(0, 60).trimEnd() + '…'
+      : rawDesc
     : null
 
   return (

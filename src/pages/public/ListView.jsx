@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useLayoutEffect } from 'react'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { useNavigate } from 'react-router-dom'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
@@ -102,7 +103,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
             sizes="(max-width: 768px) 100vw, 720px"
             alt={restaurant.name}
             loading="eager"
-            fetchpriority="high"
+            fetchPriority="high"
             decoding="async"
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
@@ -137,7 +138,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
           padding: '5px 12px', borderRadius: 10,
           boxShadow: '0 2px 10px rgba(74,222,128,0.35)',
         }}>
-          -{discountValue}%
+          {discountValue}
         </div>
       )}
 
@@ -281,7 +282,7 @@ function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, sa
             <span style={{
               background: 'var(--color-corallo, #E8453C)', color: '#fff',
               fontWeight: 800, fontSize: 10, padding: '2px 7px', borderRadius: 999, flexShrink: 0,
-            }}>-{discountValue}%</span>
+            }}>{discountValue}</span>
           )}
           <CityBadge city={restaurant.city} activeCity={activeCity} />
           {category?.name || restaurant.cuisine_type || 'Ristorante'}
@@ -428,8 +429,12 @@ export default function ListView() {
   const { discounts: activeDiscounts, allFeatured: featuredDiscounts } = useActiveDiscounts()
   const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
 
+  // L'etichetta già formattata, non il valore grezzo: `discount_value` sul DB
+  // è scritto a mano e a volte il segno ce l'ha già ("-10%"), per cui i badge
+  // che ci mettevano davanti un altro "-" e in fondo un altro "%" scrivevano
+  // "--10%%".
   const discountValueMap = useMemo(() =>
-    Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value])),
+    Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])),
     [activeDiscounts]
   )
 

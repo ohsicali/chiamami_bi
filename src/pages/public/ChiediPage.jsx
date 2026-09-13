@@ -718,7 +718,7 @@ function ChatGatePreview() {
         <div className="cp-bubble cp-bi">
           <p>
             Per una cena giapponese a Vanchiglia ti mando da Bomaki Murazzi:
-            aperto fino alle 23:30, sushi fusion, e con il sconto del Bi Club
+            aperto fino alle 23:30, sushi fusion, e con lo sconto del Bi Club
             paghi meno. Se vuoi qualcosa di più tranquillo, dimmelo.
           </p>
         </div>

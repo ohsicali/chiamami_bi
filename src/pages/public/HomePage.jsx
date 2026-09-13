@@ -82,7 +82,7 @@ function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, o
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               loading={isAboveFold ? 'eager' : 'lazy'}
-              fetchpriority={isAboveFold ? 'high' : 'auto'}
+              fetchPriority={isAboveFold ? 'high' : 'auto'}
               decoding="async"
             />
           ) : (

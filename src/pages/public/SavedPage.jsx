@@ -176,7 +176,9 @@ export default function SavedPage() {
     return list
   }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name, activeListId, savedLists])
 
-  if (!authLoading && !user) return <Navigate to="/login" replace />
+  // `state` anche qui: ci si arriva pure da un link diretto o da un segnalibro,
+  // e la pagina di accesso deve dire perché e riportare indietro dopo.
+  if (!authLoading && !user) return <Navigate to="/login" replace state={{ returnTo: '/saved', reason: 'saved', mode: 'register' }} />
   if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopSavedPage /></Suspense>
 
   const handleClick = (restaurant) => {

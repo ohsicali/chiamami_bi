@@ -86,7 +86,7 @@ function RestaurantCard({
   // skeleton + fallback emoji da SmartImage.
   if (variant === 'tile') {
     return (
-      <motion.button
+      <motion.div
         className="w-full text-left relative"
         style={{
           background: 'var(--color-card)',
@@ -104,8 +104,17 @@ function RestaurantCard({
         custom={index}
         whileTap={{ transform: 'scale(0.98)' }}
         transition={SPRING_SNAP}
-        onClick={() => onClick?.(restaurant)}
       >
+        {/* Il bottone che apre la scheda copre la card senza contenerla: il
+            cuore è un secondo bottone, e un <button> dentro un altro è HTML
+            non valido (in lettura vocale diventa un comando solo). */}
+        <button
+          type="button"
+          className="rcard-hit"
+          aria-label={`Apri la scheda di ${restaurant.name}`}
+          onClick={() => onClick?.(restaurant)}
+          style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+        />
         <SmartImage
           src={photoUrl}
           alt={restaurant.name}
@@ -121,7 +130,7 @@ function RestaurantCard({
           {onSaveToggle && (
             <div
               className="absolute"
-              style={{ top: 8, right: 8, zIndex: 2 }}
+              style={{ top: 8, right: 8, zIndex: 3 }}
               onClick={(e) => { e.stopPropagation(); onSaveToggle() }}
             >
               <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
@@ -182,7 +191,7 @@ function RestaurantCard({
             </div>
           )}
         </div>
-      </motion.button>
+      </motion.div>
     )
   }
 
@@ -217,7 +226,7 @@ function RestaurantCard({
               sizes={photoSizes}
               alt={restaurant.name}
               loading={isAboveFold ? 'eager' : 'lazy'}
-              fetchpriority={index === 0 ? 'high' : 'auto'}
+              fetchPriority={index === 0 ? 'high' : 'auto'}
               decoding="async"
               onLoad={() => setImageLoaded(true)}
               onError={() => setImgError(true)}
@@ -338,7 +347,7 @@ function RestaurantCard({
 
   // DEFAULT VARIANT — horizontal compact card
   return (
-    <motion.button
+    <motion.div
       className="rcard w-full text-left relative rounded-[18px] md:rounded-[14px]"
       style={{
         background: '#fff',
@@ -352,8 +361,18 @@ function RestaurantCard({
       custom={index}
       whileTap={{ transform: 'scale(0.98)' }}
       transition={SPRING_SNAP}
-      onClick={() => onClick?.(restaurant)}
     >
+      {/* Il bottone che apre la scheda copre la card senza contenerla: il
+          cuore è un secondo bottone, e un <button> dentro un altro è HTML
+          non valido (in lettura vocale diventa un comando solo). */}
+      <button
+        type="button"
+        className="rcard-hit"
+        aria-label={`Apri la scheda di ${restaurant.name}`}
+        onClick={() => onClick?.(restaurant)}
+        style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+      />
+
       {/* Discount strip on top (verde sfumato) */}
       {hasDiscount && discountTitle && (
         <div className="rcard-discount-strip" style={{
@@ -385,7 +404,7 @@ function RestaurantCard({
             sizes={photoSizes}
             alt={restaurant.name}
             loading={isAboveFold ? 'eager' : 'lazy'}
-            fetchpriority={index === 0 ? 'high' : 'auto'}
+            fetchPriority={index === 0 ? 'high' : 'auto'}
             decoding="async"
             onLoad={() => setImageLoaded(true)}
             onError={() => setImgError(true)}
@@ -479,12 +498,12 @@ function RestaurantCard({
 
       {/* Save heart */}
       {onSaveToggle && (
-        <div className="absolute bottom-3.5 right-3.5">
+        <div className="absolute bottom-3.5 right-3.5" style={{ zIndex: 3 }}>
           <SaveButton saved={saved} onClick={onSaveToggle} size="sm" />
         </div>
       )}
       </div>
-    </motion.button>
+    </motion.div>
   )
 }
 

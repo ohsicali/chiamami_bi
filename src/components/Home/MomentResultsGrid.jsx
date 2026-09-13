@@ -303,7 +303,7 @@ function Lcard({ r, index = 0, reduce = false, compact = false, hoursLabel, onCl
             sizes="(max-width: 768px) 72vw, 320px"
             alt=""
             loading={isAboveFold ? 'eager' : 'lazy'}
-            fetchpriority={isAboveFold ? 'high' : 'auto'}
+            fetchPriority={isAboveFold ? 'high' : 'auto'}
             decoding="async"
             onError={(e) => { e.currentTarget.style.display = 'none' }}
             style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}

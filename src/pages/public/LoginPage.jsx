@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { authErrorMessage } from '../../lib/utils/authErrors'
 import { TR_REVEAL } from '../../lib/motion'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -32,6 +33,23 @@ const inputStyle = {
   transition: 'border-color 0.2s',
 }
 
+/**
+ * Le porte che portano qui senza che l'utente abbia chiesto di accedere.
+ * La chiave arriva in `location.state.reason` da chi fa il redirect.
+ */
+const GATE_REASONS = {
+  saved: {
+    title: 'I tuoi salvati',
+    login: 'Accedi e ritrovi i posti che hai salvato, su qualsiasi telefono.',
+    register: 'Con un account i posti che salvi restano tuoi e te li ritrovi ovunque. Gratis, 20 secondi.',
+  },
+  profile: {
+    title: 'Il tuo profilo',
+    login: 'Accedi per vedere il tuo profilo, gli sconti presi e le tue liste.',
+    register: 'Il profilo tiene insieme gli sconti che prendi e le liste che salvi. Gratis, 20 secondi.',
+  },
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -42,6 +60,13 @@ export default function LoginPage() {
   // mantenendo il messaggio iniziale.
   const returnTo = location.state?.returnTo || '/'
   const pendingInitialMessage = location.state?.initialMessage || null
+
+  // Perché sei finito qui. Chi arriva dalla tab bar ("Salvati", "Profilo")
+  // non ha chiesto di accedere: ha toccato una sezione e si è ritrovato
+  // davanti a un modulo. Senza una riga che lo dica, la pagina sembra un
+  // muro comparso dal nulla — e per uno che un account non l'ha mai avuto,
+  // "Bentornato" è pure sbagliato.
+  const gateReason = GATE_REASONS[location.state?.reason] || null
   const redirectAfterAuth = () => {
     if (returnTo && returnTo !== '/') {
       navigate(returnTo, { replace: true, state: pendingInitialMessage ? { initialMessage: pendingInitialMessage } : undefined })
@@ -76,6 +101,17 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setSuccess('')
+
+    // Il controllo lo facciamo noi invece di lasciare `required` al browser:
+    // il fumetto nativo parla la lingua del browser, non quella del sito, e
+    // su un telefono in inglese usciva "Please check this box if you want to
+    // proceed" in mezzo a una pagina italiana — per giunta sopra il bottone,
+    // che copriva.
+    if (mode === 'register' && !acceptTerms) {
+      setError('Per creare l\u2019account devi accettare la Privacy Policy e i Termini di Servizio.')
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -167,11 +203,7 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      setError(err.message === 'Invalid login credentials'
-        ? 'Email o password non corretti'
-        : err.message === 'For security purposes, you can only request this once every 60 seconds'
-        ? 'Per sicurezza, puoi richiedere il reset solo ogni 60 secondi'
-        : err.message || 'Si è verificato un errore')
+      setError(authErrorMessage(err))
     } finally {
       setSubmitting(false)
     }
@@ -182,7 +214,7 @@ export default function LoginPage() {
     try {
       await signInWithGoogle()
     } catch (err) {
-      setError(err.message || 'Errore con Google')
+      setError(authErrorMessage(err, 'Non siamo riusciti a completare l\u2019accesso con Google. Riprova.'))
     }
   }
 
@@ -191,7 +223,7 @@ export default function LoginPage() {
     : mode === 'recovery_forgot' ? 'Recupero account'
     : mode === 'recovery_otp' ? 'Inserisci il codice'
     : mode === 'recovery_newpwd' ? 'Nuova password'
-    : mode === 'login' ? 'Ciao di nuovo!'
+    : mode === 'login' ? (gateReason?.title || 'Ciao di nuovo!')
     : 'Unisciti a noi'
 
   const subtitleText =
@@ -199,8 +231,8 @@ export default function LoginPage() {
     : mode === 'recovery_forgot' ? 'Ti invieremo un codice sull\u2019email di recupero'
     : mode === 'recovery_otp' ? `Abbiamo inviato un codice a ${maskedRecovery || 'la tua email di recupero'}`
     : mode === 'recovery_newpwd' ? 'Scegli una nuova password per il tuo account'
-    : mode === 'login' ? 'Accedi per salvare i tuoi ristoranti preferiti e sbloccare gli sconti esclusivi'
-    : 'Crea un account per salvare i tuoi posti del cuore'
+    : mode === 'login' ? (gateReason?.login || 'Accedi per salvare i tuoi ristoranti preferiti e sbloccare gli sconti esclusivi')
+    : (gateReason?.register || 'Crea un account per salvare i tuoi posti del cuore')
 
   return (
     <div
@@ -676,9 +708,9 @@ export default function LoginPage() {
                       checked={acceptTerms}
                       onChange={(e) => setAcceptTerms(e.target.checked)}
                       style={{ marginTop: 3, accentColor: 'var(--color-corallo)', width: 16, height: 16, flex: '0 0 auto' }}
-                      required
+                      aria-describedby="accept-terms-label"
                     />
-                    <span style={{ fontSize: 12, color: 'var(--color-ink-70)', lineHeight: 1.45 }}>
+                    <span id="accept-terms-label" style={{ fontSize: 12, color: 'var(--color-ink-70)', lineHeight: 1.45 }}>
                       Ho letto e accetto la{' '}
                       <Link to="/privacy" style={{ color: 'var(--color-ink-70)', textDecoration: 'underline' }} target="_blank">Privacy Policy</Link>
                       {' '}e i{' '}

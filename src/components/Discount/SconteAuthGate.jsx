@@ -10,11 +10,14 @@ import { setPendingDiscountId } from '../../lib/utils/pendingDiscount'
  * sconto già preso, non ritrovarsi nel catalogo a ricominciare la ricerca.
  * (Blocco 5, terza regola trasversale.)
  */
-export default function SconteAuthGate({ pendingDiscountId, onClose }) {
+export default function SconteAuthGate({ pendingDiscountId, onClose, returnTo: returnToProp }) {
   const location = useLocation()
   // Persist across OAuth/email-OTP redirects so we can auto-claim on return.
   if (pendingDiscountId) setPendingDiscountId(pendingDiscountId)
-  const returnTo = `${location.pathname}${location.search}`
+  // Di norma si torna da dove si è partiti. Chi apre il gate dalla home passa
+  // invece `/sconti`: lo sconto si prende nel Bi Club, ed è lì che lo sconto
+  // in sospeso viene riscattato da solo al rientro.
+  const returnTo = returnToProp || `${location.pathname}${location.search}`
 
   return (
     <div

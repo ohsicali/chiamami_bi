@@ -30,8 +30,20 @@ i18n
     interpolation: {
       escapeValue: false,
     },
+    // `navigator` è fuori dall'ordine di proposito, finché il
+    // LanguageSwitcher resta disattivato.
+    //
+    // Il sito è scritto in italiano quasi ovunque nel markup; le stringhe che
+    // passano da i18n sono una minoranza. Con il rilevamento dalla lingua del
+    // browser, un torinese col telefono in inglese si ritrovava "Nearby
+    // restaurants", "Search restaurants…" e "Original content in Italian" in
+    // mezzo a una pagina per il resto tutta italiana — e senza selettore non
+    // aveva modo di tornare indietro. Meglio una lingua sola e coerente.
+    //
+    // Chi ha già una scelta salvata in localStorage la mantiene: quando il
+    // selettore tornerà attivo basterà rimettere 'navigator' qui sotto.
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'chiamamibi_lang',
     },

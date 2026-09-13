@@ -150,8 +150,12 @@ export default function MobileTabBar() {
     { key: 'home', label: 'Home', Icon: HomeIcon, active: isHome, onClick: () => navigate('/') },
     { key: 'explore', label: 'Esplora', Icon: ExploreIcon, active: isExplore, onClick: () => navigate('/esplora') },
     { key: 'deals', label: 'Club', Icon: DealsIcon, active: isDeals, badge: hasActiveDrop, onClick: () => navigate('/deals') },
-    { key: 'saved', label: 'Salvati', Icon: SavedIcon, active: isSaved, onClick: () => navigate(user ? '/saved' : '/login') },
-    { key: 'profile', label: 'Profilo', Icon: ProfileIcon, active: isProfile, onClick: () => navigate(user ? '/profile' : '/login') },
+    // Chi non è registrato tocca "Salvati" e finisce sul login: gli si dice
+    // perché (`reason`) e da dove riprendere dopo (`returnTo`), altrimenti
+    // legge "Bentornato" senza aver mai avuto un account e poi si ritrova in
+    // home invece che nella sezione che voleva aprire.
+    { key: 'saved', label: 'Salvati', Icon: SavedIcon, active: isSaved, onClick: () => (user ? navigate('/saved') : navigate('/login', { state: { returnTo: '/saved', reason: 'saved', mode: 'register' } })) },
+    { key: 'profile', label: 'Profilo', Icon: ProfileIcon, active: isProfile, onClick: () => (user ? navigate('/profile') : navigate('/login', { state: { returnTo: '/profile', reason: 'profile', mode: 'register' } })) },
   ]
 
   // Initialize liquidGL once on mount. Falls back gracefully to the CSS

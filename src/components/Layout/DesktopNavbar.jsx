@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Home', match: (p) => p === '/' },
   { to: '/esplora', label: 'Esplora', match: (p) => p === '/esplora' || p === '/list' || p.startsWith('/restaurant/') },
   { to: '/deals', label: 'Club', match: (p) => p === '/deals', hasDot: true },
-  { to: '/saved', label: 'Salvati', match: (p) => p === '/saved', requiresAuth: true },
+  { to: '/saved', label: 'Salvati', match: (p) => p === '/saved', requiresAuth: true, gateReason: 'saved' },
 ]
 
 export default function DesktopNavbar() {
@@ -107,7 +107,9 @@ export default function DesktopNavbar() {
               <button
                 key={item.to}
                 onClick={() => {
-                  if (item.requiresAuth && !user) navigate('/login')
+                  // Con `returnTo` e `reason` la pagina di accesso spiega
+                  // perché ci si è finiti e poi riporta dove si stava andando.
+                  if (item.requiresAuth && !user) navigate('/login', { state: { returnTo: item.to, reason: item.gateReason, mode: 'register' } })
                   else navigate(item.to)
                 }}
                 style={{

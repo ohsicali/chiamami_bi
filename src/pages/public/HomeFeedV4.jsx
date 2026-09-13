@@ -6,6 +6,7 @@ import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
+import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { getCurrentMoment, isOpenForMoment } from '../../lib/hours'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
@@ -369,19 +370,30 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
     // mount — due orchestrazioni JS sullo stesso pezzo di schermo, per
     // fino a 8 card in fila. `.hfv4-rise` gira sul motore nativo del
     // browser e non compete con il resto del mount.
-    <button
+    <div
       className="hfv4-rcard press hfv4-rise"
-      onClick={() => onClick?.(restaurant)}
-      style={{ flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', cursor:'pointer', padding:0, fontFamily:'inherit', '--rise-delay': `${Math.round(staggerDelay(index, STAGGER, 0.2) * 1000)}ms` }}>
+      style={{ position:'relative', flex:'0 0 72%', scrollSnapAlign:'start', background:'#fff', borderRadius:20, overflow:'hidden', border:'1px solid var(--color-ink-05)', textAlign:'left', color:'inherit', boxShadow:'0 1px 3px rgba(34,24,28,.06)', padding:0, fontFamily:'inherit', display:'flex', flexDirection:'column', '--rise-delay': `${Math.round(staggerDelay(index, STAGGER, 0.2) * 1000)}ms` }}>
+      {/* Il bottone che apre la scheda copre tutta la card ma non la
+          contiene: il cuore è un secondo bottone, e un <button> dentro un
+          altro <button> è HTML non valido — il browser in lettura lo
+          annuncia come un comando solo e React lo segnala a ogni render.
+          Steso in trasparenza sopra la card, con il cuore sopra di lui. */}
+      <button
+        type="button"
+        className="hfv4-rcard-hit"
+        aria-label={`Apri la scheda di ${restaurant.name}`}
+        onClick={() => onClick?.(restaurant)}
+        style={{ position:'absolute', inset:0, zIndex:1, background:'transparent', border:'none', padding:0, cursor:'pointer' }}
+      />
       <div style={{ position:'relative', width:'100%', aspectRatio:'16/11', background:'var(--color-ink-05)', overflow:'hidden' }}>
         {photoUrl
-          ? <img src={photoUrl} srcSet={photoSrcSet} sizes="(max-width: 768px) 72vw, 320px" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading={isAboveFold ? 'eager' : 'lazy'} fetchpriority={isAboveFold ? 'high' : 'auto'} decoding="async" />
+          ? <img src={photoUrl} srcSet={photoSrcSet} sizes="(max-width: 768px) 72vw, 320px" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} loading={isAboveFold ? 'eager' : 'lazy'} fetchPriority={isAboveFold ? 'high' : 'auto'} decoding="async" />
           : <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center', fontSize:28 }}>{cat?.emoji || '🍽️'}</div>
         }
         {discLabel && (
           <span style={{ position:'absolute', top:10, left:10, background:'linear-gradient(135deg, #A3E635, #4ADE80)', color:'#1a4731', fontSize:11, fontWeight:800, padding:'4px 9px', borderRadius:999, letterSpacing:'0.02em' }}>{discLabel}</span>
         )}
-        <div style={{ position:'absolute', top:10, right:10 }}>
+        <div style={{ position:'absolute', top:10, right:10, zIndex:2 }}>
           <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
         </div>
       </div>
@@ -406,7 +418,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           </div>
         )}
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -498,10 +510,26 @@ export default function HomeFeedV4() {
   // Il drop in home porta alla scheda del locale: da lì si sblocca, con la
   // scheda sotto agli occhi. Mandare direttamente a /sconti farebbe perdere
   // il locale, che è il motivo per cui uno clicca.
-  const goToDeal = (deal) => {
+  // La porta a vetri sulla home: si apre sopra la pagina invece di portare
+  // via, così chi decide di non registrarsi resta dov'era.
+  const [homeAuthGate, setHomeAuthGate] = useState(null) // pendingDiscountId | null
+
+  // "Scopri": la scheda del locale, dove si legge chi sono e cosa fanno.
+  const goToRestaurant = (deal) => {
     const r = deal?.restaurant || deal?.restaurants
     if (r?.slug) navigate(`/restaurant/${r.slug}`)
     else navigate('/sconti')
+  }
+
+  // "Sblocca sconto": prima faceva esattamente la stessa cosa di "Scopri" —
+  // apriva la scheda del locale. Un bottone col lucchetto che non sblocca
+  // niente è una promessa mancata, e sulla scheda poteva pure comparire un
+  // altro sconto dello stesso locale invece del drop da cui si era partiti.
+  // Da sloggati si apre la porta a vetri; da loggati si va nel Bi Club, che
+  // è dove lo sconto si prende davvero e dove esce il QR.
+  const unlockDeal = (deal) => {
+    if (!user) { setHomeAuthGate(deal?.id || null); return }
+    navigate('/sconti')
   }
 
   // Quanti locali risultano aperti nella fascia corrente: il numero che il
@@ -1359,7 +1387,7 @@ export default function HomeFeedV4() {
         </div>
 
         <div className="hfv4-band-drop">
-          <HomeDrop featured={featuredDrop} onUnlock={goToDeal} onDiscover={goToDeal} />
+          <HomeDrop featured={featuredDrop} onUnlock={unlockDeal} onDiscover={goToRestaurant} />
         </div>
       </div>
 
@@ -1371,7 +1399,7 @@ export default function HomeFeedV4() {
           ultimi aggiunti a sinistra e la lista sconti a destra. */}
       <div className="hfv4-lower">
         <div className="hfv4-lower-deals">
-          <DropOthers others={otherDeals} onOpen={goToDeal} />
+          <DropOthers others={otherDeals} onOpen={goToRestaurant} />
         </div>
 
         <div className="hfv4-lower-cats">
@@ -1435,6 +1463,14 @@ export default function HomeFeedV4() {
       <div style={{ marginTop: 'auto' }}>
         <Footer />
       </div>
+
+      {homeAuthGate !== null && (
+        <SconteAuthGate
+          pendingDiscountId={homeAuthGate}
+          returnTo="/sconti"
+          onClose={() => setHomeAuthGate(null)}
+        />
+      )}
     </div>
   )
 }

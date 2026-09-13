@@ -99,7 +99,9 @@ export default function DesktopSavedPage() {
     navigate(`/restaurant/${r.slug || slugify(r.name)}`)
   }, [navigate])
 
-  if (!authLoading && !user) return <Navigate to="/login" replace />
+  // `state` anche qui: ci si arriva pure da un link diretto o da un segnalibro,
+  // e la pagina di accesso deve dire perché e riportare indietro dopo.
+  if (!authLoading && !user) return <Navigate to="/login" replace state={{ returnTo: '/saved', reason: 'saved', mode: 'register' }} />
 
   return (
     <div style={{ minHeight: 'calc(100vh - 80px)', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
