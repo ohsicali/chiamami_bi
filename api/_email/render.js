@@ -7,7 +7,7 @@
  * con la sintesi vocale o su un orologio vede quella.
  */
 
-import { COLORS, FONT_BODY, FONT_DISPLAY, LOGO, SITE_URL, WIDTH } from './theme.js'
+import { COLORS, FONT_BODY, FONT_DISPLAY, FONT_FILES, LOGO, SITE_URL, WIDTH } from './theme.js'
 import { esc } from './blocks.js'
 
 /**
@@ -93,7 +93,15 @@ export function renderEmail({ preheader, blocks, tone = 'coral', unsubscribeUrl,
 <![endif]-->
 <style>
   /* Gmail taglia questo blocco quando si inoltra un messaggio: qui dentro
-     ci va solo quello che si può perdere senza danni. */
+     ci va solo quello che si può perdere senza danni — e Poppins lo è:
+     dove non arriva resta il sans di sistema della pila. */
+${FONT_FILES.map((w) => `  @font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: ${w};
+    font-display: swap;
+    src: url('${SITE_URL}/fonts/poppins-${w}.woff2') format('woff2');
+  }`).join('\n')}
   body { margin:0 !important; padding:0 !important; width:100% !important; }
   table { border-collapse:collapse !important; }
   img { -ms-interpolation-mode:bicubic; }
