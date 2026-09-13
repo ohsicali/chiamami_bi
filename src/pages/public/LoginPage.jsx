@@ -87,6 +87,10 @@ export default function LoginPage() {
   const [recoveryOtp, setRecoveryOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  // Conferma password della registrazione. Sta a parte da `confirmPassword`,
+  // che appartiene al recupero: due percorsi diversi che non devono passarsi
+  // valori addosso quando si cambia schermata.
+  const [registerConfirm, setRegisterConfirm] = useState('')
   const [maskedRecovery, setMaskedRecovery] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
   const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
@@ -109,6 +113,11 @@ export default function LoginPage() {
     // che copriva.
     if (mode === 'register' && !acceptTerms) {
       setError('Per creare l\u2019account devi accettare la Privacy Policy e i Termini di Servizio.')
+      return
+    }
+
+    if (mode === 'register' && password !== registerConfirm) {
+      setError('Le due password non coincidono. Ricontrollale.')
       return
     }
 
@@ -586,6 +595,54 @@ export default function LoginPage() {
                       </button>
                     </div>
                   )}
+                  {/* Conferma password — compare solo quando la prima è stata
+                      scritta: chiedere due volte una cosa non ancora iniziata
+                      è solo un campo vuoto in più da guardare. */}
+                  <AnimatePresence>
+                    {mode === 'register' && password.length > 0 && (
+                      <motion.div
+                        key="password-confirm"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <input
+                          type="password"
+                          placeholder="Ripeti la password"
+                          value={registerConfirm}
+                          onChange={(e) => setRegisterConfirm(e.target.value)}
+                          aria-label="Ripeti la password"
+                          aria-invalid={registerConfirm.length > 0 && registerConfirm !== password}
+                          style={{
+                            ...inputStyle,
+                            marginBottom: 6,
+                            // Il bordo si tinge solo quando c'è qualcosa da
+                            // dire: mentre si scrive non deve diventare rosso
+                            // a ogni lettera prima che la parola sia finita.
+                            ...(registerConfirm.length > 0 && registerConfirm !== password
+                              ? { borderColor: 'var(--color-corallo)' }
+                              : {}),
+                          }}
+                        />
+                        <div
+                          aria-live="polite"
+                          style={{
+                            minHeight: 18, marginBottom: 4, fontSize: 12.5, fontWeight: 600,
+                            color: registerConfirm === password
+                              ? 'var(--color-verde, #3F9D63)'
+                              : 'var(--color-corallo)',
+                          }}
+                        >
+                          {registerConfirm.length === 0
+                            ? ''
+                            : registerConfirm === password
+                              ? '\u2713 Le password coincidono'
+                              : 'Le password non coincidono'}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   {mode === 'register' && <div style={{ marginBottom: 10 }} />}
                 </motion.div>
               )}
