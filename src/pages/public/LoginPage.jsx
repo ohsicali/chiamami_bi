@@ -453,7 +453,7 @@ export default function LoginPage() {
                 {[
                   'Sconti veri nei 70+ locali che ho provato a Torino',
                   'Drop settimanali a posti limitati (scadono)',
-                  'Liste salvate con le tue note personali',
+                  'Liste tue per organizzare i posti che salvi',
                 ].map((t) => (
                   <li key={t} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13, color: 'var(--color-ink)', lineHeight: 1.45 }}>
                     <span style={{ color: 'var(--color-corallo)', fontWeight: 900, flex: '0 0 auto' }}>✓</span>

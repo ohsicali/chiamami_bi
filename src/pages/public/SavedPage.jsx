@@ -12,7 +12,6 @@ import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SaveButton from '../../components/Restaurant/SaveButton'
 import SavedListsStrip from '../../components/Restaurant/SavedListsStrip'
-import SavedNote from '../../components/Restaurant/SavedNote'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
@@ -30,7 +29,7 @@ const DesktopSavedPage = lazy(() => import('./DesktopSavedPage'))
 export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const { savedIds, isSaved, toggleSave, notes, setNote } = useSavedRestaurants(user?.id)
+  const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
   const { lists: savedLists, renameList, deleteList } = useSavedLists(user?.id)
   const [activeListId, setActiveListId] = useState(null)
   const [restaurants, setRestaurants] = useState([])
@@ -422,26 +421,18 @@ export default function SavedPage() {
               const renderSvCard = (r, i) => {
                 const discount = activeDiscounts[r.id]
                 return (
-                  // La nota sta sotto la card, nella stessa cella: si legge
-                  // insieme al nome invece di doverla andare a cercare.
-                  <div key={r.id} style={{ display: 'flex', flexDirection: 'column' }}>
-                    <RestaurantCard
-                      variant="tile"
-                      dense
-                      restaurant={r}
-                      index={i}
-                      saved
-                      hasDiscount={!!discount}
-                      discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
-                      onSaveToggle={() => handleSave(r.id)}
-                      onClick={() => handleClick(r)}
-                    />
-                    <SavedNote
-                      compact
-                      note={notes[r.id]}
-                      onSave={(text) => setNote(r.id, text)}
-                    />
-                  </div>
+                  <RestaurantCard
+                    key={r.id}
+                    variant="tile"
+                    dense
+                    restaurant={r}
+                    index={i}
+                    saved
+                    hasDiscount={!!discount}
+                    discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
+                    onSaveToggle={() => handleSave(r.id)}
+                    onClick={() => handleClick(r)}
+                  />
                 )
               }
               const sortLabel = sortMode === 'recent' ? 'Recente' : sortMode === 'name' ? 'Nome' : 'Vicino'
@@ -480,7 +471,7 @@ export default function SavedPage() {
                   </div>
 
                   {/* Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     {displayList.map(renderSvCard)}
                   </div>
                 </>

@@ -38,7 +38,7 @@ export function welcomeEmail({ name, unsubscribeUrl }) {
         h2('Cosa puoi fare'),
         checklist([
           'Prendere uno sconto e mostrarlo al locale: niente da stampare, basta il telefono.',
-          'Salvare i posti che ti piacciono in liste tue, con le tue note.',
+          'Salvare i posti che ti piacciono e organizzarli in liste tue.',
           'Chiedermi un consiglio a parole: ti dico dove andare stasera.',
         ]),
         button('Guarda gli sconti attivi', `${SITE_URL}/sconti`, { bg: COLORS.corallo }),
@@ -53,7 +53,7 @@ export function welcomeEmail({ name, unsubscribeUrl }) {
         '',
         'Cosa puoi fare:',
         '- Prendere uno sconto e mostrarlo al locale, direttamente dal telefono',
-        '- Salvare i posti che ti piacciono in liste tue, con le tue note',
+        '- Salvare i posti che ti piacciono e organizzarli in liste tue',
         '- Chiedermi un consiglio a parole',
         '',
         `Gli sconti attivi: ${SITE_URL}/sconti`,
