@@ -17,6 +17,19 @@ import { supabase, isSupabaseConfigured } from '../supabase'
  * l'utente non capisce perché un locale ci sia finito.
  */
 
+/**
+ * Le emoji fra cui scegliere quando si fa una lista propria.
+ *
+ * Sono poche e scelte a mano: un selettore con tutte le emoji del mondo
+ * trasforma "dai un nome alla lista" in una ricerca, e chi stava salvando un
+ * ristorante si ritrova a sfogliare bandiere. Prima quelle che c'entrano col
+ * mangiare e con le occasioni, poi le generiche.
+ */
+export const LIST_EMOJI = [
+  '📁', '✨', '💕', '👨‍👩‍👧', '🍕', '🍣', '🍝', '🍷',
+  '☕️', '🍸', '🥐', '🌱', '🎂', '🌞', '🌙', '⭐️',
+]
+
 /** I tre suggerimenti mostrati fin dal primo salvataggio. */
 export const DEFAULT_LISTS = [
   { name: 'Da provare', emoji: '✨' },
@@ -110,6 +123,46 @@ export function useSavedLists(userId) {
     return !isIn
   }, [userId, lists, ensureList, load])
 
+  /**
+   * Cambia nome e/o emoji di una lista esistente.
+   *
+   * Il vincolo di unicità su (user_id, name) fa il lavoro: due liste con lo
+   * stesso nome verrebbero rifiutate dal database, e qui si restituisce un
+   * messaggio invece di lasciare l'utente davanti a un errore muto.
+   */
+  const renameList = useCallback(async (listId, { name, emoji }) => {
+    const clean = String(name || '').trim()
+    if (!userId || !listId || !clean) return { ok: false, error: 'Serve un nome.' }
+    if (lists.some((l) => l.id !== listId && l.name.toLowerCase() === clean.toLowerCase())) {
+      return { ok: false, error: 'Hai già una lista con questo nome.' }
+    }
+    const { error } = await supabase
+      .from('saved_lists')
+      .update({ name: clean, emoji: emoji || null })
+      .eq('id', listId)
+      .eq('user_id', userId)
+    if (error) return { ok: false, error: 'Non sono riuscito a salvare.' }
+    await load()
+    return { ok: true }
+  }, [userId, lists, load])
+
+  /**
+   * Cancella la lista. I locali dentro NON si perdono: restano salvati, è
+   * l'etichetta a sparire. `ON DELETE CASCADE` su saved_list_items toglie
+   * solo le righe di appartenenza, non i salvataggi né le note.
+   */
+  const deleteList = useCallback(async (listId) => {
+    if (!userId || !listId) return false
+    const { error } = await supabase
+      .from('saved_lists')
+      .delete()
+      .eq('id', listId)
+      .eq('user_id', userId)
+    if (error) return false
+    await load()
+    return true
+  }, [userId, load])
+
   const createList = useCallback(async (name, emoji = '📁') => {
     const clean = String(name || '').trim()
     if (!clean || !userId) return null
@@ -118,5 +171,5 @@ export function useSavedLists(userId) {
     return id
   }, [userId, ensureList, load])
 
-  return { lists, suggestions, loading, toggleInList, createList, reload: load }
+  return { lists, suggestions, loading, toggleInList, createList, renameList, deleteList, reload: load }
 }

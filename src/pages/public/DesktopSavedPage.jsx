@@ -11,13 +11,19 @@ import { getDistance } from '../../lib/utils/distance'
 import { supabase } from '../../lib/supabase'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import SavedListsStrip from '../../components/Restaurant/SavedListsStrip'
+import SavedNote from '../../components/Restaurant/SavedNote'
+import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { slugify } from '../../lib/utils/slug'
 
 
 export default function DesktopSavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
+  const { savedIds, toggleSave, notes, setNote } = useSavedRestaurants(user?.id)
+  // Le liste esistevano solo sul telefono: chi le creava lì, da computer non
+  // le ritrovava più. Sono le stesse righe, lo stesso componente.
+  const { lists: savedLists, renameList, deleteList } = useSavedLists(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
@@ -26,6 +32,7 @@ export default function DesktopSavedPage() {
   const [filters, setFilters] = useState({ category: null, priceRange: null, moment: null, sortBy: null })
   const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
   const [showDealsOnly, setShowDealsOnly] = useState(false)
+  const [activeListId, setActiveListId] = useState(null)
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountLabelMap = Object.fromEntries(
@@ -54,6 +61,12 @@ export default function DesktopSavedPage() {
 
   const displayedRestaurants = useMemo(() => {
     let list = [...restaurants]
+
+    // La lista attiva filtra l'elenco: è un'etichetta, non una cartella.
+    if (activeListId) {
+      const ids = new Set(savedLists.find((l) => l.id === activeListId)?.restaurantIds || [])
+      list = list.filter((r) => ids.has(r.id))
+    }
 
     if (filters.category) {
       const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
@@ -93,7 +106,7 @@ export default function DesktopSavedPage() {
     }
 
     return list
-  }, [restaurants, filters, extraFilters, showDealsOnly, position, discountRestaurantIds])
+  }, [restaurants, filters, extraFilters, showDealsOnly, position, discountRestaurantIds, activeListId, savedLists])
 
   const handleRestaurantClick = useCallback((r) => {
     navigate(`/restaurant/${r.slug || slugify(r.name)}`)
@@ -121,6 +134,18 @@ export default function DesktopSavedPage() {
             {restaurants.length} {restaurants.length === 1 ? 'locale salvato' : 'locali salvati'}
           </div>
         </div>
+
+        {restaurants.length > 0 && (
+          <SavedListsStrip
+            lists={savedLists}
+            restaurants={restaurants}
+            activeListId={activeListId}
+            onSelect={setActiveListId}
+            onRename={renameList}
+            onDelete={deleteList}
+            tileWidth={132}
+          />
+        )}
 
         {/* Filter bar — same as esplora */}
         {restaurants.length > 0 && (
@@ -174,20 +199,22 @@ export default function DesktopSavedPage() {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, alignItems: 'start' }}>
             {displayedRestaurants.map((r, i) => (
-              <RestaurantCard
-                key={r.id}
-                variant="tile"
-                restaurant={r}
-                index={i}
-                userPosition={position}
-                saved={savedIds.has(r.id)}
-                hasDiscount={discountRestaurantIds.has(r.id)}
-                discountTitle={discountLabelMap[r.id]}
-                onSaveToggle={() => toggleSave(r.id)}
-                onClick={handleRestaurantClick}
-              />
+              <div key={r.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                <RestaurantCard
+                  variant="tile"
+                  restaurant={r}
+                  index={i}
+                  userPosition={position}
+                  saved={savedIds.has(r.id)}
+                  hasDiscount={discountRestaurantIds.has(r.id)}
+                  discountTitle={discountLabelMap[r.id]}
+                  onSaveToggle={() => toggleSave(r.id)}
+                  onClick={handleRestaurantClick}
+                />
+                <SavedNote note={notes[r.id]} onSave={(text) => setNote(r.id, text)} />
+              </div>
             ))}
           </div>
         )}

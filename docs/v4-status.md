@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-08
+Ultima modifica: 2026-09-13
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -30,7 +30,7 @@ dove siamo. Aggiorna a ogni step importante.
 | 3 — Home desktop | ✅ | Banda momento+drop, poi categorie, poi due colonne. |
 | 4 — Bi Club adattivo | ✅ | 1/2/3+ drop, paginazione da 6, mai carosello su mobile, convenzioni come righe. |
 | 5 — Gating registrazione | ✅ | Club sfocato col conteggio vero, sconto singolo interamente visibile, gate di Chiedi a Bi prima di scrivere. Corretto `returnTo` in 4 punti. |
-| 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. **Non provato loggato.** |
+| 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items` + colonna `note` su `saved_restaurants`. Striscia liste condivisa fra telefono e desktop (`src/components/Restaurant/SavedListsStrip.jsx`), rinomina/elimina, scelta emoji, note personali (`SavedNote.jsx`). **Non provato loggato.** |
 | 7 — Chiedi a Bi | ⚠️ Parziale | Fatti i bug: troncamento `max_tokens` e stato dinamico in header. **Non fatto**: redesign schermata iniziale mobile, card locali dentro le risposte, chip di continuazione. |
 | 8 — Admin | ✅ | Riga sconto responsive 768-1100px, barra avviso sconti irraggiungibili, KPI con denominatore, niente flash di zeri. **Non verificato a schermo** (serve login admin). |
 | 9 — Ristoratore | ✅ | Condizione e ora nella schermata verde, saluto col nome, indirizzo ripulito, contatto non più attaccato. Il resto risultava già fatto da PR23. **Non verificato a schermo** (serve PIN). |
@@ -48,6 +48,10 @@ dove siamo. Aggiorna a ogni step importante.
 
 - `supabase/saved-lists-2026-09-08.sql` ✅ eseguito via connettore Supabase il
   2026-09-08 (tabelle `saved_lists`, `saved_list_items`, RLS + grant).
+- `supabase/saved-notes-2026-09-13.sql` ✅ eseguito via connettore Supabase il
+  2026-09-13 (colonna `note` su `saved_restaurants` con CHECK a 600 caratteri,
+  policy "Users manage own saves" rifatta con `WITH CHECK`). Il limite dei 600
+  è verificato contro il file SQL da `tests/saved-notes.test.mjs`.
 
 ## Env vars Vercel — già configurate
 

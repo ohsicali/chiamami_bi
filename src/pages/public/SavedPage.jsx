@@ -11,6 +11,8 @@ import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SaveButton from '../../components/Restaurant/SaveButton'
+import SavedListsStrip from '../../components/Restaurant/SavedListsStrip'
+import SavedNote from '../../components/Restaurant/SavedNote'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
@@ -28,8 +30,8 @@ const DesktopSavedPage = lazy(() => import('./DesktopSavedPage'))
 export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
-  const { lists: savedLists } = useSavedLists(user?.id)
+  const { savedIds, isSaved, toggleSave, notes, setNote } = useSavedRestaurants(user?.id)
+  const { lists: savedLists, renameList, deleteList } = useSavedLists(user?.id)
   const [activeListId, setActiveListId] = useState(null)
   const [restaurants, setRestaurants] = useState([])
   const [activeDiscounts, setActiveDiscounts] = useState({})
@@ -341,6 +343,8 @@ export default function SavedPage() {
           restaurants={restaurants}
           activeListId={activeListId}
           onSelect={setActiveListId}
+          onRename={renameList}
+          onDelete={deleteList}
         />
         {loading ? (
           <div className="flex flex-col gap-3">
@@ -418,18 +422,26 @@ export default function SavedPage() {
               const renderSvCard = (r, i) => {
                 const discount = activeDiscounts[r.id]
                 return (
-                  <RestaurantCard
-                    key={r.id}
-                    variant="tile"
-                    dense
-                    restaurant={r}
-                    index={i}
-                    saved
-                    hasDiscount={!!discount}
-                    discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
-                    onSaveToggle={() => handleSave(r.id)}
-                    onClick={() => handleClick(r)}
-                  />
+                  // La nota sta sotto la card, nella stessa cella: si legge
+                  // insieme al nome invece di doverla andare a cercare.
+                  <div key={r.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <RestaurantCard
+                      variant="tile"
+                      dense
+                      restaurant={r}
+                      index={i}
+                      saved
+                      hasDiscount={!!discount}
+                      discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
+                      onSaveToggle={() => handleSave(r.id)}
+                      onClick={() => handleClick(r)}
+                    />
+                    <SavedNote
+                      compact
+                      note={notes[r.id]}
+                      onSave={(text) => setNote(r.id, text)}
+                    />
+                  </div>
                 )
               }
               const sortLabel = sortMode === 'recent' ? 'Recente' : sortMode === 'name' ? 'Nome' : 'Vicino'
@@ -468,7 +480,7 @@ export default function SavedPage() {
                   </div>
 
                   {/* Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'start' }}>
                     {displayList.map(renderSvCard)}
                   </div>
                 </>
@@ -571,84 +583,6 @@ export default function SavedPage() {
       <Footer />
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
-    </div>
-  )
-}
-
-/* ============================================================================
-   BLOCCO 6 — la striscia delle liste sopra i salvati.
-
-   La copertina è automatica: la foto del primo locale della lista. Nessuna
-   scelta da fare — chiedere di scegliere una copertina è una decisione in più
-   per salvare un ristorante.
-
-   Le liste filtrano l'elenco sotto, non lo sostituiscono: ritoccando la lista
-   attiva si torna a vedere tutto. Se non ci sono liste la striscia non
-   compare affatto, invece di mostrare cartelle vuote.
-   ========================================================================= */
-function SavedListsStrip({ lists, restaurants, activeListId, onSelect }) {
-  if (!lists || lists.length === 0) return null
-  const byId = new Map((restaurants || []).map((r) => [r.id, r]))
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 10,
-        overflowX: 'auto',
-        paddingBottom: 14,
-        scrollbarWidth: 'none',
-      }}
-    >
-      {lists.map((l) => {
-        const first = (l.restaurantIds || []).map((id) => byId.get(id)).find(Boolean)
-        const photoRaw = first?.photos?.[0]?.thumb_url || first?.photos?.[0]?.photo_url
-        const cover = proxyImg(photoRaw, { w: 300 })
-        const isActive = activeListId === l.id
-        return (
-          <button
-            key={l.id}
-            type="button"
-            onClick={() => onSelect(isActive ? null : l.id)}
-            style={{
-              flex: '0 0 auto',
-              width: 116,
-              border: `2px solid ${isActive ? 'var(--color-corallo)' : 'transparent'}`,
-              borderRadius: 16,
-              padding: 0,
-              background: 'transparent',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-            aria-pressed={isActive}
-          >
-            <div
-              style={{
-                width: '100%',
-                height: 78,
-                borderRadius: 14,
-                overflow: 'hidden',
-                background: 'linear-gradient(135deg, #E8CFA8 0%, rgba(34,24,28,.18) 100%)',
-                display: 'grid',
-                placeItems: 'center',
-                fontSize: 26,
-              }}
-            >
-              {cover
-                ? <img src={cover} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span aria-hidden="true">{l.emoji || '📁'}</span>}
-            </div>
-            <div style={{ padding: '6px 4px 0' }}>
-              <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {l.emoji ? `${l.emoji} ` : ''}{l.name}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 600 }}>
-                {(l.restaurantIds || []).length}
-              </div>
-            </div>
-          </button>
-        )
-      })}
     </div>
   )
 }

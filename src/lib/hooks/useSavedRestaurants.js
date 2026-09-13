@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
+import { normalizeNote, noteForDb } from '../utils/savedNote'
 
 const LS_KEY = 'chiamamibi_saved'
 
@@ -18,6 +19,10 @@ function persistLocalSaved(userId, ids) {
 
 export function useSavedRestaurants(userId) {
   const [savedIds, setSavedIds] = useState(() => userId ? loadLocalSaved(userId) : new Set())
+  // La nota personale, per locale. Sta qui e non in un hook a parte perché
+  // arriva dalla stessa riga di `saved_restaurants`: separarla vorrebbe dire
+  // due letture per lo stesso dato.
+  const [notes, setNotes] = useState({})
   const [loading, setLoading] = useState(false)
 
   // Fetch saved restaurant IDs for the user
@@ -36,13 +41,16 @@ export function useSavedRestaurants(userId) {
     setLoading(true)
     supabase
       .from('saved_restaurants')
-      .select('restaurant_id')
+      .select('restaurant_id, note')
       .eq('user_id', userId)
       .then(({ data }) => {
         if (data && data.length > 0) {
           const ids = new Set(data.map((r) => r.restaurant_id))
           setSavedIds(ids)
           persistLocalSaved(userId, ids)
+          setNotes(Object.fromEntries(
+            data.filter((r) => r.note).map((r) => [r.restaurant_id, r.note])
+          ))
         }
         setLoading(false)
       })
@@ -86,10 +94,49 @@ export function useSavedRestaurants(userId) {
         }
       }
 
+      // Togliendo il cuore se ne va anche la nota: la riga non c'è più, e
+      // lasciarla nello stato farebbe ricomparire un pensiero vecchio se il
+      // locale viene risalvato più avanti.
+      if (currently) {
+        setNotes((prev) => {
+          if (!(restaurantId in prev)) return prev
+          const next = { ...prev }
+          delete next[restaurantId]
+          return next
+        })
+      }
+
       return true
     },
     [userId, savedIds]
   )
 
-  return { savedIds, isSaved, toggleSave, loading }
+  /**
+   * Scrive (o cancella, con stringa vuota) la nota su un locale salvato.
+   *
+   * Aggiorna prima lo stato e poi il database: chi scrive vede la propria
+   * frase restare lì mentre la rete fa il suo. Se la riga non c'è ancora
+   * perché il salvataggio è solo locale, l'update non trova niente e la nota
+   * resta sullo schermo ma non viene conservata — è il caso raro di chi
+   * salva e scrive nello stesso istante con la rete che non risponde.
+   */
+  const setNote = useCallback(async (restaurantId, text) => {
+    if (!userId || !restaurantId) return false
+    const clean = normalizeNote(text)
+    setNotes((prev) => {
+      const next = { ...prev }
+      if (clean) next[restaurantId] = clean
+      else delete next[restaurantId]
+      return next
+    })
+    if (!isSupabaseConfigured()) return true
+    const { error } = await supabase
+      .from('saved_restaurants')
+      .update({ note: noteForDb(text) })
+      .eq('user_id', userId)
+      .eq('restaurant_id', restaurantId)
+    return !error
+  }, [userId])
+
+  return { savedIds, isSaved, toggleSave, loading, notes, setNote }
 }

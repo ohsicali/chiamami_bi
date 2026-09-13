@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSavedLists } from '../../lib/hooks/useSavedLists'
+import { EmojiPicker } from './SavedListsStrip'
 import './SaveToListSheet.css'
 
 /**
@@ -17,6 +18,9 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
   const { lists, suggestions, toggleInList, createList } = useSavedLists(userId)
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
+  // Le liste pronte hanno un'emoji vera e quelle create finivano tutte con la
+  // cartellina: nella striscia si distinguevano solo leggendo il nome.
+  const [newEmoji, setNewEmoji] = useState('📁')
   const [busy, setBusy] = useState(null)
 
   if (!restaurant) return null
@@ -33,9 +37,10 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
     const name = newName.trim()
     if (!name) return
     setBusy('new')
-    const id = await createList(name)
-    if (id) await toggleInList({ id, name }, restaurant.id)
+    const id = await createList(name, newEmoji)
+    if (id) await toggleInList({ id, name, emoji: newEmoji }, restaurant.id)
     setNewName('')
+    setNewEmoji('📁')
     setCreating(false)
     setBusy(null)
   }
@@ -73,16 +78,19 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
           })}
 
           {creating ? (
-            <form className="stl-new" onSubmit={handleCreate}>
-              <input
-                autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Nome della lista"
-                maxLength={40}
-                aria-label="Nome della nuova lista"
-              />
-              <button type="submit" disabled={!newName.trim() || busy === 'new'}>Crea</button>
+            <form className="stl-new-form" onSubmit={handleCreate}>
+              <div className="stl-new">
+                <input
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Nome della lista"
+                  maxLength={40}
+                  aria-label="Nome della nuova lista"
+                />
+                <button type="submit" disabled={!newName.trim() || busy === 'new'}>Crea</button>
+              </div>
+              <EmojiPicker value={newEmoji} onChange={setNewEmoji} />
             </form>
           ) : (
             <button type="button" className="stl-item stl-add" onClick={() => setCreating(true)}>
