@@ -520,6 +520,9 @@ export default function DiscountManager() {
   // L'esito dell'annuncio partito da solo al salvataggio: si vede in un
   // avviso che sparisce, senza fermare chi sta lavorando.
   const [autoNotice, setAutoNotice] = useState(null)
+  // Banner pubblicitari che mostrano uno sconto: { [discount_id]: [id, ...] }.
+  // Servono in fase di cancellazione — vedi `handleDelete`.
+  const [adsByDiscount, setAdsByDiscount] = useState({})
 
   const [form, setForm] = useState(EMPTY_FORM)
 
@@ -551,7 +554,8 @@ export default function DiscountManager() {
       supabase.from('restaurants').select('id, name, verify_pin, restaurant_photos(photo_url)').order('name'),
       supabase.from('discount_redemptions').select('discount_id, status'),
       supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
-    ]).then(([discRes, restRes, redRes, partRes]) => {
+      supabase.from('sponsored_placements').select('id, discount_id').not('discount_id', 'is', null),
+    ]).then(([discRes, restRes, redRes, partRes, adsRes]) => {
       const genMap = {}
       const usedMap = {}
       ;(redRes.data || []).forEach((r) => {
@@ -575,6 +579,11 @@ export default function DiscountManager() {
       const partnerRows = partRes.data || []
       setPartnerIds(new Set(partnerRows.map((p) => p.restaurant_id)))
       setPartnerPins(Object.fromEntries(partnerRows.filter((p) => p.pin_code).map((p) => [p.restaurant_id, p.pin_code])))
+      const adMap = {}
+      ;(adsRes.data || []).forEach((a) => {
+        adMap[a.discount_id] = [...(adMap[a.discount_id] || []), a.id]
+      })
+      setAdsByDiscount(adMap)
       setLoading(false)
     })
   }, [])
@@ -823,8 +832,51 @@ export default function DiscountManager() {
     setTimeout(() => setAutoNotice(null), 7000)
   }
 
+  // Quanti banner pubblicitari restano appesi a questi sconti.
+  const adsFor = (ids) => ids.flatMap((id) => adsByDiscount[id] || [])
+
+  // Cancella per davvero, e dice come è andata.
+  //
+  // Il `delete` su `discounts` da solo non basta: un banner pubblicitario di
+  // tipo `restaurant_discount` punta allo sconto, la foreign key è ON DELETE
+  // SET NULL e il vincolo `sp_variant_coherence` pretende che quel campo non
+  // sia mai nullo — il DB rifiuta la riga con un errore 23514. Prima si
+  // toglie il banner, poi lo sconto.
+  //
+  // E soprattutto: prima l'esito non veniva mai letto. La riga spariva
+  // dall'elenco comunque, e ricompariva al ricarico della pagina — di qui
+  // l'impressione che gli sconti "non si eliminassero".
+  const deleteDiscountRows = async (ids) => {
+    const adIds = adsFor(ids)
+    if (adIds.length > 0) {
+      const { error } = await supabase.from('sponsored_placements').delete().in('id', adIds)
+      if (error) return error
+    }
+    const { error, count } = await supabase
+      .from('discounts')
+      .delete({ count: 'exact' })
+      .in('id', ids)
+    if (error) return error
+    // Nessun errore ma nessuna riga toccata: è la RLS che ha filtrato tutto
+    // (sessione scaduta, oppure l'utente non è più admin). Senza questo
+    // controllo la cancellazione fallita passerebbe per riuscita.
+    if (count === 0) return new Error('Nessuna riga eliminata: controlla di essere ancora loggato come admin.')
+    setAdsByDiscount((prev) => {
+      const next = { ...prev }
+      ids.forEach((id) => delete next[id])
+      return next
+    })
+    return null
+  }
+
   const handleDelete = async (id) => {
-    await supabase.from('discounts').delete().eq('id', id)
+    const error = await deleteDiscountRows([id])
+    if (error) {
+      setAutoNotice({ kind: 'err', text: `Sconto non eliminato: ${error.message}` })
+      setTimeout(() => setAutoNotice(null), 7000)
+      setDeleteConfirm(null)
+      return
+    }
     setDiscounts((p) => p.filter((d) => d.id !== id))
     setDeleteConfirm(null)
   }
@@ -848,9 +900,14 @@ export default function DiscountManager() {
   const handleBulkDelete = async () => {
     setBulkDeleting(true)
     const ids = [...selectedIds]
-    await supabase.from('discounts').delete().in('id', ids)
-    setDiscounts((p) => p.filter((d) => !selectedIds.has(d.id)))
-    setSelectedIds(new Set())
+    const error = await deleteDiscountRows(ids)
+    if (error) {
+      setAutoNotice({ kind: 'err', text: `Sconti non eliminati: ${error.message}` })
+      setTimeout(() => setAutoNotice(null), 7000)
+    } else {
+      setDiscounts((p) => p.filter((d) => !selectedIds.has(d.id)))
+      setSelectedIds(new Set())
+    }
     setBulkDeleteConfirm(false)
     setBulkDeleting(false)
   }
@@ -1660,6 +1717,13 @@ export default function DiscountManager() {
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
                   Questa azione non può essere annullata. Tutti i QR code generati per {selectedIds.size === 1 ? 'questo sconto' : 'questi sconti'} diventeranno non validi.
+                  {adsFor([...selectedIds]).length > 0 && (
+                    <>
+                      {' '}Verranno eliminati anche {adsFor([...selectedIds]).length === 1
+                        ? 'il banner pubblicitario che mostra'
+                        : `i ${adsFor([...selectedIds]).length} banner pubblicitari che mostrano`} {selectedIds.size === 1 ? 'questo sconto' : 'questi sconti'}.
+                    </>
+                  )}
                 </p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   <button
@@ -1734,6 +1798,13 @@ export default function DiscountManager() {
                 </h3>
                 <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px', lineHeight: 1.5 }}>
                   Sconto di <strong style={{ color: 'var(--color-ink)' }}>{deleteConfirm.restaurant?.name || 'ristorante'}</strong>: questa azione non può essere annullata.
+                  {adsFor([deleteConfirm.id]).length > 0 && (
+                    <>
+                      {' '}Attenzione: {adsFor([deleteConfirm.id]).length === 1
+                        ? 'un banner pubblicitario mostra questo sconto e verrà eliminato'
+                        : `${adsFor([deleteConfirm.id]).length} banner pubblicitari mostrano questo sconto e verranno eliminati`} insieme a lui.
+                    </>
+                  )}
                 </p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   <button

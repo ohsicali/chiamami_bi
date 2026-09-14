@@ -922,3 +922,72 @@ barra c'è, scrivendo e premendo invio esce il riquadro e il testo resta
 nell'input; su `/sconti` non c'è più né sfocatura né pannello. Nessun errore in
 console. `npm test` 94/94, build a posto, lint invariato (gli stessi 16 errori
 di prima meno quello dell'import mancante).
+
+---
+
+## 14/09 — due bug segnalati da Augusto: card di Esplora e sconti non eliminati
+
+Segnalazione: *"quando clicco in esplora nella lista da mobile le card dei
+ristoranti non si aprono e quando elimino da admin gli sconti non si
+eliminano"*. Sono due cose scollegate, entrambe con una causa precisa.
+
+### 1. Le card della lista di Esplora non si aprivano dal telefono
+
+`src/pages/public/HomePage.jsx`. La sheet che contiene l'elenco è avvolta da un
+`useDrag` di use-gesture (`contentBind`) che serve solo a una cosa: tirarla giù
+dall'alto per chiuderla. Era configurato con `filterTaps: true`, e lì sta il
+guaio — con quell'opzione use-gesture registra un listener `click` in fase di
+cattura e, se il tocco si è mosso più di `tapsThreshold` (3px di default),
+chiama `preventDefault()` e `stopPropagation()`.
+
+Tre pixel sono niente. Safari su iPhone manda i `touchmove` anche per uno
+scarto di due o tre pixel, mentre Chrome li trattiene dentro la propria soglia
+di tap: per questo il bug si vedeva dal telefono e non riproducendolo dal
+computer. Un tap appena storto — quelli che facciamo tutti — contava come
+trascinamento, e il click non arrivava mai al bottone `.rcard-hit` della card.
+
+Cosa è stato fatto: via `filterTaps`, e al suo posto `threshold:
+SHEET_DRAG_SLOP` (3px, la stessa sensibilità di prima per il trascinamento). Il
+click ora lo filtriamo noi, con `onClickCapture` sul contenitore, e solo se la
+sheet si è mossa davvero (`didDragSheet`) — così il click involontario dopo un
+trascinamento vero resta bloccato, ma un tap storto passa.
+
+Provato a schermo con Chromium in emulazione iPhone 13, su build di produzione:
+tap pulito ✅, tap con 12px di scarto ✅, trascinamento giù che chiude la sheet
+senza navigare ✅.
+
+**Da guardare, stessa famiglia**: `PhotoCarousel.jsx` ha anche lui `filterTaps:
+true` e dentro ci sono le frecce e i pallini cliccabili. Non l'ho toccato
+perché non era nella segnalazione, ma su iPhone potrebbe fare lo stesso scherzo.
+
+### 2. Gli sconti eliminati dall'admin tornavano al ricarico
+
+`src/pages/admin/DiscountManager.jsx`. Due problemi sovrapposti.
+
+Il primo, quello che rendeva tutto invisibile: `handleDelete` faceva
+`await supabase.from('discounts').delete().eq('id', id)` **senza mai leggere
+l'errore**, e poi toglieva la riga dallo stato locale. Qualunque cosa
+succedesse al DB, l'admin vedeva la riga sparire. Al ricarico della pagina
+tornava.
+
+Il secondo, la causa vera per gli sconti in vetrina: un banner pubblicitario di
+tipo `restaurant_discount` (tabella `sponsored_placements`) punta allo sconto
+con una foreign key `ON DELETE SET NULL`, ma il vincolo `sp_variant_coherence`
+pretende che per quella variante `discount_id` non sia mai nullo. Risultato:
+Postgres rifiuta la cancellazione con `23514 — new row for relation
+"sponsored_placements" violates check constraint`. Verificato sul DB di
+produzione impersonando il ruolo `authenticated` con l'uid admin, dentro una
+transazione annullata.
+
+Cosa è stato fatto, tutto lato app — **nessuna migrazione, lo schema non è
+stato toccato**:
+
+- si caricano all'avvio i `sponsored_placements` che puntano a uno sconto;
+- la modale di conferma dice quanti banner verranno eliminati insieme;
+- alla conferma si cancellano prima i banner, poi lo sconto;
+- l'errore viene letto e mostrato nell'avviso in cima all'elenco;
+- `delete({ count: 'exact' })` con controllo `count === 0` copre anche il caso
+  muto della RLS (sessione scaduta / non più admin): niente errore ma nessuna
+  riga toccata, e prima passava per riuscita.
+
+`npm test` 94/94, build a posto, lint invariato (stessi 15 problemi di prima).

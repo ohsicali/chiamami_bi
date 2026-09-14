@@ -37,6 +37,11 @@ const DesktopExplorePage = lazy(() => import('./DesktopExplorePage'))
 const CAROUSEL_INITIAL = 4
 const CAROUSEL_STEP = 4
 
+// Quanti pixel deve correre il dito prima che il gesto sulla sheet smetta
+// di essere un tap e diventi un trascinamento. Era il `tapsThreshold` di
+// use-gesture: ora lo teniamo noi, perché serve in due punti.
+const SHEET_DRAG_SLOP = 3
+
 function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, onSave, onClick, style }) {
   const categories = getPublicCategoryNames(restaurant).map(name => getCategoryInfo(name))
   const category = categories[0]
@@ -393,7 +398,18 @@ export default function HomePage() {
   // Content drag: when scrolled to top and dragging down, dismiss the sheet
   const scrollRef = useRef(null)
   const isDismissing = useRef(false)
+  // Vero solo quando il gesto ha spostato davvero la sheet: è la condizione
+  // per mangiarsi il click di fine trascinamento (vedi `swallowClickAfterDrag`).
+  const didDragSheet = useRef(false)
   const [dismissing, setDismissing] = useState(false)
+  // Qui c'era `filterTaps: true`, e per questo le card della lista non si
+  // aprivano dal telefono: use-gesture, con quell'opzione, spegne il click di
+  // ogni tocco che si sia mosso più di `tapsThreshold` (3px). Safari su iPhone
+  // manda i touchmove anche per uno scarto di due o tre pixel — cosa che Chrome
+  // invece trattiene dentro la propria soglia di tap — quindi un tap appena
+  // storto, quelli che facciamo tutti, contava come trascinamento e il click
+  // non arrivava mai alla card. `threshold` tiene la sensibilità di prima; il
+  // click lo filtriamo noi qui sotto, che sappiamo se la sheet si è mossa.
   const contentBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
     const atTop = !scrollRef.current || scrollRef.current.scrollTop <= 0
     if (first) {
@@ -403,6 +419,7 @@ export default function HomePage() {
     }
     if (!isDismissing.current) return
     if (active) {
+      if (my > SHEET_DRAG_SLOP) didDragSheet.current = true
       sheetY.set(Math.max(0, my))
     } else {
       setDismissing(false)
@@ -413,7 +430,18 @@ export default function HomePage() {
         animate(sheetY, 0, { type: 'spring', stiffness: 300, damping: 35 })
       }
     }
-  }, { axis: 'y', from: () => [0, 0], filterTaps: true, pointer: { touch: true } })
+  }, { axis: 'y', from: () => [0, 0], threshold: SHEET_DRAG_SLOP, pointer: { touch: true } })
+
+  // Il browser, finito un trascinamento, spara comunque un click su quello che
+  // sta sotto il dito. Lo blocchiamo solo se la sheet si è mossa davvero: un
+  // tap, per quanto storto, arriva intero alla card.
+  const resetDragGuard = useCallback(() => { didDragSheet.current = false }, [])
+  const swallowClickAfterDrag = useCallback((e) => {
+    if (!didDragSheet.current) return
+    didDragSheet.current = false
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
 
   // ── Desktop: delegate entirely to split-view layout ──
   if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopExplorePage /></Suspense>
@@ -712,6 +740,8 @@ export default function HomePage() {
           <div
             ref={scrollRef}
             {...contentBind()}
+            onTouchStartCapture={resetDragGuard}
+            onClickCapture={swallowClickAfterDrag}
             style={{
               flex: 1, overflowY: dismissing ? 'hidden' : 'auto',
               overflowX: 'hidden',
