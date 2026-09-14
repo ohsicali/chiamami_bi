@@ -408,8 +408,10 @@ export default function HomePage() {
   // manda i touchmove anche per uno scarto di due o tre pixel — cosa che Chrome
   // invece trattiene dentro la propria soglia di tap — quindi un tap appena
   // storto, quelli che facciamo tutti, contava come trascinamento e il click
-  // non arrivava mai alla card. `threshold` tiene la sensibilità di prima; il
-  // click lo filtriamo noi qui sotto, che sappiamo se la sheet si è mossa.
+  // non arrivava mai alla card. `threshold` tiene la sensibilità di prima per
+  // l'animazione della sheet; il click lo filtriamo noi, sotto, ma NON coi
+  // numeri che restituisce questo gesto (vedi perché al commento sopra
+  // `handleRawTouchMove`).
   const contentBind = useDrag(({ movement: [, my], velocity: [, vy], direction: [, dy], active, first }) => {
     const atTop = !scrollRef.current || scrollRef.current.scrollTop <= 0
     if (first) {
@@ -419,7 +421,6 @@ export default function HomePage() {
     }
     if (!isDismissing.current) return
     if (active) {
-      if (my > SHEET_DRAG_SLOP) didDragSheet.current = true
       sheetY.set(Math.max(0, my))
     } else {
       setDismissing(false)
@@ -433,9 +434,33 @@ export default function HomePage() {
   }, { axis: 'y', from: () => [0, 0], threshold: SHEET_DRAG_SLOP, pointer: { touch: true } })
 
   // Il browser, finito un trascinamento, spara comunque un click su quello che
-  // sta sotto il dito. Lo blocchiamo solo se la sheet si è mossa davvero: un
-  // tap, per quanto storto, arriva intero alla card.
-  const resetDragGuard = useCallback(() => { didDragSheet.current = false }, [])
+  // sta sotto il dito. Lo blocchiamo solo se la sheet si è mossa davvero — ma
+  // per deciderlo NON usiamo i numeri di use-gesture sopra (`my`): quel
+  // gesto conta il movimento solo a partire da quando supera `threshold`, non
+  // da dove il dito ha davvero toccato lo schermo, e su un touchscreen vero
+  // (a differenza dei touchmove sintetici con cui era stato provato il fix)
+  // il primo contatto può già valere qualche pixel di rumore. Guardiamo
+  // perciò lo spostamento vero del dito, dal touchstart, con un listener
+  // nostro e indipendente: più lento da spiegare, ma quello che succede
+  // davvero sullo schermo, non quello che ne resta dopo la soglia interna
+  // della libreria.
+  const rawTouchStartY = useRef(null)
+  const rawTouchAtTop = useRef(false)
+  const handleRawTouchStart = useCallback((e) => {
+    didDragSheet.current = false
+    const t = e.touches?.[0]
+    rawTouchStartY.current = t ? t.clientY : null
+    rawTouchAtTop.current = !scrollRef.current || scrollRef.current.scrollTop <= 0
+  }, [])
+  const handleRawTouchMove = useCallback((e) => {
+    // Fuori da "in cima e verso il basso" non è un trascinamento nostro: è
+    // scroll vero della lista, e lì ci pensa il browser a non sparare il
+    // click — non dobbiamo metterci in mezzo.
+    if (rawTouchStartY.current == null || !rawTouchAtTop.current) return
+    const t = e.touches?.[0]
+    if (!t) return
+    if (t.clientY - rawTouchStartY.current > SHEET_DRAG_SLOP) didDragSheet.current = true
+  }, [])
   const swallowClickAfterDrag = useCallback((e) => {
     if (!didDragSheet.current) return
     didDragSheet.current = false
@@ -740,7 +765,8 @@ export default function HomePage() {
           <div
             ref={scrollRef}
             {...contentBind()}
-            onTouchStartCapture={resetDragGuard}
+            onTouchStartCapture={handleRawTouchStart}
+            onTouchMoveCapture={handleRawTouchMove}
             onClickCapture={swallowClickAfterDrag}
             style={{
               flex: 1, overflowY: dismissing ? 'hidden' : 'auto',
