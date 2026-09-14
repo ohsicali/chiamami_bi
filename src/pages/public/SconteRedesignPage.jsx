@@ -823,8 +823,12 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
   const badge = formatDiscountBadge(deal)
+  // Un omaggio è spesso una frase ("Caffè offerto"), non due cifre: a quella
+  // misura finirebbe fuori dalla foto. Ma un'etichetta corta come "3x2" ci
+  // sta benissimo alla taglia normale, quindi si guarda la lunghezza del
+  // testo e non il discount_type.
+  const isLongBadge = badge.length > 6
   const location = r?.neighborhood || r?.city
   const priceStr = formatPrice(r?.price_range)
   const validityStatus = checkValidity(deal)
@@ -843,7 +847,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
     >
       <div className="sc-ph">
         <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 30 }} />
-        <span className={`sc-badge-pct ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
+        <span className={`sc-badge-pct ${isLongBadge ? 'is-freebie' : ''}`}>{badge}</span>
       </div>
       <div className="sc-body-c">
         <div className="sc-info-stack">
@@ -1091,8 +1095,8 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
   const r = deal?.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
-  const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
   const badge = formatDiscountBadge(deal)
+  const isLongBadge = badge.length > 6
   const dealTitle = deal?.title
   const description = deal?.description
   const conditionLines = (deal?.conditions || '')
@@ -1137,7 +1141,7 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
             fallbackClassName="sc-info-hero-fallback"
           />
           <div className="sc-info-hero-overlay" aria-hidden="true" />
-          <span className={`sc-info-hero-badge ${isFreebie ? 'is-freebie' : ''}`}>{badge}</span>
+          <span className={`sc-info-hero-badge ${isLongBadge ? 'is-freebie' : ''}`}>{badge}</span>
           <div className="sc-info-hero-id">
             <h3>{r?.name || dealTitle}</h3>
             <div className="sc-info-hero-meta">
