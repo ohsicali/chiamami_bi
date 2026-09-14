@@ -412,26 +412,26 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           fondo frastagliato, con gli indirizzi a altezze diverse da una card
           all'altra. Sono i due modi di subire lo stesso problema.
 
-          Così invece il problema non si pone: nome e tagline si prendono due
-          righe ciascuno SEMPRE, anche quando ne riempiono una sola o
-          nessuna. Le card vengono alte uguali per costruzione, quindi non
-          c'è niente da allungare: gli indirizzi si allineano da soli e sotto
-          non avanza niente. Il prezzo è una riga d'aria sotto ai nomi corti,
-          che si legge come impaginazione perché è sempre la stessa. */}
+          Nome e tagline riservano una riga ciascuno SEMPRE, anche quando
+          restano vuoti: bastava riservarne due per riga per lasciare un
+          vuoto ben visibile tra nome, tagline e indirizzo su ogni card senza
+          testo lungo — la maggioranza. Una riga sola tiene le card
+          allineate lo stesso, con meno aria in mezzo. */}
       <div style={{ padding:'10px 14px 14px', display:'flex', flexDirection:'column' }}>
-        {/* Due righe e non una: "Pasticceria Caffetteria Duò" o "Duccio Smash
-            Mob" a una riga sola diventano "Pasticceria Caffe…", e il nome è
-            l'unica cosa che distingue una card dall'altra. */}
-        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', minHeight:'2.4em' }}>{restaurant.name}</div>
+        {/* Troncato con ellissi oltre una riga: il nome resta l'unica cosa
+            che distingue una card dall'altra anche quando è lungo. */}
+        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', display:'-webkit-box', WebkitLineClamp:1, WebkitBoxOrient:'vertical', overflow:'hidden', minHeight:'1.2em' }}>{restaurant.name}</div>
         {/* Renderizzata anche vuota: è lo spazio riservato che tiene in riga
-            le card dei locali senza tagline. */}
-        <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:3, lineHeight:1.35, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', minHeight:'2.7em' }}>{restaurant.tagline || ''}</div>
-        <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:6 }}>
+            le card dei locali senza tagline. Una riga sola, non due: due
+            righe fisse lasciavano un vuoto sotto ogni tagline corta o
+            assente. */}
+        <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:2, lineHeight:1.35, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:1, WebkitBoxOrient:'vertical', minHeight:'1.35em' }}>{restaurant.tagline || ''}</div>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:4 }}>
           {cat?.name && <span style={{ background:`${cat.color || '#E8453C'}20`, color:cat.color || '#E8453C', fontWeight:800, fontSize:10, padding:'3px 7px', borderRadius:999, letterSpacing:'0.02em', textTransform:'uppercase' }}>{cat.emoji} {cat.name}</span>}
           {priceStr && <span style={{ fontSize:11, fontWeight:700, color:'var(--color-ink-70)' }}>{priceStr}</span>}
         </div>
         {restaurant.address && (
-          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:8, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
             {restaurant.address.split(',')[0]}
           </div>
         )}
