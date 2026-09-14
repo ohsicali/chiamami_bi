@@ -87,7 +87,26 @@
 .stl-item:disabled { opacity: 0.6; cursor: default; }
 .stl-emoji { font-size: 18px; line-height: 1; }
 .stl-name { flex: 1; font-size: 14.5px; font-weight: 700; }
-.stl-check { font-size: 16px; font-weight: 800; color: var(--color-corallo, #e8453c); }
+
+/* Dimensione fissa: lo scatto fra "+" e "✓" (SaveToListSheet.jsx, via
+   framer-motion) cambia solo il glifo dentro, mai lo spazio che occupa —
+   se no la riga si allargherebbe e restringerebbe a ogni tocco. */
+.stl-check-wrap {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.stl-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-corallo, #e8453c);
+}
 .stl-add { border-style: dashed; color: var(--color-ink-70, rgba(34, 24, 28, 0.7)); }
 
 .stl-new {
