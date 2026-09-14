@@ -15,7 +15,11 @@
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.email_preferences (
-  user_id          uuid primary key references auth.users(id) on delete cascade,
+  -- Punta a public.profiles, non a auth.users: PostgREST espone solo lo
+  -- schema public, quindi l'embed `profiles!inner(...)` in recipientsFor()
+  -- (api/_email/send.js) trova una relazione solo così. Vedi
+  -- supabase/fix-email-preferences-fk-2026-09-14.sql per la cronaca del bug.
+  user_id          uuid primary key references public.profiles(id) on delete cascade,
   -- Tre interruttori, uno per tipo di email. Le ricevute (hai preso lo
   -- sconto, l'hai usato) non hanno interruttore: rispondono a un gesto
   -- della persona e senza di loro resterebbe senza il suo codice.
