@@ -1,24 +1,19 @@
 import { useState, useCallback, useRef, useMemo, useLayoutEffect } from 'react'
-import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { useNavigate } from 'react-router-dom'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import Navbar from '../../components/Layout/Navbar'
 import MobileTabBar from '../../components/Layout/MobileTabBar'
+import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { SkeletonCard } from '../../components/UI/LoadingSpinner'
-import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
-import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
-import { getDistance, formatDistance } from '../../lib/utils/distance'
-import { getHoursStatus } from '../../lib/hours'
-import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
-import SmartImage from '../../components/UI/SmartImage'
-import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
+import { getDistance } from '../../lib/utils/distance'
+import { sortByActiveCity } from '../../components/UI/CityBadge'
 import { useCity } from '../../lib/CityContext'
 import MetaTags from '../../components/SEO/MetaTags'
 import { slugify } from '../../lib/utils/slug'
@@ -28,308 +23,14 @@ import { useSaveGate } from '../../lib/hooks/useSaveGate'
 import { useAdSlot } from '../../lib/hooks/useAds'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
 
-
-/* ── Heart SVG ── */
-const HeartIcon = ({ filled, size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24"
-    fill={filled ? '#E8453C' : 'none'}
-    stroke={filled ? '#E8453C' : 'currentColor'}
-    strokeWidth="2"
-  >
-    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-  </svg>
-)
-
-/* ── Distance icon ── */
-const DistanceIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <circle cx="12" cy="12" r="4" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-  </svg>
-)
-
-/* ── Price display (€€€ style) ── */
-function PriceDisplay({ level }) {
-  if (!level) return null
-  return (
-    <span style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>
-      {[1, 2, 3].map(i => (
-        <span key={i} style={{ color: i <= level ? '#22181C' : '#D1CDC6' }}>€</span>
-      ))}
-    </span>
-  )
-}
-
-/* ── Photo helper ── */
-function getPhotoRaw(restaurant) {
-  if (Array.isArray(restaurant.photos) && restaurant.photos.length > 0) {
-    const p = restaurant.photos[0]
-    return typeof p === 'string' ? p : (p?.thumb_url || p?.photo_url)
-  }
-  return null
-}
-
-/* ============================================
-   HERO CARD — Featured restaurant (first one)
-   ============================================ */
-function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onClick, activeCity = 'Torino' }) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const [imgError, setImgError] = useState(false)
-  const photoRaw = getPhotoRaw(restaurant)
-  const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 900 }) : null
-  // Hero is the LCP on /list — keep srcset tight (3 widths) to limit cold-cache misses.
-  const photoSrcSet = proxyImgSrcSet(photoRaw, [600, 900, 1400])
-  const categories = getPublicCategoryNames(restaurant)
-    .map(n => getCategoryInfo(n)).filter(Boolean)
-  const category = categories[0]
-
-  const dist = userPosition && restaurant.latitude
-    ? formatDistance(getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude))
-    : null
-
-  return (
-    <button
-      onClick={() => onClick?.(restaurant)}
-      style={{
-        width: '100%', borderRadius: 22, overflow: 'hidden',
-        position: 'relative', height: 200, marginBottom: 16,
-        cursor: 'pointer', border: 'none', padding: 0,
-        display: 'block', textAlign: 'left',
-      }}
-    >
-      {/* Background image or fallback */}
-      <div style={{ position: 'absolute', inset: 0, background: '#2a1f18' }}>
-        {photoUrl && !imgError && (
-          <img
-            src={photoUrl}
-            srcSet={photoSrcSet}
-            sizes="(max-width: 768px) 100vw, 720px"
-            alt={restaurant.name}
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)}
-            style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%',
-              objectFit: 'cover', opacity: imgLoaded ? 1 : 0,
-              transition: 'opacity 0.4s',
-            }}
-          />
-        )}
-        {(!photoUrl || imgError) && (
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 56, opacity: 0.4, background: `linear-gradient(135deg, ${category?.color || '#8A8680'}33, ${category?.color || '#8A8680'}11)`,
-          }}>
-            {category?.emoji || '🍽️'}
-          </div>
-        )}
-        {/* Gradient overlay */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)',
-        }} />
-      </div>
-
-      {/* Discount badge */}
-      {discountValue && (
-        <div style={{
-          position: 'absolute', top: 16, left: 16, zIndex: 3,
-          background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
-          fontSize: 11, fontWeight: 800,
-          padding: '5px 12px', borderRadius: 10,
-          boxShadow: '0 2px 10px rgba(74,222,128,0.35)',
-        }}>
-          {discountValue}
-        </div>
-      )}
-
-      {/* Heart button */}
-      <div
-        onClick={(e) => { e.stopPropagation(); onSave?.() }}
-        style={{
-          position: 'absolute', top: 16, right: 16, zIndex: 3,
-          width: 36, height: 36, borderRadius: '50%',
-          background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer',
-        }}
-      >
-        <HeartIcon filled={saved} size={18} />
-      </div>
-
-      {/* Content */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, zIndex: 2 }}>
-        {restaurant.our_rating >= 4.5 && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center',
-            background: 'var(--color-cta)', color: '#fff',
-            fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
-            textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 999, marginBottom: 10,
-          }}>
-            Top di Bi
-          </div>
-        )}
-        <div style={{
-          fontFamily: "var(--font-sans)", fontWeight: 800,
-          fontSize: 26, fontWeight: 600, color: '#fff',
-          lineHeight: 1.1, marginBottom: 6,
-        }}>
-          {restaurant.name}
-        </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          fontSize: 12, color: 'rgba(255,255,255,0.7)',
-        }}>
-          <CityBadge city={restaurant.city} activeCity={activeCity} />
-          {category && (
-            <>
-              <span>{category.name}</span>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
-            </>
-          )}
-          {restaurant.price_range && <span>{PRICE_LABELS[restaurant.price_range]}</span>}
-          {dist && (
-            <>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }} />
-              <span>{dist}</span>
-            </>
-          )}
-        </div>
-      </div>
-    </button>
-  )
-}
-
-/* ============================================
-   HORIZONTAL CARD — Compact restaurant row
-   ============================================ */
-function HorizontalCard({ restaurant, index = 0, userPosition, discountValue, saved, onSave, onClick, activeCity = 'Torino' }) {
-  const photoRaw = getPhotoRaw(restaurant)
-  // 88×88 CSS slot — a single 250w variant covers DPR ~3. No srcset needed
-  // for such a small slot (avoids extra cold cache transforms on /api/img).
-  const photoUrl = photoRaw ? proxyImg(photoRaw, { w: 250 }) : null
-  const isAboveFold = index < 3
-  const categories = getPublicCategoryNames(restaurant)
-    .map(n => getCategoryInfo(n)).filter(Boolean)
-  const category = categories[0]
-
-  const dist = userPosition && restaurant.latitude
-    ? formatDistance(getDistance(userPosition.lat, userPosition.lng, restaurant.latitude, restaurant.longitude))
-    : null
-  // C4: stato "aperto" reale per l'overlay sulla foto.
-  const isOpen = ['open', 'closing_soon'].includes(getHoursStatus(restaurant.hours_cache).state)
-
-  return (
-    // Niente animazione di ENTRATA qui, di proposito: la lista è
-    // virtualizzata, le righe vengono riciclate mentre scorri e ognuna
-    // ripartirebbe da capo — l'elenco lampeggerebbe a ogni scroll.
-    // Resta solo l'affondamento al tocco (.press), che prima mancava:
-    // era l'unica lista del sito dove toccare una card non dava
-    // nessuna risposta finché la scheda non si apriva.
-    <button
-      className="press"
-      onClick={() => onClick?.(restaurant)}
-      style={{
-        display: 'flex', gap: 14, padding: 14, marginBottom: 12,
-        background: '#fff', borderRadius: 18,
-        border: '1px solid rgba(0,0,0,0.04)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-        cursor: 'pointer', width: '100%', textAlign: 'left',
-        position: 'relative',
-      }}
-    >
-      {/* Image */}
-      <SmartImage
-        src={photoUrl}
-        alt={restaurant.name}
-        emoji={category?.emoji || '🍽️'}
-        gradient={`linear-gradient(135deg, ${category?.color || '#e8d5c0'}33, ${category?.color || '#d4c0a8'}22)`}
-        eager={isAboveFold}
-        fetchPriority={isAboveFold ? 'high' : 'auto'}
-        fallbackFontSize="2em"
-        style={{ width: 88, height: 88, borderRadius: 14, flexShrink: 0 }}
-      >
-        {/* C4: stato aperto reale, overlay alto-sx */}
-        {isOpen && (
-          <div style={{
-            position: 'absolute', top: 6, left: 6, zIndex: 2,
-            display: 'inline-flex', alignItems: 'center', gap: 3,
-            background: 'rgba(255,255,255,.94)', color: '#2E7D5B',
-            fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 999,
-            boxShadow: '0 2px 6px rgba(0,0,0,.12)',
-          }}>
-            <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#2E7D5B' }} /> Aperto
-          </div>
-        )}
-      </SmartImage>
-
-      {/* Body */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
-        <div style={{
-          fontFamily: "var(--font-sans)", fontWeight: 800,
-          fontSize: 18, color: '#22181C',
-          lineHeight: 1.2, letterSpacing: '-0.015em', marginBottom: 3,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          paddingRight: 28,
-        }}>
-          {restaurant.name}
-        </div>
-        <div style={{
-          fontSize: 12, color: '#8A8680', fontWeight: 500,
-          marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          {discountValue && (
-            <span style={{
-              background: 'var(--color-corallo, #E8453C)', color: '#fff',
-              fontWeight: 800, fontSize: 10, padding: '2px 7px', borderRadius: 999, flexShrink: 0,
-            }}>{discountValue}</span>
-          )}
-          <CityBadge city={restaurant.city} activeCity={activeCity} />
-          {category?.name || restaurant.cuisine_type || 'Ristorante'}
-          {restaurant.description && (
-            <>
-              <span style={{ opacity: 0.35 }}>|</span>
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {restaurant.description.slice(0, 30)}
-              </span>
-            </>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {dist && (
-            <div style={{
-              fontSize: 11, color: '#8A8680', fontWeight: 500,
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              <DistanceIcon />
-              {dist}
-            </div>
-          )}
-          <PriceDisplay level={restaurant.price_range} />
-        </div>
-      </div>
-
-      {/* Heart */}
-      <div
-        onClick={(e) => { e.stopPropagation(); onSave?.() }}
-        style={{
-          position: 'absolute', right: 14, top: 14,
-          color: saved ? '#E8453C' : '#D1CDC6',
-          cursor: 'pointer', padding: 4,
-        }}
-      >
-        <HeartIcon filled={saved} />
-      </div>
-    </button>
-  )
-}
-
 /* ============================================
    VIRTUALIZED LIST — uses window scroll
+   Stessa card `RestaurantCard` (variante "default") usata dalla lista di
+   /esplora: prima qui c'era una card scritta da zero (HorizontalCard), e le
+   due liste avevano un aspetto completamente diverso pur mostrando gli
+   stessi locali.
    ============================================ */
-function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSaved, onSave, onClick, activeCity = 'Torino' }) {
+function VirtualizedRestaurantList({ items, userPosition, discountRestaurantIds, discountTitleMap, isSaved, onSave, onClick, activeCity = 'Torino' }) {
   const parentRef = useRef(null)
   const [scrollMargin, setScrollMargin] = useState(0)
 
@@ -357,7 +58,7 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
 
   const virtualizer = useWindowVirtualizer({
     count: rows.length,
-    estimateSize: () => 130,
+    estimateSize: () => 140,
     overscan: 6,
     scrollMargin,
   })
@@ -389,16 +90,19 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
                 <AdSlot slot="list_inline" />
               </div>
             ) : (
-              <HorizontalCard
-                restaurant={r}
-                index={vi.index}
-                userPosition={userPosition}
-                discountValue={discountValueMap[r.id]}
-                saved={isSaved(r.id)}
-                onSave={() => onSave(r.id)}
-                onClick={onClick}
-                activeCity={activeCity}
-              />
+              <div style={{ paddingBottom: 12 }}>
+                <RestaurantCard
+                  restaurant={r}
+                  index={vi.index}
+                  userPosition={userPosition}
+                  onClick={onClick}
+                  saved={isSaved(r.id)}
+                  onSaveToggle={() => onSave(r.id)}
+                  hasDiscount={discountRestaurantIds.has(r.id)}
+                  discountTitle={discountTitleMap[r.id]}
+                  activeCity={activeCity}
+                />
+              </div>
             )}
           </div>
         )
@@ -432,12 +136,15 @@ export default function ListView() {
   const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
   const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
 
-  // L'etichetta già formattata, non il valore grezzo: `discount_value` sul DB
-  // è scritto a mano e a volte il segno ce l'ha già ("-10%"), per cui i badge
-  // che ci mettevano davanti un altro "-" e in fondo un altro "%" scrivevano
-  // "--10%%".
-  const discountValueMap = useMemo(() =>
-    Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])),
+  // Stessa forma dati di /esplora (HomePage): un Set per "ha uno sconto" e
+  // una mappa col titolo grezzo dello sconto, che `RestaurantCard` mostra
+  // nella fascia in cima alla card.
+  const discountRestaurantIds = useMemo(
+    () => new Set(activeDiscounts.map(d => d.restaurant_id)),
+    [activeDiscounts]
+  )
+  const discountTitleMap = useMemo(
+    () => Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title])),
     [activeDiscounts]
   )
 
@@ -469,7 +176,7 @@ export default function ListView() {
   // Apply extra client-side filters (deals, dietary, radius)
   const displayedRestaurants = useMemo(() => {
     let result = showDealsOnly
-      ? restaurants.filter(r => discountValueMap[r.id])
+      ? restaurants.filter(r => discountRestaurantIds.has(r.id))
       : restaurants
 
     if (extraFilters.dietary?.length > 0) {
@@ -490,13 +197,13 @@ export default function ListView() {
     }
 
     return result
-  }, [restaurants, showDealsOnly, extraFilters, position, discountValueMap])
+  }, [restaurants, showDealsOnly, extraFilters, position, discountRestaurantIds])
 
   // Random restaurant with discount as hero — excludes restaurants with featured discounts
   // (those are shown in DealsPage "In evidenza") so the two pages differ
   const [heroSeed] = useState(() => Math.floor(Math.random() * 1000))
   const featuredDiscountRestaurantIds = new Set((featuredDiscounts || []).map(d => d.restaurant_id))
-  const restaurantsWithDiscount = displayedRestaurants.filter(r => discountValueMap[r.id] && !featuredDiscountRestaurantIds.has(r.id))
+  const restaurantsWithDiscount = displayedRestaurants.filter(r => discountRestaurantIds.has(r.id) && !featuredDiscountRestaurantIds.has(r.id))
   const featuredRestaurant = restaurantsWithDiscount.length > 0
     ? restaurantsWithDiscount[heroSeed % restaurantsWithDiscount.length]
     : displayedRestaurants.filter(r => !featuredDiscountRestaurantIds.has(r.id))[0] || displayedRestaurants[0]
@@ -560,17 +267,23 @@ export default function ListView() {
           </div>
         ) : (
           <>
-            {/* Featured / Hero card */}
+            {/* Featured / Hero card — stessa variante "hero" di RestaurantCard
+                usata nel resto del sito, non più una card scritta a parte. */}
             {featuredRestaurant && (
-              <HeroCard
-                restaurant={featuredRestaurant}
-                userPosition={position}
-                discountValue={discountValueMap[featuredRestaurant.id]}
-                saved={isSaved(featuredRestaurant.id)}
-                onSave={() => handleSave(featuredRestaurant.id)}
-                onClick={handleCardClick}
-                activeCity={activeCity}
-              />
+              <div style={{ marginBottom: 16 }}>
+                <RestaurantCard
+                  restaurant={featuredRestaurant}
+                  index={0}
+                  userPosition={position}
+                  onClick={handleCardClick}
+                  saved={isSaved(featuredRestaurant.id)}
+                  onSaveToggle={() => handleSave(featuredRestaurant.id)}
+                  hasDiscount={discountRestaurantIds.has(featuredRestaurant.id)}
+                  discountTitle={discountTitleMap[featuredRestaurant.id]}
+                  activeCity={activeCity}
+                  variant="hero"
+                />
+              </div>
             )}
 
             {/* All restaurants (windowed) */}
@@ -578,7 +291,8 @@ export default function ListView() {
               <VirtualizedRestaurantList
                 items={otherRestaurants}
                 userPosition={position}
-                discountValueMap={discountValueMap}
+                discountRestaurantIds={discountRestaurantIds}
+                discountTitleMap={discountTitleMap}
                 isSaved={isSaved}
                 onSave={handleSave}
                 onClick={handleCardClick}
