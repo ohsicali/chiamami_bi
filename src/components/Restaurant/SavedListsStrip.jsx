@@ -165,6 +165,7 @@ export default function SavedListsStrip({
                 background: 'transparent',
                 cursor: 'pointer',
                 textAlign: 'left',
+                position: 'relative',
               }}
               aria-pressed={isActive}
             >
@@ -194,6 +195,14 @@ export default function SavedListsStrip({
                 {cover
                   ? <img src={cover} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span aria-hidden="true">{l.emoji || '📁'}</span>}
+                {/* Velo scuro sul fondo: senza, la foto finiva piatta e il
+                    badge dell'emoji qui sotto galleggiava senza contrasto. */}
+                {cover && (
+                  <div aria-hidden="true" style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(0deg, rgba(0,0,0,.32) 0%, transparent 45%)',
+                  }} />
+                )}
                 {isActive && (
                   <div style={{
                     position: 'absolute', top: 6, right: 6, zIndex: 1,
@@ -207,13 +216,26 @@ export default function SavedListsStrip({
                     </svg>
                   </div>
                 )}
+                {/* L'emoji come medaglietta sull'angolo della foto — copertina
+                    di lista, non icona di stato — invece che ripetuta come
+                    prefisso del nome sotto. Solo quando la copertina è una
+                    foto vera: se la lista è vuota l'emoji è già grande al
+                    centro del riquadro. */}
+                {cover && (
+                  <div style={{
+                    position: 'absolute', bottom: 6, left: 6, zIndex: 1,
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: 'rgba(255,255,255,.92)',
+                    boxShadow: '0 1px 4px rgba(34,24,28,.3)',
+                    display: 'grid', placeItems: 'center', fontSize: 12,
+                  }}>
+                    <span aria-hidden="true">{l.emoji || '📁'}</span>
+                  </div>
+                )}
               </div>
               <div style={{ padding: '6px 4px 0' }}>
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: isActive ? 'var(--color-corallo)' : 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {/* L'emoji nel nome solo quando la copertina è una foto: se
-                      la lista è ancora vuota l'emoji è già grande lì sopra, e
-                      ripeterla due volte in tre centimetri sembra un errore. */}
-                  {cover && l.emoji ? `${l.emoji} ` : ''}{l.name}
+                  {l.name}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 600 }}>
                   {/* Un numero nudo non dice di cosa: "0" da solo si legge
