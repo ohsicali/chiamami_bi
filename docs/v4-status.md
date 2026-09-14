@@ -30,7 +30,7 @@ dove siamo. Aggiorna a ogni step importante.
 | 3 — Home desktop | ↩️ Annullato | Da 1024px in su si usa la home di prima del rifacimento. Vedi "Home — due home, una per misura" sotto. |
 | 4 — Bi Club adattivo | ✅ | 1/2/3+ drop, paginazione da 6, mai carosello su mobile, convenzioni come righe. |
 | 5 — Gating registrazione | ✅ | Club sfocato col conteggio vero, sconto singolo interamente visibile, gate di Chiedi a Bi prima di scrivere. Corretto `returnTo` in 4 punti. |
-| 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. Striscia liste condivisa fra telefono e desktop (`src/components/Restaurant/SavedListsStrip.jsx`), rinomina/elimina, scelta emoji. **Note personali: scartate** — vedi sotto. **Non provato loggato.** |
+| 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. Striscia liste condivisa fra telefono e desktop (`src/components/Restaurant/SavedListsStrip.jsx`), rinomina/elimina, scelta emoji, e da PR #214 il riquadro "Aggiungi lista" in cima alla striscia. **Note personali: scartate** — vedi sotto. **Persistenza verificata sul DB il 14/09** (vedi sotto): la lista è una riga in `saved_lists`, resta dopo il logout e nessun altro utente la vede. **Non ancora provato a schermo con un account vero.** |
 | 7 — Chiedi a Bi | ⚠️ Parziale | Fatti i bug: troncamento `max_tokens` e stato dinamico in header. **Non fatto**: redesign schermata iniziale mobile, card locali dentro le risposte, chip di continuazione. |
 | 8 — Admin | ✅ | Riga sconto responsive 768-1100px, barra avviso sconti irraggiungibili, KPI con denominatore, niente flash di zeri. **Non verificato a schermo** (serve login admin). |
 | 9 — Ristoratore | ✅ | Condizione e ora nella schermata verde, saluto col nome, indirizzo ripulito, contatto non più attaccato. Il resto risultava già fatto da PR23. **Non verificato a schermo** (serve PIN). |
@@ -136,13 +136,35 @@ fatto niente; e il sito già usava il codice per il recupero password.
 
 ### Da fare prima del merge
 - **Incollare il template della mail di conferma su Supabase** (vedi sopra).
-- Provare il flusso liste con un account vero (Blocco 6).
+- Provare il flusso liste con un account vero (Blocco 6) — il giro sul database è verificato (vedi "Liste: persistenza verificata"), manca il giro a schermo.
 - Aprire /admin/sconti su un iPad vero (Blocco 8).
 - Fare una scansione QR vera per vedere la schermata verde (Blocco 9).
 - Provare la registrazione intera con un indirizzo vero: codice, conferma, animazione, benvenuto.
 - Nota nota a parte: a 768px l'intestazione della home appare due volte
   (barra desktop + logo mobile). È così anche su `main`, non è una
   regressione di questa PR.
+
+## Liste: persistenza verificata (14/09)
+
+Domanda: la lista che un utente si crea resta lì anche dopo il logout?
+Controllato sul progetto `Chiamami_bi` col connettore Supabase, non sul codice:
+
+- `saved_lists` e `saved_list_items` esistono, RLS attiva, una policy per
+  tabella (`Owner manages own lists`, `Owner manages own list items`).
+- Simulando il ruolo `authenticated` con il JWT di un utente vero — la stessa
+  strada che fa il sito — la creazione della lista e l'aggiunta di un locale
+  passano, e l'utente si rilegge la sua lista.
+- Con il JWT di un secondo utente la stessa lista non si vede: 0 righe.
+- Le prove giravano dentro una transazione con `ROLLBACK`: sul database non è
+  rimasto niente.
+
+Quindi la lista vive in Postgres, legata a `user_id`: il logout non la tocca e
+al rientro viene riletta da `useSavedLists`. Niente localStorage, a differenza
+dei salvataggi singoli, che lo usano come copia locale.
+
+Al 14/09 le liste create sul sito sono **0**: nessuno ne aveva mai fatta una.
+Coerente col motivo di PR #214 — fino a ieri una lista si poteva creare in un
+posto solo, dentro il foglio che si apre quando salvi un locale.
 
 ## SQL eseguiti in questa sessione
 
