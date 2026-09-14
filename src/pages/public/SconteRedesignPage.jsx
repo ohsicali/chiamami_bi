@@ -1,9 +1,9 @@
 import { Fragment, useState, useMemo, useCallback, useEffect } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
-import { proxyImg } from '../../lib/supabase'
+import { supabase, proxyImg } from '../../lib/supabase'
 import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
@@ -446,19 +446,14 @@ function SconteRedesignPageInner() {
         )}
 
         <div className="sc-body">
-          {/* BLOCCO 5 — porta a vetri, non porta chiusa.
-              Chi non è registrato la pagina la vede: le card restano lì,
-              sfocate, con sopra il conteggio VERO. "6 sconti ti aspettano"
-              converte più di "Registrati per continuare" perché dice quanto
-              c'è dietro il vetro. Un muro opaco fa tornare indietro.
-              Il numero si aggiorna da solo: è lo stesso conteggio del
-              catalogo, non una costante scritta a mano. */}
-          {tab === 'disponibili' && !user && !loading && countDisponibili > 0 && (
-            <ClubGate count={countDisponibili} />
-          )}
+          {/* Niente porta davanti al catalogo: chi non è registrato lo vede
+              come chiunque altro, a fuoco, e può scorrerlo tutto. La
+              richiesta di registrarsi arriva quando tocca "Sblocca sconto"
+              (vedi `claimDeal`), cioè quando ha già scelto QUALE sconto
+              vuole. Prima il vetro sfocato copriva tutto e fermava sul
+              nascere il gesto che fa venire voglia di registrarsi. */}
           {tab === 'disponibili' && (
             <CatalogoView
-              blurred={!user}
               loading={loading}
               drops={dropsAvailable}
               conv={convAvailable}
@@ -606,7 +601,7 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
   )
 }
 
-function CatalogoView({ loading, blurred, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
+function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
   if (loading) {
     return (
       <div style={{ padding: '24px 16px' }}>
@@ -635,9 +630,7 @@ function CatalogoView({ loading, blurred, drops, conv, claiming, redemptionByDea
   }
 
   return (
-    // O è sfocato tutto o è visibile tutto: mezze informazioni nascoste
-    // lasciano il dubbio su cosa manchi, e il dubbio non fa registrare.
-    <div className={blurred ? 'sc-catalogo is-blurred' : 'sc-catalogo'} aria-hidden={blurred || undefined}>
+    <div className="sc-catalogo">
       {drops.length > 0 && (
         <DropSection
           drops={drops}
@@ -805,33 +798,6 @@ function dropSectionSummary(drops) {
   if (hours < 24) return `${base} · il primo scade tra ${hours} ${hours === 1 ? 'ora' : 'ore'}`
   const days = Math.round(hours / 24)
   return `${base} · il primo scade tra ${days} ${days === 1 ? 'giorno' : 'giorni'}`
-}
-
-/* ============================================================================
-   BLOCCO 5 — il pannello sopra il catalogo sfocato.
-
-   Non è un muro: dietro si vedono le card, si capisce che ci sono davvero, e
-   il numero dice quante. Da qui si registra o si accede — e si torna esatta-
-   mente su questa pagina, non in home.
-   ========================================================================= */
-function ClubGate({ count }) {
-  const location = useLocation()
-  const returnTo = `${location.pathname}${location.search}`
-  return (
-    <div className="sc-club-gate">
-      <div className="sc-club-gate-card">
-        <span className="sc-club-gate-count">🔒 {count} {count === 1 ? 'sconto ti aspetta' : 'sconti ti aspettano'}</span>
-        <h3>Entra nel Bi Club</h3>
-        <p>Gratis · 20 secondi · poi mostri il QR al locale e paghi meno.</p>
-        <Link to="/login" state={{ returnTo, mode: 'register' }} className="sc-btn-primary">
-          Registrati gratis
-        </Link>
-        <Link to="/login" state={{ returnTo }} className="sc-club-gate-login">
-          Ho già un account
-        </Link>
-      </div>
-    </div>
-  )
 }
 
 function LockIcon() {

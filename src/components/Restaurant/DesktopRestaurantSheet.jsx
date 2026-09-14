@@ -13,6 +13,7 @@ import { formatAddress } from '../../lib/utils/formatAddress'
 import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
+import SconteAuthGate from '../Discount/SconteAuthGate'
 import AdSlot from '../Ads/AdBanner'
 
 /* ── design tokens ── */
@@ -84,6 +85,7 @@ export default function DesktopRestaurantSheet({
   const [lightbox, setLightbox] = useState(false)
   const [inlineGenerating, setInlineGenerating] = useState(false)
   const [inlineShowQR, setInlineShowQR] = useState(false)
+  const [authGate, setAuthGate] = useState(false)
   const { handleShare } = useShare(restaurant)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { status: orariStatus, data: orariData, hasVerified: orariVerified } = useOrariStatus(restaurant)
@@ -140,17 +142,11 @@ export default function DesktopRestaurantSheet({
   /* discount unlock */
   const handleDiscountClick = async () => {
     if (!user) {
-      // `returnTo`, non `from`: LoginPage legge solo `returnTo`, quindi con
-      // `from` il default restava "/" e dopo la registrazione l'utente
-      // atterrava in home, lontano dal locale che stava guardando e dallo
-      // sconto che voleva prendere (Blocco 5, terza regola trasversale).
-      navigate('/login', {
-        state: {
-          returnTo: `${window.location.pathname}${window.location.search}`,
-          pendingDiscountId: discount?.id,
-          mode: 'register',
-        },
-      })
+      // Il riquadro sopra la scheda, non un salto a /login: il locale resta
+      // aperto dietro, e chiudendo il popup si riprende da dove si era.
+      // `SconteAuthGate` si porta dietro lo sconto in sospeso e il `returnTo`
+      // di questa pagina, quindi chi va avanti torna esattamente qui.
+      setAuthGate(true)
       return
     }
     if (redemption?.status === 'redeemed') return
@@ -648,6 +644,13 @@ export default function DesktopRestaurantSheet({
           />
         )}
       </AnimatePresence>
+
+      {authGate && (
+        <SconteAuthGate
+          pendingDiscountId={discount?.id}
+          onClose={() => setAuthGate(false)}
+        />
+      )}
 
       {/* ── STICKY PILL SCONTO (desktop only — mobile uses its own bar) ── */}
       {discount && (

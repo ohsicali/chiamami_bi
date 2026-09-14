@@ -295,9 +295,13 @@ export default function ChiediPage() {
       }} />
 
       <div className="cp-body" ref={bodyRef}>
-        {isEmpty && !user ? (
-          <ChatGatePreview />
-        ) : isEmpty ? (
+        {/* Anche da sloggati si vede la schermata vera, con i prompt veri:
+            toccarne uno prova a mandarlo davvero, e solo lì arriva il gate.
+            Prima c'era un'anteprima sfocata di una risposta finta — faceva
+            vedere la vetrina a chi non era ancora entrato, ma impediva di
+            provare. Il desiderio nasce dal gesto iniziato, non dalla
+            promessa. */}
+        {isEmpty ? (
           <EmptyState onPromptClick={sendMessage} />
         ) : (
           <Conversation messages={messages} loading={loading} status={status} onChip={sendMessage} />
@@ -305,16 +309,12 @@ export default function ChiediPage() {
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
 
-      {/* BLOCCO 5 — il gate sta PRIMA, non dopo.
-          Fino a ieri si poteva scrivere la domanda, premere invia, e solo lì
-          scoprire che serviva un account: il messaggio spariva e si
-          ricominciava. È lo scenario peggiore — o mostri prima, o lasci
-          passare, mai in mezzo. Sopra il gate resta un esempio di risposta
-          vera, sfocato, per far vedere che Bi risponde con locali reali e non
-          con frasi generiche. */}
-      {!user ? (
-        <ChatGate />
-      ) : (
+      {/* La barra di scrittura c'è per tutti, anche da sloggati.
+          Il gate arriva all'invio (vedi `sendMessage`), non prima: chi non ha
+          un account scrive la sua domanda, la vede scritta, e solo quando
+          preme invia scopre che l'ultimo passo è registrarsi. Il messaggio
+          non si perde — resta nell'input e viaggia fino a `initialMessage`,
+          così al rientro dal login parte da solo. */}
       <form className="cp-input-bar" onSubmit={handleSubmit}>
         <div className="cp-input-row">
           <button
@@ -358,7 +358,6 @@ export default function ChiediPage() {
           <div className="cp-geo-err" role="alert">{locationError}</div>
         )}
       </form>
-      )}
 
       {showAuthGate && (
         <AuthGate
@@ -699,58 +698,16 @@ function ResultCard({ restaurant, photoUrl }) {
 /*  Auth Gate                                                     */
 /* ============================================================ */
 /* ============================================================================
-   BLOCCO 5 — il gate di Chiedi a Bi.
+   Il gate di Chiedi a Bi arriva al momento dell'invio.
 
-   Due pezzi: un'anteprima sfocata di una risposta vera (per far vedere che Bi
-   risponde con locali, non con frasi fatte) e, al posto della barra di
-   scrittura, l'invito a registrarsi con il beneficio dichiarato — la memoria:
-   Bi si ricorda cosa ti piace e non te lo richiede ogni volta.
+   Non c'è più niente prima: schermata iniziale, prompt e barra di scrittura
+   sono uguali per tutti. Chi non ha un account scrive la domanda e la manda;
+   il riquadro qui sotto compare in quel momento, con la domanda già messa da
+   parte (`pendingMessage`) e rispedita da sola al rientro dal login.
 
-   Il gate sta PRIMA di scrivere. Prima si poteva digitare la domanda,
-   premere invia e scoprire solo lì che serviva un account, perdendo il
-   messaggio: o si mostra prima, o si lascia passare, mai in mezzo.
+   Il messaggio non si perde mai: resta nell'input se il gate viene chiuso,
+   viaggia nello state del login se si va avanti.
    ========================================================================= */
-function ChatGatePreview() {
-  return (
-    <div className="cp-gate-preview">
-      <p className="cp-gate-preview-label">Così ti rispondo:</p>
-      <div className="cp-gate-preview-blur" aria-hidden="true">
-        <div className="cp-bubble cp-bi">
-          <p>
-            Per una cena giapponese a Vanchiglia ti mando da Bomaki Murazzi:
-            aperto fino alle 23:30, sushi fusion, e con lo sconto del Bi Club
-            paghi meno. Se vuoi qualcosa di più tranquillo, dimmelo.
-          </p>
-        </div>
-        <div className="cp-gate-preview-cards">
-          <span /><span />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ChatGate() {
-  const location = useLocation()
-  const returnTo = `${location.pathname}${location.search}`
-  return (
-    <div className="cp-gate">
-      <div className="cp-gate-inner">
-        <strong>Registrati e chiedimi quello che vuoi</strong>
-        <p>Mi ricordo cosa ti piace e non te lo richiedo ogni volta. Gratis, 20 secondi.</p>
-        <div className="cp-gate-actions">
-          <Link to="/login" state={{ returnTo, mode: 'register' }} className="cp-gate-primary">
-            Registrati gratis
-          </Link>
-          <Link to="/login" state={{ returnTo }} className="cp-gate-secondary">
-            Ho già un account
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function AuthGate({ pendingMessage, onClose }) {
   return (
     <div
@@ -765,24 +722,24 @@ function AuthGate({ pendingMessage, onClose }) {
           <BiLogoMark style={{ width: '88%', height: '88%' }} />
           <span className="cp-sp" aria-hidden="true" style={{ width: 18, height: 18, fontSize: 9 }}>✦</span>
         </div>
-        <h3 id="cp-auth-gate-title">Accedi per chattare con me</h3>
+        <h3 id="cp-auth-gate-title">La tua domanda è pronta</h3>
         <p>
-          Per ricordarmi le tue domande e darti consigli più precisi nel tempo,
-          ho bisogno che tu acceda. Ci metti 30 secondi.
+          Registrati e te la rispondo subito — la domanda l'ho già messa da
+          parte, riparte da sola appena rientri. Gratis, 20 secondi.
         </p>
         <Link
           to="/login"
-          state={{ returnTo: '/chiedi', initialMessage: pendingMessage }}
+          state={{ returnTo: '/chiedi', initialMessage: pendingMessage, mode: 'register' }}
           className="cp-btn-primary"
         >
-          Accedi
+          Registrati gratis
         </Link>
         <Link
           to="/login"
-          state={{ returnTo: '/chiedi', initialMessage: pendingMessage, mode: 'register' }}
+          state={{ returnTo: '/chiedi', initialMessage: pendingMessage }}
           className="cp-btn-secondary"
         >
-          Registrati gratis
+          Ho già un account
         </Link>
         <button type="button" onClick={onClose} className="cp-btn-link">
           Annulla

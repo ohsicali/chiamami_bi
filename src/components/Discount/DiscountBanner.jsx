@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react'
 import { TR_REVEAL } from '../../lib/motion'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
 import QRCodeDisplay from './QRCodeDisplay'
+import SconteAuthGate from './SconteAuthGate'
 
 export default function DiscountBanner({ restaurantId }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const { discount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(
@@ -20,21 +19,12 @@ export default function DiscountBanner({ restaurantId }) {
   const [showQR, setShowQR] = useState(false)
   const [error, setError] = useState(null)
   const [justRedeemed, setJustRedeemed] = useState(false)
-  const location = useLocation()
 
-  // Dopo la registrazione si torna ESATTAMENTE qui, con lo sconto pronto da
-  // prendere. Prima si passava `from`, una chiave che LoginPage non legge: il
-  // `returnTo` restava al suo default e l'utente atterrava in home, lontano
-  // dal locale che stava guardando e dallo sconto che voleva.
-  const goToRegister = () => {
-    navigate('/login', {
-      state: {
-        returnTo: `${location.pathname}${location.search}`,
-        pendingDiscountId: discount?.id,
-        mode: 'register',
-      },
-    })
-  }
+  // La registrazione si chiede col riquadro sopra la pagina, non saltando su
+  // /login: il locale e lo sconto restano dietro, visibili, e chiudendo si
+  // riprende da dove si era. `SconteAuthGate` mette da parte lo sconto e
+  // riporta qui dopo l'accesso.
+  const [authGate, setAuthGate] = useState(false)
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
@@ -74,7 +64,7 @@ export default function DiscountBanner({ restaurantId }) {
 
   const handleUnlock = async () => {
     if (!user) {
-      goToRegister()
+      setAuthGate(true)
       return
     }
 
@@ -169,31 +159,13 @@ export default function DiscountBanner({ restaurantId }) {
             {t('discount.validUntil')} {validUntil}
           </p>
 
-          {/* BLOCCO 5 — sconto singolo: si vede tutto, cambia solo il bottone.
-              Percentuale, condizione e scadenza sono già scritte qui sopra e
-              restano in chiaro: nascondere il valore riduce la voglia di
-              registrarsi, non la aumenta. Al posto del bottone di sblocco c'è
-              l'invito, con sotto il beneficio concreto.
-              Prima qui c'era un riquadro finto sfocato con dentro un'emoji
-              biglietto: sembrava che ci fosse qualcosa da vedere e invece non
-              c'era niente. */}
-          {!user && !loading && (
-            <div className="flex flex-col gap-2">
-              <motion.button
-                onClick={goToRegister}
-                className="w-full rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm hover-lift-sm"
-                whileTap={{ transform: 'scale(0.97)' }}
-              >
-                🔒 {t('discount.registerToUnlock')}
-              </motion.button>
-              <p className="text-center text-xs text-secondary">
-                Gratis · poi lo mostri al locale e paghi meno
-              </p>
-            </div>
-          )}
-
-          {/* State: Logged in, no redemption yet */}
-          {user && !redemption && !loading && (
+          {/* Il bottone è lo stesso per tutti: "Sblocca sconto".
+              Prima chi non era registrato leggeva "Registrati per sbloccare",
+              cioè gli si chiedeva il conto prima di fargli assaggiare. Adesso
+              preme sblocca come chiunque altro, e il riquadro della
+              registrazione arriva in quel momento — con lo sconto già scelto
+              e messo da parte. */}
+          {!redemption && !loading && (
             <motion.button
               onClick={handleUnlock}
               disabled={generating}
@@ -247,6 +219,13 @@ export default function DiscountBanner({ restaurantId }) {
           />
         )}
       </AnimatePresence>
+
+      {authGate && (
+        <SconteAuthGate
+          pendingDiscountId={discount?.id}
+          onClose={() => setAuthGate(false)}
+        />
+      )}
     </>
   )
 }
