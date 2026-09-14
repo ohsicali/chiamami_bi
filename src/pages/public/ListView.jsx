@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useLayoutEffect } from 'react'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
@@ -410,6 +410,7 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
    ============================================ */
 export default function ListView() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { city } = useCity()
   const activeCity = city?.name || 'Torino'
@@ -451,10 +452,18 @@ export default function ListView() {
     [navigate]
   )
 
+  // Con `navigate('/login')` e basta si finiva su una pagina che dice
+  // "bentornato" a chi un account non l'ha mai avuto, e che una volta fatto
+  // riporta in home invece che a questo elenco, con la ricerca da rifare.
   const handleSave = useCallback((id) => {
-    if (!user) { navigate('/login'); return }
+    if (!user) {
+      navigate('/login', {
+        state: { returnTo: `${location.pathname}${location.search}`, mode: 'register' },
+      })
+      return
+    }
     toggleSave(id)
-  }, [user, navigate, toggleSave])
+  }, [user, navigate, location, toggleSave])
 
   // Apply extra client-side filters (deals, dietary, radius)
   const displayedRestaurants = useMemo(() => {

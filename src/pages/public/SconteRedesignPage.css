@@ -1761,103 +1761,9 @@
   .sc-action-btn small { font-size: 12px; }
 }
 
-/* ============= AuthGate (riusa pattern PR20b) ============= */
-.sc-auth-gate {
-  position: fixed;
-  inset: 0;
-  background: rgba(34, 24, 28, 0.55);
-  display: grid;
-  place-items: center;
-  z-index: 110;
-  padding: 24px;
-  animation: scFadeIn var(--dur-pop) var(--ease-out);
-}
-.sc-auth-gate-card {
-  background: var(--sc-paper);
-  border-radius: 24px;
-  padding: 28px 24px 22px;
-  max-width: 380px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-.sc-auth-gate-card h3 {
-  font-family: var(--sc-ff-mark);
-  font-size: 22px;
-  letter-spacing: 0.3px;
-  color: var(--sc-ink);
-  line-height: 1.15;
-  margin-top: 4px;
-}
-.sc-auth-gate-card p {
-  font-size: 13.5px;
-  color: var(--sc-ink-2);
-  line-height: 1.5;
-  max-width: 320px;
-  margin: 0;
-}
-.sc-auth-gate-card .sc-btn-primary,
-.sc-auth-gate-card .sc-btn-secondary {
-  width: 100%;
-  padding: 12px 18px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 0;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.sc-auth-gate-card .sc-btn-primary {
-  background: var(--sc-corallo);
-  color: #fff;
-}
-.sc-auth-gate-card .sc-btn-secondary {
-  background: var(--sc-ink);
-  color: #fff;
-}
-.sc-auth-gate-card .sc-btn-link {
-  background: transparent;
-  color: var(--sc-ink-2);
-  font-size: 13px;
-  font-weight: 600;
-  border: 0;
-  cursor: pointer;
-  padding: 8px;
-  font-family: inherit;
-}
-.sc-av-iconic {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--sc-corallo) 0%, var(--sc-corallo-ink) 100%);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  position: relative;
-  margin-bottom: 4px;
-}
-.sc-av-iconic span {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 18px;
-  height: 18px;
-  background: var(--sc-oro);
-  border-radius: 50%;
-  border: 2px solid var(--sc-paper);
-  font-size: 9px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 700;
-}
+/* AuthGate e la sua avatar: stanno in components/Discount/SconteAuthGate.css,
+   perché quel gate lo aprono anche la home e la scheda di un locale, dove
+   questo foglio non è nemmeno caricato. */
 
 /* ============= toast errore ============= */
 .sc-toast {
@@ -1884,8 +1790,7 @@
      La dissolvenza dell'overlay invece resta — serve a capire che il
      resto della pagina è passato dietro a un livello, e toglierla
      rende il salto più brusco, non più gentile. */
-  .sc-qr-sheet,
-  .sc-auth-gate {
+  .sc-qr-sheet {
     animation: none !important;
   }
   .sc-qr-overlay,

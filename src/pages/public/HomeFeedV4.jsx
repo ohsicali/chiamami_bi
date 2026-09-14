@@ -7,6 +7,7 @@ import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
+import { setPendingSaveId, readAndClearPendingSaveId } from '../../lib/utils/pendingSave'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { getCurrentMoment, isOpenForMoment } from '../../lib/hours'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
@@ -475,7 +476,7 @@ export default function HomeFeedV4() {
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
   const { discounts } = useActiveDiscounts()
-  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
 
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
@@ -520,6 +521,32 @@ export default function HomeFeedV4() {
   // La porta a vetri sulla home: si apre sopra la pagina invece di portare
   // via, così chi decide di non registrarsi resta dov'era.
   const [homeAuthGate, setHomeAuthGate] = useState(null) // pendingDiscountId | null
+
+  // Il cuore da sloggato non faceva NIENTE. `toggleSave` esce subito se non
+  // c'è un utente, e qui nessuno controllava prima di chiamarlo: si toccava
+  // il cuore, non succedeva niente, e non c'era modo di capire perché —
+  // né che serviva un account, né che il tocco fosse arrivato.
+  // Ora si apre la stessa porta a vetri dello sconto, con la promessa giusta,
+  // e il locale toccato viene salvato davvero al rientro.
+  const [saveGateFor, setSaveGateFor] = useState(null) // restaurantId | null
+
+  const handleToggleSave = (restaurantId) => {
+    if (!user) {
+      setPendingSaveId(restaurantId)
+      setSaveGateFor(restaurantId)
+      return
+    }
+    toggleSave(restaurantId)
+  }
+
+  // Al rientro dalla registrazione il locale si salva da solo: chi ha
+  // toccato il cuore aveva già detto cosa voleva, e ritrovare la card per
+  // ritoccarla sarebbe rifare una cosa già fatta.
+  useEffect(() => {
+    if (!user?.id) return
+    const id = readAndClearPendingSaveId()
+    if (id) void addSave(id)
+  }, [user?.id, addSave])
 
   // "Scopri": la scheda del locale, dove si legge chi sono e cosa fanno.
   const goToRestaurant = (deal) => {
@@ -1419,7 +1446,7 @@ export default function HomeFeedV4() {
               activeMoment={activeMoment}
               onCardClick={onCardClick}
               isSaved={isSaved}
-              toggleSave={toggleSave}
+              toggleSave={handleToggleSave}
               compact
             />
           )}
@@ -1475,7 +1502,7 @@ export default function HomeFeedV4() {
         ) : (
           <div className="hfv4-cards-row" style={{ display:'flex', gap:12, overflowX:'auto', padding:'0 20px 12px 20px', scrollSnapType:'x mandatory', scrollPaddingLeft:20, WebkitOverflowScrolling:'touch', scrollbarWidth:'none' }}>
             {recent.map((r, i) => (
-              <Rcard key={r.id} restaurant={r} index={i} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => toggleSave(r.id)} />
+              <Rcard key={r.id} restaurant={r} index={i} discount={discountByRestaurant[r.id]} onClick={onCardClick} saved={isSaved(r.id)} onToggleSave={() => handleToggleSave(r.id)} />
             ))}
           </div>
         )}
@@ -1509,6 +1536,18 @@ export default function HomeFeedV4() {
           pendingDiscountId={homeAuthGate}
           returnTo="/sconti"
           onClose={() => setHomeAuthGate(null)}
+        />
+      )}
+
+      {/* Si torna in home, non nei salvati: il locale finisce nei salvati da
+          solo, e chi stava guardando la home stava guardando la home. */}
+      {saveGateFor !== null && (
+        <SconteAuthGate
+          pendingDiscountId={null}
+          returnTo="/"
+          title="Serve un account per salvare"
+          subtitle={'Gratis \u00b7 poi ritrovi i tuoi posti in \u201cSalvati\u201d, da qualsiasi telefono.'}
+          onClose={() => setSaveGateFor(null)}
         />
       )}
     </div>

@@ -91,5 +91,33 @@ export function useSavedRestaurants(userId) {
     [userId, savedIds]
   )
 
-  return { savedIds, isSaved, toggleSave, loading }
+  /**
+   * Salva e basta, senza togliere.
+   *
+   * Serve al rientro dalla registrazione: chi ha toccato il cuore da
+   * sloggato aveva già chiesto di salvare, e ripassare da `toggleSave`
+   * significherebbe che se nel frattempo il locale risulta già salvato
+   * glielo si toglie — l'esatto contrario di quello che ha chiesto.
+   */
+  const addSave = useCallback(
+    async (restaurantId) => {
+      if (!userId || !restaurantId) return false
+      if (savedIds.has(restaurantId)) return true
+      setSavedIds((prev) => {
+        const next = new Set(prev)
+        next.add(restaurantId)
+        persistLocalSaved(userId, next)
+        return next
+      })
+      if (isSupabaseConfigured()) {
+        await supabase
+          .from('saved_restaurants')
+          .insert({ user_id: userId, restaurant_id: restaurantId })
+      }
+      return true
+    },
+    [userId, savedIds]
+  )
+
+  return { savedIds, isSaved, toggleSave, addSave, loading }
 }

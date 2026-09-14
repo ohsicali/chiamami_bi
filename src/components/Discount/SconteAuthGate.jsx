@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import BiLogoMark from '../UI/BiLogoMark'
 import { setPendingDiscountId } from '../../lib/utils/pendingDiscount'
+import './SconteAuthGate.css'
 
 /**
  * Il gate sullo sblocco di uno sconto.
@@ -10,7 +11,16 @@ import { setPendingDiscountId } from '../../lib/utils/pendingDiscount'
  * sconto già preso, non ritrovarsi nel catalogo a ricominciare la ricerca.
  * (Blocco 5, terza regola trasversale.)
  */
-export default function SconteAuthGate({ pendingDiscountId, onClose, returnTo: returnToProp }) {
+export default function SconteAuthGate({
+  pendingDiscountId,
+  onClose,
+  returnTo: returnToProp,
+  // Lo stesso gate copre anche il cuore sui salvati, e lì il QR non
+  // c'entra niente: la promessa va detta per quello che si sta chiedendo,
+  // se no si sta vendendo la cosa sbagliata.
+  title = 'Ci metti 20 secondi',
+  subtitle = 'Gratis · poi mostri il QR al locale e paghi meno.',
+}) {
   const location = useLocation()
   // Persist across OAuth/email-OTP redirects so we can auto-claim on return.
   if (pendingDiscountId) setPendingDiscountId(pendingDiscountId)
@@ -32,12 +42,10 @@ export default function SconteAuthGate({ pendingDiscountId, onClose, returnTo: r
           <BiLogoMark style={{ width: '88%', height: '88%' }} />
           <span aria-hidden="true">✦</span>
         </div>
-        <h3 id="sc-auth-gate-title">Ci metti 20 secondi</h3>
+        <h3 id="sc-auth-gate-title">{title}</h3>
         {/* Il beneficio concreto, non "registrati per continuare": si dice
             cosa si ottiene e cosa costa. */}
-        <p>
-          Gratis · poi mostri il QR al locale e paghi meno.
-        </p>
+        <p>{subtitle}</p>
         <Link
           to="/login"
           state={{ returnTo, pendingDiscountId, mode: 'register' }}
