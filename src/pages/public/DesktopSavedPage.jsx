@@ -9,7 +9,7 @@ import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { isOpenForMoment } from '../../lib/hours'
 import { getDistance } from '../../lib/utils/distance'
 import { supabase } from '../../lib/supabase'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadgeShort } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import SavedListsStrip, { SavedListsFooter } from '../../components/Restaurant/SavedListsStrip'
 import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
@@ -23,7 +23,7 @@ export default function DesktopSavedPage() {
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
   // Le liste esistevano solo sul telefono: chi le creava lì, da computer non
   // le ritrovava più. Sono le stesse righe, lo stesso componente.
-  const { lists: savedLists, suggestions: listSuggestions, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
+  const { lists: savedLists, suggestions: listSuggestions, createList, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
@@ -38,8 +38,11 @@ export default function DesktopSavedPage() {
   const [listSheetFor, setListSheetFor] = useState(null)
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
+  // Il francobollo verde sulla foto: il valore secco, come in tutto il
+  // resto del sito. `formatDiscountValue` restituisce il titolo della promo
+  // per omaggi e prezzi speciali, e lì dentro non ci sta.
   const discountLabelMap = Object.fromEntries(
-    activeDiscounts.map(d => [d.restaurant_id, formatDiscountValue(d)])
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadgeShort(d) || 'OFFERTA'])
   )
 
   // Fetch saved restaurants
@@ -147,6 +150,7 @@ export default function DesktopSavedPage() {
             onSelect={setActiveListId}
             onRename={renameList}
             onDelete={deleteList}
+            onCreate={createList}
             tileWidth={132}
           />
         )}

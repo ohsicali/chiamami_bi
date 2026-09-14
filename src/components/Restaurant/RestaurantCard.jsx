@@ -83,6 +83,11 @@ function RestaurantCard({
       : null
 
   const priceStr = formatPrice(restaurant.price_range)
+  // Il distintivo della città compare solo fuori dalla città attiva: la
+  // stessa regola sta dentro CityBadge, qui serve a sapere in anticipo se la
+  // riga del "dove" ha qualcosa da mostrare quando l'indirizzo manca.
+  const showCity = !!restaurant.city
+    && restaurant.city.trim().toLowerCase() !== String(activeCity || '').trim().toLowerCase()
 
   // TILE VARIANT — foto 4:3 in alto, corpo sotto.
   // Unifica le card verticali che ogni pagina si era riscritta (Salvati,
@@ -131,6 +136,28 @@ function RestaurantCard({
           fallbackFontSize="2.6em"
           style={{ width: '100%', aspectRatio: '4 / 3' }}
         >
+          {/* Il francobollo verde dello sconto, nello stesso posto in cui sta
+              in tutto il resto del sito: angolo alto a sinistra della foto,
+              gradiente verde e inchiostro scuro. Prima, sulle card dei
+              Salvati, era una pillola rossa infilata di fianco al nome: si
+              leggeva come un avviso invece che come un vantaggio, e rubava
+              spazio al nome del locale, che finiva troncato a metà. */}
+          {hasDiscount && discountTitle && (
+            <span
+              className="absolute"
+              style={{
+                top: 8, left: 8, zIndex: 3,
+                maxWidth: 'calc(100% - 58px)',
+                background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
+                fontSize: 'var(--fs-xs)', fontWeight: 800, letterSpacing: '0.02em',
+                padding: '4px 9px', borderRadius: 'var(--radius-pill)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                boxShadow: '0 1px 4px rgba(34,24,28,.18)',
+              }}
+            >
+              {discountTitle}
+            </span>
+          )}
           {onSaveToggle && (
             <div
               className="absolute"
@@ -142,56 +169,90 @@ function RestaurantCard({
           )}
         </SmartImage>
 
+        {/* Le stesse informazioni, nello stesso ordine, delle card di
+            "Ultimi aggiunti" in home: nome, tagline, categoria + prezzo,
+            indirizzo. Erano due card diverse per lo stesso locale — in home
+            si leggeva cosa fosse il posto, nei Salvati restava un nome e una
+            pillola.
+
+            Nome e tagline si prendono due righe ciascuno SEMPRE, anche quando
+            ne riempiono una sola o nessuna: in una riga di griglia le card
+            prendono l'altezza della più alta, e basta un nome lungo perché
+            tutte le altre si ritrovino spazio da riempire. Riservandolo, le
+            card vengono alte uguali per costruzione e gli indirizzi si
+            allineano da soli. */}
         <div style={{
-          padding: dense ? '9px 11px 11px' : '13px 15px 15px',
-          display: 'flex', flexDirection: 'column', gap: dense ? 4 : 6, minWidth: 0,
+          padding: dense ? '10px 11px 11px' : '13px 15px 15px',
+          display: 'flex', flexDirection: 'column', minWidth: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, minWidth: 0 }}>
-            <h3 style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 800,
-              fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.02em',
-              color: 'var(--color-ink)', lineHeight: 1.2, flex: 1, minWidth: 0,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {restaurant.name}
-            </h3>
-            {hasDiscount && discountTitle && (
-              <span style={{
-                flexShrink: 0, background: 'var(--color-cta)', color: '#fff',
-                fontSize: 'var(--fs-xs)', fontWeight: 800, letterSpacing: '-0.01em',
-                padding: '3px 8px', borderRadius: 'var(--radius-pill)',
-              }}>
-                {discountTitle}
-              </span>
-            )}
+          <h3 style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 800,
+            fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.01em',
+            color: 'var(--color-ink)', lineHeight: 1.2, minWidth: 0,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+            overflow: 'hidden', minHeight: '2.4em',
+          }}>
+            {restaurant.name}
+          </h3>
+
+          {/* Renderizzata anche vuota: è lo spazio riservato che tiene in riga
+              le card dei locali senza tagline. */}
+          <div style={{
+            fontSize: dense ? 11.5 : 12, color: 'var(--color-ink-70)',
+            marginTop: 3, lineHeight: 1.35,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+            overflow: 'hidden', minHeight: '2.7em',
+          }}>
+            {restaurant.tagline || ''}
           </div>
 
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <CityBadge city={restaurant.city} activeCity={activeCity} />
+          {/* Categoria e prezzo come in home: la pillola prende il colore
+              della categoria, non un corallo uguale per tutte. */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginTop: 6,
+            flexWrap: 'nowrap', overflow: 'hidden', minWidth: 0,
+          }}>
             {category && (
               <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '3px 8px', borderRadius: 'var(--radius-pill)',
-                background: 'var(--color-corallo-soft)', color: 'var(--color-corallo-ink)',
-                fontSize: 'var(--fs-xs)', fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 3, minWidth: 0,
+                padding: '3px 7px', borderRadius: 'var(--radius-pill)',
+                background: `${category.color || '#E8453C'}20`, color: category.color || '#E8453C',
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {category.emoji} {category.name}
               </span>
             )}
             {priceStr && (
-              <span style={{ fontWeight: 700, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{priceStr}</span>
+              <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: 'var(--color-ink-70)' }}>{priceStr}</span>
             )}
             {distance != null && (
-              <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{formatDistance(distance)}</span>
+              <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--color-ink-70)' }}>{formatDistance(distance)}</span>
             )}
           </div>
 
-          {!dense && restaurant.address && (
+          {/* Il "dove", tutto su una riga: la città quando è un'altra, poi
+              via e quartiere. "Via Bonafous 7 · Vanchiglia" dice in che zona
+              si va, che è quello che si guarda scegliendo fra cinque posti
+              salvati.
+
+              La città sta qui e non in mezzo a categoria e prezzo: in una
+              card a mezza colonna quei tre pezzi insieme non ci stanno, e il
+              nome della cucina finiva tagliato a metà. Su questa riga il
+              distintivo ha il posto che gli serve, e a cedere è la via — che
+              per un locale in un'altra città conta meno del fatto che sia in
+              un'altra città. */}
+          {(showCity || restaurant.address) && (
             <div style={{
-              fontSize: 'var(--fs-sm)', color: 'var(--color-ink-64)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, minWidth: 0,
+              fontSize: dense ? 11.5 : 12, color: 'var(--color-ink-70)',
             }}>
-              {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
+              <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />
+              {restaurant.address && (
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
+                </span>
+              )}
             </div>
           )}
           {/* Sopra al bottone-lenzuolo che apre la scheda, se no il tocco
