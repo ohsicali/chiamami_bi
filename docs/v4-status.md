@@ -136,7 +136,10 @@ fatto niente; e il sito già usava il codice per il recupero password.
 
 ### Da fare prima del merge
 - **Incollare il template della mail di conferma su Supabase** (vedi sopra).
-- Provare il flusso liste con un account vero (Blocco 6) — il giro sul database è verificato (vedi "Liste: persistenza verificata"), manca il giro a schermo.
+- Provare il flusso liste con un account vero (Blocco 6) — il 14/09 provato a
+  schermo con un browser reale e rete simulata (vedi "Liste: 'metti in una
+  lista' provato a schermo" in fondo al file): il codice funziona. Manca
+  ancora la prova con un account vero sul sito live.
 - Aprire /admin/sconti su un iPad vero (Blocco 8).
 - Fare una scansione QR vera per vedere la schermata verde (Blocco 9).
 - Provare la registrazione intera con un indirizzo vero: codice, conferma, animazione, benvenuto.
@@ -1006,3 +1009,57 @@ stato toccato**:
   riga toccata, e prima passava per riuscita.
 
 `npm test` 94/94, build a posto, lint invariato (stessi 15 problemi di prima).
+
+
+## Liste: "metti in una lista" provato a schermo (14/09)
+
+Augusto ha segnalato che "metti in una lista" nella pagina Salvati non
+funziona. Prima di toccare codice, verificato il giro completo — non solo sul
+database (già fatto l'8/09, vedi "Liste: persistenza verificata" sopra), ma il
+click vero sul bottone, dentro un browser reale (Chromium via Playwright,
+build di produzione servita con `vite preview`, non il dev server).
+
+**Metodo**: `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` puntati a un dominio
+finto, con `page.route()` a intercettare ogni chiamata REST e rispondere da un
+piccolo database in memoria (righe vere per `restaurants`, `saved_restaurants`,
+`saved_lists`, `saved_list_items`), e una sessione Supabase finta seminata in
+`localStorage` con la chiave `sb-<ref>-auth-token`. Non è un account vero sul
+sito in produzione — quello resta da fare — ma è il codice vero del client
+(React + `useSavedLists` + `SaveToListSheet`) che gira per davvero in un
+browser, non uno stub.
+
+**Risultato**: il tocco su "Metti in una lista" apre il foglio, il tocco su un
+suggerimento ("Da provare") lo crea in `saved_lists`, aggiunge la riga in
+`saved_list_items`, e un secondo tocco la toglie di nuovo — provato sia da
+schermo desktop (`DesktopSavedPage`) sia da schermo telefono (`SavedPage`
+mobile), zero errori in console. **Il codice del blocco 6 funziona.**
+
+Due cose fuorvianti scoperte per strada, per chi riprende questo lavoro:
+- Un sospetto iniziale su `useSavedLists.js` (`?.` messo nel posto sbagliato
+  prima di `.includes`) si è rivelato falso: l'optional chaining in JS
+  interrompe **tutta** la catena che segue, non solo il passo successivo —
+  quella riga non lancia mai un TypeError. Non toccarla per questo motivo.
+- Testando dentro il dev server (`vite dev`, non `vite preview`) e scattando
+  screenshot a pagina intera, la pagina Salvati sembrava rimontarsi da sola
+  ogni 1-4 secondi, perdendo lo stato e chiudendo il foglio appena aperto —
+  sembrava un bug serio. Era un artefatto degli strumenti: il binario
+  Chromium installato in questa sandbox (1194) non combacia con la versione
+  del pacchetto `playwright` (1.58, che si aspetta 1208), e la combinazione
+  andava in tilt su `page.screenshot({ fullPage: true })` con l'innerWidth
+  della pagina che crollava a 1px e tornava su. Con viewport fissato
+  esplicitamente e senza screenshot a pagina intera il problema è sparito
+  del tutto. Se ricapita in una sessione futura, sospettare prima gli
+  strumenti che il codice.
+
+**Cosa è stato cambiato davvero**: nessun bug da correggere nella logica, ma
+il riscontro visivo al tocco era minimo — un cambio di colore del bordo e uno
+scambio "+"/"✓" di 16px, facile da non notare. È verosimilmente questo che ha
+fatto sembrare la funzione "rotta": il locale finiva davvero nella lista, ma
+niente lo diceva con chiarezza. `SaveToListSheet.jsx` ora anima quello scambio
+con una molla (framer-motion, gli stessi token di `src/lib/motion.js`:
+`SPRING_SNAP`) — il segno entra con uno scatto invece di cambiare di colpo, ed
+è la conferma visiva che mancava.
+
+**Resta da fare**: provare con un account vero sul sito live (non solo la
+simulazione qui sopra), per chiudere davvero la riga "Da fare prima del
+merge" con un riscontro umano.

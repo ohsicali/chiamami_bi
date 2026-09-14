@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { EmojiPicker } from './SavedListsStrip'
+import { SPRING_SNAP } from '../../lib/motion'
 import './SaveToListSheet.css'
 
 /**
@@ -69,17 +71,35 @@ export default function SaveToListSheet({ userId, restaurant, onClose }) {
             const inList = l.restaurantIds?.includes(restaurant.id)
             const key = l.id || l.name
             return (
-              <button
+              <motion.button
                 key={key}
                 type="button"
                 className={`stl-item${inList ? ' is-in' : ''}`}
                 onClick={() => handleToggle(l)}
                 disabled={busy === key}
+                whileTap={{ transform: 'scale(0.97)' }}
+                transition={SPRING_SNAP}
               >
                 <span className="stl-emoji" aria-hidden="true">{l.emoji || '📁'}</span>
                 <span className="stl-name">{l.name}</span>
-                <span className="stl-check" aria-hidden="true">{inList ? '✓' : '+'}</span>
-              </button>
+                {/* Il segno cambia con uno scatto, non un dissolvere: è la
+                    conferma che il tocco ha aggiunto (o tolto) il locale
+                    davvero, non solo un pallino che appare e basta. */}
+                <span className="stl-check-wrap" aria-hidden="true">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={inList ? 'check' : 'plus'}
+                      className="stl-check"
+                      initial={{ transform: 'scale(0.3) rotate(-25deg)', opacity: 0 }}
+                      animate={{ transform: 'scale(1) rotate(0deg)', opacity: 1 }}
+                      exit={{ transform: 'scale(0.3)', opacity: 0 }}
+                      transition={SPRING_SNAP}
+                    >
+                      {inList ? '✓' : '+'}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              </motion.button>
             )
           })}
 
