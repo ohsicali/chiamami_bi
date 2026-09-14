@@ -748,3 +748,101 @@ miglior pesce"* rifiuta la classifica, la napoletana dichiara che e a Rivoli.
 Foto presenti su tutte le card di tutte le prove.
 
 > La chiave API e stata usata solo in sessione, mai scritta su file. Va revocata.
+
+---
+
+## 14/09 — verde sconti, scroll all'apertura, cuore da sloggato, accesso bloccato
+
+Quattro segnalazioni di Augusto in un colpo solo, quattro cose separate.
+
+### 1. Un solo verde per gli sconti
+
+Lo stesso "−15%" usciva di tre colori diversi a seconda di dove lo incontravi:
+lime→verde sulle card dei locali e sulla mappa, **menta** sul badge del drop
+nel Bi Club, **corallo** sul badge grande della scheda dello sconto. Tre colori
+per la stessa identica informazione.
+
+Adesso il verde è uno, definito una volta in `globals.css`:
+
+| token | valore | cos'è |
+|---|---|---|
+| `--color-sconto-a` | `#A3E635` | lime, inizio sfumatura |
+| `--color-sconto-b` | `#4ADE80` | verde, fine sfumatura |
+| `--color-sconto-ink` | `#1A4731` | il testo dentro la pillola |
+| `--gradient-sconto` | `linear-gradient(135deg, a, b)` | già pronta |
+
+Il gradiente sta in `:root` e non in `@theme` perché Tailwind, con un
+`--color-*` che contiene un gradiente, genererebbe utility `bg-*`/`text-*`
+senza senso.
+
+Toccati: `RestaurantCard`, `RestaurantSheet`, `DesktopRestaurantSheet`,
+`MapView` (il pin), `ListView`, `HomePage`, `HomeFeedV4`, `HomeDesktopClassic`,
+`DesktopExplorePage`, `SconteRedesignPage.css`, `DropCard.css`. I `--dc-mint*`
+del drop sono diventati `--dc-verde*` e puntano ai token. Verificato a schermo:
+telefono e computer restituiscono lo stesso `rgb(163,230,53) → rgb(74,222,128)`
+con testo `rgb(26,71,49)`.
+
+Fuori campo di proposito: `HoursPill` (aperto/chiuso) e l'admin — stesso colore
+ma non sono elementi di sconto.
+
+### 2. La pagina si apriva già scrollata (telefono)
+
+Mancava `history.scrollRestoration = 'manual'`. Il browser si ricorda lo scroll
+e lo rimette quando la pagina ha ripreso la sua altezza — e qui l'altezza
+arriva tardi (guscio → chunk della route → locali da Supabase). Lo
+`scrollTo(0, 0)` di `App.jsx` parte molto prima di quel momento, quindi il
+ripristino del browser arriva per ultimo e vince: si apriva la home in mezzo al
+feed. Una riga in `src/main.jsx`. Misurato: scroll a 1176px → ricarica → 0.
+
+Non perdiamo niente, la navigazione interna non ci contava già.
+
+### 3. Il cuore da sloggato
+
+Il popup c'era solo sulle due home. Altrove il cuore o buttava su `/login`
+(perdendo mappa, filtri e ricerca) o non faceva proprio niente.
+
+Estratti `src/lib/hooks/useSaveGate.js` + `src/components/Restaurant/SaveAuthGate.jsx`
+(testo del gate in un posto solo), e collegati a: `RestaurantPage`, `ListView`,
+`HomePage` (mappa + carosello), `DesktopExplorePage`. Le due home ora passano
+dagli stessi due file invece di avere la loro copia.
+
+Il locale toccato resta in `sessionStorage` e viene salvato da solo al rientro
+(`addSave`, non `toggleSave`: chi ha toccato il cuore voleva salvare, e un
+toggle su un locale già salvato lo toglierebbe).
+
+### 4. «Clicco Accedi, il bottone scompare e non succede niente»
+
+Riprodotto: se la richiesta di accesso parte e la risposta non torna mai
+(rete mobile che cade, scheda messa in pausa da iOS mentre si prende la
+password dal gestore), la promessa di `signInWithPassword` **non si risolve e
+non fallisce**. Il bottone restava nello stato "in corso" per sempre. Due cose
+lo rendevano indistinguibile da un bottone rotto:
+
+- lo stato in corso era `background: ink-15` + tre puntini grigi — su fondo
+  crema il bottone *spariva alla vista*, da cui «scompare»;
+- non c'era nessun tempo massimo, quindi nessun messaggio e nessun modo di
+  riprovare se non ricaricare.
+
+Fatto:
+- `withTimeout(..., 20s)` in `useAuth` su accesso, registrazione, verifica
+  codice, rinvio codice e recupero password; nuovo messaggio in `authErrors.js`.
+- Il bottone resta corallo, gira una rotella e dice cosa sta facendo
+  ("Accedo…", "Creo l'account…", …).
+- `autocomplete` sui campi (`email`, `current-password` su accedi,
+  `new-password` su registrati): i gestori password ora propongono la cosa
+  giusta.
+- Le chiamate Supabase dentro `onAuthStateChange` rinviate con `setTimeout(0)`.
+  La callback gira mentre il client di autenticazione tiene il lucchetto su
+  `navigator.locks`: una query fatta da lì dentro richiede lo stesso lucchetto e
+  aspetta sé stessa. È la raccomandazione di Supabase; lo facevamo al contrario.
+
+Misurato col caso che si blocca: a 20s il bottone torna premibile con
+«Ci sta mettendo troppo: la rete non risponde. Riprova fra qualche secondo.»
+Prima: fermo all'infinito, nessun messaggio.
+
+> **Non verificato contro il Supabase vero**: da questa sessione il browser non
+> raggiunge `supabase.co` (il proxy blocca la POST; da `curl` risponde 400
+> regolare). Percorso di successo e percorso di errore provati con le risposte
+> simulate, il blocco con una richiesta che non torna mai. Se dopo il deploy
+> l'accesso non va ancora, adesso almeno **si vede** dove si ferma: o compare
+> un messaggio, o si sa che la richiesta non parte proprio.

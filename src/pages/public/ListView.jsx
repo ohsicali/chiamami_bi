@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useLayoutEffect } from 'react'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import SearchBar from '../../components/Layout/SearchBar'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
@@ -23,6 +23,8 @@ import { useCity } from '../../lib/CityContext'
 import MetaTags from '../../components/SEO/MetaTags'
 import { slugify } from '../../lib/utils/slug'
 import AdSlot from '../../components/Ads/AdBanner'
+import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
+import { useSaveGate } from '../../lib/hooks/useSaveGate'
 import { useAdSlot } from '../../lib/hooks/useAds'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
 
@@ -133,7 +135,7 @@ function HeroCard({ restaurant, userPosition, discountValue, saved, onSave, onCl
       {discountValue && (
         <div style={{
           position: 'absolute', top: 16, left: 16, zIndex: 3,
-          background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+          background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
           fontSize: 11, fontWeight: 800,
           padding: '5px 12px', borderRadius: 10,
           boxShadow: '0 2px 10px rgba(74,222,128,0.35)',
@@ -410,7 +412,6 @@ function VirtualizedRestaurantList({ items, userPosition, discountValueMap, isSa
    ============================================ */
 export default function ListView() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { user } = useAuth()
   const { city } = useCity()
   const activeCity = city?.name || 'Torino'
@@ -428,7 +429,8 @@ export default function ListView() {
   const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
 
   const { discounts: activeDiscounts, allFeatured: featuredDiscounts } = useActiveDiscounts()
-  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
+  const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
 
   // L'etichetta già formattata, non il valore grezzo: `discount_value` sul DB
   // è scritto a mano e a volte il segno ce l'ha già ("-10%"), per cui i badge
@@ -452,18 +454,17 @@ export default function ListView() {
     [navigate]
   )
 
-  // Con `navigate('/login')` e basta si finiva su una pagina che dice
-  // "bentornato" a chi un account non l'ha mai avuto, e che una volta fatto
-  // riporta in home invece che a questo elenco, con la ricerca da rifare.
+  // Mandare via dall'elenco costava la ricerca appena fatta: filtri, ordine e
+  // posizione nella lista sparivano, e chi non voleva registrarsi non aveva
+  // modo di tornare indietro se non rifacendo tutto. Ora il riquadro si apre
+  // sopra l'elenco e chi annulla è ancora esattamente dov'era.
   const handleSave = useCallback((id) => {
     if (!user) {
-      navigate('/login', {
-        state: { returnTo: `${location.pathname}${location.search}`, mode: 'register' },
-      })
+      openSaveGate(id)
       return
     }
     toggleSave(id)
-  }, [user, navigate, location, toggleSave])
+  }, [user, openSaveGate, toggleSave])
 
   // Apply extra client-side filters (deals, dietary, radius)
   const displayedRestaurants = useMemo(() => {
@@ -612,6 +613,8 @@ export default function ListView() {
 
       {/* Tab bar */}
       <MobileTabBar />
+
+      {saveGateFor && <SaveAuthGate onClose={closeSaveGate} />}
     </div>
   )
 }

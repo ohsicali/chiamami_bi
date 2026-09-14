@@ -21,6 +21,8 @@ import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
+import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
+import { useSaveGate } from '../../lib/hooks/useSaveGate'
 
 
 const PIN_SVG = (
@@ -185,7 +187,7 @@ function MapPopup({ restaurant, hasDiscount, discountLabel, onClose, onNavigate 
         {hasDiscount && discountLabel && (
           <span style={{
             position: 'absolute', top: 5, left: 5,
-            background: 'linear-gradient(135deg,#A3E635,#4ADE80)', color: 'var(--color-ink)',
+            background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
             fontWeight: 800, fontSize: 9, padding: '2px 6px', borderRadius: 999,
           }}>{discountLabel}</span>
         )}
@@ -238,7 +240,8 @@ export default function DesktopExplorePage() {
   const { user } = useAuth()
   const { city } = useCity()
   const activeCity = city?.name || 'Torino'
-  const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
+  const { savedIds, toggleSave, addSave } = useSavedRestaurants(user?.id)
+  const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
   const { discounts: activeDiscounts } = useActiveDiscounts()
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
@@ -383,7 +386,7 @@ export default function DesktopExplorePage() {
                 userPosition={position}
                 activeCity={activeCity}
                 onSelect={handleCardSelect}
-                onSave={(id) => user ? toggleSave(id) : navigate('/login')}
+                onSave={(id) => user ? toggleSave(id) : openSaveGate(id)}
               />
             </div>
           ))}
@@ -462,6 +465,8 @@ export default function DesktopExplorePage() {
           />
         )}
       </div>
+
+      {saveGateFor && <SaveAuthGate onClose={closeSaveGate} />}
     </div>
   )
 }

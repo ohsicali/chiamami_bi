@@ -50,6 +50,20 @@
   --color-green-b: #4ADE80;
   --color-success: #4ADE80;
 
+  /* ── Il verde degli sconti ────────────────────────────────────────────
+     Un solo verde per tutto quello che dice "qui si risparmia": la pillola
+     della percentuale sulle card, sul pin della mappa, sulla scheda del
+     locale, nel Bi Club e sui drop. Prima lo stesso badge era lime in un
+     posto, menta in un altro e corallo nella scheda dello sconto: tre
+     colori per la stessa informazione, e chi li vede uno dopo l'altro non
+     capisce che sono la stessa cosa.
+     `--color-sconto-ink` è il verde scuro del testo dentro la pillola:
+     nero sul lime fa 15:1 ma "pesa", il bianco non passa il contrasto.
+     Valgono per telefono e per computer: nessuna media query li ridefinisce. */
+  --color-sconto-a: #A3E635;
+  --color-sconto-b: #4ADE80;
+  --color-sconto-ink: #1A4731;
+
   --color-bordo: #EAE3D7;
 
   /* Font stacks — UI body (Poppins), wordmark (Alfa Slab One),
@@ -135,6 +149,12 @@
   --page: #FAF7F2;
   --cream: #F5F0E4;
   --oro-deep: #8E6B3E;
+
+  /* La sfumatura degli sconti, gia' pronta: si scrive una volta qui invece
+     di ricopiare gli angoli e le tappe in venti punti diversi. Sta in :root
+     e non in @theme perche' Tailwind con un `--color-*` che contiene un
+     gradiente genererebbe utility `bg-*`/`text-*` senza senso. */
+  --gradient-sconto: linear-gradient(135deg, var(--color-sconto-a) 0%, var(--color-sconto-b) 100%);
 }
 
 /* Spaziatore fisico per scroll orizzontali — iOS Safari ignora padding/margin-left

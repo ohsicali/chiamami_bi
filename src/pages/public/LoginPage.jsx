@@ -34,6 +34,23 @@ const inputStyle = {
 }
 
 /**
+ * Cosa dice il bottone mentre aspetta la risposta.
+ *
+ * Un verbo al presente e non "Caricamento...": dice quale delle azioni della
+ * pagina è in corso, che qui cambiano a ogni passo (accesso, registrazione,
+ * codice, password).
+ */
+const SUBMITTING_LABEL = {
+  login: 'Accedo\u2026',
+  register: 'Creo l\u2019account\u2026',
+  confirm_signup: 'Controllo il codice\u2026',
+  forgot: 'Invio l\u2019email\u2026',
+  recovery_forgot: 'Invio il codice\u2026',
+  recovery_otp: 'Verifico\u2026',
+  recovery_newpwd: 'Reimposto\u2026',
+}
+
+/**
  * Le porte che portano qui senza che l'utente abbia chiesto di accedere.
  * La chiave arriva in `location.state.reason` da chi fa il redirect.
  */
@@ -624,6 +641,7 @@ export default function LoginPage() {
                   exit={{ opacity: 0, height: 0 }}
                   type="text"
                   placeholder="Il tuo nome"
+                  autoComplete="name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   style={{ ...inputStyle, marginBottom: 12 }}
@@ -636,6 +654,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 placeholder="Email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ ...inputStyle, marginBottom: (mode === 'login' || mode === 'register') ? 12 : 18 }}
@@ -654,6 +673,11 @@ export default function LoginPage() {
                 >
                   <input
                     type="password"
+                    /* Su "accedi" è la password che hai già, su "registrati"
+                       è nuova: detto così il gestore password propone la
+                       compilazione nel primo caso e la generazione nel
+                       secondo, invece di offrire sempre la cosa sbagliata. */
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -694,6 +718,7 @@ export default function LoginPage() {
                       >
                         <input
                           type="password"
+                          autoComplete="new-password"
                           placeholder="Ripeti la password"
                           value={registerConfirm}
                           onChange={(e) => setRegisterConfirm(e.target.value)}
@@ -960,32 +985,60 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Submit */}
+            {/* Submit —
+                In attesa il bottone resta corallo. Prima diventava grigio
+                chiarissimo (`ink-15`) con tre puntini grigi sopra: su fondo
+                crema non si distingueva più dalla pagina, e la segnalazione
+                che ci è arrivata era «clicco il bottone, scompare ma non
+                succede niente». Il bottone non spariva, spariva alla vista —
+                e quello che sembrava un bottone rotto era un accesso in corso.
+                Adesso il colore non cambia, gira una rotella e c'è scritto
+                cosa sta succedendo. */}
             <motion.button
               type="submit"
               disabled={submitting}
+              aria-busy={submitting}
               className="hover-lift-sm"
               whileTap={{ transform: 'scale(0.98)' }}
               style={{
                 width: '100%',
-                background: submitting ? 'var(--color-ink-15)' : 'var(--color-corallo)',
-                color: submitting ? 'var(--color-ink-55)' : '#fff',
+                background: 'var(--color-corallo)',
+                color: '#fff',
+                opacity: submitting ? 0.75 : 1,
                 border: 'none',
                 borderRadius: 16,
                 padding: '15px 16px',
                 fontSize: 15,
                 fontWeight: 800,
-                cursor: submitting ? 'not-allowed' : 'pointer',
+                cursor: submitting ? 'progress' : 'pointer',
                 fontFamily: 'var(--font-sans)',
                 textAlign: 'center',
                 letterSpacing: '-.01em',
                 marginBottom: 20,
-                boxShadow: submitting ? 'none' : '0 8px 20px rgba(232,69,60,.28)',
-                transition: 'transform 0.15s',
+                boxShadow: '0 8px 20px rgba(232,69,60,.28)',
+                transition: 'transform 0.15s, opacity 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 9,
               }}
             >
+              {submitting && (
+                <svg
+                  className="animate-spin"
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  style={{ flex: 'none' }}
+                >
+                  <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.35)" strokeWidth="3" />
+                  <path d="M21 12a9 9 0 0 0-9-9" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              )}
               {submitting
-                ? '...'
+                ? SUBMITTING_LABEL[mode] || 'Un attimo\u2026'
                 : mode === 'confirm_signup'
                   ? 'Conferma ed entra'
                 : mode === 'forgot'

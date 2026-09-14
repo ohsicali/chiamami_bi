@@ -11,7 +11,7 @@
    spec. Se cambi un numero, cambialo prima nel mockup.
 
    Struttura confermata dal cliente (v5, poi ripulita): card tutta corallo,
-   foto sopra, badge mint a cavallo in basso a destra, barra con il numero,
+   foto sopra, badge verde a cavallo in basso a destra, barra con il numero,
    doppio bottone. Da NON reintrodurre: badge grande spostato a sinistra,
    pannello nero separato per i codici, bottone singolo, cuore o live-pill
    sovrapposti alla foto — direzione scartata esplicitamente.
@@ -20,8 +20,11 @@
 .dropcard {
   --dc-corallo: var(--color-corallo, #e8453c);
   --dc-corallo-d: var(--color-corallo-ink, #c93a32);
-  --dc-mint: #aef3c2;
-  --dc-mint2: #7ee5a0;
+  /* Il verde è quello degli sconti di tutto il sito, non un menta a parte:
+     la stessa percentuale non può essere menta qui e lime sulla card del
+     locale accanto. Vedi --color-sconto-* in globals.css. */
+  --dc-verde: var(--color-sconto-a, #a3e635);
+  --dc-verde2: var(--color-sconto-b, #4ade80);
   --dc-ink: var(--color-ink, #22181c);
   --dc-line: var(--color-line, rgba(34, 24, 28, 0.1));
 
@@ -89,8 +92,8 @@
   top: calc(100 * var(--dc-k));
   right: calc(13 * var(--dc-k));
   z-index: 3;
-  background: linear-gradient(140deg, var(--dc-mint) 0%, var(--dc-mint2) 100%);
-  color: var(--dc-ink);
+  background: linear-gradient(140deg, var(--dc-verde) 0%, var(--dc-verde2) 100%);
+  color: var(--color-sconto-ink, #1a4731);
   font-weight: 800;
   font-size: calc(15 * var(--dc-k));
   line-height: 1;
@@ -133,13 +136,13 @@
   text-overflow: ellipsis;
 }
 
-/* Pallino mint, non bianco: è l'unico punto di verde sulla card insieme al
+/* Pallino verde, non bianco: è l'unico punto di verde sulla card insieme al
    badge e alla barra, e lega i tre. */
 .dropcard__pill i {
   width: calc(5 * var(--dc-k));
   height: calc(5 * var(--dc-k));
   border-radius: 50%;
-  background: var(--dc-mint);
+  background: var(--dc-verde);
   flex: none;
   animation: dropcard-blink 1.5s infinite;
 }
@@ -211,7 +214,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--dc-mint), var(--dc-mint2));
+  background: linear-gradient(90deg, var(--dc-verde), var(--dc-verde2));
   transition: width 400ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
 
@@ -327,7 +330,7 @@
    diventerebbero una macchia sola e il drop in evidenza perderebbe il suo
    ruolo di unico blocco pieno.
 
-   Verticale: foto sopra (64px), badge mint a cavallo del bordo inferiore
+   Verticale: foto sopra (64px), badge verde a cavallo del bordo inferiore
    della foto in basso a SINISTRA, poi nome, categoria e stato. Niente
    pill, niente barra, niente bottoni — l'intera card è cliccabile, perché
    in una riga da scorrere un bottone da 10px è un bersaglio finto. */

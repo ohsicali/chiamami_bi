@@ -11,6 +11,8 @@ import JsonLd from '../../components/SEO/JsonLd'
 import { proxyImg } from '../../lib/supabase'
 import { slugify } from '../../lib/utils/slug'
 import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
+import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
+import { useSaveGate } from '../../lib/hooks/useSaveGate'
 
 // Caricata solo su desktop: da telefono questo codice non viene scaricato.
 // È il gemello più pesante (35 KB di sorgente), quindi è anche il risparmio
@@ -35,7 +37,8 @@ export default function RestaurantPage() {
   const slug = match?.params?.slug
   const { allRestaurants, loading } = useRestaurants()
   const { user } = useAuth()
-  const { isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
+  const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
   const isDesktop = useIsDesktop()
 
   const restaurant = allRestaurants.find((r) => r.slug === slug || slugify(r.name) === slug)
@@ -83,10 +86,10 @@ export default function RestaurantPage() {
 
   const handleSaveToggle = () => {
     if (!user) {
-      // Come per gli sconti: dopo la registrazione si torna qui, non in home.
-      navigate('/login', {
-        state: { returnTo: `${location.pathname}${location.search}`, mode: 'register' },
-      })
+      // Si apre sopra la scheda invece di portare via: chi decide di non
+      // registrarsi resta sul locale che stava guardando, e chi si registra
+      // torna qui col locale già salvato (se ne occupa useSaveGate).
+      openSaveGate(restaurant?.id)
       return
     }
     if (!restaurant) return
@@ -214,6 +217,8 @@ export default function RestaurantPage() {
           onClose={() => setListSheetFor(null)}
         />
       )}
+
+      {saveGateFor && <SaveAuthGate onClose={closeSaveGate} />}
     </>
   )
 }

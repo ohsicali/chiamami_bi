@@ -26,6 +26,8 @@ import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestauran
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
+import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
+import { useSaveGate } from '../../lib/hooks/useSaveGate'
 
 // Caricata solo su desktop: da telefono questo codice non viene scaricato.
 const DesktopExplorePage = lazy(() => import('./DesktopExplorePage'))
@@ -93,7 +95,7 @@ function MiniCard({ restaurant, index = 0, userPosition, discountTitle, saved, o
           {discountTitle && (
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
-              background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+              background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
               fontSize: 8, fontWeight: 800, textAlign: 'center',
               padding: '2px 0',
             }}>
@@ -167,7 +169,20 @@ export default function HomePage() {
   const { position, loading: geoLoading, locate } = useGeolocation()
   const { user } = useAuth()
   const isDesktop = useIsDesktop()
-  const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { savedIds, isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
+  const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
+
+  // Il cuore da sloggato buttava su /login, e con la mappa quello è il costo
+  // più alto di tutti: si perdono inquadratura, zoom e filtri, e tornando
+  // indietro si riparte da Torino centro. Il riquadro si apre sopra la mappa
+  // e la mappa resta dov'era.
+  const handleSaveToggle = useCallback((id) => {
+    if (!user) {
+      openSaveGate(id)
+      return
+    }
+    toggleSave(id)
+  }, [user, openSaveGate, toggleSave])
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
@@ -447,7 +462,7 @@ export default function HomePage() {
               userPosition={position}
               onClick={handleCardClick}
               saved={isSaved(restaurant.id)}
-              onSaveToggle={user ? () => toggleSave(restaurant.id) : () => navigate('/login')}
+              onSaveToggle={() => handleSaveToggle(restaurant.id)}
               hasDiscount={discountRestaurantIds.has(restaurant.id)}
               discountTitle={discountTitleMap[restaurant.id]}
             />
@@ -627,7 +642,7 @@ export default function HomePage() {
                       userPosition={position}
                       discountTitle={discountLabelMap[r.id]}
                       saved={isSaved(r.id)}
-                      onSave={user ? () => toggleSave(r.id) : () => navigate('/login')}
+                      onSave={() => handleSaveToggle(r.id)}
                       onClick={handleCardClick}
                     />
                   ))}
@@ -747,6 +762,8 @@ export default function HomePage() {
           onClose={() => setShowSuggest(false)}
         />
       )}
+
+      {saveGateFor && <SaveAuthGate onClose={closeSaveGate} />}
     </div>
   )
 }
