@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { proxyImg } from '../../lib/supabase'
 import { LIST_EMOJI } from '../../lib/hooks/useSavedLists'
 
 /* ============================================================================
@@ -9,9 +8,10 @@ import { LIST_EMOJI } from '../../lib/hooks/useSavedLists'
    desktop. Finché era una funzione privata di SavedPage, su desktop le liste
    semplicemente non esistevano — si creavano dal telefono e poi sparivano.
 
-   La copertina è automatica: la foto del primo locale della lista. Nessuna
-   scelta da fare — chiedere di scegliere una copertina è una decisione in più
-   per salvare un ristorante.
+   La copertina è la sola emoji della lista, su uno sfondo tinta unita: niente
+   foto del primo locale. Una foto piccola e diversa per ogni riquadro rendeva
+   la striscia rumorosa; l'emoji sola è il minimo che serve a riconoscere una
+   lista scorrendo veloce.
 
    Le liste filtrano l'elenco sotto, non lo sostituiscono: ritoccando la lista
    attiva si torna a vedere tutto. Se non ci sono liste la striscia non
@@ -26,7 +26,6 @@ import { LIST_EMOJI } from '../../lib/hooks/useSavedLists'
 export default function SavedListsStrip({
   lists,
   suggestions = [],
-  restaurants,
   activeListId,
   onSelect,
   onRename,
@@ -42,7 +41,6 @@ export default function SavedListsStrip({
 
   const real = lists || []
   if (real.length === 0 && suggestions.length === 0) return null
-  const byId = new Map((restaurants || []).map((r) => [r.id, r]))
   const active = lists.find((l) => l.id === activeListId) || null
   const canEdit = typeof onRename === 'function' && typeof onDelete === 'function'
   const canCreate = typeof onCreate === 'function'
@@ -143,9 +141,6 @@ export default function SavedListsStrip({
         )}
 
         {real.map((l) => {
-          const first = (l.restaurantIds || []).map((id) => byId.get(id)).find(Boolean)
-          const photoRaw = first?.photos?.[0]?.thumb_url || first?.photos?.[0]?.photo_url
-          const cover = proxyImg(photoRaw, { w: 300 })
           const isActive = activeListId === l.id
           return (
             <button
@@ -171,7 +166,7 @@ export default function SavedListsStrip({
             >
               {/* Selezionata: non un rettangolo colorato incollato al bordo
                   (leggeva "cornice economica"), ma un anello sottile staccato
-                  dalla foto da uno scarto bianco — lo stesso trucco degli
+                  dal riquadro da uno scarto bianco — lo stesso trucco degli
                   highlight di Instagram — con un'ombra morbida che solleva la
                   tile invece di delimitarla. */}
               <div
@@ -184,7 +179,7 @@ export default function SavedListsStrip({
                   background: 'linear-gradient(135deg, #E8CFA8 0%, rgba(34,24,28,.18) 100%)',
                   display: 'grid',
                   placeItems: 'center',
-                  fontSize: 26,
+                  fontSize: 28,
                   boxShadow: isActive
                     ? '0 0 0 2px #fff, 0 0 0 4px var(--color-corallo), 0 8px 18px -6px rgba(232,69,60,.5)'
                     : 'none',
@@ -192,17 +187,7 @@ export default function SavedListsStrip({
                   transition: 'box-shadow .18s ease, transform .18s ease',
                 }}
               >
-                {cover
-                  ? <img src={cover} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span aria-hidden="true">{l.emoji || '📁'}</span>}
-                {/* Velo scuro sul fondo: senza, la foto finiva piatta e il
-                    badge dell'emoji qui sotto galleggiava senza contrasto. */}
-                {cover && (
-                  <div aria-hidden="true" style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(0deg, rgba(0,0,0,.32) 0%, transparent 45%)',
-                  }} />
-                )}
+                <span aria-hidden="true">{l.emoji || '📁'}</span>
                 {isActive && (
                   <div style={{
                     position: 'absolute', top: 6, right: 6, zIndex: 1,
@@ -214,22 +199,6 @@ export default function SavedListsStrip({
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                  </div>
-                )}
-                {/* L'emoji come medaglietta sull'angolo della foto — copertina
-                    di lista, non icona di stato — invece che ripetuta come
-                    prefisso del nome sotto. Solo quando la copertina è una
-                    foto vera: se la lista è vuota l'emoji è già grande al
-                    centro del riquadro. */}
-                {cover && (
-                  <div style={{
-                    position: 'absolute', bottom: 6, left: 6, zIndex: 1,
-                    width: 22, height: 22, borderRadius: '50%',
-                    background: 'rgba(255,255,255,.92)',
-                    boxShadow: '0 1px 4px rgba(34,24,28,.3)',
-                    display: 'grid', placeItems: 'center', fontSize: 12,
-                  }}>
-                    <span aria-hidden="true">{l.emoji || '📁'}</span>
                   </div>
                 )}
               </div>
