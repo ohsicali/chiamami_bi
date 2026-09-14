@@ -83,6 +83,11 @@ function RestaurantCard({
       : null
 
   const priceStr = formatPrice(restaurant.price_range)
+  // Il distintivo della città compare solo fuori dalla città attiva: la
+  // stessa regola sta dentro CityBadge, qui serve a sapere in anticipo se la
+  // riga del "dove" ha qualcosa da mostrare quando l'indirizzo manca.
+  const showCity = !!restaurant.city
+    && restaurant.city.trim().toLowerCase() !== String(activeCity || '').trim().toLowerCase()
 
   // TILE VARIANT — foto 4:3 in alto, corpo sotto.
   // Unifica le card verticali che ogni pagina si era riscritta (Salvati,
@@ -164,61 +169,90 @@ function RestaurantCard({
           )}
         </SmartImage>
 
+        {/* Le stesse informazioni, nello stesso ordine, delle card di
+            "Ultimi aggiunti" in home: nome, tagline, categoria + prezzo,
+            indirizzo. Erano due card diverse per lo stesso locale — in home
+            si leggeva cosa fosse il posto, nei Salvati restava un nome e una
+            pillola.
+
+            Nome e tagline si prendono due righe ciascuno SEMPRE, anche quando
+            ne riempiono una sola o nessuna: in una riga di griglia le card
+            prendono l'altezza della più alta, e basta un nome lungo perché
+            tutte le altre si ritrovino spazio da riempire. Riservandolo, le
+            card vengono alte uguali per costruzione e gli indirizzi si
+            allineano da soli. */}
         <div style={{
           padding: dense ? '10px 11px 11px' : '13px 15px 15px',
-          display: 'flex', flexDirection: 'column', gap: dense ? 5 : 6, minWidth: 0,
+          display: 'flex', flexDirection: 'column', minWidth: 0,
         }}>
-          {/* Il nome su due righe e con l'altezza sempre riservata. In griglia
-              le card di una riga prendono l'altezza della più alta: con una
-              riga sola i nomi lunghi finivano troncati, con un'altezza libera
-              il locale dal nome corto spostava tutto quello che aveva sotto.
-              Due righe fisse tengono allineate categoria, prezzo e liste. */}
           <h3 style={{
             fontFamily: 'var(--font-sans)', fontWeight: 800,
-            fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.02em',
-            color: 'var(--color-ink)', lineHeight: 1.25, minWidth: 0,
+            fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.01em',
+            color: 'var(--color-ink)', lineHeight: 1.2, minWidth: 0,
             display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
-            overflow: 'hidden', minHeight: '2.5em',
+            overflow: 'hidden', minHeight: '2.4em',
           }}>
             {restaurant.name}
           </h3>
 
-          {/* Una riga sola, in ordine fisso: dove sta il locale, che cucina è,
-              quanto costa, quanto è lontano. Prima andava a capo, e due card
-              affiancate mostravano le stesse informazioni a due altezze
-              diverse. Quello che non ci sta viene tagliato, non mandato a
-              capo: la categoria si accorcia per prima, prezzo e distanza —
-              corti e utili — restano interi. */}
+          {/* Renderizzata anche vuota: è lo spazio riservato che tiene in riga
+              le card dei locali senza tagline. */}
           <div style={{
-            display: 'flex', gap: 6, alignItems: 'center',
+            fontSize: dense ? 11.5 : 12, color: 'var(--color-ink-70)',
+            marginTop: 3, lineHeight: 1.35,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+            overflow: 'hidden', minHeight: '2.7em',
+          }}>
+            {restaurant.tagline || ''}
+          </div>
+
+          {/* Categoria e prezzo come in home: la pillola prende il colore
+              della categoria, non un corallo uguale per tutte. */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginTop: 6,
             flexWrap: 'nowrap', overflow: 'hidden', minWidth: 0,
           }}>
-            <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />
             {category && (
               <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '3px 8px', borderRadius: 'var(--radius-pill)',
-                background: 'var(--color-corallo-soft)', color: 'var(--color-corallo-ink)',
-                fontSize: 'var(--fs-xs)', fontWeight: 700, minWidth: 0,
+                display: 'inline-flex', alignItems: 'center', gap: 3, minWidth: 0,
+                padding: '3px 7px', borderRadius: 'var(--radius-pill)',
+                background: `${category.color || '#E8453C'}20`, color: category.color || '#E8453C',
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {category.emoji} {category.name}
               </span>
             )}
             {priceStr && (
-              <span style={{ flexShrink: 0, fontWeight: 700, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{priceStr}</span>
+              <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: 'var(--color-ink-70)' }}>{priceStr}</span>
             )}
             {distance != null && (
-              <span style={{ flexShrink: 0, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{formatDistance(distance)}</span>
+              <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--color-ink-70)' }}>{formatDistance(distance)}</span>
             )}
           </div>
 
-          {!dense && restaurant.address && (
+          {/* Il "dove", tutto su una riga: la città quando è un'altra, poi
+              via e quartiere. "Via Bonafous 7 · Vanchiglia" dice in che zona
+              si va, che è quello che si guarda scegliendo fra cinque posti
+              salvati.
+
+              La città sta qui e non in mezzo a categoria e prezzo: in una
+              card a mezza colonna quei tre pezzi insieme non ci stanno, e il
+              nome della cucina finiva tagliato a metà. Su questa riga il
+              distintivo ha il posto che gli serve, e a cedere è la via — che
+              per un locale in un'altra città conta meno del fatto che sia in
+              un'altra città. */}
+          {(showCity || restaurant.address) && (
             <div style={{
-              fontSize: 'var(--fs-sm)', color: 'var(--color-ink-64)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, minWidth: 0,
+              fontSize: dense ? 11.5 : 12, color: 'var(--color-ink-70)',
             }}>
-              {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
+              <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />
+              {restaurant.address && (
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {formatAddress(restaurant.address, restaurant.neighborhood) || restaurant.address}
+                </span>
+              )}
             </div>
           )}
           {/* Sopra al bottone-lenzuolo che apre la scheda, se no il tocco
