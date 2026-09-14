@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { proxyImg } from '../../lib/supabase'
 import { getHoursStatus } from '../../lib/hours'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 import { useAdSlot, adHref } from '../../lib/hooks/useAds'
 import { useAdImpression, trackAdClick } from '../../lib/hooks/useAdTracking'
@@ -57,7 +57,7 @@ function resolveAd(ad) {
   const r = ad.restaurant
   const isBrand = ad.variant === 'brand'
   const hasDiscount = !!ad.discount && ad.variant === 'restaurant_discount'
-  const discountLabel = hasDiscount ? formatDiscountValue(ad.discount) : null
+  const discountLabel = hasDiscount ? formatDiscountBadge(ad.discount) : null
 
   const catName = (Array.isArray(r?.category) && r.category[0]) || r?.cuisine_type || ''
   const zone = (r?.address || '').split(',')[0].trim()

@@ -10,7 +10,7 @@ import {
   computeNextValidWindow,
 } from '../../lib/validity'
 import ValidityPill from './ValidityPill'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import './DiscountDetailPopup.css'
 import { slugify } from '../../lib/utils/slug'
 
@@ -24,7 +24,7 @@ function shortAddress(addr) {
 }
 
 function pctNum(deal) {
-  return formatDiscountValue(deal)
+  return formatDiscountBadge(deal)
 }
 
 function pctLabel(deal) {

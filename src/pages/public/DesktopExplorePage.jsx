@@ -16,7 +16,7 @@ import { formatAddress } from '../../lib/utils/formatAddress'
 import { useCity } from '../../lib/CityContext'
 import { CityBadge, sortByActiveCity } from '../../components/UI/CityBadge'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
 import AdSlot from '../../components/Ads/AdBanner'
@@ -246,7 +246,7 @@ export default function DesktopExplorePage() {
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountLabelMap = Object.fromEntries(
-    activeDiscounts.map(d => [d.restaurant_id, formatDiscountValue(d)])
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
   )
   const discountMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d]))
 

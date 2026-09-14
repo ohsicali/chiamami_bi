@@ -21,7 +21,7 @@ import { filterActiveDrops, filterActiveConventions, sortByExpiry, msUntilEnd } 
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
-import { formatDiscountValue, discountContextWord } from '../../lib/utils/discountFormat'
+import { formatDiscountValue, formatDiscountBadge, discountContextWord } from '../../lib/utils/discountFormat'
 import './SconteRedesignPage.css'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
@@ -79,7 +79,7 @@ function isDealExpired(deal) {
 }
 
 function dealBadgeText(deal) {
-  return formatDiscountValue(deal)
+  return formatDiscountBadge(deal)
 }
 
 function freebieLabel(deal) {
@@ -824,7 +824,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
-  const badge = formatDiscountValue(deal)
+  const badge = formatDiscountBadge(deal)
   const location = r?.neighborhood || r?.city
   const priceStr = formatPrice(r?.price_range)
   const validityStatus = checkValidity(deal)
@@ -1092,7 +1092,7 @@ function DealInfoSheet({ deal, claiming, onClaim, onClose }) {
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const isFreebie = deal?.discount_type === 'freebie' || deal?.discount_type === 'special_price'
-  const badge = formatDiscountValue(deal)
+  const badge = formatDiscountBadge(deal)
   const dealTitle = deal?.title
   const description = deal?.description
   const conditionLines = (deal?.conditions || '')
