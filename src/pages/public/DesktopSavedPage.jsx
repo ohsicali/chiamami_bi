@@ -11,6 +11,9 @@ import { getDistance } from '../../lib/utils/distance'
 import { supabase } from '../../lib/supabase'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
+import SavedListsStrip, { SavedListsFooter } from '../../components/Restaurant/SavedListsStrip'
+import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
+import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { slugify } from '../../lib/utils/slug'
 
 
@@ -18,6 +21,9 @@ export default function DesktopSavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { savedIds, toggleSave } = useSavedRestaurants(user?.id)
+  // Le liste esistevano solo sul telefono: chi le creava lì, da computer non
+  // le ritrovava più. Sono le stesse righe, lo stesso componente.
+  const { lists: savedLists, suggestions: listSuggestions, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { position } = useGeolocation()
 
@@ -26,6 +32,10 @@ export default function DesktopSavedPage() {
   const [filters, setFilters] = useState({ category: null, priceRange: null, moment: null, sortBy: null })
   const [extraFilters, setExtraFilters] = useState({ dietary: [], radiusKm: null })
   const [showDealsOnly, setShowDealsOnly] = useState(false)
+  const [activeListId, setActiveListId] = useState(null)
+  // Lo stesso foglio del telefono: le liste di un locale già salvato si
+  // cambiano da qui, non solo nell'istante in cui lo si salva.
+  const [listSheetFor, setListSheetFor] = useState(null)
 
   const discountRestaurantIds = new Set(activeDiscounts.map(d => d.restaurant_id))
   const discountLabelMap = Object.fromEntries(
@@ -54,6 +64,12 @@ export default function DesktopSavedPage() {
 
   const displayedRestaurants = useMemo(() => {
     let list = [...restaurants]
+
+    // La lista attiva filtra l'elenco: è un'etichetta, non una cartella.
+    if (activeListId) {
+      const ids = new Set(savedLists.find((l) => l.id === activeListId)?.restaurantIds || [])
+      list = list.filter((r) => ids.has(r.id))
+    }
 
     if (filters.category) {
       const selected = Array.isArray(filters.category) ? filters.category : [filters.category]
@@ -93,13 +109,15 @@ export default function DesktopSavedPage() {
     }
 
     return list
-  }, [restaurants, filters, extraFilters, showDealsOnly, position, discountRestaurantIds])
+  }, [restaurants, filters, extraFilters, showDealsOnly, position, discountRestaurantIds, activeListId, savedLists])
 
   const handleRestaurantClick = useCallback((r) => {
     navigate(`/restaurant/${r.slug || slugify(r.name)}`)
   }, [navigate])
 
-  if (!authLoading && !user) return <Navigate to="/login" replace />
+  // `state` anche qui: ci si arriva pure da un link diretto o da un segnalibro,
+  // e la pagina di accesso deve dire perché e riportare indietro dopo.
+  if (!authLoading && !user) return <Navigate to="/login" replace state={{ returnTo: '/saved', reason: 'saved', mode: 'register' }} />
 
   return (
     <div style={{ minHeight: 'calc(100vh - 80px)', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' }}>
@@ -119,6 +137,19 @@ export default function DesktopSavedPage() {
             {restaurants.length} {restaurants.length === 1 ? 'locale salvato' : 'locali salvati'}
           </div>
         </div>
+
+        {restaurants.length > 0 && (
+          <SavedListsStrip
+            lists={savedLists}
+            suggestions={listSuggestions}
+            restaurants={restaurants}
+            activeListId={activeListId}
+            onSelect={setActiveListId}
+            onRename={renameList}
+            onDelete={deleteList}
+            tileWidth={132}
+          />
+        )}
 
         {/* Filter bar — same as esplora */}
         {restaurants.length > 0 && (
@@ -185,6 +216,14 @@ export default function DesktopSavedPage() {
                 discountTitle={discountLabelMap[r.id]}
                 onSaveToggle={() => toggleSave(r.id)}
                 onClick={handleRestaurantClick}
+                footer={
+                  <SavedListsFooter
+                    lists={savedLists}
+                    restaurantId={r.id}
+                    restaurantName={r.name}
+                    onOpen={() => setListSheetFor(r)}
+                  />
+                }
               />
             ))}
           </div>
@@ -192,6 +231,17 @@ export default function DesktopSavedPage() {
       </div>
 
       <Footer />
+
+      {/* Il foglio ha la sua copia delle liste: alla chiusura questa pagina
+          le rilegge, se no striscia e righe sotto le card resterebbero
+          ferme a prima del tocco. */}
+      {listSheetFor && (
+        <SaveToListSheet
+          userId={user?.id}
+          restaurant={listSheetFor}
+          onClose={() => { setListSheetFor(null); reloadLists() }}
+        />
+      )}
     </div>
   )
 }

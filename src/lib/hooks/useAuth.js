@@ -132,9 +132,18 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }, [])
 
+  /**
+   * Restituisce { needsConfirmation } — vero quando Supabase non ha aperto
+   * una sessione perché aspetta la conferma dell'indirizzo. Serve a chi
+   * chiama per sapere se mostrare la schermata del codice o entrare e basta.
+   *
+   * `emailRedirectTo` resta anche se ora confermiamo col codice: chi apre una
+   * vecchia email col link, o chi ha il client di posta che lo pre-carica,
+   * deve comunque atterrare da qualche parte di sensato.
+   */
   const signUp = useCallback(async (email, password, fullName) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -142,6 +151,28 @@ export function AuthProvider({ children }) {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
+    if (error) throw error
+    return { needsConfirmation: !data?.session }
+  }, [])
+
+  /**
+   * Conferma la registrazione col codice a 6 cifre arrivato per email.
+   *
+   * `type: 'signup'` è quello giusto: 'email' verificherebbe un cambio di
+   * indirizzo, non una registrazione, e fallirebbe con un messaggio che non
+   * dice niente a nessuno. A verifica riuscita Supabase apre già la sessione,
+   * quindi non serve un login dopo.
+   */
+  const verifySignupOtp = useCallback(async (email, token) => {
+    if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'signup' })
+    if (error) throw error
+  }, [])
+
+  /** Rimanda il codice a chi non l'ha ricevuto o l'ha lasciato scadere. */
+  const resendSignupOtp = useCallback(async (email) => {
+    if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
     if (error) throw error
   }, [])
 
@@ -176,7 +207,7 @@ export function AuthProvider({ children }) {
 
   const isAdmin = profile?.is_admin === true
 
-  const value = { user, profile, loading, isAdmin, signIn, signUp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
+  const value = { user, profile, loading, isAdmin, signIn, signUp, verifySignupOtp, resendSignupOtp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
   return React.createElement(AuthContext.Provider, { value }, children)
 }
 

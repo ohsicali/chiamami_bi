@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChiamamiBi · v10 — home "il momento" + drop corallo sviluppato</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22181c; --corallo:#e8453c; --corallo-d:#c93a32; --page:#faf7f2; --cream:#f5f0e4;
+    --oro:#8e6b3e; --verde:#3f9d63; --line:rgba(34,24,28,.10);
+    --bad:#dc2626; --mint:#aef3c2; --mint2:#7ee5a0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Poppins',sans-serif;background:var(--page);color:var(--ink)}
+  .topbar{position:sticky;top:0;z-index:80;background:rgba(250,247,242,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1360px;margin:0 auto;padding:11px 26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{font-weight:800;font-size:13.5px}.brand span{color:var(--corallo)}
+  .tabs{display:flex;gap:3px;flex-wrap:wrap}
+  .tab{border:none;background:transparent;font-family:inherit;font-size:11.8px;font-weight:600;color:rgba(34,24,28,.6);padding:7px 12px;border-radius:999px;cursor:pointer}
+  .tab:hover{background:rgba(34,24,28,.05);color:var(--ink)}
+  .tab.on{background:var(--ink);color:#fff}
+  .panel{display:none;max-width:1360px;margin:0 auto;padding:38px 26px 90px}
+  .panel.on{display:block}
+  .kicker{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--corallo);margin-bottom:9px}
+  h1.big{font-size:35px;font-weight:800;letter-spacing:-.8px;line-height:1.13}
+  .lead{color:rgba(34,24,28,.68);font-size:14.6px;line-height:1.7;max-width:780px;margin-top:11px}
+  h2.sec{font-size:20px;font-weight:800;letter-spacing:-.3px;margin:34px 0 10px}
+  .note{background:var(--cream);border-radius:13px;padding:14px 18px;font-size:12.6px;line-height:1.7;margin-top:18px;max-width:900px}
+  .split{display:flex;gap:26px;flex-wrap:wrap;margin-top:16px;align-items:flex-start}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;color:rgba(34,24,28,.45)}
+  .lab.pick{color:var(--corallo)}
+  .lab.old{color:var(--oro)}
+  .cap{margin-top:11px;font-size:12.1px;line-height:1.62;color:rgba(34,24,28,.72);max-width:318px}
+  .cap b{color:var(--ink)}
+  .ph{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .g1{background:linear-gradient(135deg,#f3c9a5,#d98e63)}
+  .g2{background:linear-gradient(135deg,#e8d9c2,#bba180)}
+  .g3{background:linear-gradient(135deg,#f6e3d0,#e0b18b)}
+  .g4{background:linear-gradient(135deg,#ddc9b8,#a98a72)}
+  .g5{background:linear-gradient(135deg,#efd7c4,#c99a76)}
+  .phone{width:314px;background:#fff;border:1px solid var(--line);border-radius:31px;overflow:hidden;box-shadow:0 26px 60px -42px rgba(34,24,28,.4);flex:none}
+  .phone.pick{box-shadow:0 0 0 3px rgba(232,69,60,.35),0 26px 60px -42px rgba(34,24,28,.4)}
+  .notch{height:21px;display:flex;align-items:center;justify-content:center;background:var(--page)}
+  .notch i{width:90px;height:13px;background:var(--ink);border-radius:99px;font-style:normal}
+  .scr{overflow:hidden;position:relative;background:var(--page)}
+  .mnav{display:flex;align-items:center;justify-content:space-between;padding:10px 13px}
+  .mnav .lg{font-weight:800;color:var(--corallo);font-size:11px;line-height:1.1}
+  .mnav .lg small{display:block;font-size:5.5px;letter-spacing:.2em;color:rgba(34,24,28,.45)}
+  .mnav .ask{background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 9px;font-size:8.5px;font-weight:700;display:flex;gap:4px;align-items:center}
+  .mnav .ask i{width:14px;height:14px;border-radius:50%;background:var(--corallo);color:#fff;font-style:normal;font-size:6.5px;display:flex;align-items:center;justify-content:center;font-weight:800}
+  .tabbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:13px;background:rgba(255,255,255,.87);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:7.5px;font-weight:600;color:rgba(34,24,28,.6);box-shadow:0 8px 22px rgba(34,24,28,.15);white-space:nowrap}
+  .tabbar .it{display:flex;flex-direction:column;align-items:center;gap:1px}
+  .tabbar .it i{font-size:11px;font-style:normal}
+  .tabbar .it.on{background:rgba(34,24,28,.08);outline:1.5px solid rgba(34,24,28,.45);border-radius:99px;padding:3px 8px;color:var(--ink)}
+  .fixed{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px;margin-top:10px}
+  .fx{display:flex;gap:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:12.2px;line-height:1.55}
+  .fx i{flex:none;width:19px;height:19px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-style:normal;font-weight:800;margin-top:1px}
+  .fx.ok i{background:#e9f5ee;color:var(--verde)}
+  .fx.bad i{background:#fde8e7;color:var(--bad)}
+
+  /* ===== MOMENTO (dalla v5) ===== */
+  .moment{margin:8px 12px 0;background:var(--ink);color:#fff;border-radius:17px;padding:16px;position:relative;overflow:hidden}
+  .moment::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 15%,rgba(232,69,60,.35),transparent 60%)}
+  .moment .in{position:relative}
+  .moment .tag{font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--mint)}
+  .moment .clock{font-size:38px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin-top:6px}
+  .moment .q{font-size:15px;font-weight:700;line-height:1.25;margin-top:6px}
+  .moment .sub2{font-size:10px;opacity:.75;margin-top:4px}
+  .moment .chips{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+  .moment .chips span{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:6px 11px;font-size:9.5px;font-weight:600}
+  .moment .chips span.on{background:#fff;color:var(--ink);border-color:#fff}
+  .mrow{display:flex;gap:8px;padding:10px 12px 0;overflow:hidden}
+  .mcard{width:112px;flex:none;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}
+  .mcard .p{height:62px;font-size:22px;position:relative}
+  .mcard .op{position:absolute;left:5px;top:5px;background:rgba(255,255,255,.94);color:var(--verde);font-size:7px;font-weight:800;border-radius:99px;padding:2px 6px;z-index:2}
+  .mcard .t{padding:7px 8px}
+  .mcard .t b{font-size:10px;display:block;line-height:1.2}
+  .mcard .t span{font-size:8px;color:rgba(34,24,28,.55)}
+
+  /* ===== DROP v5 originale (piccolo) ===== */
+  .dOld{margin:8px 12px 0;background:var(--corallo);border-radius:17px;color:#fff;overflow:hidden;position:relative}
+  .dOld .photo{height:112px;font-size:40px}
+  .dOld .bdg{position:absolute;top:88px;right:12px;background:var(--mint);color:var(--ink);font-weight:800;font-size:12px;border-radius:99px;padding:5px 11px;border:3px solid var(--corallo);z-index:3}
+  .dOld .bd{padding:11px 14px 13px}
+  .dOld .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.17);border-radius:99px;padding:4px 10px;font-size:8.5px;font-weight:700;letter-spacing:.08em}
+  .dOld .pill i{width:5px;height:5px;border-radius:50%;background:var(--mint);font-style:normal}
+  .dOld h3{font-size:19px;font-weight:800;margin-top:7px;line-height:1.1}
+  .dOld .pk{font-size:12px;font-weight:700;margin-top:3px}
+  .dOld .pk small{display:block;font-size:9px;font-weight:500;opacity:.85;margin-top:1px}
+  .dOld .prog{height:5px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:9px;overflow:hidden}
+  .dOld .prog i{display:block;width:8%;height:100%;background:#fff;font-style:normal}
+  .dOld .mt{display:flex;justify-content:space-between;font-size:9px;margin-top:5px;opacity:.92}
+  .dOld .cta{display:flex;gap:7px;margin-top:10px}
+  .dOld .b1{flex:1;text-align:center;background:var(--ink);border-radius:99px;padding:10px;font-size:10.5px;font-weight:700}
+  .dOld .b2{background:rgba(255,255,255,.17);border-radius:99px;padding:10px 13px;font-size:10.5px;font-weight:600}
+
+  /* ===== DROP v10 — struttura v5 originale, pulita ===== */
+  @keyframes blink{50%{opacity:.28}}
+  .dClean{margin:8px 12px 0;background:linear-gradient(168deg,var(--corallo) 0%,var(--corallo-d) 100%);border-radius:19px;color:#fff;overflow:hidden;position:relative;box-shadow:0 14px 30px -20px rgba(232,69,60,.7)}
+  .dClean .photo{height:128px;font-size:44px;position:relative}
+  .dClean .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(201,58,50,.5) 100%)}
+  .dClean .bdg{position:absolute;top:100px;right:13px;z-index:3;background:linear-gradient(140deg,var(--mint) 0%,var(--mint2) 100%);color:var(--ink);font-weight:800;font-size:15px;letter-spacing:-.3px;border-radius:11px;padding:7px 12px;border:3px solid var(--corallo);box-shadow:0 5px 12px rgba(34,24,28,.25)}
+  .dClean .bd{padding:13px 15px 15px}
+  .dClean .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:99px;padding:5px 11px;font-size:9px;font-weight:700;letter-spacing:.06em}
+  .dClean .pill i{width:5px;height:5px;border-radius:50%;background:var(--mint);font-style:normal;animation:blink 1.5s infinite}
+  .dClean h3{font-size:19px;font-weight:800;margin-top:8px;line-height:1.12;letter-spacing:-.3px}
+  .dClean .pk{font-size:12.5px;font-weight:700;margin-top:6px;line-height:1.4}
+  .dClean .pk small{display:block;font-size:9.5px;font-weight:500;opacity:.85;margin-top:2px}
+  .dClean .prog{height:6px;border-radius:99px;background:rgba(255,255,255,.24);margin-top:11px;overflow:hidden}
+  .dClean .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--mint2));font-style:normal;border-radius:99px}
+  .dClean .mt{display:flex;justify-content:space-between;font-size:10px;margin-top:6px;opacity:.92}
+  .dClean .mt b{font-size:11px}
+  .dClean .cta{display:flex;gap:8px;margin-top:12px}
+  .dClean .b1{flex:1;text-align:center;background:var(--ink);border-radius:99px;padding:12px;font-size:11.5px;font-weight:700;box-shadow:0 6px 14px rgba(34,24,28,.28)}
+  .dClean .b2{background:rgba(255,255,255,.18);border-radius:99px;padding:12px 15px;font-size:11.5px;font-weight:600}
+
+  /* sconti row */
+  .srow{padding:12px 12px 0}
+  .srow .h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+  .srow .h b{font-size:13px}
+  .srow .h span{font-size:9px;color:var(--corallo);font-weight:700}
+  .sscroll{display:flex;gap:8px;overflow:hidden}
+  .scard{width:132px;flex:none;background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden;position:relative;box-shadow:0 4px 12px -8px rgba(34,24,28,.3)}
+  .scard .p{height:64px;font-size:23px;position:relative}
+  .scard .pc{position:absolute;left:6px;bottom:-9px;background:linear-gradient(140deg,var(--mint),var(--mint2));color:var(--ink);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:800;border:2px solid #fff;box-shadow:0 3px 8px rgba(63,157,99,.3)}
+  .scard .t{padding:13px 8px 9px}
+  .scard .t b{font-size:10.5px;display:block;line-height:1.15}
+  .scard .t .c{font-size:8px;color:rgba(34,24,28,.55);margin-top:1px}
+  .scard .t .k{font-size:8.5px;font-weight:700;color:var(--corallo);margin-top:4px}
+
+  /* ===== DESKTOP ===== */
+  .dt{background:var(--page);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 20px 50px -40px rgba(34,24,28,.35)}
+  .dtnav{display:flex;align-items:center;gap:14px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  .dtnav .lg{font-weight:800;color:var(--corallo);font-size:11px;line-height:1.1}
+  .dtnav .lg small{display:block;font-size:5.5px;letter-spacing:.2em;color:rgba(34,24,28,.45)}
+  .dtnav .lk{display:flex;gap:11px;font-size:9.5px;font-weight:600;color:rgba(34,24,28,.6);margin-left:14px}
+  .dtnav .lk b{color:var(--ink)}
+  .dtnav .rt{margin-left:auto;display:flex;gap:7px;align-items:center}
+  .dtnav .rt .a{background:var(--cream);border-radius:99px;padding:4px 9px;font-size:8.5px;font-weight:700}
+  .dtnav .rt .b{background:var(--ink);color:#fff;border-radius:99px;padding:5px 11px;font-size:8.5px;font-weight:700}
+  .dtbody{padding:13px}
+  .band{display:grid;grid-template-columns:1.45fr 1fr;gap:12px}
+  .momD{background:var(--ink);color:#fff;border-radius:16px;padding:18px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .momD::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 88% 12%,rgba(232,69,60,.4),transparent 58%)}
+  .momD .in{position:relative;flex:1;display:flex;flex-direction:column}
+  .momD .tg{font-size:8px;font-weight:800;letter-spacing:.15em;color:var(--mint)}
+  .momD .ck{font-size:46px;font-weight:800;letter-spacing:-2px;line-height:1;margin-top:6px}
+  .momD .q{font-size:17px;font-weight:700;line-height:1.2;margin-top:6px;max-width:330px}
+  .momD .s2{font-size:10px;opacity:.75;margin-top:4px}
+  .momD .ch{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+  .momD .ch span{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:6px 11px;font-size:9px;font-weight:600}
+  .momD .ch span.on{background:#fff;color:var(--ink)}
+  .momD .cards{display:flex;gap:7px;margin-top:auto;padding-top:14px}
+  .momD .oc{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:11px;overflow:hidden}
+  .momD .oc .p{height:44px;font-size:17px}
+  .momD .oc .t{padding:6px 7px}
+  .momD .oc .t b{font-size:9.5px;display:block;line-height:1.1}
+  .momD .oc .t span{font-size:7.5px;opacity:.7}
+  .dropD{background:linear-gradient(168deg,var(--corallo),var(--corallo-d));border-radius:16px;color:#fff;overflow:hidden;position:relative;box-shadow:0 14px 30px -20px rgba(232,69,60,.7)}
+  .dropD .photo{height:118px;font-size:38px;position:relative}
+  .dropD .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 58%,rgba(201,58,50,.5) 100%)}
+  .dropD .bdg{position:absolute;top:92px;right:12px;z-index:3;background:linear-gradient(140deg,var(--mint),var(--mint2));color:var(--ink);font-weight:800;font-size:13.5px;border-radius:10px;padding:6px 10px;border:2.5px solid var(--corallo);box-shadow:0 4px 10px rgba(34,24,28,.25)}
+  .dropD .bd{padding:12px 13px 13px}
+  .dropD .pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);border-radius:99px;padding:4px 9px;font-size:8px;font-weight:700}
+  .dropD .pill i{width:4px;height:4px;border-radius:50%;background:var(--mint);font-style:normal;animation:blink 1.5s infinite}
+  .dropD h3{font-size:17px;font-weight:800;margin-top:7px;line-height:1.1}
+  .dropD .pk{font-size:11px;font-weight:700;margin-top:5px}
+  .dropD .pk small{display:block;font-size:8.5px;font-weight:500;opacity:.85;margin-top:1px}
+  .dropD .prog{height:5px;border-radius:99px;background:rgba(255,255,255,.24);margin-top:9px;overflow:hidden}
+  .dropD .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--mint2));font-style:normal;border-radius:99px}
+  .dropD .mt{display:flex;justify-content:space-between;font-size:9px;margin-top:5px;opacity:.92}
+  .dropD .mt b{font-size:10px}
+  .dropD .cta{display:flex;gap:6px;margin-top:9px}
+  .dropD .b1{flex:1;text-align:center;background:var(--ink);border-radius:99px;padding:9px;font-size:10px;font-weight:700}
+  .dropD .b2{background:rgba(255,255,255,.18);border-radius:99px;padding:9px 11px;font-size:10px;font-weight:600}
+  .catrow{display:flex;gap:8px;margin-top:12px;overflow:hidden}
+  .catrow .c{text-align:center;font-size:8px;color:rgba(34,24,28,.7)}
+  .catrow .c i{display:flex;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);align-items:center;justify-content:center;font-size:17px;font-style:normal;margin:0 auto 3px}
+  .twocol{display:grid;grid-template-columns:1.45fr 1fr;gap:12px;margin-top:12px}
+  .secbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+  .secbox .hh{font-size:12px;font-weight:800;margin-bottom:9px;display:flex;justify-content:space-between;align-items:baseline}
+  .secbox .hh span{font-size:8.5px;color:var(--corallo);font-weight:700}
+  .g3c{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .rc{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .rc .p{height:52px;font-size:19px}
+  .rc .t{padding:6px 7px}
+  .rc .t b{font-size:9.5px;display:block;line-height:1.15}
+  .rc .t span{font-size:7.5px;color:rgba(34,24,28,.55)}
+  .sideli{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .sideli:last-of-type{border:none}
+  .sideli .p{width:36px;height:36px;border-radius:8px;flex:none;font-size:15px;position:relative}
+  .sideli .p .pc{position:absolute;left:-3px;bottom:-3px;background:linear-gradient(140deg,var(--mint),var(--mint2));border-radius:5px;padding:0 4px;font-size:7.5px;font-weight:800;border:1.5px solid #fff}
+  .sideli .t b{font-size:10px;display:block;line-height:1.15}
+  .sideli .t span{font-size:8px;color:rgba(34,24,28,.55)}
+  .sideli .ar{margin-left:auto;font-size:10px;opacity:.35}
+  .plan{counter-reset:s;margin-top:12px}
+  .plan .step{display:flex;gap:11px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 16px;margin-bottom:8px;font-size:12.6px;line-height:1.6;align-items:flex-start}
+  .plan .step::before{counter-increment:s;content:counter(s);flex:none;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+  .plan .step .eta{margin-left:auto;flex:none;font-size:10px;font-weight:700;color:rgba(34,24,28,.45);background:var(--page);border-radius:99px;padding:4px 9px}
+</style>
+</head>
+<body>
+
+<nav class="topbar"><div class="topbar-in">
+  <div class="brand">Chiamami<span>Bi</span> · v10</div>
+  <div class="tabs">
+    <button class="tab on" data-p="s0">🔥 Drop sviluppato</button>
+    <button class="tab" data-p="s1">🏠 Home mobile</button>
+    <button class="tab" data-p="s2">🖥️ Home desktop</button>
+    <button class="tab" data-p="s3">🗺️ Piano</button>
+  </div>
+</div></nav>
+
+<!-- ===== S0 ===== -->
+<section class="panel on" id="s0">
+  <span class="kicker">Ripreso dalla v5, struttura confermata</span>
+  <h1 class="big">Il drop corallo,<br>ora <em style="font-style:normal;color:var(--corallo)">pulito</em></h1>
+  <p class="lead">Mi hai confermato che l'impianto della v5 era già quello giusto: card <b>tutta corallo</b>, foto sopra, badge mint <b>a cavallo</b> in basso a destra, doppio bottone, barra con il numero. Non lo cambio — lo pulisco. Stessa struttura, stessi elementi, stesse posizioni: solo tipografia, spaziature e finiture più curate.</p>
+
+  <div class="split">
+    <div>
+      <div class="lab old">Com'era nella v5 (accenno)</div>
+      <div class="phone"><div class="scr" style="padding:12px 0 12px;background:var(--page)">
+        <div class="dOld">
+          <div class="photo ph g3">🥪</div>
+          <span class="bdg">−50%</span>
+          <div class="bd">
+            <span class="pill"><i></i> DROP LIVE · 6G 19H</span>
+            <h3>Bar Stampa</h3>
+            <div class="pk">50% sul tramezzino base<small>Tramezzini spaziali · Via Bertola 2</small></div>
+            <div class="prog"><i></i></div>
+            <div class="mt"><span>0 presi</span><span><b>10 rimasti</b></span></div>
+            <div class="cta"><span class="b1">🔓 Sblocca sconto</span><span class="b2">Scopri</span></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="cap">Struttura confermata: card corallo, foto sopra, badge a cavallo, doppio bottone, barra con numero. Qui sotto la stessa identica cosa, solo rifinita.</p>
+    </div>
+
+    <div>
+      <div class="lab pick">Pulita</div>
+      <div class="phone pick"><div class="scr" style="padding:12px 0 12px;background:var(--page)">
+        <div class="dClean">
+          <div class="photo ph g3">🥪</div>
+          <span class="bdg">−50%</span>
+          <div class="bd">
+            <span class="pill"><i></i> DROP LIVE · 6G 19H</span>
+            <h3>Bar Stampa</h3>
+            <div class="pk">50% sul tramezzino base<small>Tramezzini spaziali · Via Bertola 2</small></div>
+            <div class="prog"><i style="width:30%"></i></div>
+            <div class="mt"><span>3 presi</span><span><b>7 rimasti</b></span></div>
+            <div class="cta"><span class="b1">🔓 Sblocca sconto</span><span class="b2">Scopri</span></div>
+          </div>
+        </div>
+      </div></div>
+      <p class="cap">Nulla è stato spostato, aggiunto o tolto. Solo: foto più leggibile con una leggera sfumatura che la fonde nel corallo, badge con bordo e ombra più decisi, tipografia più ariosa, barra più spessa e colorata invece del bianco piatto.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">Cosa ho pulito, nient'altro</h2>
+  <div class="fixed">
+    <div class="fx"><i>1</i><span><b>Foto da 112 a 128px</b> con una sfumatura in basso che la fonde nel corallo, senza cambiarne la posizione.</span></div>
+    <div class="fx"><i>2</i><span><b>Badge nello stesso angolo</b> (in basso a destra, a cavallo tra foto e corpo), solo con bordo e ombra più marcati per staccarlo meglio dal fondo.</span></div>
+    <div class="fx"><i>3</i><span><b>Barra più spessa</b> e a gradiente mint invece che bianca piatta: si legge a colpo d'occhio anche senza fissarla.</span></div>
+    <div class="fx"><i>4</i><span><b>Stessi due bottoni</b>, Sblocca sconto e Scopri: solo pesi tipografici e spaziature rifiniti.</span></div>
+  </div>
+
+  <div class="note">🎨 <b>Perché il corallo funziona meglio del bianco:</b> la home è tutta crema e bianco. Una card corallo piena è l'unico blocco a colore saturo sopra la piega — attira l'occhio da sola, senza bisogno di scrivere il numero in grande. È lo stesso motivo per cui il blocco "22:35" funziona: <b>sono i due blocchi pieni</b> in una pagina fatta di aria.</div>
+</section>
+
+<!-- ===== S1 HOME MOBILE ===== -->
+<section class="panel" id="s1">
+  <span class="kicker">La disposizione della v5, completata</span>
+  <h1 class="big">Home mobile</h1>
+  <p class="lead">La sequenza che ti era piaciuta: <b>il momento apre</b>, sotto i locali aperti adesso, poi il drop, poi gli altri sconti. Due blocchi pieni (ink e corallo) che si alternano al bianco, con le informazioni che contano in mezzo.</p>
+
+  <div class="split">
+    <div>
+      <div class="lab pick">Proposta</div>
+      <div class="phone pick"><div class="scr" style="height:660px">
+        <div class="mnav"><span class="lg">LA GUIDA DI BI<small>BY CHIAMAMI BI</small></span><span class="ask"><i>Bi</i> Chiedi a Bi</span></div>
+        <div class="moment"><div class="in">
+          <div class="tag">● DOPO CENA · TORINO</div>
+          <div class="clock">22:35</div>
+          <div class="q">È l'ora di un cocktail.<br>Ce l'hai un posto in mente?</div>
+          <div class="sub2">9 locali aperti adesso, scelti da me</div>
+          <div class="chips"><span class="on">Aperti ora</span><span>🍸 Cocktail</span><span>🍕 Cucina aperta</span></div>
+        </div></div>
+        <div class="mrow">
+          <div class="mcard"><div class="ph g1 p">🍸<span class="op">● APERTO</span></div><div class="t"><b>Bar Cavour</b><span>Cocktail · €€</span></div></div>
+          <div class="mcard"><div class="ph g2 p">🍣<span class="op">● APERTO</span></div><div class="t"><b>Bomaki</b><span>Sushi · €€€</span></div></div>
+          <div class="mcard"><div class="ph g5 p">🍕<span class="op">● APERTO</span></div><div class="t"><b>La Perla</b><span>Pizza · €€</span></div></div>
+        </div>
+        <div class="dClean">
+          <div class="photo ph g3">🥪</div>
+          <span class="bdg">−50%</span>
+          <div class="bd">
+            <span class="pill"><i></i> DROP LIVE · 6G 19H</span>
+            <h3>Bar Stampa</h3>
+            <div class="pk">50% sul tramezzino base<small>Tramezzini spaziali · Via Bertola 2</small></div>
+            <div class="prog"><i style="width:30%"></i></div>
+            <div class="mt"><span>3 presi</span><span><b>7 rimasti</b></span></div>
+            <div class="cta"><span class="b1">🔓 Sblocca sconto</span><span class="b2">Scopri</span></div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="h"><b>Altri 5 sconti attivi</b><span>Vedi tutti →</span></div>
+          <div class="sscroll">
+            <div class="scard"><div class="ph g1 p">🍺<span class="pc">−20%</span></div><div class="t"><b>Birrificio</b><div class="c">Birreria · 📍 Anzola</div><div class="k">Sempre valido</div></div></div>
+            <div class="scard"><div class="ph g2 p">🍸<span class="pc">−10%</span></div><div class="t"><b>Orma</b><div class="c">Aperitivo · Torino</div><div class="k">Sempre valido</div></div></div>
+            <div class="scard"><div class="ph g4 p">🥩<span class="pc">−30%</span></div><div class="t"><b>Al Brasà</b><div class="c">Carne · Torino</div><div class="k">Sempre valido</div></div></div>
+          </div>
+        </div>
+        <div class="tabbar"><span class="it on"><i>🏠</i>Home</span><span class="it"><i>📍</i>Esplora</span><span class="it"><i>%</i>Club</span><span class="it"><i>🤍</i>Salvati</span><span class="it"><i>👤</i>Profilo</span></div>
+      </div></div>
+      <p class="cap">Sopra la piega entrano il momento e i primi locali aperti; il drop arriva subito dopo, quando hai già ricevuto qualcosa di utile. Il ritmo è <b>scuro → bianco → corallo → bianco</b>.</p>
+    </div>
+    <div style="flex:1;min-width:320px">
+      <h2 class="sec" style="margin-top:0">Perché il momento apre e il drop segue</h2>
+      <div class="fixed" style="grid-template-columns:1fr">
+        <div class="fx ok"><i>1</i><span><b>Chi apre alle 22:35 non cerca uno sconto</b>, cerca un posto. Il momento risponde alla domanda che ha davvero in testa; il drop è un'offerta che arriva dopo, quando è già dentro.</span></div>
+        <div class="fx ok"><i>2</i><span><b>È l'unica cosa che nessuno ha.</b> Sconti li fanno tutti. Un sito che sa che ora è e ti parla come un'amica no — ed è la promessa del brand.</span></div>
+        <div class="fx ok"><i>3</i><span><b>Il drop guadagna, non perde.</b> Preceduto da qualcosa di utile smette di sembrare pubblicità e diventa un premio. E ha più spazio per essere fatto bene, invece di dover comprimere tutto in cima.</span></div>
+        <div class="fx ok"><i>4</i><span><b>I due blocchi pieni si alternano</b>: ink → bianco → corallo → bianco. Nessuno dei due compete con l'altro e la pagina ha un ritmo.</span></div>
+        <div class="fx bad"><i>!</i><span><b>L'unico rischio</b> è che il drop scenda sotto la piega su schermi piccoli. Per questo il momento è compatto (~200px) e i locali aperti sono una riga sola: il drop resta a portata di un mezzo scroll.</span></div>
+        <div class="fx"><i>↺</i><span><b>Se vuoi misurare:</b> è la classica cosa da provare una settimana per versione, guardando quanti sconti vengono presi. Il layout non si difende a chiacchiere, si difende coi numeri.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S2 DESKTOP ===== -->
+<section class="panel" id="s2">
+  <span class="kicker">Stessa idea, larghezza sfruttata</span>
+  <h1 class="big">Home desktop</h1>
+  <p class="lead">Su desktop il momento e il drop non devono stare in fila: possono <b>convivere</b>. Il momento prende la parte larga con i locali aperti già dentro, il drop diventa una colonna verticale a destra — e restano entrambi sopra la piega.</p>
+
+  <div class="lab pick" style="margin-top:16px">Proposta</div>
+  <div class="dt">
+    <div class="dtnav">
+      <span class="lg">LA GUIDA DI BI<small>BY CHIAMAMI BI</small></span>
+      <span class="lk"><b>Home</b><span>Esplora</span><span>Club</span><span>Salvati</span></span>
+      <span class="rt"><span class="a">📍 Torino</span><span class="a">Bi · Chiedi a Bi</span><span class="b">Accedi</span></span>
+    </div>
+    <div class="dtbody">
+      <div class="band">
+        <div class="momD"><div class="in">
+          <div class="tg">● DOPO CENA · TORINO</div>
+          <div class="ck">22:35</div>
+          <div class="q">È l'ora di un cocktail. Ce l'hai un posto in mente?</div>
+          <div class="s2">9 locali aperti adesso, scelti da me</div>
+          <div class="ch"><span class="on">Aperti ora</span><span>🍸 Cocktail</span><span>🍕 Cucina aperta</span><span>🍣 Giapponese</span></div>
+          <div class="cards">
+            <div class="oc"><div class="ph g1 p">🍸</div><div class="t"><b>Bar Cavour</b><span>Cocktail · €€ · aperto</span></div></div>
+            <div class="oc"><div class="ph g2 p">🍣</div><div class="t"><b>Bomaki</b><span>Sushi · €€€ · aperto</span></div></div>
+            <div class="oc"><div class="ph g5 p">🍕</div><div class="t"><b>La Perla</b><span>Pizza · €€ · aperto</span></div></div>
+            <div class="oc"><div class="ph g4 p">🍺</div><div class="t"><b>Hops</b><span>Birreria · €€ · aperto</span></div></div>
+          </div>
+        </div></div>
+        <div class="dropD">
+          <div class="photo ph g3">🥪</div>
+          <span class="bdg">−50%</span>
+          <div class="bd">
+            <span class="pill"><i></i> DROP LIVE · 6G 19H</span>
+            <h3>Bar Stampa</h3>
+            <div class="pk">50% sul tramezzino base<small>Tramezzini spaziali · Via Bertola 2</small></div>
+            <div class="prog"><i style="width:30%"></i></div>
+            <div class="mt"><span>3 presi</span><span><b>7 rimasti</b></span></div>
+            <div class="cta"><span class="b1">🔓 Sblocca sconto</span><span class="b2">Scopri</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="catrow">
+        <div class="c"><i>🥂</i>Aperitivo</div><div class="c"><i>🍷</i>Piemontese</div><div class="c"><i>🍕</i>Pizza</div><div class="c"><i>🍣</i>Giapponese</div><div class="c"><i>🐟</i>Pesce</div><div class="c"><i>☕</i>Colazione</div><div class="c"><i>🥩</i>Carne</div><div class="c"><i>🍝</i>Italiana</div><div class="c"><i>🥬</i>Vegano</div><div class="c"><i>🍸</i>Cocktail</div>
+      </div>
+      <div class="twocol">
+        <div class="secbox">
+          <div class="hh">Ultimi aggiunti <span>Vedi tutti →</span></div>
+          <div class="g3c">
+            <div class="rc"><div class="ph g1 p">🍝</div><div class="t"><b>La Piazzetta</b><span>Pizzeria · €€</span></div></div>
+            <div class="rc"><div class="ph g2 p">🥐</div><div class="t"><b>Pasticceria Duò</b><span>Dolce · 📍 Bardonecchia</span></div></div>
+            <div class="rc"><div class="ph g5 p">🍕</div><div class="t"><b>Bottega Flegrea</b><span>Napoletana · €€</span></div></div>
+            <div class="rc"><div class="ph g4 p">🍜</div><div class="t"><b>Wokoza</b><span>Asiatico · €€</span></div></div>
+            <div class="rc"><div class="ph g3 p">🥩</div><div class="t"><b>Duccio</b><span>Smash & sushi · €€</span></div></div>
+            <div class="rc"><div class="ph g1 p">🍺</div><div class="t"><b>Kilo</b><span>Birreria · €€</span></div></div>
+          </div>
+        </div>
+        <div class="secbox">
+          <div class="hh">Altri 5 sconti attivi <span>Vedi tutti →</span></div>
+          <div class="sideli"><div class="ph g1 p">🍺<span class="pc">20%</span></div><div class="t"><b>Birrificio Casa del Popolo</b><span>Birreria · 📍 Anzola</span></div><span class="ar">›</span></div>
+          <div class="sideli"><div class="ph g2 p">🍸<span class="pc">10%</span></div><div class="t"><b>Orma</b><span>Aperitivo · Torino</span></div><span class="ar">›</span></div>
+          <div class="sideli"><div class="ph g4 p">🥩<span class="pc">30%</span></div><div class="t"><b>Al Brasà</b><span>Carne · Torino</span></div><span class="ar">›</span></div>
+          <div class="sideli"><div class="ph g5 p">🍣<span class="pc">20%</span></div><div class="t"><b>Shoro</b><span>Giapponese · 📍 Poirino</span></div><span class="ar">›</span></div>
+          <div style="background:var(--cream);border-radius:10px;padding:9px 10px;font-size:9px;font-weight:700;text-align:center;color:var(--oro);margin-top:9px">🔒 Registrati per prenderli · gratis, 20 secondi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed" style="margin-top:18px">
+    <div class="fx"><i>1</i><span><b>Momento e drop affiancati:</b> il momento prende il 59% con i locali aperti già dentro come riga di card, il drop il 41% in verticale. Entrambi sopra la piega, nessuno dei due sacrificato.</span></div>
+    <div class="fx"><i>2</i><span><b>Il drop verticale è lo stesso componente</b> del mobile, solo più stretto: foto sopra, badge a cavallo, barra, doppio bottone. Zero codice nuovo.</span></div>
+    <div class="fx"><i>3</i><span><b>Gli altri sconti scendono</b> nella colonna destra sotto, come <b>lista verticale</b>: su desktop una riga a scorrimento obbliga a trascinare, una lista si legge e si clicca tutta.</span></div>
+    <div class="fx"><i>4</i><span><b>Il gancio alla registrazione</b> chiude la lista sconti, dove l'occhio arriva dopo aver visto il valore.</span></div>
+  </div>
+</section>
+
+<!-- ===== S3 PIANO ===== -->
+<section class="panel" id="s3">
+  <span class="kicker">Prossimi passi</span>
+  <h1 class="big">Piano</h1>
+  <div class="plan">
+    <div class="step"><span><b>Bi Club mostra tutti gli sconti</b> — il bug resta il primo urgente, indipendente da tutto il resto.</span><span class="eta">subito</span></div>
+    <div class="step"><span><b>Componente drop corallo</b> in tre taglie: grande (home mobile + Club con 1 drop), verticale stretta (colonna desktop + Club con 2-3 drop), mini (riga sconti). Struttura v5 confermata — foto, badge a cavallo, barra, doppio bottone — solo taglie diverse, prop <span style="background:var(--ink);color:#fff;border-radius:5px;padding:1px 6px;font-size:11px">size</span>.</span><span class="eta">1 PR</span></div>
+    <div class="step"><span><b>Home mobile</b> con la sequenza momento → locali aperti → drop → altri sconti.</span><span class="eta">1 PR</span></div>
+    <div class="step"><span><b>Home desktop</b> con banda momento+drop affiancati, poi categorie, poi due colonne.</span><span class="eta">1 PR</span></div>
+    <div class="step"><span><b>Bi Club adattivo</b> 1 / 2 / 3+ drop con lo stesso componente (mockup nella v9).</span><span class="eta">1 PR</span></div>
+    <div class="step"><span><b>Gating registrazione</b>, <b>salvati per liste</b>, <b>chat mobile e desktop</b> — già approvati.</span><span class="eta">3 PR</span></div>
+  </div>
+  <div class="note">📌 <b>Drop card confermato:</b> struttura v5 originale (foto, badge a cavallo, barra con numero, doppio bottone), solo pulita — nessuna scelta ancora aperta su questo punto. Da qui parto col componente in tre taglie e con l'handoff per Claude Code.</div>
+</section>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+      document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('on')});
+      t.classList.add('on');
+      document.getElementById(t.dataset.p).classList.add('on');
+      window.scrollTo({top:0});
+    });
+  });
+</script>
+</body>
+</html>

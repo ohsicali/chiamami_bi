@@ -94,7 +94,7 @@
   --dur-press: 120ms;    /* feedback al tap di un bottone */
   --dur-pop: 180ms;      /* tooltip, pill, popover piccoli */
   --dur-menu: 220ms;     /* dropdown, select, chip */
-  --dur-reveal: 280ms;   /* entrata di card e sezioni */
+  --dur-reveal: 240ms;   /* entrata di card e sezioni */
   --dur-sheet: 320ms;    /* bottom sheet, modali, drawer */
 
   /* CTA — corallo a contrasto AA per TESTO bianco sopra (il corallo brillante
@@ -632,8 +632,13 @@ body {
    that must stay smooth while the page is busy loading". JS sceglie
    solo i due numeri (quanto sale, quanto aspetta) via custom
    property, non anima più nulla lui stesso. */
+/* `--rise-opacity` è l'opacità di partenza. Sta a 0 per i contenuti su
+   fondo chiaro; i blocchi a colore pieno la alzano (vedi il commento su
+   `riseFrom` in src/lib/motion.js): un corallo che sale da zero sulla
+   pagina crema passa per una fase in cui legge rosa, e un ink legge
+   grigio. */
 @keyframes hfv4-rise-in {
-  from { opacity: 0; transform: translateY(var(--rise-y, 14px)); }
+  from { opacity: var(--rise-opacity, 0); transform: translateY(var(--rise-y, 14px)); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .hfv4-rise {
@@ -760,4 +765,22 @@ body {
 }
 .ad-compact:active {
   transform: scale(0.985);
+}
+
+/* ---------------------------------------------------------------------------
+   Campi per i codici di verifica (registrazione, recupero password).
+
+   Le cifre vogliono monospace e letter-spacing largo, così si leggono a
+   gruppi e si controllano a colpo d'occhio. Il testo del segnaposto però
+   eredita entrambi, e "Il codice che hai ricevuto" diventava una fila di
+   lettere distanziate che usciva dal campo tagliata a metà.
+
+   Qui il segnaposto torna al carattere del sito e alla spaziatura normale:
+   le cifre restano come devono, la frase si legge come una frase.
+   ------------------------------------------------------------------------ */
+.otp-field::placeholder {
+  font-family: var(--font-sans);
+  letter-spacing: normal;
+  font-size: 14.5px;
+  opacity: 0.5;
 }

@@ -4,12 +4,15 @@ import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
+import { useSavedLists } from '../../lib/hooks/useSavedLists'
 import { supabase, proxyImg } from '../../lib/supabase'
 import { getDistance } from '../../lib/utils/distance'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
 import SaveButton from '../../components/Restaurant/SaveButton'
+import SavedListsStrip, { SavedListsFooter } from '../../components/Restaurant/SavedListsStrip'
+import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
@@ -28,6 +31,11 @@ export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
+  const { lists: savedLists, suggestions: listSuggestions, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
+  const [activeListId, setActiveListId] = useState(null)
+  // Il locale di cui si stanno scegliendo le liste. È lo stesso foglio che
+  // compare dopo il primo salvataggio: qui si può riaprire quando si vuole.
+  const [listSheetFor, setListSheetFor] = useState(null)
   const [restaurants, setRestaurants] = useState([])
   const [activeDiscounts, setActiveDiscounts] = useState({})
   const [loading, setLoading] = useState(true)
@@ -113,6 +121,13 @@ export default function SavedPage() {
   const displayList = useMemo(() => {
     let list = [...restaurants]
 
+    // Lista selezionata: è un'etichetta, quindi filtra l'elenco senza
+    // toglierne niente altrove. Deselezionandola si torna a vedere tutto.
+    if (activeListId) {
+      const ids = new Set(savedLists.find((l) => l.id === activeListId)?.restaurantIds || [])
+      list = list.filter((r) => ids.has(r.id))
+    }
+
     // Filter by selected city
     if (currentCity.name) {
       list = list.filter(r => r.city?.toLowerCase() === currentCity.name.toLowerCase())
@@ -164,9 +179,11 @@ export default function SavedPage() {
     }
 
     return list
-  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name])
+  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name, activeListId, savedLists])
 
-  if (!authLoading && !user) return <Navigate to="/login" replace />
+  // `state` anche qui: ci si arriva pure da un link diretto o da un segnalibro,
+  // e la pagina di accesso deve dire perché e riportare indietro dopo.
+  if (!authLoading && !user) return <Navigate to="/login" replace state={{ returnTo: '/saved', reason: 'saved', mode: 'register' }} />
   if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopSavedPage /></Suspense>
 
   const handleClick = (restaurant) => {
@@ -321,6 +338,21 @@ export default function SavedPage() {
 
       {/* Content */}
       <div className="flex-1 md:max-w-[940px] md:mx-auto md:w-full" style={{ padding: '8px 16px', paddingBottom: TAB_BAR_HEIGHT + 16 }}>
+        {/* BLOCCO 6 — le liste in alto come copertine, poi TUTTI i salvati in
+            ordine. Chi non usa le liste vede comunque tutto: le liste sono
+            etichette sopra l'elenco, non cartelle che lo sostituiscono. */}
+        <SavedListsStrip
+          lists={savedLists}
+          /* I tre suggerimenti solo quando c'è già qualcosa di salvato: a
+             chi apre la pagina vuota servono i locali, non tre etichette da
+             riempire. */
+          suggestions={restaurants.length > 0 ? listSuggestions : []}
+          restaurants={restaurants}
+          activeListId={activeListId}
+          onSelect={setActiveListId}
+          onRename={renameList}
+          onDelete={deleteList}
+        />
         {loading ? (
           <div className="flex flex-col gap-3">
             {[120, 120, 120].map((h, i) => (
@@ -408,6 +440,14 @@ export default function SavedPage() {
                     discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
                     onSaveToggle={() => handleSave(r.id)}
                     onClick={() => handleClick(r)}
+                    footer={
+                      <SavedListsFooter
+                        lists={savedLists}
+                        restaurantId={r.id}
+                        restaurantName={r.name}
+                        onOpen={() => setListSheetFor(r)}
+                      />
+                    }
                   />
                 )
               }
@@ -550,6 +590,17 @@ export default function SavedPage() {
       <Footer />
 
       <CityPickerSheet open={cityPickerOpen} onClose={() => setCityPickerOpen(false)} />
+
+      {/* Il foglio tiene una sua copia delle liste: alla chiusura questa
+          pagina le rilegge, se no la striscia in cima e le righe sotto le
+          card resterebbero ferme a com'erano prima del tocco. */}
+      {listSheetFor && (
+        <SaveToListSheet
+          userId={user?.id}
+          restaurant={listSheetFor}
+          onClose={() => { setListSheetFor(null); reloadLists() }}
+        />
+      )}
     </div>
   )
 }

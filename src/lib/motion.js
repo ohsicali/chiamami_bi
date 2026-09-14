@@ -27,7 +27,7 @@ export const DUR = {
   press: 0.12,   // feedback al tap
   pop: 0.18,     // tooltip, pill, popover piccoli
   menu: 0.22,    // dropdown, select, chip
-  reveal: 0.28,  // entrata di card e sezioni
+  reveal: 0.24,  // entrata di card e sezioni
   sheet: 0.32,   // bottom sheet, modali, drawer
 }
 
@@ -105,9 +105,19 @@ export const REVEAL_VIEWPORT = { once: true, amount: 0.15, margin: '0px 0px -10%
  * (`layout`, `layoutId`): lì la stringa sovrascriverebbe il transform
  * calcolato dall'animazione di layout e l'elemento salterebbe.
  */
-export function riseFrom(px, reduce = false) {
+/**
+ * `from` è l'opacità di partenza, non sempre zero.
+ *
+ * Un blocco a colore pieno — la card corallo, il riquadro ink di "Conosci
+ * un posto che manca?" — che sale da opacity 0 su una pagina crema passa
+ * per una fase in cui il corallo legge rosa e l'ink legge grigio: non è
+ * una desaturazione applicata da noi, è la fusione col fondo chiaro. Non
+ * si toglie cambiando curva: si toglie non partendo da zero. Con 0.55 il
+ * blocco entra già del suo colore e l'entrata resta percepibile.
+ */
+export function riseFrom(px, reduce = false, from = 0) {
   return {
-    from: { opacity: 0, transform: `translateY(${reduce ? 0 : px}px)` },
+    from: { opacity: from, transform: `translateY(${reduce ? 0 : px}px)` },
     to: { opacity: 1, transform: 'translateY(0px)' },
   }
 }

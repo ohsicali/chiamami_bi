@@ -152,7 +152,7 @@ export default function SmartImage({
           sizes={sizes}
           alt={alt}
           loading={eager ? 'eager' : 'lazy'}
-          fetchpriority={fetchPriority}
+          fetchPriority={fetchPriority}
           decoding="async"
           onLoad={() => setLoadedSrc(raw)}
           onError={() => { warnDeadUrl(raw); setErrorSrc(raw) }}

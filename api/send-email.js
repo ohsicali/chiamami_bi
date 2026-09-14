@@ -15,6 +15,16 @@ import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
 import { verifyTurnstile } from './_turnstile.js'
+import {
+  welcomeEmail, newDiscountEmail, newRestaurantEmail,
+  discountClaimedEmail, discountUsedEmail, SAMPLE,
+} from './_email/templates.js'
+import {
+  sendEmail, claimSendSlot, logFailure, tokenForUser,
+  unsubscribeUrl, listUnsubscribeHeaders,
+} from './_email/send.js'
+import { formatDiscountBadge, pickPerk } from './_email/discount.js'
+import { SITE_URL as PUBLIC_SITE } from './_email/theme.js'
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
@@ -30,7 +40,213 @@ export default async function handler(req, res) {
   if (type === 'confirmation')                     return handleSuggestionConfirmation(req, res)
   if (type === 'internal-notify')                  return handleInternalNotify(req, res)
   if (type === 'partner-application-confirmation') return handlePartnerApplicationConfirmation(req, res)
+  // Le ricevute degli sconti (Blocco mail): chi le chiede deve essere
+  // l'utente stesso, con il proprio token di sessione — vedi handleDiscount*.
+  if (type === 'discount-claimed')                 return handleDiscountClaimed(req, res)
+  if (type === 'discount-used')                    return handleDiscountUsed(req, res)
+  // Anteprima: manda a sé stesso una copia di prova di una qualunque email.
+  if (type === 'preview')                          return handlePreview(req, res)
   return res.status(400).json({ error: `Unknown type: ${type}` })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Le ricevute degli sconti                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Da chi arriva la richiesta.
+ *
+ * Non ci si fida del `userId` scritto nel corpo: chiunque potrebbe mandare
+ * quello di un altro e farsi spedire il codice sconto altrui. L'identità la
+ * decide il token di sessione, e l'email la leggiamo dal profilo, non dal
+ * corpo della richiesta.
+ */
+async function requireUser(req) {
+  const auth = req.headers.authorization
+  if (!auth?.startsWith('Bearer ')) return { error: 'Missing authorization token', status: 401 }
+
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const anon = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !anon || !service) return { error: 'Server configuration error', status: 500 }
+
+  const asUser = createClient(url, anon, {
+    global: { headers: { Authorization: auth } },
+    auth: { persistSession: false },
+  })
+  const { data: { user }, error } = await asUser.auth.getUser()
+  if (error || !user) return { error: 'Invalid token', status: 401 }
+
+  const admin = createClient(url, service, { auth: { persistSession: false } })
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('email, full_name')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  return {
+    user,
+    admin,
+    email: profile?.email || user.email,
+    name: profile?.full_name || user.user_metadata?.full_name || '',
+  }
+}
+
+/** POST { type:'discount-claimed', redemptionId } — il codice via email. */
+async function handleDiscountClaimed(req, res) {
+  const limited = rateLimit(req, { key: 'send-email-claimed', max: 20, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
+
+  const ctx = await requireUser(req)
+  if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
+
+  const { redemptionId } = req.body || {}
+  if (!redemptionId) return res.status(400).json({ error: 'redemptionId required' })
+
+  // Il riscatto deve essere suo: `eq('user_id', …)` non è ridondante con la
+  // RLS, perché qui stiamo usando la service role key che la salta.
+  const { data: red } = await ctx.admin
+    .from('discount_redemptions')
+    .select('id, qr_code, status, generated_at, discount_id, user_id, discount:discounts(*, restaurant:restaurants(name, slug, address, neighborhood, city, cuisine_type))')
+    .eq('id', redemptionId)
+    .eq('user_id', ctx.user.id)
+    .maybeSingle()
+
+  if (!red) return res.status(404).json({ error: 'Redemption not found' })
+  if (!ctx.email) return res.status(400).json({ error: 'No email on profile' })
+
+  const first = await claimSendSlot(ctx.admin, {
+    userId: ctx.user.id, kind: 'discount-claimed', refId: red.id, toEmail: ctx.email,
+  })
+  if (!first) return res.status(200).json({ ok: true, skipped: 'already-sent' })
+
+  const mail = discountClaimedEmail(discountClaimedProps(red))
+  const r = await sendEmail({ to: ctx.email, ...mail })
+  if (!r.ok) {
+    await logFailure(ctx.admin, { userId: ctx.user.id, kind: 'discount-claimed', refId: red.id, toEmail: ctx.email, error: r.error })
+    return res.status(502).json({ error: 'Send failed', detail: r.error })
+  }
+  return res.status(200).json({ ok: true, id: r.id })
+}
+
+/** POST { type:'discount-used', redemptionId } — la conferma dopo la scansione. */
+async function handleDiscountUsed(req, res) {
+  const limited = rateLimit(req, { key: 'send-email-used', max: 30, windowMs: 60_000 })
+  if (limited) return res.status(429).json({ error: limited })
+
+  // Qui chi chiama è il locale che ha appena scansionato, non l'utente:
+  // l'autorizzazione è il codice QR stesso, che solo chi ha il telefono in
+  // mano davanti a sé può aver letto.
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !service) return res.status(500).json({ error: 'Server configuration error' })
+  const admin = createClient(url, service, { auth: { persistSession: false } })
+
+  const { qrCode } = req.body || {}
+  if (!qrCode) return res.status(400).json({ error: 'qrCode required' })
+
+  const { data: red } = await admin
+    .from('discount_redemptions')
+    .select('id, status, redeemed_at, user_id, discount:discounts(*, restaurant:restaurants(name, slug))')
+    .eq('qr_code', qrCode)
+    .maybeSingle()
+
+  if (!red) return res.status(404).json({ error: 'Redemption not found' })
+  // 'redeemed' è il valore che scrive la RPC verify_redeem_qr: mandare la
+  // conferma per uno sconto non ancora scansionato sarebbe una bugia.
+  if (red.status !== 'redeemed') return res.status(409).json({ error: 'Redemption not marked as redeemed' })
+
+  const { data: profile } = await admin
+    .from('profiles').select('email').eq('id', red.user_id).maybeSingle()
+  const to = profile?.email
+  if (!to) return res.status(200).json({ ok: true, skipped: 'no-email' })
+
+  const first = await claimSendSlot(admin, {
+    userId: red.user_id, kind: 'discount-used', refId: red.id, toEmail: to,
+  })
+  if (!first) return res.status(200).json({ ok: true, skipped: 'already-sent' })
+
+  const mail = discountUsedEmail(discountUsedProps(red))
+  const r = await sendEmail({ to, ...mail })
+  if (!r.ok) {
+    await logFailure(admin, { userId: red.user_id, kind: 'discount-used', refId: red.id, toEmail: to, error: r.error })
+    return res.status(502).json({ error: 'Send failed', detail: r.error })
+  }
+  return res.status(200).json({ ok: true, id: r.id })
+}
+
+/** POST { type:'preview', template } — una copia di prova a sé stessi (admin). */
+async function handlePreview(req, res) {
+  const ctx = await requireUser(req)
+  if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
+
+  const { data: me } = await ctx.admin
+    .from('profiles').select('is_admin').eq('id', ctx.user.id).maybeSingle()
+  if (!me?.is_admin) return res.status(403).json({ error: 'Admin only' })
+
+  const { template } = req.body || {}
+  const token = await tokenForUser(ctx.admin, ctx.user.id)
+  const u = unsubscribeUrl(token)
+  const built = {
+    welcome: () => welcomeEmail({ ...SAMPLE.welcome, name: ctx.name || SAMPLE.welcome.name, unsubscribeUrl: u }),
+    'new-discount': () => newDiscountEmail({ ...SAMPLE.newDiscount, unsubscribeUrl: u }),
+    'new-place': () => newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: u }),
+    'discount-claimed': () => discountClaimedEmail(SAMPLE.discountClaimed),
+    'discount-used': () => discountUsedEmail(SAMPLE.discountUsed),
+  }[template]
+
+  if (!built) return res.status(400).json({ error: `Unknown template: ${template}` })
+  const mail = built()
+  const r = await sendEmail({
+    to: ctx.email,
+    subject: `[PROVA] ${mail.subject}`,
+    html: mail.html,
+    text: mail.text,
+    headers: listUnsubscribeHeaders(token),
+  })
+  if (!r.ok) return res.status(502).json({ error: 'Send failed', detail: r.error })
+  return res.status(200).json({ ok: true, to: ctx.email, id: r.id })
+}
+
+/* ── Dalla riga del DB ai campi dell'email ───────────────────────────── */
+
+function discountClaimedProps(red) {
+  const d = red.discount || {}
+  const r = d.restaurant || {}
+  return {
+    value: formatDiscountBadge(d),
+    restaurantName: r.name || 'il locale',
+    perk: pickPerk(d),
+    conditions: (d.conditions || '').trim() || null,
+    address: [r.address, r.city].filter(Boolean).join(', ') || null,
+    code: red.qr_code,
+    expiryLabel: expiryLabel(d),
+    href: `${PUBLIC_SITE}/sconti`,
+  }
+}
+
+function discountUsedProps(red) {
+  const d = red.discount || {}
+  const r = d.restaurant || {}
+  return {
+    value: formatDiscountBadge(d),
+    restaurantName: r.name || 'il locale',
+    whenLabel: red.redeemed_at ? formatWhen(red.redeemed_at) : null,
+    href: `${PUBLIC_SITE}/sconti`,
+  }
+}
+
+function expiryLabel(d) {
+  if (!d?.valid_until) return null
+  const date = new Date(d.valid_until)
+  if (Number.isNaN(date.getTime())) return null
+  return `Scade il ${date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })}`
+}
+
+function formatWhen(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return `il ${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })} alle ${d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}`
 }
 
 /* ------------------------------------------------------------------ */
@@ -50,7 +266,23 @@ async function handleUserWelcome(req, res) {
     return res.status(400).json({ error: 'Invalid email address' })
   }
 
-  const firstName = (name || '').split(' ')[0] || 'there'
+  // Il token per "scegli cosa ricevere": senza, il benvenuto sarebbe l'unica
+  // email di annuncio senza via d'uscita. Lo cerchiamo con la service role
+  // key perché qui la chiamata arriva subito dopo la registrazione, quando
+  // il browser una sessione valida può non averla ancora.
+  let unsubUrl = null
+  try {
+    const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+    const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (url && service) {
+      const admin = createClient(url, service, { auth: { persistSession: false } })
+      const { data: prof } = await admin
+        .from('profiles').select('id').eq('email', String(email).trim().toLowerCase()).maybeSingle()
+      if (prof?.id) unsubUrl = unsubscribeUrl(await tokenForUser(admin, prof.id))
+    }
+  } catch { /* il benvenuto parte comunque */ }
+
+  const mail = welcomeEmail({ name, unsubscribeUrl: unsubUrl })
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -63,8 +295,9 @@ async function handleUserWelcome(req, res) {
         from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
         reply_to: process.env.RESEND_REPLY_TO || 'info@chiamamibi.com',
         to: [email],
-        subject: `Benvenuta su ChiamamiBi, ${firstName}! 🍕`,
-        html: buildWelcomeHtml(firstName),
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
       }),
     })
 
@@ -187,63 +420,6 @@ async function handlePartnerWelcome(req, res) {
 /* ------------------------------------------------------------------ */
 /*  Template USER                                                       */
 /* ------------------------------------------------------------------ */
-
-function buildWelcomeHtml(name) {
-  return `
-<!DOCTYPE html>
-<html lang="it">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background-color:#FFF8F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF8F6;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
-        <!-- Header -->
-        <tr><td style="background-color:#E8604C;padding:32px 24px;text-align:center;">
-          <h1 style="margin:0;color:#ffffff;font-family:'Georgia',serif;font-size:28px;font-weight:800;letter-spacing:2px;text-transform:uppercase;">CHIAMAMI BI</h1>
-        </td></tr>
-
-        <!-- Body -->
-        <tr><td style="padding:32px 24px;">
-          <h2 style="margin:0 0 16px;color:#1a1a1a;font-size:22px;">Ciao ${name}! 👋</h2>
-          <p style="margin:0 0 16px;color:#4a4a4a;font-size:15px;line-height:1.6;">
-            Benvenuta su <strong>ChiamamiBi</strong> — la tua guida ai migliori ristoranti di Torino!
-          </p>
-          <p style="margin:0 0 24px;color:#4a4a4a;font-size:15px;line-height:1.6;">
-            Ecco cosa puoi fare:
-          </p>
-
-          <!-- Features -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-            <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">🗺️ &nbsp;Esplora i ristoranti sulla mappa interattiva</td></tr>
-            <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">❤️ &nbsp;Salva i tuoi preferiti</td></tr>
-            <tr><td style="padding:8px 0;color:#4a4a4a;font-size:14px;">🏷️ &nbsp;Riscatta sconti esclusivi con QR code</td></tr>
-          </table>
-
-          <!-- CTA Button -->
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td align="center">
-              <a href="https://chiamamibi.com" style="display:inline-block;background-color:#E8604C;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;">
-                Esplora i ristoranti
-              </a>
-            </td></tr>
-          </table>
-        </td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:24px;border-top:1px solid #f0e6e3;text-align:center;">
-          <p style="margin:0 0 8px;color:#999;font-size:12px;">ChiamamiBi — Torino, Italia</p>
-          <p style="margin:0;color:#999;font-size:12px;">
-            <a href="https://chiamamibi.com/privacy" style="color:#E8604C;text-decoration:none;">Privacy Policy</a>
-            &nbsp;·&nbsp;
-            <a href="https://chiamamibi.com/terms" style="color:#E8604C;text-decoration:none;">Termini di Servizio</a>
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
-}
 
 /* ------------------------------------------------------------------ */
 /*  Template PARTNER                                                    */

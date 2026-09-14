@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-07
+Ultima modifica: 2026-09-14 (mattina)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -17,7 +17,159 @@ dove siamo. Aggiorna a ogni step importante.
 | C2 — Email notifications | #66 | ✅ Merged (7c4f05b) | Env + SQL + test consegna email fatti |
 | B — Reskin | — | 🚧 Next | Vedi docs/v4-sitemap-reskin.md, docs/mockups/ |
 | C3 — (TBD) | — | ⏳ Not started | |
+| HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
+
+## HANDOFF v10 — stato per blocco (PR #212)
+
+| Blocco | Stato | Note |
+|---|---|---|
+| 0 — Bi Club mostra tutti gli sconti | ✅ | Filtro città rimosso. Definizione unica in `src/lib/discounts.js`, usata da admin e sito pubblico. Test di regressione in `tests/discounts.test.mjs` (16 test). |
+| 1 — DropCard in 3 taglie | ✅ | `src/components/Discount/DropCard.jsx` + `.css`. Struttura v5. |
+| 2 — Home mobile | ✅ | Resta la v10 sotto i 1024px. Sequenza momento → aperti ora → drop → altri sconti → categorie → ultimi aggiunti. |
+| 3 — Home desktop | ↩️ Annullato | Da 1024px in su si usa la home di prima del rifacimento. Vedi "Home — due home, una per misura" sotto. |
+| 4 — Bi Club adattivo | ✅ | 1/2/3+ drop, paginazione da 6, mai carosello su mobile, convenzioni come righe. |
+| 5 — Gating registrazione | ✅ | Club sfocato col conteggio vero, sconto singolo interamente visibile, gate di Chiedi a Bi prima di scrivere. Corretto `returnTo` in 4 punti. |
+| 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. Striscia liste condivisa fra telefono e desktop (`src/components/Restaurant/SavedListsStrip.jsx`), rinomina/elimina, scelta emoji. **Note personali: scartate** — vedi sotto. **Non provato loggato.** |
+| 7 — Chiedi a Bi | ⚠️ Parziale | Fatti i bug: troncamento `max_tokens` e stato dinamico in header. **Non fatto**: redesign schermata iniziale mobile, card locali dentro le risposte, chip di continuazione. |
+| 8 — Admin | ✅ | Riga sconto responsive 768-1100px, barra avviso sconti irraggiungibili, KPI con denominatore, niente flash di zeri. **Non verificato a schermo** (serve login admin). |
+| 9 — Ristoratore | ✅ | Condizione e ora nella schermata verde, saluto col nome, indirizzo ripulito, contatto non più attaccato. Il resto risultava già fatto da PR23. **Non verificato a schermo** (serve PIN). |
+| 10 — Pubblicità | ✅ | Quarta posizione su scheda ristorante + barra inventario. Tracking IntersectionObserver e anteprima live erano già in PR #211. |
+
+## Home — due home, una per misura (14/09)
+
+Augusto, in due passaggi: prima *"la home da desktop non mi piace, preferivo
+come era prima del redesign"*, poi *"da mobile invece teniamo quello nuovo,
+solo da desktop torniamo indietro"*.
+
+Quindi adesso:
+
+| misura | quale home | file |
+|---|---|---|
+| < 1024px (telefono, tablet) | la v10 **com'era al deploy `31805ab`** | `src/pages/public/HomeFeedV4.jsx` |
+| ≥ 1024px (computer) | quella di prima del rifacimento | `src/pages/public/HomeDesktopClassic.jsx` |
+
+Lo switch è in `App.jsx`, una media query a 1024px sulla route `/`, e ognuna
+delle due arriva col suo `lazy`: da telefono il codice della home desktop non
+viene nemmeno scaricato.
+
+**Perché due file e non due rami dentro lo stesso componente**: le due home non
+condividono la struttura. Una apre col drop in evidenza e il momento scende
+sotto, l'altra apre con l'orologio e la fascia del momento. Non è una
+differenza di margini, è un altro ordine di blocchi con altri componenti
+dentro; tenerle nello stesso file avrebbe voluto dire due alberi JSX interi
+montati insieme e nascosti a vicenda col CSS.
+
+Stessa ragione per i due gemelli: `TimeContextHeroClassic.jsx` e
+`MomentResultsGridClassic.jsx`, usati solo dalla home desktop.
+
+Sulla home del telefono Augusto ha chiesto di tornare esattamente al deploy
+`31805ab`, e poi ha segnalato di nuovo il buco bianco nelle card di "Ultimi
+aggiunti". Ci sono girato intorno due volte prima di capire da dove veniva:
+non dall'indirizzo, ma dal fatto che in una riga tutte le card prendono
+l'altezza della più alta. Basta un locale in fondo alla riga con nome lungo
+e tagline lunga e tutte le altre si ritrovano dello spazio da riempire.
+`margin-top: auto` lo mandava in mezzo (buco), toglierlo lo mandava in fondo
+(card frastagliate, indirizzi a altezze diverse): due modi di subire lo
+stesso problema.
+
+Risolto togliendolo di mezzo: nome e tagline si prendono due righe ciascuno
+SEMPRE, anche quando ne riempiono una sola o nessuna. Le card vengono alte
+uguali per costruzione — misurate: tutt'e nove a 325px con 1px di scarto —
+quindi non c'è niente da allungare. Costa una riga d'aria sotto ai nomi
+corti, che si legge come impaginazione perché è sempre la stessa.
+
+La home del computer non è stata toccata: lì le card stanno in griglia, il
+difetto non si presentava e Augusto non l'ha segnalato.
+
+I blocchi `@media (min-width: 1024px)` dentro `HomeFeedV4.jsx` sono ormai
+codice morto — da 1024 in su monta l'altro componente. Lasciati apposta, con
+un avviso in cima: servono se un domani si torna a una home sola.
+
+**Il prezzo, detto chiaro: una modifica alla home ora va fatta due volte.**
+Se un domani una delle due versioni viene abbandonata, i suoi file vanno
+cancellati e non lasciati lì.
+
+La home desktop parte da `42d0dcb` (il commit prima di `dba1fc6`) ma NON è un
+ritorno cieco: porta con sé i bug già segnalati e già sistemati, che riportare
+indietro sarebbe stato un passo indietro vero — `fetchPriority` con la
+maiuscola, il cuore che non è più un `<button>` dentro un altro, "Sblocca
+sconto" che sblocca davvero, il cuore da sloggato che apre la porta a vetri, e
+la barra mobile che sparisce già da 768px (a 1024 su un iPad in verticale si
+vedevano due intestazioni sovrapposte).
+
+`DropCard.jsx` e `DropCard.css` non sono tornati indietro: li usa anche il Bi
+Club, e la home desktop non li importa affatto.
+
+Tutto il resto del lavoro resta: liste dei salvati, email, registrazione col
+codice, gate, correzioni sparse.
+
+Lint: da 144 a 147 problemi. I tre in più sono copie di errori già presenti,
+arrivate coi file duplicati (`Date.now()` dentro un memo, setState in un
+effetto del countdown, il falso positivo su `motion` usato in JSX).
+
+## Registrazione — sistemata la sera del 13/09
+
+**L'SMTP di Supabase era rotto** (535) e bloccava ogni registrazione: l'utente
+ha messo Resend (smtp.resend.com:465, utente `resend`, password = API key) e
+adesso funziona. Verificato: `POST /auth/v1/signup` non risponde più 500.
+
+Attenzione per chi riprende: **per provare il signup non usare indirizzi
+`@example.com`**. È un dominio riservato senza MX, Resend lo rifiuta, e
+Supabase restituisce lo stesso `500 "Error sending confirmation email"` che dà
+quando le credenziali sono sbagliate. I due casi da fuori sono
+indistinguibili, e questo ha già fatto perdere un giro di diagnosi.
+
+Sopra a quello, quattro lavori:
+
+| Cosa | Stato | Note |
+|---|---|---|
+| Logo e font nelle email | ✅ | Il logo non era quello del sito: stessa scritta, carattere diverso (grazie squadrate contro lettere tonde). Rigenerato da `public/logo-guida-bi.png`. Georgia sostituito da Poppins, self-hosted in `public/fonts` (8KB a peso). Su Gmail e Outlook i webfont non si caricano e resta un sans di sistema: non è aggirabile. |
+| Conferma password | ✅ | Secondo campo che compare dopo la prima, con riscontro dal vivo. Stato separato da `confirmPassword`, che appartiene al recupero. |
+| Codice a 6 cifre | ⚠️ Serve un passaggio manuale | `verifySignupOtp` / `resendSignupOtp` in `useAuth`, modalità `confirm_signup` in LoginPage. **Il template "Confirm signup" su Supabase deve mandare `{{ .Token }}` e non il link** — finché non è fatto arriva ancora il link e la schermata del codice non serve a niente. |
+| Animazione di conferma | ✅ | `RegistrationDone` in fondo a LoginPage.jsx. Dura quanto il rimando (1,6s). Rispetta "riduci animazioni". |
+
+Perché il codice e non il link: sul telefono il link apre un browser diverso da
+quello della registrazione e si finisce confermati ma sloggati; gli scanner di
+posta pre-caricano i link e confermano l'account senza che una persona abbia
+fatto niente; e il sito già usava il codice per il recupero password.
+
+### Da fare prima del merge
+- **Incollare il template della mail di conferma su Supabase** (vedi sopra).
+- Provare il flusso liste con un account vero (Blocco 6).
+- Aprire /admin/sconti su un iPad vero (Blocco 8).
+- Fare una scansione QR vera per vedere la schermata verde (Blocco 9).
+- Provare la registrazione intera con un indirizzo vero: codice, conferma, animazione, benvenuto.
+- Nota nota a parte: a 768px l'intestazione della home appare due volte
+  (barra desktop + logo mobile). È così anche su `main`, non è una
+  regressione di questa PR.
+
+## SQL eseguiti in questa sessione
+
+- `supabase/saved-lists-2026-09-08.sql` ✅ eseguito via connettore Supabase il
+  2026-09-08 (tabelle `saved_lists`, `saved_list_items`, RLS + grant).
+- `supabase/saved-restaurants-withcheck-2026-09-13.sql` ✅ eseguito via
+  connettore Supabase il 2026-09-13 (policy "Users manage own saves" rifatta
+  con `WITH CHECK`; senza, un UPDATE su una riga propria poteva riscriverne
+  lo `user_id`).
+
+### Note personali sui salvati — scartate, non riproporle
+
+Il 2026-09-13 erano state fatte: colonna `note` su `saved_restaurants`,
+componente `SavedNote.jsx`, foglio di scrittura, test. **L'utente ha deciso di
+non metterle** e sono state tolte per intero — codice, test e colonna (era
+vuota, zero righe).
+
+Erano nate non da una richiesta ma da una promessa già scritta nel sito
+("Liste salvate con le tue note personali" nella pagina di accesso, e la
+stessa frase nell'email di benvenuto): le note non esistevano e la frase
+prometteva che sì. Adesso la frase è stata corretta in due punti
+(`src/pages/public/LoginPage.jsx`, `api/_email/templates.js`) e dice quello
+che le liste fanno davvero.
+
+**Attenzione**: i mockup `docs/mockups/v4-mobile-auth.html` e
+`v4-mobile-pagine.html` contengono ancora la vecchia frase sulle note. Sono
+documenti storici, non copia viva — non ricopiarla da lì.
 
 ## Env vars Vercel — già configurate
 

@@ -1000,17 +1000,22 @@
   font-size: 16px;
   flex: 0 0 auto;
 }
-.v4-set-row .body { flex: 1; min-width: 0; }
+/* Sono <span>, quindi restavano sulla stessa riga e uscivano attaccati:
+   "Bi · Augustoinfo@chiamamibi.com". Il nome sta sopra, il contatto sotto. */
+.v4-set-row .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .v4-set-row .t {
+  display: block;
   font-weight: 800;
   font-size: 14px;
   color: var(--color-ink);
 }
 .v4-set-row .s {
+  display: block;
   font-size: 11px;
   color: var(--color-ink-55);
   font-weight: 600;
   margin-top: 2px;
+  overflow-wrap: anywhere;
 }
 .v4-set-row .arr {
   margin-left: auto;

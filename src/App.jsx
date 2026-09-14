@@ -7,6 +7,7 @@ import DesktopNavbar from './components/Layout/DesktopNavbar'
 import { usePageTracking } from './lib/hooks/usePageTracking'
 import MaintenanceGate from './components/MaintenanceGate'
 import AdsProvider from './components/Ads/AdsProvider'
+import { useMediaQuery } from './lib/hooks/useMediaQuery'
 
 // CookieConsent is rendered after first paint via requestIdleCallback so it
 // doesn't compete with the LCP. The library + its CSS adds ~20 kB to the
@@ -40,6 +41,10 @@ class ErrorBoundary extends Component {
 // Lazy load pages
 const HomePage = lazy(() => import('./pages/public/HomePage'))
 const HomeFeedV4 = lazy(() => import('./pages/public/HomeFeedV4'))
+// La home del computer è quella di prima del rifacimento v10, quella del
+// telefono è la v10: due strutture diverse, due file. Vedi la nota in cima
+// a HomeDesktopClassic.jsx.
+const HomeDesktopClassic = lazy(() => import('./pages/public/HomeDesktopClassic'))
 const RestaurantPage = lazy(() => import('./pages/public/RestaurantPage'))
 const ListView = lazy(() => import('./pages/public/ListView'))
 const AboutPage = lazy(() => import('./pages/public/AboutPage'))
@@ -68,6 +73,7 @@ const ApplicationManager = lazy(() => import('./pages/admin/ApplicationManager')
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const SuggestionsManager = lazy(() => import('./pages/admin/SuggestionsManager'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
+const EmailPreferencesPage = lazy(() => import('./pages/public/EmailPreferencesPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
 const AuthCallback = lazy(() => import('./pages/public/AuthCallback'))
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
@@ -78,6 +84,10 @@ const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
 
 export default function App() {
   const location = useLocation()
+  // 1024 e non 768: sotto i 1024 le due home si assomigliano (una colonna,
+  // riga che scorre), e la piega a due colonne — quella che non piaceva —
+  // è esattamente quella che nasce da lì in su.
+  const homeDaComputer = useMediaQuery('(min-width: 1024px)')
 
   // Track page views (skips /admin routes internally)
   usePageTracking()
@@ -157,7 +167,7 @@ export default function App() {
       {!isEsplora && (
         <div className={!isAdmin ? 'desktop-nav-offset' : undefined}>
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<HomeFeedV4 />} />
+          <Route path="/" element={homeDaComputer ? <HomeDesktopClassic /> : <HomeFeedV4 />} />
           <Route path="/chiedi" element={<ChiediPage />} />
           <Route path="/chiedi/:conversationId" element={<ChiediPage />} />
           <Route path="/list" element={<ListView />} />
@@ -189,6 +199,7 @@ export default function App() {
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/preferenze-email" element={<EmailPreferencesPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

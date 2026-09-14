@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TR_REVEAL } from '../../lib/motion'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -20,6 +20,21 @@ export default function DiscountBanner({ restaurantId }) {
   const [showQR, setShowQR] = useState(false)
   const [error, setError] = useState(null)
   const [justRedeemed, setJustRedeemed] = useState(false)
+  const location = useLocation()
+
+  // Dopo la registrazione si torna ESATTAMENTE qui, con lo sconto pronto da
+  // prendere. Prima si passava `from`, una chiave che LoginPage non legge: il
+  // `returnTo` restava al suo default e l'utente atterrava in home, lontano
+  // dal locale che stava guardando e dallo sconto che voleva.
+  const goToRegister = () => {
+    navigate('/login', {
+      state: {
+        returnTo: `${location.pathname}${location.search}`,
+        pendingDiscountId: discount?.id,
+        mode: 'register',
+      },
+    })
+  }
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
@@ -59,7 +74,7 @@ export default function DiscountBanner({ restaurantId }) {
 
   const handleUnlock = async () => {
     if (!user) {
-      navigate('/login', { state: { from: window.location.pathname, discount: true } })
+      goToRegister()
       return
     }
 
@@ -154,32 +169,26 @@ export default function DiscountBanner({ restaurantId }) {
             {t('discount.validUntil')} {validUntil}
           </p>
 
-          {/* State: Not logged in - blurred teaser */}
+          {/* BLOCCO 5 — sconto singolo: si vede tutto, cambia solo il bottone.
+              Percentuale, condizione e scadenza sono già scritte qui sopra e
+              restano in chiaro: nascondere il valore riduce la voglia di
+              registrarsi, non la aumenta. Al posto del bottone di sblocco c'è
+              l'invito, con sotto il beneficio concreto.
+              Prima qui c'era un riquadro finto sfocato con dentro un'emoji
+              biglietto: sembrava che ci fosse qualcosa da vedere e invece non
+              c'era niente. */}
           {!user && !loading && (
-            <div className="relative">
-              {/* Blur overlay */}
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/60 backdrop-blur-sm">
-                <p className="text-sm font-semibold text-primary mb-2">
-                  {t('discount.registerToUnlock')}
-                </p>
-                <motion.button
-                  onClick={() =>
-                    navigate('/login', {
-                      state: { from: window.location.pathname, discount: true },
-                    })
-                  }
-                  className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {t('discount.registerFree')}
-                </motion.button>
-              </div>
-              {/* Blurred content behind */}
-              <div className="rounded-xl bg-white/40 p-4 blur-sm select-none pointer-events-none">
-                <div className="h-32 flex items-center justify-center text-6xl opacity-30">
-                  🎟️
-                </div>
-              </div>
+            <div className="flex flex-col gap-2">
+              <motion.button
+                onClick={goToRegister}
+                className="w-full rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm hover-lift-sm"
+                whileTap={{ transform: 'scale(0.97)' }}
+              >
+                🔒 {t('discount.registerToUnlock')}
+              </motion.button>
+              <p className="text-center text-xs text-secondary">
+                Gratis · poi lo mostri al locale e paghi meno
+              </p>
             </div>
           )}
 

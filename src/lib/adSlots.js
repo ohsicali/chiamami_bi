@@ -60,6 +60,23 @@ export const AD_SLOTS = {
     order: 3,
     paths: ['/sconti', '/deals'],
   },
+  // BLOCCO 10 — la posizione che vale di più, e mancava.
+  //
+  // Sulla scheda del locale chi guarda ha già scelto cucina, zona e prezzo:
+  // è il punto più vicino alla decisione, quindi il più prezioso per un
+  // brand. Formato compatto come le altre posizioni, così ai clienti non si
+  // deve chiedere una creatività nuova.
+  //
+  // `paths` non elenca le schede una per una: le rotte sono
+  // /restaurant/<slug>, e ci pensa `slotsForPath` col prefisso.
+  restaurant_nearby: {
+    key: 'restaurant_nearby',
+    label: 'Scheda ristorante',
+    where: 'Scheda del locale, sotto “Qui vicino”',
+    format: 'compact',
+    order: 4,
+    paths: ['/restaurant'],
+  },
 }
 
 export const AD_SLOT_LIST = Object.values(AD_SLOTS).sort((a, b) => a.order - b.order)
@@ -78,7 +95,15 @@ export const MAX_ADS_PER_PAGE = 2
  * invisibili e le posizioni in fondo alla lista non uscirebbero mai.
  */
 export function slotsForPath(pathname) {
-  return AD_SLOT_LIST.filter((s) => s.paths.includes(pathname))
+  return AD_SLOT_LIST.filter((s) =>
+    s.paths.some((p) =>
+      // Le schede locale hanno una rotta per ogni slug: si confronta il
+      // prefisso, non l'uguaglianza, se no `restaurant_nearby` non
+      // risulterebbe mai presente sulla pagina e il tetto per pagina la
+      // salterebbe.
+      p === pathname || (p !== '/' && pathname.startsWith(`${p}/`))
+    )
+  )
 }
 
 /**

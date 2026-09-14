@@ -4,34 +4,112 @@
 
   Subject: Conferma il nuovo indirizzo email — ChiamamiBi
 
-  Incolla il contenuto HTML qui sotto nel campo "Body":
+  Incolla tutto quello che segue nel campo "Body".
+  Generato da supabase/email-templates/build.mjs — non modificare a mano,
+  le modifiche andrebbero perse alla prossima rigenerazione.
 -->
-
-<div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
-  <div style="background:#FF5757;padding:32px 24px;text-align:center;">
-    <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:2px;">CHIAMAMI BI</h1>
-  </div>
-  <div style="padding:32px 24px;">
-    <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">Cambio indirizzo email</h2>
-    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">
-      Hai richiesto di cambiare l'email del tuo account ChiamamiBi. Clicca il bottone per confermare il nuovo indirizzo.
-    </p>
-    <div style="text-align:center;margin-bottom:24px;">
-      <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#FF5757;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;">
-        Conferma nuova email
-      </a>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="x-apple-disable-message-reformatting" />
+<meta name="format-detection" content="telephone=no,address=no,email=no,date=no" />
+<!-- Le email restano chiare anche dove il sistema è scuro: i client che
+     invertono i colori da soli fanno danni sul corallo pieno. -->
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>ChiamamiBi</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
+<style>
+  /* Gmail taglia questo blocco quando si inoltra un messaggio: qui dentro
+     ci va solo quello che si può perdere senza danni — e Poppins lo è:
+     dove non arriva resta il sans di sistema della pila. */
+  @font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://chiamamibi.com/fonts/poppins-400.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('https://chiamamibi.com/fonts/poppins-600.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://chiamamibi.com/fonts/poppins-700.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url('https://chiamamibi.com/fonts/poppins-900.woff2') format('woff2');
+  }
+  body { margin:0 !important; padding:0 !important; width:100% !important; }
+  table { border-collapse:collapse !important; }
+  img { -ms-interpolation-mode:bicubic; }
+  a { color:#C53A33; }
+  @media only screen and (max-width:620px) {
+    .cb-col { width:100% !important; }
+    .cb-pad { padding-left:20px !important; padding-right:20px !important; }
+    .cb-pad-sm { padding-left:14px !important; padding-right:14px !important; }
+    .cb-h1 { font-size:26px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#FAF7F2;">
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">Conferma il nuovo indirizzo per continuare a ricevere gli sconti.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F2;">
+  <tr><td align="center" style="padding:24px 12px 32px;">
+    <table role="presentation" class="cb-col" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#FFFFFF;border-radius:22px;overflow:hidden;">
+      <tr><td style="background:#E8453C;padding:26px 32px;" align="center">
+    <a href="https://chiamamibi.com" style="text-decoration:none;">
+      <img src="https://chiamamibi.com/email-assets/guida-bi-white.png" width="168" alt="La Guida di Bi" style="display:block;width:168px;max-width:168px;height:auto;border:0;outline:none;" />
+    </a>
+  </td></tr>
+      <tr><td style="padding:28px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:0 32px 12px;font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:30px;line-height:1.18;font-weight:700;color:#22181C;text-align:left;">Cambio indirizzo.</td></tr>
+<tr><td style="padding:0 32px 16px;font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:1.6;color:#5C5359;text-align:left;">Hai chiesto di cambiare l'email del tuo account. Conferma qui sotto e da quel momento ti scrivo al nuovo indirizzo.</td></tr>
+<tr><td style="padding:6px 32px 22px;" align="left">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="background:#E8453C;border-radius:999px;" align="center">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 30px;font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:15px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:999px;">Conferma il nuovo indirizzo</a>
+      </td>
+    </tr></table>
+  </td></tr>
+<tr><td style="padding:8px 32px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#E6E1D8;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:0 32px 16px;font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:15px;line-height:1.6;color:#5C5359;text-align:left;">Se non sei stato tu, non fare niente: senza questa conferma l'indirizzo resta quello di prima.</td></tr>
+<tr><td style="padding:4px 32px 26px;font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:19px;font-style:italic;color:#8A8388;">— Bi</td></tr>
+      </table></td></tr>
+      <tr><td style="background:#F5F0E4;padding:28px 32px 32px;" align="center">
+    <img src="https://chiamamibi.com/email-assets/guida-bi-ink.png" width="116" alt="ChiamamiBi" style="display:block;width:116px;max-width:116px;height:auto;border:0;outline:none;opacity:0.55;" />
+    <div style="font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:13px;line-height:1.6;color:#8A8388;padding-top:14px;">
+      La guida ai posti dove tornerei, a Torino.
     </div>
-    <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-      Se non riesci a cliccare il bottone, copia e incolla questo link nel browser:<br/>
-      <a href="{{ .ConfirmationURL }}" style="color:#FF5757;word-break:break-all;">{{ .ConfirmationURL }}</a>
-    </p>
-  </div>
-  <div style="padding:20px 24px;background:#fafafa;border-top:1px solid #f0f0f0;text-align:center;">
-    <p style="margin:0 0 4px;font-size:11px;color:#9ca3af;">Se non hai richiesto questo cambio, contatta subito <a href="mailto:supporto@chiamamibi.com" style="color:#FF5757;">supporto@chiamamibi.com</a></p>
-    <p style="margin:0 0 4px;font-size:11px;color:#9ca3af;">ChiamamiBi — Torino, Italia</p>
-    <p style="margin:0;font-size:10px;color:#d1d5db;">
-      <a href="https://chiamamibi.com/privacy" style="color:#9ca3af;">Privacy Policy</a> · <a href="https://chiamamibi.com/terms" style="color:#9ca3af;">Termini di Servizio</a>
-    </p>
-    <p style="margin:8px 0 0;font-size:9px;color:#d1d5db;">Ai sensi del Reg. UE 2016/679 (GDPR), questa comunicazione è inviata per finalità di sicurezza del tuo account.</p>
-  </div>
-</div>
+    <div style="font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:13px;line-height:1.9;padding-top:12px;">
+      <a href="https://chiamamibi.com" style="color:#5C5359;text-decoration:underline;">Il sito</a>
+      &nbsp;·&nbsp;
+      <a href="https://chiamamibi.com/sconti" style="color:#5C5359;text-decoration:underline;">Bi Club</a>
+      &nbsp;·&nbsp;
+      <a href="https://chiamamibi.com/privacy" style="color:#5C5359;text-decoration:underline;">Privacy</a>
+    </div>
+    
+    <div style="font-family:'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;font-size:11px;line-height:1.6;color:#8A8388;padding-top:14px;">
+      © 2026 ChiamamiBi
+    </div>
+  </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

@@ -87,7 +87,9 @@ export default function ProfilePage() {
     }
   }
 
-  if (!authLoading && !user) return <Navigate to="/login" replace />
+  // `state` anche qui: ci si arriva pure da un link diretto o da un segnalibro,
+  // e la pagina di accesso deve dire perché e riportare indietro dopo.
+  if (!authLoading && !user) return <Navigate to="/login" replace state={{ returnTo: '/profile', reason: 'profile', mode: 'register' }} />
   if (isDesktop) return <Suspense fallback={<PageLoader />}><DesktopProfilePage /></Suspense>
 
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import PhotoCarousel from './PhotoCarousel'
 import NearbySection from './NearbySection'
+import AdSlot from '../Ads/AdBanner'
 import Footer from '../Layout/Footer'
 import SaveButton from './SaveButton'
 import OrariLocale from './OrariLocale'
@@ -76,7 +77,17 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
 
   const handleUnlock = async () => {
     if (!user) {
-      navigate('/login', { state: { from: window.location.pathname, discount: true } })
+      // `returnTo`, non `from`: LoginPage legge solo `returnTo`, quindi con
+      // `from` il default restava "/" e dopo la registrazione l'utente
+      // atterrava in home, lontano dal locale che stava guardando e dallo
+      // sconto che voleva prendere (Blocco 5, terza regola trasversale).
+      navigate('/login', {
+        state: {
+          returnTo: `${window.location.pathname}${window.location.search}`,
+          pendingDiscountId: discount?.id,
+          mode: 'register',
+        },
+      })
       return
     }
     setGenerating(true)
@@ -969,6 +980,12 @@ export default function RestaurantSheet({
                   allRestaurants={allRestaurants}
                   onSelect={onSelectNearby}
                 />
+                {/* BLOCCO 10 — la quarta posizione. Qui chi legge ha già
+                    scelto cucina, zona e prezzo: è il punto più vicino alla
+                    decisione, e finora non c'era niente in vendita. */}
+                <div style={{ marginTop: 18 }}>
+                  <AdSlot slot="restaurant_nearby" />
+                </div>
               </motion.div>
 
               {/* Footer */}

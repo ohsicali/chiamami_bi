@@ -96,7 +96,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
         alignItems: 'center',
         transition: 'background 0.15s, border 0.15s',
       }}
-      className="max-md:!grid-cols-[18px_1fr_auto]"
+      className="dm-row max-md:!grid-cols-[18px_1fr_auto]"
     >
       <input
         type="checkbox"
@@ -105,6 +105,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
         onClick={(e) => e.stopPropagation()}
         style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#E8453C', justifySelf: 'center' }}
         aria-label="Seleziona"
+        className="dm-row-check"
       />
 
       <div
@@ -119,7 +120,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
           cursor: 'pointer',
           overflow: 'hidden',
         }}
-        className="max-md:!hidden"
+        className="dm-row-photo max-md:!hidden"
       >
         {d.restaurant_photo && (
           <img
@@ -149,7 +150,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
         </span>
       </div>
 
-      <div onClick={onEdit} style={{ cursor: 'pointer', minWidth: 0 }}>
+      <div onClick={onEdit} className="dm-row-body" style={{ cursor: 'pointer', minWidth: 0 }}>
         <h4
           style={{
             fontFamily: 'var(--font-sans)',
@@ -246,7 +247,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
           minWidth: 92,
           cursor: 'pointer',
         }}
-        className="max-md:!hidden"
+        className="dm-row-ttl max-md:!hidden"
       >
         <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 20, letterSpacing: '-0.03em', color: 'var(--color-ink)' }}>
           {ttl.value}
@@ -272,6 +273,7 @@ function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit,
           alignItems: 'center',
           justifyContent: 'flex-end',
         }}
+        className="dm-row-actions"
         onClick={(e) => e.stopPropagation()}
       >
         <ActionIcon
@@ -515,6 +517,9 @@ export default function DiscountManager() {
   // Notify subscribers: map of `${type}:${id}` -> { sent_at, sent_count }
   const [notifyLogs, setNotifyLogs] = useState({})
   const [notifyingId, setNotifyingId] = useState(null)
+  // L'esito dell'annuncio partito da solo al salvataggio: si vede in un
+  // avviso che sparisce, senza fermare chi sta lavorando.
+  const [autoNotice, setAutoNotice] = useState(null)
 
   const [form, setForm] = useState(EMPTY_FORM)
 
@@ -766,8 +771,56 @@ export default function DiscountManager() {
       setShowForm(false)
       resetForm()
       if (pendingPin) setPinPopup(pendingPin)
+
+      // L'annuncio parte da solo quando lo sconto nasce già attivo.
+      // Solo alla creazione: su una modifica manderebbe una seconda email
+      // per lo stesso sconto a chi l'ha già ricevuta. E comunque il server
+      // tiene il registro (email_notifications_log) e rifiuta il doppione,
+      // questo è il primo dei due sbarramenti.
+      if (!editing && result.data.is_active) {
+        notifyOnPublish(result.data)
+      }
     }
     setSaving(false)
+  }
+
+  /**
+   * Manda l'annuncio senza chiedere niente e senza bloccare il salvataggio.
+   *
+   * Non usa `handleNotify` perché quello è il bottone manuale: mostra
+   * finestre di conferma e chiede "vuoi mandarlo di nuovo?", cose che
+   * durante un salvataggio automatico non hanno senso. Qui un fallimento
+   * finisce in un avviso discreto: lo sconto è comunque salvato, e il
+   * bottone "Notifica" resta lì per riprovare a mano.
+   */
+  const notifyOnPublish = async (d) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ type: d.is_drop ? 'drop' : 'discount', id: d.id }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setNotifyLogs((prev) => ({
+          ...prev,
+          [`${d.is_drop ? 'drop' : 'discount'}:${d.id}`]: {
+            sent_at: new Date().toISOString(), sent_count: json.sent,
+          },
+        }))
+        setAutoNotice({ kind: 'ok', text: `Annuncio inviato a ${json.sent} iscritti.` })
+      } else if (res.status !== 409) {
+        setAutoNotice({ kind: 'err', text: `Sconto salvato, ma l'annuncio non è partito: ${json.error || 'errore invio'}. Puoi mandarlo col bottone Notifica.` })
+      }
+    } catch (err) {
+      setAutoNotice({ kind: 'err', text: `Sconto salvato, ma l'annuncio non è partito: ${err.message}` })
+    }
+    setTimeout(() => setAutoNotice(null), 7000)
   }
 
   const handleDelete = async (id) => {
@@ -840,6 +893,35 @@ export default function DiscountManager() {
 
   return (
     <AdminLayout title="Sconti & Drop">
+      {/* BLOCCO 8 — la riga sconto sotto i 1100px (iPad in verticale, finestra
+          affiancata, portatile piccolo).
+
+          Nella griglia da cinque colonne la colonna del testo restava larga
+          200px scarsi: il nome del locale andava su quattro righe, la
+          descrizione su sette, e la riga arrivava a 230px di altezza — sullo
+          schermo ne entravano due e mezza.
+
+          Sotto i 1100px diventa una card impilata: foto e nome sopra, scadenza
+          e azioni sotto, il testo non va più a capo forzato e ne entrano cinque
+          o sei per schermata. Sopra i 1100px non cambia niente. */}
+      <style>{`
+        @media (max-width: 1100px) and (min-width: 768px) {
+          .dm-row {
+            grid-template-columns: 18px 56px minmax(0, 1fr) auto !important;
+            grid-template-areas:
+              "check photo body body"
+              "ttl   ttl   .    actions" !important;
+            row-gap: 12px !important;
+            align-items: start !important;
+          }
+          .dm-row-check   { grid-area: check; align-self: center; }
+          .dm-row-photo   { grid-area: photo; width: 56px !important; height: 56px !important; }
+          .dm-row-body    { grid-area: body; }
+          .dm-row-ttl     { grid-area: ttl; justify-self: start; min-width: 0 !important; padding: 6px 10px !important; }
+          .dm-row-ttl > div:first-child { font-size: 15px !important; }
+          .dm-row-actions { grid-area: actions; }
+        }
+      `}</style>
       <div style={{ fontFamily: "var(--font-sans)", padding: '28px 32px', maxWidth: 1400, margin: '0 auto' }} className="max-md:!p-[18px]">
         {/* ── Header ── */}
         <div
@@ -968,6 +1050,26 @@ export default function DiscountManager() {
             subtitle={filter === 'all' ? 'Crea il primo sconto per un ristorante partner.' : 'Cambia filtro per vedere altri sconti.'}
             cta={filter === 'all' ? { label: '+ Nuovo drop', onClick: () => { resetForm(); setShowForm(true) } } : null}
           />
+        )}
+
+        {/* Esito dell'annuncio partito da solo dopo il salvataggio. */}
+        {autoNotice && (
+          <div
+            role="status"
+            style={{
+              padding: '11px 16px',
+              borderRadius: 12,
+              marginBottom: 12,
+              fontSize: 13,
+              fontWeight: 600,
+              lineHeight: 1.45,
+              background: autoNotice.kind === 'ok' ? '#E9F8EF' : '#FDEDEB',
+              color: autoNotice.kind === 'ok' ? '#1A4731' : '#8A2B25',
+              border: `1px solid ${autoNotice.kind === 'ok' ? '#BFE9CF' : '#F6C9C4'}`,
+            }}
+          >
+            {autoNotice.text}
+          </div>
         )}
 
         {/* ── Bulk action bar — appears when items are selected ── */}

@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useNavigate, useLocation, matchPath } from 'react-router-dom'
 import RestaurantSheet from '../../components/Restaurant/RestaurantSheet'
 import { useRestaurants } from '../../lib/hooks/useRestaurants'
@@ -10,6 +10,7 @@ import MetaTags from '../../components/SEO/MetaTags'
 import JsonLd from '../../components/SEO/JsonLd'
 import { proxyImg } from '../../lib/supabase'
 import { slugify } from '../../lib/utils/slug'
+import SaveToListSheet from '../../components/Restaurant/SaveToListSheet'
 
 // Caricata solo su desktop: da telefono questo codice non viene scaricato.
 // È il gemello più pesante (35 KB di sorgente), quindi è anche il risparmio
@@ -74,14 +75,24 @@ export default function RestaurantPage() {
     navigate(`/restaurant/${nearby.slug || slugify(nearby.name)}`)
   }
 
+  // BLOCCO 6 — il salvataggio resta UN tocco. Il foglio delle liste compare
+  // dopo, è facoltativo e si ignora: salvare non deve costringere a scegliere
+  // dove mettere la cosa salvata. E non compare quando si TOGLIE dai salvati,
+  // che sarebbe chiedere in quale lista mettere un locale appena rimosso.
+  const [listSheetFor, setListSheetFor] = useState(null)
+
   const handleSaveToggle = () => {
     if (!user) {
-      navigate('/login')
+      // Come per gli sconti: dopo la registrazione si torna qui, non in home.
+      navigate('/login', {
+        state: { returnTo: `${location.pathname}${location.search}`, mode: 'register' },
+      })
       return
     }
-    if (restaurant) {
-      toggleSave(restaurant.id)
-    }
+    if (!restaurant) return
+    const wasSaved = isSaved(restaurant.id)
+    toggleSave(restaurant.id)
+    if (!wasSaved) setListSheetFor(restaurant)
   }
 
   // Loading state
@@ -193,6 +204,14 @@ export default function RestaurantPage() {
           onSelectNearby={handleSelectNearby}
           saved={isSaved(restaurant.id)}
           onSaveToggle={handleSaveToggle}
+        />
+      )}
+
+      {listSheetFor && (
+        <SaveToListSheet
+          userId={user?.id}
+          restaurant={listSheetFor}
+          onClose={() => setListSheetFor(null)}
         />
       )}
     </>

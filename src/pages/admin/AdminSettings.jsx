@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import EmailPreviewTool from '../../components/admin/EmailPreviewTool'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -764,7 +765,10 @@ export default function AdminSettings() {
             </div>
             <div>
               <div style={sectionLabel}>STRUMENTI</div>
-              <ThumbnailTool />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <ThumbnailTool />
+                <EmailPreviewTool />
+              </div>
             </div>
           </div>
 

@@ -961,3 +961,100 @@
   .cp-thinking .cp-tdot { animation: none; }
   .cp-tstatus { animation: none; }
 }
+
+/* ============================================================================
+   BLOCCO 5 — gate di Chiedi a Bi, prima della scrittura.
+   ========================================================================= */
+
+.cp-gate-preview {
+  padding: 18px 18px 8px;
+}
+
+.cp-gate-preview-label {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-ink-55, rgba(34, 24, 28, 0.55));
+}
+
+/* Sfocata ma leggibile come forma: si deve capire che è una risposta vera,
+   con dentro delle card di locali, non un placeholder grigio. */
+.cp-gate-preview-blur {
+  filter: blur(4.5px) saturate(0.9);
+  pointer-events: none;
+  user-select: none;
+  contain: paint;
+  opacity: 0.9;
+}
+
+.cp-gate-preview-cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.cp-gate-preview-cards span {
+  flex: 1;
+  height: 88px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e8cfa8 0%, rgba(34, 24, 28, 0.18) 100%);
+}
+
+.cp-gate {
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border-top: 1px solid var(--color-line, #eae3d7);
+}
+
+.cp-gate-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.cp-gate-inner strong {
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-ink, #22181c);
+}
+
+.cp-gate-inner p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-ink-70, rgba(34, 24, 28, 0.7));
+}
+
+.cp-gate-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cp-gate-primary {
+  flex: 1;
+  min-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 20px;
+  border-radius: 999px;
+  background: var(--color-ink, #22181c);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cp-gate-secondary {
+  padding: 13px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink-70, rgba(34, 24, 28, 0.7));
+  text-decoration: none;
+}

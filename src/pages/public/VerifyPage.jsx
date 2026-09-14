@@ -5,6 +5,7 @@ import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 import SuccessResult from '../../components/Verify/SuccessResult'
+import { formatAddress } from '../../lib/utils/formatAddress'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 
@@ -1163,6 +1164,16 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
       }
       if (resp.status === 'success') {
         try { navigator.vibrate?.([40, 60, 40]) } catch { /* no-op */ }
+        // Conferma per email a chi ha usato lo sconto. Non blocca la
+        // schermata verde: chi è al bancone deve vedere subito l'esito, e
+        // l'email è un di più che arriva quando arriva. L'autorizzazione è
+        // il codice stesso — averlo letto vuol dire avere il telefono del
+        // cliente davanti.
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'discount-used', qrCode: trimmed }),
+        }).catch(() => {})
       }
       if (resp.status === 'unauthorized') {
         deleteCookie(COOKIE_NAME)
@@ -1740,9 +1751,16 @@ function DesktopDashboard({ restaurant, deviceToken, onSessionExpired, onOpenSca
   return (
     <>
       <div className="v4-dsk-crumb">
-        {restaurant?.name || '—'}{restaurant?.address ? ` · ${restaurant.address}` : ''}
+        {/* L'indirizzo grezzo di Google ("Via X 7, 10123 Torino Turin, Italy")
+            si ripulisce con lo stesso helper del sito pubblico. */}
+        {restaurant?.name || '—'}
+        {formatAddress(restaurant?.address, restaurant?.neighborhood)
+          ? ` · ${formatAddress(restaurant.address, restaurant.neighborhood)}`
+          : ''}
       </div>
-      <h1 className="v4-dsk-title">Ciao 👋</h1>
+      {/* Il nome del locale è già lì due righe sopra: salutare con "Ciao 👋"
+          e basta fa sembrare la pagina di chiunque. */}
+      <h1 className="v4-dsk-title">Ciao {restaurant?.name || ''} 👋</h1>
       <div className="v4-dsk-sub">
         <span>{dayLabel}</span>
         <span className="dot" />

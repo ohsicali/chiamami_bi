@@ -1,0 +1,129 @@
+/* ============================================================================
+   La porta a vetri: stile del componente, non della pagina sconti.
+
+   Stava in SconteRedesignPage.css, e questo gate lo aprono anche la home e
+   la scheda di un locale. Fuori da /sconti succedevano due cose insieme:
+   il foglio non era nemmeno caricato (Vite lo consegna col chunk della
+   pagina che lo importa), e le variabili --sc-* sono dichiarate su .sc-page,
+   che lì fuori non esiste. Risultato: un <div> senza posizione né sfondo
+   buttato in mezzo alla pagina, cioè — per chi guarda — il nulla. Si toccava
+   il cuore e non succedeva niente.
+
+   Quindi il foglio viaggia col componente, e i token se li dichiara addosso
+   invece di aspettarseli da un antenato. Dentro .sc-page vince comunque
+   questa dichiarazione, che ha gli stessi valori: la pagina sconti non
+   cambia aspetto.
+   ========================================================================= */
+.sc-auth-gate {
+  --sc-paper: #FFFFFF;
+  --sc-ink: var(--color-ink, #22181C);
+  --sc-ink-2: var(--color-ink-70, rgba(34, 24, 28, .7));
+  --sc-corallo: var(--color-corallo, #E8453C);
+  --sc-corallo-ink: var(--color-corallo-ink, #C53A33);
+  --sc-oro: var(--color-oro, #B08954);
+  --sc-ff-mark: var(--font-mark, 'Alfa Slab One', serif);
+
+  position: fixed;
+  inset: 0;
+  background: rgba(34, 24, 28, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 110;
+  padding: 24px;
+  animation: scGateFadeIn var(--dur-pop, 180ms) var(--ease-out, ease-out);
+}
+@keyframes scGateFadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.sc-auth-gate-card {
+  background: var(--sc-paper);
+  border-radius: 24px;
+  padding: 28px 24px 22px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.sc-auth-gate-card h3 {
+  font-family: var(--sc-ff-mark);
+  font-size: 22px;
+  letter-spacing: 0.3px;
+  color: var(--sc-ink);
+  line-height: 1.15;
+  margin-top: 4px;
+}
+.sc-auth-gate-card p {
+  font-size: 13.5px;
+  color: var(--sc-ink-2);
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0;
+}
+.sc-auth-gate-card .sc-btn-primary,
+.sc-auth-gate-card .sc-btn-secondary {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 0;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.sc-auth-gate-card .sc-btn-primary {
+  background: var(--sc-corallo);
+  color: #fff;
+}
+.sc-auth-gate-card .sc-btn-secondary {
+  background: var(--sc-ink);
+  color: #fff;
+}
+.sc-auth-gate-card .sc-btn-link {
+  background: transparent;
+  color: var(--sc-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  padding: 8px;
+  font-family: inherit;
+}
+.sc-auth-gate .sc-av-iconic {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sc-corallo) 0%, var(--sc-corallo-ink) 100%);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  position: relative;
+  margin-bottom: 4px;
+}
+.sc-auth-gate .sc-av-iconic span {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 18px;
+  height: 18px;
+  background: var(--sc-oro);
+  border-radius: 50%;
+  border: 2px solid var(--sc-paper);
+  font-size: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Quello che SI SPOSTA sparisce; la dissolvenza resta, perché serve a capire
+   che il resto della pagina è passato dietro a un livello. */
+@media (prefers-reduced-motion: reduce) {
+  .sc-auth-gate { animation: none !important; }
+}
