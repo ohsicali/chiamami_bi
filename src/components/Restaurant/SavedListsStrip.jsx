@@ -159,7 +159,7 @@ export default function SavedListsStrip({
               style={{
                 flex: '0 0 auto',
                 width: tileWidth,
-                border: `2px solid ${isActive ? 'var(--color-corallo)' : 'transparent'}`,
+                border: 'none',
                 borderRadius: 16,
                 padding: 0,
                 background: 'transparent',
@@ -168,24 +168,48 @@ export default function SavedListsStrip({
               }}
               aria-pressed={isActive}
             >
+              {/* Selezionata: non un rettangolo colorato incollato al bordo
+                  (leggeva "cornice economica"), ma un anello sottile staccato
+                  dalla foto da uno scarto bianco — lo stesso trucco degli
+                  highlight di Instagram — con un'ombra morbida che solleva la
+                  tile invece di delimitarla. */}
               <div
                 style={{
                   width: '100%',
                   height: 78,
                   borderRadius: 14,
                   overflow: 'hidden',
+                  position: 'relative',
                   background: 'linear-gradient(135deg, #E8CFA8 0%, rgba(34,24,28,.18) 100%)',
                   display: 'grid',
                   placeItems: 'center',
                   fontSize: 26,
+                  boxShadow: isActive
+                    ? '0 0 0 2px #fff, 0 0 0 4px var(--color-corallo), 0 8px 18px -6px rgba(232,69,60,.5)'
+                    : 'none',
+                  transform: isActive ? 'translateY(-1px)' : 'none',
+                  transition: 'box-shadow .18s ease, transform .18s ease',
                 }}
               >
                 {cover
                   ? <img src={cover} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span aria-hidden="true">{l.emoji || '📁'}</span>}
+                {isActive && (
+                  <div style={{
+                    position: 'absolute', top: 6, right: 6, zIndex: 1,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: 'var(--color-corallo)',
+                    display: 'grid', placeItems: 'center',
+                    boxShadow: '0 1px 4px rgba(34,24,28,.3)',
+                  }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                )}
               </div>
               <div style={{ padding: '6px 4px 0' }}>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: isActive ? 'var(--color-corallo)' : 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {/* L'emoji nel nome solo quando la copertina è una foto: se
                       la lista è ancora vuota l'emoji è già grande lì sopra, e
                       ripeterla due volte in tre centimetri sembra un errore. */}
