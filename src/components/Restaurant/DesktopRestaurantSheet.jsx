@@ -532,6 +532,48 @@ export default function DesktopRestaurantSheet({
               )
             })()}
 
+            {/* ── Card Video (Instagram Reel / TikTok) ── */}
+            {(restaurant.instagram_reel || restaurant.tiktok_url) && (
+              <div style={{
+                background: '#fff', border: `1px solid ${INK05}`,
+                borderRadius: 20, padding: 22, marginBottom: 18,
+              }}>
+                <h4 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 15, letterSpacing: '-.01em', marginBottom: 12, marginTop: 0, color: INK }}>
+                  Ho fatto un video in questo posto, guardalo!
+                </h4>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {restaurant.instagram_reel && (
+                    <a href={restaurant.instagram_reel} target="_blank" rel="noopener noreferrer" style={{
+                      flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      padding: '10px 14px', borderRadius: 10,
+                      background: BEIGE_CTA, textDecoration: 'none',
+                      border: 'none',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="#DD2A7B" strokeWidth="2"/>
+                        <circle cx="12" cy="12" r="4.5" stroke="#DD2A7B" strokeWidth="2"/>
+                        <circle cx="17.5" cy="6.5" r="1.5" fill="#DD2A7B"/>
+                      </svg>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>Reel</span>
+                    </a>
+                  )}
+                  {restaurant.tiktok_url && (
+                    <a href={restaurant.tiktok_url} target="_blank" rel="noopener noreferrer" style={{
+                      flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      padding: '10px 14px', borderRadius: 10,
+                      background: BEIGE_CTA, textDecoration: 'none',
+                      border: 'none',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill={INK}>
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.16 8.16 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.12z"/>
+                      </svg>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: INK }}>TikTok</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* ── Card Ciao sono Bi ── */}
             <div style={{
               background: '#F1EBE0', borderRadius: 20, padding: 22,
