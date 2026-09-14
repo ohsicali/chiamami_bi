@@ -11,6 +11,7 @@ import OrariLocale from './OrariLocale'
 import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
+import SconteAuthGate from '../Discount/SconteAuthGate'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -57,7 +58,6 @@ function useShare(restaurant, t) {
 /* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
 function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
   const discount = discountFromParent || fetchedDiscount
@@ -65,6 +65,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const [generating, setGenerating] = useState(false)
   const [showQR, setShowQR] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const [authGate, setAuthGate] = useState(false)
 
   if (!discount && discountLoading) return null
   if (!discount) return null
@@ -77,17 +78,13 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
 
   const handleUnlock = async () => {
     if (!user) {
-      // `returnTo`, non `from`: LoginPage legge solo `returnTo`, quindi con
-      // `from` il default restava "/" e dopo la registrazione l'utente
-      // atterrava in home, lontano dal locale che stava guardando e dallo
-      // sconto che voleva prendere (Blocco 5, terza regola trasversale).
-      navigate('/login', {
-        state: {
-          returnTo: `${window.location.pathname}${window.location.search}`,
-          pendingDiscountId: discount?.id,
-          mode: 'register',
-        },
-      })
+      // Il riquadro, non un salto a /login: chi preme "Sblocca sconto" ha
+      // appena scelto questo locale e questo sconto, e buttarlo su un'altra
+      // pagina gli fa perdere il filo. Il popup si chiude e la scheda è
+      // ancora lì, aperta dov'era. `SconteAuthGate` porta con sé lo sconto in
+      // sospeso e il `returnTo` di questa pagina, quindi chi va avanti torna
+      // esattamente qui.
+      setAuthGate(true)
       return
     }
     setGenerating(true)
@@ -219,6 +216,13 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           />
         )}
       </AnimatePresence>
+
+      {authGate && (
+        <SconteAuthGate
+          pendingDiscountId={discount?.id}
+          onClose={() => setAuthGate(false)}
+        />
+      )}
     </>
   )
 }

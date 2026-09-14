@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-14 (mattina)
+Ultima modifica: 2026-09-14 (gate spostato sul gesto)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -29,7 +29,7 @@ dove siamo. Aggiorna a ogni step importante.
 | 2 — Home mobile | ✅ | Resta la v10 sotto i 1024px. Sequenza momento → aperti ora → drop → altri sconti → categorie → ultimi aggiunti. |
 | 3 — Home desktop | ↩️ Annullato | Da 1024px in su si usa la home di prima del rifacimento. Vedi "Home — due home, una per misura" sotto. |
 | 4 — Bi Club adattivo | ✅ | 1/2/3+ drop, paginazione da 6, mai carosello su mobile, convenzioni come righe. |
-| 5 — Gating registrazione | ✅ | Club sfocato col conteggio vero, sconto singolo interamente visibile, gate di Chiedi a Bi prima di scrivere. Corretto `returnTo` in 4 punti. |
+| 5 — Gating registrazione | ♻️ Rifatto al contrario il 14/09 | Il gate non sta più all'ingresso ma sul gesto: catalogo e chat aperti a tutti, riquadro al click su "Sblocca" / all'invio del messaggio. Vedi "14/09 — il gate si sposta sul gesto" in fondo. |
 | 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. Striscia liste condivisa fra telefono e desktop (`src/components/Restaurant/SavedListsStrip.jsx`), rinomina/elimina, scelta emoji, e da PR #214 il riquadro "Aggiungi lista" in cima alla striscia. **Note personali: scartate** — vedi sotto. **Persistenza verificata sul DB il 14/09** (vedi sotto): la lista è una riga in `saved_lists`, resta dopo il logout e nessun altro utente la vede. **Non ancora provato a schermo con un account vero.** |
 | 7 — Chiedi a Bi | ⚠️ Parziale | Fatti i bug: troncamento `max_tokens` e stato dinamico in header. **Non fatto**: redesign schermata iniziale mobile, card locali dentro le risposte, chip di continuazione. |
 | 8 — Admin | ✅ | Riga sconto responsive 768-1100px, barra avviso sconti irraggiungibili, KPI con denominatore, niente flash di zeri. **Non verificato a schermo** (serve login admin). |
@@ -868,3 +868,57 @@ Prima: fermo all'infinito, nessun messaggio.
 > simulate, il blocco con una richiesta che non torna mai. Se dopo il deploy
 > l'accesso non va ancora, adesso almeno **si vede** dove si ferma: o compare
 > un messaggio, o si sa che la richiesta non parte proprio.
+
+## 14/09 — il gate si sposta sul gesto (ribaltato il Blocco 5)
+
+Augusto: *«il pop up registrati per… salvare, sconto, chat deve apparire quando
+stai per fare l'azione. Non come adesso che impedisce in principio di svolgere
+le attività, secondo me è meglio così, uno ha più fomo.»*
+
+È il contrario di come era stato deciso nel Blocco 5, quindi vale la pena
+scriverlo: **prima** si mostrava la porta chiusa all'ingresso (catalogo
+sfocato, barra della chat sostituita da un invito), **adesso** si lascia
+entrare e la registrazione si chiede nell'istante in cui si preme il bottone.
+Il modello è il cuore dei salvati, che funzionava già così: si tocca, esce il
+riquadro, e al rientro dal login il locale si salva da solo.
+
+Cosa cambia, pezzo per pezzo:
+
+| dove | prima | adesso |
+|---|---|---|
+| Bi Club `/sconti` | catalogo sfocato + pannello "🔒 6 sconti ti aspettano" sopra | catalogo a fuoco e scorribile per tutti; il riquadro esce premendo "Sblocca sconto" su uno sconto preciso |
+| Chiedi a Bi `/chiedi` | anteprima sfocata di una risposta finta al posto della schermata iniziale, e invito al posto della barra di scrittura | schermata iniziale e barra vere per tutti: si scrive, si preme invia, e lì esce il riquadro |
+| Scheda locale (telefono e computer) | "Sblocca sconto" saltava su `/login` | esce `SconteAuthGate` sopra la scheda, che resta aperta dietro |
+| `DiscountBanner` | bottone diverso per lo sloggato ("🔒 Registrati per sbloccare") | stesso bottone per tutti ("🔓 Sblocca sconto"), riquadro al click |
+
+Niente si perde per strada, in nessuno dei tre casi:
+
+- la domanda scritta resta nell'input se il riquadro viene chiuso, e viaggia
+  come `initialMessage` fino al login: al rientro parte da sola;
+- lo sconto scelto va in `sessionStorage` (`pendingDiscountId`) e viene preso
+  da solo al rientro sul Bi Club;
+- il locale del cuore va in `sessionStorage` (`pendingSaveId`), come già era.
+
+File toccati: `SconteRedesignPage.jsx/.css` (via `ClubGate` e `.is-blurred`),
+`ChiediPage.jsx/.css` (via `ChatGate` e `ChatGatePreview`),
+`RestaurantSheet.jsx`, `DesktopRestaurantSheet.jsx`, `DiscountBanner.jsx`.
+
+Il testo del riquadro di Chiedi a Bi adesso parla del gesto appena fatto
+("La tua domanda è pronta"), non dell'accesso in astratto, e ha per primo
+"Registrati gratis" invece di "Accedi": chi arriva lì un account non ce l'ha.
+
+Preso al volo strada facendo: `SconteRedesignPage.jsx` usava `supabase` senza
+importarlo (`sendClaimReceipt`, l'email col codice appena preso). La chiamata
+moriva dentro il `try` e l'email non partiva mai, in silenzio. Una riga
+d'import.
+
+Restano volutamente com'erano le voci di menu "Salvati" e "Profilo" (telefono e
+computer) e le pagine che ne dipendono: lì dietro non c'è niente da far vedere
+a chi non è registrato, quindi il salto a `/login` è il gesto stesso, non un
+muro davanti a un contenuto.
+
+Verificato a schermo (browser, sloggato, build di produzione): su `/chiedi` la
+barra c'è, scrivendo e premendo invio esce il riquadro e il testo resta
+nell'input; su `/sconti` non c'è più né sfocatura né pannello. Nessun errore in
+console. `npm test` 94/94, build a posto, lint invariato (gli stessi 16 errori
+di prima meno quello dell'import mancante).
