@@ -30,6 +30,7 @@ export default function DropCard({
   ctaLabel,
   ctaDisabled = false,
   validityNote,
+  showAlwaysValid = true,
   className = '',
   style,
 }) {
@@ -41,7 +42,7 @@ export default function DropCard({
     return () => clearInterval(id)
   }, [])
 
-  const view = useMemo(() => buildView(deal, now), [deal, now])
+  const view = useMemo(() => buildView(deal, now, { showAlwaysValid }), [deal, now, showAlwaysValid])
   if (!view) return null
 
   const isMini = size === 'mini'
@@ -76,7 +77,7 @@ export default function DropCard({
         <span className="dropcard__body">
           <span className="dropcard__name">{view.restaurantName}</span>
           <span className="dropcard__where">{view.where}</span>
-          <span className="dropcard__status">{view.miniStatus}</span>
+          {view.miniStatus && <span className="dropcard__status">{view.miniStatus}</span>}
         </span>
       </button>
     )
@@ -103,10 +104,12 @@ export default function DropCard({
       {view.badgeLabel && <span className="dropcard__badge">{view.badgeLabel}</span>}
 
       <div className="dropcard__body">
-        <span className="dropcard__pill">
-          <i aria-hidden />
-          {view.pillLabel}
-        </span>
+        {view.pillLabel && (
+          <span className="dropcard__pill">
+            <i aria-hidden />
+            {view.pillLabel}
+          </span>
+        )}
 
         {/* Due titoli, uno solo visibile per volta: il CSS spegne quello
             che non serve alla larghezza corrente (vedi .dropcard--wide).
@@ -187,7 +190,7 @@ export default function DropCard({
 /*  Dalla riga del DB a ciò che si vede                                      */
 /* ------------------------------------------------------------------------ */
 
-function buildView(deal, now) {
+function buildView(deal, now, { showAlwaysValid = true } = {}) {
   if (!deal) return null
   const r = deal.restaurant || deal.restaurants || null
 
@@ -202,7 +205,7 @@ function buildView(deal, now) {
   const drop = isDrop(deal)
   const pillLabel = drop
     ? (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE')
-    : 'SEMPRE VALIDO'
+    : (showAlwaysValid ? 'SEMPRE VALIDO' : '')
 
   // La riga piccola: prima la condizione d'uso, poi categoria e indirizzo.
   // La condizione sta QUI e non nel vantaggio — è il vincolo, non il premio.
@@ -223,7 +226,9 @@ function buildView(deal, now) {
 
   // Lo stato in fondo alla mini: il countdown se è un drop, "Sempre valido"
   // se è una convenzione.
-  const miniStatus = drop ? (countdown ? `Scade tra ${countdown}` : 'Drop live') : 'Sempre valido'
+  const miniStatus = drop
+    ? (countdown ? `Scade tra ${countdown}` : 'Drop live')
+    : (showAlwaysValid ? 'Sempre valido' : '')
 
   const valueLabel = formatDiscountValue(deal)
   const restaurantName = r?.name || deal.title || 'Locale'
