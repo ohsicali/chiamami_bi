@@ -189,21 +189,21 @@ function RestaurantCard({
             fontFamily: 'var(--font-sans)', fontWeight: 800,
             fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.01em',
             color: 'var(--color-ink)', lineHeight: 1.2, minWidth: 0,
-            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: dense ? 1 : 2,
-            overflow: 'hidden', minHeight: dense ? '1.2em' : '2.4em',
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 1,
+            overflow: 'hidden', minHeight: '1.2em',
           }}>
             {restaurant.name}
           </h3>
 
           {/* Renderizzata anche vuota: è lo spazio riservato che tiene in riga
-              le card dei locali senza tagline. In dense (mobile Salvati) una
-              sola riga: due righe fisse su una card stretta lasciavano un
-              vuoto sotto ogni tagline corta o assente. */}
+              le card dei locali senza tagline. Una sola riga anche su
+              desktop: due righe fisse lasciavano un vuoto sotto ogni nome o
+              tagline corta, ed erano la maggioranza dei casi. */}
           <div style={{
             fontSize: dense ? 11.5 : 12, color: 'var(--color-ink-70)',
-            marginTop: dense ? 2 : 3, lineHeight: 1.35,
-            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: dense ? 1 : 2,
-            overflow: 'hidden', minHeight: dense ? '1.35em' : '2.7em',
+            marginTop: 2, lineHeight: 1.35,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 1,
+            overflow: 'hidden', minHeight: '1.35em',
           }}>
             {restaurant.tagline || ''}
           </div>
@@ -211,7 +211,7 @@ function RestaurantCard({
           {/* Categoria e prezzo come in home: la pillola prende il colore
               della categoria, non un corallo uguale per tutte. */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 6, marginTop: dense ? 4 : 6,
+            display: 'flex', alignItems: 'center', gap: 6, marginTop: 4,
             flexWrap: 'nowrap', overflow: 'hidden', minWidth: 0,
           }}>
             {category && (
@@ -246,7 +246,7 @@ function RestaurantCard({
               un'altra città. */}
           {(showCity || restaurant.address) && (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 6, marginTop: dense ? 6 : 8, minWidth: 0,
+              display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, minWidth: 0,
               fontSize: dense ? 11.5 : 12, color: 'var(--color-ink-70)',
             }}>
               <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />

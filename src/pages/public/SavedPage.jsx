@@ -357,7 +357,6 @@ export default function SavedPage() {
              chi apre la pagina vuota servono i locali, non tre etichette da
              riempire. */
           suggestions={restaurants.length > 0 ? listSuggestions : []}
-          restaurants={restaurants}
           activeListId={activeListId}
           onSelect={setActiveListId}
           onRename={renameList}

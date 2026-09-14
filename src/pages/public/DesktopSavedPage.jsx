@@ -145,7 +145,6 @@ export default function DesktopSavedPage() {
           <SavedListsStrip
             lists={savedLists}
             suggestions={listSuggestions}
-            restaurants={restaurants}
             activeListId={activeListId}
             onSelect={setActiveListId}
             onRename={renameList}
