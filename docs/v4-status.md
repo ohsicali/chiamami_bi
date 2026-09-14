@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-14 (gate spostato sul gesto)
+Ultima modifica: 2026-09-14 (/list allineata a /esplora)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -868,6 +868,21 @@ Prima: fermo all'infinito, nessun messaggio.
 > simulate, il blocco con una richiesta che non torna mai. Se dopo il deploy
 > l'accesso non va ancora, adesso almeno **si vede** dove si ferma: o compare
 > un messaggio, o si sa che la richiesta non parte proprio.
+
+## 14/09 — "Ultimi aggiunti" → /list allineata a /esplora
+
+Augusto: la sezione "Ultimi aggiunti" in fondo alla home rimanda a una lista
+con "tutt'altro aspetto". Causa: `/list` (`ListView.jsx`) aveva una sua
+`HeroCard`/`HorizontalCard` scritte da zero, mai migrate al componente
+unico — era già segnalato in "Step 4 — card unica" qui sopra come lavoro
+da fare ("Da migrare ancora: ... HorizontalCard/HeroCard (ListView)").
+
+Fatto: `ListView.jsx` ora usa `RestaurantCard`, la stessa card di
+`/esplora` — variante `hero` per il locale in evidenza (esisteva già nel
+componente, non la usava nessuna pagina), variante `default` per il resto
+della lista virtualizzata. −340 righe di markup duplicato. PR #219.
+
+Non verificato a schermo in questa sessione (nessun ambiente con browser).
 
 ## 14/09 — il gate si sposta sul gesto (ribaltato il Blocco 5)
 
