@@ -47,7 +47,7 @@ import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 
 function formatCountdown(endsAt) {
@@ -559,7 +559,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
   // First card visible on screen → eager load so it doesn't pop in.
   const isAboveFold = index < 2
   const priceStr = formatPrice(restaurant.price_range)
-  const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
+  const discLabel = discount?.discount_value ? formatDiscountBadge(discount) : null
   return (
     // CSS, non Framer: questa card è dentro <Reveal> (whileInView), che
     // essendo la sezione sopra la piega scatta nello stesso istante del
@@ -686,7 +686,7 @@ export default function HomeDesktopClassic() {
     const photo = proxyImg(photoRaw, { w: 900 })
     // Keep srcset to 3 widths (mobile / desktop / retina) — fewer cold-cache misses.
     const photoSrcSet = proxyImgSrcSet(photoRaw, [600, 900, 1400])
-    const label = formatDiscountValue(drop)
+    const label = formatDiscountBadge(drop)
     const catName = getPublicCategoryNames(r)[0] || r.cuisine_type || ''
     const catInfo = getCategoryInfo(catName)
     const neighborhood = r.address ? r.address.split(',')[0].trim() : ''

@@ -70,6 +70,10 @@ supabase/
 - **Colonne mancanti DB**: `recommended_for`, `tiktok_url`, `instagram_reel` aggiunte con ALTER TABLE
 - **Google CAPTCHA/sorry page**: rilevata e gestita con messaggio errore
 
+## Convenzioni contenuti sconti (per riferimento futuro)
+- **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
+- **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).
+
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
 - **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.

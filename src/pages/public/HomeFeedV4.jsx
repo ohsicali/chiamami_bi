@@ -24,7 +24,7 @@ import AskBiChat from '../../components/Home/AskBiChat'
 import BiLogoMark from '../../components/UI/BiLogoMark'
 import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import DropCard from '../../components/Discount/DropCard'
 import { filterActive, filterActiveDrops, sortByExpiry } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
@@ -366,7 +366,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
   // First card visible on screen → eager load so it doesn't pop in.
   const isAboveFold = index < 2
   const priceStr = formatPrice(restaurant.price_range)
-  const discLabel = discount?.discount_value ? formatDiscountValue(discount) : null
+  const discLabel = discount?.discount_value ? formatDiscountBadge(discount) : null
   return (
     // CSS, non Framer: questa card è dentro <Reveal> (whileInView), che
     // essendo la sezione sopra la piega scatta nello stesso istante del

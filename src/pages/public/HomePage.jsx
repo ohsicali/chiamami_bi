@@ -23,7 +23,7 @@ import { SkeletonCard, PageLoader } from '../../components/UI/LoadingSpinner'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import SuggestRestaurantSheet from '../../components/Restaurant/SuggestRestaurantSheet'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -193,7 +193,7 @@ export default function HomePage() {
   const discountValueMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.discount_value]))
   const discountTitleMap = Object.fromEntries(activeDiscounts.map(d => [d.restaurant_id, d.title]))
   const discountLabelMap = Object.fromEntries(
-    activeDiscounts.map(d => [d.restaurant_id, formatDiscountValue(d)])
+    activeDiscounts.map(d => [d.restaurant_id, formatDiscountBadge(d)])
   )
 
   const {
