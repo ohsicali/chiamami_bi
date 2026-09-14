@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-14 (/list allineata a /esplora)
+Ultima modifica: 2026-09-14 (fix FK email_preferences → profiles, email sconti/drop)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -177,6 +177,9 @@ posto solo, dentro il foglio che si apre quando salvi un locale.
   connettore Supabase il 2026-09-13 (policy "Users manage own saves" rifatta
   con `WITH CHECK`; senza, un UPDATE su una riga propria poteva riscriverne
   lo `user_id`).
+- `supabase/fix-email-preferences-fk-2026-09-14.sql` ✅ eseguito via
+  connettore Supabase il 2026-09-14 — vedi "14/09 — email di sconto/drop
+  mai partite" sotto e `docs/EMAIL-FLOWS.md`.
 
 ### Note personali sui salvati — scartate, non riproporle
 
@@ -1063,3 +1066,33 @@ con una molla (framer-motion, gli stessi token di `src/lib/motion.js`:
 **Resta da fare**: provare con un account vero sul sito live (non solo la
 simulazione qui sopra), per chiudere davvero la riga "Da fare prima del
 merge" con un riscontro umano.
+
+
+## 14/09 — email di sconto/drop mai partite dal 13/09
+
+Augusto: pubblicato un drop, nessuna mail arrivata al suo account registrato
+sul sito.
+
+**Causa**: `email_preferences.user_id` (tabella creata il giorno prima,
+`supabase/email-preferences-2026-09-13.sql`) aveva la FK verso `auth.users`
+invece che verso `public.profiles`, a differenza di ogni altra tabella
+utente dello schema (`saved_restaurants`, `saved_lists`, ecc.).
+`recipientsFor()` in `api/_email/send.js` legge i destinatari con un embed
+PostgREST `profiles!inner(email, full_name)`: PostgREST espone solo lo
+schema `public` e costruisce l'embed seguendo le FK dirette, quindi senza
+una FK verso `public.profiles` non trovava nessuna relazione e la query
+falliva ad ogni chiamata — sia quella automatica alla pubblicazione, sia il
+bottone "Notifica" in `/admin/sconti`. Il fallimento è silenzioso lato
+admin (lo sconto si salva comunque, resta solo un avviso discreto poco
+visibile), e infatti `email_notifications_log` non aveva **nessuna** riga di
+tipo `discount`/`drop` da quando la tabella esiste — solo `restaurant`
+(trigger diverso, non passa da `email_preferences`).
+
+**Fix**: `supabase/fix-email-preferences-fk-2026-09-14.sql`, eseguito via
+connettore Supabase — FK spostata su `public.profiles(id)` +
+`notify pgrst, 'reload schema'`. Corretto anche il file sorgente
+`email-preferences-2026-09-13.sql` per chi lo rilancia da zero.
+
+**Da fare**: rimandare la notifica per il drop del 14/09
+(`96afd9e4-6bc8-4753-b21c-8b77e551c827`, "50% di sconto") col bottone
+"Notifica" — non riparte da sola.

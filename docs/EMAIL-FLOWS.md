@@ -158,6 +158,35 @@ Senza questi record le email finivano in spam di Gmail (bug risolto nel periodo 
 
 ---
 
+## Bug risolti
+
+### 2026-09-14 — Nessuna email di sconto/drop partiva dal 13/09
+
+`email_preferences.user_id` (creata il 2026-09-13, vedi
+`supabase/email-preferences-2026-09-13.sql`) puntava con FK a `auth.users`
+invece che a `public.profiles`, diversamente da ogni altra tabella utente
+dello schema. `recipientsFor()` in `api/_email/send.js` fa un embed
+PostgREST `profiles!inner(...)` da `email_preferences`: senza una FK diretta
+verso `public.profiles` (schema esposto), PostgREST non trova la relazione e
+la query falliva sempre con un errore silenzioso lato admin (lo sconto si
+salva comunque, resta solo un avviso discreto "l'annuncio non è partito").
+
+Risultato: dal 13/09 nessuna notifica di nuovo sconto o drop è mai arrivata a
+nessun iscritto, incluso il caso segnalato il 14/09 (drop pubblicato, nessuna
+mail all'utente registrato). `email_notifications_log` non aveva infatti
+nessuna riga di tipo `discount`/`drop`, solo `restaurant` (trigger diverso,
+non passa da `email_preferences`).
+
+**Fix** (`supabase/fix-email-preferences-fk-2026-09-14.sql`, eseguito via
+connettore Supabase): FK di `email_preferences.user_id` spostata su
+`public.profiles(id)`, più `notify pgrst, 'reload schema'` per non aspettare
+la scadenza naturale della cache. File sorgente `email-preferences-2026-09-13.sql`
+corretto per chi lo rilancia da zero altrove.
+
+**Da fare:** rimandare la notifica per il drop pubblicato il 14/09
+(`96afd9e4-6bc8-4753-b21c-8b77e551c827`) col bottone "Notifica" in
+`/admin/sconti` — ora dovrebbe funzionare.
+
 ## Gaps identificati — da decidere se sistemare
 
 ### Gap A — Manca l'invio automatico partner welcome quando admin crea un ristoratore
