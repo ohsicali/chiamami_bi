@@ -49,12 +49,10 @@ const DistanceIcon = () => (
 
 /* ── Price display (€€€ style) ── */
 function PriceDisplay({ level }) {
-  if (!level) return null
+  if (!level || !PRICE_LABELS[level]) return null
   return (
-    <span style={{ fontSize: 11, color: '#8A8680', fontWeight: 600 }}>
-      {[1, 2, 3].map(i => (
-        <span key={i} style={{ color: i <= level ? '#22181C' : '#D1CDC6' }}>€</span>
-      ))}
+    <span style={{ fontSize: 11, color: '#22181C', fontWeight: 600 }}>
+      {PRICE_LABELS[level]}
     </span>
   )
 }
