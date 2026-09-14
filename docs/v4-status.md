@@ -63,13 +63,24 @@ montati insieme e nascosti a vicenda col CSS.
 Stessa ragione per i due gemelli: `TimeContextHeroClassic.jsx` e
 `MomentResultsGridClassic.jsx`, usati solo dalla home desktop.
 
-Sulla home del telefono Augusto ha poi chiesto di tornare esattamente al
-deploy `31805ab`: la modifica che avevo fatto in `fe679e1` — togliere
-`margin-top: auto` all'indirizzo per chiudere il buco bianco in mezzo alle
-card — su una riga che scorre sfalsava gli indirizzi fra una card e l'altra
-e lasciava i fondi frastagliati. Il buco torna, l'incolonnamento pure, ed è
-il compromesso che preferisce. Il file è identico a `31805ab` tranne il gate
-del cuore, che è una correzione di comportamento e non di aspetto.
+Sulla home del telefono Augusto ha chiesto di tornare esattamente al deploy
+`31805ab`, e poi ha segnalato di nuovo il buco bianco nelle card di "Ultimi
+aggiunti". Ci sono girato intorno due volte prima di capire da dove veniva:
+non dall'indirizzo, ma dal fatto che in una riga tutte le card prendono
+l'altezza della più alta. Basta un locale in fondo alla riga con nome lungo
+e tagline lunga e tutte le altre si ritrovano dello spazio da riempire.
+`margin-top: auto` lo mandava in mezzo (buco), toglierlo lo mandava in fondo
+(card frastagliate, indirizzi a altezze diverse): due modi di subire lo
+stesso problema.
+
+Risolto togliendolo di mezzo: nome e tagline si prendono due righe ciascuno
+SEMPRE, anche quando ne riempiono una sola o nessuna. Le card vengono alte
+uguali per costruzione — misurate: tutt'e nove a 325px con 1px di scarto —
+quindi non c'è niente da allungare. Costa una riga d'aria sotto ai nomi
+corti, che si legge come impaginazione perché è sempre la stessa.
+
+La home del computer non è stata toccata: lì le card stanno in griglia, il
+difetto non si presentava e Augusto non l'ha segnalato.
 
 I blocchi `@media (min-width: 1024px)` dentro `HomeFeedV4.jsx` sono ormai
 codice morto — da 1024 in su monta l'altro componente. Lasciati apposta, con

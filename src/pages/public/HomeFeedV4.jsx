@@ -398,23 +398,38 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
         </div>
       </div>
-      {/* Colonna flessibile: l'indirizzo va in fondo con `margin-top: auto`,
-          così in griglia gli indirizzi di tutte le card si allineano fra
-          loro invece di seguire ognuno la propria tagline. */}
-      <div style={{ padding:'10px 14px 14px', display:'flex', flexDirection:'column', height:'100%' }}>
+      {/* Il testo occupa sempre lo stesso spazio, qualunque cosa ci sia
+          scritto dentro.
+
+          Il buco bianco non nasceva dall'indirizzo: nasceva dal fatto che
+          in una riga tutte le card prendono l'altezza della più alta. Basta
+          UN locale in fondo alla riga con nome lungo e tagline lunga e tutte
+          le altre — anche quelle che si vedono per prime — si ritrovano con
+          dello spazio da riempire. Spinto in fondo con `margin-top: auto`
+          quello spazio diventa un vuoto in mezzo; lasciato libero diventa un
+          fondo frastagliato, con gli indirizzi a altezze diverse da una card
+          all'altra. Sono i due modi di subire lo stesso problema.
+
+          Così invece il problema non si pone: nome e tagline si prendono due
+          righe ciascuno SEMPRE, anche quando ne riempiono una sola o
+          nessuna. Le card vengono alte uguali per costruzione, quindi non
+          c'è niente da allungare: gli indirizzi si allineano da soli e sotto
+          non avanza niente. Il prezzo è una riga d'aria sotto ai nomi corti,
+          che si legge come impaginazione perché è sempre la stessa. */}
+      <div style={{ padding:'10px 14px 14px', display:'flex', flexDirection:'column' }}>
         {/* Due righe e non una: "Pasticceria Caffetteria Duò" o "Duccio Smash
             Mob" a una riga sola diventano "Pasticceria Caffe…", e il nome è
             l'unica cosa che distingue una card dall'altra. */}
-        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{restaurant.name}</div>
-        {restaurant.tagline && (
-          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:3, lineHeight:1.35, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{restaurant.tagline}</div>
-        )}
+        <div style={{ fontFamily:'var(--font-sans)', fontWeight:800, fontSize:16, lineHeight:1.2, letterSpacing:'-0.01em', color:'var(--color-ink)', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', minHeight:'2.4em' }}>{restaurant.name}</div>
+        {/* Renderizzata anche vuota: è lo spazio riservato che tiene in riga
+            le card dei locali senza tagline. */}
+        <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:3, lineHeight:1.35, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', minHeight:'2.7em' }}>{restaurant.tagline || ''}</div>
         <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:6 }}>
           {cat?.name && <span style={{ background:`${cat.color || '#E8453C'}20`, color:cat.color || '#E8453C', fontWeight:800, fontSize:10, padding:'3px 7px', borderRadius:999, letterSpacing:'0.02em', textTransform:'uppercase' }}>{cat.emoji} {cat.name}</span>}
           {priceStr && <span style={{ fontSize:11, fontWeight:700, color:'var(--color-ink-70)' }}>{priceStr}</span>}
         </div>
         {restaurant.address && (
-          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:'auto', paddingTop:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:8, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
             {restaurant.address.split(',')[0]}
           </div>
         )}
