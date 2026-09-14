@@ -131,6 +131,28 @@ function RestaurantCard({
           fallbackFontSize="2.6em"
           style={{ width: '100%', aspectRatio: '4 / 3' }}
         >
+          {/* Il francobollo verde dello sconto, nello stesso posto in cui sta
+              in tutto il resto del sito: angolo alto a sinistra della foto,
+              gradiente verde e inchiostro scuro. Prima, sulle card dei
+              Salvati, era una pillola rossa infilata di fianco al nome: si
+              leggeva come un avviso invece che come un vantaggio, e rubava
+              spazio al nome del locale, che finiva troncato a metà. */}
+          {hasDiscount && discountTitle && (
+            <span
+              className="absolute"
+              style={{
+                top: 8, left: 8, zIndex: 3,
+                maxWidth: 'calc(100% - 58px)',
+                background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
+                fontSize: 'var(--fs-xs)', fontWeight: 800, letterSpacing: '0.02em',
+                padding: '4px 9px', borderRadius: 'var(--radius-pill)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                boxShadow: '0 1px 4px rgba(34,24,28,.18)',
+              }}
+            >
+              {discountTitle}
+            </span>
+          )}
           {onSaveToggle && (
             <div
               className="absolute"
@@ -143,46 +165,51 @@ function RestaurantCard({
         </SmartImage>
 
         <div style={{
-          padding: dense ? '9px 11px 11px' : '13px 15px 15px',
-          display: 'flex', flexDirection: 'column', gap: dense ? 4 : 6, minWidth: 0,
+          padding: dense ? '10px 11px 11px' : '13px 15px 15px',
+          display: 'flex', flexDirection: 'column', gap: dense ? 5 : 6, minWidth: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, minWidth: 0 }}>
-            <h3 style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 800,
-              fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.02em',
-              color: 'var(--color-ink)', lineHeight: 1.2, flex: 1, minWidth: 0,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {restaurant.name}
-            </h3>
-            {hasDiscount && discountTitle && (
-              <span style={{
-                flexShrink: 0, background: 'var(--color-cta)', color: '#fff',
-                fontSize: 'var(--fs-xs)', fontWeight: 800, letterSpacing: '-0.01em',
-                padding: '3px 8px', borderRadius: 'var(--radius-pill)',
-              }}>
-                {discountTitle}
-              </span>
-            )}
-          </div>
+          {/* Il nome su due righe e con l'altezza sempre riservata. In griglia
+              le card di una riga prendono l'altezza della più alta: con una
+              riga sola i nomi lunghi finivano troncati, con un'altezza libera
+              il locale dal nome corto spostava tutto quello che aveva sotto.
+              Due righe fisse tengono allineate categoria, prezzo e liste. */}
+          <h3 style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 800,
+            fontSize: dense ? 'var(--fs-sm)' : 'var(--fs-base)', letterSpacing: '-0.02em',
+            color: 'var(--color-ink)', lineHeight: 1.25, minWidth: 0,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+            overflow: 'hidden', minHeight: '2.5em',
+          }}>
+            {restaurant.name}
+          </h3>
 
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <CityBadge city={restaurant.city} activeCity={activeCity} />
+          {/* Una riga sola, in ordine fisso: dove sta il locale, che cucina è,
+              quanto costa, quanto è lontano. Prima andava a capo, e due card
+              affiancate mostravano le stesse informazioni a due altezze
+              diverse. Quello che non ci sta viene tagliato, non mandato a
+              capo: la categoria si accorcia per prima, prezzo e distanza —
+              corti e utili — restano interi. */}
+          <div style={{
+            display: 'flex', gap: 6, alignItems: 'center',
+            flexWrap: 'nowrap', overflow: 'hidden', minWidth: 0,
+          }}>
+            <CityBadge city={restaurant.city} activeCity={activeCity} style={{ flexShrink: 0 }} />
             {category && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4,
                 padding: '3px 8px', borderRadius: 'var(--radius-pill)',
                 background: 'var(--color-corallo-soft)', color: 'var(--color-corallo-ink)',
-                fontSize: 'var(--fs-xs)', fontWeight: 700,
+                fontSize: 'var(--fs-xs)', fontWeight: 700, minWidth: 0,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {category.emoji} {category.name}
               </span>
             )}
             {priceStr && (
-              <span style={{ fontWeight: 700, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{priceStr}</span>
+              <span style={{ flexShrink: 0, fontWeight: 700, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{priceStr}</span>
             )}
             {distance != null && (
-              <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{formatDistance(distance)}</span>
+              <span style={{ flexShrink: 0, fontSize: 'var(--fs-xs)', color: 'var(--color-ink-64)' }}>{formatDistance(distance)}</span>
             )}
           </div>
 

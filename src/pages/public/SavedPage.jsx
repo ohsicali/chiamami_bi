@@ -17,7 +17,7 @@ import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import MobileFilterBar from '../../components/Layout/MobileFilterBar'
 import { isOpenForMoment } from '../../lib/hours'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
-import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { formatDiscountBadgeShort } from '../../lib/utils/discountFormat'
 import RestaurantCard from '../../components/Restaurant/RestaurantCard'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
@@ -31,7 +31,7 @@ export default function SavedPage() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { savedIds, isSaved, toggleSave } = useSavedRestaurants(user?.id)
-  const { lists: savedLists, suggestions: listSuggestions, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
+  const { lists: savedLists, suggestions: listSuggestions, createList, renameList, deleteList, reload: reloadLists } = useSavedLists(user?.id)
   const [activeListId, setActiveListId] = useState(null)
   // Il locale di cui si stanno scegliendo le liste. È lo stesso foglio che
   // compare dopo il primo salvataggio: qui si può riaprire quando si vuole.
@@ -170,16 +170,26 @@ export default function SavedPage() {
       list = list.filter(r => activeDiscounts[r.id])
     }
 
+    // L'ordinamento dichiarato in cima all'elenco, applicato davvero.
+    // "Recente" e "Nome" erano solo due scritte: qualunque cosa dicesse il
+    // bottone, l'ordine restava quello in cui il database aveva risposto.
     if (filters.sortBy === 'distance' && userLocation) {
       list.sort((a, b) => {
         const dA = a.latitude ? getDistance(userLocation.lat, userLocation.lng, a.latitude, a.longitude) : Infinity
         const dB = b.latitude ? getDistance(userLocation.lat, userLocation.lng, b.latitude, b.longitude) : Infinity
         return dA - dB
       })
+    } else if (sortMode === 'name') {
+      list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'it'))
+    } else {
+      // `savedIds` arriva dal più recente al più vecchio: chi non c'è (foto
+      // ancora in arrivo, id sparito) va in fondo invece che in cima.
+      const order = new Map([...savedIds].map((id, i) => [id, i]))
+      list.sort((a, b) => (order.get(a.id) ?? Infinity) - (order.get(b.id) ?? Infinity))
     }
 
     return list
-  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name, activeListId, savedLists])
+  }, [restaurants, filters, extraFilters, showDealsOnly, activeDiscounts, userLocation, currentCity.name, activeListId, savedLists, sortMode, savedIds])
 
   // `state` anche qui: ci si arriva pure da un link diretto o da un segnalibro,
   // e la pagina di accesso deve dire perché e riportare indietro dopo.
@@ -352,6 +362,7 @@ export default function SavedPage() {
           onSelect={setActiveListId}
           onRename={renameList}
           onDelete={deleteList}
+          onCreate={createList}
         />
         {loading ? (
           <div className="flex flex-col gap-3">
@@ -437,7 +448,10 @@ export default function SavedPage() {
                     index={i}
                     saved
                     hasDiscount={!!discount}
-                    discountTitle={discount ? (discount.title || formatDiscountValue(discount) || 'SCONTO') : null}
+                    /* Il francobollo dice il vantaggio in due caratteri
+                       ("−20%"), non il titolo della promo: a mezza colonna di
+                       telefono un titolo esce dalla foto. */
+                    discountTitle={discount ? (formatDiscountBadgeShort(discount) || 'OFFERTA') : null}
                     onSaveToggle={() => handleSave(r.id)}
                     onClick={() => handleClick(r)}
                     footer={
@@ -452,7 +466,14 @@ export default function SavedPage() {
                 )
               }
               const sortLabel = sortMode === 'recent' ? 'Recente' : sortMode === 'name' ? 'Nome' : 'Vicino'
-              const sortSub = sortMode === 'recent' ? 'Ordinati per ultimo aggiunto' : sortMode === 'name' ? 'Ordine alfabetico' : 'Più vicini a te'
+              // La riga sotto al titolo dice com'è ordinato l'elenco in quel
+              // momento. "Vicino" senza posizione non ordina niente: dirlo
+              // qui evita di cercare l'errore nell'elenco.
+              const sortSub = sortMode === 'recent'
+                ? 'Ordinati per ultimo aggiunto'
+                : sortMode === 'name'
+                  ? 'Ordine alfabetico'
+                  : userLocation ? 'Più vicini a te' : 'Attiva la posizione per ordinarli per distanza'
               return (
                 <>
                   {/* sv-head: title + subtitle + sort */}
@@ -528,10 +549,11 @@ export default function SavedPage() {
                     {discount && (
                       <div style={{
                         position: 'absolute', top: 10, left: 10, zIndex: 2,
-                        background: 'linear-gradient(135deg, var(--color-corallo-soft) 0%, var(--color-corallo) 100%)', color: 'var(--color-ink)',
-                        fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 8,
+                        background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
+                        fontSize: 11, fontWeight: 800, letterSpacing: '0.02em',
+                        padding: '4px 9px', borderRadius: 999,
                       }}>
-                        {discount.title || discount.discount_value}
+                        {formatDiscountBadgeShort(discount) || 'OFFERTA'}
                       </div>
                     )}
                     {/* Save button */}

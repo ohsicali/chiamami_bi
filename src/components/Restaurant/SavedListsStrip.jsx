@@ -31,20 +31,50 @@ export default function SavedListsStrip({
   onSelect,
   onRename,
   onDelete,
+  onCreate,
   tileWidth = 116,
 }) {
   const [editing, setEditing] = useState(null)   // la lista in modifica
   const [confirming, setConfirming] = useState(null)
   const [hint, setHint] = useState(null)         // il suggerimento toccato
+  const [creating, setCreating] = useState(false)
+  const [created, setCreated] = useState(null)   // la lista appena fatta
 
   const real = lists || []
   if (real.length === 0 && suggestions.length === 0) return null
   const byId = new Map((restaurants || []).map((r) => [r.id, r]))
   const active = lists.find((l) => l.id === activeListId) || null
   const canEdit = typeof onRename === 'function' && typeof onDelete === 'function'
+  const canCreate = typeof onCreate === 'function'
 
   return (
     <div style={{ marginBottom: 4 }}>
+      {/* Un'intestazione sopra la striscia: senza, i riquadri in cima ai
+          salvati si leggevano come dei locali in evidenza invece che come le
+          liste che filtrano l'elenco sotto. */}
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+        gap: 10, padding: '0 2px 8px',
+      }}>
+        <h2 style={{
+          fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 13,
+          letterSpacing: '0.04em', textTransform: 'uppercase',
+          color: 'var(--color-ink-70)', margin: 0,
+        }}>
+          Le tue liste
+        </h2>
+        {activeListId && (
+          <button
+            type="button"
+            onClick={() => { onSelect(null); setEditing(null); setConfirming(null) }}
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700,
+              color: 'var(--color-corallo)', textDecoration: 'underline',
+            }}
+          >Vedi tutti</button>
+        )}
+      </div>
       <div
         style={{
           display: 'flex',
@@ -54,6 +84,64 @@ export default function SavedListsStrip({
           scrollbarWidth: 'none',
         }}
       >
+        {/* "Aggiungi lista", il primo riquadro della striscia. Fino a ieri una lista
+            propria si poteva fare in un posto solo: dentro il foglio che si
+            apre quando si salva un locale. Chi voleva prima la lista e poi i
+            locali — "Compleanno di mia madre", e poi tre posti dentro — non
+            aveva da dove cominciare. Il più (invece di un'emoji) e il bordo
+            continuo lo separano dai tre suggerimenti tratteggiati: quelli
+            sono nomi già scritti, questo è un nome da scrivere.
+
+            Primo e non ultimo perché la striscia scorre di lato: in fondo a
+            tre liste più tre suggerimenti finiva oltre il bordo dello
+            schermo, e un bottone che si vede solo scorrendo è un bottone che
+            per metà delle persone non c'è. */}
+        {canCreate && (
+          <button
+            type="button"
+            onClick={() => { setCreating(true); setHint(null); setCreated(null) }}
+            aria-expanded={creating}
+            style={{
+              flex: '0 0 auto',
+              width: tileWidth,
+              border: '2px solid transparent',
+              borderRadius: 16,
+              padding: 0,
+              background: 'transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                height: 78,
+                borderRadius: 14,
+                display: 'grid',
+                placeItems: 'center',
+                background: creating ? 'var(--color-corallo-wash, #FDEDEB)' : 'var(--color-ink-05)',
+                border: `1.5px solid ${creating ? 'var(--color-corallo)' : 'var(--color-ink-10, rgba(34,24,28,.10))'}`,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 26, lineHeight: 1, fontWeight: 300,
+                  color: creating ? 'var(--color-corallo)' : 'var(--color-ink-70)',
+                }}
+              >+</span>
+            </div>
+            <div style={{ padding: '6px 4px 0' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Aggiungi lista
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-ink-55)', fontWeight: 600 }}>
+                la tua
+              </div>
+            </div>
+          </button>
+        )}
+
         {real.map((l) => {
           const first = (l.restaurantIds || []).map((id) => byId.get(id)).find(Boolean)
           const photoRaw = first?.photos?.[0]?.thumb_url || first?.photos?.[0]?.photo_url
@@ -165,7 +253,30 @@ export default function SavedListsStrip({
             </button>
           )
         })}
+
       </div>
+
+      {canCreate && creating && (
+        <ListCreator
+          existing={real}
+          onCancel={() => setCreating(false)}
+          onCreate={async (name, emoji) => {
+            const res = await onCreate(name, emoji)
+            if (res) { setCreating(false); setCreated(name) }
+            return res
+          }}
+        />
+      )}
+
+      {/* La lista nasce vuota, e una lista vuota non si vede da nessuna parte
+          finché non ci metti dentro qualcosa: senza questa riga sembra che il
+          tocco non abbia fatto niente. */}
+      {created && !creating && (
+        <p style={{ ...boxStyle, fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-70)', margin: '0 0 14px' }}>
+          &ldquo;{created}&rdquo; è pronta, per ora vuota.
+          Qui sotto, su un locale salvato, tocca <strong>Metti in una lista</strong> per riempirla.
+        </p>
+      )}
 
       {hint && (
         <p style={{ ...boxStyle, fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-ink-70)', margin: '0 0 14px' }}>
@@ -284,6 +395,73 @@ export function SavedListsFooter({ lists, restaurantId, restaurantName, onOpen }
 function countLabel(n) {
   if (n === 0) return 'vuota'
   return n === 1 ? '1 locale' : `${n} locali`
+}
+
+/**
+ * Il modulo di "Aggiungi lista": nome e icona, sotto la striscia.
+ *
+ * Sotto e non in un foglio a pieno schermo perché da qui si fa una cosa
+ * sola, e la striscia con le liste già fatte deve restare in vista: è lì che
+ * si vede se il nome che si sta scrivendo esiste già.
+ */
+function ListCreator({ existing, onCancel, onCreate }) {
+  const [name, setName] = useState('')
+  const [emoji, setEmoji] = useState('📁')
+  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    const clean = name.trim()
+    if (!clean) return
+    // Controllato qui prima di chiedere al database: il vincolo di unicità
+    // rifiuterebbe comunque il doppione, ma con un errore muto.
+    if ((existing || []).some((l) => l.name.toLowerCase() === clean.toLowerCase())) {
+      setError('Hai già una lista con questo nome.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    const res = await onCreate(clean, emoji)
+    setBusy(false)
+    if (!res) setError('Non sono riuscito a creare la lista.')
+  }
+
+  return (
+    <form onSubmit={submit} style={boxStyle}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--color-ink-70)', marginBottom: 6 }}>
+        Nome della nuova lista
+      </label>
+      <input
+        autoFocus
+        value={name}
+        onChange={(e) => { setName(e.target.value); setError(null) }}
+        placeholder="Es. Compleanno di mia madre"
+        maxLength={40}
+        style={{
+          width: '100%', padding: '11px 13px', borderRadius: 12,
+          border: '1px solid var(--color-ink-15, rgba(34,24,28,.15))',
+          fontFamily: 'inherit', fontSize: 15, background: '#fff', color: 'var(--color-ink)',
+        }}
+      />
+      <EmojiPicker value={emoji} onChange={setEmoji} />
+      {error && (
+        <p role="alert" style={{ fontSize: 13, color: 'var(--color-corallo)', margin: '10px 0 0' }}>{error}</p>
+      )}
+      <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+        <button
+          type="submit"
+          disabled={busy || !name.trim()}
+          style={{ ...pillStyle, background: 'var(--color-ink)', color: '#fff', opacity: busy || !name.trim() ? .5 : 1 }}
+        >{busy ? 'Creo…' : 'Crea lista'}</button>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{ ...pillStyle, background: 'transparent', color: 'var(--color-ink-70)' }}
+        >Annulla</button>
+      </div>
+    </form>
+  )
 }
 
 function ListEditor({ list, onCancel, onSave }) {

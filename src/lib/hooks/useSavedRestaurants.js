@@ -34,10 +34,15 @@ export function useSavedRestaurants(userId) {
     if (!isSupabaseConfigured()) return
 
     setLoading(true)
+    // Dal più recente al più vecchio: un Set in JS conserva l'ordine in cui
+    // gli elementi ci sono entrati, e i Salvati lo usano per mostrare per
+    // primo l'ultimo locale salvato. Senza `order` il database restituisce
+    // le righe nell'ordine che gli fa comodo, e "Recente" ordinava a caso.
     supabase
       .from('saved_restaurants')
       .select('restaurant_id')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (data && data.length > 0) {
           const ids = new Set(data.map((r) => r.restaurant_id))
