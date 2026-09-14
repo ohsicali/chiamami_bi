@@ -266,6 +266,7 @@ function HomeDrop({ featured, onUnlock, onDiscover }) {
         size="large"
         onUnlock={() => onUnlock(featured)}
         onDiscover={() => onDiscover(featured)}
+        showAlwaysValid={false}
       />
 
     </div>
@@ -293,7 +294,7 @@ function DropOthers({ others, onOpen }) {
           senza trascinare. */}
       <div className="hfv4-drop-others-row">
         {others.map((d) => (
-          <DropCard key={d.id} deal={d} size="mini" onUnlock={() => onOpen(d)} />
+          <DropCard key={d.id} deal={d} size="mini" onUnlock={() => onOpen(d)} showAlwaysValid={false} />
         ))}
       </div>
       <Link to="/sconti" className="hfv4-drop-others-hook">
