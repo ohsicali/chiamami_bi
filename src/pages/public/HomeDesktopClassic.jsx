@@ -30,7 +30,8 @@ import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
-import { setPendingSaveId, readAndClearPendingSaveId } from '../../lib/utils/pendingSave'
+import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
+import { useSaveGate } from '../../lib/hooks/useSaveGate'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
 import { getCurrentMoment } from '../../lib/hours'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
@@ -586,7 +587,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           : <div style={{ position:'absolute', inset:0, display:'grid', placeItems:'center', fontSize:28 }}>{cat?.emoji || '🍽️'}</div>
         }
         {discLabel && (
-          <span style={{ position:'absolute', top:10, left:10, background:'linear-gradient(135deg, #A3E635, #4ADE80)', color:'#1a4731', fontSize:11, fontWeight:800, padding:'4px 9px', borderRadius:999, letterSpacing:'0.02em' }}>{discLabel}</span>
+          <span style={{ position:'absolute', top:10, left:10, background:'var(--gradient-sconto)', color:'var(--color-sconto-ink)', fontSize:11, fontWeight:800, padding:'4px 9px', borderRadius:999, letterSpacing:'0.02em' }}>{discLabel}</span>
         )}
         <div style={{ position:'absolute', top:10, right:10, zIndex:2 }}>
           <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
@@ -736,7 +737,8 @@ export default function HomeDesktopClassic() {
   // La porta a vetri: si apre sopra la home invece di portare via, così chi
   // decide di non registrarsi resta dov'era.
   const [homeAuthGate, setHomeAuthGate] = useState(null)   // pendingDiscountId | null
-  const [saveGateFor, setSaveGateFor] = useState(null)     // restaurantId | null
+  // Gate del cuore + salvataggio in sospeso: vedi src/lib/hooks/useSaveGate.js
+  const { saveGateFor, openSaveGate, closeSaveGate } = useSaveGate({ user, addSave })
 
   // "Sblocca sconto" faceva esattamente la stessa cosa di "Scopri": apriva la
   // scheda del locale. Un bottone col lucchetto che non sblocca niente è una
@@ -754,20 +756,11 @@ export default function HomeDesktopClassic() {
   // senza cuore pieno né spiegazione.
   const handleToggleSave = (restaurantId) => {
     if (!user) {
-      setPendingSaveId(restaurantId)
-      setSaveGateFor(restaurantId)
+      openSaveGate(restaurantId)
       return
     }
     toggleSave(restaurantId)
   }
-
-  // Al rientro dalla registrazione il locale si salva da solo: chi ha toccato
-  // il cuore aveva già detto cosa voleva.
-  useEffect(() => {
-    if (!user?.id) return
-    const id = readAndClearPendingSaveId()
-    if (id) void addSave(id)
-  }, [user?.id, addSave])
 
   const topRestaurants = useMemo(
     () => (restaurants || [])
@@ -1178,15 +1171,7 @@ export default function HomeDesktopClassic() {
 
       {/* Si torna in home, non nei salvati: il locale finisce nei salvati da
           solo, e chi stava guardando la home stava guardando la home. */}
-      {saveGateFor !== null && (
-        <SconteAuthGate
-          pendingDiscountId={null}
-          returnTo="/"
-          title="Serve un account per salvare"
-          subtitle={'Gratis \u00b7 poi ritrovi i tuoi posti in \u201cSalvati\u201d, da qualsiasi telefono.'}
-          onClose={() => setSaveGateFor(null)}
-        />
-      )}
+      {saveGateFor && <SaveAuthGate returnTo="/" onClose={closeSaveGate} />}
     </div>
   )
 }

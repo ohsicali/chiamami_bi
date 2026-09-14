@@ -123,7 +123,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           display: 'flex', alignItems: 'center',
           gap: 10,
           padding: '0 8px 0 20px',
-          background: 'linear-gradient(135deg, #A3E635 0%, #4ADE80 100%)',
+          background: 'var(--gradient-sconto)',
           boxShadow: '0 8px 24px rgba(74,222,128,.40), 0 2px 10px rgba(0,0,0,.10)',
         }}
       >

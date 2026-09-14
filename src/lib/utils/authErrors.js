@@ -31,6 +31,9 @@ const KNOWN = [
   ['error sending confirmation email', 'Non riusciamo a inviare l’email di conferma: è un problema nostro, non tuo. Riprova più tardi o scrivici a info@chiamamibi.com.'],
   ['error sending recovery email', 'Non riusciamo a inviare l’email di recupero: è un problema nostro, non tuo. Riprova più tardi o scrivici a info@chiamamibi.com.'],
   ['error sending', 'Non riusciamo a inviare l’email: è un problema nostro, non tuo. Riprova più tardi o scrivici a info@chiamamibi.com.'],
+  // La richiesta è partita e non è mai tornata: `withTimeout` in useAuth la
+  // chiude dopo 20 secondi, se no il bottone resterebbe in attesa per sempre.
+  ['auth request timed out', 'Ci sta mettendo troppo: la rete non risponde. Riprova fra qualche secondo.'],
   // Fetch fallita = niente rete, o il nostro server non risponde.
   ['failed to fetch', 'Connessione assente. Controlla la rete e riprova.'],
   ['networkerror', 'Connessione assente. Controlla la rete e riprova.'],

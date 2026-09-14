@@ -301,8 +301,8 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: linear-gradient(135deg, #A3E635, #4ADE80);
-  color: #1a4731;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
   font-size: 12px;
@@ -519,23 +519,27 @@
   );
   pointer-events: none;
 }
+/* Era corallo, cioè l'unico badge di sconto rosso del sito: lo stesso "-20%"
+   arrivava verde dalla card del locale e diventava rosso appena si apriva la
+   scheda. Adesso è il verde degli sconti come tutti gli altri. */
 .sc-info-hero-badge {
   position: absolute;
   top: 16px; left: 16px;
-  background: linear-gradient(135deg, var(--sc-corallo) 0%, #C53A33 100%);
-  color: #fff;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
   font-size: 16px;
   padding: 8px 14px;
   border-radius: 12px;
   letter-spacing: -0.3px;
-  box-shadow: 0 6px 20px rgba(232, 69, 60, 0.4);
-}
-.sc-info-hero-badge.is-freebie {
-  background: linear-gradient(135deg, #A3E635 0%, #4ADE80 100%);
-  color: #1a4731;
   box-shadow: 0 6px 20px rgba(74, 222, 128, 0.35);
+}
+/* Un omaggio è una frase ("Caffè offerto"), non due cifre: alla misura della
+   percentuale finirebbe fuori dalla foto. */
+.sc-info-hero-badge.is-freebie {
+  font-size: 13px;
+  padding: 7px 12px;
 }
 .sc-info-hero-id {
   position: absolute;
@@ -1115,8 +1119,8 @@
   left: auto;
   bottom: -5px;
   right: -5px;
-  background: linear-gradient(135deg, #A3E635, #4ADE80);
-  color: #1a4731;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
   font-size: 13px;
@@ -1133,8 +1137,8 @@
 }
 /* Freebie: badge verde sfumato (label invece di percentuale) */
 .sc-conv .sc-badge-pct.is-freebie {
-  background: linear-gradient(135deg, #A3E635, #4ADE80);
-  color: #1a4731;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
   font-size: 10px;
@@ -1316,8 +1320,8 @@
   position: absolute;
   bottom: -5px;
   right: -5px;
-  background: linear-gradient(135deg, #A3E635, #4ADE80);
-  color: #1a4731;
+  background: var(--gradient-sconto);
+  color: var(--color-sconto-ink);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
   font-size: 13px;

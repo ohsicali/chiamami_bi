@@ -135,7 +135,7 @@ function createPinEl(restaurant, isSaved, discountValue) {
     const badge = document.createElement('span')
     badge.style.cssText = `
       position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
-      background:linear-gradient(135deg,#A3E635,#4ADE80);color:#1a4731;
+      background:var(--gradient-sconto);color:var(--color-sconto-ink);
       font-size:10px;font-weight:900;letter-spacing:0.3px;
       padding:2px 6px;border-radius:6px;white-space:nowrap;
       box-shadow:0 2px 6px rgba(74,222,128,0.4);

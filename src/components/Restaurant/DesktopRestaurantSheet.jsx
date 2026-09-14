@@ -29,7 +29,7 @@ const ORO_DEEP = '#8E6B3E'
 const ORO_SOFT = '#F4E7CC'
 const GREEN = '#2E7D5B'
 const GREEN_SOFT = '#E5F3EA'
-const GREEN_GRAD = 'linear-gradient(135deg,#A3E635,#4ADE80)'
+const GREEN_GRAD = 'var(--gradient-sconto)'
 
 const GLASS_BTN = {
   width: 44, height: 44, borderRadius: '50%',
@@ -671,7 +671,7 @@ export default function DesktopRestaurantSheet({
             <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-.01em', color: INK, display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 width: 9, height: 9, borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg,#A3E635,#4ADE80)',
+                background: 'var(--gradient-sconto)',
                 animation: 'dskPulse 1.6s ease-in-out infinite',
               }} />
               {discount.title || discount.discount_value}

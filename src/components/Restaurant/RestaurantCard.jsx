@@ -265,7 +265,7 @@ function RestaurantCard({
         <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           {hasDiscount && discountTitle && (
             <div style={{
-              background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+              background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
               fontSize: 11, fontWeight: 800,
               padding: '5px 12px', borderRadius: 10,
             }}>
@@ -384,8 +384,8 @@ function RestaurantCard({
       {/* Discount strip on top (verde sfumato) */}
       {hasDiscount && discountTitle && (
         <div className="rcard-discount-strip" style={{
-          background: 'linear-gradient(135deg, #A3E635, #4ADE80)',
-          color: '#1a4731',
+          background: 'var(--gradient-sconto)',
+          color: 'var(--color-sconto-ink)',
           fontSize: 10, fontWeight: 800,
           padding: '5px 10px',
           textAlign: 'center',
@@ -427,7 +427,7 @@ function RestaurantCard({
         {hasDiscount && discountTitle && (
           <div className="rcard-photo-badge hidden md:block" style={{
             position: 'absolute', top: 6, left: 6,
-            background: 'linear-gradient(135deg, #A3E635, #4ADE80)', color: '#1a4731',
+            background: 'var(--gradient-sconto)', color: 'var(--color-sconto-ink)',
             fontSize: 9, fontWeight: 800,
             padding: '3px 8px', borderRadius: 999,
             letterSpacing: 0.3,

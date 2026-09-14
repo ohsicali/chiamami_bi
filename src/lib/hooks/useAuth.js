@@ -8,6 +8,41 @@ import { supabase, isSupabaseConfigured } from '../supabase'
 // Now the fetch runs once inside AuthProvider and all consumers share it.
 const AuthContext = createContext(null)
 
+/**
+ * Nessuna chiamata di autenticazione può restare appesa per sempre.
+ *
+ * `signInWithPassword` e compagni non hanno un tempo massimo: se la richiesta
+ * parte e la risposta non arriva mai — rete mobile che cade a metà, tunnel,
+ * scheda messa in pausa da iOS mentre si va a prendere la password dal
+ * gestore — la promessa non si risolve e non fallisce. In pagina si vedeva
+ * così: premi "Accedi", il bottone passa allo stato in corso e ci resta.
+ * Nessun messaggio, nessun modo di riprovare se non ricaricare.
+ *
+ * Qui, passati AUTH_TIMEOUT_MS, la promessa fallisce con un errore che
+ * `authErrorMessage` sa tradurre: chi sta davanti legge cos'è successo e il
+ * bottone torna premibile. Se la risposta arriva dopo, non fa danni: Supabase
+ * ha comunque salvato la sessione e `onAuthStateChange` fa il suo lavoro.
+ *
+ * 20 secondi e non 5: su 3G lenta un accesso legittimo può metterci parecchio,
+ * e troncarlo troppo presto vorrebbe dire dare buca a chi stava per entrare.
+ */
+const AUTH_TIMEOUT_MS = 20000
+
+export class AuthTimeoutError extends Error {
+  constructor() {
+    super('auth request timed out')
+    this.name = 'AuthTimeoutError'
+  }
+}
+
+function withTimeout(promise, ms = AUTH_TIMEOUT_MS) {
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new AuthTimeoutError()), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -112,13 +147,23 @@ export function AuthProvider({ children }) {
       const authUser = session?.user ?? null
       setUser(authUser)
       if (authUser) {
-        fetchProfile(authUser)
-        // Sync email to profiles when it changes (e.g. after email change confirmation)
-        // Skip for Google OAuth users — their profile email is managed separately as a contact email
-        const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
-        if (event === 'USER_UPDATED' && authUser.email && !isGoogleUser) {
-          supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
-        }
+        // Il `setTimeout(0)` non è un ritardo estetico: dentro la callback di
+        // onAuthStateChange non si possono chiamare altre funzioni Supabase.
+        // La callback viene eseguita — e attesa — mentre il client di
+        // autenticazione tiene il lucchetto su navigator.locks; qualsiasi
+        // query fatta da qui dentro chiede a sua volta la sessione, quindi lo
+        // stesso lucchetto, e resta in attesa di sé stessa. Con il rinvio a
+        // fine giro il lucchetto è già stato rilasciato. È la raccomandazione
+        // di Supabase stesso; noi l'abbiamo sempre fatto al contrario.
+        setTimeout(() => {
+          fetchProfile(authUser)
+          // Sync email to profiles when it changes (e.g. after email change confirmation)
+          // Skip for Google OAuth users — their profile email is managed separately as a contact email
+          const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
+          if (event === 'USER_UPDATED' && authUser.email && !isGoogleUser) {
+            supabase.from('profiles').update({ email: authUser.email }).eq('id', authUser.id)
+          }
+        }, 0)
       } else {
         setProfile(null)
       }
@@ -128,7 +173,7 @@ export function AuthProvider({ children }) {
 
   const signIn = useCallback(async (email, password) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await withTimeout(supabase.auth.signInWithPassword({ email, password }))
     if (error) throw error
   }, [])
 
@@ -143,14 +188,14 @@ export function AuthProvider({ children }) {
    */
   const signUp = useCallback(async (email, password, fullName) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await withTimeout(supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
-    })
+    }))
     if (error) throw error
     return { needsConfirmation: !data?.session }
   }, [])
@@ -165,14 +210,14 @@ export function AuthProvider({ children }) {
    */
   const verifySignupOtp = useCallback(async (email, token) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'signup' })
+    const { error } = await withTimeout(supabase.auth.verifyOtp({ email, token, type: 'signup' }))
     if (error) throw error
   }, [])
 
   /** Rimanda il codice a chi non l'ha ricevuto o l'ha lasciato scadere. */
   const resendSignupOtp = useCallback(async (email) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
-    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    const { error } = await withTimeout(supabase.auth.resend({ type: 'signup', email }))
     if (error) throw error
   }, [])
 
@@ -189,9 +234,9 @@ export function AuthProvider({ children }) {
 
   const resetPasswordForEmail = useCallback(async (email) => {
     if (!isSupabaseConfigured()) throw new Error('Supabase not configured')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await withTimeout(supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    })
+    }))
     if (error) throw error
   }, [])
 
