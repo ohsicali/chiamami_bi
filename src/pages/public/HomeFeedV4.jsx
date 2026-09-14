@@ -398,17 +398,10 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           <SaveButton saved={saved} onClick={onToggleSave} size="sm" />
         </div>
       </div>
-      {/* L'indirizzo segue il testo che ha sopra invece di essere spinto in
-          fondo alla card.
-
-          Prima la colonna era alta `100%` e l'indirizzo aveva
-          `margin-top: auto`, per allineare fra loro gli indirizzi di tutte
-          le card della riga. Ma in griglia ogni card prende l'altezza della
-          più alta, e su quelle col nome corto o senza tagline si apriva un
-          buco bianco in mezzo — abbastanza grande da sembrare un errore di
-          caricamento. Meglio lo spazio in fondo alla card, che si legge
-          come aria, che un vuoto in mezzo, che si legge come un guasto. */}
-      <div style={{ padding:'10px 14px 14px', display:'flex', flexDirection:'column' }}>
+      {/* Colonna flessibile: l'indirizzo va in fondo con `margin-top: auto`,
+          così in griglia gli indirizzi di tutte le card si allineano fra
+          loro invece di seguire ognuno la propria tagline. */}
+      <div style={{ padding:'10px 14px 14px', display:'flex', flexDirection:'column', height:'100%' }}>
         {/* Due righe e non una: "Pasticceria Caffetteria Duò" o "Duccio Smash
             Mob" a una riga sola diventano "Pasticceria Caffe…", e il nome è
             l'unica cosa che distingue una card dall'altra. */}
@@ -421,7 +414,7 @@ function Rcard({ restaurant, index = 0, discount, onClick, saved, onToggleSave }
           {priceStr && <span style={{ fontSize:11, fontWeight:700, color:'var(--color-ink-70)' }}>{priceStr}</span>}
         </div>
         {restaurant.address && (
-          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:8, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          <div style={{ fontSize:12, color:'var(--color-ink-70)', marginTop:'auto', paddingTop:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
             {restaurant.address.split(',')[0]}
           </div>
         )}
@@ -976,6 +969,15 @@ export default function HomeFeedV4() {
           .hfv4-mob-cat { display: none !important; }
         }
 
+        /* ATTENZIONE — i blocchi "@media (min-width: 1024px)" di questo file
+           non li vede più nessuno. Da 1024px in su App.jsx monta un altro
+           componente (HomeDesktopClassic), quindi questa home vive solo
+           sotto quella soglia. Sono rimasti perché se un domani si torna a
+           una home sola servono di nuovo, e cancellarli sarebbe buttare via
+           il lavoro della piega desktop: ma finché le home sono due, il
+           computer non passa di qui. Per modificare il desktop si apre
+           HomeDesktopClassic.jsx. */
+
         /* Desktop ≥1024px per sezioni originali (hero, cats, Ultimi aggiunti) */
         @media (min-width: 1024px) {
           .hfv4-section,
@@ -1021,10 +1023,7 @@ export default function HomeFeedV4() {
             display: flex !important;
             flex-direction: column !important;
           }
-          /* Il corpo di testo NON si stira: quando cresceva lui l'indirizzo
-             finiva in fondo e in mezzo restava un buco bianco. L'aria adesso
-             avanza sotto l'indirizzo, dove si legge come respiro e non come
-             un pezzo che non ha caricato. */
+          .hfv4-rcard > div:last-child { flex: 1 1 auto !important; }
           .hfv4-sec-head { padding-left: 0 !important; padding-right: 0 !important; margin-bottom: 22px; }
           .hfv4-sec-head h2 { font-size: 32px !important; letter-spacing: -.02em !important; }
         }
@@ -1199,57 +1198,27 @@ export default function HomeFeedV4() {
           .hfv4-band-open { padding: 0; }
           .hfv4-band-open .hfv4-results { padding-top: 0 !important; }
           .hfv4-band-open .hfv4-results-head { padding: 0 0 12px !important; }
-          /* Gli "aperti adesso" hanno la taglia delle card di "Ultimi
-             aggiunti". Erano sette in fila dentro 1240px: 105px a card,
-             foto grandi come francobolli e nomi tagliati a metà parola
-             ("Birrificio Casa Del…", "La Casa Iberica T…"). Sono il
-             contenuto più importante della pagina — è il momento, sono i
-             locali aperti adesso — ed erano scritti più piccoli di tutto
-             il resto, mentre in fondo "Ultimi aggiunti" si prendeva le
-             card grandi. La gerarchia era rovesciata.
-
-             Quattro card più il riquadro scuro: cinque colonne su 1240px
-             fanno ~235px a card, cioè esattamente la larghezza delle card
-             in fondo. Quante card mostrarne lo decide MomentResultsGrid,
-             non questo CSS: da lì dipende anche il "Vedi gli altri N". */
           .hfv4-band-open .hfv4-results-row {
             display: grid !important;
-            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
             padding: 0 !important;
             overflow: visible !important;
-            gap: 18px !important;
+            gap: 14px !important;
           }
           .hfv4-band-open .hfv4-lcard--compact {
             --mk: 1px;
             width: auto !important;
             flex: 1 1 auto !important;
-            border-radius: 20px;
           }
-          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-photo {
-            height: auto;
-            aspect-ratio: 16 / 11;
-          }
-          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-emoji { font-size: 42px; }
-          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-name {
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: -0.01em;
-            /* Due righe invece del taglio a metà parola: il nome è l'unica
-               cosa che distingue una card dall'altra. */
-            white-space: normal;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            text-overflow: clip;
-          }
-          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-sub { font-size: 12.5px; margin-top: 4px; }
-          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-open { font-size: 11px; padding: 4px 9px; left: 10px; top: 10px; }
-          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-body { padding: 12px 14px 14px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-photo { height: 96px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-name { font-size: 13px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-sub { font-size: 11px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-open { font-size: 9.5px; padding: 3px 7px; }
+          .hfv4-band-open .hfv4-lcard--compact .hfv4-lcard-body { padding: 10px 11px 12px; }
           .hfv4-band-open .hfv4-results-more--compact {
             flex: 1 1 auto !important;
             width: auto !important;
             padding: 14px 10px !important;
-            border-radius: 20px;
           }
 
           /* 3. Il drop hero prende tutta la riga: la card si sdraia da sola

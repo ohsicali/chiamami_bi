@@ -46,7 +46,7 @@ Quindi adesso:
 
 | misura | quale home | file |
 |---|---|---|
-| < 1024px (telefono, tablet) | la v10 | `src/pages/public/HomeFeedV4.jsx` |
+| < 1024px (telefono, tablet) | la v10 **com'era al deploy `31805ab`** | `src/pages/public/HomeFeedV4.jsx` |
 | ≥ 1024px (computer) | quella di prima del rifacimento | `src/pages/public/HomeDesktopClassic.jsx` |
 
 Lo switch è in `App.jsx`, una media query a 1024px sulla route `/`, e ognuna
@@ -62,6 +62,18 @@ montati insieme e nascosti a vicenda col CSS.
 
 Stessa ragione per i due gemelli: `TimeContextHeroClassic.jsx` e
 `MomentResultsGridClassic.jsx`, usati solo dalla home desktop.
+
+Sulla home del telefono Augusto ha poi chiesto di tornare esattamente al
+deploy `31805ab`: la modifica che avevo fatto in `fe679e1` — togliere
+`margin-top: auto` all'indirizzo per chiudere il buco bianco in mezzo alle
+card — su una riga che scorre sfalsava gli indirizzi fra una card e l'altra
+e lasciava i fondi frastagliati. Il buco torna, l'incolonnamento pure, ed è
+il compromesso che preferisce. Il file è identico a `31805ab` tranne il gate
+del cuore, che è una correzione di comportamento e non di aspetto.
+
+I blocchi `@media (min-width: 1024px)` dentro `HomeFeedV4.jsx` sono ormai
+codice morto — da 1024 in su monta l'altro componente. Lasciati apposta, con
+un avviso in cima: servono se un domani si torna a una home sola.
 
 **Il prezzo, detto chiaro: una modifica alla home ora va fatta due volte.**
 Se un domani una delle due versioni viene abbandonata, i suoi file vanno
