@@ -260,18 +260,29 @@ export default function HomePage() {
   }, [])
 
   const WIDE_RADIUS_KM = 5
+  const toRad = (d) => (d * Math.PI) / 180
+  const haversineFromCenter = (r) => {
+    if (!mapCenter) return Infinity
+    const dLat = toRad(r.latitude - mapCenter.lat)
+    const dLng = toRad(r.longitude - mapCenter.lng)
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(mapCenter.lat)) * Math.cos(toRad(r.latitude)) * Math.sin(dLng / 2) ** 2
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  }
   const viewportRestaurants = (() => {
     if (!mapCenter) return displayedRestaurants
-    const toRad = (d) => (d * Math.PI) / 180
-    const haversine = (r) => {
-      const dLat = toRad(r.latitude - mapCenter.lat)
-      const dLng = toRad(r.longitude - mapCenter.lng)
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(mapCenter.lat)) * Math.cos(toRad(r.latitude)) * Math.sin(dLng / 2) ** 2
-      return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    }
-    const nearby = displayedRestaurants.filter(r => r.latitude && r.longitude && haversine(r) <= WIDE_RADIUS_KM)
-    nearby.sort((a, b) => haversine(a) - haversine(b))
+    const nearby = displayedRestaurants.filter(r => r.latitude && r.longitude && haversineFromCenter(r) <= WIDE_RADIUS_KM)
+    nearby.sort((a, b) => haversineFromCenter(a) - haversineFromCenter(b))
     return nearby
+  })()
+  // Locali oltre il raggio di 5km — esclusi da `viewportRestaurants` ma non
+  // dal sito: "Carica altri locali" nella sheet li rivela invece di lasciare
+  // l'utente in fondo alla lista senza modo di vedere il resto della città.
+  const remainingRestaurants = (() => {
+    if (!mapCenter) return []
+    const nearbyIds = new Set(viewportRestaurants.map(r => r.id))
+    return displayedRestaurants
+      .filter(r => !nearbyIds.has(r.id))
+      .sort((a, b) => haversineFromCenter(a) - haversineFromCenter(b))
   })()
 
   const handleLocateMe = useCallback(() => {
@@ -300,6 +311,12 @@ export default function HomePage() {
   useEffect(() => { setCarouselLimit(CAROUSEL_INITIAL) }, [filters, showDealsOnly])
   const carouselRestaurants = viewportRestaurants.slice(0, carouselLimit)
   const hasMoreCarousel = viewportRestaurants.length > carouselLimit
+
+  // Sheet "Lista": mostra solo i locali entro 5km finché l'utente non chiede
+  // esplicitamente il resto della città con "Carica altri locali".
+  const [sheetShowAll, setSheetShowAll] = useState(false)
+  useEffect(() => { setSheetShowAll(false) }, [filters, showDealsOnly, extraFilters])
+  const sheetRestaurants = sheetShowAll ? [...viewportRestaurants, ...remainingRestaurants] : viewportRestaurants
 
   // --- Sheet ---
   const windowH = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -489,7 +506,7 @@ export default function HomePage() {
           onFilterChange={setFilters}
           showDealsOnly={showDealsOnly}
           onToggleDeals={() => setShowDealsOnly(v => !v)}
-          restaurantCount={viewportRestaurants.length}
+          restaurantCount={sheetRestaurants.length}
           extraFilters={extraFilters}
           onExtraFilterChange={setExtraFilters}
         />
@@ -499,7 +516,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
-      ) : viewportRestaurants.length === 0 ? (
+      ) : sheetRestaurants.length === 0 && remainingRestaurants.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div style={{ marginBottom: 12, fontSize: 40 }}>🔍</div>
           <p style={{ fontSize: 16, fontWeight: 600, color: '#22181C' }}>{t('home.noResults')}</p>
@@ -507,7 +524,7 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 md:gap-0 pb-8">
-          {viewportRestaurants.map((restaurant, index) => (
+          {sheetRestaurants.map((restaurant, index) => (
             <RestaurantCard
               key={restaurant.id}
               restaurant={restaurant}
@@ -520,6 +537,32 @@ export default function HomePage() {
               discountTitle={discountTitleMap[restaurant.id]}
             />
           ))}
+
+          {/* In fondo alla lista: se ci sono locali oltre i 5km (altre zone
+              della città, o altre città), un modo di andarli a vedere invece
+              di lasciare la sheet a metà come unico risultato possibile. */}
+          {!sheetShowAll && remainingRestaurants.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSheetShowAll(true)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                width: '100%', padding: '14px', marginTop: 4,
+                background: '#FAF7F2', border: '1.5px dashed rgba(34,24,28,0.18)',
+                borderRadius: 14, cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 800, color: '#22181C', letterSpacing: '-0.01em',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <span style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: '#22181C', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 700, lineHeight: 1, flexShrink: 0,
+              }}>+</span>
+              Carica altri {remainingRestaurants.length} locali
+            </button>
+          )}
 
           {/* CTA: suggerisci un ristorante mancante */}
           <button

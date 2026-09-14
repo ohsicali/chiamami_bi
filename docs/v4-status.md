@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-14 (fix FK email_preferences → profiles, email sconti/drop)
+Ultima modifica: 2026-09-14 ("carica altri locali" in fondo alla lista Esplora)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -1096,3 +1096,33 @@ connettore Supabase — FK spostata su `public.profiles(id)` +
 **Da fare**: rimandare la notifica per il drop del 14/09
 (`96afd9e4-6bc8-4753-b21c-8b77e551c827`, "50% di sconto") col bottone
 "Notifica" — non riparte da sola.
+
+## 14/09 — "carica altri locali" in fondo alla lista Esplora
+
+Segnalazione: in fondo alle liste con le card dei locali, in particolare
+nella lista di /esplora, non c'era modo di caricare altri locali una volta
+arrivati in fondo.
+
+**Causa**: la sheet "Lista" di `/esplora` (mobile, `HomePage.jsx`) non
+pagina davvero i risultati — mostra `viewportRestaurants`, cioè
+`displayedRestaurants` filtrati a un raggio fisso di 5km dal centro mappa
+(`WIDE_RADIUS_KM`), aggiornato a ogni `moveend`. Chi non sposta la mappa
+vede solo i locali entro 5km da dove il centro è caduto al caricamento, e
+arrivato in fondo alla lista non ha modo di vedere il resto della città (o
+altre città). Il carosello orizzontale sotto la mappa aveva già un "+ Altro"
+(`carouselLimit`/`CAROUSEL_STEP`), ma pesca dallo stesso pool limitato a
+5km — non risolveva il problema.
+
+**Fix**: aggiunto `remainingRestaurants` (i locali di `displayedRestaurants`
+esclusi da `viewportRestaurants`, ordinati per distanza dal centro mappa) e
+uno stato `sheetShowAll` che, quando attivato, li accoda alla lista della
+sheet. Bottone "Carica altri N locali" in fondo alla lista, visibile solo
+se `remainingRestaurants.length > 0`; si resetta quando cambiano filtri o
+sconti-only. `DesktopExplorePage` e `/list` (`ListView.jsx`) non avevano
+questo limite — mostrano già tutti i locali filtrati — quindi non
+toccati.
+
+PR: #228. Branch: `claude/stoic-ritchie-fm9ajh`.
+
+**Da fare**: verifica a schermo su un telefono vero (aprire /esplora,
+toccare "Lista", scorrere in fondo).
