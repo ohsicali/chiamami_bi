@@ -26,8 +26,8 @@ dove siamo. Aggiorna a ogni step importante.
 |---|---|---|
 | 0 — Bi Club mostra tutti gli sconti | ✅ | Filtro città rimosso. Definizione unica in `src/lib/discounts.js`, usata da admin e sito pubblico. Test di regressione in `tests/discounts.test.mjs` (16 test). |
 | 1 — DropCard in 3 taglie | ✅ | `src/components/Discount/DropCard.jsx` + `.css`. Struttura v5. |
-| 2 — Home mobile | ↩️ Annullato | La home v10 è stata ritirata su richiesta di Augusto (14/09): non gli piaceva né il design né l'impaginazione da desktop. Vedi "Home: ritorno alla versione pre-v10" sotto. |
-| 3 — Home desktop | ↩️ Annullato | Come sopra. |
+| 2 — Home mobile | ✅ | Resta la v10 sotto i 1024px. Sequenza momento → aperti ora → drop → altri sconti → categorie → ultimi aggiunti. |
+| 3 — Home desktop | ↩️ Annullato | Da 1024px in su si usa la home di prima del rifacimento. Vedi "Home — due home, una per misura" sotto. |
 | 4 — Bi Club adattivo | ✅ | 1/2/3+ drop, paginazione da 6, mai carosello su mobile, convenzioni come righe. |
 | 5 — Gating registrazione | ✅ | Club sfocato col conteggio vero, sconto singolo interamente visibile, gate di Chiedi a Bi prima di scrivere. Corretto `returnTo` in 4 punti. |
 | 6 — Salvati per liste | ✅ | Tabelle `saved_lists` + `saved_list_items`. Striscia liste condivisa fra telefono e desktop (`src/components/Restaurant/SavedListsStrip.jsx`), rinomina/elimina, scelta emoji. **Note personali: scartate** — vedi sotto. **Non provato loggato.** |
@@ -36,40 +36,54 @@ dove siamo. Aggiorna a ogni step importante.
 | 9 — Ristoratore | ✅ | Condizione e ora nella schermata verde, saluto col nome, indirizzo ripulito, contatto non più attaccato. Il resto risultava già fatto da PR23. **Non verificato a schermo** (serve PIN). |
 | 10 — Pubblicità | ✅ | Quarta posizione su scheda ristorante + barra inventario. Tracking IntersectionObserver e anteprima live erano già in PR #211. |
 
-## Home — ritorno alla versione pre-v10 (14/09)
+## Home — due home, una per misura (14/09)
 
-Augusto: *"la home da desktop non mi piace, preferivo come era prima del
-redesign"*. Scelta confermata su richiesta esplicita fra tre opzioni: non
-solo l'ultima modifica, ma **tutto il rifacimento v10 della home**.
+Augusto, in due passaggi: prima *"la home da desktop non mi piace, preferivo
+come era prima del redesign"*, poi *"da mobile invece teniamo quello nuovo,
+solo da desktop torniamo indietro"*.
 
-`src/pages/public/HomeFeedV4.jsx`, `src/components/Home/MomentResultsGrid.jsx`
-e `src/components/Home/TimeContextHero.jsx` sono tornati allo stato di
-`42d0dcb` (il commit prima di `dba1fc6`). La home riapre col drop in
-evidenza invece che con la fascia del momento; il momento e gli aperti ora
-scendono sotto "Ultimi aggiunti".
+Quindi adesso:
 
-**Quello che NON è tornato indietro**, perché erano bug segnalati e già
-sistemati e riportarli sarebbe stato un passo indietro vero:
+| misura | quale home | file |
+|---|---|---|
+| < 1024px (telefono, tablet) | la v10 | `src/pages/public/HomeFeedV4.jsx` |
+| ≥ 1024px (computer) | quella di prima del rifacimento | `src/pages/public/HomeDesktopClassic.jsx` |
 
-- `fetchPriority` con la maiuscola (in minuscolo React lo scarta)
-- il cuore non è più un `<button>` dentro un altro `<button>`
-- "Sblocca sconto" sblocca davvero invece di aprire la scheda del locale
-- il cuore da sloggato apre la porta a vetri invece di non fare niente
-- la barra mobile sparisce già da 768px: a 1024 su un iPad in verticale si
-  vedevano due intestazioni sovrapposte
+Lo switch è in `App.jsx`, una media query a 1024px sulla route `/`, e ognuna
+delle due arriva col suo `lazy`: da telefono il codice della home desktop non
+viene nemmeno scaricato.
 
-**Non sono tornati indietro** (restano com'erano prima del ritiro):
-`DropCard.jsx` e `DropCard.css`, perché li usa anche il Bi Club, che non
-c'entra con la home. La home pre-v10 non li importa affatto.
+**Perché due file e non due rami dentro lo stesso componente**: le due home non
+condividono la struttura. Una apre col drop in evidenza e il momento scende
+sotto, l'altra apre con l'orologio e la fascia del momento. Non è una
+differenza di margini, è un altro ordine di blocchi con altri componenti
+dentro; tenerle nello stesso file avrebbe voluto dire due alberi JSX interi
+montati insieme e nascosti a vicenda col CSS.
 
-Conseguenza da sapere: la home **mobile** è tornata indietro insieme a
-quella desktop — erano lo stesso file. Se serve recuperare qualcosa della
-v10 solo per il telefono, la versione ritirata è nella storia del branch
-(`git show 4321f82:src/pages/public/HomeFeedV4.jsx`).
+Stessa ragione per i due gemelli: `TimeContextHeroClassic.jsx` e
+`MomentResultsGridClassic.jsx`, usati solo dalla home desktop.
 
-Lint: da 144 a 146 problemi. I due in più arrivano col codice vecchio
-ripristinato (`Date.now()` dentro un memo, setState in un effetto del
-countdown) e sono degli stessi tipi già presenti altrove.
+**Il prezzo, detto chiaro: una modifica alla home ora va fatta due volte.**
+Se un domani una delle due versioni viene abbandonata, i suoi file vanno
+cancellati e non lasciati lì.
+
+La home desktop parte da `42d0dcb` (il commit prima di `dba1fc6`) ma NON è un
+ritorno cieco: porta con sé i bug già segnalati e già sistemati, che riportare
+indietro sarebbe stato un passo indietro vero — `fetchPriority` con la
+maiuscola, il cuore che non è più un `<button>` dentro un altro, "Sblocca
+sconto" che sblocca davvero, il cuore da sloggato che apre la porta a vetri, e
+la barra mobile che sparisce già da 768px (a 1024 su un iPad in verticale si
+vedevano due intestazioni sovrapposte).
+
+`DropCard.jsx` e `DropCard.css` non sono tornati indietro: li usa anche il Bi
+Club, e la home desktop non li importa affatto.
+
+Tutto il resto del lavoro resta: liste dei salvati, email, registrazione col
+codice, gate, correzioni sparse.
+
+Lint: da 144 a 147 problemi. I tre in più sono copie di errori già presenti,
+arrivate coi file duplicati (`Date.now()` dentro un memo, setState in un
+effetto del countdown, il falso positivo su `motion` usato in JSX).
 
 ## Registrazione — sistemata la sera del 13/09
 
