@@ -522,17 +522,34 @@ export default function RestaurantSheet({
             <div ref={photoRef} className="rs-photo-area" style={{ height: '45vh', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
               <PhotoCarousel photos={restaurant.photos || []} height="45vh" restaurantName={restaurant.name} city={restaurant.city} dotsPosition="right" hideDots onIndexChange={setPhotoIndex} />
               {/* C1 mobile — lo sconto si vede dal primo pixel, già sulla foto,
-                  senza dover scrollare fino alla sticky bar. */}
+                  senza dover scrollare fino alla sticky bar.
+                  `bottom: 34` (non 12): la card bianca risale di -24px sopra la
+                  foto, quindi una pill a 12px finiva mezza nascosta sotto la
+                  card. A 34 sta sulla stessa riga del contatore foto "1 / 6".
+                  Vetro scuro invece del gradiente verde acido: sulla foto è la
+                  stessa lingua visiva del contatore, il verde resta come punto
+                  di accento e vive per intero nella barra sticky in fondo. */}
               {discount && (
                 <span style={{
-                  position: 'absolute', left: 12, bottom: 12, zIndex: 3,
-                  background: 'linear-gradient(90deg,#bdebc9,#8fdca6)',
-                  color: 'var(--color-ink)',
-                  fontSize: 11, fontWeight: 800, letterSpacing: '-0.01em',
-                  borderRadius: 999, padding: '5px 11px',
+                  position: 'absolute', left: 14, bottom: 34, zIndex: 3,
+                  maxWidth: 'calc(100% - 100px)',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(6px)',
+                  WebkitBackdropFilter: 'blur(6px)',
+                  color: '#fff',
+                  fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em',
+                  borderRadius: 14, padding: '5px 11px',
                   boxShadow: '0 2px 8px rgba(34,24,28,.18)',
                 }}>
-                  {discount.title || discount.discount_value} attivo
+                  <span style={{
+                    width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                    background: '#8fdca6',
+                    boxShadow: '0 0 0 3px rgba(143,220,166,.25)',
+                  }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {discount.title || discount.discount_value}
+                  </span>
                 </span>
               )}
             </div>
@@ -832,11 +849,6 @@ export default function RestaurantSheet({
                 </motion.div>
               )}
 
-              {/* ── Orari Google Places (dopo Secondo Bi come nel mockup) ── */}
-              <motion.div className="sec-orari" variants={itemVariants} style={{ marginBottom: 20 }}>
-                <OrariLocale restaurant={restaurant} />
-              </motion.div>
-
               {/* ── Cosa prendere — oro gradient card ── */}
               {tipText && (
                 <motion.div className="sec-oro" variants={itemVariants} style={{ marginBottom: 20 }}>
@@ -859,6 +871,13 @@ export default function RestaurantSheet({
                   </div>
                 </motion.div>
               )}
+
+              {/* ── Orari Google Places — dopo "Cosa prendere": prima si
+                  arrivava agli orari passando sopra il consiglio, che è il
+                  motivo per cui uno apre la scheda. ── */}
+              <motion.div className="sec-orari" variants={itemVariants} style={{ marginBottom: 20 }}>
+                <OrariLocale restaurant={restaurant} />
+              </motion.div>
 
               {/* Video links — "Ho fatto un video" */}
               {(restaurant.instagram_reel || restaurant.tiktok_url) && (
