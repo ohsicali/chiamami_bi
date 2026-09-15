@@ -331,7 +331,7 @@
    ruolo di unico blocco pieno.
 
    Verticale: foto sopra (64px), badge verde a cavallo del bordo inferiore
-   della foto in basso a SINISTRA, poi nome, categoria e stato. Niente
+   della foto in basso a DESTRA, poi nome, categoria e stato. Niente
    pill, niente barra, niente bottoni — l'intera card è cliccabile, perché
    in una riga da scorrere un bottone da 10px è un bersaglio finto. */
 
@@ -366,8 +366,8 @@
 .dropcard--mini .dropcard__badge {
   top: auto;
   bottom: calc(-9 * var(--dc-k));
-  left: calc(6 * var(--dc-k));
-  right: auto;
+  left: auto;
+  right: calc(6 * var(--dc-k));
   font-size: calc(11 * var(--dc-k));
   border-radius: calc(8 * var(--dc-k));
   padding: calc(3 * var(--dc-k)) calc(8 * var(--dc-k));
