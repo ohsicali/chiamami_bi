@@ -12,15 +12,10 @@ import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
 import { newDiscountEmail, newRestaurantEmail } from './_email/templates.js'
-import {
-  sendBatch, recipientsFor, unsubscribeUrl, listUnsubscribeHeaders, FROM, REPLY_TO,
-} from './_email/send.js'
+import { sendBatch, buildMessage, recipientsFor, unsubscribeUrl } from './_email/send.js'
 import { formatDiscountBadge, pickPerk } from './_email/discount.js'
 
 const SITE_URL = 'https://chiamamibi.com'
-const RESEND_BATCH_URL = 'https://api.resend.com/emails/batch'
-// Resend batch endpoint accepts up to 100 messages per request.
-const RESEND_BATCH_SIZE = 100
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return
@@ -120,15 +115,7 @@ export default async function handler(req, res) {
   // ciclo e non una volta sola fuori.
   const messages = recipients.map((r) => {
     const mail = buildMail(type, payload, unsubscribeUrl(r.token))
-    return {
-      from: FROM(),
-      reply_to: REPLY_TO(),
-      to: [r.email],
-      subject: mail.subject,
-      html: mail.html,
-      text: mail.text,
-      headers: listUnsubscribeHeaders(r.token),
-    }
+    return buildMessage({ to: r.email, token: r.token, ...mail })
   })
 
   const { sent, failed: errors, errors: errorDetails } = await sendBatch(messages)
@@ -166,15 +153,7 @@ async function loadPayload(admin, type, id) {
     if (error || !r) throw new Error('Restaurant not found')
     if (!r.is_published) throw new Error('Restaurant is not published — publish it before sending')
 
-    const { data: photos } = await admin
-      .from('restaurant_photos')
-      .select('photo_url, thumb_url, sort_order')
-      .eq('restaurant_id', id)
-      .order('sort_order', { ascending: true })
-      .limit(1)
-    const photo = photos?.[0]?.thumb_url || photos?.[0]?.photo_url || null
-
-    return { restaurant: r, photo }
+    return { restaurant: r, photo: await firstPhoto(admin, id) }
   }
 
   if (type === 'discount' || type === 'drop') {
@@ -187,25 +166,39 @@ async function loadPayload(admin, type, id) {
     if (!d.is_active) throw new Error('Discount is not active')
     if (type === 'drop' && !d.is_drop) throw new Error('This discount is not a drop')
 
+    // `our_review` e `tagline` non servono allo sconto in sé: servono
+    // all'email. Un annuncio fatto di sola offerta è un volantino, e si
+    // legge come tale — la riga in cui Bi dice perché quel posto merita è
+    // l'unica parte che nessun altro potrebbe aver scritto.
     const { data: r } = await admin
       .from('restaurants')
-      .select('id, name, slug, address, city, cuisine_type')
+      .select('id, name, slug, address, city, cuisine_type, tagline, our_review')
       .eq('id', d.restaurant_id)
       .single()
     if (!r) throw new Error('Restaurant linked to discount not found')
 
-    const { data: photos } = await admin
-      .from('restaurant_photos')
-      .select('photo_url, thumb_url, sort_order')
-      .eq('restaurant_id', r.id)
-      .order('sort_order', { ascending: true })
-      .limit(1)
-    const photo = photos?.[0]?.thumb_url || photos?.[0]?.photo_url || null
-
-    return { discount: d, restaurant: r, photo }
+    return { discount: d, restaurant: r, photo: await firstPhoto(admin, r.id) }
   }
 
   throw new Error('Unknown type')
+}
+
+/**
+ * La prima foto del locale, a piena risoluzione.
+ *
+ * Prima si prendeva `thumb_url` per primo — che è il ritaglio da 400px usato
+ * nelle card — e finiva dentro una fascia larga 600: in posta arrivava
+ * sgranata. Il ridimensionamento lo fa `/api/img` a valle (vedi
+ * `croppedPhoto` in _email/blocks.js), quindi qui serve la foto grande.
+ */
+async function firstPhoto(admin, restaurantId) {
+  const { data: photos } = await admin
+    .from('restaurant_photos')
+    .select('photo_url, thumb_url, sort_order')
+    .eq('restaurant_id', restaurantId)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+  return photos?.[0]?.photo_url || photos?.[0]?.thumb_url || null
 }
 
 // ---------------------------------------------------------------
@@ -243,6 +236,7 @@ function buildMail(type, p, unsubUrl) {
     restaurantName: r.name,
     perk: pickPerk(d),
     conditions: (d.conditions || '').trim() || null,
+    review: (r.our_review || r.tagline || '').trim() || null,
     city: r.city,
     cuisine: r.cuisine_type,
     photoUrl: p.photo,

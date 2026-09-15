@@ -19,6 +19,12 @@ const TEMPLATES = [
   { key: 'new-place', label: 'Nuovo locale', hint: 'Parte da sola quando pubblichi un locale.' },
   { key: 'discount-claimed', label: 'Sconto preso (col codice)', hint: 'Quando l’utente sblocca uno sconto.' },
   { key: 'discount-used', label: 'Sconto usato', hint: 'Quando il locale scansiona il QR.' },
+  { key: 'partner', label: 'Benvenuto ristoratore (col PIN)', hint: 'Quando aggiungi un locale e generi il PIN.' },
+  { key: 'suggestion', label: 'Conferma suggerimento', hint: 'A chi ti segnala un locale dal sito.' },
+  { key: 'partner-application', label: 'Conferma candidatura', hint: 'A chi candida il proprio locale da /partner.' },
+  { key: 'otp', label: 'Codice di recupero', hint: 'Cambio email e password dimenticata.' },
+  { key: 'internal-suggestion', label: 'Interna — nuovo suggerimento', hint: 'Quella che arriva a te, non agli utenti.' },
+  { key: 'internal-partner-application', label: 'Interna — nuova candidatura', hint: 'Quella che arriva a te, non agli utenti.' },
 ]
 
 export default function EmailPreviewTool() {

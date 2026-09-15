@@ -1,13 +1,19 @@
 /**
- * Il guscio di ogni email: intestazione, colonna, piè di pagina.
+ * Il guscio di ogni email: testata, colonna, piè di pagina.
  *
  * `renderEmail` mette insieme i blocchi di blocks.js e restituisce sia
  * l'HTML sia la versione a solo testo. La versione testo non è un di più:
  * i filtri antispam penalizzano i messaggi che hanno solo HTML, e chi legge
  * con la sintesi vocale o su un orologio vede quella.
+ *
+ * La testata è la stessa per tutte le email — una sola, sempre quella. Prima
+ * ce n'erano due (una fascia corallo piena per gli annunci, una crema per il
+ * resto) e una terza scritta a mano dentro send-email.js: tre modi di
+ * presentarsi a chi ci legge, che è uno dei motivi per cui il risultato
+ * sembrava messo insieme di fretta.
  */
 
-import { COLORS, FONT_BODY, FONT_DISPLAY, FONT_FILES, LOGO, SITE_URL, WIDTH } from './theme.js'
+import { BRAND, COLORS, FONT_BODY, FONT_DISPLAY, FONT_FILES, LOGO, SITE_URL, WIDTH } from './theme.js'
 import { esc } from './blocks.js'
 
 /**
@@ -24,45 +30,61 @@ function preheaderBlock(text) {
   return `<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">${esc(text)}${pad}</div>`
 }
 
-function header({ tone = 'coral' } = {}) {
-  const onCoral = tone === 'coral'
-  const bg = onCoral ? COLORS.corallo : COLORS.cream
-  const logo = onCoral ? LOGO.white : LOGO.ink
-  return `<tr><td style="background:${bg};padding:26px 32px;" align="center">
+/**
+ * La testata: marchio al centro, città sotto, filo.
+ *
+ * Il logo è un PNG e non del testo perché il carattere del marchio (Alfa
+ * Slab One) in Gmail e Outlook non si carica, e al suo posto comparirebbe
+ * un Times qualunque — cioè il marchio di qualcun altro.
+ */
+function masthead() {
+  return `<tr><td style="background:${COLORS.white};padding:30px 32px 0;" align="center">
     <a href="${SITE_URL}" style="text-decoration:none;">
-      <img src="${logo}" width="168" alt="La Guida di Bi" style="display:block;width:168px;max-width:168px;height:auto;border:0;outline:none;" />
+      <img src="${LOGO.ink}" width="150" alt="La Guida di Bi" style="display:block;width:150px;max-width:150px;height:auto;border:0;outline:none;" />
     </a>
-  </td></tr>`
+    <div style="font-family:${FONT_BODY};font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:${COLORS.oro};padding:12px 0 22px;">Torino</div>
+  </td></tr>
+  <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:${COLORS.line};font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>`
 }
 
 /**
- * Il piè di pagina con il link per non ricevere più questo tipo di email.
+ * Il piè di pagina.
  *
- * `unsubscribeUrl` non è facoltativo per le email che annunciano qualcosa:
- * mandare promozioni senza una via d'uscita a un clic è fuori legge in UE,
- * e i client di posta lo trattano come segnale di spam. Per le email che
- * rispondono a un gesto della persona (hai preso lo sconto, l'hai usato) il
- * link non serve e non c'è.
+ * Tre cose ci stanno per obbligo, non per gusto: chi manda (con un indirizzo
+ * fisico), perché questo messaggio è arrivato proprio a te, e come farlo
+ * smettere in un clic. Mancavano tutte e tre, e sono fra i primi segnali che
+ * Gmail guarda per decidere se un messaggio è posta o pubblicità non
+ * richiesta. `unsubscribeUrl` non è facoltativo per le email che annunciano
+ * qualcosa: mandare promozioni senza una via d'uscita a un clic è fuori
+ * legge in UE. Per le email che rispondono a un gesto della persona (hai
+ * preso lo sconto, l'hai usato, ecco il tuo codice) il link non serve e non
+ * c'è — ma il motivo dell'invio sì, sempre.
  */
-function footer({ unsubscribeUrl, unsubscribeLabel }) {
-  return `<tr><td style="background:${COLORS.cream};padding:28px 32px 32px;" align="center">
-    <img src="${LOGO.ink}" width="116" alt="ChiamamiBi" style="display:block;width:116px;max-width:116px;height:auto;border:0;outline:none;opacity:0.55;" />
-    <div style="font-family:${FONT_BODY};font-size:13px;line-height:1.6;color:${COLORS.ink45};padding-top:14px;">
-      La guida ai posti dove tornerei, a Torino.
+function footer({ unsubscribeUrl, unsubscribeLabel, reason }) {
+  const link = (href, label) => `<a href="${href}" style="color:${COLORS.ink70};text-decoration:none;border-bottom:1px solid ${COLORS.line};">${label}</a>`
+  return `<tr><td style="background:${COLORS.cream};padding:30px 32px 34px;" align="center">
+    <img src="${LOGO.ink}" width="104" alt="ChiamamiBi" style="display:block;width:104px;max-width:104px;height:auto;border:0;outline:none;" />
+    <div style="font-family:${FONT_BODY};font-size:13px;line-height:1.6;color:${COLORS.ink70};padding-top:14px;">
+      ${esc(BRAND.tagline)}
     </div>
-    <div style="font-family:${FONT_BODY};font-size:13px;line-height:1.9;padding-top:12px;">
-      <a href="${SITE_URL}" style="color:${COLORS.ink70};text-decoration:underline;">Il sito</a>
-      &nbsp;·&nbsp;
-      <a href="${SITE_URL}/sconti" style="color:${COLORS.ink70};text-decoration:underline;">Bi Club</a>
-      &nbsp;·&nbsp;
-      <a href="${SITE_URL}/privacy" style="color:${COLORS.ink70};text-decoration:underline;">Privacy</a>
+    <div style="font-family:${FONT_BODY};font-size:13px;line-height:2;padding-top:14px;">
+      ${link(SITE_URL, 'Il sito')}
+      &nbsp;&nbsp;·&nbsp;&nbsp;
+      ${link(`${SITE_URL}/sconti`, 'Bi Club')}
+      &nbsp;&nbsp;·&nbsp;&nbsp;
+      ${link(BRAND.instagram, 'Instagram')}
+      &nbsp;&nbsp;·&nbsp;&nbsp;
+      ${link(`${SITE_URL}/privacy`, 'Privacy')}
     </div>
-    ${unsubscribeUrl ? `<div style="font-family:${FONT_BODY};font-size:12px;line-height:1.6;color:${COLORS.ink45};padding-top:16px;">
-      ${esc(unsubscribeLabel || 'Non vuoi più ricevere queste email?')}
-      <a href="${esc(unsubscribeUrl)}" style="color:${COLORS.ink45};text-decoration:underline;">Scegli cosa ricevere</a>.
-    </div>` : ''}
-    <div style="font-family:${FONT_BODY};font-size:11px;line-height:1.6;color:${COLORS.ink45};padding-top:14px;">
-      © ${new Date().getFullYear()} ChiamamiBi
+    <table role="presentation" width="200" cellpadding="0" cellspacing="0" border="0" style="width:200px;margin:22px auto 0;"><tr><td style="height:1px;background:${COLORS.line};font-size:0;line-height:0;">&nbsp;</td></tr></table>
+    <div style="font-family:${FONT_BODY};font-size:12px;line-height:1.7;color:${COLORS.ink45};padding-top:18px;">
+      ${esc(reason || `Ricevi questa email perché hai un account su ${BRAND.name}.`)}
+      ${unsubscribeUrl ? `<br />${esc(unsubscribeLabel || 'Non vuoi più ricevere queste email?')} <a href="${esc(unsubscribeUrl)}" style="color:${COLORS.ink70};text-decoration:underline;">Scegli cosa ricevere</a>.` : ''}
+    </div>
+    <div style="font-family:${FONT_BODY};font-size:11.5px;line-height:1.7;color:${COLORS.ink45};padding-top:14px;">
+      ${esc(BRAND.postal)}<br />
+      <a href="mailto:${BRAND.contact}" style="color:${COLORS.ink45};text-decoration:underline;">${BRAND.contact}</a>
+      &nbsp;·&nbsp; © ${new Date().getFullYear()} ${esc(BRAND.name)}
     </div>
   </td></tr>`
 }
@@ -71,11 +93,12 @@ function footer({ unsubscribeUrl, unsubscribeLabel }) {
  * @param {object}   o
  * @param {string}   o.preheader   riga di anteprima nell'elenco dei messaggi
  * @param {string[]} o.blocks      righe di tabella da blocks.js
- * @param {string}   [o.tone]      'coral' | 'cream' — colore dell'intestazione
+ * @param {string}   [o.reason]    perché questo messaggio è arrivato
  * @param {string}   [o.unsubscribeUrl]
+ * @param {string}   [o.unsubscribeLabel]
  * @param {string}   [o.text]      versione a solo testo
  */
-export function renderEmail({ preheader, blocks, tone = 'coral', unsubscribeUrl, unsubscribeLabel, text }) {
+export function renderEmail({ preheader, blocks, reason, unsubscribeUrl, unsubscribeLabel, text }) {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="it">
 <head>
@@ -84,7 +107,7 @@ export function renderEmail({ preheader, blocks, tone = 'coral', unsubscribeUrl,
 <meta name="x-apple-disable-message-reformatting" />
 <meta name="format-detection" content="telephone=no,address=no,email=no,date=no" />
 <!-- Le email restano chiare anche dove il sistema è scuro: i client che
-     invertono i colori da soli fanno danni sul corallo pieno. -->
+     invertono i colori da soli fanno danni sui blocchi scuri. -->
 <meta name="color-scheme" content="light" />
 <meta name="supported-color-schemes" content="light" />
 <title>ChiamamiBi</title>
@@ -108,32 +131,63 @@ ${FONT_FILES.map((w) => `  @font-face {
   a { color:${COLORS.coralloInk}; }
   @media only screen and (max-width:620px) {
     .cb-col { width:100% !important; }
-    .cb-pad { padding-left:20px !important; padding-right:20px !important; }
-    .cb-pad-sm { padding-left:14px !important; padding-right:14px !important; }
-    .cb-h1 { font-size:26px !important; }
+    .cb-pad { padding-left:22px !important; padding-right:22px !important; }
+    .cb-h1 { font-size:27px !important; }
   }
 </style>
 </head>
 <body style="margin:0;padding:0;background:${COLORS.page};">
 ${preheaderBlock(preheader)}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${COLORS.page};">
-  <tr><td align="center" style="padding:24px 12px 32px;">
-    <table role="presentation" class="cb-col" width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" style="width:${WIDTH}px;max-width:${WIDTH}px;background:${COLORS.white};border-radius:22px;overflow:hidden;">
-      ${header({ tone })}
-      <tr><td style="padding:28px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr><td align="center" style="padding:28px 12px 36px;">
+    <table role="presentation" class="cb-col" width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" style="width:${WIDTH}px;max-width:${WIDTH}px;background:${COLORS.white};border-radius:24px;overflow:hidden;">
+      ${masthead()}
+      <tr><td style="padding:30px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         ${blocks.filter(Boolean).join('\n')}
       </table></td></tr>
-      ${footer({ unsubscribeUrl, unsubscribeLabel })}
+      ${footer({ unsubscribeUrl, unsubscribeLabel, reason })}
     </table>
   </td></tr>
 </table>
 </body>
 </html>`
 
-  return { html, text: text || stripToText(html) }
+  return { html, text: text ? footerText(text, { reason, unsubscribeUrl }) : stripToText(html) }
 }
 
-/** Ripiego quando non passiamo un testo scritto a mano. */
+/**
+ * La stessa coda anche in fondo alla versione a solo testo.
+ *
+ * Chi legge in solo testo — e chi lo legge è spesso un filtro, non una
+ * persona — deve trovarci le stesse cose dell'HTML: chi manda, perché, e
+ * come smettere. Un HTML con il piè di pagina completo e un testo che finisce
+ * con "— Bi" sono due messaggi diversi, e i due messaggi diversi sono
+ * esattamente quello che un filtro va a cercare.
+ */
+function footerText(text, { reason, unsubscribeUrl }) {
+  const coda = [
+    '',
+    '—',
+    reason || `Ricevi questa email perché hai un account su ${BRAND.name}.`,
+    unsubscribeUrl ? `Scegli cosa ricevere: ${unsubscribeUrl}` : '',
+    BRAND.postal,
+    `${SITE_URL} · ${BRAND.contact}`,
+  ].filter((r) => r !== '')
+  return `${text.trimEnd()}\n${coda.join('\n')}\n`
+}
+
+/**
+ * Ripiego quando non passiamo un testo scritto a mano.
+ *
+ * Esportato perché serve anche a send.js: un messaggio senza versione a solo
+ * testo è uno dei modi più rapidi per finire nella posta indesiderata, e la
+ * rete di sicurezza va messa nell'unico punto da cui parte tutto, non
+ * sperando che ogni template si ricordi di scriverla.
+ */
+export function htmlToText(html) {
+  return stripToText(html)
+}
+
 function stripToText(html) {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, '')
