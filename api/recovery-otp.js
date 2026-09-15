@@ -18,6 +18,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, maybeCleanup } from './_rate-limit.js'
 import { applyCors } from './_cors.js'
+import { recoveryOtpEmail } from './_email/templates.js'
+import { sendEmail } from './_email/send.js'
 import { verifyTurnstile } from './_turnstile.js'
 
 const MAX_FAILED_ATTEMPTS = 5
@@ -104,26 +106,15 @@ async function handleRequest({ adminClient, body, req, res }) {
       return res.status(500).json({ error: 'Email service not configured' })
     }
 
-    const firstName = (profile.full_name || '').split(' ')[0] || 'Utente'
+    // Senza nome si saluta e basta: "Ciao Utente" è peggio di "Ciao".
+    const firstName = (profile.full_name || '').split(' ')[0] || ''
     const actionText = action === 'reset_password' ? 'reimpostare la password' : 'cambiare l\'email'
 
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Bi <ciao@chiamamibi.com>',
-        reply_to: process.env.RESEND_REPLY_TO || 'info@chiamamibi.com',
-        to: [profile.recovery_email],
-        subject: `${otp} — Codice di recupero ChiamamiBi`,
-        html: buildOtpHtml(firstName, otp, actionText),
-      }),
-    })
+    const mail = recoveryOtpEmail({ name: firstName, otp, actionText })
+    const sentMail = await sendEmail({ to: profile.recovery_email, ...mail })
 
-    if (!emailResponse.ok) {
-      console.error('Resend error:', await emailResponse.json())
+    if (!sentMail.ok) {
+      console.error('[recovery-otp] ', sentMail.error)
       return res.status(500).json({ error: 'Failed to send recovery email' })
     }
 
@@ -237,25 +228,3 @@ function maskEmail(email) {
   return `${masked}@${domain}`
 }
 
-function buildOtpHtml(name, otp, actionText) {
-  return `
-<div style="max-width:520px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
-  <div style="background:#FF5757;padding:32px 24px;text-align:center;">
-    <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:2px;">CHIAMAMI BI</h1>
-  </div>
-  <div style="padding:32px 24px;">
-    <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">Codice di recupero</h2>
-    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">
-      Ciao ${name}, hai richiesto di ${actionText} del tuo account ChiamamiBi.
-      Usa questo codice per procedere. Il codice scade tra 10 minuti.
-    </p>
-    <div style="background:#fff5f5;border:2px solid #FF5757;border-radius:12px;padding:16px;text-align:center;margin-bottom:24px;">
-      <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#FF5757;font-family:monospace;">${otp}</span>
-    </div>
-  </div>
-  <div style="padding:20px 24px;background:#fafafa;border-top:1px solid #f0f0f0;text-align:center;">
-    <p style="margin:0 0 4px;font-size:11px;color:#9ca3af;">Se non hai richiesto questo codice, ignora questa email.</p>
-    <p style="margin:0;font-size:11px;color:#9ca3af;">ChiamamiBi — Torino, Italia</p>
-  </div>
-</div>`
-}

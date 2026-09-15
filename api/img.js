@@ -5,10 +5,21 @@
 //   /api/img?url=https://xxx.supabase.co/storage/v1/object/public/photos/...
 //   /api/img?url=...&w=600           → resize to 600px wide, keep aspect ratio
 //   /api/img?url=...&w=600&q=82      → custom quality (1-100, default 82)
+//   /api/img?url=...&w=1200&h=500&fit=cover → crop to an exact 1200×500 band
+//   /api/img?url=...&w=1200&fm=jpg   → force JPEG instead of WebP/AVIF
 //
 // AVIF is served when the browser sends `Accept: image/avif` and a transform
 // is applied. WebP is the default transform output. When no `w` is set we
 // stream the original bytes through (back-compat with old call sites).
+//
+// `h` + `fit=cover` and `fm` esistono per le email. Il ritaglio a rapporto
+// fisso in un client di posta non si può fare (`object-fit` in Outlook non
+// esiste, e un'altezza fissa senza ritaglio schiaccia la foto), quindi lo
+// facciamo qui: la fascia in cima alle email è una foto già tagliata, e il
+// ritaglio "attention" tiene il soggetto invece del centro geometrico —
+// utile con i fotogrammi verticali presi dai video, che arrivano con le
+// bande nere sopra e sotto. `fm=jpg` perché il WebP che serviremmo di nostra
+// iniziativa in Outlook 2016 e in qualche webmail resta un riquadro vuoto.
 
 export const config = {
   // Sharp resize is fast (~200-500ms cold, ~50-150ms warm) so 10s is plenty.
@@ -51,6 +62,13 @@ function parseWidth(raw) {
   return n
 }
 
+// L'altezza vive nello stesso intervallo della larghezza e conta solo
+// insieme a `fit=cover`: da sola non ha senso, perché il ridimensionamento
+// per larghezza già decide l'altezza.
+function parseHeight(raw) {
+  return parseWidth(raw)
+}
+
 function parseQuality(raw) {
   if (!raw) return 88
   const n = Math.floor(Number(raw))
@@ -66,9 +84,12 @@ export default async function handler(req, res) {
   }
 
   const width = parseWidth(req.query.w)
+  const height = parseHeight(req.query.h)
+  const cover = String(req.query.fit || '') === 'cover' && !!height
+  const forceJpeg = /^jpe?g$/i.test(String(req.query.fm || ''))
   const quality = parseQuality(req.query.q)
   const accept = (req.headers['accept'] || '').toString()
-  const wantsAvif = accept.includes('image/avif')
+  const wantsAvif = !forceJpeg && accept.includes('image/avif')
 
   // SSRF guard: parse the URL and allowlist hostname + protocol + path prefix.
   // A plain substring check on `url` is bypassable with e.g.
@@ -130,8 +151,17 @@ export default async function handler(req, res) {
         // cold function invocations finish under the 10s maxDuration.
         const pipeline = sharp(originalBuffer, { failOn: 'none' })
           .rotate()
-          .resize({ width, withoutEnlargement: true })
-        if (wantsAvif) {
+          .resize(cover
+            // Con il ritaglio niente `withoutEnlargement`: chi chiede una
+            // fascia 1200×500 la deve ricevere di quella forma anche se la
+            // foto sorgente è più piccola, altrimenti l'altezza scritta nel
+            // tag <img> non corrisponde e l'immagine si schiaccia.
+            ? { width, height, fit: 'cover', position: 'attention' }
+            : { width, withoutEnlargement: true })
+        if (forceJpeg) {
+          outBuffer = await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer()
+          outContentType = 'image/jpeg'
+        } else if (wantsAvif) {
           outBuffer = await pipeline.avif({ quality, effort: 3 }).toBuffer()
           outContentType = 'image/avif'
         } else {
@@ -159,8 +189,11 @@ export default async function handler(req, res) {
     res.setHeader('CDN-Cache-Control', 'public, s-maxage=31536000, immutable')
     res.setHeader('Vercel-CDN-Cache-Control', 'public, s-maxage=31536000, immutable')
     // Tell the CDN to vary the cache by Accept so AVIF and WebP each get
-    // their own cache entry per URL+width combination.
-    if (width) res.setHeader('Vary', 'Accept')
+    // their own cache entry per URL+width combination. Con `fm` esplicito il
+    // formato non dipende più da chi chiede, e far variare la cache
+    // sull'Accept moltiplicherebbe le copie per niente — nelle email, dove
+    // ogni destinatario è un client diverso, sarebbe una copia a testa.
+    if (width && !forceJpeg) res.setHeader('Vary', 'Accept')
     res.setHeader('Content-Type', outContentType)
     res.setHeader('Content-Length', outBuffer.length)
     res.send(outBuffer)

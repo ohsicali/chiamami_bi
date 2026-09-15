@@ -36,6 +36,13 @@ const call = async (body, headers = {}) => {
   return res
 }
 
+/** Come sopra, ma con metodo e query: la disiscrizione non manda un JSON. */
+const callRaw = async ({ method = 'POST', query = {}, body = {}, headers = {} }) => {
+  const res = mockRes()
+  await handler({ method, query, body, headers, socket: {} }, res)
+  return res
+}
+
 test('il modulo espone un handler', () => {
   assert.equal(typeof handler, 'function')
 })
@@ -90,4 +97,25 @@ test('la conferma di uso vuole il codice QR', async () => {
   const res = await call({ type: 'discount-used' })
   // Senza env si ferma sulla configurazione, con env chiede il codice.
   assert.ok([400, 500].includes(res.statusCode), `atteso 400 o 500, ricevuto ${res.statusCode}`)
+})
+
+
+/* ── Disiscrizione a un clic ───────────────────────────────────────── */
+
+test('la disiscrizione a un clic non passa dal router dei `type`', async () => {
+  // Gmail fa una POST senza il nostro JSON: se finisse nel router normale si
+  // beccherebbe "Missing required field: type" e la persona resterebbe
+  // iscritta convinta di essersi tolta.
+  const res = await callRaw({ query: { unsub: 'non-un-uuid' } })
+  assert.equal(res.statusCode, 400)
+  assert.match(res.body.error, /token/i, 'deve lamentarsi del token, non del `type` mancante')
+})
+
+test('chi apre quell’indirizzo col browser finisce sulle preferenze', async () => {
+  const res = await callRaw({
+    method: 'GET',
+    query: { unsub: '11111111-2222-3333-4444-555555555555' },
+  })
+  assert.equal(res.statusCode, 302)
+  assert.match(res.headers.Location, /\/preferenze-email\?t=11111111/)
 })

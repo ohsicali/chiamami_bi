@@ -24,13 +24,27 @@ export const COLORS = {
   coralloInk: '#C53A33',
   coralloWash: '#FDEDEB',
   ink: '#22181C',
+  // L'inchiostro un filo più chiaro del nero pieno: serve per le due fasce
+  // scure (la card dell'offerta, il riquadro del codice) quando stanno una
+  // sopra l'altra e un nero unico le farebbe sembrare un blocco solo.
+  inkSoft: '#2C2126',
   ink70: '#5C5359',
   ink45: '#8A8388',
-  page: '#FAF7F2',
-  cream: '#F5F0E4',
+  page: '#F3EDE4',
+  cream: '#F7F2E9',
   creamDeep: '#F1EBE0',
   white: '#FFFFFF',
   line: '#E6E1D8',
+  // Il filo d'oro è la cosa che il sito ha e le email non avevano: è quello
+  // che separa un messaggio scritto bene da un volantino. Su fondo chiaro
+  // serve `oro`, su fondo scuro `oroLight` — l'oro del sito sull'inchiostro
+  // diventa marrone e non si legge più.
+  oro: '#B08954',
+  oroDeep: '#8E6B3E',
+  oroLight: '#D9B476',
+  // Il crema sull'inchiostro: il bianco pieno su fondo scuro "vibra", questo no.
+  onInk: '#F6F1E8',
+  onInk70: '#B7ADA0',
   mint: '#AEF3C2',
   mint2: '#7EE5A0',
   mintInk: '#1A4731',
@@ -56,5 +70,37 @@ export const LOGO = {
   coral: `${ASSETS}/guida-bi-coral.png`,
 }
 
+/**
+ * Chi manda, scritto per esteso in fondo a ogni email.
+ *
+ * Non è burocrazia: un messaggio pubblicitario che non dice chi lo manda e
+ * da dove è, per il filtro di Gmail, indistinguibile da uno mandato da
+ * chiunque altro. L'indirizzo vero si mette in `EMAIL_POSTAL_ADDRESS` su
+ * Vercel — finché non c'è, in fondo compare la sola città, che è meglio di
+ * niente ma non quanto una via e un numero civico.
+ */
+export const BRAND = {
+  name: 'ChiamamiBi',
+  tagline: 'La guida ai posti dove tornerei, a Torino.',
+  postal: process.env.EMAIL_POSTAL_ADDRESS || 'ChiamamiBi · Torino, Italia',
+  instagram: 'https://instagram.com/chiamamibi',
+  contact: 'info@chiamamibi.com',
+}
+
 /** Larghezza della colonna: 600px è il massimo che Outlook mostra intero. */
 export const WIDTH = 600
+
+/**
+ * La fascia della foto in cima: 600×250, cioè 2.4 a 1.
+ *
+ * Il numero non è estetico, è la lamentela che ha fatto nascere questa
+ * revisione: la foto arrivava con le sue proporzioni native — spesso un
+ * fotogramma verticale di un video, bande nere comprese — e su un telefono
+ * si mangiava due schermate intere prima che si leggesse una parola. Con un
+ * rapporto fisso la foto è una fascia, il messaggio comincia subito sotto,
+ * e il ritaglio al centro butta via le bande nere invece di mostrarle.
+ *
+ * Il taglio lo fa /api/img (vedi `photoUrl` in blocks.js), non il client di
+ * posta: `object-fit` in Outlook non esiste e lì l'immagine si schiaccerebbe.
+ */
+export const HERO = { w: 600, h: 250 }

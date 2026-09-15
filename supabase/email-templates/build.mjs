@@ -20,7 +20,7 @@
 import { writeFileSync } from 'node:fs'
 import { renderEmail } from '../../api/_email/render.js'
 import { COLORS } from '../../api/_email/theme.js'
-import { h1, p, codeBlock, button, divider, signature } from '../../api/_email/blocks.js'
+import { h1, p, lede, eyebrow, codeBlock, button, divider, note, signature } from '../../api/_email/blocks.js'
 
 /** Il cartello di istruzioni in cima al file, invisibile una volta incollato. */
 const intestazione = (nome, oggetto) => `<!--
@@ -46,16 +46,20 @@ function scrivi(file, nome, oggetto, segnaposto, contenuto) {
 }
 
 scrivi('conferma-registrazione.html', 'Confirm signup', 'Il tuo codice per entrare nel Bi Club', '{{ .Token }}', {
-  preheader: 'Il tuo codice per confermare la registrazione su ChiamamiBi.',
+  preheader: 'Sei cifre e sei dentro: il codice scade fra un\'ora.',
+  reason: 'Ricevi questa email perché qualcuno ha chiesto di registrarsi su ChiamamiBi con questo indirizzo.',
   blocks: [
+    eyebrow('Conferma registrazione'),
     h1('Confermiamo che sei tu.'),
-    p('Scrivi questo codice sul sito, nella schermata dove ti ho lasciato. Scade fra un\'ora.'),
+    lede('Scrivi questo codice sul sito, nella schermata dove ti ho lasciato.'),
     codeBlock({
       code: '{{ .Token }}',
-      note: 'Se non hai richiesto niente, puoi ignorare questa email: senza il codice l\'account non si attiva.',
+      label: 'Il tuo codice',
+      note: 'Scade fra un\'ora.',
     }),
-    divider(),
+    divider({ gold: true }),
     p('Appena confermi, gli sconti del Bi Club sono tuoi.', { size: 15 }),
+    note('Se non hai richiesto niente, puoi ignorare questa email: senza il codice l\'account non si attiva.'),
     signature('— Bi'),
   ],
   text: [
@@ -77,12 +81,14 @@ scrivi('conferma-registrazione.html', 'Confirm signup', 'Il tuo codice per entra
 // senza logo e in Arial.
 scrivi('change-email.html', 'Change Email Address', 'Conferma il nuovo indirizzo email — ChiamamiBi', '{{ .ConfirmationURL }}', {
   preheader: 'Conferma il nuovo indirizzo per continuare a ricevere gli sconti.',
+  reason: 'Ricevi questa email perché è stato chiesto di cambiare l\'indirizzo del tuo account ChiamamiBi.',
   blocks: [
-    h1('Cambio indirizzo.'),
-    p('Hai chiesto di cambiare l\'email del tuo account. Conferma qui sotto e da quel momento ti scrivo al nuovo indirizzo.'),
+    eyebrow('Cambio indirizzo'),
+    h1('Il nuovo indirizzo sei tu?'),
+    lede('Hai chiesto di cambiare l\'email del tuo account. Conferma qui sotto e da quel momento ti scrivo qui.'),
     button('Conferma il nuovo indirizzo', '{{ .ConfirmationURL }}', { bg: COLORS.corallo }),
-    divider(),
-    p('Se non sei stato tu, non fare niente: senza questa conferma l\'indirizzo resta quello di prima.', { size: 15 }),
+    divider({ gold: true }),
+    note('Se non sei stato tu, non fare niente: senza questa conferma l\'indirizzo resta quello di prima.'),
     signature('— Bi'),
   ],
   text: [

@@ -1,6 +1,26 @@
 # Email Flows · ChiamamiBi
 
-**Ultimo aggiornamento:** 24 aprile 2026
+> **15/09/2026 — revisione completa.** Design, contenuti, oggetti e
+> deliverability sono stati rifatti: vedi **`docs/email-sistema.md`**, che è
+> adesso il riferimento per *com'è fatta* un'email e per *cosa la tiene fuori
+> dallo spam*. Questo file resta il riferimento per *cosa parte quando*.
+> Le parti qui sotto marcate ~~così~~ non valgono più.
+>
+> In breve, cosa è cambiato rispetto a quello che leggi sotto:
+> - l'HTML non sta più dentro gli endpoint: tutte le email (queste **più**
+>   benvenuto ristoratore, conferma suggerimento, notifica interna,
+>   candidatura partner e codice di recupero) le costruisce
+>   `api/_email/templates.js`;
+> - `api/partner-application.js` e `api/recovery-otp.js` non chiamano più
+>   Resend da soli, passano da `api/_email/send.js`;
+> - gli oggetti sono cambiati tutti (tabella in `email-sistema.md` §4);
+> - `List-Unsubscribe` punta a `/api/send-email?unsub=<token>`, non più alla
+>   pagina delle preferenze — la POST di Gmail adesso disiscrive davvero;
+> - l'oggetto della notifica interna di candidatura è passato da
+>   `Nuova candidatura partner: X` a `[Bi] Nuova candidatura: X`: **se hai un
+>   filtro in Gmail su quella dicitura, aggiornalo.**
+
+**Ultimo aggiornamento:** 24 aprile 2026 (impianto) · 15 settembre 2026 (revisione)
 **Provider:** [Resend](https://resend.com) (account già configurato pre-v4)
 **Dominio mittente:** `chiamamibi.com` (verificato via DKIM + SPF + DMARC dal 23/04/2026)
 **Mittente default:** `Bi <ciao@chiamamibi.com>`
@@ -17,13 +37,13 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 
 | # | Quando scatta | A chi arriva | Subject | Endpoint | File client che la chiama |
 |---|---|---|---|---|---|
-| 1 | Utente fa signup con Google OAuth | Email utente | `Benvenuta su ChiamamiBi, {firstName}! 🍕` | `POST /api/send-email` type=`user` | `src/lib/hooks/useAuth.js` |
-| 2 | Admin crea ristoratore (genera PIN) | Email ristoratore | `Ciao, sono Bi — il tuo accesso a ChiamamiBi` | `POST /api/send-email` type=`partner` | `src/components/admin/tabs/CredenzialiTab.jsx` (re-send) · `RestaurantForm.jsx` (dead code, era il trigger iniziale) · **GAP**: il nuovo flow admin potrebbe non inviare più all'inserimento iniziale — vedi §Gaps |
-| 3 | Utente compila form "Suggerisci un locale" | Email utente | `Ho ricevuto il tuo suggerimento` | `POST /api/send-email` type=`confirmation` | `src/components/Restaurant/SuggestRestaurantSheet.jsx` |
+| 1 | Utente fa signup con Google OAuth | Email utente | ~~`Benvenuta su ChiamamiBi, {firstName}! 🍕`~~ → `{Nome}, da adesso sei nel Bi Club` | `POST /api/send-email` type=`user` | `src/lib/hooks/useAuth.js` |
+| 2 | Admin crea ristoratore (genera PIN) | Email ristoratore | ~~`Ciao, sono Bi — il tuo accesso a ChiamamiBi`~~ → `{Locale} è nella Guida di Bi: ecco il tuo PIN` | `POST /api/send-email` type=`partner` | `src/components/admin/tabs/CredenzialiTab.jsx` (re-send) · `RestaurantForm.jsx` (dead code, era il trigger iniziale) · **GAP**: il nuovo flow admin potrebbe non inviare più all'inserimento iniziale — vedi §Gaps |
+| 3 | Utente compila form "Suggerisci un locale" | Email utente | ~~`Ho ricevuto il tuo suggerimento`~~ → `Ho preso nota di {Locale}` | `POST /api/send-email` type=`confirmation` | `src/components/Restaurant/SuggestRestaurantSheet.jsx` |
 | 4 | Utente compila form "Suggerisci un locale" | `info@chiamamibi.com` | `[Bi] Nuovo suggerimento: {nome_locale}` | `POST /api/send-email` type=`internal-notify` | `src/components/Restaurant/SuggestRestaurantSheet.jsx` |
-| 5 | Ristoratore candida il locale via form pubblico | `info@chiamamibi.com` (reply-to candidato) | `Nuova candidatura partner: {restaurant_name}` | `POST /api/partner-application` | `src/pages/public/PartnerLandingPage.jsx` |
-| 6a | Utente chiede cambio email account | Email di recupero utente | `{otp} — Codice di recupero ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/SettingsPage.jsx` |
-| 6b | Utente chiede reset password (forgot) | Email utente | `{otp} — Codice di recupero ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/LoginPage.jsx` |
+| 5 | Ristoratore candida il locale via form pubblico | `info@chiamamibi.com` (reply-to candidato) | ~~`Nuova candidatura partner: {restaurant_name}`~~ → `[Bi] Nuova candidatura: {restaurant_name}` | `POST /api/partner-application` | `src/pages/public/PartnerLandingPage.jsx` |
+| 6a | Utente chiede cambio email account | Email di recupero utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/SettingsPage.jsx` |
+| 6b | Utente chiede reset password (forgot) | Email utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/LoginPage.jsx` |
 | 7 | Admin pubblica un nuovo drop | Tutti gli iscritti newsletter (batch) | Variabile (compilato in notify-subscribers.js) | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
 | 8 | Admin invia newsletter manuale (edge function) | Tutti gli iscritti newsletter | Variabile (passato nel body) | Supabase Edge Function `send-newsletter` | **Non ci sono callsite client attivi** — è un endpoint amministrativo |
 
@@ -203,7 +223,12 @@ Il vecchio `RestaurantForm.jsx` inviava automaticamente l'email benvenuto (type=
 
 Stesso pattern: `notify-subscribers` type=`restaurant` esiste come endpoint ma non è chiamato da nessun componente live (solo dal dead code). Se Augusto vuole che un nuovo ristorante triggeri una mail agli iscritti, serve ri-aggancio.
 
-### Gap C — Candidato partner non riceve conferma
+### ~~Gap C — Candidato partner non riceve conferma~~ · CHIUSO
+
+Esiste `type='partner-application-confirmation'` in `send-email.js`, chiamato
+in coda da `api/partner-application.js`. Testo sotto per storia.
+
+### Gap C (storico) — Candidato partner non riceve conferma
 
 Il form su `/partner` manda solo la notifica interna a Bi. Il candidato non riceve "Abbiamo ricevuto la tua candidatura, ti rispondo io". Per un candidato è silenzio dopo il submit — UX meno calda. Da valutare se aggiungere un template type=`partner-application-confirmation` o simile.
 
@@ -251,5 +276,22 @@ Per ogni trigger, il test "happy path" da casella Gmail esterna:
 | 24/04/2026 | PR #89 (PR15a-h) | Admin big reskin. `RestaurantForm.jsx` marcato `@deprecated` ma preservato come file fisico. Possibili gap A, B da verificare |
 
 ---
+
+## 15/09 — revisione design + deliverability
+
+Vedi `docs/email-sistema.md`. In sintesi, quello che tocca questo file:
+
+- **Tutti gli endpoint passano da `_email/send.js`.** `partner-application.js`
+  e `recovery-otp.js` non chiamano più Resend per conto proprio, quindi da
+  adesso anche loro hanno versione a solo testo, `X-Entity-Ref-ID` e mittente
+  coerente.
+- **Il trigger #7 (notifica iscritti) manda anche `our_review`** del locale
+  dentro l'email dello sconto, e usa `photo_url` invece di `thumb_url`.
+- **Nuova rotta:** `POST /api/send-email?unsub=<token>` — disiscrizione a un
+  clic, chiamata da Gmail, non dal sito. `GET` sullo stesso indirizzo
+  reindirizza a `/preferenze-email`.
+- **Anteprima:** `node scripts/email-preview.mjs` genera `docs/email-preview/`
+  con tutte e dodici le email; il pannello admin adesso ne può mandare dodici
+  di prova invece di cinque.
 
 *File auto-generato da audit manuale sorgente `main` HEAD `7e6f406`. Aggiornare quando si toccano gli endpoint `/api/send-email`, `/api/partner-application`, `/api/recovery-otp`, `/api/notify-subscribers`, o la edge function `send-newsletter`.*

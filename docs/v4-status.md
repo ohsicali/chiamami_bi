@@ -1126,3 +1126,66 @@ PR: #228. Branch: `claude/stoic-ritchie-fm9ajh`.
 
 **Da fare**: verifica a schermo su un telefono vero (aprire /esplora,
 toccare "Lista", scorrere in fondo).
+
+## 15/09 — revisione completa del sistema email
+
+Segnalazione, con tre screenshot di un drop arrivato in posta: «le mail sono
+bruttissime, lavorerei sul design che deve sembrare premium, sui contenuti e
+sull'oggetto […] la foto copre troppo spazio […] non devono finire in spam
+mentre ora mi sono finite in spam».
+
+Riferimento completo: **`docs/email-sistema.md`** (com'è fatta un'email, cosa
+la tiene fuori dallo spam, cosa resta da fare ad Augusto).
+**`docs/EMAIL-FLOWS.md`** resta il riferimento per cosa parte quando.
+
+**Cosa c'era**
+
+- `heroPhoto` stampava la foto con le proporzioni native — un fotogramma
+  verticale di un video, bande nere comprese: due schermate di telefono prima
+  di una parola. E partiva da `thumb_url` (400px) dentro una colonna da 600,
+  quindi anche sgranata.
+- Il blocco dell'offerta era un rettangolo corallo pieno a tutta larghezza:
+  volantino, non guida.
+- Cinque email su nove avevano l'HTML scritto a mano dentro l'endpoint —
+  tre testate diverse, due piè di pagina, due coralli (`#E8453C` e `#FF5757`
+  nell'email del codice di recupero).
+- Tre email partivano senza versione a solo testo; il benvenuto senza
+  `List-Unsubscribe`; nessuna diceva chi manda e perché.
+- **Il peggiore**: `List-Unsubscribe` puntava a `/preferenze-email?t=…`, una
+  pagina React. La disiscrizione a un clic (RFC 8058) è una POST che si
+  aspetta il lavoro fatto dal server: la pagina rispondeva 200 con l'HTML del
+  sito, Gmail segnava "disiscritto", la persona continuava a ricevere le email
+  e al giro dopo premeva "segnala come spam".
+
+**Cosa è stato fatto**
+
+- Sistema grafico rifatto (`_email/theme.js`, `blocks.js`, `render.js`):
+  una testata sola, corallo come accento, blocchi importanti sull'inchiostro
+  con il filo d'oro (`--color-oro`, che c'era nei token del sito e nelle email
+  non era mai arrivato), piè di pagina con motivo dell'invio e indirizzo.
+- Foto ritagliata dal server: `/api/img` accetta `h`, `fit=cover` (crop
+  "attention", che butta via le bande nere) e `fm=jpg`. Fascia 600×250.
+- Nove email portate dentro `_email/templates.js` (le cinque che c'erano più
+  benvenuto ristoratore, conferma suggerimento, notifica interna, conferma
+  candidatura, codice di recupero) + le due interne. `send-email.js` da 982 a
+  ~540 righe; `partner-application.js` e `recovery-otp.js` non chiamano più
+  Resend da soli.
+- Oggetti riscritti tutti (tabella in `email-sistema.md` §4).
+- Nuova rotta `POST /api/send-email?unsub=<token>`: disiscrizione a un clic
+  vera, via `set_email_prefs_by_token`. Il `GET` reindirizza alle preferenze.
+- `X-Entity-Ref-ID` per messaggio, mezzo secondo fra un blocco e l'altro,
+  versione testo garantita in `sendEmail`.
+- `node scripts/email-preview.mjs` → `docs/email-preview/index.html`, tutte e
+  dodici le email una accanto all'altra con oggetto e riga d'anteprima.
+- Template Supabase rigenerati (**vanno reincollati nel dashboard Supabase**).
+
+**Da fare — non è codice, lo fa Augusto** (dettagli in `email-sistema.md` §5)
+
+1. Resend → Domains → chiamamibi.com → **spegnere Click tracking** (riscrive i
+   link con un dominio Resend: per un filtro è la definizione di phishing).
+2. Iscrivere il dominio a **Google Postmaster Tools**.
+3. Vercel: `RESEND_FROM` = `Bi di ChiamamiBi <ciao@chiamamibi.com>`,
+   e aggiungere `EMAIL_POSTAL_ADDRESS` con l'indirizzo vero.
+4. Foto profilo su `ciao@chiamamibi.com` (Google Workspace): Gmail la mostra
+   accanto al mittente.
+5. DMARC a `p=quarantine` fra due settimane, dopo aver letto i rapporti.
