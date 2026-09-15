@@ -169,15 +169,21 @@ Quindi non era SPF/DKIM. Era il resto.
 Il codice non può toccare né il DNS né il pannello di Resend. In ordine di
 quanto pesano:
 
-### a) Spegnere il tracciamento dei clic su Resend — **il più importante**
+### a) Il tracciamento dei clic su Resend — **verificato, è già spento**
 
-Resend → *Domains* → `chiamamibi.com` → *Settings*: se **Click tracking** è
-acceso, ogni link nell'email viene riscritto con un indirizzo di Resend. Un
-messaggio dove l'indirizzo scritto e quello vero non coincidono è, per un
-filtro, la definizione di phishing — e su un dominio giovane pesa moltissimo.
-Spegnere **Click tracking**. *Open tracking* si può tenere, ma per adesso
-meglio spegnere anche quello: aggiunge un'immagine invisibile in fondo a ogni
-messaggio.
+Nell'interfaccia attuale di Resend (Domains → `chiamamibi.com` → tab
+*Configuration*) il tracciamento non è un interruttore già acceso: è la
+sezione **"Enable tracking metrics"**, che spiega che per tracciare clic e
+aperture serve prima configurare un **sottodominio di tracciamento** dedicato
+(bottone "Configure"). Finché quel sottodominio non viene creato, i link
+nell'email restano quelli veri — nessun riscritto con un dominio Resend.
+
+Verificato il 15/09: nessun sottodominio di tracciamento è configurato su
+`chiamamibi.com`, quindi **il tracciamento clic è già disattivato** e non
+c'è niente da spegnere. L'unica cosa da *non* fare è cliccare "Configure" e
+attivarlo — un link riscritto con un indirizzo diverso da quello vero è, per
+un filtro, la definizione di phishing, e su un dominio giovane pesa
+moltissimo.
 
 ### b) Iscrivere il dominio a Google Postmaster Tools
 

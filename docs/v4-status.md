@@ -1181,8 +1181,12 @@ la tiene fuori dallo spam, cosa resta da fare ad Augusto).
 
 **Da fare — non è codice, lo fa Augusto** (dettagli in `email-sistema.md` §5)
 
-1. Resend → Domains → chiamamibi.com → **spegnere Click tracking** (riscrive i
-   link con un dominio Resend: per un filtro è la definizione di phishing).
+1. ~~Resend → Domains → chiamamibi.com → spegnere Click tracking~~ —
+   **verificato il 15/09, non serve**: nell'interfaccia attuale il
+   tracciamento è opt-in (tab *Configuration* → "Enable tracking metrics",
+   richiede di configurare un sottodominio dedicato) e su `chiamamibi.com`
+   quel sottodominio non è mai stato creato. Da non fare: cliccare
+   "Configure" e attivarlo.
 2. Iscrivere il dominio a **Google Postmaster Tools**.
 3. Vercel: `RESEND_FROM` = `Bi di ChiamamiBi <ciao@chiamamibi.com>`,
    e aggiungere `EMAIL_POSTAL_ADDRESS` con l'indirizzo vero.
