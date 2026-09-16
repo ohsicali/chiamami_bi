@@ -169,6 +169,38 @@ Al 14/09 le liste create sul sito sono **0**: nessuno ne aveva mai fatta una.
 Coerente col motivo di PR #214 — fino a ieri una lista si poteva creare in un
 posto solo, dentro il foglio che si apre quando salvi un locale.
 
+## 16/09 — crash al login admin: "history.replaceState() more than 100 times"
+
+Augusto segnalava un errore bianco ("Qualcosa è andato storto —
+`history.replaceState()` more than 100 times per 10 seconds") subito dopo il
+login su `/admin/login`, soprattutto da rete mobile lenta.
+
+**Causa**: dopo un `SIGNED_IN` (login vero), `onAuthStateChange` in
+`useAuth.js` aggiorna `user` subito ma rimanda il fetch del profilo (quindi
+`isAdmin`) — di proposito, per non chiedere il lucchetto `navigator.locks`
+mentre il client di auth lo tiene già (vedi commento sopra nel file). Il
+flag `loading` però **non tornava `true`** durante quell'attesa: restava
+`false` da quando la pagina si era aperta. Ogni pagina admin (`AdminDashboard`
+e le altre) fa `if (authLoading) ...; if (!user || !isAdmin) <Navigate to=
+"/admin/login"/>` — con `isAdmin` ancora `false` (profilo non arrivato)
+rimbalzavano subito su `/admin/login`, che a sua volta ha un effetto che
+rimanda a `/admin` appena vede `user`. I due redirect si rincorrevano a
+`replaceState()` finché non tornava la query `profiles` — su rete lenta,
+abbastanza volte da far scattare il limite di sicurezza di Safari/WebKit e
+mandare in crash la pagina.
+
+**Fix**: in `useAuth.js`, sull'evento `SIGNED_IN` (solo quello — non
+`TOKEN_REFRESHED`/`USER_UPDATED`, per non far comparire uno spinner a ogni
+refresh silenzioso del token) `loading` torna `true` finché il profilo non è
+arrivato (con lo stesso timeout di sicurezza `withTimeout` già usato per
+signIn/signUp, così non resta bloccato per sempre se la query non torna).
+Le pagine admin ora mostrano lo spinner invece di rimbalzare.
+
+Non riproducibile in locale (serve una vera latenza di rete verso Supabase
+sull'evento `SIGNED_IN`); verificato che build e i 101 test esistenti
+passano invariati. **Da verificare a schermo dopo il deploy**, login admin
+da rete mobile reale.
+
 ## SQL eseguiti in questa sessione
 
 - `supabase/saved-lists-2026-09-08.sql` ✅ eseguito via connettore Supabase il
