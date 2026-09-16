@@ -15,7 +15,7 @@ import {
   welcomeEmail, newDiscountEmail, newRestaurantEmail,
   discountClaimedEmail, discountUsedEmail, SAMPLE,
 } from '../api/_email/templates.js'
-import { KINDS, unsubscribeUrl, listUnsubscribeHeaders } from '../api/_email/send.js'
+import { KINDS, unsubscribeUrl, oneClickUrl, listUnsubscribeHeaders } from '../api/_email/send.js'
 
 const UNSUB = 'https://chiamamibi.com/preferenze-email?t=abc'
 
@@ -81,10 +81,21 @@ for (const [nome, build] of RICEVUTE) {
 
 test('le intestazioni List-Unsubscribe ci sono quando c’è il token', () => {
   const h = listUnsubscribeHeaders('abc-123')
-  assert.match(h['List-Unsubscribe'], /preferenze-email\?t=abc-123/)
   assert.match(h['List-Unsubscribe'], /mailto:/)
   // È questa che rende il link a un clic invece di una pagina da compilare.
   assert.equal(h['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click')
+})
+
+test('la disiscrizione a un clic punta a un endpoint, non alla pagina React', () => {
+  // Gmail non apre quell'indirizzo: ci fa una POST e si aspetta che il
+  // lavoro sia fatto. Alla pagina React la POST tornava 200 con l'HTML del
+  // sito dentro — "disiscritto" per Gmail, ancora iscritto per davvero.
+  const h = listUnsubscribeHeaders('abc-123')
+  assert.match(h['List-Unsubscribe'], /\/api\/send-email\?unsub=abc-123/)
+  assert.ok(!/preferenze-email/.test(h['List-Unsubscribe']), 'l’intestazione non deve puntare alla pagina')
+  assert.equal(oneClickUrl(null), null)
+  // Il link visibile nel piè di pagina, invece, resta quello bello.
+  assert.match(unsubscribeUrl('abc-123'), /preferenze-email\?t=abc-123/)
 })
 
 test('senza token non si inventa un link finto', () => {
@@ -111,8 +122,41 @@ test('l’oggetto dice la cosa concreta, non la categoria', () => {
 test('un drop si annuncia come drop, una convenzione no', () => {
   const drop = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: true, unsubscribeUrl: UNSUB })
   const conv = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: false, countdown: null, unsubscribeUrl: UNSUB })
-  assert.match(drop.subject, /^Drop:/)
-  assert.ok(!/^Drop:/.test(conv.subject), 'una convenzione non scade, non va annunciata come drop')
+  // L'oggetto non porta più il prefisso "Drop:": un prefisso fisso su ogni
+  // messaggio è la firma delle email automatiche, e in elenco il nome del
+  // locale è la cosa che fa aprire. La fretta resta, ma detta a parole.
+  assert.match(drop.subject, /finché dura/, 'un drop scade, e l’oggetto deve dirlo')
+  assert.ok(!/finché dura/.test(conv.subject), 'una convenzione non scade, non va annunciata come drop')
+  assert.match(drop.subject, /Bar Stampa/)
+  assert.match(conv.subject, /Bar Stampa/)
+})
+
+test('l’oggetto non comincia con il segno meno o la percentuale', () => {
+  // "−50% da Bar Stampa" in elenco sembra un volantino, e i filtri
+  // guardano proprio l'inizio dell'oggetto. Il valore ci sta, ma in mezzo.
+  for (const [nome, build] of ANNUNCI) {
+    const { subject } = build()
+    assert.ok(!/^[−\-%€\d]/.test(subject), `${nome}: l’oggetto comincia con "${subject[0]}"`)
+    assert.equal(subject, subject.replace(/\s{2,}/g, ' '), `${nome}: spazi doppi nell’oggetto`)
+  }
+})
+
+test('ogni email dice perché è arrivata, in HTML e in testo', () => {
+  // È la riga che manca a chi manda pubblicità non richiesta, e la prima
+  // che guarda chi sta decidendo se segnalarci.
+  for (const [nome, build] of TUTTE) {
+    const m = build()
+    assert.match(m.html, /Ricevi questa email perché/, `${nome}: manca il motivo nell’HTML`)
+    assert.match(m.text, /Ricevi questa email perché/, `${nome}: manca il motivo nel testo`)
+  }
+})
+
+test('ogni email dice chi la manda e da dove', () => {
+  for (const [nome, build] of TUTTE) {
+    const m = build()
+    assert.match(m.html, /Torino/, `${nome}: manca l’identità del mittente`)
+    assert.match(m.text, /Torino/, `${nome}: manca l’identità del mittente nel testo`)
+  }
 })
 
 /* ── Testo che arriva dal database ─────────────────────────────────── */
@@ -138,6 +182,17 @@ test('i campi facoltativi mancanti non lasciano buchi né "undefined"', () => {
   })
   assert.ok(!/undefined|null|NaN/.test(m.html), 'un campo vuoto non deve stampare "undefined"')
   assert.ok(m.html.includes('Posto Nudo'))
+})
+
+test('uno sconto senza valore leggibile non lascia un oggetto monco', () => {
+  // Succede con un omaggio salvato senza titolo: prima usciva
+  // "Senza Valore: , da oggi nel Club".
+  const drop = newDiscountEmail({ value: '', restaurantName: 'Bar Senza', href: 'x', isDrop: true, unsubscribeUrl: UNSUB })
+  const conv = newDiscountEmail({ value: '', restaurantName: 'Bar Senza', href: 'x', isDrop: false, unsubscribeUrl: UNSUB })
+  for (const m of [drop, conv]) {
+    assert.ok(!/:\s*,/.test(m.subject), `oggetto monco: ${m.subject}`)
+    assert.match(m.subject, /Bar Senza/)
+  }
 })
 
 test('il nome di battesimo si prende dal nome completo', () => {

@@ -12,5 +12,6 @@ export {
   formatDiscountValue,
   formatDiscountBadge,
   formatDiscountBadgeShort,
+  isBareDiscountValue,
   pickPerk,
 } from '../../src/lib/utils/discountFormat.js'
