@@ -221,9 +221,41 @@ user?.id` — vero ogni volta che c'è un `user` ma il profilo caricato non è
 ancora (o non è più) il suo, qualunque sia la strada che ci ha portati lì.
 Aggiunto anche un fallback: se il fetch del profilo non torna entro
 `AUTH_TIMEOUT_MS`, si mette un profilo minimo non-admin così l'app non
-resta bloccata in caricamento per sempre. **Da verificare di nuovo a
-schermo sul sito live** dopo il prossimo deploy, login admin da rete
-mobile reale — lo stesso test che ha fatto emergere il buco precedente.
+resta bloccata in caricamento per sempre.
+
+**Aggiornamento 3 (17/09, dopo il secondo deploy) — la causa vera**: crash
+ancora identico, anche con questo fix. Verificato leggendo direttamente il
+bundle JS servito da `chiamamibi.com` (non fidandosi più della sola
+diagnosi teorica): il fix di useAuth.js **era** in produzione
+(`profileMatchesUser`/`effectiveLoading` presenti nel bundle minificato),
+quindi non era un problema di cache/deploy. Controllato anche il DB via
+connettore Supabase: l'account admin ha `is_admin: true`, una sola riga in
+`profiles`, RLS in lettura aperta (`Public read basic profile info`,
+`SELECT ... USING (true)`) — nessuna ricorsione, nessun blocco.
+
+Il bug vero era un altro, mai toccato dai due fix precedenti perché stava
+in un file diverso: **`AdminLogin.jsx` non controllava mai `isAdmin`**,
+solo `user`:
+
+```js
+useEffect(() => {
+  if (!loading && user) navigate('/admin', { replace: true })
+}, [user, loading, navigate])
+```
+
+Qualunque account autenticato — non necessariamente quello giusto, o in
+qualunque momento in cui `isAdmin` risultasse `false` — veniva rimandato a
+`/admin`. Lì `AdminDashboard` nega l'accesso e rimanda a `/admin/login`,
+che (vedendo comunque `user` valorizzato) rimandava di nuovo a `/admin`:
+un ping-pong permanente e deterministico di `history.replaceState()`, non
+una corsa intermittente — coerente con "torna sempre identico", a
+differenza dei primi due bug che erano invece delle corse vere.
+
+Corretto: l'effetto ora aspetta anche `isAdmin` prima di navigare, e se
+l'account è autenticato ma non è admin mostra un messaggio ("Questo
+account non ha i permessi di amministratore") e fa logout, invece di
+rimbalzare. **Verificare di nuovo a schermo sul sito live** con l'account
+admin vero (`ale.cali@icloud.com`) dopo il prossimo deploy.
 
 ## SQL eseguiti in questa sessione
 
