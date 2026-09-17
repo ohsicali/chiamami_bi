@@ -12,6 +12,7 @@ import CityPickerSheet from '../../components/UI/CityPickerSheet'
 import { useCity } from '../../lib/CityContext'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
 import { PageLoader } from '../../components/UI/LoadingSpinner'
+import { LogoFull } from '../../components/UI/Logo'
 
 // Caricata solo su desktop: da telefono questo codice non viene scaricato.
 const DesktopProfilePage = lazy(() => import('./DesktopProfilePage'))
@@ -291,8 +292,7 @@ export default function ProfilePage() {
       }}>
         <div className="flex items-center justify-between" style={{ paddingBottom: 14 }}>
           <Link to="/" className="flex flex-col items-start" style={{ gap: 1 }}>
-            <img src="/logo-guida-bi.png" alt="La Guida di Bi" style={{ height: 22, width: 'auto' }} />
-            <span style={{ fontSize: 9, color: 'var(--color-secondary)', fontWeight: 500, letterSpacing: 1.5, textTransform: 'uppercase' }}>by Chiamami Bi</span>
+            <LogoFull height={22} />
           </Link>
           <button onClick={() => setCityPickerOpen(true)} className="flex items-center gap-1.5" style={{
             fontSize: 12, color: 'var(--color-ink-70)', fontWeight: 600, padding: '6px 12px', borderRadius: 20,

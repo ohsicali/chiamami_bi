@@ -31,18 +31,20 @@ function preheaderBlock(text) {
 }
 
 /**
- * La testata: marchio al centro, città sotto, filo.
+ * La testata: marchio al centro, "by Chiamami Bi" sotto, filo.
  *
  * Il logo è un PNG e non del testo perché il carattere del marchio (Alfa
  * Slab One) in Gmail e Outlook non si carica, e al suo posto comparirebbe
- * un Times qualunque — cioè il marchio di qualcun altro.
+ * un Times qualunque — cioè il marchio di qualcun altro. Corallo e la riga
+ * "by Chiamami Bi" sotto: la stessa testata che il sito mostra in navbar,
+ * footer e header mobile (vedi Navbar.jsx / Footer.jsx / MobileLogoHeader.jsx).
  */
 function masthead() {
   return `<tr><td style="background:${COLORS.white};padding:30px 32px 0;" align="center">
     <a href="${SITE_URL}" style="text-decoration:none;">
-      <img src="${LOGO.ink}" width="150" alt="La Guida di Bi" style="display:block;width:150px;max-width:150px;height:auto;border:0;outline:none;" />
+      <img src="${LOGO.coral}" width="150" alt="La Guida di Bi" style="display:block;width:150px;max-width:150px;height:auto;border:0;outline:none;" />
     </a>
-    <div style="font-family:${FONT_BODY};font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:${COLORS.oro};padding:12px 0 22px;">Torino</div>
+    <div style="font-family:${FONT_BODY};font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:${COLORS.ink45};padding:10px 0 22px;">by Chiamami Bi</div>
   </td></tr>
   <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:${COLORS.line};font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>`
 }
@@ -63,7 +65,7 @@ function masthead() {
 function footer({ unsubscribeUrl, unsubscribeLabel, reason }) {
   const link = (href, label) => `<a href="${href}" style="color:${COLORS.ink70};text-decoration:none;border-bottom:1px solid ${COLORS.line};">${label}</a>`
   return `<tr><td style="background:${COLORS.cream};padding:30px 32px 34px;" align="center">
-    <img src="${LOGO.ink}" width="104" alt="ChiamamiBi" style="display:block;width:104px;max-width:104px;height:auto;border:0;outline:none;" />
+    <img src="${LOGO.coral}" width="104" alt="ChiamamiBi" style="display:block;width:104px;max-width:104px;height:auto;border:0;outline:none;" />
     <div style="font-family:${FONT_BODY};font-size:13px;line-height:1.6;color:${COLORS.ink70};padding-top:14px;">
       ${esc(BRAND.tagline)}
     </div>
