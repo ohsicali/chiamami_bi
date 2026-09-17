@@ -198,8 +198,15 @@ Le pagine admin ora mostrano lo spinner invece di rimbalzare.
 
 Non riproducibile in locale (serve una vera latenza di rete verso Supabase
 sull'evento `SIGNED_IN`); verificato che build e i 101 test esistenti
-passano invariati. **Da verificare a schermo dopo il deploy**, login admin
-da rete mobile reale.
+passano invariati.
+
+**Aggiornamento**: Augusto ha riprovato sul sito live e il crash si
+ripresentava ancora — a quel punto il fix era pronto ma solo in PR #69
+draft (#233), mai mergiato: il sito in produzione girava ancora sul codice
+vecchio. Mergiato #233 su `main` (squash, commit `faaacb4`) il 17/09,
+deploy Vercel di produzione partito subito dopo. **Da verificare a schermo
+sul sito live** dopo che il deploy è finito, login admin da rete mobile
+reale.
 
 ## SQL eseguiti in questa sessione
 
