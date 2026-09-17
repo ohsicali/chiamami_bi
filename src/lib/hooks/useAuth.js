@@ -147,6 +147,18 @@ export function AuthProvider({ children }) {
       const authUser = session?.user ?? null
       setUser(authUser)
       if (authUser) {
+        // Un vero login (`SIGNED_IN`) lascia `user` valorizzato mentre il
+        // profilo — quindi `isAdmin` — arriva ancora un attimo dopo (vedi
+        // sotto). Nel frattempo `loading` deve tornare `true`: altrimenti le
+        // pagine admin, che aspettano solo `authLoading`, leggono `isAdmin
+        // === false` (profilo non ancora arrivato) e rimbalzano su
+        // `/admin/login`, che a sua volta rimanda a `/admin` appena vede
+        // `user` — un ping-pong di `history.replaceState()` che su rete
+        // lenta arriva a superare il limite che Safari/WebKit impone
+        // (100 chiamate/10s) e manda in crash la pagina. Un timeout di
+        // sicurezza evita che resti bloccato per sempre se la query sul
+        // profilo non torna.
+        if (event === 'SIGNED_IN') setLoading(true)
         // Il `setTimeout(0)` non è un ritardo estetico: dentro la callback di
         // onAuthStateChange non si possono chiamare altre funzioni Supabase.
         // La callback viene eseguita — e attesa — mentre il client di
@@ -156,7 +168,10 @@ export function AuthProvider({ children }) {
         // fine giro il lucchetto è già stato rilasciato. È la raccomandazione
         // di Supabase stesso; noi l'abbiamo sempre fatto al contrario.
         setTimeout(() => {
-          fetchProfile(authUser)
+          const profilePromise = fetchProfile(authUser)
+          if (event === 'SIGNED_IN') {
+            withTimeout(profilePromise).catch(() => {}).finally(() => setLoading(false))
+          }
           // Sync email to profiles when it changes (e.g. after email change confirmation)
           // Skip for Google OAuth users — their profile email is managed separately as a contact email
           const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
