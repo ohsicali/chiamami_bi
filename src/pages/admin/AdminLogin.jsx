@@ -10,13 +10,25 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const { user, loading, signIn } = useAuth()
+  const { user, loading, isAdmin, signIn, signOut } = useAuth()
   const navigate = useNavigate()
 
-  // Redirect if already authenticated
+  // Redirect solo quando sappiamo per certo che l'account loggato è admin —
+  // mai sul solo `user`: un account autenticato ma non admin farebbe
+  // rimbalzare per sempre con AdminDashboard (che nega l'accesso e rimanda
+  // qui), un ping-pong di history.replaceState() che su rete lenta può far
+  // scattare il limite di sicurezza di Safari/WebKit e mandare in crash la
+  // pagina. `isAdmin` arriva un attimo dopo `user` (il profilo si carica in
+  // modo asincrono), quindi questo effetto riparte da solo quando è pronto.
   useEffect(() => {
-    if (!loading && user) navigate('/admin', { replace: true })
-  }, [user, loading, navigate])
+    if (loading || !user) return
+    if (isAdmin) {
+      navigate('/admin', { replace: true })
+    } else {
+      setError('Questo account non ha i permessi di amministratore.')
+      signOut()
+    }
+  }, [user, loading, isAdmin, navigate, signOut])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -24,7 +36,9 @@ export default function AdminLogin() {
     setSubmitting(true)
     try {
       await signIn(email, password)
-      navigate('/admin')
+      // Il redirect (o il messaggio di accesso negato) lo fa l'effetto qui
+      // sopra non appena isAdmin è noto — non subito: il profilo arriva un
+      // attimo dopo l'accesso.
     } catch (err) {
       setError(err.message || 'Credenziali non valide')
     } finally {
