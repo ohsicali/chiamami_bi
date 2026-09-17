@@ -1281,3 +1281,51 @@ la tiene fuori dallo spam, cosa resta da fare ad Augusto).
 4. Foto profilo su `ciao@chiamamibi.com` (Google Workspace): Gmail la mostra
    accanto al mittente.
 5. DMARC a `p=quarantine` fra due settimane, dopo aver letto i rapporti.
+
+## 17/09 — logo vecchio in email, login admin e altre pagine auth
+
+Augusto segnalava (con screenshot di una email di prova) che il logo non era
+quello del sito live: nella testata delle email c'era "LA GUIDA DI BI" in nero
+con "TORINO" sotto, invece del marchio corallo con "by Chiamami Bi" sotto che
+usano Navbar/Footer/MobileLogoHeader sul sito.
+
+Girando il codice sono uscite **tre fonti diverse per lo stesso marchio**,
+tutte disallineate dal sito live in modi diversi:
+
+| Dove | Cos'era | Font/colore |
+|---|---|---|
+| Email (`api/_email/render.js` → `masthead()`/`footer()`) | `guida-bi-ink.png` + testo "Torino" | Font giusto (Alfa Slab One), ma nero invece di corallo, e "Torino" invece di "by Chiamami Bi" |
+| `LogoFull` (`src/components/UI/Logo.jsx`) — usato da `AdminLogin`, `ResetPasswordPage`, `TermsPage`, `PrivacyPage`, `AuthCallback` | `/logo-full.svg` | Font **completamente diverso** (non Alfa Slab One), colore `#ff5757` invece di `#E8453C` |
+| `ProfilePage.jsx` (header sticky mobile) | `/logo-guida-bi.png` | Font "gommoso" arrotondato, non Alfa Slab One |
+
+**Fix**: un solo componente, un solo template email.
+
+- `LogoFull` non è più un'immagine: ora è testo — "LA GUIDA DI BI" (Alfa Slab
+  One, `var(--color-corallo)`) + "by Chiamami Bi" sotto (Poppins 700,
+  maiuscolo, grigio) — lo stesso markup di `Navbar.jsx`/`Footer.jsx`/
+  `MobileLogoHeader.jsx`, solo scalato dalla prop `height`. Fixa in un colpo
+  solo, cinque pagine.
+- `ProfilePage.jsx`: sostituita l'`<img>` vecchia + lo `by Chiamami Bi`
+  scritto a mano con `<LogoFull height={22} />` (che ora lo include già).
+- `api/_email/render.js`: `masthead()` e `footer()` ora usano
+  `LOGO.coral` invece di `LOGO.ink`, e la riga sotto il logo dice
+  "by Chiamami Bi" (colore `COLORS.ink45`, niente `rgba()` — vietato dal
+  test `reggono dove i client di posta sono severi`) invece di "Torino".
+- Rigenerati `supabase/email-templates/*.html` con
+  `node supabase/email-templates/build.mjs` (il test
+  `tests/supabase-templates.test.mjs` confronta questi file col codice, va
+  rilanciato ad ogni modifica di `render.js`/`blocks.js`) e
+  `docs/email-preview/*` con `node scripts/email-preview.mjs`.
+- **Da fare — non è codice**: reincollare `conferma-registrazione.html` e
+  `change-email.html` nel dashboard Supabase (Authentication → Email
+  Templates), altrimenti le due email di Supabase continuano a mandare la
+  versione vecchia finché qualcuno non li reincolla.
+
+I file immagine vecchi (`/logo-full.svg`, `/logo-guida-bi.png`) restano su
+disco ma non sono più referenziati da nessun file in `src/`: non cancellati
+di proposito, per non toccare altro oltre al logo.
+
+**Verificato**: `npm test` — 66/68 passano (i 2 rossi sono
+`tests/ai-engine.test.mjs` e `tests/send-email-routes.test.mjs`, entrambi
+falliscono per `@supabase/supabase-js` mancante da `node_modules` in questo
+ambiente, non collegati a questa modifica).
