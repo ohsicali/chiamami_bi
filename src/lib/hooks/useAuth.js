@@ -132,14 +132,24 @@ export function AuthProvider({ children }) {
       setLoading(false)
       return
     }
+    // Se il fetch del profilo per l'utente attuale non torna mai (rete che
+    // muore a metà), non lasciamo `profile` orfano per sempre: dopo
+    // AUTH_TIMEOUT_MS mettiamo un profilo minimo non-admin, così chi aspetta
+    // `isAdmin` non resta bloccato. Vedi il commento su `profileMatchesUser`
+    // più sotto per perché questo conta.
+    const fetchProfileSafely = (authUser) => {
+      withTimeout(fetchProfile(authUser)).catch(() => {
+        setProfile((p) => (p && p.id === authUser.id ? p : { id: authUser.id, is_admin: false }))
+      })
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       const authUser = session?.user ?? null
       setUser(authUser)
       if (authUser) {
-        fetchProfile(authUser).finally(() => setLoading(false))
-      } else {
-        setLoading(false)
+        fetchProfileSafely(authUser)
       }
+      setLoading(false)
     }).catch(() => {
       setLoading(false)
     })
@@ -147,18 +157,6 @@ export function AuthProvider({ children }) {
       const authUser = session?.user ?? null
       setUser(authUser)
       if (authUser) {
-        // Un vero login (`SIGNED_IN`) lascia `user` valorizzato mentre il
-        // profilo — quindi `isAdmin` — arriva ancora un attimo dopo (vedi
-        // sotto). Nel frattempo `loading` deve tornare `true`: altrimenti le
-        // pagine admin, che aspettano solo `authLoading`, leggono `isAdmin
-        // === false` (profilo non ancora arrivato) e rimbalzano su
-        // `/admin/login`, che a sua volta rimanda a `/admin` appena vede
-        // `user` — un ping-pong di `history.replaceState()` che su rete
-        // lenta arriva a superare il limite che Safari/WebKit impone
-        // (100 chiamate/10s) e manda in crash la pagina. Un timeout di
-        // sicurezza evita che resti bloccato per sempre se la query sul
-        // profilo non torna.
-        if (event === 'SIGNED_IN') setLoading(true)
         // Il `setTimeout(0)` non è un ritardo estetico: dentro la callback di
         // onAuthStateChange non si possono chiamare altre funzioni Supabase.
         // La callback viene eseguita — e attesa — mentre il client di
@@ -168,10 +166,7 @@ export function AuthProvider({ children }) {
         // fine giro il lucchetto è già stato rilasciato. È la raccomandazione
         // di Supabase stesso; noi l'abbiamo sempre fatto al contrario.
         setTimeout(() => {
-          const profilePromise = fetchProfile(authUser)
-          if (event === 'SIGNED_IN') {
-            withTimeout(profilePromise).catch(() => {}).finally(() => setLoading(false))
-          }
+          fetchProfileSafely(authUser)
           // Sync email to profiles when it changes (e.g. after email change confirmation)
           // Skip for Google OAuth users — their profile email is managed separately as a contact email
           const isGoogleUser = authUser.app_metadata?.provider === 'google' || authUser.app_metadata?.providers?.includes('google')
@@ -267,7 +262,31 @@ export function AuthProvider({ children }) {
 
   const isAdmin = profile?.is_admin === true
 
-  const value = { user, profile, loading, isAdmin, signIn, signUp, verifySignupOtp, resendSignupOtp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
+  // Dopo un login vero, `user` viene valorizzato subito ma il profilo (quindi
+  // `is_admin`) arriva un attimo dopo con un fetch asincrono — rimandato di
+  // proposito per non chiedere il lucchetto `navigator.locks` mentre il
+  // client di autenticazione lo tiene già (vedi sopra). Se le pagine admin
+  // considerassero `loading` finito in quella finestra, leggerebbero
+  // `isAdmin === false` (profilo non ancora arrivato, o ancora quello
+  // dell'utente precedente) e rimbalzerebbero su `/admin/login` — che a sua
+  // volta rimanda a `/admin` appena vede `user`: un ping-pong di
+  // `history.replaceState()` che su rete lenta arriva a superare il limite
+  // di sicurezza di Safari/WebKit e manda in crash la pagina (successo il
+  // 16-17/09, vedi docs/v4-status.md).
+  //
+  // Un tentativo precedente provava a inseguire l'evento `SIGNED_IN` per
+  // riportare `loading` a `true` — ma l'ordine esatto fra la promise di
+  // `signIn()` e il fire di quell'evento non è garantito, quindi la corsa
+  // poteva ripresentarsi. Qui invece `loading` dipende da un confronto
+  // diretto: finché c'è un `user` ma `profile` non è ancora il SUO profilo
+  // (`profile.id !== user.id`, vero anche appena dopo il login quando
+  // `profile` è ancora `null` o è rimasto quello della sessione precedente),
+  // l'app è considerata "in caricamento" — a prescindere da quale evento
+  // l'abbia scatenato o da quando è arrivato.
+  const profileMatchesUser = !user || (profile != null && profile.id === user.id)
+  const effectiveLoading = loading || (!!user && !profileMatchesUser)
+
+  const value = { user, profile, loading: effectiveLoading, isAdmin, signIn, signUp, verifySignupOtp, resendSignupOtp, signInWithGoogle, signOut, refreshProfile, resetPasswordForEmail }
   return React.createElement(AuthContext.Provider, { value }, children)
 }
 
