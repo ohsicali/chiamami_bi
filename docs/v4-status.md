@@ -200,13 +200,30 @@ Non riproducibile in locale (serve una vera latenza di rete verso Supabase
 sull'evento `SIGNED_IN`); verificato che build e i 101 test esistenti
 passano invariati.
 
-**Aggiornamento**: Augusto ha riprovato sul sito live e il crash si
+**Aggiornamento 1**: Augusto ha riprovato sul sito live e il crash si
 ripresentava ancora — a quel punto il fix era pronto ma solo in PR #69
 draft (#233), mai mergiato: il sito in produzione girava ancora sul codice
 vecchio. Mergiato #233 su `main` (squash, commit `faaacb4`) il 17/09,
-deploy Vercel di produzione partito subito dopo. **Da verificare a schermo
-sul sito live** dopo che il deploy è finito, login admin da rete mobile
-reale.
+deploy Vercel di produzione partito subito dopo.
+
+**Aggiornamento 2 (17/09, dopo il deploy)**: crash identico riprodotto di
+nuovo da Augusto **dopo** il deploy — quindi il fix `SIGNED_IN` non
+bastava. Causa del buco: il fix inseguiva l'evento `SIGNED_IN` per far
+tornare `loading` a `true`, ma l'ordine esatto fra la promise di `signIn()`
+(che risolve in `AdminLogin.jsx` e lì chiama subito `navigate('/admin')`) e
+il momento in cui quell'evento arriva **non è garantito** — su certe reti
+la navigazione poteva partire prima che `loading` tornasse `true`,
+riaprendo esattamente lo stesso ping-pong.
+
+Rifatto in modo che non dipenda più da quale evento o da quando arriva:
+`loading` ora è derivato da un confronto diretto, `profile?.id !==
+user?.id` — vero ogni volta che c'è un `user` ma il profilo caricato non è
+ancora (o non è più) il suo, qualunque sia la strada che ci ha portati lì.
+Aggiunto anche un fallback: se il fetch del profilo non torna entro
+`AUTH_TIMEOUT_MS`, si mette un profilo minimo non-admin così l'app non
+resta bloccata in caricamento per sempre. **Da verificare di nuovo a
+schermo sul sito live** dopo il prossimo deploy, login admin da rete
+mobile reale — lo stesso test che ha fatto emergere il buco precedente.
 
 ## SQL eseguiti in questa sessione
 
