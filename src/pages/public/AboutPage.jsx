@@ -331,7 +331,7 @@ export default function AboutPage() {
         >
           <motion.a
             variants={fadeUp}
-            href="https://instagram.com/chiamamibi"
+            href="https://www.instagram.com/chiamami_bi/"
             target="_blank" rel="noopener noreferrer"
             style={socialCardStyle()}
           >

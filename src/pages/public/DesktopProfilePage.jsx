@@ -329,7 +329,7 @@ export default function DesktopProfilePage() {
             {/* Social buttons */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
               <button
-                onClick={() => window.open('https://instagram.com/chiamamibi', '_blank')}
+                onClick={() => window.open('https://www.instagram.com/chiamami_bi/', '_blank')}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                   padding: '13px 16px', borderRadius: 12,
