@@ -1337,7 +1337,14 @@
   text-align: center;
   line-height: 1.4;
 }
-.v4-scan-manual input {
+/* Figlio diretto, non discendente: questo campo è per il codice lungo di
+   `manual-long` (un <input> direttamente dentro il form). Un selettore
+   discendente colpirebbe anche le sei caselle di ShortCodeInput — sono
+   annidate dentro `.sc-code-input` ma stanno comunque dentro questo stesso
+   form in modalità `manual` — e con specificità più alta della loro
+   `.sc-code-cell` le trasformerebbe in sei campi larghi al 100%, uno per
+   riga: esattamente il bug visto in produzione. */
+.v4-scan-manual > input {
   width: 100%;
   background: rgba(255, 255, 255, 0.08);
   border: 1.5px solid rgba(255, 255, 255, 0.18);
@@ -1351,7 +1358,7 @@
   letter-spacing: 1.5px;
   outline: none;
 }
-.v4-scan-manual input:focus {
+.v4-scan-manual > input:focus {
   border-color: var(--color-corallo);
 }
 .v4-scan-manual .submit {
