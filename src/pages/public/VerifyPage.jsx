@@ -7,7 +7,9 @@ import InvalidNowResult from '../../components/Verify/InvalidNowResult'
 import SuccessResult from '../../components/Verify/SuccessResult'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
+import ShortCodeInput from '../../components/Verify/ShortCodeInput'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
+import { SHORT_CODE_LENGTH, isShortCode, normalizeShortCode } from '../../lib/shortCode'
 
 
 function normalizeRestaurant(r) {
@@ -1112,8 +1114,16 @@ function ImpostazioniTab({ restaurant, deviceToken, onLogout, onSessionExpired }
 /* Stub Scanner overlay — wrappa VerifyTab in overlay nero con close.
    Sostituito con versione full-bleed black + corner brackets nel commit successivo. */
 function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCodeConsumed }) {
-  const [mode, setMode] = useState('camera') // 'camera' | 'manual'
+  // 'camera'      → scansione QR
+  // 'manual'      → le sei caselle del codice dettato dal cliente
+  // 'manual-long' → campo libero, per il codice lungo dei PDF già stampati
+  //                 o per un link incollato
+  const [mode, setMode] = useState('camera')
   const [code, setCode] = useState('')
+  // Codice rifiutato mentre si digita: invece di sbattere il ristoratore su
+  // una schermata di errore per una cifra sbagliata, le caselle tremano e
+  // restano lì da correggere.
+  const [typedError, setTypedError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null) // { status, reason, data }
   const [camStatus, setCamStatus] = useState('starting') // 'starting' | 'running' | 'no-camera' | 'denied' | 'error'
@@ -1135,10 +1145,11 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
     return () => { document.body.style.overflow = prev }
   }, [])
 
-  const verifyCode = async (rawCode) => {
+  const verifyCode = async (rawCode, { inline = false } = {}) => {
     const trimmed = extractQrCode(rawCode)
     if (!trimmed || loading) return
     setLoading(true)
+    setTypedError(null)
     try {
       const token = getCookie(COOKIE_NAME)
       if (!token) {
@@ -1169,15 +1180,26 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
         // l'email è un di più che arriva quando arriva. L'autorizzazione è
         // il codice stesso — averlo letto vuol dire avere il telefono del
         // cliente davanti.
+        // `qrCode` e non `trimmed`: se il locale ha digitato il codice corto,
+        // `trimmed` è quello, mentre /api/send-email cerca il riscatto per
+        // qr_code. La RPC ci restituisce il codice canonico apposta.
+        const canonicalCode = payload.qr_code || trimmed
         fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'discount-used', qrCode: trimmed }),
+          body: JSON.stringify({ type: 'discount-used', qrCode: canonicalCode }),
         }).catch(() => {})
       }
       if (resp.status === 'unauthorized') {
         deleteCookie(COOKIE_NAME)
         setResult({ status: 'error', data: { message: 'Sessione non valida, rientra con il PIN.' } })
+        return
+      }
+      // Codice digitato che non esiste: quasi sempre è un carattere letto
+      // male. Si corregge sul posto, senza passare da una schermata di
+      // errore e tornare indietro a riscriverlo tutto.
+      if (inline && resp.status === 'not_found') {
+        setTypedError('Questo codice non risulta. Controlla i caratteri con il cliente.')
         return
       }
       setResult({ status: resp.status, reason: resp.reason, data: normalized })
@@ -1300,22 +1322,38 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
     }
   }
 
-  // Auto-focus manual input when switching to manual mode
+  // Auto-focus del campo libero. Le sei caselle si mettono a fuoco da sole
+  // (ci pensa ShortCodeInput).
   useEffect(() => {
-    if (mode === 'manual' && !result) setTimeout(() => inputRef.current?.focus(), 50)
+    if (mode === 'manual-long' && !result) setTimeout(() => inputRef.current?.focus(), 50)
   }, [mode, result])
 
   const resetForNextScan = () => {
     setCode('')
+    setTypedError(null)
     setResult(null)
     lastScanRef.current = { code: null, at: 0 }
     setMode('camera')
   }
 
+  const openManual = () => {
+    setCode('')
+    setTypedError(null)
+    setMode('manual')
+  }
+
   const handleManualSubmit = (e) => {
+    e?.preventDefault?.()
+    verifyCode(code, { inline: true })
+  }
+
+  const handleLongSubmit = (e) => {
     e?.preventDefault?.()
     verifyCode(code)
   }
+
+  const typedCode = normalizeShortCode(code)
+  const typedReady = isShortCode(typedCode)
 
   // ============ AUTO-VERIFY PENDING (deep-link da fotocamera del telefono) ===
   if (autoVerifyPending && !result) {
@@ -1381,7 +1419,9 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
         >
           ✕
         </button>
-        <div className="v4-scan-title">{mode === 'manual' ? 'Inserisci il codice' : 'Scansiona il QR'}</div>
+        <div className="v4-scan-title">
+          {mode === 'camera' ? 'Scansiona il QR' : 'Inserisci il codice'}
+        </div>
         {mode === 'camera' && camStatus === 'running' ? (
           <button
             type="button"
@@ -1410,10 +1450,13 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
               </div>
               <div className="v4-scan-hint">
                 <div className="h1">Inquadra il QR del cliente</div>
-                <div className="h2">Il codice è nella sua app, dentro la scheda del tuo ristorante</div>
+                <div className="h2">
+                  Se la fotocamera non lo legge, fatti dettare il codice di sei caratteri
+                  che il cliente ha sotto il QR
+                </div>
               </div>
               <div className="v4-scan-bottom">
-                <button type="button" className="v4-scan-btn" onClick={() => setMode('manual')}>
+                <button type="button" className="v4-scan-btn" onClick={openManual}>
                   ⌨︎  Inserisci codice
                 </button>
                 <a className="v4-scan-btn" href="mailto:info@chiamamibi.com" style={{ textDecoration: 'none' }}>
@@ -1473,7 +1516,7 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
               </div>
               <button
                 type="button"
-                onClick={() => setMode('manual')}
+                onClick={openManual}
                 style={{
                   marginTop: 18, padding: '14px 22px', borderRadius: 14,
                   background: 'var(--color-cta)', color: '#fff', border: 0,
@@ -1488,14 +1531,65 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
         </>
       )}
 
-      {/* MANUAL mode: full-screen black input form */}
+      {/* MANUAL mode: le sei caselle del codice dettato dal cliente */}
       {mode === 'manual' && (
         <form className="v4-scan-manual" onSubmit={handleManualSubmit}>
-          <h2>Inserisci il codice</h2>
+          <h2>Codice del cliente</h2>
           <p>
-            Scrivi il codice{' '}
+            Sei caratteri, sotto il suo QR: <strong>una lettera</strong> e cinque numeri.
+          </p>
+
+          <ShortCodeInput
+            value={code}
+            onChange={(next) => { setCode(next); setTypedError(null) }}
+            onComplete={(full) => verifyCode(full, { inline: true })}
+            disabled={loading}
+            invalid={!!typedError}
+          />
+
+          <div className={`v4-scan-manual-msg ${typedError ? 'is-error' : ''}`} role="status">
+            {typedError || (
+              typedReady
+                ? 'Ci siamo — verifico.'
+                : `Ancora ${SHORT_CODE_LENGTH - typedCode.length} ${SHORT_CODE_LENGTH - typedCode.length === 1 ? 'carattere' : 'caratteri'}`
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="submit"
+            disabled={!typedReady || loading}
+          >
+            {loading ? 'Verifica…' : 'Attiva lo sconto'}
+          </button>
+
+          <button
+            type="button"
+            className="v4-scan-manual-link"
+            onClick={() => { setCode(''); setTypedError(null); setMode('camera') }}
+          >
+            ← Torna alla fotocamera
+          </button>
+          <button
+            type="button"
+            className="v4-scan-manual-link subtle"
+            onClick={() => { setCode(''); setTypedError(null); setMode('manual-long') }}
+          >
+            Il cliente ha un link o un codice lungo
+          </button>
+        </form>
+      )}
+
+      {/* MANUAL-LONG: il campo libero di prima, per i QR stampati e i link.
+          I PDF scaricati prima di questa versione hanno solo il codice
+          lungo, e chi incolla un link da WhatsApp finisce comunque qui. */}
+      {mode === 'manual-long' && (
+        <form className="v4-scan-manual" onSubmit={handleLongSubmit}>
+          <h2>Codice lungo o link</h2>
+          <p>
+            Incolla il link del QR oppure il codice{' '}
             <code style={{ color: '#fff', fontWeight: 700 }}>BiSc-XXXXXXXX</code>
-            {' '}mostrato sotto il QR del cliente.
+            {' '}che sta sui PDF stampati.
           </p>
           <input
             ref={inputRef}
@@ -1517,14 +1611,10 @@ function ScannerOverlay({ restaurant, onClose, initialCode = null, onInitialCode
           </button>
           <button
             type="button"
-            onClick={() => { setCode(''); setMode('camera') }}
-            style={{
-              marginTop: 14, padding: 12, background: 'transparent', border: 0,
-              color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
+            className="v4-scan-manual-link"
+            onClick={() => { setCode(''); setTypedError(null); setMode('manual') }}
           >
-            ← Torna alla fotocamera
+            ← Torna al codice di sei caratteri
           </button>
         </form>
       )}
@@ -1553,6 +1643,12 @@ function ScanResultView({ result, onReset, onClose }) {
     return <ResultCard tone="error" icon="✕" title="Codice non riconosciuto"
       description="Controlla che il codice sia scritto correttamente."
       onReset={handleReset} resetLabel="Riprova" />
+  }
+  if (status === 'too_many_attempts') {
+    const mins = Math.max(1, Math.ceil((data?.retry_after_sec || 900) / 60))
+    return <ResultCard tone="error" icon="🔒" title="Troppi codici sbagliati"
+      description={`Per sicurezza l'inserimento a mano è sospeso per ${mins} ${mins === 1 ? 'minuto' : 'minuti'}. La fotocamera continua a funzionare: fatti mostrare il QR del cliente.`}
+      onReset={handleReset} resetLabel="Usa la fotocamera" />
   }
   return <ResultCard tone="error" icon="✕" title="Errore"
     description={data?.message || 'Si è verificato un errore.'}

@@ -35,6 +35,7 @@ import {
   unsubscribeUrl, listUnsubscribeHeaders, REPLY_TO,
 } from './_email/send.js'
 import { formatDiscountBadge, pickPerk } from './_email/discount.js'
+import { formatShortCode, normalizeShortCode } from './_short-code.js'
 import { SITE_URL as PUBLIC_SITE } from './_email/theme.js'
 
 export default async function handler(req, res) {
@@ -177,7 +178,7 @@ async function handleDiscountClaimed(req, res) {
   // RLS, perché qui stiamo usando la service role key che la salta.
   const { data: red } = await ctx.admin
     .from('discount_redemptions')
-    .select('id, qr_code, status, generated_at, discount_id, user_id, discount:discounts(*, restaurant:restaurants(name, slug, address, neighborhood, city, cuisine_type))')
+    .select('id, qr_code, short_code, status, generated_at, discount_id, user_id, discount:discounts(*, restaurant:restaurants(name, slug, address, neighborhood, city, cuisine_type))')
     .eq('id', redemptionId)
     .eq('user_id', ctx.user.id)
     .maybeSingle()
@@ -215,11 +216,29 @@ async function handleDiscountUsed(req, res) {
   const { qrCode } = req.body || {}
   if (!qrCode) return res.status(400).json({ error: 'qrCode required' })
 
-  const { data: red } = await admin
+  const REDEMPTION_FIELDS =
+    'id, status, redeemed_at, user_id, discount:discounts(*, restaurant:restaurants(name, slug))'
+
+  let { data: red } = await admin
     .from('discount_redemptions')
-    .select('id, status, redeemed_at, user_id, discount:discounts(*, restaurant:restaurants(name, slug))')
+    .select(REDEMPTION_FIELDS)
     .eq('qr_code', qrCode)
     .maybeSingle()
+
+  // Il locale può aver digitato lo short code invece di scansionare il QR.
+  // La RPC rimanda il qr_code canonico apposta, ma una scheda rimasta
+  // aperta da prima di questa versione manda ancora quello che ha in mano.
+  if (!red) {
+    const normalized = normalizeShortCode(qrCode)
+    if (/^[A-HJ-NP-Z][0-9]{5}$/.test(normalized)) {
+      const { data: byShort } = await admin
+        .from('discount_redemptions')
+        .select(REDEMPTION_FIELDS)
+        .eq('short_code', normalized)
+        .maybeSingle()
+      red = byShort
+    }
+  }
 
   if (!red) return res.status(404).json({ error: 'Redemption not found' })
   // 'redeemed' è il valore che scrive la RPC verify_redeem_qr: mandare la
@@ -295,7 +314,10 @@ function discountClaimedProps(red) {
     perk: pickPerk(d),
     conditions: (d.conditions || '').trim() || null,
     address: [r.address, r.city].filter(Boolean).join(', ') || null,
-    code: red.qr_code,
+    // Il codice da dettare, non il qr_code: `BiSc-aB3dK9pM` in mezzo a
+    // un'email nessuno lo legge al bancone, `K48 213` sì. Il fallback è per
+    // le righe scritte prima che la colonna esistesse.
+    code: formatShortCode(red.short_code) || red.qr_code,
     expiryLabel: expiryLabel(d),
     href: `${PUBLIC_SITE}/sconti`,
   }

@@ -12,6 +12,7 @@ import {
 import ValidityPill from './ValidityPill'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import './DiscountDetailPopup.css'
+import ShortCodeCard from './ShortCodeCard'
 import { slugify } from '../../lib/utils/slug'
 
 /* ============================================================================
@@ -70,10 +71,10 @@ function QRCanvas({ value, size = 170 }) {
 export default function DiscountDetailPopup({
   deal,
   initialUnlocked = false,
-  initialRedemption = null, // { id, qr_code } se già preso
+  initialRedemption = null, // { id, qr_code, short_code } se già preso
   photoUrl,
   restaurantUrl, // /restaurant/<slug>
-  onClaim,       // async: ritorna { id, qr_code } | null se AuthGate
+  onClaim,       // async: ritorna { id, qr_code, short_code } | null se AuthGate
   onClose,
   claiming = false,
 }) {
@@ -471,6 +472,10 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
           Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br />
           Codice valido una sola volta.
         </div>
+
+        {/* Il piano B del QR: se la fotocamera del locale non collabora, il
+            codice si detta e il ristoratore lo digita. */}
+        <ShortCodeCard code={redemption?.short_code} />
 
         <div className="ddp-reassurance">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>

@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-18 (fix: admin non vedeva né suggerimenti né candidature)
+Ultima modifica: 2026-09-18 (codice a 6 caratteri per sbloccare uno sconto senza QR)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -19,6 +19,99 @@ dove siamo. Aggiorna a ogni step importante.
 | C3 — (TBD) | — | ⏳ Not started | |
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
+
+## 18/09 — sbloccare uno sconto digitando il codice (senza QR)
+
+Prima l'unico modo di validare uno sconto era scansionare il QR del cliente.
+Quando la fotocamera non collaborava — vetrina controluce, schermo del
+cliente rotto, locale col tablet fisso alla cassa, permessi camera negati —
+restava solo il campo libero dove digitare `BiSc-aB3dK9pM`: dodici caratteri
+misti maiuscole e minuscole, che nessuno detta al bancone con la fila
+davanti.
+
+Adesso ogni riscatto ha anche un **codice di sei caratteri**: una lettera e
+cinque cifre, es. `K48213`, mostrato come `K48 213`.
+
+### Il formato, e perché
+
+- **Prima posizione lettera**: si vede da che verso si legge il codice, e sul
+  telefono del locale la tastiera parte in modalità testo per un carattere
+  solo e poi passa al tastierino numerico.
+- **Niente I e O** fra le lettere (24 ammesse): non si confondono con 1 e 0.
+- **Nel DB sempre maiuscolo e senza separatori**; lo spazio a metà è solo
+  presentazione, e cade dove cade nella lettura ad alta voce.
+- Spazio totale: 2,4 milioni di codici. Se un giorno il generatore comincia a
+  fare molti tentativi a vuoto vuol dire che è quasi pieno e il formato va
+  allungato — la funzione SQL alza un'eccezione esplicita a 50 tentativi
+  invece di girare all'infinito.
+
+### Dove sta il codice
+
+Lo genera **il database**, non il client: trigger `trg_redemption_short_code`
+BEFORE INSERT su `discount_redemptions`. I punti che inseriscono un riscatto
+sono già due (`useDiscounts.js` e `SconteRedesignPage.jsx`) e nessuno dei due
+deve poter dimenticare il codice. Il generatore usa `gen_random_bytes`
+(pgcrypto, che su Supabase sta in schema `extensions` — serve nel
+search_path) e non `random()`: con sei caratteri, un generatore
+deterministico renderebbe prevedibile il codice successivo a chi ne ha già
+visti un paio.
+
+### SQL eseguito (✅ entrambi, 18/09, connettore Supabase, progetto `Chiamami_bi`)
+
+| File | Cosa fa |
+|---|---|
+| `supabase/short-code-redemptions-2026-09-18.sql` | colonna `short_code`, generatore, trigger, backfill, UNIQUE + CHECK `^[A-HJ-NP-Z][0-9]{5}$`, colonne `failed_attempts`/`failed_since` su `verified_devices` |
+| `supabase/verify-redeem-short-code-2026-09-18.sql` | `verify_redeem_qr` accetta anche lo short code, più il freno anti-forza-bruta |
+
+Backfill verificato: tutte e 14 le righe già esistenti hanno un codice.
+
+### Anti-forza-bruta
+
+Sei caratteri si possono tirare a indovinare, il QR no. Il contatore sta sul
+dispositivo del locale (`verified_devices.failed_attempts`): **dieci codici
+inesistenti in 15 minuti** e la RPC risponde `too_many_attempts` con
+`retry_after_sec`. Due dettagli che contano:
+
+- conta **solo** gli input a forma di short code. Una scansione QR non
+  incrementa niente e **non viene mai bloccata**: il locale che ha appena
+  sbagliato dieci volte a digitare può comunque passare alla fotocamera e
+  continuare a lavorare;
+- un codice esistente e del locale giusto **azzera** il contatore, anche se
+  poi lo sconto risulta già usato o fuori fascia oraria. Chi lavora
+  normalmente non si accorge mai che il freno esiste.
+
+### Cosa è cambiato nel codice
+
+- `src/lib/shortCode.js` — formato, normalizzazione, validazione per posizione.
+  `normalizeShortCode` toglie spazi/trattini/minuscole ma **non taglia** a sei
+  caratteri: tagliando, `isShortCode('K482134')` direbbe di sì guardando
+  `K48213`, e cercheremmo un codice che nessuno ha dettato.
+- `api/_short-code.js` — gemello lato server (le serverless non importano da
+  `src/`, stesso motivo di `api/_email/discount.js`). `tests/short-code.test.mjs`
+  verifica che le due copie non divergano.
+- `src/components/Discount/ShortCodeCard.jsx` + `.css` — il codice sotto il QR
+  per il cliente, con copia. Montato in `SconteQRPopup`, `DiscountDetailPopup`
+  e `QRCodeDisplay` (in quest'ultimo ha **sostituito** il `qr_code` scritto per
+  esteso, che era lungo il doppio e illeggibile).
+- `src/components/Verify/ShortCodeInput.jsx` + `.css` — le sei caselle per il
+  ristoratore. Sei input separati e non uno solo proprio per la tastiera
+  (lettera → testo, cifre → tastierino). Avanza da solo, backspace torna
+  indietro, incollare distribuisce, e a codice pieno parte la verifica.
+- `src/pages/public/VerifyPage.jsx` — lo scanner ha tre modi: `camera`,
+  `manual` (le sei caselle) e `manual-long` (il vecchio campo libero, per i
+  PDF già stampati e i link incollati). Un codice digitato che non risulta fa
+  tremare le caselle e resta lì da correggere, invece di sbattere il locale su
+  una schermata di errore per una cifra sbagliata.
+- `api/discount-pdf.js` — il PDF mostra "OPPURE DETTA IL CODICE" e il codice
+  in grande, al posto del `qr_code` in grigio da 6.5pt.
+- `api/send-email.js` — la ricevuta porta `K48 213` e non più `BiSc-…`; la
+  conferma post-scansione sa cercare il riscatto anche per `short_code`.
+
+### Compatibilità
+
+Il QR e i codici `BiSc-…` continuano a funzionare identici: la RPC prova
+prima il `qr_code` esatto, poi lo short code. Nessun PDF già scaricato e
+nessuna email già spedita smette di valere.
 
 ## 18/09 — admin non vedeva MAI i suggerimenti utenti (fix)
 

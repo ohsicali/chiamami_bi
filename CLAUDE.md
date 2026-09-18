@@ -84,6 +84,24 @@ Anteprima: `node scripts/email-preview.mjs` → `docs/email-preview/index.html`.
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).
 
+## Sblocco sconti — QR e codice a 6 caratteri
+Ogni riscatto (`discount_redemptions`) ha due codici: il `qr_code`
+(`BiSc-…`, dentro il QR) e lo `short_code` di sei caratteri — una lettera e
+cinque cifre, es. `K48213` — che il cliente detta e il ristoratore digita
+quando la fotocamera non collabora. Tre regole:
+- **lo short code lo genera il DB**, mai il client (trigger
+  `trg_redemption_short_code`): i punti che inseriscono un riscatto sono già
+  due e nessuno deve poter dimenticare il codice;
+- il formato sta in tre posti che devono restare allineati —
+  `supabase/short-code-redemptions-2026-09-18.sql` (la verità),
+  `src/lib/shortCode.js` (app) e `api/_short-code.js` (PDF ed email).
+  `tests/short-code.test.mjs` verifica che non divergano;
+- per mostrarlo usa `formatShortCode()` e il componente
+  `ShortCodeCard` — mai il codice nudo, mai il `qr_code` scritto per esteso.
+
+Dettagli e ragioni: sezione "18/09 — sbloccare uno sconto digitando il
+codice" in `docs/v4-status.md`.
+
 ## Connettori disponibili — USALI SE ATTIVI
 - **GitHub** — PR, issues, merge (funziona via `gh` CLI, testato e operativo)
 - **Supabase** — se il connettore è attivo, esegui query SQL direttamente. Se non funziona, fornisci SQL all'utente da eseguire nel dashboard Supabase. CLI disponibile (`npx supabase`) ma richiede login/token.

@@ -210,6 +210,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
         {showQR && redemption && (
           <QRCodeDisplay
             qrCode={redemption.qr_code}
+            shortCode={redemption.short_code}
             discountTitle={discount.title}
             discountValue={discount.discount_value}
             onClose={() => setShowQR(false)}
@@ -1073,6 +1074,7 @@ export default function RestaurantSheet({
           {inlineShowQR && inlineRedemption && inlineDiscount && (
             <QRCodeDisplay
               qrCode={inlineRedemption.qr_code}
+              shortCode={inlineRedemption.short_code}
               discountTitle={inlineDiscount.title}
               discountValue={inlineDiscount.discount_value}
               onClose={() => setInlineShowQR(false)}

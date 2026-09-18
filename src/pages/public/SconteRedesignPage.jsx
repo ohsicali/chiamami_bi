@@ -237,7 +237,7 @@ function SconteRedesignPageInner() {
       // that look like an error response and obscures real failures.
       const { data: existing } = await supabase
         .from('discount_redemptions')
-        .select('id, qr_code, status')
+        .select('id, qr_code, short_code, status')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
         .order('generated_at', { ascending: false })
@@ -354,7 +354,7 @@ function SconteRedesignPageInner() {
       const { supabase } = await import('../../lib/supabase')
       const { data: existing } = await supabase
         .from('discount_redemptions')
-        .select('id, qr_code, status')
+        .select('id, qr_code, short_code, status')
         .eq('discount_id', deal.id)
         .eq('user_id', user.id)
         .order('generated_at', { ascending: false })
@@ -496,6 +496,7 @@ function SconteRedesignPageInner() {
         <SconteQRPopup
           redemptionId={qrPopup.redemption.id}
           qrCode={qrPopup.redemption.qr_code}
+          shortCode={qrPopup.redemption.short_code}
           qrPayload={`${window.location.origin}/verify?code=${qrPopup.redemption.qr_code}`}
           restaurantName={qrPopup.deal?.restaurant?.name || 'Ristorante'}
           restaurantSubtitle={[

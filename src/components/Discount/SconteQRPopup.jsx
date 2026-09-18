@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { supabase } from '../../lib/supabase'
 import { slugify } from '../../lib/utils/slug'
+import ShortCodeCard from './ShortCodeCard'
 
 function QRCanvas({ value, size }) {
   const ref = useRef(null)
@@ -20,6 +21,7 @@ function QRCanvas({ value, size }) {
 export default function SconteQRPopup({
   redemptionId,
   qrCode,
+  shortCode,
   qrPayload,
   restaurantName,
   restaurantSubtitle,
@@ -134,6 +136,10 @@ export default function SconteQRPopup({
           Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br />
           Codice valido una sola volta.
         </div>
+
+        {/* Il piano B del QR: se la fotocamera del locale non collabora, il
+            codice si detta e il ristoratore lo digita. */}
+        <ShortCodeCard code={shortCode} />
 
         {expiresLabel && (
           <div className="sc-scad-line">{expiresLabel}</div>

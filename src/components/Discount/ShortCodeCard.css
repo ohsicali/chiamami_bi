@@ -1,0 +1,151 @@
+/* Il codice da dettare, sotto il QR — vedi ShortCodeCard.jsx.
+   Due tone: `light` dentro i popup su carta, `dark` sui fondi scuri. */
+
+.shortcode-card {
+  --sc-ink: var(--color-ink, #22181C);
+  --sc-ink-soft: var(--color-ink-55, rgba(34, 24, 28, 0.55));
+  --sc-cell-bg: var(--color-cream, #F5F0E4);
+  --sc-cell-line: var(--color-line, #EAE3D7);
+  --sc-accent: var(--color-corallo, #E8453C);
+
+  width: 100%;
+  text-align: center;
+}
+
+.shortcode-card.shortcode-dark {
+  --sc-ink: #FFFFFF;
+  --sc-ink-soft: rgba(255, 255, 255, 0.6);
+  --sc-cell-bg: rgba(255, 255, 255, 0.08);
+  --sc-cell-line: rgba(255, 255, 255, 0.16);
+  --sc-accent: #FF7A70;
+}
+
+/* ── "oppure" con le righe ai lati ─────────────────────────────────────── */
+.shortcode-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 16px;
+}
+.shortcode-or::before,
+.shortcode-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--sc-cell-line);
+}
+.shortcode-or span {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sc-ink-soft);
+}
+
+.shortcode-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sc-ink-soft);
+  margin-bottom: 10px;
+}
+
+/* ── Le sei caselle ────────────────────────────────────────────────────── */
+.shortcode-digits {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Il respiro a metà codice cade dove cade nella lettura ad alta voce
+   (`K48 213`): tre caratteri per volta si tengono a mente, sei di fila no. */
+.shortcode-cell:nth-child(3) {
+  margin-right: 12px;
+}
+
+.shortcode-cell {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--sc-cell-bg);
+  border: 1.5px solid var(--sc-cell-line);
+  font-family: 'SF Mono', 'SFMono-Regular', ui-monospace, 'Menlo', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--sc-ink);
+  font-variant-numeric: tabular-nums;
+  /* Su iOS le cifre "ballano" di mezzo pixel senza questo. */
+  font-feature-settings: 'tnum' 1;
+}
+
+/* La prima casella è l'unica lettera: colorata per dire da che verso si
+   legge il codice, e per rendere evidente il formato a chi lo digita. */
+.shortcode-cell.is-letter {
+  background: var(--sc-accent);
+  border-color: var(--sc-accent);
+  color: #FFFFFF;
+}
+
+/* ── Copia ─────────────────────────────────────────────────────────────── */
+.shortcode-copy {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--sc-cell-line);
+  background: transparent;
+  color: var(--sc-ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.shortcode-copy:active {
+  transform: scale(0.97);
+}
+.shortcode-copy.is-copied {
+  border-color: var(--color-sconto-b, #4ADE80);
+  background: var(--color-sconto-b, #4ADE80);
+  color: var(--color-sconto-ink, #1A4731);
+}
+
+.shortcode-hint {
+  margin: 10px 0 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--sc-ink-soft);
+}
+
+.shortcode-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shortcode-copy {
+    transition: none;
+  }
+  .shortcode-copy:active {
+    transform: none;
+  }
+}
