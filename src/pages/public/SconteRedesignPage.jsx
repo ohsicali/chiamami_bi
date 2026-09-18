@@ -17,7 +17,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterActiveConventions, sortByExpiry, msUntilEnd } from '../../lib/discounts'
+import { filterActiveDrops, filterVisibleDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
@@ -131,7 +131,11 @@ function SconteRedesignPageInner() {
   // selezionata: nascondeva Shoro (Poirino) e Birrificio (Anzola) a chi aveva
   // Torino selezionata — 6 sconti attivi in admin, 4 visibili qui.
   // La selezione è corretta solo in home (unica vetrina curata).
-  const drops = useMemo(() => sortByExpiry(filterActiveDrops(allRaw)), [allRaw])
+  // I drop esauriti restano in lista (stato "sold out" nella card) invece di
+  // sparire: solo `activeDropsCount` — usato per il conteggio nel tab e per
+  // i dati strutturati — resta sulla definizione stretta di "attivo".
+  const drops = useMemo(() => sortByExpiry(filterVisibleDrops(allRaw)), [allRaw])
+  const activeDropsCount = useMemo(() => filterActiveDrops(allRaw).length, [allRaw])
   const conv = useMemo(() => filterActiveConventions(allRaw), [allRaw])
   // Backward-compat per auto-claim post login
   void allActiveDrops; void allFeatured; void allRegular
@@ -158,7 +162,7 @@ function SconteRedesignPageInner() {
     [conv, redemptionByDealId]
   )
 
-  const countDisponibili = dropsAvailable.length + convAvailable.length
+  const countDisponibili = activeDropsCount + convAvailable.length
   const countTuttiIMiei = myActive.length + myUsed.length
 
   const [claiming, setClaiming] = useState(null)
@@ -419,7 +423,7 @@ function SconteRedesignPageInner() {
         url="https://chiamamibi.com/sconti"
         canonical="https://chiamamibi.com/sconti"
       />
-      <SconteSchemaOrg drops={dropsAvailable} conv={convAvailable} />
+      <SconteSchemaOrg drops={dropsAvailable.filter((d) => !isSoldOut(d))} conv={convAvailable} />
       {!isDesktop && <MobileLogoHeader />}
       <div className={isDesktop ? 'sc-shell sc-shell-desktop' : 'sc-shell sc-shell-mobile'}>
         <div className="sc-head-row">
@@ -730,6 +734,7 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
           const isSaved = status === 'generated'
           const isUsed = status === 'redeemed'
           const busy = claiming === d.id
+          const soldOut = isSoldOut(d)
 
           let label = '🔓 Sblocca sconto'
           let action = () => onClaim(d)
@@ -737,6 +742,9 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
           if (busy) label = 'Un attimo…'
           else if (isUsed) { label = 'Già usato'; disabled = true; action = () => {} }
           else if (isSaved) { label = 'Apri il QR'; action = () => onOpenQR({ ...redemption, discount: d }) }
+          // Esaurito e non ancora preso da questo utente: nessuno sblocco
+          // possibile, la card resta ma il bottone lo dice chiaro.
+          else if (soldOut) { label = 'Esaurito'; disabled = true; action = () => {} }
 
           const validityStatus = checkValidity(d)
 
@@ -786,12 +794,19 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
 /**
  * "3 attivi · il primo scade tra 2 giorni" — il quadro prima di scorrere,
  * così chi arriva sa quanti sono e quanto tempo ha senza contare le card.
+ *
+ * `drops` qui dentro può contenere anche drop esauriti (restano in lista,
+ * vedi `filterVisibleDrops`): il conteggio "N attivi" li esclude, altrimenti
+ * direbbe "attivo" un drop che non si può più prendere.
  */
 function dropSectionSummary(drops) {
-  const n = drops.length
+  const active = drops.filter((d) => !isSoldOut(d))
+  const n = active.length
+  if (n === 0) return 'tutti esauriti'
   const base = `${n} ${n === 1 ? 'attivo' : 'attivi'}`
-  // `drops` arriva ordinato per scadenza: il primo è il più vicino a finire.
-  const ms = msUntilEnd(drops[0])
+  // `drops` arriva ordinato per scadenza: il primo attivo è il più vicino a
+  // finire — un esaurito in testa alla lista non ha più un countdown che conti.
+  const ms = msUntilEnd(active[0])
   if (ms === null || ms <= 0) return base
   const hours = Math.floor(ms / 3_600_000)
   if (hours < 1) return `${base} · il primo scade tra meno di un'ora`
