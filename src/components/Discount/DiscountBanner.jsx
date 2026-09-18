@@ -213,6 +213,7 @@ export default function DiscountBanner({ restaurantId }) {
         {showQR && redemption && (
           <QRCodeDisplay
             qrCode={redemption.qr_code}
+            shortCode={redemption.short_code}
             discountTitle={discount.title}
             discountValue={discount.discount_value}
             onClose={() => setShowQR(false)}

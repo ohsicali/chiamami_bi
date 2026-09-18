@@ -28,6 +28,7 @@ import {
 import React from 'react'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { formatShortCode } from './_short-code.js'
 
 export const config = { maxDuration: 30 }
 
@@ -275,7 +276,14 @@ const styles = StyleSheet.create({
   },
   qrImage: { width: '100%', height: '100%' },
   qrHint: { fontFamily: 'Caveat', fontWeight: 700, fontSize: 18, color: C.corallo, marginTop: 3, lineHeight: 1 },
-  codeText: { fontFamily: 'Courier', fontSize: 6.5, color: C.ink3, letterSpacing: 1.2, marginTop: 3 },
+  codeLabel: {
+    fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.ink3,
+    letterSpacing: 1.1, marginTop: 6,
+  },
+  codeShort: {
+    fontFamily: 'Courier', fontSize: 15, color: C.ink, letterSpacing: 2.5,
+    marginTop: 2,
+  },
   scadPill: {
     backgroundColor: C.oroSoft, color: C.oro, fontFamily: 'Poppins', fontWeight: 700,
     fontSize: 7, paddingTop: 3, paddingBottom: 2, paddingHorizontal: 10,
@@ -342,7 +350,12 @@ function CouponDocument({ ctx }) {
           React.createElement(Image, { src: ctx.qr_data_url, style: styles.qrImage })
         ),
         React.createElement(Text, { style: styles.qrHint }, 'Mostra al ristoratore'),
-        React.createElement(Text, { style: styles.codeText }, ctx.codice_testuale),
+        ctx.codice_breve
+          ? React.createElement(Text, { style: styles.codeLabel }, 'OPPURE DETTA IL CODICE')
+          : null,
+        ctx.codice_breve
+          ? React.createElement(Text, { style: styles.codeShort }, ctx.codice_breve)
+          : null,
         ctx.scadenza
           ? React.createElement(Text, { style: styles.scadPill }, `Scade ${ctx.scadenza}`)
           : null
@@ -401,7 +414,7 @@ export default async function handler(req, res) {
   const { data: redemption, error: redErr } = await adminClient
     .from('discount_redemptions')
     .select(`
-      id, qr_code, status, generated_at, redeemed_at, user_id,
+      id, qr_code, short_code, status, generated_at, redeemed_at, user_id,
       discount:discounts(
         id, title, description, discount_type, discount_value, conditions,
         valid_until, drop_ends_at, is_drop,
@@ -451,6 +464,9 @@ export default async function handler(req, res) {
     percentuale: pctText(deal),
     descrizione_sconto: deal.title || deal.description || 'Valido alla cassa',
     codice_testuale: redemption.qr_code,
+    // Il codice da dettare al ristoratore quando la fotocamera non legge il
+    // QR: spezzato in due gruppi di tre, come sull'app.
+    codice_breve: formatShortCode(redemption.short_code),
     scadenza: formatExpiryLabel(deal),
   }
 

@@ -281,7 +281,7 @@ export function discountClaimedEmail({ value, restaurantName, perk, conditions, 
         }),
         codeBlock({
           code,
-          note: 'Trovi lo stesso codice nel Bi Club, con il QR da far scansionare.',
+          note: 'Se la fotocamera del locale non legge il QR, detta questo codice: lo digitano loro. Lo trovi anche nel Bi Club, sotto il QR.',
         }),
         button('Apri il QR nel Bi Club', href, { bg: COLORS.corallo }),
         divider({ gold: true }),
@@ -635,7 +635,7 @@ export const SAMPLE = {
     value: '−50%', restaurantName: 'Bar Stampa', perk: '50% di sconto',
     conditions: 'Valido solo sull’acquisto del tramezzino base',
     address: 'Via Antonio Giuseppe Bertola 2',
-    code: 'BI-7QF4-2M8K', expiryLabel: 'Scade il 14 settembre',
+    code: 'K48 213', expiryLabel: 'Scade il 14 settembre',
     href: `${SITE_URL}/sconti`,
   },
   discountUsed: {

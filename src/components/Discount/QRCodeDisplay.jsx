@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import QRCode from 'qrcode'
+import ShortCodeCard from './ShortCodeCard'
 
 function QRCanvas({ value, size = 220 }) {
   const canvasRef = useRef(null)
@@ -18,7 +19,7 @@ function QRCanvas({ value, size = 220 }) {
   return <canvas ref={canvasRef} style={{ width: size, height: size }} />
 }
 
-export default function QRCodeDisplay({ qrCode, discountTitle, discountValue, onClose }) {
+export default function QRCodeDisplay({ qrCode, shortCode, discountTitle, discountValue, onClose }) {
   const { t } = useTranslation()
   const verifyUrl = `${window.location.origin}/verify?code=${qrCode}`
 
@@ -54,17 +55,19 @@ export default function QRCodeDisplay({ qrCode, discountTitle, discountValue, on
           <QRCanvas value={verifyUrl} size={220} />
         </div>
 
-        {/* Code text */}
-        <div className="text-center mb-5">
-          <p className="text-xs text-secondary mb-1">{t('discount.code')}</p>
-          <p className="font-mono text-sm font-bold text-primary tracking-wider">{qrCode}</p>
-        </div>
-
         {/* Instructions */}
-        <div className="rounded-xl bg-accent-light p-3 mb-5">
+        <div className="rounded-xl bg-accent-light p-3 mb-2">
           <p className="text-xs text-center text-secondary leading-relaxed">
             {t('discount.showToWaiter')}
           </p>
+        </div>
+
+        {/* Il piano B del QR: se la fotocamera del locale non collabora, il
+            codice si detta e il ristoratore lo digita. Ha preso il posto del
+            qr_code scritto per esteso, che era lungo il doppio e nessuno
+            avrebbe mai dettato al bancone. */}
+        <div className="mb-5">
+          <ShortCodeCard code={shortCode} />
         </div>
 
         {/* Close button */}

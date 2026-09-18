@@ -1326,7 +1326,7 @@
   font-weight: 900;
   font-size: 22px;
   letter-spacing: -0.02em;
-  margin-top: 60px;
+  margin-top: 56px;
   text-align: center;
 }
 .v4-scan-manual p {
@@ -1371,6 +1371,46 @@
 .v4-scan-manual .submit:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* ── Codice digitato: la riga sotto le caselle ──────────────────────────
+   Tiene l'altezza fissa anche da vuota: senza, il bottone sotto salta su e
+   giù a ogni carattere mentre il locale digita. */
+.v4-scan-manual-msg {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  padding: 0 8px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55);
+}
+.v4-scan-manual-msg.is-error {
+  color: #FF9A94;
+}
+
+.v4-scan-manual-link {
+  margin-top: 14px;
+  padding: 12px;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.v4-scan-manual-link.subtle {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ==================================================================

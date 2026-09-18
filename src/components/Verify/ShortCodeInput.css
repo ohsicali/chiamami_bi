@@ -1,0 +1,105 @@
+/* Le sei caselle del codice digitato — vedi ShortCodeInput.jsx.
+   Vive dentro lo scanner a schermo pieno del ristoratore, che è nero. */
+
+.sc-code-input {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Lo stesso respiro a metà codice della card del cliente (`K48 213`): chi
+   detta e chi digita vedono il codice spezzato negli stessi due gruppi. */
+.sc-code-input .sc-code-cell:nth-child(3) {
+  margin-right: 14px;
+}
+
+.sc-code-cell {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 62px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-family: 'SF Mono', 'SFMono-Regular', ui-monospace, 'Menlo', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--color-corallo, #E8453C);
+  outline: none;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+  /* Sotto i 16px iOS zooma sul focus e manda il layout fuori squadra. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.sc-code-cell.is-filled {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.sc-code-cell.is-focused {
+  border-color: var(--color-corallo, #E8453C);
+  background: rgba(232, 69, 60, 0.14);
+  box-shadow: 0 0 0 3px rgba(232, 69, 60, 0.22);
+}
+
+/* La prima casella è l'unica lettera. Il bordo colorato anche da vuota dice
+   al locale cosa ci va, così non prova a metterci un numero. */
+.sc-code-cell.is-letter {
+  border-color: rgba(232, 69, 60, 0.55);
+}
+.sc-code-cell.is-letter.is-filled {
+  background: var(--color-corallo, #E8453C);
+  border-color: var(--color-corallo, #E8453C);
+}
+
+.sc-code-cell:disabled {
+  opacity: 0.5;
+}
+
+/* Codice rifiutato: le caselle si tingono e tremano una volta sola. */
+.sc-code-input.is-invalid .sc-code-cell {
+  border-color: #FF6B6B;
+  background: rgba(255, 107, 107, 0.16);
+  box-shadow: none;
+}
+.sc-code-input.is-invalid {
+  animation: scCodeShake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes scCodeShake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+
+/* Telefoni stretti (iPhone SE e simili): sei caselle da 46px più i gap non
+   ci stanno, si restringono invece di andare a capo. */
+@media (max-width: 380px) {
+  .sc-code-cell {
+    width: 40px;
+    height: 56px;
+    font-size: 23px;
+  }
+  .sc-code-input {
+    gap: 6px;
+  }
+  .sc-code-input .sc-code-cell:nth-child(3) {
+    margin-right: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-code-cell {
+    transition: none;
+  }
+  .sc-code-input.is-invalid {
+    animation: none;
+  }
+}

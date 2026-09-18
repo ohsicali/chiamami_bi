@@ -680,6 +680,7 @@ export default function DesktopRestaurantSheet({
         {inlineShowQR && redemption && (
           <QRCodeDisplay
             qrCode={redemption.qr_code}
+            shortCode={redemption.short_code}
             discountTitle={discount?.title}
             discountValue={discount?.discount_value}
             onClose={() => setInlineShowQR(false)}
