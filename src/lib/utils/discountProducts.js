@@ -34,16 +34,28 @@ export function normalizeProducts(products) {
 }
 
 /**
- * La didascalia dell'anteprima in lista: «Matcha latte, chai e altri 3».
+ * La didascalia dell'anteprima in lista: «Matcha latte e altri 4».
  *
- * Due nomi e basta, perché la riga della card è alta 21px e il terzo nome
- * andrebbe a capo spingendo giù tutta la lista. Il resto diventa un conteggio.
+ * Lo spazio è quello che è: nella riga del Bi Club, tolti foto, pastiglie e
+ * bottone «Sblocca», al testo restano circa 130px — una ventina di caratteri
+ * a corpo 10. Quindi si nominano tutti finché ci stanno, e appena la frase
+ * sfora si passa al primo nome più il conteggio. Meglio «Matcha latte e altri
+ * 4» per intero che «Matcha latte, Chai la…» tagliato a metà parola.
  */
-export function productsSummary(items, maxNames = 2) {
-  const named = items.filter((p) => p.name)
+const BUDGET = 26
+
+export function productsSummary(items) {
+  const named = (items || []).filter((p) => p.name).map((p) => p.name)
   if (named.length === 0) return null
-  const shown = named.slice(0, maxNames).map((p) => p.name)
-  const rest = named.length - shown.length
-  if (rest <= 0) return shown.join(', ')
-  return `${shown.join(', ')} e ${rest === 1 ? 'un altro' : `altri ${rest}`}`
+  if (named.length === 1) return named[0]
+
+  // Due prodotti: i nomi per esteso, se ci stanno.
+  if (named.length === 2) {
+    const both = named.join(', ')
+    return both.length <= BUDGET ? both : `${named[0]} e un altro`
+  }
+
+  // Da tre in su i nomi non ci stanno mai tutti: il primo, e quanti altri.
+  const rest = named.length - 1
+  return `${named[0]} e altri ${rest}`
 }

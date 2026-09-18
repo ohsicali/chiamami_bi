@@ -71,26 +71,34 @@ test('uno sconto senza prodotti dà lista vuota, non esplode', () => {
 
 /* ── productsSummary ── */
 
-test('la didascalia nomina due prodotti e conta gli altri', () => {
+test('da tre prodotti in su: primo nome e conteggio', () => {
   const items = normalizeProducts(
     ['Matcha latte', 'Chai', 'Cold brew', 'Apple spicy', 'Hot chocolate']
       .map((name, i) => ({ id: String(i), name, sort_order: i }))
   )
-  assert.equal(productsSummary(items), 'Matcha latte, Chai e altri 3')
+  // Nella riga del Bi Club al testo restano ~130px: "Matcha latte, Chai e
+  // altri 3" ci arriverebbe tagliato a metà parola.
+  assert.equal(productsSummary(items), 'Matcha latte e altri 4')
 })
 
-test('con un prodotto in più dice "un altro", non "altri 1"', () => {
-  const items = normalizeProducts(
-    ['Matcha', 'Chai', 'Cold brew'].map((name, i) => ({ id: String(i), name, sort_order: i }))
-  )
-  assert.equal(productsSummary(items), 'Matcha, Chai e un altro')
+test('due prodotti dai nomi corti: tutti e due per esteso', () => {
+  const items = normalizeProducts([
+    { id: '1', name: 'Veneziane', sort_order: 0 },
+    { id: '2', name: 'Bomboloni', sort_order: 1 },
+  ])
+  assert.equal(productsSummary(items), 'Veneziane, Bomboloni')
 })
 
-test('uno o due prodotti: solo i nomi, nessun conteggio', () => {
-  const uno = normalizeProducts([{ id: '1', name: 'Matcha' }])
-  const due = normalizeProducts([{ id: '1', name: 'Matcha' }, { id: '2', name: 'Chai', sort_order: 1 }])
-  assert.equal(productsSummary(uno), 'Matcha')
-  assert.equal(productsSummary(due), 'Matcha, Chai')
+test('due prodotti dai nomi lunghi: il primo e il conteggio', () => {
+  const items = normalizeProducts([
+    { id: '1', name: 'Tagliere della casa', sort_order: 0 },
+    { id: '2', name: 'Selezione di formaggi', sort_order: 1 },
+  ])
+  assert.equal(productsSummary(items), 'Tagliere della casa e un altro')
+})
+
+test('un prodotto solo: il suo nome e basta', () => {
+  assert.equal(productsSummary(normalizeProducts([{ id: '1', name: 'Matcha latte' }])), 'Matcha latte')
 })
 
 test('prodotti con la sola foto e nessun nome non producono didascalia', () => {
@@ -106,6 +114,11 @@ test('i senza nome non gonfiano il conteggio degli altri', () => {
     { id: '3', photo_url: FOTO, sort_order: 2 },
   ])
   // Il terzo si vede in foto ma non ha un nome da leggere: contarlo darebbe
-  // «e un altro» senza che ci sia un altro nome da cercare.
+  // "e un altro" senza che ci sia un altro nome da cercare.
   assert.equal(productsSummary(items), 'Matcha, Chai')
+})
+
+test('nessun prodotto: nessuna didascalia', () => {
+  assert.equal(productsSummary([]), null)
+  assert.equal(productsSummary(normalizeProducts(null)), null)
 })
