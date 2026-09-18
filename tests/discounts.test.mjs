@@ -17,8 +17,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   isActiveDiscount, isActiveDrop, isConvention, isSoldOut, isExpired,
-  filterActive, filterActiveDrops, filterActiveConventions,
-  sortByExpiry, remainingCount, formatCountdown, findUnreachableDiscounts,
+  isVisibleDrop, filterActive, filterActiveDrops, filterActiveConventions,
+  filterVisibleDrops, sortByExpiry, remainingCount, formatCountdown,
+  findUnreachableDiscounts,
 } from '../src/lib/discounts.js'
 
 const NOW = new Date('2026-09-08T12:00:00Z')
@@ -132,6 +133,35 @@ test('claimed_count fermo a 0 non nasconde i riscatti reali', () => {
   assert.equal(remainingCount(d({ max_quantity: 10, claimed_count: 0, total_redeemed: 7 })), 3)
   assert.equal(isSoldOut(d({ max_quantity: 10, claimed_count: 0, total_redeemed: 10 })), true)
   assert.equal(isActiveDiscount(d({ max_quantity: 10, claimed_count: 0, total_redeemed: 10 }), NOW), false)
+})
+
+/* ── Drop esaurito: resta visibile in Bi Club, non sparisce ── */
+
+test('un drop esaurito non è più "attivo" ma resta "visibile"', () => {
+  const esaurito = d({ is_drop: true, drop_ends_at: '2026-12-01T00:00:00Z', max_quantity: 10, claimed_count: 10 })
+  assert.equal(isActiveDrop(esaurito, NOW), false, 'esaurito non conta più come attivo (conteggi, home)')
+  assert.equal(isVisibleDrop(esaurito, NOW), true, 'ma resta in Bi Club con lo stato sold out')
+})
+
+test('un drop scaduto o disattivato invece sparisce anche da "visibile"', () => {
+  const scaduto = d({ is_drop: true, drop_ends_at: '2026-09-01T00:00:00Z', max_quantity: 10, claimed_count: 10 })
+  const disattivato = d({ is_drop: true, is_active: false, drop_ends_at: '2026-12-01T00:00:00Z' })
+  assert.equal(isVisibleDrop(scaduto, NOW), false)
+  assert.equal(isVisibleDrop(disattivato, NOW), false)
+})
+
+test('filterVisibleDrops include i drop esauriti in più rispetto a filterActiveDrops', () => {
+  const conMaxRaggiunto = [
+    ...DB_SNAPSHOT,
+    d({ id: 'esaurito', is_drop: true, drop_ends_at: '2026-09-14T17:00:00Z',
+        valid_until: '2026-09-14T17:00:00Z', max_quantity: 5, claimed_count: 5,
+        restaurants: { name: 'Tutto Preso', city: 'Torino', is_published: true } }),
+  ]
+  const attivi = filterActiveDrops(conMaxRaggiunto, NOW).map((x) => x.id)
+  const visibili = filterVisibleDrops(conMaxRaggiunto, NOW).map((x) => x.id)
+  assert.ok(!attivi.includes('esaurito'))
+  assert.ok(visibili.includes('esaurito'))
+  assert.equal(visibili.length, attivi.length + 1)
 })
 
 /* ── Ordinamento e countdown ── */

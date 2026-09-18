@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { proxyImg, proxyImgSrcSet } from '../../lib/supabase'
 import { formatDiscountValue, pickPerk, normalizeValue } from '../../lib/utils/discountFormat'
 import { formatAddress } from '../../lib/utils/formatAddress'
-import { claimedCount, maxQuantity, remainingCount, formatCountdown, isDrop } from '../../lib/discounts'
+import { claimedCount, maxQuantity, remainingCount, formatCountdown, isDrop, isSoldOut } from '../../lib/discounts'
 import './DropCard.css'
 
 /**
@@ -50,6 +50,7 @@ export default function DropCard({
     'dropcard',
     `dropcard--${size}`,
     taken ? 'dropcard--taken' : '',
+    view.soldOut ? 'dropcard--soldout' : '',
     // Nella taglia larga il titolo è già il vantaggio: quando il vantaggio
     // in parole non dice altro che il valore ("50%" → "50% di sconto") la
     // riga sotto ripeterebbe il titolo, e il CSS la spegne.
@@ -77,7 +78,11 @@ export default function DropCard({
         <span className="dropcard__body">
           <span className="dropcard__name">{view.restaurantName}</span>
           <span className="dropcard__where">{view.where}</span>
-          {view.miniStatus && <span className="dropcard__status">{view.miniStatus}</span>}
+          {view.miniStatus && (
+            <span className={`dropcard__status ${view.soldOut ? 'dropcard__status--soldout' : ''}`}>
+              {view.miniStatus}
+            </span>
+          )}
         </span>
       </button>
     )
@@ -99,14 +104,19 @@ export default function DropCard({
             />
           )
           : <span aria-hidden>{view.emoji}</span>}
+        {view.soldOut && (
+          <span className="dropcard__soldout-stamp" aria-hidden="true">
+            <span>Sold out</span>
+          </span>
+        )}
       </div>
 
       {view.badgeLabel && <span className="dropcard__badge">{view.badgeLabel}</span>}
 
       <div className="dropcard__body">
         {view.pillLabel && (
-          <span className="dropcard__pill">
-            <i aria-hidden />
+          <span className={`dropcard__pill ${view.soldOut ? 'dropcard__pill--soldout' : ''}`}>
+            {!view.soldOut && <i aria-hidden />}
             {view.pillLabel}
           </span>
         )}
@@ -138,14 +148,20 @@ export default function DropCard({
               aria-valuenow={view.claimed}
               aria-valuemin={0}
               aria-valuemax={view.max}
-              aria-label={`${view.claimed} presi su ${view.max}`}
+              aria-label={view.soldOut ? `${view.max} su ${view.max} presi — esaurito` : `${view.claimed} presi su ${view.max}`}
             >
-              <i style={{ width: `${view.progressPct}%` }} />
+              <i className={view.soldOut ? 'is-soldout' : ''} style={{ width: `${view.progressPct}%` }} />
             </div>
-            <div className="dropcard__counts">
-              <span>{view.claimed} {view.claimed === 1 ? 'preso' : 'presi'}</span>
-              <span><b>{view.remaining} rimasti</b></span>
-            </div>
+            {view.soldOut ? (
+              <div className="dropcard__counts dropcard__counts--soldout">
+                <span>🔥 Tutti i posti sono stati presi</span>
+              </div>
+            ) : (
+              <div className="dropcard__counts">
+                <span>{view.claimed} {view.claimed === 1 ? 'preso' : 'presi'}</span>
+                <span><b>{view.remaining} rimasti</b></span>
+              </div>
+            )}
           </div>
         )}
 
@@ -199,12 +215,16 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
   const max = maxQuantity(deal)
   const remaining = remainingCount(deal)
   const countdown = formatCountdown(deal, now)
+  // Esaurito: la card resta (vedi `filterVisibleDrops`), ma smette di
+  // fingersi "live" — niente pallino che pulsa su un drop che non si può
+  // più prendere.
+  const soldOut = isSoldOut(deal)
 
   // "DROP LIVE · 6G 19H" per i drop; le convenzioni non hanno countdown né
   // posti e dicono quello che sono, senza fingersi urgenti.
   const drop = isDrop(deal)
   const pillLabel = drop
-    ? (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE')
+    ? (soldOut ? 'ESAURITO' : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'))
     : (showAlwaysValid ? 'SEMPRE VALIDO' : '')
 
   // La riga piccola: prima la condizione d'uso, poi categoria e indirizzo.
@@ -225,10 +245,12 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
   ].filter(Boolean).join(' · ')
 
   // Lo stato in fondo alla mini: il countdown se è un drop, "Sempre valido"
-  // se è una convenzione.
-  const miniStatus = drop
-    ? (countdown ? `Scade tra ${countdown}` : 'Drop live')
-    : (showAlwaysValid ? 'Sempre valido' : '')
+  // se è una convenzione, "Esaurito" se un drop è finito ma resta in lista.
+  const miniStatus = soldOut
+    ? 'Esaurito'
+    : drop
+      ? (countdown ? `Scade tra ${countdown}` : 'Drop live')
+      : (showAlwaysValid ? 'Sempre valido' : '')
 
   const valueLabel = formatDiscountValue(deal)
   const restaurantName = r?.name || deal.title || 'Locale'
@@ -255,6 +277,7 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
     claimed,
     max,
     remaining,
+    soldOut,
     // La barra ha senso solo con un tetto: senza `max_quantity` non c'è un
     // "quanti ne restano" da mostrare, e una barra al 100% fissa mentirebbe.
     showProgress: max > 0 && remaining !== null,

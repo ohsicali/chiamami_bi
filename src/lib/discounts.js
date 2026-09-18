@@ -94,6 +94,28 @@ export function isActiveDrop(d, now = new Date()) {
   return isDrop(d) && isActiveDiscount(d, now)
 }
 
+/**
+ * Drop da MOSTRARE in Bi Club, esaurito o no.
+ *
+ * Non è un sinonimo di `isActiveDrop`: quello resta la definizione di
+ * "attivo" (esaurito escluso, usata per i conteggi e per la selezione in
+ * home). Questo invece serve solo al catalogo pubblico, dove un drop
+ * esaurito non deve sparire — resta in lista con lo stato "sold out",
+ * altrimenti chi arriva tardi non sa nemmeno che c'era ed era stato preso.
+ * Un drop scaduto o disattivato invece sparisce comunque: la scarsità
+ * finita del tutto non ha più niente da raccontare.
+ */
+export function isVisibleDrop(d, now = new Date()) {
+  if (!d || !isDrop(d)) return false
+  if (d.is_active === false) return false
+  if (isExpired(d, now)) return false
+  return true
+}
+
+export function filterVisibleDrops(list, now = new Date()) {
+  return (list || []).filter((d) => isVisibleDrop(d, now))
+}
+
 /** Convenzione attiva. */
 export function isActiveConvention(d, now = new Date()) {
   return isConvention(d) && isActiveDiscount(d, now)

@@ -411,6 +411,60 @@
 
 .dropcard--taken { opacity: 0.62; }
 
+/* ── Stato "esaurito": la card resta, il drop no ───────────────────────
+   Non sparisce (vedi `filterVisibleDrops` in lib/discounts.js): la foto si
+   spegne in bianco e nero, un timbro diagonale attraversa l'angolo come su
+   un biglietto già staccato, e la pill smette di pulsare — non è più
+   "live", è finita. È scarsità raccontata, non un errore da nascondere. */
+
+.dropcard--soldout .dropcard__photo img {
+  filter: grayscale(0.9) brightness(0.55);
+}
+
+.dropcard__soldout-stamp {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dropcard__soldout-stamp span {
+  transform: rotate(-8deg);
+  text-transform: uppercase;
+  font-weight: 900;
+  font-size: calc(16 * var(--dc-k));
+  letter-spacing: calc(2 * var(--dc-k));
+  color: #fff;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: calc(8 * var(--dc-k));
+  padding: calc(6 * var(--dc-k)) calc(18 * var(--dc-k));
+  background: rgba(20, 14, 16, 0.72);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.dropcard__pill--soldout {
+  background: rgba(20, 14, 16, 0.4);
+}
+
+.dropcard__bar i.is-soldout {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.dropcard__counts--soldout {
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.dropcard__status--soldout {
+  color: var(--dc-ink);
+  opacity: 0.55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dropcard__pill i { animation: none; }
   .dropcard__bar i { transition: none; }
