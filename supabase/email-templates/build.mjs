@@ -103,6 +103,34 @@ scrivi('change-email.html', 'Change Email Address', 'Conferma il nuovo indirizzo
   ].join('\n'),
 })
 
+// Il link di reset lo manda Supabase stesso (resetPasswordForEmail, chiamato
+// da "Password dimenticata?" in LoginPage.jsx): non passa da api/_email/, e
+// senza rigenerarlo qui restava sul default di Supabase — niente logo,
+// niente corallo, niente "— Bi".
+scrivi('reset-password.html', 'Reset Password', 'Reimposta la password — ChiamamiBi', '{{ .ConfirmationURL }}', {
+  preheader: 'Un link per scegliere una password nuova.',
+  reason: 'Ricevi questa email perché è stato chiesto di reimpostare la password del tuo account ChiamamiBi.',
+  blocks: [
+    eyebrow('Reset password'),
+    h1('Vuoi una password nuova?'),
+    lede('Hai chiesto di reimpostare la password del tuo account. Clicca qui sotto e scegline una nuova.'),
+    button('Reimposta la password', '{{ .ConfirmationURL }}', { bg: COLORS.corallo }),
+    divider({ gold: true }),
+    note('Se non sei stato tu, non fare niente: la password resta quella di prima.'),
+    signature('— Bi'),
+  ],
+  text: [
+    'Vuoi una password nuova?',
+    '',
+    'Hai chiesto di reimpostare la password del tuo account. Apri questo link e scegline una nuova:',
+    '{{ .ConfirmationURL }}',
+    '',
+    'Se non sei stato tu, non fare niente: la password resta quella di prima.',
+    '',
+    '— Bi',
+  ].join('\n'),
+})
+
 export { TEMPLATES }
 
 /**
