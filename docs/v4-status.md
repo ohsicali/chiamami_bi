@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-14 ("carica altri locali" in fondo alla lista Esplora)
+Ultima modifica: 2026-09-18 (fix: admin non vedeva mai i suggerimenti utenti)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -19,6 +19,42 @@ dove siamo. Aggiorna a ogni step importante.
 | C3 — (TBD) | — | ⏳ Not started | |
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
+
+## 18/09 — admin non vedeva MAI i suggerimenti utenti (fix)
+
+Augusto: la mail "SUGGERIMENTO DAL SITO" arriva (per "Mizzica"), ma
+`/admin/suggestions` mostra sempre "Nessun suggerimento".
+
+**Causa**: `SuggestionsManager.jsx` legge
+`.from('restaurant_suggestions').select('*, profile:profiles(...)')`. Quell'
+embed richiede una FK diretta fra le due tabelle che PostgREST possa
+risolvere. `restaurant_suggestions.user_id` puntava a `auth.users(id)`
+(schema originale di `restaurant-suggestions.sql`), non a `profiles(id)` —
+a differenza di ogni altra tabella "contenuto utente" del progetto
+(`discount_redemptions`, `saved_lists`, `saved_restaurants`,
+`user_reviews`, `email_preferences`, `push_subscriptions`,
+`ai_user_preferences`), che puntano tutte a `profiles(id)` proprio per
+poter fare questo embed. PostgREST non risolve relazioni fra tabelle
+"sorelle" che puntano entrambe ad `auth.users`: la query falliva sempre con
+un errore di relationship, e `const { data } = await supabase...` in
+`SuggestionsManager.jsx` ignorava l'errore — `data` restava `null`, la UI
+mostrava lista vuota. **100% riproducibile**, non intermittente: ogni
+suggerimento mai arrivato in admin, da quando la pagina esiste (15/05).
+
+**Fix**:
+- `supabase/fix-suggestions-profiles-fk-2026-09-18.sql` — FK rifatta su
+  `profiles(id) ON DELETE CASCADE` (pattern delle altre tabelle). ✅
+  **Eseguita** via connettore Supabase sul progetto `Chiamami_bi` il
+  18/09 — verificata nessuna riga orfana prima, FK verificata dopo,
+  schema PostgREST ricaricato (`NOTIFY pgrst, 'reload schema'`).
+- `SuggestionsManager.jsx` — la fetch ora legge anche `error`: se la query
+  fallisce di nuovo (qualunque motivo), lo mostra in un banner rosso in
+  cima alla lista invece di sembrare "zero suggerimenti". Prima falliva in
+  silenzio.
+
+**Dato verificato sul DB**: 3 righe in `restaurant_suggestions`, inclusa
+quella di oggi ("Mizzica", da `pubblismart@live.com`, stato `pending`) —
+non erano mai andate perse, semplicemente l'admin non le vedeva mai.
 
 ## HANDOFF v10 — stato per blocco (PR #212)
 
