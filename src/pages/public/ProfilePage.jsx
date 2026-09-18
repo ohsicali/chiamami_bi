@@ -623,7 +623,7 @@ export default function ProfilePage() {
           </svg>
           TikTok
         </a>
-        <a href="https://www.instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+        <a href="https://www.instagram.com/chiamami_bi/" target="_blank" rel="noopener noreferrer" style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           background: '#fff', borderRadius: 14, padding: '13px 0',
           color: 'var(--color-primary)', fontSize: 13, fontWeight: 600, textDecoration: 'none',

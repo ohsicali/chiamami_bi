@@ -37,7 +37,7 @@ export default function Footer() {
                 <path d="M19.321 5.562a5.124 5.124 0 0 1-3.414-1.267 5.124 5.124 0 0 1-1.537-2.723L14.348 1h-3.142v13.443a3.083 3.083 0 0 1-3.087 3.083 3.083 3.083 0 0 1-3.087-3.083 3.083 3.083 0 0 1 3.087-3.087c.297 0 .593.044.879.131v-3.197a6.249 6.249 0 0 0-.879-.063A6.243 6.243 0 0 0 1.876 14.47a6.243 6.243 0 0 0 6.243 6.243 6.243 6.243 0 0 0 6.243-6.243V8.094a8.221 8.221 0 0 0 4.959 1.652V6.604c0-.346-.345-1.042-.345-1.042z"/>
               </svg>
             </a>
-            <a href="https://www.instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer"
+            <a href="https://www.instagram.com/chiamami_bi/" target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-pink-500 hover:text-white transition-colors"
               aria-label="Instagram">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

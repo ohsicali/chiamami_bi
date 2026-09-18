@@ -83,7 +83,7 @@ export const BRAND = {
   name: 'ChiamamiBi',
   tagline: 'La guida ai posti dove tornerei, a Torino.',
   postal: process.env.EMAIL_POSTAL_ADDRESS || 'ChiamamiBi · Torino, Italia',
-  instagram: 'https://instagram.com/chiamamibi',
+  instagram: 'https://www.instagram.com/chiamami_bi/',
   contact: 'info@chiamamibi.com',
 }
 

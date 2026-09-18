@@ -966,7 +966,7 @@ export default function RestaurantSheet({
                       Consiglio solo posti dove tornerei. Niente sponsorizzazioni, niente fuffa — solo i locali che amo davvero.
                     </p>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <a href="https://instagram.com/chiamamibi" target="_blank" rel="noopener noreferrer" style={{
+                      <a href="https://www.instagram.com/chiamami_bi/" target="_blank" rel="noopener noreferrer" style={{
                         padding: '6px 10px', background: '#fff', border: '1px solid var(--color-ink-05)',
                         borderRadius: 999, fontSize: 11, fontWeight: 700, color: 'var(--color-ink)',
                         textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
