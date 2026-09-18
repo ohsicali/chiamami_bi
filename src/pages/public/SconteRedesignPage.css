@@ -1231,6 +1231,52 @@
 @media (min-width: 768px) {
   .sc-conv .sc-when { font-size: 11px; }
 }
+/* Anteprima prodotti sulla riga — vedi ProductDots in SconteRedesignPage.jsx.
+   Sta al posto della riga dei giorni, quindi l'altezza della card non cambia:
+   le pastiglie sono 22px come lo era quella riga di testo. */
+.sc-prod-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+.sc-prod-dots-imgs {
+  display: flex;
+  flex-shrink: 0;
+}
+.sc-prod-dots-imgs i {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--sc-cream, #F5F0E4);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  /* Il filo bianco stacca le pastiglie fra loro e dalla card: senza, tre foto
+     scure sovrapposte diventano una macchia sola. */
+  box-shadow: 0 0 0 1.6px #fff;
+}
+.sc-prod-dots-imgs i + i { margin-left: -7px; }
+.sc-prod-dots-imgs img { width: 100%; height: 100%; object-fit: cover; }
+.sc-prod-dots-imgs em { font-size: 10px; font-style: normal; opacity: 0.55; }
+.sc-prod-dots-txt {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sc-ink-3);
+  line-height: 1.2;
+  /* Una riga sola: «Matcha latte, chai e altri 3» che va a capo farebbe
+     crescere solo le card che hanno prodotti, sfalsando tutta la lista. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .sc-prod-dots-txt { font-size: 11px; }
+}
+
 .sc-cta-mini {
   background: var(--sc-ink);
   color: #fff;

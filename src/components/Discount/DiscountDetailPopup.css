@@ -164,15 +164,22 @@
 }
 
 /* Validity block colored */
+.ddp-lead {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: rgba(34, 24, 28, 0.7);
+}
+
 .ddp-validity-block {
   border-radius: 14px;
   padding: 12px 14px;
-  margin-bottom: 14px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
   gap: 11px;
 }
-.ddp-validity-block.is-ok   { background: #DDF4E0; }
 .ddp-validity-block.is-warn { background: #FBEDD0; }
 .ddp-validity-block.is-bad  { background: rgba(232, 69, 60, 0.1); }
 .ddp-validity-ic {
@@ -182,7 +189,6 @@
   display: grid; place-items: center;
   flex-shrink: 0;
 }
-.ddp-validity-block.is-ok   .ddp-validity-ic { background: #3FB955; }
 .ddp-validity-block.is-warn .ddp-validity-ic { background: #E8A53C; }
 .ddp-validity-block.is-bad  .ddp-validity-ic { background: #E8453C; }
 .ddp-validity-txt strong {
@@ -192,7 +198,6 @@
   line-height: 1.1;
   margin-bottom: 2px;
 }
-.ddp-validity-block.is-ok   .ddp-validity-txt strong { color: #1d6e30; }
 .ddp-validity-block.is-warn .ddp-validity-txt strong { color: #7a5a17; }
 .ddp-validity-block.is-bad  .ddp-validity-txt strong { color: #B92E26; }
 .ddp-validity-txt p {
@@ -270,41 +275,11 @@
   transition: width 0.4s ease;
 }
 
-/* Specs list */
-.ddp-specs { display: flex; flex-direction: column; }
-.ddp-spec-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid #EFE7DD;
-}
-.ddp-spec-row:last-child { border-bottom: 0; }
-.ddp-spec-ic {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  background: #FCE7E5;
-  color: #E8453C;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.ddp-spec-info { flex: 1; min-width: 0; }
-.ddp-spec-info strong {
-  display: block;
-  font-size: 9.5px;
-  font-weight: 700;
-  color: #9A8E94;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-}
-.ddp-spec-v {
-  font-size: 13.5px;
-  color: #22181C;
-  font-weight: 600;
-  line-height: 1.2;
-}
+/* Le regole dello sconto (DiscountRules) al posto della vecchia lista specs:
+   quella era una colonna di righe uguali — icona corallo, etichetta, valore —
+   dove "Quando", "Cosa ottieni" e "Da sapere" avevano la stessa forma pur
+   rispondendo a domande diverse. Adesso ogni domanda ha la sua forma. */
+.ddp-rules { margin-top: 14px; }
 
 /* Scopri ristorante card */
 .ddp-restaurant-link {

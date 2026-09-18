@@ -17,6 +17,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { supabase, proxyImg } from '../../../lib/supabase'
 import FGroup from './_FGroup'
+import { convertToWebP } from '../../../lib/utils/imageUpload'
 
 const MAX_PHOTOS = 12
 const STORAGE_BUCKET = 'photos'
@@ -362,33 +363,6 @@ function normalizePhotos(list) {
     })
     .filter((p) => p.url)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-}
-
-function convertToWebP(file, maxWidth = 2400, quality = 0.82) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const resize = (targetWidth, q) =>
-        new Promise((res, rej) => {
-          const scale = Math.min(1, targetWidth / img.width)
-          const w = Math.round(img.width * scale)
-          const h = Math.round(img.height * scale)
-          const canvas = document.createElement('canvas')
-          canvas.width = w
-          canvas.height = h
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-          canvas.toBlob((blob) => (blob ? res(blob) : rej(new Error('WebP conversion failed'))), 'image/webp', q)
-        })
-      Promise.all([resize(maxWidth, quality), resize(400, 0.7)])
-        .then(([full, thumb]) => {
-          URL.revokeObjectURL(img.src)
-          resolve({ full, thumb })
-        })
-        .catch(reject)
-    }
-    img.onerror = () => reject(new Error('Failed to load image'))
-    img.src = URL.createObjectURL(file)
-  })
 }
 
 const photoAction = {

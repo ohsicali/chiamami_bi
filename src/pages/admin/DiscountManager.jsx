@@ -7,6 +7,7 @@ import AdminLayout from '../../components/Layout/AdminLayout'
 import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
 import PrettyDatePicker from '../../components/admin/PrettyDatePicker'
+import { ProductsEditor, ValidityPicker } from '../../components/admin/DiscountRulesFields'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -33,6 +34,9 @@ const EMPTY_FORM = {
   discount_type: 'percentage',
   discount_value: '',
   conditions: '',
+  valid_days: [],          // [] = tutti i giorni
+  valid_meal_slots: [],    // [] = qualsiasi ora
+  products: [],            // foto di cosa lo sconto copre
   kind: 'discount', // 'discount' | 'featured' | 'drop'
   starts_at: new Date().toISOString().split('T')[0],
   ends_at: '',
@@ -550,7 +554,7 @@ export default function DiscountManager() {
       return
     }
     Promise.all([
-      supabase.from('discounts').select('*, restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
+      supabase.from('discounts').select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)').order('created_at', { ascending: false }),
       supabase.from('restaurants').select('id, name, verify_pin, restaurant_photos(photo_url)').order('name'),
       supabase.from('discount_redemptions').select('discount_id, status'),
       supabase.from('restaurant_partners').select('restaurant_id, pin_code').eq('is_active', true),
@@ -660,6 +664,9 @@ export default function DiscountManager() {
       discount_type: d.discount_type,
       discount_value: d.discount_value,
       conditions: d.conditions || '',
+      valid_days: Array.isArray(d.valid_days) ? d.valid_days : [],
+      valid_meal_slots: Array.isArray(d.valid_meal_slots) ? d.valid_meal_slots : [],
+      products: [...(d.products || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
       kind,
       starts_at: toInputDate(isDrop ? (d.drop_starts_at || d.valid_from) : d.valid_from, isDrop),
       ends_at: toInputDate(isDrop ? (d.drop_ends_at || d.valid_until) : d.valid_until, isDrop),
@@ -668,6 +675,37 @@ export default function DiscountManager() {
     })
     setEditing(d.id)
     setShowForm(true)
+  }
+
+  /**
+   * Riallinea `discount_products` a quello che c'è nel form.
+   *
+   * Cancella e reinserisce invece di fare un diff riga per riga: le foto sono
+   * al massimo otto, nessuno tiene riferimenti agli id dei prodotti, e un
+   * diff su nome/nota/ordine sarebbe tre volte il codice per lo stesso
+   * risultato. L'ordine dell'array è l'ordine pubblicato.
+   */
+  const syncProducts = async (discountId, products) => {
+    const rows = (products || [])
+      .map((p, i) => ({
+        discount_id: discountId,
+        name: (p.name || '').trim() || 'Prodotto',
+        note: (p.note || '').trim() || null,
+        photo_url: p.photo_url || null,
+        thumb_url: p.thumb_url || null,
+        sort_order: i,
+      }))
+      // Una riga senza foto e col nome lasciato vuoto è una riga aggiunta per
+      // sbaglio: non ha niente da mostrare e non va pubblicata.
+      .filter((r) => r.photo_url || r.name !== 'Prodotto')
+
+    const { error: delErr } = await supabase.from('discount_products').delete().eq('discount_id', discountId)
+    if (delErr) return { error: delErr.message, rows: [] }
+    if (rows.length === 0) return { error: null, rows: [] }
+
+    const { data, error } = await supabase.from('discount_products').insert(rows).select()
+    if (error) return { error: error.message, rows: [] }
+    return { error: null, rows: data || [] }
   }
 
   const handleSave = async () => {
@@ -756,6 +794,11 @@ export default function DiscountManager() {
       discount_type: form.discount_type,
       discount_value: form.discount_value,
       conditions: form.conditions || null,
+      // Lista vuota → null, non []: `effectiveValidDays` legge "nessun limite"
+      // da entrambi, ma null è quello che c'è già sulle righe storiche e
+      // tenere due modi di dire la stessa cosa non aiuta nessuno.
+      valid_days: form.valid_days?.length ? form.valid_days : null,
+      valid_meal_slots: form.valid_meal_slots?.length ? form.valid_meal_slots : null,
       valid_from: startIso,
       valid_until: endIso,
       max_redemptions: uses,
@@ -766,17 +809,28 @@ export default function DiscountManager() {
       max_quantity: isDrop ? uses : null,
       is_featured: isFeatured,
     }
+    const withProducts = '*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name)'
     const result = editing
-      ? await supabase.from('discounts').update(payload).eq('id', editing).select('*, restaurant:restaurants(id, name)').single()
-      : await supabase.from('discounts').insert(payload).select('*, restaurant:restaurants(id, name)').single()
+      ? await supabase.from('discounts').update(payload).eq('id', editing).select(withProducts).single()
+      : await supabase.from('discounts').insert(payload).select(withProducts).single()
     if (result.error) {
       setSaveError(result.error.message || 'Errore nel salvataggio. Riprova.')
       setSaving(false)
       return
     }
     if (result.data) {
-      if (editing) setDiscounts((p) => p.map((d) => (d.id === editing ? result.data : d)))
-      else setDiscounts((p) => [result.data, ...p])
+      const savedProducts = await syncProducts(result.data.id, form.products)
+      if (savedProducts.error) {
+        // Lo sconto è salvato: qui fallisce solo l'elenco prodotti. Dirlo e
+        // lasciare il form aperto è meglio che chiuderlo facendo credere che
+        // le foto siano andate a posto.
+        setSaveError(`Sconto salvato, ma le foto dei prodotti no: ${savedProducts.error}`)
+        setSaving(false)
+        return
+      }
+      const saved = { ...result.data, products: savedProducts.rows }
+      if (editing) setDiscounts((p) => p.map((d) => (d.id === editing ? saved : d)))
+      else setDiscounts((p) => [saved, ...p])
       setShowForm(false)
       resetForm()
       if (pendingPin) setPinPopup(pendingPin)
@@ -787,7 +841,7 @@ export default function DiscountManager() {
       // tiene il registro (email_notifications_log) e rifiuta il doppione,
       // questo è il primo dei due sbarramenti.
       if (!editing && result.data.is_active) {
-        notifyOnPublish(result.data)
+        notifyOnPublish(saved)
       }
     }
     setSaving(false)
@@ -1435,13 +1489,32 @@ export default function DiscountManager() {
                     </FormField>
                   </div>
 
-                  <FormField label="Condizioni (opzionale)">
-                    <input
-                      type="text"
+                  {/* Su cosa vale — le foto dei prodotti coperti dallo sconto */}
+                  <FormField label="Su cosa vale" hint="facoltativo">
+                    <ProductsEditor
+                      products={form.products}
+                      folder={editing || form.restaurant_id || newPartner?.id || 'nuovi'}
+                      onChange={(products) => setForm((f) => ({ ...f, products }))}
+                    />
+                  </FormField>
+
+                  {/* Quando vale — giorni e fasce, che prima si potevano solo
+                      raccontare dentro "Condizioni" */}
+                  <FormField label="Quando vale" hint="facoltativo">
+                    <ValidityPicker
+                      days={form.valid_days}
+                      slots={form.valid_meal_slots}
+                      onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+                    />
+                  </FormField>
+
+                  <FormField label="Altre regole (opzionale)" hint="una per riga">
+                    <textarea
                       value={form.conditions}
                       onChange={(e) => setForm((f) => ({ ...f, conditions: e.target.value }))}
-                      placeholder="Es: Valido solo a cena, min 2 persone"
-                      style={inputStyle}
+                      placeholder={'Es: Escluso asporto\nMinimo 2 persone'}
+                      rows={3}
+                      style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
                     />
                   </FormField>
 
