@@ -454,10 +454,25 @@
   background: rgba(255, 255, 255, 0.45);
 }
 
+/* Niente emoji, niente rosso d'allarme: due filetti sottili e un testo in
+   maiuscoletto spaziato, come una targhetta — la scarsità si dice con la
+   tipografia, non con un fuoco. */
 .dropcard__counts--soldout {
   justify-content: center;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  align-items: center;
+  gap: calc(10 * var(--dc-k));
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: calc(9 * var(--dc-k));
+  letter-spacing: 0.16em;
+  opacity: 0.85;
+}
+
+.dropcard__soldout-rule {
+  flex: 1;
+  max-width: calc(26 * var(--dc-k));
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .dropcard__status--soldout {

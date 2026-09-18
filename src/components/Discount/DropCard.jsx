@@ -154,7 +154,9 @@ export default function DropCard({
             </div>
             {view.soldOut ? (
               <div className="dropcard__counts dropcard__counts--soldout">
-                <span>🔥 Tutti i posti sono stati presi</span>
+                <i className="dropcard__soldout-rule" aria-hidden="true" />
+                <span>Tutti i posti sono stati presi</span>
+                <i className="dropcard__soldout-rule" aria-hidden="true" />
               </div>
             ) : (
               <div className="dropcard__counts">
