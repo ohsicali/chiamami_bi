@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-18 (fix: admin non vedeva mai i suggerimenti utenti)
+Ultima modifica: 2026-09-18 (fix: admin non vedeva né suggerimenti né candidature)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -55,6 +55,42 @@ suggerimento mai arrivato in admin, da quando la pagina esiste (15/05).
 **Dato verificato sul DB**: 3 righe in `restaurant_suggestions`, inclusa
 quella di oggi ("Mizzica", da `pubblismart@live.com`, stato `pending`) —
 non erano mai andate perse, semplicemente l'admin non le vedeva mai.
+
+## 18/09 — anche le candidature ristoratori sparivano (fix, causa diversa)
+
+Stesso giorno, stesso sintomo lamentato ("non funziona nemmeno questo"), ma
+**causa diversa e più grave**: `partner_applications` aveva **zero righe**,
+mai una da quando la pagina `/partner` esiste (15/05). Non era un problema
+di lettura come i suggerimenti — l'INSERT falliva da mesi.
+
+**Causa**: `api/partner-application.js` inserisce anche `address`,
+`instagram`, `motivation`. Queste tre colonne esistevano già come file di
+migration nel repo (`supabase/add-partner-application-fields.sql`, commit
+del 15/05) ma **non erano mai state eseguite sul DB di produzione**. Ogni
+insert falliva con "column does not exist", ma il codice logga l'errore e
+**continua comunque** (`// don't hard-fail: still try to send email` — scelta
+voluta, per non perdere il lead se il DB ha un problema) e manda l'email di
+notifica a `info@chiamamibi.com` lo stesso. Risultato: il candidato vedeva
+"candidatura inviata", Augusto riceveva l'email, ma la riga in DB non c'era
+mai — l'admin (`/admin/applications`) è sempre stato vuoto, e le
+candidature ricevute in questi 4 mesi **non sono recuperabili dal DB**
+(erano solo nell'email, mai salvate).
+
+**Fix**: eseguita `supabase/add-partner-application-fields.sql` (file già
+pronto, mai lanciato) via connettore Supabase il 18/09. Verificato con un
+insert di prova nella stessa forma esatta usata da `partner-application.js`
+(dentro una transazione con `ROLLBACK`, nessun dato lasciato) — va a buon
+fine.
+
+**Verifica più ampia fatta lo stesso giorno**: confrontate tutte le
+`ALTER TABLE ... ADD COLUMN` e `CREATE TABLE` in `supabase/*.sql` contro lo
+schema live, per lo stesso tipo di bug (file di migration mai eseguito).
+Nessun'altra tabella o colonna mancante — le uniche due altre righe
+"mancanti" trovate (`profiles.recovery_otp*`, `newsletter_subscribers.source`)
+sono innocue: la prima è una colonna legacy già sostituita da
+`auth_recovery_tokens` (il security audit del 14/05 raccomandava anzi di
+droppare `recovery_otp`, non di aggiungerlo), la seconda non è letta né
+scritta da nessun codice attuale.
 
 ## HANDOFF v10 — stato per blocco (PR #212)
 
