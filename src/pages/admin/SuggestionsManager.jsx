@@ -47,6 +47,7 @@ export default function SuggestionsManager() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const [suggestions, setSuggestions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [filter, setFilter] = useState('pending')
 
   useEffect(() => {
@@ -56,10 +57,16 @@ export default function SuggestionsManager() {
 
   const fetchSuggestions = async () => {
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('restaurant_suggestions')
       .select('*, profile:profiles(full_name, email, avatar_url)')
       .order('created_at', { ascending: false })
+    if (error) {
+      console.error('SuggestionsManager fetch error:', error)
+      setLoadError(error.message)
+    } else {
+      setLoadError('')
+    }
     setSuggestions(data || [])
     setLoading(false)
   }
@@ -146,6 +153,19 @@ export default function SuggestionsManager() {
         </div>
 
         {/* Content */}
+        {loadError && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 12,
+            padding: '14px 16px',
+            marginBottom: 16,
+            fontSize: 12.5,
+            color: '#dc2626',
+          }}>
+            Errore nel caricamento dei suggerimenti: {loadError}
+          </div>
+        )}
         {loading ? (
           <div style={{ textAlign: 'center', padding: 60, color: '#999', fontSize: 13 }}>
             Caricamento...
