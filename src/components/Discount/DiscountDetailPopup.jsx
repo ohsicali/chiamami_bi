@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import {
   checkValidity,
   formatShortPill,
+  formatSlots,
   computeNextValidWindow,
 } from '../../lib/validity'
 import ValidityPill from './ValidityPill'
@@ -224,8 +225,12 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
     }
     const next = computeNextValidWindow(deal)
     if (status === 'valid_today_later') {
+      // Con una sola fascia il nome si può dire ("a cena"): è l'informazione
+      // che serve per decidere se aspettare, non solo l'orario nudo.
+      const slots = Array.isArray(deal?.valid_meal_slots) ? deal.valid_meal_slots : []
+      const slotLabel = slots.length === 1 ? formatSlots(slots) : null
       return {
-        validityHeadline: 'Non ancora attivo',
+        validityHeadline: slotLabel ? `Valido solo a ${slotLabel.toLowerCase()}` : 'Non ancora attivo',
         validityCopy: next ? `Si attiva ${next}.` : 'Si attiva più tardi oggi.',
       }
     }

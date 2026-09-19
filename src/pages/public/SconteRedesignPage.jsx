@@ -168,9 +168,24 @@ function SconteRedesignPageInner() {
 
   const [claiming, setClaiming] = useState(null)
   const [qrPopup, setQrPopup] = useState(null) // { redemption, deal }
+  const [qrBlocked, setQrBlocked] = useState(null) // deal | null
   const [authGate, setAuthGate] = useState(null) // pendingDiscountId | null
   const [toast, setToast] = useState(null)
   const [infoDeal, setInfoDeal] = useState(null) // deal | null per dialog dettagli
+
+  // Il riscatto si salva sempre — si può sbloccare in anticipo, resta in
+  // "I miei vantaggi" — ma il QR si mostra solo se lo sconto è valido ORA,
+  // giorno e fascia giusti. Fuori da quella finestra si vede QRBlockedView
+  // (che spiega quando torna valido) invece di un QR che il locale
+  // scansionerebbe e rifiuterebbe. Stessa regola per il primo sblocco
+  // (qui) e per la riapertura da "I miei vantaggi" (`openMyQR` sotto).
+  const showClaimedQR = (deal, redemption) => {
+    if (deal && checkValidity(deal) !== 'valid_now') {
+      setQrBlocked(deal)
+      return
+    }
+    setQrPopup({ redemption: { ...redemption, discount_id: deal?.id }, deal })
+  }
 
   useEffect(() => {
     if (!toast) return
@@ -246,7 +261,7 @@ function SconteRedesignPageInner() {
         .maybeSingle()
 
       if (existing?.qr_code) {
-        setQrPopup({ redemption: { ...existing, discount_id: deal.id }, deal })
+        showClaimedQR(deal, existing)
         return
       }
 
@@ -289,7 +304,7 @@ function SconteRedesignPageInner() {
           .limit(1)
           .maybeSingle()
         if (!recovered) throw error
-        setQrPopup({ redemption: { ...recovered, discount_id: deal.id }, deal })
+        showClaimedQR(deal, recovered)
         return
       }
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
@@ -300,7 +315,7 @@ function SconteRedesignPageInner() {
       // registro e non manda due volte la stessa ricevuta.
       sendClaimReceipt(data.id)
 
-      setQrPopup({ redemption: { ...data, discount_id: deal.id }, deal })
+      showClaimedQR(deal, data)
     } catch (e) {
       console.error('Claim failed:', e)
       // The insert can commit server-side even when the JS promise rejects
@@ -320,7 +335,7 @@ function SconteRedesignPageInner() {
           .limit(1)
           .maybeSingle()
         if (recovered?.qr_code) {
-          setQrPopup({ redemption: { ...recovered, discount_id: deal.id }, deal })
+          showClaimedQR(deal, recovered)
           return
         }
       } catch { /* recovery best-effort */ }
@@ -330,10 +345,7 @@ function SconteRedesignPageInner() {
     }
   }, [claiming, user])
 
-  const [qrBlocked, setQrBlocked] = useState(null) // deal | null
-
-  // Click "Apri QR" da I miei vantaggi: se non valid_now → blocked view,
-  // altrimenti popup QR normale (PR21 SconteQRPopup).
+  // Click "Apri QR" da I miei vantaggi: stessa regola di `showClaimedQR`.
   const openMyQR = (redemption) => {
     const deal = redemption?.discount
     if (deal && checkValidity(deal) !== 'valid_now') {
@@ -529,6 +541,14 @@ function SconteRedesignPageInner() {
           claiming={claiming === infoDeal.id}
           onClaim={async () => {
             const result = await claimFromPopup(infoDeal)
+            // Il riscatto si salva comunque, ma se lo sconto non è valido
+            // ORA il popup non deve passare al QR: si chiude e si apre
+            // QRBlockedView, stessa regola di `showClaimedQR`/`openMyQR`.
+            if (result && checkValidity(infoDeal) !== 'valid_now') {
+              setInfoDeal(null)
+              setQrBlocked(infoDeal)
+              return null
+            }
             return result
           }}
           onClose={() => setInfoDeal(null)}

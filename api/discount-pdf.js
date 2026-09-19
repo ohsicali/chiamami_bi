@@ -29,6 +29,7 @@ import React from 'react'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { formatShortCode } from './_short-code.js'
+import { formatDays, formatSlots } from '../src/lib/validity.js'
 
 export const config = { maxDuration: 30 }
 
@@ -120,6 +121,34 @@ function formatExpiryLabel(deal) {
   const diffDays = (d.getTime() - Date.now()) / 86400000
   if (diffDays > 365) return null
   return `il ${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
+}
+
+/**
+ * La riga "quando vale" del coupon — sempre presente, anche quando lo
+ * sconto non ha limiti. Il PDF è l'unica versione dello sconto che il
+ * ristoratore vede senza passare dall'app: se il cliente lo stampa e si
+ * presenta di martedì su uno sconto valido solo a cena dal lunedì al
+ * giovedì, la regola deve essere leggibile sulla carta stessa, non solo
+ * nell'app che magari non ha più sotto mano.
+ *
+ * Stessa formattazione di `DiscountRules`/`QRBlockedView` lato app
+ * (`formatDays`/`formatSlots` da `src/lib/validity.js`), così le due
+ * versioni non raccontano regole diverse per lo stesso sconto.
+ */
+function formatValidityLine(deal) {
+  const days = Array.isArray(deal?.valid_days) ? deal.valid_days : []
+  const hasDayLimit = days.length > 0 && days.length < 7
+  const dayPart = hasDayLimit ? formatDays(days) : 'Tutti i giorni'
+
+  const slots = Array.isArray(deal?.valid_meal_slots) ? deal.valid_meal_slots : []
+  let timePart = null
+  if (deal?.valid_time_from && deal?.valid_time_to) {
+    // Orario esplicito: vince sulla fascia, come lato app.
+    timePart = `${deal.valid_time_from.slice(0, 5)}–${deal.valid_time_to.slice(0, 5)}`
+  } else if (slots.length > 0) {
+    timePart = formatSlots(slots)
+  }
+  return timePart ? `${dayPart} · ${timePart}` : dayPart
 }
 
 function pctText(deal) {
@@ -218,7 +247,7 @@ async function streamToBuffer(stream) {
 const styles = StyleSheet.create({
   page: { backgroundColor: C.page, fontFamily: 'Poppins', color: C.ink, padding: 0, flexDirection: 'column' },
   /* Header — wordmark "LA GUIDA DI BI" in Alfa Slab One (come live) */
-  header: { paddingTop: 10, paddingBottom: 4, paddingHorizontal: 18, alignItems: 'flex-start' },
+  header: { paddingTop: 8, paddingBottom: 3, paddingHorizontal: 18, alignItems: 'flex-start' },
   logoText: {
     fontFamily: 'AlfaSlabOne', fontSize: 19, color: C.corallo,
     letterSpacing: 0.5, lineHeight: 1.05,
@@ -230,7 +259,7 @@ const styles = StyleSheet.create({
   divider: { height: 0.5, backgroundColor: C.line, marginHorizontal: 18, marginTop: 3 },
   /* Photo */
   photoWrap: {
-    marginHorizontal: 18, marginTop: 7, height: 65,
+    marginHorizontal: 18, marginTop: 5, height: 60,
     borderRadius: 6, overflow: 'hidden', backgroundColor: '#dcd0c0',
   },
   photo: { width: '100%', height: '100%', objectFit: 'cover' },
@@ -240,7 +269,7 @@ const styles = StyleSheet.create({
   },
   photoFallbackText: { fontSize: 24, color: '#dcd0c0' },
   /* Info locale */
-  info: { paddingHorizontal: 18, paddingTop: 7 },
+  info: { paddingHorizontal: 18, paddingTop: 5 },
   localeName: {
     fontFamily: 'Poppins', fontWeight: 700, fontSize: 15, color: C.ink,
     lineHeight: 1.05, letterSpacing: -0.3,
@@ -252,7 +281,7 @@ const styles = StyleSheet.create({
   /* Pct row */
   pctRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 18, paddingTop: 7, gap: 9,
+    paddingHorizontal: 18, paddingTop: 5, gap: 9,
   },
   pctBadge: {
     backgroundColor: C.corallo, color: '#fff', fontFamily: 'Poppins', fontWeight: 800,
@@ -265,20 +294,35 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8, marginBottom: 1,
   },
   pctClaimText: { fontFamily: 'Poppins', fontWeight: 400, fontSize: 7.5, color: C.ink, lineHeight: 1.2 },
+  /* Validità — quando vale, in chiaro sulla carta stessa */
+  validityRow: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: 18, marginTop: 3, gap: 6,
+    backgroundColor: C.oroSoft, borderRadius: 5,
+    paddingVertical: 3, paddingHorizontal: 9,
+  },
+  validityLabel: {
+    fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.oro,
+    letterSpacing: 0.7,
+  },
+  validityText: {
+    fontFamily: 'Poppins', fontWeight: 700, fontSize: 8, color: C.ink,
+    letterSpacing: -0.1,
+  },
   /* QR */
   qrWrap: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 18, paddingTop: 5,
+    paddingHorizontal: 18, paddingTop: 3,
   },
   qrBox: {
     width: 110, height: 110, backgroundColor: '#fff',
     borderWidth: 1.3, borderColor: C.ink, borderRadius: 7, padding: 5,
   },
   qrImage: { width: '100%', height: '100%' },
-  qrHint: { fontFamily: 'Caveat', fontWeight: 700, fontSize: 18, color: C.corallo, marginTop: 3, lineHeight: 1 },
+  qrHint: { fontFamily: 'Caveat', fontWeight: 700, fontSize: 18, color: C.corallo, marginTop: 2, lineHeight: 1 },
   codeLabel: {
     fontFamily: 'Poppins', fontWeight: 700, fontSize: 5.5, color: C.ink3,
-    letterSpacing: 1.1, marginTop: 6,
+    letterSpacing: 1.1, marginTop: 4,
   },
   codeShort: {
     fontFamily: 'Courier', fontSize: 15, color: C.ink, letterSpacing: 2.5,
@@ -287,12 +331,12 @@ const styles = StyleSheet.create({
   scadPill: {
     backgroundColor: C.oroSoft, color: C.oro, fontFamily: 'Poppins', fontWeight: 700,
     fontSize: 7, paddingTop: 3, paddingBottom: 2, paddingHorizontal: 10,
-    borderRadius: 100, marginTop: 4, letterSpacing: 0.3,
+    borderRadius: 100, marginTop: 3, letterSpacing: 0.3,
   },
   /* Footer */
   footer: {
     borderTopWidth: 0.5, borderTopColor: C.line,
-    marginHorizontal: 18, marginTop: 5, paddingTop: 5, paddingBottom: 7,
+    marginHorizontal: 18, marginTop: 3, paddingTop: 4, paddingBottom: 5,
     alignItems: 'center',
   },
   footerUrl: { fontFamily: 'Poppins', fontWeight: 700, fontSize: 7, color: C.ink, letterSpacing: 0.5 },
@@ -342,6 +386,14 @@ function CouponDocument({ ctx }) {
           React.createElement(Text, { style: styles.pctClaimText }, ctx.descrizione_sconto)
         )
       ),
+      // VALIDITÀ — giorni + fascia, sempre in chiaro sulla carta
+      ctx.validita
+        ? React.createElement(
+            View, { style: styles.validityRow },
+            React.createElement(Text, { style: styles.validityLabel }, 'QUANDO VALE'),
+            React.createElement(Text, { style: styles.validityText }, ctx.validita)
+          )
+        : null,
       // QR
       React.createElement(
         View, { style: styles.qrWrap },
@@ -418,6 +470,7 @@ export default async function handler(req, res) {
       discount:discounts(
         id, title, description, discount_type, discount_value, conditions,
         valid_until, drop_ends_at, is_drop,
+        valid_days, valid_meal_slots, valid_time_from, valid_time_to,
         restaurant:restaurants(
           id, name, slug, address, cuisine_type, category
         )
@@ -463,6 +516,7 @@ export default async function handler(req, res) {
     locale_indirizzo: shortAddress(restaurant.address),
     percentuale: pctText(deal),
     descrizione_sconto: deal.title || deal.description || 'Valido alla cassa',
+    validita: formatValidityLine(deal),
     codice_testuale: redemption.qr_code,
     // Il codice da dettare al ristoratore quando la fotocamera non legge il
     // QR: spezzato in due gruppi di tre, come sull'app.
