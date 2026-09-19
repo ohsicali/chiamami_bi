@@ -12,8 +12,9 @@ import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
-import QRCodeDisplay from '../Discount/QRCodeDisplay'
+import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
 import SconteAuthGate from '../Discount/SconteAuthGate'
+import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import AdSlot from '../Ads/AdBanner'
 
 /* ── design tokens ── */
@@ -84,7 +85,8 @@ export default function DesktopRestaurantSheet({
   const [photoIndex, setPhotoIndex] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const [inlineGenerating, setInlineGenerating] = useState(false)
-  const [inlineShowQR, setInlineShowQR] = useState(false)
+  const [popupOpen, setPopupOpen] = useState(false)
+  const [blockedMessage, setBlockedMessage] = useState(null)
   const [authGate, setAuthGate] = useState(false)
   const { handleShare } = useShare(restaurant)
   const { discounts: activeDiscounts } = useActiveDiscounts()
@@ -140,24 +142,52 @@ export default function DesktopRestaurantSheet({
   const next = () => setPhotoIndex(i => (i + 1) % photoCount)
 
   /* discount unlock */
-  const handleDiscountClick = async () => {
+  // Stesso testo di "non è ancora il momento" usato da RestaurantSheet
+  // (mobile) e da QRBlockedView — riscritto qui perché questo popup
+  // leggero non ha i dati (foto, nome locale) che QRBlockedView si aspetta.
+  const discountBlockedMessage = (deal) => {
+    const status = checkValidity(deal)
+    const next = computeNextValidWindow(deal)
+    if (status === 'valid_today_later') return next ? `Si attiva ${next}.` : 'Si attiva più tardi oggi.'
+    return next ? `Torna ${next}: guarda gli orari sulla scheda dello sconto.` : 'Guarda gli orari sulla scheda dello sconto.'
+  }
+
+  // Sblocco chiamato da dentro il popup ("Sblocca sconto"): il riscatto si
+  // salva comunque, ma se lo sconto non è valido ORA non si passa mai al
+  // QR — il popup resta aperto e mostra `blockedMessage` invece.
+  const handleClaim = async () => {
     if (!user) {
       // Il riquadro sopra la scheda, non un salto a /login: il locale resta
       // aperto dietro, e chiudendo il popup si riprende da dove si era.
       // `SconteAuthGate` si porta dietro lo sconto in sospeso e il `returnTo`
       // di questa pagina, quindi chi va avanti torna esattamente qui.
+      setPopupOpen(false)
       setAuthGate(true)
-      return
+      return null
     }
-    if (redemption?.status === 'redeemed') return
-    if (redemption?.status === 'generated') { setInlineShowQR(true); return }
     setInlineGenerating(true)
     try {
       const result = await generateRedemption()
-      if (result) setInlineShowQR(true)
+      if (result && checkValidity(discount) !== 'valid_now') {
+        setBlockedMessage(discountBlockedMessage(discount))
+        return null
+      }
+      return result
     } finally {
       setInlineGenerating(false)
     }
+  }
+
+  // Click sul bottone: se già sbloccato il popup apre subito il QR — a
+  // meno che la finestra valida sia passata da quando è stato sbloccato.
+  const handleDiscountClick = () => {
+    if (redemption?.status === 'redeemed') return
+    if ((redemption?.status === 'generated') && checkValidity(discount) !== 'valid_now') {
+      setBlockedMessage(discountBlockedMessage(discount))
+    } else {
+      setBlockedMessage(null)
+    }
+    setPopupOpen(true)
   }
 
   /* ══════ RENDER ══════ */
@@ -434,7 +464,7 @@ export default function DesktopRestaurantSheet({
                     whiteSpace: 'nowrap', opacity: inlineGenerating ? 0.6 : 1,
                   }}
                 >
-                  {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Usa sconto →'}
+                  {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Scopri di più'}
                 </button>
               </div>
             )}
@@ -675,15 +705,17 @@ export default function DesktopRestaurantSheet({
         <span>© 2026 · v1.0</span>
       </div>
 
-      {/* QR overlay */}
+      {/* Popup sconto — "Scopri di più" apre le info, poi da lì lo sblocco */}
       <AnimatePresence>
-        {inlineShowQR && redemption && (
-          <QRCodeDisplay
-            qrCode={redemption.qr_code}
-            shortCode={redemption.short_code}
-            discountTitle={discount?.title}
-            discountValue={discount?.discount_value}
-            onClose={() => setInlineShowQR(false)}
+        {popupOpen && (
+          <DiscountQuickPopup
+            deal={discount}
+            initialUnlocked={redemption?.status === 'generated' && !blockedMessage}
+            initialRedemption={redemption}
+            claiming={inlineGenerating}
+            blockedMessage={blockedMessage}
+            onClaim={handleClaim}
+            onClose={() => { setPopupOpen(false); setBlockedMessage(null) }}
           />
         )}
       </AnimatePresence>
@@ -742,7 +774,7 @@ export default function DesktopRestaurantSheet({
               transition: 'background .15s ease, transform .15s ease',
             }}
           >
-            {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Usa sconto'}
+            {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Scopri di più'}
             <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M13 5l7 7-7 7" />
             </svg>

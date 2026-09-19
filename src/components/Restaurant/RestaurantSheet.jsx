@@ -10,8 +10,9 @@ import SaveButton from './SaveButton'
 import OrariLocale from './OrariLocale'
 import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
-import QRCodeDisplay from '../Discount/QRCodeDisplay'
+import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
 import SconteAuthGate from '../Discount/SconteAuthGate'
+import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -55,6 +56,19 @@ function useShare(restaurant, t) {
 
 /* ── Video Buttons (Instagram Reel / TikTok) ── */
 
+/**
+ * Il testo pronto quando lo sconto non è valido ORA (giorno o fascia
+ * sbagliati) — stessa logica/copy di `QRBlockedView` e `DiscountDetailPopup`,
+ * riscritta qui perché questo popup leggero non ha i dati (foto, nome
+ * locale) che quel componente si aspetta.
+ */
+function discountBlockedMessage(discount) {
+  const status = checkValidity(discount)
+  const next = computeNextValidWindow(discount)
+  if (status === 'valid_today_later') return next ? `Si attiva ${next}.` : 'Si attiva più tardi oggi.'
+  return next ? `Torna ${next}: guarda gli orari sulla scheda dello sconto.` : 'Guarda gli orari sulla scheda dello sconto.'
+}
+
 /* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
 function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const { t } = useTranslation()
@@ -63,7 +77,8 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const discount = discountFromParent || fetchedDiscount
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
   const [generating, setGenerating] = useState(false)
-  const [showQR, setShowQR] = useState(false)
+  const [popupOpen, setPopupOpen] = useState(false)
+  const [blockedMessage, setBlockedMessage] = useState(null)
   const [dismissed, setDismissed] = useState(false)
   const [authGate, setAuthGate] = useState(false)
 
@@ -76,7 +91,10 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
 
-  const handleUnlock = async () => {
+  // Sblocco chiamato da dentro il popup ("Sblocca sconto"): il riscatto si
+  // salva comunque, ma se lo sconto non è valido ORA non si passa mai al
+  // QR — il popup resta aperto e mostra `blockedMessage` invece.
+  const handleClaim = async () => {
     if (!user) {
       // Il riquadro, non un salto a /login: chi preme "Sblocca sconto" ha
       // appena scelto questo locale e questo sconto, e buttarlo su un'altra
@@ -84,18 +102,36 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
       // ancora lì, aperta dov'era. `SconteAuthGate` porta con sé lo sconto in
       // sospeso e il `returnTo` di questa pagina, quindi chi va avanti torna
       // esattamente qui.
+      setPopupOpen(false)
       setAuthGate(true)
-      return
+      return null
     }
     setGenerating(true)
     try {
       const result = await generateRedemption()
-      if (result) setShowQR(true)
+      if (result && checkValidity(discount) !== 'valid_now') {
+        setBlockedMessage(discountBlockedMessage(discount))
+        return null
+      }
+      return result
     } catch (err) {
       console.error(err)
+      return null
     } finally {
       setGenerating(false)
     }
+  }
+
+  // Click sul bottone principale: se già sbloccato il popup apre subito il
+  // QR ("Mostra QR") — a meno che la finestra valida sia già passata da
+  // quando è stato sbloccato, nel qual caso si vede il blocco invece.
+  const handleButtonClick = () => {
+    if ((isGenerated || isRedeemed) && checkValidity(discount) !== 'valid_now') {
+      setBlockedMessage(discountBlockedMessage(discount))
+    } else {
+      setBlockedMessage(null)
+    }
+    setPopupOpen(true)
   }
 
   const displayTitle = discount.title || discount.discount_value
@@ -167,7 +203,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           </span>
         ) : isGenerated ? (
           <button
-            onClick={() => setShowQR(true)}
+            onClick={handleButtonClick}
             style={{
               flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
               height: 44, padding: '0 18px',
@@ -182,7 +218,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           </button>
         ) : (
           <button
-            onClick={handleUnlock}
+            onClick={handleButtonClick}
             disabled={generating || redemptionLoading}
             style={{
               flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -194,26 +230,21 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
               opacity: generating ? 0.5 : 1,
             }}
           >
-            {generating ? '…' : (
-              <>
-                <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                Sblocca sconto
-              </>
-            )}
+            {generating ? '…' : 'Scopri di più'}
           </button>
         )}
       </motion.div>
 
       <AnimatePresence>
-        {showQR && redemption && (
-          <QRCodeDisplay
-            qrCode={redemption.qr_code}
-            shortCode={redemption.short_code}
-            discountTitle={discount.title}
-            discountValue={discount.discount_value}
-            onClose={() => setShowQR(false)}
+        {popupOpen && (
+          <DiscountQuickPopup
+            deal={discount}
+            initialUnlocked={isGenerated && !blockedMessage}
+            initialRedemption={redemption}
+            claiming={generating}
+            blockedMessage={blockedMessage}
+            onClaim={handleClaim}
+            onClose={() => { setPopupOpen(false); setBlockedMessage(null) }}
           />
         )}
       </AnimatePresence>
@@ -239,7 +270,6 @@ export default function RestaurantSheet({
 }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const isItalian = i18n.language === 'it' || i18n.language?.startsWith('it-')
   const scrollRef = useRef(null)
   const photoRef = useRef(null)
@@ -250,10 +280,7 @@ export default function RestaurantSheet({
   const { position } = useGeolocation()
   const [photoIndex, setPhotoIndex] = useState(0)
   const [showStickyHeader, setShowStickyHeader] = useState(false)
-  const [inlineShowQR, setInlineShowQR] = useState(false)
   const [newsletterStatus, setNewsletterStatus] = useState(null)
-  const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
-  const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
   const { status: orariStatus } = useOrariStatus(restaurant)
 
   // Desktop detection for animation direction (reactive — updates on resize)
@@ -1068,19 +1095,6 @@ export default function RestaurantSheet({
 
         {/* Floating discount bar — Airbnb style white bottom bar */}
         <FloatingDiscountBar discount={discount} restaurantId={restaurant.id} />
-
-        {/* Inline QR modal — triggered by in-page sconto banner click */}
-        <AnimatePresence>
-          {inlineShowQR && inlineRedemption && inlineDiscount && (
-            <QRCodeDisplay
-              qrCode={inlineRedemption.qr_code}
-              shortCode={inlineRedemption.short_code}
-              discountTitle={inlineDiscount.title}
-              discountValue={inlineDiscount.discount_value}
-              onClose={() => setInlineShowQR(false)}
-            />
-          )}
-        </AnimatePresence>
       </motion.div>
     </div>
   )

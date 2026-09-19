@@ -25,9 +25,12 @@ import './DiscountRules.css'
  *   - QUANDO    → i sette giorni come pastiglie, quelli buoni accesi
  *   - DA SAPERE → le condizioni, una per riga
  *
- * Ogni blocco compare solo se ha qualcosa da dire. Uno sconto senza prodotti,
- * senza giorni e senza condizioni non mostra la scheda affatto: resta come
- * era prima, che è il caso della maggior parte degli sconti già a catalogo.
+ * VALE SU e DA SAPERE compaiono solo se hanno qualcosa da dire; QUANDO
+ * invece, una volta che la scheda esce, si vede sempre — anche "tutti i
+ * giorni" è una risposta, non va lasciata intuire dal vuoto. Uno sconto
+ * senza prodotti, senza vincoli di giorno/orario e senza condizioni non
+ * mostra la scheda affatto: resta come era prima, che è il caso della
+ * maggior parte degli sconti già a catalogo.
  *
  * Il verde è riservato a ciò che è valido — è lo stesso `--gradient-sconto`
  * delle pillole percentuale, non un secondo verde.
@@ -39,12 +42,18 @@ export default function DiscountRules({ deal, products, className = '' }) {
   const hasDayLimit = days.length > 0 && days.length < 7
   const slots = Array.isArray(deal?.valid_meal_slots) ? deal.valid_meal_slots : []
   const hasWindow = !!(deal?.valid_time_from && deal?.valid_time_to) || slots.length > 0
-  const showWhen = hasDayLimit || hasWindow
 
   const conditionLines = splitConditions(deal?.conditions)
   const showConditions = conditionLines.length > 0
 
-  if (items.length === 0 && !showWhen && !showConditions) return null
+  // La scheda esce solo se ha qualcosa da dire — prodotti, condizioni, o un
+  // vincolo di giorno/orario. Ma se esce, "Quando" si vede SEMPRE, anche
+  // quando la risposta è "tutti i giorni": un'informazione va detta, non
+  // dedotta dal silenzio — stessa regola della riga "QUANDO VALE" sul PDF
+  // del coupon. Prima "Quando" spariva insieme alla fila dei sette giorni
+  // quando non c'era un vincolo, e uno sconto con le foto prodotto ma senza
+  // limiti non diceva mai "vale sempre".
+  if (items.length === 0 && !hasDayLimit && !hasWindow && !showConditions) return null
 
   return (
     <section className={`dr ${className}`.trim()} aria-label="Regole dello sconto">
@@ -55,18 +64,17 @@ export default function DiscountRules({ deal, products, className = '' }) {
         </div>
       )}
 
-      {showWhen && (
-        <div className="dr-block">
-          <h3 className="dr-eyebrow">Quando</h3>
-          {/* La fila dei sette giorni esce solo se qualche giorno è escluso.
-              Senza limiti sarebbero sette pastiglie verdi tutte uguali: un
-              disegno che sembra una regola ma non ne dice nessuna, e in più
-              riempie di verde un blocco che parla d'altro. "Tutti i giorni"
-              scritto in due parole è più corto e più chiaro. */}
-          {hasDayLimit && <DayStrip days={days} />}
-          <WindowLine deal={deal} slots={slots} allDays={!hasDayLimit} />
-        </div>
-      )}
+      <div className="dr-block">
+        <h3 className="dr-eyebrow">Quando</h3>
+        {/* La fila dei sette giorni esce solo se qualche giorno è escluso.
+            Senza limiti sarebbero sette pastiglie verdi tutte uguali: un
+            disegno che sembra una regola ma non ne dice nessuna, e in più
+            riempie di verde un blocco che parla d'altro. "Tutti i giorni"
+            scritto in due parole è più corto e più chiaro — ma si scrive,
+            non si sottintende. */}
+        {hasDayLimit && <DayStrip days={days} />}
+        <WindowLine deal={deal} slots={slots} allDays={!hasDayLimit} />
+      </div>
 
       {showConditions && (
         <div className="dr-block">
