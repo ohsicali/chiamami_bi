@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import QRCode from 'qrcode'
 import ShortCodeCard from './ShortCodeCard'
+import DiscountRules from './DiscountRules'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 
 /**
@@ -16,10 +17,11 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
  * sconto, e solo da lì "Sblocca sconto" passa al QR — nella stessa card,
  * senza chiuderla e aprirne un'altra.
  *
- * Deliberatamente leggero: niente regole giorno/fascia né foto prodotto
- * — quella versione ricca resta sulla scheda dello sconto in Bi Club
- * (`DiscountDetailPopup`). Chi è già sulla pagina del locale ha solo
- * bisogno di sapere di cosa si tratta e sbloccarlo.
+ * Le stesse info di `DiscountDetailPopup` (Bi Club) — foto prodotto,
+ * giorni e fasce valide, condizioni — tramite `DiscountRules`, la
+ * componente già costruita per quella pagina. La differenza è solo la
+ * cornice: qui niente foto grande del locale in testa, perché chi apre
+ * questo popup è già sulla pagina del locale e la foto ce l'ha intorno.
  *
  * Terzo stato, oltre a info/QR: `blockedMessage`. Se lo sconto non è
  * valido ORA (giorno o fascia sbagliati) non si passa mai al QR — si
@@ -83,7 +85,8 @@ export default function DiscountQuickPopup({
       onClick={onClose}
     >
       <motion.div
-        className="mx-4 w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl"
+        className="mx-4 w-full max-w-md rounded-3xl bg-white p-6 shadow-xl overflow-y-auto"
+        style={{ maxHeight: '85vh' }}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -129,6 +132,12 @@ export default function DiscountQuickPopup({
                 <p className="text-sm text-secondary mt-1.5" style={{ lineHeight: 1.5 }}>{description}</p>
               )}
             </div>
+
+            {/* Su cosa vale, quando, cos'altro c'è da sapere — invisibile
+                da sé se lo sconto non ha niente di questo da dire
+                (DiscountRules non renderizza nulla in quel caso). */}
+            <DiscountRules deal={deal} className="mb-5" />
+
             <motion.button
               onClick={handleUnlock}
               disabled={claiming}
