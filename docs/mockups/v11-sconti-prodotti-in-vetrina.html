@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChiamamiBi · v11 — i prodotti in vetrina dentro lo sconto</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22181C; --ink70:rgba(34,24,28,.7); --ink55:rgba(34,24,28,.55); --ink40:rgba(34,24,28,.4);
+    --corallo:#E8453C; --corallo-d:#C53A33; --corallo-wash:#FDEDEB;
+    --page:#FAF7F2; --cream:#F5F0E4; --line:#EAE3D7; --paper:#fff;
+    --oro:#8E6B3E;
+    --sconto-a:#A3E635; --sconto-b:#4ADE80; --sconto-ink:#1A4731;
+    --grad-sconto:linear-gradient(135deg,var(--sconto-a) 0%,var(--sconto-b) 100%);
+    --matcha:linear-gradient(150deg,#d9ecc0,#8fbf6a 55%,#5d8f42);
+    --matcha2:linear-gradient(150deg,#eaf3dc,#a8cf86 55%,#79a95c);
+    --chai:linear-gradient(150deg,#f4e2c6,#d9ab6f 55%,#a87840);
+    --apple:linear-gradient(150deg,#fbe6cf,#e8ab6b 55%,#c07f3e);
+    --brew:linear-gradient(150deg,#e6d6c4,#a9805c 55%,#6f4f38);
+    --choc:linear-gradient(150deg,#e8d5c6,#b3826a 55%,#7a4f3c);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Poppins',system-ui,sans-serif;background:var(--page);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  /* ---------- chrome della pagina di preview ---------- */
+  .topbar{position:sticky;top:0;z-index:80;background:rgba(250,247,242,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1400px;margin:0 auto;padding:11px 26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{font-weight:800;font-size:13.5px;letter-spacing:-.2px}
+  .brand span{color:var(--corallo)}
+  .tabs{display:flex;gap:3px;flex-wrap:wrap}
+  .tab{border:none;background:transparent;font-family:inherit;font-size:11.8px;font-weight:600;color:var(--ink55);padding:7px 12px;border-radius:999px;cursor:pointer;transition:.15s}
+  .tab:hover{background:rgba(34,24,28,.05);color:var(--ink)}
+  .tab.on{background:var(--ink);color:#fff}
+  .panel{display:none;max-width:1400px;margin:0 auto;padding:38px 26px 110px}
+  .panel.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .kicker{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--corallo);margin-bottom:9px}
+  h1.big{font-size:34px;font-weight:800;letter-spacing:-.8px;line-height:1.14}
+  .lead{color:var(--ink70);font-size:14.4px;line-height:1.72;max-width:800px;margin-top:11px}
+  h2.sec{font-size:19px;font-weight:800;letter-spacing:-.3px;margin:36px 0 6px}
+  .sec-sub{color:var(--ink55);font-size:12.8px;line-height:1.65;max-width:760px;margin-bottom:16px}
+  .note{background:var(--cream);border-radius:14px;padding:15px 18px;font-size:12.6px;line-height:1.72;margin-top:20px;max-width:920px;border:1px solid var(--line)}
+  .note b{font-weight:700}
+  .note.warn{background:var(--corallo-wash);border-color:#f6cfcb}
+  .split{display:flex;gap:30px;flex-wrap:wrap;margin-top:18px;align-items:flex-start}
+  .lab{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;color:var(--ink40)}
+  .lab.pick{color:var(--corallo)}
+  .col{max-width:342px}
+  .col.wide{max-width:462px}
+  .cap{margin-top:12px;font-size:12.1px;line-height:1.65;color:var(--ink70)}
+  .cap b{color:var(--ink);font-weight:700}
+  .pro,.con{display:flex;gap:7px;font-size:11.8px;line-height:1.55;margin-top:6px;color:var(--ink70)}
+  .pro i,.con i{flex:none;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:9px;font-weight:800;margin-top:2px}
+  .pro i{background:#E3F6E9;color:#2E8B57}
+  .con i{background:var(--corallo-wash);color:var(--corallo-d)}
+
+  /* ---------- telefono ---------- */
+  .phone{width:318px;background:#fff;border:1px solid var(--line);border-radius:32px;overflow:hidden;box-shadow:0 26px 60px -42px rgba(34,24,28,.45);flex:none}
+  .phone.pick{box-shadow:0 0 0 3px rgba(232,69,60,.32),0 26px 60px -42px rgba(34,24,28,.45)}
+  .notch{height:21px;display:flex;align-items:center;justify-content:center;background:#1b1317}
+  .notch i{width:90px;height:12px;background:#000;border-radius:99px;font-style:normal}
+  .scr{position:relative;background:#524549;overflow:hidden}
+
+  /* ---------- il bottom sheet dello sconto (ricostruzione fedele) ---------- */
+  .sheet{background:#fff;border-radius:22px 22px 0 0;overflow:hidden;margin-top:26px}
+  .grip{width:38px;height:4px;background:#E5DBCE;border-radius:99px;margin:8px auto 0;position:relative;z-index:3}
+  .hero{position:relative;aspect-ratio:4/3;background:#dcd0c0;overflow:hidden}
+  .hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero .grad{position:absolute;left:0;right:0;bottom:0;height:86px;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.58))}
+  .hero .x{position:absolute;top:11px;right:11px;width:27px;height:27px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;font-size:11px;box-shadow:0 4px 12px rgba(0,0,0,.16)}
+  .pct{position:absolute;left:14px;bottom:12px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.4)}
+  .pct .n{font-size:33px;font-weight:800;line-height:1;letter-spacing:-1.2px}
+  .pct .l{font-size:9.5px;font-weight:600;opacity:.92;margin-top:2px;letter-spacing:.02em}
+  .sbody{padding:13px 15px 0}
+  .smeta{font-size:9.5px;font-weight:600;color:var(--ink55);letter-spacing:.02em}
+  .sname{font-size:19px;font-weight:800;letter-spacing:-.4px;margin-top:2px}
+  .vpill{display:inline-flex;align-items:center;gap:4px;background:#E9F7EE;color:#2E7D52;font-size:8.8px;font-weight:700;padding:4px 9px;border-radius:99px;margin-top:7px}
+  .vpill::before{content:'';width:5px;height:5px;border-radius:50%;background:#3CB371}
+
+  .specs{margin-top:12px;border-top:1px solid #F0EAE0;padding-top:10px}
+  .srow{display:flex;gap:9px;padding:7px 0}
+  .srow .ic{flex:none;width:23px;height:23px;border-radius:7px;background:#F6F1E8;display:grid;place-items:center;font-size:10px}
+  .srow strong{display:block;font-size:8.6px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink40)}
+  .srow .v{font-size:11.4px;font-weight:500;color:var(--ink);line-height:1.45;margin-top:1px}
+  .foot{padding:11px 15px calc(11px + 6px);border-top:1px solid #F0EAE0;background:#fff;margin-top:10px}
+  .cta{width:100%;background:var(--ink);color:#fff;border:0;border-radius:13px;padding:12px;font-family:inherit;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+
+  /* ---------- BLOCCO PRODOTTI — titolo comune ---------- */
+  .pt{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:14px 0 9px}
+  .pt strong{font-size:11.6px;font-weight:800;letter-spacing:-.2px}
+  .pt small{font-size:9.2px;font-weight:600;color:var(--ink40)}
+  .pt .cnt{font-size:8.6px;font-weight:700;color:var(--sconto-ink);background:#EDFBE0;border-radius:99px;padding:3px 7px}
+
+  /* ===== PROPOSTA A — striscia orizzontale ===== */
+  .stripA{display:flex;gap:9px;overflow-x:auto;padding:1px 15px 3px;margin:0 -15px;scrollbar-width:none}
+  .stripA::-webkit-scrollbar{display:none}
+  .pA{flex:none;width:78px}
+  .pA .ph{width:78px;height:78px;border-radius:14px;position:relative;overflow:hidden;display:grid;place-items:center;font-size:27px;box-shadow:inset 0 0 0 1px rgba(34,24,28,.05)}
+  .pA .nm{font-size:9.6px;font-weight:700;line-height:1.28;margin-top:6px;letter-spacing:-.1px}
+  .pA .pr{font-size:9.2px;font-weight:600;color:var(--ink55);margin-top:1px}
+  .pA .pr s{color:var(--ink40);font-weight:500;margin-right:3px}
+  .pA .pr b{color:var(--sconto-ink);font-weight:700}
+
+  /* ===== PROPOSTA B — griglia vetrina 2 colonne ===== */
+  .gridB{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .pB{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .pB .ph{aspect-ratio:4/3;position:relative;display:grid;place-items:center;font-size:31px}
+  .pB .stk{position:absolute;top:6px;left:6px;background:var(--grad-sconto);color:var(--sconto-ink);font-size:8.6px;font-weight:800;padding:3px 7px;border-radius:99px;box-shadow:0 2px 8px rgba(34,24,28,.14)}
+  .pB .tx{padding:7px 9px 9px}
+  .pB .nm{font-size:10.4px;font-weight:700;line-height:1.3;letter-spacing:-.1px}
+  .pB .dc{font-size:9px;color:var(--ink55);line-height:1.35;margin-top:2px}
+  .pB .pr{font-size:10px;font-weight:700;margin-top:5px;display:flex;align-items:baseline;gap:4px}
+  .pB .pr s{color:var(--ink40);font-weight:500;font-size:9px}
+  .pB .pr b{color:var(--sconto-ink)}
+
+  /* ===== PROPOSTA C — hero collage ===== */
+  .heroC{position:relative;display:grid;grid-template-columns:1.62fr 1fr;grid-template-rows:1fr 1fr;gap:2px;aspect-ratio:4/3;background:#dcd0c0}
+  .heroC .t{position:relative;display:grid;place-items:center;font-size:34px;overflow:hidden}
+  .heroC .t.big{grid-row:span 2;font-size:54px}
+  .heroC .t img{width:100%;height:100%;object-fit:cover}
+  .heroC .more{position:absolute;inset:0;background:rgba(34,24,28,.62);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800;backdrop-filter:blur(2px)}
+  .heroC .x{position:absolute;top:11px;right:11px;width:27px;height:27px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;font-size:11px;z-index:4;box-shadow:0 4px 12px rgba(0,0,0,.16)}
+  .heroC .rib{position:absolute;left:0;bottom:0;right:0;padding:22px 14px 11px;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.66));color:#fff;z-index:3;pointer-events:none}
+  .heroC .rib .n{font-size:30px;font-weight:800;line-height:1;letter-spacing:-1.1px}
+  .heroC .rib .l{font-size:9.4px;font-weight:600;opacity:.93;margin-top:2px}
+  .capC{display:flex;gap:6px;padding:8px 15px 0;font-size:9px;font-weight:600;color:var(--ink40);align-items:center}
+  .capC b{color:var(--ink70);font-weight:700}
+  .rlink{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:14px;padding:8px;margin-top:12px}
+  .rlink .th{width:40px;height:40px;border-radius:10px;overflow:hidden;flex:none;background:#eee}
+  .rlink .th img{width:100%;height:100%;object-fit:cover}
+  .rlink strong{display:block;font-size:8.6px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink40)}
+  .rlink .nm{font-size:11.6px;font-weight:700;margin-top:1px}
+  .rlink .ar{margin-left:auto;color:var(--ink40);font-size:12px}
+
+  /* ===== PROPOSTA D — anteprima in lista ===== */
+  .listD{padding:12px 13px;display:flex;flex-direction:column;gap:9px;background:var(--page)}
+  .conv{min-height:96px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;gap:10px;align-items:center;box-shadow:0 2px 10px rgba(34,24,28,.03)}
+  .conv .ph{width:74px;height:74px;border-radius:12px;position:relative;overflow:hidden;flex:none;background:#eee}
+  .conv .ph img{width:100%;height:100%;object-fit:cover}
+  .conv .bdg{position:absolute;left:5px;bottom:5px;background:var(--grad-sconto);color:var(--sconto-ink);font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px}
+  .conv .bd{flex:1;min-width:0}
+  .conv h4{font-size:12.6px;font-weight:700;letter-spacing:-.2px}
+  .conv .mt{font-size:9px;color:var(--ink55);margin-top:1px}
+  .conv .vp{display:inline-flex;align-items:center;gap:4px;background:#E9F7EE;color:#2E7D52;font-size:8px;font-weight:700;padding:3px 7px;border-radius:99px;margin-top:5px}
+  /* la fila di pastiglie prodotto */
+  .stack{display:flex;align-items:center;gap:6px;margin-top:6px}
+  .stack .dots{display:flex}
+  .stack .dots i{width:21px;height:21px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-style:normal;box-shadow:0 0 0 1.6px #fff;margin-left:-6px}
+  .stack .dots i:first-child{margin-left:0}
+  .stack .txt{font-size:8.8px;font-weight:600;color:var(--ink55);line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stack .txt b{color:var(--ink);font-weight:700}
+
+  /* ---------- admin ---------- */
+  .adm{width:430px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 18px 44px -34px rgba(34,24,28,.5);flex:none}
+  .adm-h{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .adm-h strong{font-size:13px;font-weight:700}
+  .adm-h span{margin-left:auto;font-size:9.4px;font-weight:700;color:var(--ink40);letter-spacing:.08em;text-transform:uppercase}
+  .adm-b{padding:14px 16px 18px}
+  .fl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink40);margin-bottom:6px;display:block}
+  .hint{font-size:10.6px;color:var(--ink55);line-height:1.55;margin-top:5px}
+  .prow{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:7px;background:#fff}
+  .prow .th{width:46px;height:46px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:19px}
+  .prow .f{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+  .prow .r2 .grow{flex:1;min-width:0;width:auto}
+  .prow input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:11px;width:100%;background:#FCFAF6}
+  .prow .r2{display:flex;gap:5px}
+  .prow .r2 input{width:80px;flex:none}
+  .prow .del{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:11px;color:var(--ink40);flex:none;cursor:pointer}
+  .prow .drag{color:var(--ink40);font-size:13px;cursor:grab;flex:none}
+  .addp{width:100%;border:1.6px dashed var(--line);border-radius:12px;padding:13px;background:#FCFAF6;font-family:inherit;font-size:11.6px;font-weight:700;color:var(--ink70);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+
+  /* ---------- tabella / dati ---------- */
+  table{border-collapse:collapse;width:100%;max-width:900px;margin-top:12px;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid #F2ECE2;vertical-align:top}
+  th{background:#FBF8F3;font-size:10.2px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink55)}
+  tr:last-child td{border-bottom:0}
+  code{font-size:11px;background:#F5F0E4;padding:1px 5px;border-radius:5px;white-space:nowrap}
+  pre{background:#1f1a1d;color:#e9e2d8;border-radius:13px;padding:15px 17px;overflow:auto;font-size:11.4px;line-height:1.65;max-width:900px;margin-top:12px}
+  pre .k{color:#f3a8a3}.c{color:#9aa08f}
+
+  /* ---------- telefono stretto: la preview si guarda anche dal telefono ---------- */
+  @media (max-width: 640px){
+    .topbar-in{padding:10px 16px}
+    .panel{padding:26px 16px 80px}
+    h1.big{font-size:27px}
+    .split{gap:22px}
+    .col,.col.wide{max-width:100%}
+    .phone{width:100%;max-width:318px}
+    .adm{width:100%}
+    .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{min-width:640px}
+  }
+  .hand{font-family:'Caveat',cursive;font-size:17px;color:var(--oro)}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <div class="brand">Chiamami<span>Bi</span> · v11 prodotti in vetrina</div>
+  <div class="tabs">
+    <button class="tab on" data-p="p0">Panoramica</button>
+    <button class="tab" data-p="pA">A · Striscia</button>
+    <button class="tab" data-p="pB">B · Vetrina</button>
+    <button class="tab" data-p="pC">C · Collage hero</button>
+    <button class="tab" data-p="pD">D · Anteprima in lista</button>
+    <button class="tab" data-p="pAdm">Admin</button>
+    <button class="tab" data-p="pDati">Dati &amp; piano</button>
+  </div>
+</div></div>
+
+<!-- ======================= PANORAMICA ======================= -->
+<section class="panel on" id="p0">
+  <div class="note" style="background:#EDFBE0;border-color:#c9ec9f;margin:0 0 26px">
+    <b>Deciso e costruito — 18/09/2026.</b> Di queste quattro proposte è passata la
+    <b>vetrina (B)</b> come blocco «Lo sconto vale su», <b>senza prezzi</b>: il valore del risparmio
+    lo dice già il badge dello sconto («-10%», «-1€», «3x2») e un prezzo scritto sul prodotto
+    diverge dal menù del locale al primo aumento. È passata anche l'<b>anteprima in lista (D)</b>.
+    In più, per la parte «quando vale e con quali regole»: la vecchia lista di specifiche è stata
+    sostituita da una scheda sola con tre blocchi — <b>Lo sconto vale su</b> (le foto),
+    <b>Quando</b> (i sette giorni come pastiglie, con la fascia oraria) e <b>Da sapere</b>
+    (le condizioni, una per riga) — e in admin i giorni e le fasce si scelgono a pastiglie,
+    invece di raccontarli dentro il campo libero «Condizioni».
+    Quello che segue resta come traccia del ragionamento: le proposte A e C non sono state
+    realizzate, e le tessere con il prezzo barrato mostrano una cosa che sul sito non c'è.
+  </div>
+
+  <span class="kicker">Il problema</span>
+  <h1 class="big">«10% sulle bevande Matcha» non fa venire sete.</h1>
+  <p class="lead">
+    Oggi uno sconto è solo tre righe di testo sopra la foto del locale. Chi legge
+    <b>10% sulle bevande Matcha</b> da DAPPER non sa se parliamo di un matcha latte, di un
+    matcha tonic o di uno scaffale di lattine. La foto che vede è il bancone: bella, ma
+    non è <em>quello che sta comprando</em>.
+    Questa preview mostra quattro modi di far vedere i prodotti dentro lo sconto — tre per
+    la scheda dello sconto, uno per la lista — con lo stesso linguaggio visivo del Bi Club
+    (stessa pillola verde, stesse foto 4:3, stesso sheet).
+  </p>
+
+  <h2 class="sec">Le quattro proposte in una riga</h2>
+  <p class="sec-sub">A, B e C sono alternative fra loro (vivono nello stesso punto della scheda sconto). D è un add-on: si somma a qualsiasi delle tre.</p>
+  <div class="scroll-x"><table>
+    <tr><th style="width:96px">Proposta</th><th style="width:150px">Dove vive</th><th>Cosa fa</th><th style="width:120px">Adatta quando</th></tr>
+    <tr><td><b>A · Striscia</b></td><td>Scheda sconto, sotto la validità</td><td>Fila orizzontale scrollabile di quadrati 78px con nome e prezzo. Ingombro minimo, regge 1 o 12 prodotti.</td><td>Sempre. È il default sicuro.</td></tr>
+    <tr><td><b>B · Vetrina</b></td><td>Scheda sconto, stesso punto</td><td>Griglia 2 colonne con foto 4:3, sticker sconto sulla foto, nome, descrizione breve, prezzo pieno barrato + scontato.</td><td>2–6 prodotti con foto curate.</td></tr>
+    <tr><td><b>C · Collage hero</b></td><td>Scheda sconto, <em>al posto</em> della foto locale</td><td>L'hero diventa un mosaico dei prodotti. Il locale scende a miniatura nella riga «Scopri il ristorante».</td><td>Sconto su 3–5 prodotti precisi, foto ottime.</td></tr>
+    <tr><td><b>D · Anteprima</b></td><td>Lista Bi Club + card home</td><td>Tre pastiglie tonde sovrapposte + «Matcha latte, chai e altri 3». Si capisce cosa copre lo sconto <em>prima</em> di aprirlo.</td><td>Add-on, sempre.</td></tr>
+  </table></div>
+
+  <div class="note"><b>La mia raccomandazione:</b> <b>A + D</b> come comportamento base di tutti gli sconti, e <b>B</b> che si accende da solo quando il locale ha caricato almeno 2 prodotti con foto (un flag in admin, «mostra come vetrina»). <b>C</b> lo terrei per gli sconti-drop e i freebie su un prodotto solo, dove il prodotto <em>è</em> l'offerta — è il più bello e il più fragile: con una foto storta si porta giù tutta la scheda.</div>
+
+  <div class="note warn"><b>Regola che non salterei:</b> i prodotti sono <em>facoltativi</em>. Uno sconto senza prodotti deve restare identico a oggi, pixel per pixel. Nessun blocco vuoto, nessun «nessun prodotto disponibile», nessuno spazio che si allarga. Su 9 sconti attivi oggi, 8 non avranno foto prodotto per settimane.</div>
+</section>
+
+<!-- ======================= A ======================= -->
+<section class="panel" id="pA">
+  <span class="kicker">Proposta A</span>
+  <h1 class="big">La striscia</h1>
+  <p class="lead">Una fila orizzontale sotto il blocco validità, prima delle specifiche. Scorre col dito, non allunga la scheda, e con un solo prodotto non sembra un errore. È il minimo che risolve il problema.</p>
+  <div class="split">
+    <div class="col">
+      <div class="lab pick">A · come appare nella scheda sconto</div>
+      <div class="phone pick"><div class="notch"><i></i></div><div class="scr">
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="hero">
+            <img src="https://urcwnontifybzugmmiov.supabase.co/storage/v1/object/public/photos/restaurants/torino/dapper-coffee/dapper-coffee-torino-2.webp" alt="">
+            <div class="grad"></div><div class="x">✕</div>
+            <div class="pct"><div class="n">-10%</div><div class="l">sulle bevande matcha</div></div>
+          </div>
+          <div class="sbody">
+            <div class="smeta">Bar · Via Giuseppe Barbaroux</div>
+            <div class="sname">DAPPER Coffee</div>
+            <div class="vpill">Valido ora</div>
+
+            <div class="pt"><strong>Cosa entra nello sconto</strong><span class="cnt">5 prodotti</span></div>
+            <div class="stripA">
+              <div class="pA"><div class="ph" style="background:var(--matcha)">🍵</div><div class="nm">Matcha latte</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div>
+              <div class="pA"><div class="ph" style="background:var(--matcha2)">🧋</div><div class="nm">Iced matcha</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div>
+              <div class="pA"><div class="ph" style="background:var(--chai)">🫖</div><div class="nm">Chai latte</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div>
+              <div class="pA"><div class="ph" style="background:var(--apple)">🍎</div><div class="nm">Apple spicy</div><div class="pr"><s>4,00€</s><b>3,60€</b></div></div>
+              <div class="pA"><div class="ph" style="background:var(--brew)">🥤</div><div class="nm">Cold brew</div><div class="pr"><s>4,00€</s><b>3,60€</b></div></div>
+            </div>
+
+            <div class="specs">
+              <div class="srow"><div class="ic">📅</div><div><strong>Quando</strong><div class="v">Tutti i giorni</div></div></div>
+              <div class="srow"><div class="ic">✓</div><div><strong>Cosa ottieni</strong><div class="v">10% su tutte le bevande a base di matcha</div></div></div>
+            </div>
+          </div>
+          <div class="foot"><button class="cta">🔒 Sblocca sconto</button></div>
+        </div>
+      </div></div>
+      <div class="cap"><b>Dettaglio:</b> il prezzo pieno è barrato e accanto c'è quello scontato, calcolato dal valore dello sconto — non lo scrive il ristoratore, lo fa l'app. Se il prodotto non ha prezzo, resta solo il nome e la riga non si sbilancia.</div>
+      <div class="pro"><i>✓</i>Ingombro fisso: 108px, indipendente da quanti prodotti sono.</div>
+      <div class="pro"><i>✓</i>Un prodotto solo non sembra un bug.</div>
+      <div class="pro"><i>✓</i>Nessun rischio sulla scheda: sta in mezzo, non tocca l'hero né la CTA.</div>
+      <div class="con"><i>!</i>Le foto sono piccole: un matcha e un chai a 78px si somigliano.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">A2 · variante «senza prezzi»</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div class="sheet" style="margin-top:0">
+        <div style="padding:16px 15px 18px">
+          <div class="pt"><strong>Cosa entra nello sconto</strong><small>scorri →</small></div>
+          <div class="stripA">
+            <div class="pA"><div class="ph" style="background:var(--matcha)">🍵</div><div class="nm">Matcha latte</div></div>
+            <div class="pA"><div class="ph" style="background:var(--matcha2)">🧋</div><div class="nm">Iced matcha</div></div>
+            <div class="pA"><div class="ph" style="background:var(--chai)">🫖</div><div class="nm">Chai latte</div></div>
+            <div class="pA"><div class="ph" style="background:var(--apple)">🍎</div><div class="nm">Apple spicy</div></div>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="cap">Se i prezzi non ci sono (o il locale non li vuole pubblicare) la striscia regge lo stesso: foto + nome. <b>Questa è la modalità che scatta in automatico</b> quando il campo prezzo è vuoto.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">A3 · un prodotto solo</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div class="sheet" style="margin-top:0">
+        <div style="padding:16px 15px 18px">
+          <div class="pt"><strong>Cosa entra nello sconto</strong></div>
+          <div class="stripA">
+            <div class="pA" style="width:100%"><div class="ph" style="background:var(--matcha);width:100%;height:96px;font-size:36px">🍵</div><div class="nm" style="font-size:11.5px;margin-top:8px">Matcha latte · 400ml</div><div class="pr" style="font-size:10.5px"><s>5,00€</s><b>4,50€</b></div></div>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="cap">Con un prodotto solo la tessera si allarga a tutta la riga invece di lasciare l'80% di vuoto a destra. <span class="hand">niente card orfane</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= B ======================= -->
+<section class="panel" id="pB">
+  <span class="kicker">Proposta B</span>
+  <h1 class="big">La vetrina</h1>
+  <p class="lead">Stesso punto della scheda, ma i prodotti diventano card vere: foto 4:3, sticker verde con lo sconto, nome, una riga di descrizione e il prezzo. Il blocco pesa quanto merita — è l'unico che fa venire davvero voglia.</p>
+  <div class="split">
+    <div class="col">
+      <div class="lab pick">B · come appare nella scheda sconto</div>
+      <div class="phone pick"><div class="notch"><i></i></div><div class="scr">
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="hero">
+            <img src="https://urcwnontifybzugmmiov.supabase.co/storage/v1/object/public/photos/restaurants/torino/dapper-coffee/dapper-coffee-torino-2.webp" alt="">
+            <div class="grad"></div><div class="x">✕</div>
+            <div class="pct"><div class="n">-10%</div><div class="l">sulle bevande matcha</div></div>
+          </div>
+          <div class="sbody">
+            <div class="smeta">Bar · Via Giuseppe Barbaroux</div>
+            <div class="sname">DAPPER Coffee</div>
+            <div class="vpill">Valido ora</div>
+
+            <div class="pt"><strong>La vetrina dello sconto</strong><span class="cnt">4 prodotti</span></div>
+            <div class="gridB">
+              <div class="pB"><div class="ph" style="background:var(--matcha)">🍵<span class="stk">-10%</span></div><div class="tx"><div class="nm">Matcha latte</div><div class="dc">Ceremonial grade, latte intero o avena</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+              <div class="pB"><div class="ph" style="background:var(--matcha2)">🧋<span class="stk">-10%</span></div><div class="tx"><div class="nm">Iced matcha</div><div class="dc">Ghiaccio, shakerato</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+              <div class="pB"><div class="ph" style="background:var(--chai)">🫖<span class="stk">-10%</span></div><div class="tx"><div class="nm">Chai latte</div><div class="dc">Spezie tostate in casa</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+              <div class="pB"><div class="ph" style="background:var(--apple)">🍎<span class="stk">-10%</span></div><div class="tx"><div class="nm">Apple spicy</div><div class="dc">Caldo, senza caffeina</div><div class="pr"><s>4,00€</s><b>3,60€</b></div></div></div>
+            </div>
+
+            <div class="specs">
+              <div class="srow"><div class="ic">📅</div><div><strong>Quando</strong><div class="v">Tutti i giorni</div></div></div>
+            </div>
+          </div>
+          <div class="foot"><button class="cta">🔒 Sblocca sconto</button></div>
+        </div>
+      </div></div>
+      <div class="cap"><b>Lo sticker verde sulla foto</b> è lo stesso della card in lista: percentuale col meno davanti, gradiente lime→menta, testo verde scuro. Stessa funzione (<code>formatDiscountBadgeShort()</code>), zero colori nuovi introdotti.</div>
+      <div class="pro"><i>✓</i>È il formato che vende. Il prodotto si riconosce.</div>
+      <div class="pro"><i>✓</i>C'è spazio per una riga di descrizione: «ceremonial grade, avena».</div>
+      <div class="con"><i>!</i>Con 8 prodotti la scheda diventa lunghissima → serve un «mostra tutti».</div>
+      <div class="con"><i>!</i>Pretende foto decenti. Una foto storta qui si vede eccome.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">B2 · dispari + «mostra tutti»</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div class="sheet" style="margin-top:0"><div style="padding:16px 15px 18px">
+        <div class="pt"><strong>La vetrina dello sconto</strong><span class="cnt">7 prodotti</span></div>
+        <div class="gridB">
+          <div class="pB"><div class="ph" style="background:var(--matcha)">🍵<span class="stk">-10%</span></div><div class="tx"><div class="nm">Matcha latte</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+          <div class="pB"><div class="ph" style="background:var(--matcha2)">🧋<span class="stk">-10%</span></div><div class="tx"><div class="nm">Iced matcha</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+          <div class="pB"><div class="ph" style="background:var(--chai)">🫖<span class="stk">-10%</span></div><div class="tx"><div class="nm">Chai latte</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+          <div class="pB"><div class="ph" style="background:var(--choc)">🍫<span class="stk">-10%</span></div><div class="tx"><div class="nm">Hot chocolate</div><div class="pr"><s>5,00€</s><b>4,50€</b></div></div></div>
+        </div>
+        <button class="cta" style="background:#fff;color:var(--ink);border:1px solid var(--line);margin-top:10px;font-size:11.5px;padding:10px">Vedi tutti e 7 i prodotti</button>
+      </div></div></div></div>
+      <div class="cap">Oltre i 4 prodotti la griglia si ferma e compare il bottone. La scheda resta di una lunghezza prevedibile e la CTA «Sblocca» non finisce a tre schermate di distanza.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">B3 · offerta 3x2 (Duò)</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div class="sheet" style="margin-top:0"><div style="padding:16px 15px 18px">
+        <div class="pt"><strong>La vetrina dello sconto</strong><span class="cnt">2 prodotti</span></div>
+        <div class="gridB">
+          <div class="pB"><div class="ph" style="background:linear-gradient(150deg,#f7e7cd,#dcae72 55%,#b07f45)">🥐<span class="stk">3x2</span></div><div class="tx"><div class="nm">Veneziane</div><div class="dc">Ne paghi 2, ne prendi 3</div><div class="pr"><b>3 × 1,80€</b></div></div></div>
+          <div class="pB"><div class="ph" style="background:linear-gradient(150deg,#f3ddd0,#cd9d84 55%,#9a6b52)">🍩<span class="stk">3x2</span></div><div class="tx"><div class="nm">Bomboloni</div><div class="dc">Crema o cioccolato</div><div class="pr"><b>3 × 1,80€</b></div></div></div>
+        </div>
+      </div></div></div></div>
+      <div class="cap">Sugli sconti «paghi X prendi Y» lo sticker riporta <code>3x2</code> come da convenzione, e il prezzo non si barra: non c'è un prezzo pieno da tagliare.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= C ======================= -->
+<section class="panel" id="pC">
+  <span class="kicker">Proposta C</span>
+  <h1 class="big">Il collage nell'hero</h1>
+  <p class="lead">La più radicale: la foto del bancone lascia il posto ai prodotti. Apri lo sconto e la prima cosa che vedi è il matcha, non il locale. Il locale non sparisce — scende nella riga «Scopri il ristorante», dove comunque c'era già.</p>
+  <div class="split">
+    <div class="col">
+      <div class="lab pick">C · hero mosaico 1+2</div>
+      <div class="phone pick"><div class="notch"><i></i></div><div class="scr">
+        <div class="sheet">
+          <div class="grip"></div>
+          <div class="heroC">
+            <div class="x">✕</div>
+            <div class="t big" style="background:var(--matcha)">🍵</div>
+            <div class="t" style="background:var(--matcha2)">🧋</div>
+            <div class="t" style="background:var(--chai)">🫖<div class="more">+2</div></div>
+            <div class="rib"><div class="n">-10%</div><div class="l">su matcha, chai e bevande calde</div></div>
+          </div>
+          <div class="capC"><b>Matcha latte</b> · Iced matcha · Chai latte · altri 2</div>
+          <div class="sbody">
+            <div class="sname" style="margin-top:8px">10% sulle bevande Matcha</div>
+            <div class="vpill">Valido ora</div>
+            <div class="rlink">
+              <div class="th"><img src="https://urcwnontifybzugmmiov.supabase.co/storage/v1/object/public/photos/restaurants/torino/dapper-coffee/dapper-coffee-torino-2.webp" alt=""></div>
+              <div><strong>Scopri il ristorante</strong><div class="nm">DAPPER Coffee</div></div>
+              <div class="ar">›</div>
+            </div>
+            <div class="specs">
+              <div class="srow"><div class="ic">📅</div><div><strong>Quando</strong><div class="v">Tutti i giorni</div></div></div>
+            </div>
+          </div>
+          <div class="foot"><button class="cta">🔒 Sblocca sconto</button></div>
+        </div>
+      </div></div>
+      <div class="cap"><b>Il mosaico si adatta al numero di foto:</b> 1 foto → hero pieno, 2 → metà e metà, 3+ → 1 grande + 2 piccole con «+N» sull'ultima.</div>
+      <div class="pro"><i>✓</i>Impatto massimo. È letteralmente «far vedere cosa offre lo sconto».</div>
+      <div class="pro"><i>✓</i>Zero altezza aggiunta: occupa lo spazio che c'era già.</div>
+      <div class="con"><i>!</i>Perdi la foto del locale come prima impressione.</div>
+      <div class="con"><i>!</i>Serve un fallback perfetto: se manca anche una sola foto, il mosaico va storto.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">C2 · un prodotto solo</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div class="sheet" style="margin-top:0">
+        <div class="hero" style="background:var(--matcha);display:grid;place-items:center;font-size:72px">🍵
+          <div class="grad"></div><div class="x">✕</div>
+          <div class="pct"><div class="n">-10%</div><div class="l">Matcha latte · DAPPER Coffee</div></div>
+        </div>
+        <div style="padding:9px 15px 16px">
+          <div class="capC" style="padding:0"><b>Matcha latte</b> · ceremonial grade, latte o avena</div>
+        </div>
+      </div></div></div>
+      <div class="cap">Il caso del freebie o dello sconto su un prodotto singolo: una foto sola a tutto hero. <b>È qui che C dà il meglio</b> — un prodotto, una foto, un prezzo.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">C3 · ibrido: locale + prodotti</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div class="sheet" style="margin-top:0">
+        <div class="heroC" style="grid-template-columns:1fr;grid-template-rows:1.55fr .9fr;gap:2px">
+          <div class="x">✕</div>
+          <div class="t" style="padding:0"><img src="https://urcwnontifybzugmmiov.supabase.co/storage/v1/object/public/photos/restaurants/torino/dapper-coffee/dapper-coffee-torino-2.webp" alt=""></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">
+            <div class="t big" style="background:var(--matcha)">🍵</div>
+            <div class="t" style="background:var(--matcha2)">🧋</div>
+            <div class="t" style="background:var(--chai)">🫖<div class="more">+2</div></div>
+          </div>
+          <div class="rib" style="bottom:37%"><div class="n">-10%</div><div class="l">sulle bevande matcha</div></div>
+        </div>
+      </div></div></div>
+      <div class="cap">Compromesso: il locale resta protagonista, i prodotti diventano una fascia sotto. Meno impatto di C, ma <b>nessuna delle sue fragilità</b> — se i prodotti mancano, l'hero torna esattamente a com'è oggi.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= D ======================= -->
+<section class="panel" id="pD">
+  <span class="kicker">Proposta D — add-on, si somma ad A, B o C</span>
+  <h1 class="big">L'anteprima in lista</h1>
+  <p class="lead">Tutto il lavoro sulle foto serve a poco se resta sepolto dentro lo sheet. Qui i prodotti arrivano fin nella lista del Bi Club: tre pastiglie tonde sovrapposte e una riga di nomi. Si capisce cosa copre lo sconto <em>senza aprirlo</em>.</p>
+  <div class="split">
+    <div class="col">
+      <div class="lab pick">D · lista Bi Club con anteprima</div>
+      <div class="phone pick"><div class="notch"><i></i></div><div class="scr"><div style="background:var(--page);padding-top:10px">
+        <div style="padding:0 13px 4px;font-size:13px;font-weight:800;letter-spacing:-.3px">Sempre validi <span style="font-size:9.5px;font-weight:600;color:var(--ink40)">· 9 convenzioni</span></div>
+        <div class="listD">
+          <div class="conv">
+            <div class="ph"><img src="https://urcwnontifybzugmmiov.supabase.co/storage/v1/object/public/photos/restaurants/torino/dapper-coffee/dapper-coffee-torino-2.webp" alt=""><span class="bdg">-10%</span></div>
+            <div class="bd">
+              <h4>DAPPER Coffee</h4>
+              <div class="mt">Bar | Centro | €€</div>
+              <div class="stack">
+                <span class="dots"><i style="background:var(--matcha)">🍵</i><i style="background:var(--matcha2)">🧋</i><i style="background:var(--chai)">🫖</i></span>
+                <span class="txt"><b>Matcha latte</b>, chai e altri 3</span>
+              </div>
+            </div>
+          </div>
+          <div class="conv">
+            <div class="ph" style="background:linear-gradient(150deg,#f7e7cd,#c89a63)"><span class="bdg">3x2</span></div>
+            <div class="bd">
+              <h4>Pasticceria Duò</h4>
+              <div class="mt">Dolce | San Salvario | €</div>
+              <div class="stack">
+                <span class="dots"><i style="background:linear-gradient(150deg,#f7e7cd,#dcae72)">🥐</i><i style="background:linear-gradient(150deg,#f3ddd0,#cd9d84)">🍩</i></span>
+                <span class="txt"><b>Veneziane</b> e bomboloni</span>
+              </div>
+            </div>
+          </div>
+          <div class="conv">
+            <div class="ph" style="background:linear-gradient(150deg,#e8dcc8,#a58d6d)"><span class="bdg">-15%</span></div>
+            <div class="bd">
+              <h4>Bottega Flegrea</h4>
+              <div class="mt">Pizza | Vanchiglia | €€</div>
+              <div class="vp">Valido ora</div>
+            </div>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="cap"><b>Guarda la terza riga:</b> Bottega Flegrea non ha prodotti caricati e la card è <em>esattamente</em> quella di oggi, con la pillola validità al suo posto. Le pastiglie prendono il posto della pillola solo quando ci sono prodotti da mostrare — nessuna riga cresce, la lista resta allineata.</div>
+      <div class="pro"><i>✓</i>Il valore delle foto si vede in lista, non solo dentro lo sheet.</div>
+      <div class="pro"><i>✓</i>Costa 21px di altezza e zero richieste in più al DB (i prodotti arrivano con la stessa query).</div>
+      <div class="con"><i>!</i>A 21px la foto è quasi un colore: serve che i prodotti siano cromaticamente diversi.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">D2 · card home / drop</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div style="background:var(--page);padding:12px 13px">
+        <div style="background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 6px 20px rgba(34,24,28,.06)">
+          <div style="position:relative;aspect-ratio:16/11;overflow:hidden">
+            <img src="https://urcwnontifybzugmmiov.supabase.co/storage/v1/object/public/photos/restaurants/torino/dapper-coffee/dapper-coffee-torino-2.webp" style="width:100%;height:100%;object-fit:cover" alt="">
+            <span style="position:absolute;top:9px;left:9px;background:var(--grad-sconto);color:var(--sconto-ink);font-size:10px;font-weight:800;padding:4px 9px;border-radius:99px">-10%</span>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.55))"></div>
+            <div style="position:absolute;left:10px;bottom:9px;display:flex;align-items:center;gap:6px">
+              <span class="dots" style="display:flex"><i style="background:var(--matcha);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-style:normal;box-shadow:0 0 0 1.8px #fff">🍵</i><i style="background:var(--matcha2);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-style:normal;box-shadow:0 0 0 1.8px #fff;margin-left:-7px">🧋</i><i style="background:var(--chai);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-style:normal;box-shadow:0 0 0 1.8px #fff;margin-left:-7px">🫖</i></span>
+              <span style="color:#fff;font-size:9.4px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.5)">5 bevande in offerta</span>
+            </div>
+          </div>
+          <div style="padding:11px 12px 13px">
+            <div style="font-size:14px;font-weight:800;letter-spacing:-.3px">DAPPER Coffee</div>
+            <div style="font-size:9.6px;color:var(--ink55);margin-top:2px">Bar · Via Giuseppe Barbaroux 9</div>
+            <button class="cta" style="margin-top:10px;padding:10px;font-size:11.8px">🔒 Sblocca sconto</button>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="cap">Sulla card grande le pastiglie stanno <b>sulla foto</b>, dentro il gradiente scuro che già c'è. Bordo bianco 1.8px perché si stacchino da qualunque foto ci sia sotto.</div>
+    </div>
+
+    <div class="col">
+      <div class="lab">D3 · scheda ristorante</div>
+      <div class="phone"><div class="notch"><i></i></div><div class="scr"><div style="background:var(--page);padding:12px 13px">
+        <div style="background:var(--grad-sconto);border-radius:16px;padding:12px 13px">
+          <div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--sconto-ink);opacity:.72">Sconto attivo</div>
+          <div style="font-size:16px;font-weight:800;color:var(--sconto-ink);margin-top:3px;letter-spacing:-.3px">-10% sulle bevande matcha</div>
+          <div style="display:flex;gap:6px;margin-top:9px;overflow:hidden">
+            <div style="flex:1;border-radius:10px;overflow:hidden;background:var(--matcha);aspect-ratio:1;display:grid;place-items:center;font-size:20px">🍵</div>
+            <div style="flex:1;border-radius:10px;overflow:hidden;background:var(--matcha2);aspect-ratio:1;display:grid;place-items:center;font-size:20px">🧋</div>
+            <div style="flex:1;border-radius:10px;overflow:hidden;background:var(--chai);aspect-ratio:1;display:grid;place-items:center;font-size:20px">🫖</div>
+            <div style="flex:1;border-radius:10px;overflow:hidden;background:rgba(26,71,49,.22);aspect-ratio:1;display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--sconto-ink)">+2</div>
+          </div>
+          <button style="width:100%;margin-top:10px;background:var(--sconto-ink);color:#fff;border:0;border-radius:11px;padding:10px;font-family:inherit;font-size:11.6px;font-weight:700">Sblocca sconto</button>
+        </div>
+      </div></div></div>
+      <div class="cap">Lo stesso blocco anche sul banner sconto della scheda locale: quattro quadrati dentro la fascia verde. Riusa il gradiente sconti, non aggiunge un colore.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ADMIN ======================= -->
+<section class="panel" id="pAdm">
+  <span class="kicker">Il pannello</span>
+  <h1 class="big">Dove si caricano</h1>
+  <p class="lead">Una sezione nuova dentro il form dello sconto, sotto «Condizioni». Righe trascinabili: foto, nome, prezzo pieno. Il prezzo scontato lo calcola l'app. Niente di obbligatorio — si può salvare uno sconto senza toccarla.</p>
+  <div class="split">
+    <div class="col wide">
+      <div class="lab pick">DiscountManager · nuovo blocco «Prodotti in vetrina»</div>
+      <div class="adm">
+        <div class="adm-h"><strong>Prodotti in vetrina</strong><span>facoltativo</span></div>
+        <div class="adm-b">
+          <p class="hint" style="margin:0 0 12px">Le foto di cosa entra nello sconto. Vengono mostrate dentro la scheda dello sconto e come anteprima nella lista. <b>Consigliato: 3–6 prodotti.</b></p>
+
+          <div class="prow">
+            <span class="drag">⠿</span>
+            <div class="th" style="background:var(--matcha)">🍵</div>
+            <div class="f">
+              <input value="Matcha latte">
+              <div class="r2"><input value="5,00 €" placeholder="Prezzo pieno"><input value="Ceremonial grade" placeholder="Nota breve" class="grow"></div>
+            </div>
+            <button class="del">✕</button>
+          </div>
+          <div class="prow">
+            <span class="drag">⠿</span>
+            <div class="th" style="background:var(--chai)">🫖</div>
+            <div class="f">
+              <input value="Chai latte">
+              <div class="r2"><input value="5,00 €" placeholder="Prezzo pieno"><input placeholder="Nota breve" class="grow"></div>
+            </div>
+            <button class="del">✕</button>
+          </div>
+
+          <button class="addp">＋ Aggiungi prodotto</button>
+
+          <label class="fl" style="margin-top:16px">Come mostrarli</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="background:var(--ink);color:#fff;font-size:10.4px;font-weight:700;padding:6px 11px;border-radius:99px">Striscia</span>
+            <span style="background:#fff;border:1px solid var(--line);font-size:10.4px;font-weight:600;padding:6px 11px;border-radius:99px;color:var(--ink70)">Vetrina</span>
+            <span style="background:#fff;border:1px solid var(--line);font-size:10.4px;font-weight:600;padding:6px 11px;border-radius:99px;color:var(--ink70)">Collage hero</span>
+          </div>
+          <p class="hint">Di default <b>Striscia</b>. «Vetrina» si sblocca da 2 prodotti con foto in su, «Collage hero» da 3.</p>
+        </div>
+      </div>
+      <div class="cap"><b>L'upload riusa quello che c'è già:</b> stessa pipeline di <code>FotoGalleriaTab</code> — conversione in WebP, thumb, upload su bucket <code>photos</code> in <code>discounts/&lt;id&gt;/</code>, niente codice nuovo di compressione.</div>
+    </div>
+
+    <div class="col" style="max-width:420px">
+      <div class="lab">Perché non riusare le foto del ristorante</div>
+      <div class="note" style="margin-top:0">
+        Le foto in <code>restaurant_photos</code> sono foto <em>del locale</em>: bancone, sala, vetrina. Nessuna è «il matcha latte». Servono righe proprie, legate allo sconto e non al ristorante, perché:
+        <div class="pro"><i>✓</i>Lo stesso locale può avere due sconti su prodotti diversi.</div>
+        <div class="pro"><i>✓</i>Un prodotto ha nome e prezzo, una foto locale no.</div>
+        <div class="pro"><i>✓</i>Quando lo sconto finisce, le sue foto spariscono con lui — <code>ON DELETE CASCADE</code>.</div>
+      </div>
+      <div class="lab" style="margin-top:22px">Chi le carica</div>
+      <div class="note" style="margin-top:0">
+        Per ora solo l'admin da <code>/admin</code>, come per tutto il resto degli sconti. Il giorno in cui i ristoratori avranno un pannello loro, questa sezione ci entra così com'è: è già una lista di righe indipendenti.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= DATI ======================= -->
+<section class="panel" id="pDati">
+  <span class="kicker">Sotto il cofano</span>
+  <h1 class="big">Dati e piano di lavoro</h1>
+  <p class="lead">Quello che serve per reggere qualsiasi delle quattro proposte. Una tabella sola, una colonna sullo sconto, nessuna modifica distruttiva.</p>
+
+  <h2 class="sec">La tabella</h2>
+  <div class="scroll-x"><pre><span class="c">-- supabase/discount-products-&lt;data&gt;.sql</span>
+<span class="k">CREATE TABLE</span> discount_products (
+  id            uuid <span class="k">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  discount_id   uuid <span class="k">NOT NULL REFERENCES</span> discounts(id) <span class="k">ON DELETE CASCADE</span>,
+  name          text <span class="k">NOT NULL</span>,
+  note          text,              <span class="c">-- «ceremonial grade, avena»</span>
+  photo_url     text,
+  thumb_url     text,
+  price         numeric(8,2),      <span class="c">-- prezzo PIENO. Lo scontato lo calcola l'app</span>
+  sort_order    int <span class="k">NOT NULL DEFAULT</span> 0,
+  created_at    timestamptz <span class="k">NOT NULL DEFAULT</span> now()
+);
+
+<span class="c">-- come mostrarli: 'strip' (default) | 'showcase' | 'hero'</span>
+<span class="k">ALTER TABLE</span> discounts <span class="k">ADD COLUMN IF NOT EXISTS</span>
+  products_layout text <span class="k">NOT NULL DEFAULT</span> 'strip'
+  <span class="k">CHECK</span> (products_layout <span class="k">IN</span> ('strip','showcase','hero'));
+
+<span class="c">-- RLS: lettura pubblica solo dei prodotti di sconti attivi, scrittura solo admin</span>
+<span class="k">ALTER TABLE</span> discount_products <span class="k">ENABLE ROW LEVEL SECURITY</span>;</pre></div>
+
+  <h2 class="sec">Cosa cambia nel codice</h2>
+  <div class="scroll-x"><table>
+    <tr><th style="width:290px">File</th><th>Modifica</th></tr>
+    <tr><td><code>supabase/discount-products-&lt;data&gt;.sql</code></td><td><b>nuovo</b> — tabella, colonna, policy RLS, indice su <code>(discount_id, sort_order)</code>.</td></tr>
+    <tr><td><code>src/lib/hooks/useDiscounts.js</code></td><td>Aggiunta di <code>products:discount_products(...)</code> alla select condivisa. <b>Attenzione:</b> cambia la forma della query → va alzata la chiave cache a <code>cb_active_discounts_v3</code>, altrimenti chi ha la v2 in localStorage vede le card senza prodotti finché non svuota la cache.</td></tr>
+    <tr><td><code>src/components/Discount/DiscountProducts.jsx</code></td><td><b>nuovo</b> — un componente solo con <code>layout="strip|showcase|hero"</code>. Le tre proposte sono tre rami dello stesso componente, non tre componenti.</td></tr>
+    <tr><td><code>src/lib/utils/discountFormat.js</code></td><td><code>productDiscountedPrice(price, deal)</code>: applica %, importo fisso o nulla (freebie / 3x2 / prezzo speciale). Un solo posto che sa fare il conto.</td></tr>
+    <tr><td><code>DiscountDetailPopup.jsx</code></td><td>Inserimento del blocco fra validità e specifiche (A/B) o sostituzione dell'hero (C).</td></tr>
+    <tr><td><code>SconteRedesignPage.jsx</code> · <code>DropCard.jsx</code></td><td>Proposta D: la fila di pastiglie al posto della pillola validità <em>quando ci sono prodotti</em>.</td></tr>
+    <tr><td><code>DiscountManager.jsx</code></td><td>Il blocco «Prodotti in vetrina»: righe ordinabili + upload WebP riusando la pipeline di <code>FotoGalleriaTab</code>.</td></tr>
+    <tr><td><code>api/_email/</code> · <code>api/discount-pdf</code></td><td><b>Fuori da questo giro.</b> Email e PDF restano come sono: vanno toccati solo dopo aver scelto il layout, e le regole del sistema email vogliono i blocchi in <code>blocks.js</code>.</td></tr>
+  </table></div>
+
+  <h2 class="sec">Il prezzo scontato lo calcola l'app</h2>
+  <p class="sec-sub">Il ristoratore inserisce solo il prezzo pieno. Il resto discende dal tipo di sconto, così non esistono due verità che divergono:</p>
+  <div class="scroll-x"><table>
+    <tr><th style="width:140px">discount_type</th><th style="width:110px">Prezzo pieno</th><th>Cosa mostra la card</th></tr>
+    <tr><td><code>percentage</code> 10%</td><td>5,00 €</td><td><s>5,00€</s> <b>4,50€</b> · sticker <code>-10%</code></td></tr>
+    <tr><td><code>fixed</code> 1€</td><td>4,50 €</td><td><s>4,50€</s> <b>3,50€</b> · sticker <code>-1€</code></td></tr>
+    <tr><td><code>freebie</code> 3x2</td><td>1,80 €</td><td><b>3 × 1,80€</b> · sticker <code>3x2</code>, nessun prezzo barrato</td></tr>
+    <tr><td><code>special_price</code></td><td>—</td><td>Solo il prezzo speciale dello sconto, nessun barrato</td></tr>
+    <tr><td>qualsiasi, prezzo vuoto</td><td>—</td><td>Solo foto e nome</td></tr>
+  </table></div>
+
+  <div class="note" style="margin-top:26px"><b>Ordine dei lavori che proporrei:</b> 1) SQL + hook + <code>DiscountProducts</code> in versione <em>striscia</em> + admin → si carica il matcha di DAPPER e si vede online. 2) Proposta D in lista. 3) Vetrina e collage come layout alternativi, scelti dall'admin. Il punto 1 da solo è già la cosa che hai chiesto; 2 e 3 sono il moltiplicatore.</div>
+
+  <div class="note warn"><b>Aspetto la tua scelta prima di scrivere codice.</b> Dimmi quale layout vuoi come default (A, B o C), se prendiamo anche D, e se il prezzo dei prodotti lo vuoi visibile o no — poi implemento sul sito.</div>
+</section>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('on') })
+      document.querySelectorAll('.panel').forEach(function (x) { x.classList.remove('on') })
+      t.classList.add('on')
+      document.getElementById(t.dataset.p).classList.add('on')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  })
+</script>
+</body>
+</html>

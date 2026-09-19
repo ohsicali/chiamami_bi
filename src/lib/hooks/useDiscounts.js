@@ -5,7 +5,7 @@ import { supabase, isSupabaseConfigured } from '../supabase'
 // from localStorage so the home and deals page render instantly on repeat
 // visits while a fresh fetch runs in the background. Bump the key version
 // when the select shape changes.
-const ACTIVE_DISCOUNTS_CACHE_KEY = 'cb_active_discounts_v2'
+const ACTIVE_DISCOUNTS_CACHE_KEY = 'cb_active_discounts_v3'
 function readActiveDiscountsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(ACTIVE_DISCOUNTS_CACHE_KEY)
@@ -80,7 +80,7 @@ export function useRestaurantDiscount(restaurantId) {
 
     supabase
       .from('discounts')
-      .select('*')
+      .select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order)')
       .eq('restaurant_id', restaurantId)
       .eq('is_active', true)
       .gt('valid_until', new Date().toISOString())
@@ -278,7 +278,7 @@ function fetchActiveDiscounts() {
   if (activeDiscountsInFlight) return activeDiscountsInFlight
   activeDiscountsInFlight = supabase
     .from('discounts')
-    .select('*, restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
+    .select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
     .eq('is_active', true)
     .gt('valid_until', new Date().toISOString())
     .order('created_at', { ascending: false })
@@ -353,7 +353,7 @@ export function useMyDiscounts(userId) {
     const load = () => {
       supabase
         .from('discount_redemptions')
-        .select('*, discount:discounts(*, restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
+        .select('*, discount:discounts(*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, cuisine_type, category, price_range, tagline, photos:restaurant_photos(id, photo_url, thumb_url, sort_order)))')
         .eq('user_id', userId)
         .order('generated_at', { ascending: false })
         .then(({ data }) => {

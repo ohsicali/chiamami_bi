@@ -22,6 +22,7 @@ import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
 import { formatDiscountValue, formatDiscountBadge, discountContextWord } from '../../lib/utils/discountFormat'
+import { normalizeProducts, productsSummary } from '../../lib/utils/discountProducts'
 import './SconteRedesignPage.css'
 import { formatPrice } from '../../lib/utils/price'
 import { slugify } from '../../lib/utils/slug'
@@ -849,6 +850,7 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
   const priceStr = formatPrice(r?.price_range)
   const validityStatus = checkValidity(deal)
   const validityPill = formatShortPill(deal, validityStatus)
+  const productItems = normalizeProducts(deal?.products)
   const daysShort = (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7)
     ? formatDays(deal.valid_days)
     : null
@@ -877,7 +879,13 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
           </div>
           <div className="sc-left-info">
             <ValidityPill status={validityStatus} text={validityPill} />
-            {daysShort && <span className="sc-when">{daysShort}</span>}
+            {/* Le foto dei prodotti dicono su cosa vale lo sconto senza
+                doverlo aprire. Prendono il posto della riga dei giorni, che
+                dentro la scheda è comunque scritta molto meglio: la riga
+                della card non cresce di un pixel. */}
+            {productItems.length > 0
+              ? <ProductDots items={productItems} />
+              : daysShort ? <span className="sc-when">{daysShort}</span> : null}
           </div>
         </div>
         <button
@@ -890,6 +898,30 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
         </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Tre pastiglie sovrapposte con i nomi accanto: «(•••) Matcha latte, chai e
+ * altri 3». Tre e non di più perché a 22px una quarta foto non si
+ * distinguerebbe dalla terza, e il conteggio dice comunque quante sono.
+ */
+function ProductDots({ items }) {
+  const shown = items.slice(0, 3)
+  const summary = productsSummary(items)
+  return (
+    <span className="sc-prod-dots">
+      <span className="sc-prod-dots-imgs" aria-hidden="true">
+        {shown.map((p) => (
+          <i key={p.key}>
+            {p.photo
+              ? <img src={proxyImg(p.photo, { w: 96 })} alt="" loading="lazy" decoding="async" />
+              : <em>🍽️</em>}
+          </i>
+        ))}
+      </span>
+      {summary && <span className="sc-prod-dots-txt">{summary}</span>}
+    </span>
   )
 }
 

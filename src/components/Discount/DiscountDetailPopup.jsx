@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
   checkValidity,
-  formatDays,
-  formatSlots,
   formatShortPill,
   computeNextValidWindow,
 } from '../../lib/validity'
@@ -13,6 +11,7 @@ import ValidityPill from './ValidityPill'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import './DiscountDetailPopup.css'
 import ShortCodeCard from './ShortCodeCard'
+import DiscountRules from './DiscountRules'
 import { slugify } from '../../lib/utils/slug'
 
 /* ============================================================================
@@ -200,36 +199,48 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
   const cd = isDrop ? compactCountdown(endIso, now) : null
 
   const validityPillText = formatShortPill(deal, status)
-  const daysText = formatDays(deal?.valid_days)
-  const slotsText = formatSlots(deal?.valid_meal_slots)
-  const hasValidityRestriction =
-    (Array.isArray(deal?.valid_days) && deal.valid_days.length > 0 && deal.valid_days.length < 7) ||
-    (Array.isArray(deal?.valid_meal_slots) && deal.valid_meal_slots.length > 0) ||
-    !!(deal?.valid_time_from && deal?.valid_time_to)
 
-  // Block validità (verde / giallo / rosso) sotto al header
-  const validityVariant = status === 'valid_now' ? 'ok'
-    : status === 'valid_today_later' ? 'warn'
-    : 'bad'
-  const validityHeadline = status === 'valid_now'
-    ? 'Valido ora'
-    : status === 'valid_today_later'
-      ? `Solo ${slotsText.toLowerCase()}`
-      : (Array.isArray(deal?.valid_days) && deal.valid_days.length && deal.valid_days.length < 7)
-        ? `Oggi non valido · Da ${formatDays(deal.valid_days).split(' · ')[0].split('–')[0]}`
-        : 'Oggi non valido'
-  const validityCopy = (() => {
-    if (status === 'valid_now') return 'Mostralo al ristoratore al momento del conto.'
+  // Il blocco di avviso esce solo quando c'è un avviso da dare: se lo sconto
+  // è usabile adesso lo dicono già la pillola in testa e i giorni accesi
+  // dentro DiscountRules, e un terzo riquadro verde che ripete "Valido ora"
+  // è rumore fra il nome del locale e le regole vere.
+  const showValidityWarning = status !== 'valid_now'
+  const validityVariant = status === 'valid_today_later' ? 'warn' : 'bad'
+
+  // Una frase per stato, scritta per intero.
+  //
+  // Prima la frase si costruiva a pezzi incollando `formatDays` e
+  // `formatSlots`, e su uno sconto con i giorni ma senza fascia usciva
+  // "Si attiva Lun–Gio, fascia qualsiasi fascia": `formatSlots([])` risponde
+  // "Qualsiasi fascia" — giusto come etichetta a sé, incollato dentro una
+  // frase no. Il caso è esattamente quello dei sei sconti a catalogo con i
+  // giorni scritti a mano.
+  const { validityHeadline, validityCopy } = (() => {
+    if (status === 'expired') {
+      return {
+        validityHeadline: 'Sconto scaduto',
+        validityCopy: 'Questo sconto non è più disponibile.',
+      }
+    }
     const next = computeNextValidWindow(deal)
     if (status === 'valid_today_later') {
-      return next ? `Si attiva ${next}.` : 'Si attiva più tardi oggi.'
+      return {
+        validityHeadline: 'Non ancora attivo',
+        validityCopy: next ? `Si attiva ${next}.` : 'Si attiva più tardi oggi.',
+      }
     }
-    return `Si attiva ${daysText.toLowerCase().includes('tutti') ? '' : daysText + ', '}fascia ${slotsText.toLowerCase()}.`
+    // valid_other_day: `computeNextValidWindow` qui dà il nome del prossimo
+    // giorno buono ("giovedì"), che è l'unica cosa che serve sapere.
+    return {
+      validityHeadline: 'Oggi non valido',
+      validityCopy: next ? `Torna ${next}: i giorni validi sono qui sotto.` : 'Guarda qui sotto i giorni in cui vale.',
+    }
   })()
 
-  const description = deal?.description || deal?.title
-  const conditionLines = (deal?.conditions || '')
-    .split(/\n+|•/g).map((s) => s.trim()).filter(Boolean)
+  // La descrizione esce solo se aggiunge qualcosa: quando è uguale al titolo
+  // (o manca, che è il caso di tutti gli sconti a catalogo oggi) ripeterebbe
+  // la riga già stampata sulla foto.
+  const description = deal?.description && deal.description !== deal.title ? deal.description : null
 
   return (
     <>
@@ -264,15 +275,13 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
           <ValidityPill status={status} text={validityPillText} />
         </div>
 
-        {/* Validity block */}
-        {hasValidityRestriction && (
+        {description && <p className="ddp-lead">{description}</p>}
+
+        {/* Avviso: esce solo quando lo sconto NON è usabile adesso */}
+        {showValidityWarning && (
           <div className={`ddp-validity-block is-${validityVariant}`}>
             <div className="ddp-validity-ic" aria-hidden="true">
-              {status === 'valid_now' ? (
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
-              )}
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
             </div>
             <div className="ddp-validity-txt">
               <strong>{validityHeadline}</strong>
@@ -305,57 +314,8 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
           </div>
         )}
 
-        {/* Specs */}
-        <div className="ddp-specs">
-          {hasValidityRestriction && (
-            <div className="ddp-spec-row">
-              <div className="ddp-spec-ic">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18M8 3v4M16 3v4" /></svg>
-              </div>
-              <div className="ddp-spec-info">
-                <strong>Quando</strong>
-                <div className="ddp-spec-v">{daysText}</div>
-              </div>
-            </div>
-          )}
-          {(Array.isArray(deal?.valid_meal_slots) && deal.valid_meal_slots.length) || (deal?.valid_time_from && deal?.valid_time_to) ? (
-            <div className="ddp-spec-row">
-              <div className="ddp-spec-ic">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-              </div>
-              <div className="ddp-spec-info">
-                <strong>Fascia</strong>
-                <div className="ddp-spec-v">{
-                  deal.valid_time_from && deal.valid_time_to
-                    ? `${deal.valid_time_from.slice(0, 5)} – ${deal.valid_time_to.slice(0, 5)}`
-                    : slotsText
-                }</div>
-              </div>
-            </div>
-          ) : null}
-          {description && (
-            <div className="ddp-spec-row">
-              <div className="ddp-spec-ic">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7L9 18l-5-5" /></svg>
-              </div>
-              <div className="ddp-spec-info">
-                <strong>Cosa ottieni</strong>
-                <div className="ddp-spec-v">{description}</div>
-              </div>
-            </div>
-          )}
-          {conditionLines.length > 0 && (
-            <div className="ddp-spec-row">
-              <div className="ddp-spec-ic">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
-              </div>
-              <div className="ddp-spec-info">
-                <strong>Da sapere</strong>
-                <div className="ddp-spec-v">{conditionLines.join(' · ')}</div>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Cosa vale · quando · da sapere */}
+        <DiscountRules deal={deal} className="ddp-rules" />
 
         {/* Scopri ristorante */}
         {restaurantUrl && (
