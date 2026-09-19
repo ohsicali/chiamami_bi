@@ -27,6 +27,11 @@ import { formatDiscountBadge } from '../../lib/utils/discountFormat'
  * valido ORA (giorno o fascia sbagliati) non si passa mai al QR — si
  * vede questo invece, stessa regola già in vigore ovunque nell'app
  * (`QRBlockedView`, il claim su /sconti).
+ *
+ * Bottoni a pillola (non `rounded-xl`): stessa forma del banner sopra
+ * ("Scopri di più"/"Usa sconto") e di `DiscountDetailPopup` su /sconti —
+ * i tre punti in cui si sblocca uno sconto sull'app hanno lo stesso
+ * bottone, non tre bottoni diversi.
  */
 function QRCanvas({ value, size = 210 }) {
   const canvasRef = useRef(null)
@@ -107,7 +112,7 @@ export default function DiscountQuickPopup({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white"
+              className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-white"
             >
               Chiudi
             </button>
@@ -141,7 +146,7 @@ export default function DiscountQuickPopup({
             <motion.button
               onClick={handleUnlock}
               disabled={claiming}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white disabled:opacity-50"
+              className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-white disabled:opacity-50"
               whileTap={{ scale: 0.97 }}
             >
               {claiming ? 'Sblocco…' : '🔓 Sblocca sconto'}
@@ -184,7 +189,7 @@ export default function DiscountQuickPopup({
             <motion.button
               type="button"
               onClick={onClose}
-              className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white"
+              className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-white"
               whileTap={{ scale: 0.97 }}
             >
               Chiudi
