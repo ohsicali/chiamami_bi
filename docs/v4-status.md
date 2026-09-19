@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-18 (codice a 6 caratteri per sbloccare uno sconto senza QR)
+Ultima modifica: 2026-09-19 (foto dei prodotti e regole dentro la scheda sconto)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -19,6 +19,70 @@ dove siamo. Aggiorna a ogni step importante.
 | C3 — (TBD) | — | ⏳ Not started | |
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
+| Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
+
+## 19/09 — le foto dei prodotti dentro lo sconto (PR #245, merged 47cffee)
+
+Uno sconto diceva «10% sulle bevande Matcha» e mostrava la foto del bancone:
+chi legge non sa se parliamo di un matcha latte, di un matcha tonic o di uno
+scaffale di lattine. E tutte le regole finivano nel campo libero
+«Condizioni», che lato pubblico si legge in corpo 11 sotto a tutto il resto —
+a catalogo c'erano righe come «Valido solo a cena dal Lunedì al Giovedì
+escluso asporto»: tre informazioni diverse in una frase sola.
+
+Adesso la scheda dello sconto ha `DiscountRules` con tre blocchi:
+
+- **LO SCONTO VALE SU** — le foto dei prodotti coperti (`discount_products`).
+  La griglia segue il numero di prodotti (1 grande, 2, 3, 2×2, da 5 in su una
+  striscia che scorre) così non resta mai una riga a metà.
+- **QUANDO** — i sette giorni come pastiglie, accese quelle valide, con oggi
+  cerchiato. La fila esce **solo se qualche giorno è escluso**: sette
+  pastiglie tutte verdi sembrano una regola senza dirne nessuna.
+- **DA SAPERE** — le condizioni, una per riga.
+
+Ogni blocco compare solo se ha qualcosa da dire, e uno sconto senza prodotti,
+senza giorni e senza condizioni non mostra la scheda affatto — il caso della
+maggior parte degli sconti già a catalogo.
+
+### Regole da non perdere
+
+- **Niente prezzi sui prodotti**, ed è una scelta esplicita: il risparmio lo
+  dice già il valore dello sconto (`-10%`, `-1€`, `3x2`), e un prezzo scritto
+  qui diverge dal menù del locale al primo aumento. La tabella
+  `discount_products` **non ha una colonna prezzo** apposta.
+- La lista prodotti si normalizza in **un posto solo**,
+  `src/lib/utils/discountProducts.js` (`normalizeProducts`,
+  `productsSummary`): la stessa lista serve alla scheda sconto, alla riga del
+  Bi Club e al banner sul locale, e tre copie divergono al primo
+  `sort_order` dimenticato. `tests/discount-products.test.mjs` tiene fermo
+  questo (13 test).
+- La didascalia in lista si regola sulla lunghezza: in quella riga al testo
+  restano ~130px, e «Matcha latte, Chai latte e altri 3» arrivava tagliato a
+  metà parola. Un prodotto → il suo nome; due nomi corti → tutti e due; due
+  nomi lunghi o da tre in su → il primo e il conteggio.
+- Cache sconti attivi alzata a **`cb_active_discounts_v3`**: il select ha
+  cambiato forma, chi aveva la v2 in localStorage avrebbe visto le card senza
+  prodotti finché non svuotava la cache. Stessa regola la prossima volta che
+  si tocca quel select.
+- `valid_days` e `valid_meal_slots` esistevano già in `discounts` e **nessuno
+  poteva riempirle** — per questo erano `null` ovunque e il blocco validità
+  non compariva mai. Adesso ci sono i selettori in admin
+  (`src/components/admin/DiscountRulesFields.jsx`).
+- `convertToWebP` sta in `src/lib/utils/imageUpload.js`: i punti che caricano
+  foto adesso sono due (galleria locale e prodotti sconto), e due copie della
+  stessa conversione divergono al primo ritocco di qualità.
+
+### Cosa resta da fare a mano
+
+Le foto prodotto vanno caricate dal pannello: **/admin → Sconti → Modifica →
+«Su cosa vale»** (max 8, riordinabili). Finché non si caricano, gli sconti
+esistenti si vedono esattamente come prima. Stesso discorso per «Quando
+vale»: i giorni e le fasce vanno scelti lì.
+
+Traccia del ragionamento e proposte scartate:
+`docs/mockups/v11-sconti-prodotti-in-vetrina.html` (le proposte A e C non
+sono state realizzate, e le tessere col prezzo barrato mostrano una cosa che
+sul sito non c'è).
 
 ## 18/09 — sbloccare uno sconto digitando il codice (senza QR)
 
@@ -472,6 +536,9 @@ documenti storici, non copia viva — non ricopiarla da lì.
   2026-09-07: colonne `slot`/`weight`/`link_type` e vincoli presenti.
 - `supabase/ad-events-2026-09-07.sql` ✓ (Pubblicità · metriche) — eseguita via
   connettore Supabase il 2026-09-07.
+- `supabase/discount-products-2026-09-18.sql` ✓ (Sconti · prodotti) — eseguita
+  via connettore Supabase il 2026-09-18: tabella, indice e due policy RLS.
+  Additiva e idempotente, nessuna riga esistente toccata.
 
 ## Pubblicità — note operative
 
