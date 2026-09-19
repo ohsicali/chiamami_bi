@@ -8,13 +8,13 @@ import './DiscountProductTiles.css'
  * Stesso principio delle pastiglie in lista (`ProductDots` in
  * `SconteRedesignPage.jsx`) e della vetrina nello sheet dello sconto
  * (`ProductShowcase` in `DiscountRules.jsx`): mostra le foto vere quando
- * ci sono, non un numero. Qui però il contenitore è largo e basso — il
- * banner del locale, non una scheda dedicata — quindi la forma è una riga
- * di quadrati pari, non una griglia.
+ * ci sono, non un numero. Qui però è solo un accenno dentro un banner che
+ * parla d'altro, non la scheda dedicata: le caselle sono piccole e a
+ * dimensione fissa (vedi il CSS) apposta — con 2 prodotti la riga deve
+ * restare corta, non diventare due caselle enormi.
  *
  * Massimo 4 caselle: con più di 4 prodotti le prime 3 sono foto e la
- * quarta diventa "+N", così la riga non si allunga mai oltre la larghezza
- * del banner né si stringe a francobolli illeggibili.
+ * quarta diventa "+N", così non si stringe a francobolli illeggibili.
  */
 const MAX_TILES = 4
 
@@ -31,13 +31,12 @@ export default function DiscountProductTiles({ items, className = '' }) {
         <div className="dpt-tile" role="listitem" key={p.key}>
           {p.photo ? (
             <img
-              // La casella è piccola (70–150px lato secondo il contesto) ma
-              // su schermo retina/2x-3x quei pixel CSS non bastano: 160px di
-              // sorgente, la misura "onesta" per la casella più grande,
-              // usciva sfocata su ogni telefono e su molti laptop. 420px
-              // coprono anche il caso desktop più largo a 3x pixel-ratio,
-              // e il peso resta minimo — è un ritaglio quadrato compresso.
-              src={proxyImg(p.photo, { w: 420 })}
+              // La casella è 42px CSS, ma su schermo retina/2-3x quei
+              // pixel CSS ne servono 2-3 volte tanti: 42px di sorgente
+              // uscirebbe sfocato su ogni telefono. 140px coprono anche il
+              // 3x più spinto, a un peso trascurabile — un ritaglio
+              // quadrato piccolo e compresso.
+              src={proxyImg(p.photo, { w: 140 })}
               alt=""
               loading="lazy"
               decoding="async"

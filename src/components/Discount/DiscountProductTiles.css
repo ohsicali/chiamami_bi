@@ -5,6 +5,11 @@
  * caselle senza foto e quella "+N" usano lo stesso verde scurito invece
  * di grigio neutro — sembrano parte del banner, non un widget incollato
  * sopra.
+ *
+ * Dimensione FISSA, non `flex:1`: con `flex:1` due prodotti diventavano
+ * due caselle enormi (metà banner ciascuna, es. "Pasticceria Duò") — il
+ * contrario di un accenno rapido. La riga resta piccola sempre, che ci
+ * siano 2 o 4 prodotti: cambia solo quanto si allunga, mai quanto cresce.
  */
 .dpt-row {
   display: flex;
@@ -13,10 +18,10 @@
 }
 
 .dpt-tile {
-  flex: 1;
-  min-width: 0;
-  aspect-ratio: 1;
-  border-radius: 10px;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 9px;
   overflow: hidden;
   background: rgba(26, 71, 49, 0.14);
   display: grid;
@@ -31,7 +36,7 @@
 }
 
 .dpt-fallback {
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1;
   opacity: 0.55;
 }
@@ -41,5 +46,5 @@
   color: var(--color-sconto-ink, #1a4731);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
-  font-size: 13px;
+  font-size: 11.5px;
 }
