@@ -6,10 +6,15 @@
  * di grigio neutro — sembrano parte del banner, non un widget incollato
  * sopra.
  *
- * Dimensione FISSA, non `flex:1`: con `flex:1` due prodotti diventavano
- * due caselle enormi (metà banner ciascuna, es. "Pasticceria Duò") — il
- * contrario di un accenno rapido. La riga resta piccola sempre, che ci
- * siano 2 o 4 prodotti: cambia solo quanto si allunga, mai quanto cresce.
+ * La misura giusta è quella che 3-4 foto prendono riempiendo la riga
+ * (visto a schermo su DAPPER, ~170px lato) — non un chip piccolo, le foto
+ * dei prodotti sono il punto della sezione. `flex:1` puro però lasciava
+ * che con MENO prodotti le caselle crescessero oltre quella misura: con
+ * 2 (es. "Pasticceria Duò") diventavano due quadrati enormi, metà banner
+ * ciascuno. Il `max-width` sotto ferma la crescita lì: le caselle
+ * riempiono la riga quando sono 3-4, e restano alla stessa dimensione
+ * (non più grandi) quando sono 1-2 — cambia lo spazio vuoto a destra, non
+ * quanto sono grandi le foto.
  */
 .dpt-row {
   display: flex;
@@ -18,10 +23,11 @@
 }
 
 .dpt-tile {
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 9px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 180px;
+  aspect-ratio: 1;
+  border-radius: 14px;
   overflow: hidden;
   background: rgba(26, 71, 49, 0.14);
   display: grid;
@@ -36,7 +42,7 @@
 }
 
 .dpt-fallback {
-  font-size: 15px;
+  font-size: 30px;
   line-height: 1;
   opacity: 0.55;
 }
@@ -46,5 +52,5 @@
   color: var(--color-sconto-ink, #1a4731);
   font-family: var(--font-sans, 'Poppins', sans-serif);
   font-weight: 800;
-  font-size: 11.5px;
+  font-size: 20px;
 }

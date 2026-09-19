@@ -8,10 +8,11 @@ import './DiscountProductTiles.css'
  * Stesso principio delle pastiglie in lista (`ProductDots` in
  * `SconteRedesignPage.jsx`) e della vetrina nello sheet dello sconto
  * (`ProductShowcase` in `DiscountRules.jsx`): mostra le foto vere quando
- * ci sono, non un numero. Qui però è solo un accenno dentro un banner che
- * parla d'altro, non la scheda dedicata: le caselle sono piccole e a
- * dimensione fissa (vedi il CSS) apposta — con 2 prodotti la riga deve
- * restare corta, non diventare due caselle enormi.
+ * ci sono, non un numero. Qui però il contenitore è un banner che parla
+ * d'altro, non la scheda dedicata: le caselle riempiono la riga quando i
+ * prodotti sono 3-4, ma un `max-width` (vedi il CSS) ferma la crescita
+ * quando sono 1-2 — restano alla stessa dimensione, non diventano due
+ * quadrati enormi.
  *
  * Massimo 4 caselle: con più di 4 prodotti le prime 3 sono foto e la
  * quarta diventa "+N", così non si stringe a francobolli illeggibili.
@@ -31,12 +32,12 @@ export default function DiscountProductTiles({ items, className = '' }) {
         <div className="dpt-tile" role="listitem" key={p.key}>
           {p.photo ? (
             <img
-              // La casella è 42px CSS, ma su schermo retina/2-3x quei
-              // pixel CSS ne servono 2-3 volte tanti: 42px di sorgente
-              // uscirebbe sfocato su ogni telefono. 140px coprono anche il
-              // 3x più spinto, a un peso trascurabile — un ritaglio
-              // quadrato piccolo e compresso.
-              src={proxyImg(p.photo, { w: 140 })}
+              // La casella arriva fino a 180px CSS (il `max-width` nel
+              // CSS): su schermo retina/2-3x quei pixel CSS ne servono
+              // 2-3 volte tanti, quindi 180px di sorgente uscirebbe
+              // sfocato. 560px coprono anche il 3x più spinto, a un peso
+              // comunque contenuto — un ritaglio quadrato compresso.
+              src={proxyImg(p.photo, { w: 560 })}
               alt=""
               loading="lazy"
               decoding="async"
