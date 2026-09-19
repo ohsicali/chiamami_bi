@@ -12,6 +12,8 @@ import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import SconteAuthGate from '../Discount/SconteAuthGate'
+import DiscountProductTiles from '../Discount/DiscountProductTiles'
+import { normalizeProducts } from '../../lib/utils/discountProducts'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames, getDietCategoryNames } from '../../lib/hooks/useCategories'
 import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '../../lib/hooks/useDiscounts'
@@ -56,7 +58,7 @@ function useShare(restaurant, t) {
 /* ── Video Buttons (Instagram Reel / TikTok) ── */
 
 /* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
-function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
+function FloatingDiscountBar({ discount: discountFromParent, restaurantId, hidden = false }) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
@@ -66,6 +68,19 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
   const [showQR, setShowQR] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const [authGate, setAuthGate] = useState(false)
+
+  // L'entrata ha un ritardo di 1.2s (aspetta che il resto della scheda si
+  // sia assestato). `hidden` invece scatta a ogni scroll dentro/fuori dal
+  // banner inline sotto "Cosa prendere" (vedi RestaurantSheet) e deve
+  // reagire subito — un ritardo di 1.2s a ogni passaggio sembrerebbe un
+  // bug, non un'animazione. Le due cose restano transizioni separate:
+  // `entered` gestisce SOLO la prima apparizione, `hidden` la pillola una
+  // volta già entrata.
+  const [entered, setEntered] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setEntered(true), 1200)
+    return () => clearTimeout(timer)
+  }, [])
 
   if (!discount && discountLoading) return null
   if (!discount) return null
@@ -102,14 +117,19 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
 
   const displaySub = isRedeemed ? t('discount.alreadyUsed') : 'Sconto attivo'
 
+  // Visibile solo dopo l'ingresso E quando il banner inline (sotto "Cosa
+  // prendere") non è a schermo: altrimenti per un attimo si vedrebbero
+  // insieme due CTA identiche per lo stesso sconto.
+  const visible = entered && !hidden
+
   return (
     <>
       <motion.div
         className="rs-sticky-disc"
         initial={{ y: 80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        animate={visible ? { y: 0, opacity: 1 } : { y: 80, opacity: 0 }}
         exit={{ y: 80, opacity: 0 }}
-        transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 22 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
         style={{
           position: 'fixed',
           left: 14, right: 14,
@@ -120,6 +140,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           display: 'flex', alignItems: 'center',
           gap: 10,
           padding: '0 8px 0 20px',
+          pointerEvents: visible ? 'auto' : 'none',
           background: 'var(--gradient-sconto)',
           boxShadow: '0 8px 24px rgba(74,222,128,.40), 0 2px 10px rgba(0,0,0,.10)',
         }}
@@ -251,10 +272,49 @@ export default function RestaurantSheet({
   const [photoIndex, setPhotoIndex] = useState(0)
   const [showStickyHeader, setShowStickyHeader] = useState(false)
   const [inlineShowQR, setInlineShowQR] = useState(false)
+  const [inlineGenerating, setInlineGenerating] = useState(false)
+  const [inlineAuthGate, setInlineAuthGate] = useState(false)
   const [newsletterStatus, setNewsletterStatus] = useState(null)
   const inlineDiscount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
   const { redemption: inlineRedemption, loading: inlineRedemptionLoading, generateRedemption: inlineGenerateRedemption } = useUserRedemption(inlineDiscount?.id, user?.id)
+  const inlineDiscountProducts = normalizeProducts(inlineDiscount?.products)
   const { status: orariStatus } = useOrariStatus(restaurant)
+
+  // Coordina il banner inline con la pillola fissa in fondo (sotto): sono
+  // lo stesso sconto, e mostrarli insieme è il duplicato che "fix B6" (vedi
+  // sotto) evitava tenendo il banner fuori dal tutto. La pillola resta
+  // visibile per il resto della pagina e si nasconde solo mentre il banner
+  // verde è a schermo.
+  const inlineBannerRef = useRef(null)
+  const [inlineBannerInView, setInlineBannerInView] = useState(false)
+  useEffect(() => {
+    const el = inlineBannerRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver(
+      ([entry]) => setInlineBannerInView(entry.isIntersecting),
+      { threshold: 0.15 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [inlineDiscount?.id])
+
+  const handleInlineUnlock = async () => {
+    if (!user) {
+      // Stesso motivo del riquadro nella pillola (vedi FloatingDiscountBar):
+      // lo sconto scelto resta da parte e si ritorna qui dopo l'accesso.
+      setInlineAuthGate(true)
+      return
+    }
+    setInlineGenerating(true)
+    try {
+      const result = await inlineGenerateRedemption()
+      if (result) setInlineShowQR(true)
+    } catch (err) {
+      console.error('Inline discount unlock error:', err)
+    } finally {
+      setInlineGenerating(false)
+    }
+  }
 
   // Desktop detection for animation direction (reactive — updates on resize)
   const isDesktop = useIsDesktop()
@@ -827,13 +887,6 @@ export default function RestaurantSheet({
                 )}
               </motion.div>
 
-              {/* ── Sconto: NIENTE banner inline su mobile (fix B6) ──
-                  Qui comparivano insieme il banner inline E la sticky bar in
-                  fondo, con lo stesso identico contenuto. Su mobile lo sconto
-                  vive solo nella sticky bar (<FloatingDiscountBar/>), che resta
-                  visibile durante lo scroll. Su desktop vale il contrario:
-                  solo il banner inline (vedi DesktopRestaurantSheet). */}
-
               {/* ── Secondo Bi ── */}
               {reviewText && (
                 <motion.div className="sec-secondobi" variants={itemVariants} style={{ marginBottom: 20 }}>
@@ -874,6 +927,67 @@ export default function RestaurantSheet({
                       </p>
                     </div>
                   </div>
+                </motion.div>
+              )}
+
+              {/* ── Sconto: banner inline sotto "Cosa prendere" ──
+                  Prima non c'era (fix B6): banner inline e pillola fissa
+                  mostravano insieme lo stesso identico sconto. Ora la
+                  pillola si nasconde mentre questo banner è a schermo (vedi
+                  `inlineBannerInView` sopra e la prop `hidden` più sotto),
+                  quindi si vede uno solo dei due alla volta. Il banner
+                  porta anche le foto dei prodotti (proposta D3): il "cosa
+                  prendere" lo dice il locale, questo mostra su cosa vale lo
+                  sconto — la stessa logica, di fila. */}
+              {inlineDiscount && (
+                <motion.div
+                  ref={inlineBannerRef}
+                  className="sec-sconto-inline"
+                  variants={itemVariants}
+                  style={{
+                    marginBottom: 20, background: 'var(--gradient-sconto)',
+                    borderRadius: 16, padding: '16px 18px',
+                    color: 'var(--color-ink, #22181C)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(34,24,28,.7)', marginBottom: 4 }}>
+                        Sconto attivo
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-.01em' }}>
+                        {inlineDiscount.title || inlineDiscount.discount_value}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (inlineRedemption?.status === 'generated' || inlineRedemption?.status === 'redeemed') {
+                          setInlineShowQR(true)
+                        } else {
+                          handleInlineUnlock()
+                        }
+                      }}
+                      disabled={inlineGenerating || inlineRedemptionLoading}
+                      style={{
+                        flexShrink: 0,
+                        background: 'var(--color-ink, #22181C)', color: '#fff', border: 0,
+                        padding: '9px 16px', borderRadius: 999,
+                        fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+                        fontWeight: 800, fontSize: 12.5, cursor: 'pointer',
+                        whiteSpace: 'nowrap', opacity: inlineGenerating ? 0.6 : 1,
+                      }}
+                    >
+                      {inlineRedemption?.status === 'redeemed'
+                        ? '✓ Usato'
+                        : inlineRedemption?.status === 'generated'
+                          ? 'Mostra QR'
+                          : (inlineGenerating ? '…' : 'Sblocca')}
+                    </button>
+                  </div>
+                  {inlineDiscountProducts.length > 0 && (
+                    <DiscountProductTiles items={inlineDiscountProducts} />
+                  )}
                 </motion.div>
               )}
 
@@ -1067,7 +1181,11 @@ export default function RestaurantSheet({
         </div>
 
         {/* Floating discount bar — Airbnb style white bottom bar */}
-        <FloatingDiscountBar discount={discount} restaurantId={restaurant.id} />
+        <FloatingDiscountBar
+          discount={discount}
+          restaurantId={restaurant.id}
+          hidden={inlineBannerInView}
+        />
 
         {/* Inline QR modal — triggered by in-page sconto banner click */}
         <AnimatePresence>
@@ -1081,6 +1199,13 @@ export default function RestaurantSheet({
             />
           )}
         </AnimatePresence>
+
+        {inlineAuthGate && (
+          <SconteAuthGate
+            pendingDiscountId={inlineDiscount?.id}
+            onClose={() => setInlineAuthGate(false)}
+          />
+        )}
       </motion.div>
     </div>
   )

@@ -413,10 +413,44 @@ export default function DesktopRestaurantSheet({
               )}
             </div>
 
-            {/* Sconto banner */}
+            {/* Secondo Bi */}
+            {reviewText && (
+              <div style={{ borderTop: 0, paddingTop: 0, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 18, letterSpacing: '-.02em', marginBottom: 10, marginTop: 0, color: INK }}>
+                  Secondo Bi
+                </h3>
+                {reviewText.split('\n').filter(Boolean).map((para, i) => (
+                  <p key={i} style={{ fontSize: 14, lineHeight: 1.65, color: INK, fontWeight: 500, marginTop: i > 0 ? 14 : 0 }}>
+                    {para}
+                  </p>
+                ))}
+                <div style={{ marginTop: 12, fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 22, color: CORALLO_INK, lineHeight: 1 }}>
+                  — Bi
+                </div>
+              </div>
+            )}
+
+            {/* Cosa prendere — oro */}
+            {tipText && (
+              <div style={{
+                background: `linear-gradient(135deg, ${ORO} 0%, ${ORO_DEEP} 100%)`,
+                color: '#fff', borderRadius: 20, padding: '24px 26px', marginTop: 20,
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.82)', display: 'inline-flex', gap: 8, alignItems: 'center', marginBottom: 0 }}>
+                  🍴 Cosa ti consiglio di prendere
+                </span>
+                <p style={{ fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 22, lineHeight: 1.35, color: '#fff', marginTop: 10 }}>
+                  {tipText}
+                </p>
+              </div>
+            )}
+
+            {/* Sconto banner — dopo "Cosa prendere": prima si consiglia il
+                piatto, poi si mostra lo sconto (e le foto dei prodotti che
+                copre, se caricate), non il contrario. */}
             {discount && discountMainText && (
               <div style={{
-                margin: '0 0 28px', background: GREEN_GRAD,
+                margin: '20px 0 0', background: GREEN_GRAD,
                 borderRadius: 18, padding: '16px 22px',
                 color: INK,
               }}>
@@ -448,38 +482,6 @@ export default function DesktopRestaurantSheet({
                     dentro il banner del locale. Esce solo se lo sconto ha
                     prodotti caricati — altrimenti il banner resta com'era. */}
                 {discountProducts.length > 0 && <DiscountProductTiles items={discountProducts} />}
-              </div>
-            )}
-
-            {/* Secondo Bi */}
-            {reviewText && (
-              <div style={{ borderTop: 0, paddingTop: 0, marginBottom: 24 }}>
-                <h3 style={{ fontFamily: 'var(--font-sans, "Poppins", sans-serif)', fontWeight: 900, fontSize: 18, letterSpacing: '-.02em', marginBottom: 10, marginTop: 0, color: INK }}>
-                  Secondo Bi
-                </h3>
-                {reviewText.split('\n').filter(Boolean).map((para, i) => (
-                  <p key={i} style={{ fontSize: 14, lineHeight: 1.65, color: INK, fontWeight: 500, marginTop: i > 0 ? 14 : 0 }}>
-                    {para}
-                  </p>
-                ))}
-                <div style={{ marginTop: 12, fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 22, color: CORALLO_INK, lineHeight: 1 }}>
-                  — Bi
-                </div>
-              </div>
-            )}
-
-            {/* Cosa prendere — oro */}
-            {tipText && (
-              <div style={{
-                background: `linear-gradient(135deg, ${ORO} 0%, ${ORO_DEEP} 100%)`,
-                color: '#fff', borderRadius: 20, padding: '24px 26px', marginTop: 20,
-              }}>
-                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.82)', display: 'inline-flex', gap: 8, alignItems: 'center', marginBottom: 0 }}>
-                  🍴 Cosa ti consiglio di prendere
-                </span>
-                <p style={{ fontFamily: 'var(--font-hand, "Caveat", cursive)', fontSize: 22, lineHeight: 1.35, color: '#fff', marginTop: 10 }}>
-                  {tipText}
-                </p>
               </div>
             )}
           </div>

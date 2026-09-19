@@ -31,7 +31,13 @@ export default function DiscountProductTiles({ items, className = '' }) {
         <div className="dpt-tile" role="listitem" key={p.key}>
           {p.photo ? (
             <img
-              src={proxyImg(p.photo, { w: 160 })}
+              // La casella è piccola (70–150px lato secondo il contesto) ma
+              // su schermo retina/2x-3x quei pixel CSS non bastano: 160px di
+              // sorgente, la misura "onesta" per la casella più grande,
+              // usciva sfocata su ogni telefono e su molti laptop. 420px
+              // coprono anche il caso desktop più largo a 3x pixel-ratio,
+              // e il peso resta minimo — è un ritaglio quadrato compresso.
+              src={proxyImg(p.photo, { w: 420 })}
               alt=""
               loading="lazy"
               decoding="async"
