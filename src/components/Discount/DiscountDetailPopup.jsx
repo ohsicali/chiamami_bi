@@ -249,25 +249,28 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
 
   return (
     <>
-      {/* HERO foto fullbleed con percentuale overlay */}
+      {/* HERO foto: margine e angoli curvi, come le card della pagina del
+          locale — non più a filo bordo. */}
       <div className="ddp-grip" aria-hidden="true" />
-      <div className="ddp-photo">
-        {photoUrl ? (
-          <img src={photoUrl} alt={r?.name || ''} loading="lazy" decoding="async" />
-        ) : (
-          <div className="ddp-photo-fallback">🍽️</div>
-        )}
-        <div className="ddp-photo-grad" aria-hidden="true" />
+      <div className="ddp-hero">
+        <div className="ddp-photo">
+          {photoUrl ? (
+            <img src={photoUrl} alt={r?.name || ''} loading="lazy" decoding="async" />
+          ) : (
+            <div className="ddp-photo-fallback">🍽️</div>
+          )}
+          <div className="ddp-photo-grad" aria-hidden="true" />
 
-        {isDrop && <span className="ddp-live-pill">drop live</span>}
-        <button type="button" className="ddp-close" aria-label="Chiudi" onClick={onClose}>✕</button>
+          {isDrop && <span className="ddp-live-pill">drop live</span>}
+          <button type="button" className="ddp-close" aria-label="Chiudi" onClick={onClose}>✕</button>
 
-        {numText && (
-          <div className="ddp-pct-overlay">
-            <div className="ddp-pct-num">{numText}</div>
-            {labelText && <div className="ddp-pct-lbl">{labelText}</div>}
-          </div>
-        )}
+          {numText && (
+            <div className="ddp-pct-overlay">
+              <div className="ddp-pct-num">{numText}</div>
+              {labelText && <div className="ddp-pct-lbl">{labelText}</div>}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* BODY scrollable */}
