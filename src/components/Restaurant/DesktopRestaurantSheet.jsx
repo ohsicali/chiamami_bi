@@ -14,6 +14,8 @@ import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
 import QRCodeDisplay from '../Discount/QRCodeDisplay'
 import SconteAuthGate from '../Discount/SconteAuthGate'
+import DiscountProductTiles from '../Discount/DiscountProductTiles'
+import { normalizeProducts } from '../../lib/utils/discountProducts'
 import AdSlot from '../Ads/AdBanner'
 
 /* ── design tokens ── */
@@ -127,6 +129,10 @@ export default function DesktopRestaurantSheet({
   const discountMainText = discount
     ? `${discount.title || discount.discount_value}${discount.description ? ' · ' + discount.description : ''}`
     : null
+  // Le foto di cosa lo sconto copre davvero (proposta D3): mostrano il
+  // matcha latte, non solo la scritta "sulle bevande matcha". Uno sconto
+  // senza prodotti caricati resta il banner di oggi, senza la riga.
+  const discountProducts = normalizeProducts(discount?.products)
 
   /* open/close status */
   const openChipText = orariStatus
@@ -412,30 +418,36 @@ export default function DesktopRestaurantSheet({
               <div style={{
                 margin: '0 0 28px', background: GREEN_GRAD,
                 borderRadius: 18, padding: '16px 22px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 color: INK,
               }}>
-                <div>
-                  <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(34,24,28,.7)', marginBottom: 4 }}>
-                    Sconto attivo per te
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(34,24,28,.7)', marginBottom: 4 }}>
+                      Sconto attivo per te
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: '-.01em' }}>
+                      {discountMainText}
+                    </div>
                   </div>
-                  <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: '-.01em' }}>
-                    {discountMainText}
-                  </div>
+                  <button
+                    onClick={handleDiscountClick}
+                    disabled={inlineGenerating || redemptionLoading}
+                    style={{
+                      background: INK, color: '#fff', border: 0,
+                      padding: '8px 16px', borderRadius: 999,
+                      fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+                      fontWeight: 800, fontSize: 12.5, cursor: 'pointer',
+                      whiteSpace: 'nowrap', opacity: inlineGenerating ? 0.6 : 1,
+                    }}
+                  >
+                    {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Usa sconto →'}
+                  </button>
                 </div>
-                <button
-                  onClick={handleDiscountClick}
-                  disabled={inlineGenerating || redemptionLoading}
-                  style={{
-                    background: INK, color: '#fff', border: 0,
-                    padding: '8px 16px', borderRadius: 999,
-                    fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
-                    fontWeight: 800, fontSize: 12.5, cursor: 'pointer',
-                    whiteSpace: 'nowrap', opacity: inlineGenerating ? 0.6 : 1,
-                  }}
-                >
-                  {redemption?.status === 'redeemed' ? '✓ Usato' : redemption?.status === 'generated' ? 'Mostra QR' : 'Usa sconto →'}
-                </button>
+                {/* Le foto dei prodotti coperti (proposta D3): stesso quadrato
+                    riusato in lista e nella scheda dello sconto, qui in riga
+                    dentro il banner del locale. Esce solo se lo sconto ha
+                    prodotti caricati — altrimenti il banner resta com'era. */}
+                {discountProducts.length > 0 && <DiscountProductTiles items={discountProducts} />}
               </div>
             )}
 

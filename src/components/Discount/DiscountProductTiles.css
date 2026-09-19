@@ -1,0 +1,45 @@
+/**
+ * DiscountProductTiles — quadrati sul banner sconto della scheda locale.
+ *
+ * Vive dentro un contenitore col gradiente sconti (verde), quindi le
+ * caselle senza foto e quella "+N" usano lo stesso verde scurito invece
+ * di grigio neutro — sembrano parte del banner, non un widget incollato
+ * sopra.
+ */
+.dpt-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dpt-tile {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(26, 71, 49, 0.14);
+  display: grid;
+  place-items: center;
+}
+
+.dpt-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dpt-fallback {
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.dpt-more {
+  background: rgba(26, 71, 49, 0.24);
+  color: var(--color-sconto-ink, #1a4731);
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  font-weight: 800;
+  font-size: 13px;
+}
