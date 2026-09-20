@@ -1683,7 +1683,7 @@ export default function DiscountManager() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={saving || !form.restaurant_id || !form.title || !form.discount_value || !form.ends_at}
+                    disabled={saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value || !form.ends_at}
                     style={{
                       padding: '9px 18px',
                       borderRadius: 8,
@@ -1693,7 +1693,7 @@ export default function DiscountManager() {
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: saving ? 'not-allowed' : 'pointer',
-                      opacity: saving || !form.restaurant_id || !form.title || !form.discount_value || !form.ends_at ? 0.5 : 1,
+                      opacity: saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value || !form.ends_at ? 0.5 : 1,
                       fontFamily: "var(--font-sans)",
                     }}
                   >
