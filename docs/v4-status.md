@@ -21,6 +21,29 @@ dove siamo. Aggiorna a ogni step importante.
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
 
+## 20/09 — la barra momento in home: verificata, non era rotta
+
+Segnalazione (Augusto, a voce): la barra colazione/pranzo/aperitivo/cena
+nella prima sezione della home resta ferma su "colazione" invece di
+spostarsi sulla fascia giusta al caricamento.
+
+**Verificato e non riprodotto.** `getCurrentMoment()` in `src/lib/hours.js`
+e l'inizializzazione `useState(autoActive || autoNext || 'aperitivo')` in
+`HomeFeedV4.jsx` (mobile) e `HomeDesktopClassic.jsx` (desktop) erano già
+corrette — testato con `TZ=Europe/Rome node` sulla funzione pura (13:37 →
+`pranzo`) e poi con un browser reale (Playwright, `npm run dev`) su
+viewport mobile e desktop: tag `.hfv4-moment-tag` e tab `MomentTabs`
+mostravano entrambi "Pranzo" selezionato all'ora di test. Il commit in
+produzione (verificato via connettore Vercel, `2c56d69`) è lo stesso
+identico HEAD di questa sessione — non è nemmeno un problema di deploy in
+ritardo.
+
+Nessuna modifica al codice. Se il problema si ripresenta a schermo,
+probabile causa non nel codice: cache del browser/PWA (service worker) che
+serve una vecchia versione — vale la pena chiedere ad Augusto di fare un
+refresh forzato (o disinstallare/reinstallare la PWA) prima di riaprire
+un'indagine qui.
+
 ## 20/09 — "Consiglia un ristorante" non rispondeva al tocco: era il banner cookie
 
 Segnalazione: *"non funziona il touch su consiglia ristorante"*. Riprodotto
