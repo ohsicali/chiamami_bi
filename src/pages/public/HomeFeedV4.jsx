@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
-import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -26,7 +26,7 @@ import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import DropCard from '../../components/Discount/DropCard'
-import { filterActive, filterActiveDrops, sortByExpiry } from '../../lib/discounts'
+import { isDrop, isExpired, isSoldOut, sortByExpiry } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 
@@ -257,7 +257,7 @@ function TopBar() {
  * implementazione con badge, barra e conteggi calcolati a modo suo, che si
  * era già allontanata da quella del Bi Club.
  */
-function HomeDrop({ featured, onUnlock, onDiscover }) {
+function HomeDrop({ featured, onUnlock, onDiscover, taken, ctaLabel, ctaDisabled }) {
   if (!featured) return null
   return (
     <div className="hfv4-drop-wrap hfv4-rise" style={{ '--rise-y': '12px', '--rise-opacity': 0.55 }}>
@@ -267,6 +267,9 @@ function HomeDrop({ featured, onUnlock, onDiscover }) {
         onUnlock={() => onUnlock(featured)}
         onDiscover={() => onDiscover(featured)}
         showAlwaysValid={false}
+        taken={taken}
+        ctaLabel={ctaLabel}
+        ctaDisabled={ctaDisabled}
       />
 
     </div>
@@ -486,7 +489,19 @@ export default function HomeFeedV4() {
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
   const { discounts } = useActiveDiscounts()
+  const { active: myActiveDeals, used: myUsedDeals } = useMyDiscounts(user?.id)
   const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
+
+  // Riscatti dell'utente indicizzati per sconto: la card in home deve poter
+  // dire "già preso"/"già usato" esattamente come il Bi Club (vedi
+  // `redemptionByDealId` in SconteRedesignPage) invece di continuare a
+  // proporre "Sblocca sconto" su un drop che l'utente ha già preso.
+  const redemptionByDealId = useMemo(() => {
+    const map = new Map()
+    ;(myActiveDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'generated' }))
+    ;(myUsedDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'redeemed' }))
+    return map
+  }, [myActiveDeals, myUsedDeals])
 
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
@@ -509,9 +524,23 @@ export default function HomeFeedV4() {
   // La selezione della vetrina: un drop in evidenza (il più vicino a
   // scadere, quello che ha davvero fretta) e gli altri sconti attivi nella
   // riga sotto. È l'unica pagina che seleziona — vedi HomeDrop.
-  const activeDeals = useMemo(() => sortByExpiry(filterActive(discounts)), [discounts])
+  //
+  // Uno sconto esaurito sparisce dalla home (comportamento voluto), TRANNE
+  // quando è l'utente stesso ad averlo preso: altrimenti l'ultimo pezzo di
+  // un drop a quantità limitata sparisce dalla home nell'istante stesso in
+  // cui lo si sblocca, portandosi via la card (e la barra) con sé, invece
+  // di restare con lo stato "già preso"/"già usato" come sul Bi Club.
+  const activeDeals = useMemo(() => {
+    const now = new Date()
+    return sortByExpiry((discounts || []).filter((d) => {
+      if (d.is_active === false) return false
+      if (isExpired(d, now)) return false
+      if (isSoldOut(d) && !redemptionByDealId.has(d.id)) return false
+      return true
+    }))
+  }, [discounts, redemptionByDealId])
   const featuredDrop = useMemo(
-    () => filterActiveDrops(activeDeals)[0] || activeDeals[0] || null,
+    () => activeDeals.find((d) => isDrop(d)) || activeDeals[0] || null,
     [activeDeals]
   )
   // Tutti gli altri, non i primi otto: su desktop è una lista verticale che
@@ -564,7 +593,22 @@ export default function HomeFeedV4() {
   // è dove lo sconto si prende davvero e dove esce il QR.
   const unlockDeal = (deal) => {
     if (!user) { setHomeAuthGate(deal?.id || null); return }
+    // Già usato: niente da sbloccare, il bottone in questo stato è disabled
+    // (vedi dealCta) — la guardia qui è solo per chi lo richiama a mano.
+    if (redemptionByDealId.get(deal?.id)?.status === 'redeemed') return
     navigate('/sconti')
+  }
+
+  // Stessa logica di `DropSection` sul Bi Club: "Sblocca sconto" di default,
+  // "Apri il QR" se l'utente l'ha già preso, "Già usato" (disabled) se il QR
+  // è già stato riscattato. Senza questo la home continuava a proporre
+  // "Sblocca sconto" su un drop che l'utente aveva già preso o consumato.
+  const dealCta = (deal) => {
+    const redemption = redemptionByDealId.get(deal?.id)
+    const status = redemption?.status
+    if (status === 'redeemed') return { taken: true, ctaLabel: 'Già usato', ctaDisabled: true }
+    if (status === 'generated') return { taken: true, ctaLabel: 'Apri il QR', ctaDisabled: false }
+    return { taken: false, ctaLabel: undefined, ctaDisabled: false }
   }
 
   // Quanti locali risultano aperti nella fascia corrente: il numero che il
@@ -1431,7 +1475,12 @@ export default function HomeFeedV4() {
         </div>
 
         <div className="hfv4-band-drop">
-          <HomeDrop featured={featuredDrop} onUnlock={unlockDeal} onDiscover={goToRestaurant} />
+          <HomeDrop
+            featured={featuredDrop}
+            onUnlock={unlockDeal}
+            onDiscover={goToRestaurant}
+            {...dealCta(featuredDrop)}
+          />
         </div>
       </div>
 
