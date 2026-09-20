@@ -212,6 +212,24 @@ function SconteRedesignPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, myLoading, allRaw])
 
+  // Arrivo da "Apri il QR" in home (`?open=<discountId>`): lo sconto è già
+  // sbloccato, l'utente ha già toccato il bottone giusto — non deve
+  // ricercarlo nella lista per aprirlo una seconda volta.
+  const [openParamHandled, setOpenParamHandled] = useState(false)
+  useEffect(() => {
+    if (openParamHandled || loading || myLoading) return
+    const openId = searchParams.get('open')
+    if (!openId) { setOpenParamHandled(true); return }
+    setOpenParamHandled(true)
+    const deal = (allRaw || []).find((d) => d.id === openId)
+    const redemption = redemptionByDealId.get(openId)
+    if (deal && redemption) showClaimedQR(deal, redemption)
+    const sp = new URLSearchParams(searchParams)
+    sp.delete('open')
+    setSearchParams(sp, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openParamHandled, loading, myLoading, allRaw, redemptionByDealId])
+
   const goTo = (r) => {
     if (!r) return
     navigate(`/restaurant/${r?.slug || slugify(r?.name || '')}`)

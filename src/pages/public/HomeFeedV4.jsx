@@ -593,9 +593,14 @@ export default function HomeFeedV4() {
   // è dove lo sconto si prende davvero e dove esce il QR.
   const unlockDeal = (deal) => {
     if (!user) { setHomeAuthGate(deal?.id || null); return }
+    const status = redemptionByDealId.get(deal?.id)?.status
     // Già usato: niente da sbloccare, il bottone in questo stato è disabled
     // (vedi dealCta) — la guardia qui è solo per chi lo richiama a mano.
-    if (redemptionByDealId.get(deal?.id)?.status === 'redeemed') return
+    if (status === 'redeemed') return
+    // Già preso: "Apri il QR" deve aprire davvero il QR, non solo portare
+    // sul Bi Club perché poi l'utente lo cerchi tra gli sconti — ?open=
+    // dice a SconteRedesignPage di mostrarlo subito all'arrivo.
+    if (status === 'generated') { navigate(`/sconti?open=${deal.id}`); return }
     navigate('/sconti')
   }
 
