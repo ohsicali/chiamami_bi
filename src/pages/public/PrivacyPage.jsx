@@ -1,113 +1,128 @@
-import { Link } from 'react-router-dom'
-import { LogoFull } from '../../components/UI/Logo'
 import Footer from '../../components/Layout/Footer'
+import LegalHeader from '../../components/Layout/LegalHeader'
+import LegalSection from '../../components/Layout/LegalSection'
 import MetaTags from '../../components/SEO/MetaTags'
+
+const linkStyle = { color: 'var(--color-corallo-ink)', fontWeight: 600, textDecoration: 'underline' }
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-dvh md:min-h-[calc(100dvh-80px)] bg-bg flex flex-col">
+    <div className="min-h-dvh md:min-h-[calc(100dvh-80px)] flex flex-col" style={{ background: 'var(--color-page)' }}>
       <MetaTags
         title="Privacy Policy — ChiamamiBi"
         description="Informativa sulla privacy di ChiamamiBi: come trattiamo i dati personali in conformità al GDPR."
         url="https://chiamamibi.com/privacy"
         canonical="https://chiamamibi.com/privacy"
       />
-      {/* Header */}
-      <nav className="sticky top-0 z-40 glass">
-        <div className="flex items-center justify-between px-4 py-3 max-w-screen-lg mx-auto">
-          <Link to="/">
-            <LogoFull height={28} />
-          </Link>
-        </div>
-      </nav>
+      <LegalHeader />
 
-      <div className="flex-1 max-w-screen-md mx-auto px-5 py-8">
+      <div className="flex-1 max-w-screen-md mx-auto w-full px-5 py-8 md:py-12">
+        <div style={{
+          fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase',
+          color: 'var(--color-corallo-ink)', marginBottom: 8,
+        }}>
+          Documento legale
+        </div>
         <h1
-          className="text-2xl font-bold text-primary mb-6"
-          style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}
+          className="text-primary"
+          style={{
+            fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.025em',
+            fontSize: 32, lineHeight: 1.08, margin: 0,
+          }}
         >
           Privacy Policy
         </h1>
+        <p style={{ color: 'var(--color-ink-55)', fontSize: 13.5, marginTop: 10, marginBottom: 28 }}>
+          Come raccogliamo e trattiamo i tuoi dati personali, in conformità al GDPR.
+          <br />
+          <strong style={{ color: 'var(--color-ink-70)' }}>Ultimo aggiornamento:</strong> Aprile 2026
+        </p>
 
-        <div className="prose prose-sm text-secondary leading-relaxed space-y-6">
-          <p><strong>Ultimo aggiornamento:</strong> Aprile 2026</p>
+        <div className="flex flex-col gap-3.5">
+          <LegalSection n={1} title="Titolare del trattamento">
+            <p>
+              Il titolare del trattamento dei dati è ChiamamiBi, contattabile all'indirizzo email{' '}
+              <a href="mailto:info@chiamamibi.com" style={linkStyle}>info@chiamamibi.com</a>.
+            </p>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>1. Titolare del trattamento</h2>
-          <p>
-            Il titolare del trattamento dei dati è ChiamamiBi, contattabile all'indirizzo email:
-            <a href="mailto:info@chiamamibi.com" className="text-accent"> info@chiamamibi.com</a>
-          </p>
+          <LegalSection n={2} title="Dati raccolti">
+            <p>Raccogliamo i seguenti dati personali:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong style={{ color: 'var(--color-ink)' }}>Dati di registrazione:</strong> nome, indirizzo email</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Dati di navigazione:</strong> indirizzo IP, tipo di browser, pagine visitate</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Dati di geolocalizzazione:</strong> posizione GPS (solo con consenso esplicito)</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Contenuti generati:</strong> ristoranti salvati</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Dati di utilizzo sconti:</strong> codici QR generati e utilizzati</li>
+            </ul>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>2. Dati raccolti</h2>
-          <p>Raccogliamo i seguenti dati personali:</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Dati di registrazione:</strong> nome, indirizzo email</li>
-            <li><strong>Dati di navigazione:</strong> indirizzo IP, tipo di browser, pagine visitate</li>
-            <li><strong>Dati di geolocalizzazione:</strong> posizione GPS (solo con consenso esplicito)</li>
-            <li><strong>Contenuti generati:</strong> ristoranti salvati</li>
-            <li><strong>Dati di utilizzo sconti:</strong> codici QR generati e utilizzati</li>
-          </ul>
+          <LegalSection n={3} title="Finalità del trattamento">
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Erogazione del servizio di scoperta ristoranti</li>
+              <li>Gestione dell'account utente e delle preferenze</li>
+              <li>Gestione del sistema sconti e QR code</li>
+              <li>Invio della newsletter (con consenso)</li>
+              <li>Miglioramento del servizio e analisi aggregate</li>
+            </ul>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>3. Finalità del trattamento</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>Erogazione del servizio di scoperta ristoranti</li>
-            <li>Gestione dell'account utente e delle preferenze</li>
-            <li>Gestione del sistema sconti e QR code</li>
-            <li>Invio della newsletter (con consenso)</li>
-            <li>Miglioramento del servizio e analisi aggregate</li>
-          </ul>
+          <LegalSection n={4} title="Base giuridica">
+            <p>
+              Il trattamento si basa su: consenso dell'interessato (Art. 6(1)(a) GDPR),
+              esecuzione di un contratto (Art. 6(1)(b) GDPR), legittimo interesse (Art. 6(1)(f) GDPR).
+            </p>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>4. Base giuridica</h2>
-          <p>
-            Il trattamento si basa su: consenso dell'interessato (Art. 6(1)(a) GDPR),
-            esecuzione di un contratto (Art. 6(1)(b) GDPR), legittimo interesse (Art. 6(1)(f) GDPR).
-          </p>
+          <LegalSection n={5} title="Sub-processori">
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong style={{ color: 'var(--color-ink)' }}>Supabase</strong> (database, autenticazione) — UE</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Vercel</strong> (hosting) — Global CDN</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Mapbox</strong> (mappe) — USA</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Google</strong> (OAuth, Places API) — USA</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Anthropic</strong> (traduzione AI contenuti) — USA</li>
+            </ul>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>5. Sub-processori</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Supabase</strong> (database, autenticazione) — UE</li>
-            <li><strong>Vercel</strong> (hosting) — Global CDN</li>
-            <li><strong>Mapbox</strong> (mappe) — USA</li>
-            <li><strong>Google</strong> (OAuth, Places API) — USA</li>
-            <li><strong>Anthropic</strong> (traduzione AI contenuti) — USA</li>
-          </ul>
+          <LegalSection n={6} title="Diritti dell'interessato">
+            <p>Ai sensi degli articoli 15-22 del GDPR, hai diritto a:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong style={{ color: 'var(--color-ink)' }}>Accesso:</strong> ottenere conferma e copia dei tuoi dati</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Rettifica:</strong> correggere dati inesatti</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Cancellazione:</strong> richiedere la rimozione dei tuoi dati</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Portabilità:</strong> ricevere i tuoi dati in formato leggibile</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Opposizione:</strong> opporti al trattamento per legittimo interesse</li>
+              <li><strong style={{ color: 'var(--color-ink)' }}>Revoca del consenso:</strong> in qualsiasi momento</li>
+            </ul>
+            <p>
+              Per esercitare i tuoi diritti, puoi utilizzare le funzioni nel tuo profilo
+              o scrivere a <a href="mailto:info@chiamamibi.com" style={linkStyle}>info@chiamamibi.com</a>.
+            </p>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>6. Diritti dell'interessato</h2>
-          <p>Ai sensi degli articoli 15-22 del GDPR, hai diritto a:</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Accesso:</strong> ottenere conferma e copia dei tuoi dati</li>
-            <li><strong>Rettifica:</strong> correggere dati inesatti</li>
-            <li><strong>Cancellazione:</strong> richiedere la rimozione dei tuoi dati</li>
-            <li><strong>Portabilità:</strong> ricevere i tuoi dati in formato leggibile</li>
-            <li><strong>Opposizione:</strong> opporti al trattamento per legittimo interesse</li>
-            <li><strong>Revoca del consenso:</strong> in qualsiasi momento</li>
-          </ul>
-          <p>
-            Per esercitare i tuoi diritti, puoi utilizzare le funzioni nel tuo profilo
-            o scrivere a <a href="mailto:info@chiamamibi.com" className="text-accent">info@chiamamibi.com</a>.
-          </p>
+          <LegalSection n={7} title="Conservazione dei dati">
+            <p>
+              I dati personali vengono conservati per il tempo necessario alle finalità per cui sono stati raccolti.
+              Alla cancellazione dell'account, tutti i dati vengono rimossi entro 30 giorni.
+            </p>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>7. Conservazione dei dati</h2>
-          <p>
-            I dati personali vengono conservati per il tempo necessario alle finalità per cui sono stati raccolti.
-            Alla cancellazione dell'account, tutti i dati vengono rimossi entro 30 giorni.
-          </p>
+          <LegalSection n={8} title="Cookie">
+            <p>
+              Utilizziamo solo cookie tecnici necessari al funzionamento del servizio e cookie
+              analitici anonimi. Nessun cookie di profilazione viene installato senza il tuo consenso.
+            </p>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>8. Cookie</h2>
-          <p>
-            Utilizziamo solo cookie tecnici necessari al funzionamento del servizio e cookie
-            analitici anonimi. Nessun cookie di profilazione viene installato senza il tuo consenso.
-          </p>
+          <LegalSection n={9} title="Età minima">
+            <p>Il servizio è rivolto a persone di età pari o superiore a 16 anni.</p>
+          </LegalSection>
 
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>9. Età minima</h2>
-          <p>
-            Il servizio è rivolto a persone di età pari o superiore a 16 anni.
-          </p>
-
-          <h2 className="text-lg text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, letterSpacing: '-0.02em' }}>10. Contatti</h2>
-          <p>
-            Per domande sulla privacy: <a href="mailto:info@chiamamibi.com" className="text-accent">info@chiamamibi.com</a>
-          </p>
+          <LegalSection n={10} title="Contatti">
+            <p>
+              Per domande sulla privacy: <a href="mailto:info@chiamamibi.com" style={linkStyle}>info@chiamamibi.com</a>
+            </p>
+          </LegalSection>
         </div>
       </div>
 
