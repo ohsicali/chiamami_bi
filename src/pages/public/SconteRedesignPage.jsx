@@ -800,7 +800,9 @@ function DropSection({ drops, claiming, redemptionByDealId, onClaim, onOpenQR, o
               key={d.id}
               deal={d}
               size={size}
-              taken={isSaved || isUsed}
+              // Niente `taken`: sbiadiva anche qui la card di un drop già
+              // preso/usato — lo stato resta leggibile dal bottone
+              // ("Apri il QR" / "Già usato"), non serve spegnere la card.
               ctaLabel={label}
               ctaDisabled={disabled}
               validityNote={validityStatus === 'valid_now' ? null : formatShortPill(d, validityStatus)}

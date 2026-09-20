@@ -407,10 +407,6 @@
   text-overflow: ellipsis;
 }
 
-/* ── Stato "già preso": la card resta leggibile ma esce dal fuoco ─────── */
-
-.dropcard--taken { opacity: 0.62; }
-
 /* ── Stato "esaurito": la card resta, il drop no ───────────────────────
    Non sparisce (vedi `filterVisibleDrops` in lib/discounts.js): la foto si
    spegne in bianco e nero, un timbro diagonale attraversa l'angolo come su

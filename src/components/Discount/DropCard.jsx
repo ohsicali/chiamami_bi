@@ -26,7 +26,6 @@ export default function DropCard({
   size = 'large',
   onUnlock,
   onDiscover,
-  taken = false,
   ctaLabel,
   ctaDisabled = false,
   validityNote,
@@ -49,7 +48,6 @@ export default function DropCard({
   const classes = [
     'dropcard',
     `dropcard--${size}`,
-    taken ? 'dropcard--taken' : '',
     view.soldOut ? 'dropcard--soldout' : '',
     // Nella taglia larga il titolo è già il vantaggio: quando il vantaggio
     // in parole non dice altro che il valore ("50%" → "50% di sconto") la
@@ -175,7 +173,7 @@ export default function DropCard({
               onClick={(e) => { e.stopPropagation(); onUnlock?.(deal) }}
               disabled={ctaDisabled || !onUnlock}
             >
-              {ctaLabel || (taken ? 'Apri il QR' : '🔓 Sblocca sconto')}
+              {ctaLabel || '🔓 Sblocca sconto'}
             </button>
             <button
               type="button"

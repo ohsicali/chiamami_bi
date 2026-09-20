@@ -261,10 +261,6 @@ function HomeDrop({ featured, onUnlock, onDiscover, ctaLabel, ctaDisabled }) {
   if (!featured) return null
   return (
     <div className="hfv4-drop-wrap hfv4-rise" style={{ '--rise-y': '12px', '--rise-opacity': 0.55 }}>
-      {/* Niente `taken` qui: su DropCard spegne la card al 62% di opacità
-          (`.dropcard--taken`, pensato per la lista fitta del Bi Club). In
-          home è l'unica card in vetrina — sbiadirla la fa sembrare rotta
-          invece che "già presa". Lo stato passa solo dall'etichetta/CTA. */}
       <DropCard
         deal={featured}
         size="large"
