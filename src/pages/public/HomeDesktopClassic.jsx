@@ -27,7 +27,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../components/Layout/Footer'
 import { useRestaurants, getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
-import { useActiveDiscounts } from '../../lib/hooks/useDiscounts'
+import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import SaveAuthGate from '../../components/Restaurant/SaveAuthGate'
@@ -279,7 +279,7 @@ function TopBar() {
   )
 }
 
-function HeroPromo({ featured, onUnlock }) {
+function HeroPromo({ featured, onUnlock, taken, ctaLabel, ctaDisabled }) {
   const navigate = useNavigate()
   const [countdown, setCountdown] = useState(() => formatCountdown(featured?.endsAt))
   useEffect(() => {
@@ -320,6 +320,7 @@ function HeroPromo({ featured, onUnlock }) {
           position: 'relative', background: 'var(--color-corallo)', borderRadius: 28,
           padding: '22px', display: 'grid', gridTemplateColumns: '1fr 108px', gap: 14,
           color: '#fff', overflow: 'hidden', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
+          opacity: taken ? 0.72 : 1,
         }}
       >
         {/* Body: col sinistra desktop, sotto la foto su mobile */}
@@ -380,10 +381,11 @@ function HeroPromo({ featured, onUnlock }) {
           )}
           <div className="hfv4-hero-ctas" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
-              onClick={() => onUnlock?.(featured)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'var(--color-ink)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}
+              onClick={() => !ctaDisabled && onUnlock?.(featured)}
+              disabled={ctaDisabled}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: 'var(--color-ink)', color: '#fff', borderRadius: 999, fontSize: 13, fontWeight: 700, border: 'none', cursor: ctaDisabled ? 'default' : 'pointer', opacity: ctaDisabled ? 0.7 : 1 }}
             >
-              {featured.cta} →
+              {ctaLabel || featured.cta}{ctaDisabled ? '' : ' →'}
             </button>
             {/* Desktop: bottone secondario con nome completo */}
             {featured.secondaryCta && (
@@ -658,7 +660,19 @@ export default function HomeDesktopClassic() {
   const { user } = useAuth()
   const { restaurants, loading } = useRestaurants(null)
   const { discounts } = useActiveDiscounts()
+  const { active: myActiveDeals, used: myUsedDeals } = useMyDiscounts(user?.id)
   const { isSaved, toggleSave, addSave } = useSavedRestaurants(user?.id)
+
+  // Riscatti dell'utente indicizzati per sconto: la card in home deve poter
+  // dire "già preso"/"già usato" esattamente come il Bi Club (vedi
+  // `redemptionByDealId` in SconteRedesignPage) invece di continuare a
+  // proporre "Sblocca sconto" su un drop che l'utente ha già preso.
+  const redemptionByDealId = useMemo(() => {
+    const map = new Map()
+    ;(myActiveDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'generated' }))
+    ;(myUsedDeals || []).forEach((r) => map.set(r.discount_id, { ...r, status: r.status || 'redeemed' }))
+    return map
+  }, [myActiveDeals, myUsedDeals])
 
   const { active: autoActive, next: autoNext } = getCurrentMoment()
   const [activeMoment, setActiveMoment] = useState(autoActive || autoNext || 'aperitivo')
@@ -748,7 +762,21 @@ export default function HomeDesktopClassic() {
   // Club, che è dove lo sconto si prende davvero.
   const unlockDeal = (deal) => {
     if (!user) { setHomeAuthGate(deal?.id || null); return }
+    // Già usato: niente da sbloccare, il bottone in questo stato è disabled
+    // (vedi dealCta) — la guardia qui è solo per chi lo richiama a mano.
+    if (redemptionByDealId.get(deal?.id)?.status === 'redeemed') return
     navigate('/sconti')
+  }
+
+  // Stessa logica di `DropSection` sul Bi Club: "Sblocca sconto" di default,
+  // "Apri il QR" se l'utente l'ha già preso, "Già usato" (disabled) se il QR
+  // è già stato riscattato.
+  const dealCta = (deal) => {
+    const redemption = redemptionByDealId.get(deal?.id)
+    const status = redemption?.status
+    if (status === 'redeemed') return { taken: true, ctaLabel: 'Già usato', ctaDisabled: true }
+    if (status === 'generated') return { taken: true, ctaLabel: 'Apri il QR', ctaDisabled: false }
+    return { taken: false, ctaLabel: undefined, ctaDisabled: false }
   }
 
   // Il cuore da sloggato non faceva niente: `toggleSave` esce subito senza
@@ -1080,7 +1108,7 @@ export default function HomeDesktopClassic() {
 
       <TopBar />
 
-      <HeroPromo featured={featuredDrop} onUnlock={unlockDeal} />
+      <HeroPromo featured={featuredDrop} onUnlock={unlockDeal} {...dealCta(featuredDrop)} />
 
       <CategoryBubbles
         onSelect={(c) => navigate('/esplora', { state: { initialCategory: c.label } })}
