@@ -229,7 +229,11 @@ export default function App() {
         padding: '18px 20px',
         fontSize: '13px',
         alignItems: 'center',
-        zIndex: 9999,
+        // Sopra la bottom-nav (z 50) ma sotto qualunque sheet/modale
+        // dell'app (60+): con 9999 il banner restava sopra la sheet di
+        // "Consiglia un ristorante" (e ogni altra sheet) e ne mangiava i
+        // tap sui bottoni in fondo — invisibile perché sotto, ma lì.
+        zIndex: 51,
         borderTop: '1px solid rgba(255,255,255,0.1)',
       }}
       buttonStyle={{

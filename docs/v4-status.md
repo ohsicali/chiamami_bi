@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-19 (foto dei prodotti e regole dentro la scheda sconto)
+Ultima modifica: 2026-09-20 (fix: il banner cookie mangiava i tap sulle sheet)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -20,6 +20,41 @@ dove siamo. Aggiorna a ogni step importante.
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
+
+## 20/09 — "Consiglia un ristorante" non rispondeva al tocco: era il banner cookie
+
+Segnalazione: *"non funziona il touch su consiglia ristorante"*. Riprodotto
+con Chromium in emulazione iPhone (touch reali via CDP, non `click()`), non
+su Safari — perché non è un bug di Safari: succede su qualunque browser, la
+prima volta che si apre il sito, prima di aver dato risposta al banner
+cookie.
+
+Causa: `App.jsx` monta il `CookieConsent` con `zIndex: 9999`. La sheet di
+`SuggestRestaurantSheet.jsx` sta a `zIndex: 60` — enormemente più sotto. I
+suoi bottoni in fondo (Step 1 "Avanti →", Step 3 "Invia a Bi →") cadono
+dentro la fascia di schermo dove il banner è fisso in basso: il banner ci
+sta *sopra* per z-index anche se non lo si vede coprire nulla a occhio
+(entrambi sono in fondo allo schermo, uno dietro l'altro), e si becca lui il
+tap invece del bottone sotto. Verificato con `elementFromPoint()` sul centro
+del bottone "Avanti": tornava `#rcc-confirm-button` ("Accetta tutti"), non
+il bottone della sheet.
+
+Non è solo "Consiglia": ogni sheet/modale mobile dell'app sta tra
+`zIndex: 60` e `200` (lista filtri, salva-in-lista, gate sconti, Chiedi a
+Bi…) — tutte sotto i 9999 del banner, tutte esposte allo stesso morso finché
+il banner resta a schermo. Un'unica causa, un'unica riga da cambiare.
+
+Fix in `src/App.jsx`: `zIndex: 9999` → `zIndex: 51` sul banner — sopra la
+`bottom-nav` (che sta a 50, così il banner continua a coprirla come prima)
+ma sotto qualunque sheet o modale dell'app (60 in su). I due overlay
+davvero a schermo intero (selettore città, ricerca città da mobile) restano
+a `9999` apposta: quando sono aperti devono coprire tutto, banner incluso.
+
+Verificato con tap reali (CDP `Input.dispatchTouchEvent`, non solo
+`.click()`) su iPhone 13 emulato, banner cookie non ancora accettato:
+`Avanti →` e il resto del flusso di "Consiglia un posto" ora arrivano al
+bottone giusto; stesso test ripetuto sul foglio filtri ("Mostra N locali",
+`zIndex: 200`), stesso esito. `npm test` 125/125, lint pulito.
 
 ## 19/09 — le foto dei prodotti dentro lo sconto (PR #245, merged 47cffee)
 
