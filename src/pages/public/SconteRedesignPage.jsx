@@ -490,6 +490,7 @@ function SconteRedesignPageInner() {
           {tab === 'disponibili' && (
             <CatalogoView
               loading={loading}
+              myLoading={myLoading}
               drops={dropsAvailable}
               conv={convAvailable}
               claiming={claiming}
@@ -645,8 +646,14 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
   )
 }
 
-function CatalogoView({ loading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
-  if (loading) {
+function CatalogoView({ loading, myLoading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
+  // Il catalogo (`loading`) arriva quasi subito dalla cache locale, "I miei
+  // riscatti" (`myLoading`) no — è una fetch di rete senza cache. Dipingere
+  // le card prima che risponda vuol dire mostrare "Sblocca sconto" su un
+  // drop già preso, perché `redemptionByDealId` è ancora vuota: l'utente
+  // vede lo stato sbagliato finché la rete non risponde (su rete lenta,
+  // un bel po'). Aspettiamo anche quella, non solo il catalogo.
+  if (loading || myLoading) {
     return (
       <div style={{ padding: '24px 16px' }}>
         {[180, 110, 110].map((h, i) => (

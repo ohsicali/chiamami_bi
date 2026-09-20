@@ -257,17 +257,20 @@ function TopBar() {
  * implementazione con badge, barra e conteggi calcolati a modo suo, che si
  * era già allontanata da quella del Bi Club.
  */
-function HomeDrop({ featured, onUnlock, onDiscover, taken, ctaLabel, ctaDisabled }) {
+function HomeDrop({ featured, onUnlock, onDiscover, ctaLabel, ctaDisabled }) {
   if (!featured) return null
   return (
     <div className="hfv4-drop-wrap hfv4-rise" style={{ '--rise-y': '12px', '--rise-opacity': 0.55 }}>
+      {/* Niente `taken` qui: su DropCard spegne la card al 62% di opacità
+          (`.dropcard--taken`, pensato per la lista fitta del Bi Club). In
+          home è l'unica card in vetrina — sbiadirla la fa sembrare rotta
+          invece che "già presa". Lo stato passa solo dall'etichetta/CTA. */}
       <DropCard
         deal={featured}
         size="large"
         onUnlock={() => onUnlock(featured)}
         onDiscover={() => onDiscover(featured)}
         showAlwaysValid={false}
-        taken={taken}
         ctaLabel={ctaLabel}
         ctaDisabled={ctaDisabled}
       />
@@ -611,9 +614,9 @@ export default function HomeFeedV4() {
   const dealCta = (deal) => {
     const redemption = redemptionByDealId.get(deal?.id)
     const status = redemption?.status
-    if (status === 'redeemed') return { taken: true, ctaLabel: 'Già usato', ctaDisabled: true }
-    if (status === 'generated') return { taken: true, ctaLabel: 'Apri il QR', ctaDisabled: false }
-    return { taken: false, ctaLabel: undefined, ctaDisabled: false }
+    if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
+    if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
+    return { ctaLabel: undefined, ctaDisabled: false }
   }
 
   // Quanti locali risultano aperti nella fascia corrente: il numero che il
