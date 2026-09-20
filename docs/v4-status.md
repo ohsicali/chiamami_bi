@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-20 (fix: il banner cookie mangiava i tap sulle sheet)
+Ultima modifica: 2026-09-20 (fix: il banner cookie copriva "Metti in una lista" sui Salvati)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -20,6 +20,46 @@ dove siamo. Aggiorna a ogni step importante.
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
+
+## 20/09 — "Metti in una lista" nei Salvati: il banner cookie copriva il bottone
+
+Segnalazione: *"Metti in una lista dentro la pagina salvati non funziona,
+clicco ma non succede nulla"*.
+
+Riprodotto con un tocco vero (CDP `Input.dispatchTouchEvent`, non `.click()`)
+su Chromium in emulazione telefono, `/saved` con un solo locale salvato
+(build servita da `vite dev`, dati e sessione finti via `page.route()` —
+stesso metodo di "Liste: 'metti in una lista' provato a schermo" del 14/09
+più sotto). `document.elementFromPoint()` sul centro del bottone "+ Metti in
+una lista" tornava `.CookieConsent`, non il bottone: identico al bug del
+banner già trovato oggi per le sheet (v. sezione sopra "il banner cookie
+mangiava i tap"), ma un caso diverso — qui non è una sheet aperta sopra il
+banner, è contenuto normale della pagina che ci finisce *sotto*.
+
+**Causa**: il banner è `position: fixed` in fondo allo schermo e compare
+~1,5s dopo il primo render (deferred a `requestIdleCallback`). Con pochi
+locali salvati, la card e il suo "Metti in una lista" cadono per intero
+dentro il primo schermo — sopra "the fold", niente suggerisce di scorrere —
+eppure quello spazio è esattamente dove il banner si va a posare appena
+spunta. Il tocco nel punto esatto in cui il bottone è disegnato arriva al
+banner, non al bottone: da schermo sembra un tocco assorbito nel nulla.
+Scorrendo anche solo ~60px il bottone si libera (verificato passo per passo,
+`scrollY` 0/60/120/180/250): la pagina in sé scorre già a sufficienza (c'è il
+`Footer` sotto), manca solo il perché di provarci.
+
+**Fix** in `src/App.jsx`: quando il banner compare (osservato con
+`MutationObserver`, perché è caricato con `lazy()` e il chunk può arrivare
+dopo il primo giro dell'effetto), se l'utente non ha ancora scorso lui
+stesso (`scrollY <= 4`) la pagina scorre da sola di quanto è alto il banner
+— mai oltre la fine reale del contenuto — con `behavior: 'smooth'`. Non
+tocca lo z-index (già a posto dal fix di stamattina) né richiede di sapere
+in anticipo quanto è alto il banner: lo si misura quando compare.
+
+**Verificato**: rifatta la stessa identica riproduzione con la correzione —
+`elementFromPoint()` sul bottone ora torna il `<button>` vero, e un tocco
+realistico (`locator.tap()` con `hasTouch: true`, non coordinate forzate)
+apre il foglio "Vuoi metterlo in una lista?". `npm test` 125/125, lint
+invariato su `App.jsx` (0 problemi), build a posto.
 
 ## 20/09 — la barra momento in home: verificata, non era rotta
 

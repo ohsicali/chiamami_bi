@@ -108,6 +108,46 @@ export default function App() {
     return () => cancel(handle)
   }, [])
 
+  // Il banner è `position: fixed` e appare un attimo dopo il primo
+  // rendering: su una pagina corta (es. Salvati con uno o due locali) quello
+  // che c'era già in cima — qui, il bottone "Metti in una lista" sotto la
+  // card — può ritrovarsi esattamente sotto al banner appena spunta, senza
+  // che nulla in pagina suggerisca di scorrere. Un tocco vero lì (provato con
+  // eventi touch reali, non `.click()`) arriva al banner, non al bottone: chi
+  // preme non vede succedere niente. Qui si scorre la pagina di quanto è alto
+  // il banner, ma solo se l'utente non ha già scorso lui stesso (altrimenti
+  // lo spiazzerebbe) e solo di quanto basta — mai oltre la fine reale del
+  // contenuto.
+  useEffect(() => {
+    if (!showCookieBanner) return
+
+    const nudge = (banner) => {
+      if (window.scrollY > 4) return
+      const bannerH = banner.getBoundingClientRect().height
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      const delta = Math.min(bannerH, Math.max(0, maxScroll - window.scrollY))
+      if (delta > 0) window.scrollBy({ top: delta, behavior: 'smooth' })
+    }
+
+    const already = document.querySelector('.CookieConsent')
+    if (already) {
+      nudge(already)
+      return
+    }
+    // `<CookieConsent>` è caricato con `lazy()`: al momento in cui questo
+    // effetto parte il chunk potrebbe non essere ancora arrivato, quindi si
+    // osserva il DOM finché non compare invece di controllare una volta sola.
+    const observer = new MutationObserver(() => {
+      const banner = document.querySelector('.CookieConsent')
+      if (banner) {
+        observer.disconnect()
+        nudge(banner)
+      }
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [showCookieBanner])
+
   // Scroll to top on route change — but preserve scroll when transitioning
   // between the map (/) and a restaurant detail (/restaurant/:slug), since
   // HomePage stays mounted and we don't want to disturb the map state.
