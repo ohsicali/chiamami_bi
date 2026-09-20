@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-20 (fix: il banner cookie copriva "Metti in una lista" sui Salvati)
+Ultima modifica: 2026-09-20 (fix: doppio segno meno sui badge sconto — pin mappa e popup sconto locale)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -1659,3 +1659,40 @@ di proposito, per non toccare altro oltre al logo.
 `tests/ai-engine.test.mjs` e `tests/send-email-routes.test.mjs`, entrambi
 falliscono per `@supabase/supabase-js` mancante da `node_modules` in questo
 ambiente, non collegati a questa modifica).
+
+## 20/09 — doppio segno meno sui badge sconto (pin mappa)
+
+Augusto segnalava doppi "meno" davanti alla percentuale sugli sconti
+("--10%" invece di "-10%"), chiedendo che in tutto il sito ci sia sempre
+esattamente un segno meno davanti al valore — la regola già scritta sopra
+("Convenzioni contenuti sconti") e già implementata in
+`formatDiscountBadge()`/`formatDiscountBadgeShort()`
+(`src/lib/utils/discountFormat.js`): quelle funzioni puliscono sempre il
+segno esistente e ne rimettono uno solo, che l'admin lo scriva a mano
+("-10%") o no.
+
+Girando il sito, due punti non passavano da quelle funzioni:
+
+- **`src/components/Map/MapView.jsx`** (`createPinEl`, badge sotto il pin
+  sulla mappa) — riceve già il valore formattato da `formatDiscountBadge()`
+  (chiamato in `HomePage.jsx`/`DesktopExplorePage.jsx` prima di passarlo
+  come `discountMap`), ma poi ricontrollava a mano
+  `!val.startsWith('-')` (trattino ASCII) e ci riaggiungeva un `-` davanti.
+  Siccome `formatDiscountBadge()` usa il meno tipografico `−` (U+2212), il
+  controllo falliva sempre e il pin mostrava `-−10%`. Fix: il pin ora usa
+  il valore ricevuto così com'è, senza ritoccarlo.
+- **`src/components/Discount/DiscountQuickPopup.jsx`** (popup sconto sulla
+  pagina del locale) — nella card "Il tuo sconto" (dopo lo sblocco)
+  mostrava `deal?.discount_value` grezzo dal DB, senza segno né unità,
+  mentre la stessa card prima dello sblocco mostra il badge formattato
+  correttamente. Fix: usa `formatDiscountBadge(deal)` (stessa variabile
+  `badge` già calcolata in cima al componente) anche lì; il confronto per
+  evitare di ripetere il titolo ora usa `formatDiscountValue(deal)` invece
+  del valore grezzo.
+
+Non toccati (per scelta, non sono badge/sticker ma titoli/fallback in
+prosa, dove il segno meno non è la convenzione): il fallback titolo in
+`DiscountQuickPopup.jsx` (`deal?.title || valueLabel`) e la pillola sticky
+sconto in `DesktopRestaurantSheet.jsx` (`discount.title || discount.discount_value`).
+`src/components/Discount/DiscountBanner.jsx` mostra `discount_value` grezzo
+ma non è importato da nessuna pagina — componente morto, non toccato.
