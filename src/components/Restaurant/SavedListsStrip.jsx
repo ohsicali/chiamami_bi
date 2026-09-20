@@ -78,6 +78,12 @@ export default function SavedListsStrip({
           display: 'flex',
           gap: 10,
           overflowX: 'auto',
+          /* La tile selezionata cresce sopra il suo riquadro (anello +
+             translateY): l'overflow-x 'auto' fa diventare 'auto' anche
+             l'overflow verticale (regola CSS: un asse non-visible forza
+             l'altro a smettere di essere visible), quindi senza questo
+             margine il bordo alto del contenitore taglia l'anello. */
+          paddingTop: 6,
           paddingBottom: 14,
           scrollbarWidth: 'none',
         }}
