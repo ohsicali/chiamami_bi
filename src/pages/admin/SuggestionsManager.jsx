@@ -328,24 +328,6 @@ export default function SuggestionsManager() {
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      {s.status !== 'reviewed' && (
-                        <button
-                          onClick={() => updateStatus(s.id, 'reviewed')}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: 8,
-                            border: 'none',
-                            background: '#eef2ff',
-                            color: '#4338ca',
-                            fontSize: 11,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
-                        >
-                          Visto
-                        </button>
-                      )}
                       {s.status !== 'accepted' && (
                         <button
                           onClick={() => updateStatus(s.id, 'accepted')}
