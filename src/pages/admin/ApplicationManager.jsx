@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -27,7 +27,6 @@ function timeAgo(dateStr) {
 
 export default function ApplicationManager() {
   const { user, isAdmin, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('pending')
@@ -93,17 +92,6 @@ export default function ApplicationManager() {
   async function handleArchive(id) {
     if (!confirm('Archiviare questa candidatura? Puoi sempre riaprirla dopo dai filtri.')) return
     await handleStatusChange(id, 'rejected')
-  }
-
-  function handleCreateFromApplication(app) {
-    // Mark as approved and open new-restaurant page with hint in URL
-    handleStatusChange(app.id, 'approved')
-    const params = new URLSearchParams()
-    if (app.restaurant_name) params.set('name', app.restaurant_name)
-    if (app.email) params.set('email', app.email)
-    if (app.city) params.set('city', app.city)
-    if (app.phone) params.set('phone', app.phone)
-    navigate(`/admin/restaurant/new?${params.toString()}`)
   }
 
   if (authLoading) return null
@@ -242,7 +230,6 @@ export default function ApplicationManager() {
               app={selected}
               onStatusChange={(s) => handleStatusChange(selected.id, s)}
               onArchive={() => handleArchive(selected.id)}
-              onCreateFromApplication={() => handleCreateFromApplication(selected)}
             />
           ) : (
             <div
@@ -337,7 +324,7 @@ function InboxRow({ app, active, onClick }) {
   )
 }
 
-function DetailPane({ app, onStatusChange, onArchive, onCreateFromApplication }) {
+function DetailPane({ app, onStatusChange, onArchive }) {
   const st = STATUS_CONFIG[app.status] || STATUS_CONFIG.pending
   return (
     <section
@@ -421,11 +408,8 @@ function DetailPane({ app, onStatusChange, onArchive, onCreateFromApplication })
           alignItems: 'center',
         }}
       >
-        <button type="button" onClick={onCreateFromApplication} style={primaryBtn}>
-          → Apri pre-compilata
-        </button>
         {app.email && (
-          <a href={`mailto:${app.email}?subject=Re: la tua candidatura a chiamamibi.com`} style={ghostBtn}>
+          <a href={`mailto:${app.email}?subject=Re: la tua candidatura a chiamamibi.com`} style={primaryBtn}>
             Rispondi via email
           </a>
         )}
@@ -438,22 +422,6 @@ function DetailPane({ app, onStatusChange, onArchive, onCreateFromApplication })
         <button type="button" onClick={onArchive} style={rejectBtn}>
           Archivia (non interessa)
         </button>
-      </div>
-
-      <div
-        style={{
-          marginTop: 16,
-          paddingTop: 12,
-          borderTop: '1px dashed var(--color-line, #EAE3D7)',
-          fontSize: 11,
-          color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
-          fontWeight: 500,
-          lineHeight: 1.6,
-        }}
-      >
-        <b style={{ color: 'var(--color-ink)' }}>Apri pre-compilata</b> porta alla pagina{' '}
-        <Link to="/admin/restaurant/new" style={{ color: 'var(--color-corallo, #E8453C)' }}>Nuovo ristorante</Link>{' '}
-        con nome, email e città già compilati. Puoi rifinire la scheda e pubblicarla in 60 secondi.
       </div>
 
       <AnimatePresence>{false}</AnimatePresence>

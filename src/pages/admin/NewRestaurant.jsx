@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
@@ -10,14 +10,10 @@ import AdminLayout from '../../components/Layout/AdminLayout'
  * Così l'utente vede tutti e 6 i tab (con TabsShell) immediatamente, senza
  * dover prima "salvare i dettagli essenziali" in una pagina separata.
  * Il tab SEO resta bloccato finché non vengono compilati nome + città + racconto.
- *
- * Pre-fill da query params: ?name=…&email=…&city=…&phone=…&website=…
- * (usato dal flusso Candidature → "+ Apri pre-compilata").
  */
 export default function NewRestaurant() {
   const { user, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -32,13 +28,7 @@ export default function NewRestaurant() {
       return
     }
 
-    const name = (searchParams.get('name') || '').trim()
-    const email = (searchParams.get('email') || '').trim()
-    const city = (searchParams.get('city') || 'Torino').trim()
-    const phone = (searchParams.get('phone') || '').trim()
-    const website = (searchParams.get('website') || '').trim()
-
-    const draftName = name || 'Nuovo ristorante'
+    const draftName = 'Nuovo ristorante'
     const uniqueSuffix = Date.now().toString(36)
 
     // PIN opzionale: alla creazione NON viene generato. L'admin lo attiva
@@ -47,10 +37,10 @@ export default function NewRestaurant() {
       name: draftName,
       slug: slugify(draftName) + '-' + uniqueSuffix,
       address: '',
-      city: city || 'Torino',
-      partner_email: email || null,
-      phone: phone || null,
-      website: website || null,
+      city: 'Torino',
+      partner_email: null,
+      phone: null,
+      website: null,
       verify_pin: null,
       last_pin_rotation_at: null,
       is_published: false,
