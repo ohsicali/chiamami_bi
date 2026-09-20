@@ -279,7 +279,7 @@ function TopBar() {
   )
 }
 
-function HeroPromo({ featured, onUnlock, taken, ctaLabel, ctaDisabled }) {
+function HeroPromo({ featured, onUnlock, ctaLabel, ctaDisabled }) {
   const navigate = useNavigate()
   const [countdown, setCountdown] = useState(() => formatCountdown(featured?.endsAt))
   useEffect(() => {
@@ -314,13 +314,15 @@ function HeroPromo({ featured, onUnlock, taken, ctaLabel, ctaDisabled }) {
       className="hfv4-hero-wrap hfv4-rise"
       style={{ padding: '4px 20px 22px', '--rise-y': '12px' }}
     >
+      {/* Niente opacità legata a `taken`: è l'unica card in vetrina, sbiadirla
+          la fa sembrare rotta invece che "già presa". Lo stato passa solo
+          dall'etichetta/CTA (vedi il bottone sotto). */}
       <div
         className="hfv4-hero-card"
         style={{
           position: 'relative', background: 'var(--color-corallo)', borderRadius: 28,
           padding: '22px', display: 'grid', gridTemplateColumns: '1fr 108px', gap: 14,
           color: '#fff', overflow: 'hidden', boxShadow: '0 8px 24px rgba(34,24,28,.08)',
-          opacity: taken ? 0.72 : 1,
         }}
       >
         {/* Body: col sinistra desktop, sotto la foto su mobile */}
@@ -779,9 +781,9 @@ export default function HomeDesktopClassic() {
   const dealCta = (deal) => {
     const redemption = redemptionByDealId.get(deal?.id)
     const status = redemption?.status
-    if (status === 'redeemed') return { taken: true, ctaLabel: 'Già usato', ctaDisabled: true }
-    if (status === 'generated') return { taken: true, ctaLabel: 'Apri il QR', ctaDisabled: false }
-    return { taken: false, ctaLabel: undefined, ctaDisabled: false }
+    if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
+    if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
+    return { ctaLabel: undefined, ctaDisabled: false }
   }
 
   // Il cuore da sloggato non faceva niente: `toggleSave` esce subito senza
