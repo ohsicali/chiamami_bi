@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import QRCode from 'qrcode'
 import ShortCodeCard from './ShortCodeCard'
 import DiscountRules from './DiscountRules'
-import { formatDiscountBadge } from '../../lib/utils/discountFormat'
+import { formatDiscountBadge, formatDiscountValue } from '../../lib/utils/discountFormat'
 
 /**
  * DiscountQuickPopup — il popup dello sconto sulla pagina del locale.
@@ -78,6 +78,7 @@ export default function DiscountQuickPopup({
   }
 
   const badge = formatDiscountBadge(deal)
+  const valueLabel = formatDiscountValue(deal)
   const description = deal?.description && deal.description !== deal.title ? deal.description : null
   const verifyUrl = redemption?.qr_code ? `${window.location.origin}/verify?code=${redemption.qr_code}` : null
 
@@ -131,7 +132,7 @@ export default function DiscountQuickPopup({
                 </span>
               )}
               <h3 className="text-lg font-bold text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, marginTop: 10 }}>
-                {deal?.title || deal?.discount_value}
+                {deal?.title || valueLabel}
               </h3>
               {description && (
                 <p className="text-sm text-secondary mt-1.5" style={{ lineHeight: 1.5 }}>{description}</p>
@@ -166,8 +167,8 @@ export default function DiscountQuickPopup({
               <h3 className="text-lg font-bold text-primary" style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}>
                 Il tuo sconto
               </h3>
-              <p className="text-accent font-bold text-xl mt-1">{deal?.discount_value}</p>
-              {deal?.title && deal.title !== deal.discount_value && (
+              <p className="text-accent font-bold text-xl mt-1">{badge}</p>
+              {deal?.title && deal.title !== valueLabel && (
                 <p className="text-sm text-secondary mt-0.5">{deal.title}</p>
               )}
             </div>

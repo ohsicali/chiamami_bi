@@ -141,8 +141,10 @@ function createPinEl(restaurant, isSaved, discountValue) {
       box-shadow:0 2px 6px rgba(74,222,128,0.4);
       pointer-events:none;
     `
-    const val = String(discountValue)
-    badge.textContent = val.includes('%') && !val.startsWith('-') ? `-${val}` : val
+    // discountValue arriva già formattato da formatDiscountBadge() (un solo
+    // segno meno, mai due): qui non si ritocca, altrimenti si duplica il
+    // segno quando formatDiscountBadge ha già usato il meno tipografico "−".
+    badge.textContent = String(discountValue)
     inner.appendChild(badge)
   }
 
