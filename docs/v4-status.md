@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-20 (fix: doppio segno meno sui badge sconto — pin mappa e popup sconto locale)
+Ultima modifica: 2026-09-20 (performance RLS: auth_rls_initplan 15→0, multiple_permissive_policies 32→7)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -20,6 +20,52 @@ dove siamo. Aggiorna a ogni step importante.
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
+
+## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
+
+Chiesto "quanti utenti regge il sito", ho controllato gli advisor Supabase in
+diretta (progetto `urcwnontifybzugmmiov`, piano Free, 21 MB usati su 500 MB —
+non è quello il collo di bottiglia). Sono usciti due avvisi performance veri,
+non ipotetici:
+
+- **15 policy RLS** su `ai_conversations`, `ai_messages`, `ai_user_preferences`,
+  `saved_lists`, `saved_list_items`, `restaurant_suggestions`, `saved_restaurants`
+  chiamavano `auth.uid()` senza `(select ...)`: Postgres lo ricalcola per ogni
+  riga scansionata invece che una volta per query. Irrilevante con pochi
+  utenti, un moltiplicatore di carico DB con tanti.
+- **32 casi di policy permissive duplicate** sulla stessa tabella/azione
+  (soprattutto `saved_restaurants`, toccata da ogni utente loggato che salva
+  un locale): ogni query eseguiva più policy invece di una.
+
+Applicata `supabase/fix-rls-performance-2026-09-20.sql` (migration
+`fix_rls_performance_20260920`), solo `DROP POLICY` + `CREATE POLICY` e un
+indice mancante — nessuna tabella/colonna/dato toccato, nessun deploy
+richiesto. Prima di scrivere la migration ho salvato uno snapshot completo
+delle policy esistenti (in questa sessione, non su file) per poter tornare
+indietro in un secondo se serviva.
+
+Verificato dopo l'applicazione:
+- `auth_rls_initplan`: 15 → **0**.
+- `multiple_permissive_policies`: 32 → **7** (rimasti apposta su
+  `discount_products`, `restaurant_dishes`, `sponsored_placements`: basso
+  traffico — admin vs pubblico — e la fusione lì richiederebbe restrutturare
+  policy `ALL` vs `SELECT` separate, rischio non giustificato dal guadagno).
+- Ogni policy toccata confrontata riga per riga col testo pre-migration: la
+  condizione è identica (solo incapsulata in `(select auth.uid())`), tranne
+  due punti dove la semplificazione era una vera equivalenza logica —
+  documentati coi commenti nel file SQL:
+  - `saved_restaurants."Users manage own saves"` era un sottoinsieme stretto
+    delle 4 policy already-scoped (proprietario OR admin) → rimossa.
+  - `restaurant_suggestions`: le 2 policy INSERT sovrapposte accorpate in una
+    con l'unione esatta delle condizioni.
+  - `sponsored_placements."Admins read all placements"` era un sottoinsieme
+    di `"Admins write placements"` (ALL già copre SELECT) → rimossa.
+
+Non toccato in questo giro (a scopo, vedi sopra): `discount_products` (5
+avvisi) e `restaurant_dishes` (1). Non toccati nemmeno gli avvisi di security
+(leaked password protection disabilitata, `function_search_path` mutabile su
+2 funzioni, RLS senza policy su `email_sent_log`) — non erano nello scope di
+questa richiesta, restano da valutare a parte.
 
 ## 20/09 — "Metti in una lista" nei Salvati: il banner cookie copriva il bottone
 
