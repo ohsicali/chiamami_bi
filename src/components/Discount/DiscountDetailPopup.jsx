@@ -164,6 +164,7 @@ export default function DiscountDetailPopup({
             deal={deal}
             redemption={redemption}
             photoUrl={photoUrl}
+            restaurantUrl={restaurantUrl}
             onClose={onClose}
             onDownloadPDF={handleDownload}
             pdfBusy={pdfBusy}
@@ -378,7 +379,7 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
 /* ============================================================================
    Stato 2: UNLOCKED — QR inline
    ============================================================================ */
-function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pdfBusy, pdfError }) {
+function UnlockedQRView({ deal, redemption, photoUrl, restaurantUrl, onClose, onDownloadPDF, pdfBusy, pdfError }) {
   const r = deal?.restaurant
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const address = shortAddress(r?.address)
@@ -399,6 +400,33 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
   const reassuranceText = isDrop && cd
     ? `Salvato in I miei vantaggi · Scade in ${cd}`
     : 'Salvato in I miei vantaggi · Sempre valido'
+
+  // Il QR è la cosa che serve al banco, quindi resta la prima cosa che si
+  // vede — ma chi vuole ricontrollare condizioni o giorni prima di uscire
+  // di casa non deve chiudere il popup e riaprirlo dal catalogo per
+  // trovarle: un tasto le apre qui sotto, chiuse di default.
+  const [showInfo, setShowInfo] = useState(false)
+  const description = deal?.description && deal.description !== deal.title ? deal.description : null
+
+  // Ingrandimento: quando la fotocamera del locale fatica a mettere a fuoco
+  // un codice piccolo dentro un popup, serve poterlo portare a schermo
+  // pieno — sfocando tutto intorno così l'occhio (e l'autofocus) vanno
+  // dritti sul QR, non sulla card che lo contiene.
+  const [zoomed, setZoomed] = useState(false)
+  useEffect(() => {
+    if (!zoomed) return undefined
+    // Fase di cattura + stopImmediatePropagation: l'Escape deve chiudere
+    // solo lo zoom, non l'intero popup — l'handler del popup è registrato
+    // sullo stesso `document` e senza questo girerebbe comunque.
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation()
+        setZoomed(false)
+      }
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [zoomed])
 
   return (
     <>
@@ -431,11 +459,24 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
           <span className="ddp-qrp-pct">{pctNum(deal)}</span>
         </div>
 
-        <div className="ddp-qr-frame">
+        <div
+          className="ddp-qr-frame ddp-qr-frame-tap"
+          role="button"
+          tabIndex={0}
+          aria-label="Ingrandisci il QR"
+          onClick={() => qrPayload && setZoomed(true)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && qrPayload) setZoomed(true) }}
+        >
           {qrPayload ? <QRCanvas value={qrPayload} size={170} /> : <div className="ddp-qr-loading">Genero QR…</div>}
+          {qrPayload && (
+            <span className="ddp-qr-zoom-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4" /></svg>
+            </span>
+          )}
         </div>
 
         <div className="ddp-qr-hint">Mostra al ristoratore</div>
+        {qrPayload && <div className="ddp-qr-zoom-hint">Tocca il QR per ingrandirlo</div>}
         <div className="ddp-qr-info">
           Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br />
           Codice valido una sola volta.
@@ -449,6 +490,37 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
           {reassuranceText}
         </div>
+
+        <button
+          type="button"
+          className="ddp-info-toggle"
+          aria-expanded={showInfo}
+          onClick={() => setShowInfo((v) => !v)}
+        >
+          {showInfo ? 'Nascondi info sconto' : 'Info sconto'}
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" className={`ddp-info-chev ${showInfo ? 'is-open' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+
+        {showInfo && (
+          <div className="ddp-qr-info-panel">
+            {description && <p className="ddp-lead">{description}</p>}
+            <DiscountRules deal={deal} className="ddp-rules" />
+            {restaurantUrl && (
+              <Link to={restaurantUrl} className="ddp-restaurant-link" onClick={onClose}>
+                <div className="ddp-rl-thumb">
+                  {photoUrl && <img src={photoUrl} alt="" loading="lazy" decoding="async" />}
+                </div>
+                <div className="ddp-rl-info">
+                  <strong>Scopri il ristorante</strong>
+                  <div className="ddp-rl-name">{r?.name || ''}</div>
+                </div>
+                <div className="ddp-rl-arrow">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                </div>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ddp-footer-actions">
@@ -465,6 +537,25 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
         {pdfError && <div className="ddp-pdf-error" role="status">{pdfError}</div>}
         <button type="button" className="ddp-close-link" onClick={onClose}>Chiudi</button>
       </div>
+
+      {/* Zoom: tutto il resto sfocato, il QR ingrandito e basta — per quando
+          la fotocamera del locale non ne trova a fuoco uno piccolo dentro
+          il popup. */}
+      {zoomed && qrPayload && (
+        <div
+          className="ddp-qr-zoom-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="QR ingrandito"
+          onClick={(e) => { if (e.target === e.currentTarget) setZoomed(false) }}
+        >
+          <button type="button" className="ddp-qr-zoom-close" aria-label="Chiudi" onClick={() => setZoomed(false)}>✕</button>
+          <div className="ddp-qr-zoom-frame">
+            <QRCanvas value={qrPayload} size={280} />
+          </div>
+          <p className="ddp-qr-zoom-hint-txt" onClick={() => setZoomed(false)}>Tocca ovunque per chiudere</p>
+        </div>
+      )}
     </>
   )
 }

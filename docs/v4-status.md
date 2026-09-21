@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-20 (performance RLS: auth_rls_initplan 15→0, multiple_permissive_policies 32→7)
+Ultima modifica: 2026-09-21 (tocca il QR per ingrandirlo a schermo pieno con sfondo sfocato)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -20,6 +20,111 @@ dove siamo. Aggiorna a ogni step importante.
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
+| Sconti — tap su "I miei vantaggi" + banner QR unificato | — | ✅ Done | Vedi sezione "21/09" sotto. |
+
+## 21/09 — "I miei vantaggi" disponibili: il tap portava al locale, non allo sconto
+
+Richiesta: sui "vantaggi disponibili" (`/sconti?tab=miei`) poter cliccare sullo
+sconto per vederne le info, e ridisegnare il banner che apre "Apri QR" perché
+non era coerente col resto (era rimasto lo stile vecchio, `SconteQRPopup`,
+mentre il resto della pagina sconti usa `DiscountDetailPopup`).
+
+**Prima**: `MineRow` (la riga di uno sconto già sbloccato, sotto "Disponibili"
+dentro "I miei vantaggi") mandava il click sulla riga a `onCardClick` → dritto
+alla pagina del locale, saltando lo sconto. Il bottone "Apri QR" apriva invece
+`SconteQRPopup`, un componente a parte con le sue classi CSS (`sc-qr-*`),
+diverso nel disegno da `DiscountDetailPopup` (usato per il catalogo e per le
+convenzioni).
+
+**Fatto**:
+- `MineRow`: il click sulla riga ora fa la stessa cosa del bottone "Apri QR"
+  (apre il popup con QR + info) invece di navigare al locale. Restava
+  comunque raggiungibile da lì: il link "Scopri il ristorante" dentro il
+  popup, vedi sotto.
+- `SconteQRPopup.jsx` eliminato. Il popup che si apre su "Apri QR" (sia da "I
+  miei vantaggi" sia dal claim di un drop/convenzione appena sbloccato) ora è
+  `DiscountDetailPopup` montato con `initialUnlocked` + `initialRedemption`:
+  stesso componente, stesso disegno del resto della pagina sconti, una sola
+  fonte di verità per lo stato "sbloccato" invece di due.
+- `DiscountDetailPopup` → `UnlockedQRView`: aggiunto un tasto "Info sconto"
+  sotto la rassicurazione ("Salvato in I miei vantaggi…"), chiuso di default
+  per non far ingombro sopra al QR (quello resta la prima cosa che si vede,
+  è quello che serve al banco). Aprendolo esce lo stesso pannello regole
+  della scheda LOCKED — `DiscountRules`, descrizione se c'è, e la card
+  "Scopri il ristorante" — non una versione ridotta.
+- CSS morto rimosso da `SconteRedesignPage.css`: tutto il blocco
+  `.sc-qr-overlay`/`.sc-qr-sheet`/`.sc-action-btn` (era usato solo da
+  `SconteQRPopup`), e i riferimenti nella media query
+  `prefers-reduced-motion`.
+
+Non toccato: `QRBlockedView` (si apre quando lo sconto non è valido adesso,
+spiega già da sé perché e quando torna valido) e `MieiUtilizzatiView`/
+`UsedRow` (storico, il tap continua a portare al locale — non c'è un QR da
+mostrare per uno sconto già usato).
+
+**Feedback dopo il primo giro**: la lista compatta (`MineRow`) restava comunque
+troppo diversa, visivamente, dalle card di "Disponibili" — chiesto di renderle
+identiche, non solo di sistemare il click. `MineRow` eliminato: "I miei
+vantaggi" → Disponibili ora riusa `DropSection`/`DropCard` per i drop e
+`ConvCard` per le convenzioni, esattamente le stesse card del catalogo. La
+differenza è solo di stato: `redemptionByDealId`/`ConvCard locked={false}`
+fanno nascere la card già in "Apri QR" invece che "Sblocca", perché lo sconto
+è già preso. `ConvCard` ha guadagnato il prop `locked` (default `true`,
+comportamento invariato nel catalogo). Aggiunta anche una piccola animazione
+d'ingresso (check + QR con un pop) sul banner "Sbloccato!" di
+`DiscountDetailPopup`, per rendere il momento dello sblocco più vivo. CSS
+morto di `MineRow`/`.sc-qr-btn` rimosso da `SconteRedesignPage.css`.
+
+**Secondo giro di feedback**: confermato che le card dei drop presi vanno
+bene, ma il banner QR (`UnlockedQRView` dentro `DiscountDetailPopup`) andava
+ridisegnato di nuovo — l'aggiunta del tasto "Info sconto" e delle due
+animazioni pop del giro precedente non erano un vero redesign, solo rifiniture
+sullo stesso layout (due riquadri bianchi separati: identità locale sopra,
+QR sotto). Rifatto come un **biglietto unico**: striscia corallo in cima,
+foto/nome/badge nella metà superiore, una perforazione tratteggiata con due
+semicerchi "strappati" ai lati (stesso colore di sfondo della sezione — è
+quello che li fa sembrare un buco vero) a separarla dal QR nella metà
+inferiore. Preso in prestito dall'estetica del biglietto da evento, coerente
+col tono "membership" del Bi Club (stesso registro dei blocchi "Secondo Bi").
+Verificato visivamente con uno snapshot HTML/CSS isolato (stesse regole,
+dati finti, screenshot locale) prima di committare, perché il preview Vercel
+non è raggiungibile da questa sessione (proxy).
+
+**Terzo giro di feedback — bocciato il biglietto, chiarito cosa serviva
+davvero**: due correzioni.
+
+1. Il biglietto perforato non piaceva. Commit revertito (`git revert`) di
+   netto: `UnlockedQRView` torna alla versione precedente (due riquadri
+   bianchi separati — identità locale, poi QR — col tasto "Info sconto" e le
+   animazioni pop, quelli non erano in discussione).
+2. Frainteso cosa intendeva "le card dei drop presi devono essere come le
+   altre" nel primo giro: avevo riusato `DropSection`/`DropCard`, cioè il
+   trattamento grande del catalogo con la pillola "DROP LIVE · countdown" —
+   e quello *è* "quel barre grosso in alto" di cui si lamentava. L'idea era
+   un'altra: un drop già preso deve stare **nella stessa lista** delle
+   convenzioni già prese, con la stessa card compatta, non in una sezione a
+   parte con un trattamento speciale — l'urgenza del countdown ha senso nel
+   catalogo (spinge a sbloccare), non qui (è già sbloccato). `MieiDisponibiliView`
+   ora è una singola lista di `ConvCard` (`locked={false}`) per tutto,
+   niente più split drop/convenzioni né sezione "Drop a tempo".
+
+**Quarto giro — tocca il QR per ingrandirlo**: richiesta esplicita per quando
+il ristoratore non riesce a scansionare il codice piccolo dentro il popup.
+Aggiunto in `UnlockedQRView` (`DiscountDetailPopup.jsx`): tap sul
+`.ddp-qr-frame` (badge d'angolo a segnalare che è cliccabile) apre un
+overlay a tutto schermo — QR a 260-300px, sfondo sfocato con
+`backdrop-filter: blur(22px)` invece di un tendone scuro piatto, così
+l'occhio (e l'autofocus della fotocamera) vanno dritti sul codice. Si
+chiude toccando ovunque intorno, col bottone ✕, o con Escape.
+
+Un dettaglio tecnico non ovvio: l'Escape dello zoom doveva chiudere SOLO lo
+zoom, non l'intero popup — ma il popup registra già il proprio handler
+Escape su `document` (in `DiscountDetailPopup`, non in questo componente
+figlio), quindi un secondo listener bubble-phase su `document` sarebbe
+comunque scattato dopo, chiudendo tutto. Risolto registrando l'handler dello
+zoom in fase di **cattura** (`addEventListener(..., true)`) con
+`stopImmediatePropagation()`: scatta prima e impedisce all'altro listener
+sullo stesso nodo di girare.
 
 ## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
 

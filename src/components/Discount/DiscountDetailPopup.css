@@ -457,6 +457,11 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  animation: ddpCheckPop 0.4s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes ddpCheckPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 .ddp-ub-txt { flex: 1; min-width: 0; padding-right: 36px; }
 .ddp-ub-txt strong {
@@ -544,10 +549,39 @@
   border-radius: 14px;
   padding: 14px;
   margin-top: 6px;
+  animation: ddpQrPop 0.4s 0.1s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes ddpQrPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ddp-ub-check, .ddp-qr-frame { animation: none !important; }
 }
 .ddp-qr-frame canvas { display: block; width: 170px !important; height: 170px !important; }
 @media (min-width: 768px) {
   .ddp-qr-frame canvas { width: 200px !important; height: 200px !important; }
+}
+/* Il QR si tocca per ingrandirlo — badge d'angolo a dirlo, e un piccolo
+   schiacciamento al tap perché sembri davvero un bottone e non solo
+   un'immagine. */
+.ddp-qr-frame-tap {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.ddp-qr-frame-tap:active { transform: scale(0.96); }
+.ddp-qr-zoom-badge {
+  position: absolute;
+  bottom: -9px; right: -9px;
+  width: 27px; height: 27px;
+  background: #22181C;
+  color: #fff;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 9px rgba(34, 24, 28, 0.3);
 }
 .ddp-qr-loading {
   width: 170px; height: 170px;
@@ -572,6 +606,74 @@
 }
 .ddp-qr-info strong { color: #22181C; font-weight: 700; }
 
+.ddp-qr-zoom-hint {
+  font-size: 10.5px;
+  color: #9A8E94;
+  font-weight: 600;
+  margin-top: -6px;
+}
+
+/* Zoom a schermo pieno: sfondo sfocato (backdrop-filter, non un overlay
+   scuro e basta) così l'occhio — e l'autofocus della fotocamera del
+   locale — vanno dritti sul QR ingrandito, l'unica cosa a fuoco. */
+.ddp-qr-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  background: rgba(34, 24, 28, 0.6);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  cursor: pointer;
+  animation: ddpFadeIn 0.2s ease;
+}
+.ddp-qr-zoom-close {
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 15px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.ddp-qr-zoom-frame {
+  background: #fff;
+  border: 3px solid #22181C;
+  border-radius: 24px;
+  padding: 22px;
+  cursor: default;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  animation: ddpQrZoomPop 0.3s cubic-bezier(.2,.8,.25,1) both;
+}
+.ddp-qr-zoom-frame canvas { display: block; width: 260px !important; height: 260px !important; }
+@media (min-width: 480px) {
+  .ddp-qr-zoom-frame canvas { width: 300px !important; height: 300px !important; }
+}
+@keyframes ddpQrZoomPop {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.ddp-qr-zoom-hint-txt {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ddp-qr-zoom-frame { animation: none !important; }
+}
+
 .ddp-reassurance {
   width: 100%;
   margin-top: 6px;
@@ -587,6 +689,37 @@
   gap: 6px;
   letter-spacing: 0.1px;
 }
+
+/* Tasto "Info sconto": stesso bottone discreto del "Chiudi" sotto, non un
+   CTA — chi vuole il QR e basta non deve nemmeno vederlo aprirsi. */
+.ddp-info-toggle {
+  margin-top: 2px;
+  background: transparent;
+  border: 0;
+  color: #5C4F54;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+.ddp-info-chev { transition: transform 0.2s ease; }
+.ddp-info-chev.is-open { transform: rotate(180deg); }
+
+/* Il pannello riusa esattamente i pezzi della scheda LOCKED (DiscountRules,
+   la card "Scopri il ristorante"): stessa forma, non una versione
+   ridotta — chi lo apre da qui deve vedere le stesse regole di chi le
+   legge prima di sbloccare. */
+.ddp-qr-info-panel {
+  width: 100%;
+  align-self: stretch;
+  text-align: left;
+  animation: ddpFadeIn 0.18s ease;
+}
+.ddp-qr-info-panel .ddp-lead { margin-top: 0; }
 
 .ddp-footer-actions {
   padding: 14px 20px 22px;
