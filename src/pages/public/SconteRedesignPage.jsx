@@ -16,7 +16,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterVisibleDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut } from '../../lib/discounts'
+import { filterActiveDrops, filterVisibleDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, isDrop } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
@@ -38,19 +38,9 @@ function shortAddress(addr) {
   return addr.split(',')[0]
 }
 
-function dropDeadline(deal) {
-  return deal?.drop_ends_at || deal?.valid_until || null
-}
-
 function categoryEmoji(name) {
   const map = { Asiatico: '🥟', Matcha: '🍵', Aperitivo: '🥂', Bistrot: '🍽️', Cocktail: '🍸', Panineria: '🥪', Trattoria: '🍝', Barbecue: '🔥', Pizza: '🍕', Bar: '☕' }
   return map[name] || '🍽️'
-}
-
-function isDealExpired(deal) {
-  const end = dropDeadline(deal)
-  if (!end) return false
-  return new Date(end).getTime() < Date.now()
 }
 
 function dealBadgeText(deal) {
@@ -481,6 +471,7 @@ function SconteRedesignPageInner() {
               user={user}
               items={myActive}
               onOpenQR={openMyQR}
+              onCardClick={goTo}
             />
           )}
           {tab === 'miei' && sub === 'utilizzati' && (
@@ -850,7 +841,35 @@ function LockIcon() {
   )
 }
 
-function ConvCard({ deal, claiming, onClaim, onInfo }) {
+function QRIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1.2" />
+      <rect x="14" y="3" width="7" height="7" rx="1.2" />
+      <rect x="3" y="14" width="7" height="7" rx="1.2" />
+      <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01" />
+    </svg>
+  )
+}
+
+/**
+ * `locked` (default true, il catalogo "Disponibili") apre le info e sblocca
+ * da lì. Una convenzione già presa ("I miei vantaggi") non ha più uno stato
+ * "da sbloccare" — card e bottone fanno la stessa cosa, aprono il QR (che a
+ * sua volta dà accesso alle stesse info, dietro il tasto "Info sconto") —
+ * stessa card, stesso disegno, cambia solo cosa succede al tap.
+ */
+function ConvCard({ deal, claiming, locked = true, onClaim, onInfo, onOpenQR }) {
   const r = deal.restaurant
   const photo = getPhoto(r)
   const cuisine = r?.cuisine_type || r?.category?.[0]
@@ -869,13 +888,15 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
     ? formatDays(deal.valid_days)
     : null
 
+  const primaryAction = locked ? onInfo : onOpenQR
+
   return (
     <div
       className="sc-conv sc-conv-clean"
       role="button"
       tabIndex={0}
-      onClick={(e) => { if (!e.defaultPrevented) onInfo() }}
-      onKeyDown={(e) => { if (e.key === 'Enter') onInfo() }}
+      onClick={(e) => { if (!e.defaultPrevented) primaryAction() }}
+      onKeyDown={(e) => { if (e.key === 'Enter') primaryAction() }}
     >
       <div className="sc-ph">
         <PhotoOrEmoji src={photo} alt={r?.name || ''} emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 30 }} />
@@ -905,10 +926,10 @@ function ConvCard({ deal, claiming, onClaim, onInfo }) {
         <button
           type="button"
           className="sc-cta-mini"
-          disabled={!!claiming}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClaim() }}
+          disabled={locked && !!claiming}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); (locked ? onClaim : onOpenQR)() }}
         >
-          {claiming ? '…' : (<><LockIcon />Sblocca</>)}
+          {locked ? (claiming ? '…' : (<><LockIcon />Sblocca</>)) : (<><QRIcon />Apri QR</>)}
         </button>
       </div>
     </div>
@@ -939,7 +960,14 @@ function ProductDots({ items }) {
   )
 }
 
-function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
+/**
+ * "I miei vantaggi" → Disponibili: STESSE card del catalogo "Disponibili"
+ * (`DropSection` per i drop, `ConvCard` per le convenzioni) — non una lista
+ * ridotta a parte. La sola differenza è lo stato: qui ogni voce è già presa
+ * (`redemptionByDealId` ha sempre una riga con `status: 'generated'`), quindi
+ * la card nasce già nello stato "Apri QR" invece di "Sblocca".
+ */
+function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
   if (!user) {
     return (
       <div className="sc-empty">
@@ -951,10 +979,10 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
   }
   if (loading) {
     return (
-      <div style={{ padding: '20px 16px' }}>
-        {[64, 64, 64].map((h, i) => (
+      <div style={{ padding: '24px 16px' }}>
+        {[180, 110, 110].map((h, i) => (
           <div key={i} className="skeleton" style={{
-            height: h, borderRadius: 14, background: 'rgba(34,24,28,0.04)', marginBottom: 10,
+            height: h, borderRadius: 16, background: 'rgba(34,24,28,0.04)', marginBottom: 12,
           }} />
         ))}
       </div>
@@ -970,73 +998,42 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
     )
   }
 
-  return (
-    <section className="sc-section">
-      <div className="sc-section-head">
-        <strong>Pronti da usare</strong>
-        <small>tap per vedere il QR e le info</small>
-      </div>
-      <div className="sc-mine-list">
-        {items.map((r) => (
-          <MineRow
-            key={r.id}
-            redemption={r}
-            onOpenQR={() => onOpenQR(r)}
-          />
-        ))}
-      </div>
-    </section>
-  )
-}
+  const dropItems = items.filter((r) => isDrop(r.discount))
+  const convItems = items.filter((r) => !isDrop(r.discount))
+  const dropDeals = dropItems.map((r) => r.discount)
+  const dropRedemptionById = new Map(dropItems.map((r) => [r.discount_id, r]))
 
-function MineRow({ redemption, onOpenQR }) {
-  const deal = redemption.discount
-  const r = deal?.restaurant
-  const photo = getPhoto(r)
-  const expired = isDealExpired(deal)
-  const cuisine = r?.cuisine_type || r?.category?.[0]
-  const location = r?.neighborhood || r?.city
-  const priceStr = formatPrice(r?.price_range)
-  const validityStatus = expired ? 'expired' : checkValidity(deal)
-  const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
-  const pctBadge = dealBadgeText(deal) || freebieLabel(deal)
-
-  // Clic sulla riga: stessa azione del bottone "Apri QR" — apre il popup
-  // col QR e, da lì, chi vuole può aprire anche le info dello sconto.
-  // Prima portava dritti alla pagina del locale, saltando lo sconto stesso.
   return (
-    <div
-      className={`sc-mine-row ${expired ? 'is-expired' : ''}`}
-      role="button"
-      tabIndex={0}
-      onClick={(e) => { if (!e.defaultPrevented && !expired) onOpenQR() }}
-      onKeyDown={(e) => { if (e.key === 'Enter' && !expired) onOpenQR() }}
-    >
-      <div className="sc-ph-mini">
-        <PhotoOrEmoji src={photo} alt="" emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 22 }} />
-        {pctBadge && <span className="sc-pct-corner">{pctBadge}</span>}
-      </div>
-      <div className="sc-info">
-        <h4>{r?.name || deal?.title || 'Ristorante'}</h4>
-        <div className="sc-meta">
-          {cuisine && <span className="sc-cat">{cuisine}</span>}
-          {location && <><span className="sc-sep">|</span><span>{location}</span></>}
-          {priceStr && <><span className="sc-sep">|</span><span>{priceStr}</span></>}
-        </div>
-        <div className="sc-pill-row sc-pill-row-mini">
-          <ValidityPill status={validityStatus} text={validityPill} />
-        </div>
-      </div>
-      {/* Bottone Apri QR SEMPRE attivo (anche fuori validità):
-          il click apre QRBlockedView se non valid_now. */}
-      <button
-        type="button"
-        className="sc-qr-btn"
-        disabled={expired}
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!expired) onOpenQR() }}
-      >
-        {expired ? 'Scaduto' : 'Apri QR'}
-      </button>
+    <div className="sc-catalogo">
+      {dropDeals.length > 0 && (
+        <DropSection
+          drops={dropDeals}
+          claiming={null}
+          redemptionByDealId={dropRedemptionById}
+          onClaim={() => {}}
+          onOpenQR={onOpenQR}
+          onCardClick={onCardClick}
+        />
+      )}
+
+      {convItems.length > 0 && (
+        <section className="sc-section">
+          <div className="sc-section-head">
+            <strong>Convenzioni</strong>
+            <small>{convItems.length} pront{convItems.length === 1 ? 'a' : 'e'} da usare</small>
+          </div>
+          <div className="sc-conv-list">
+            {convItems.map((r) => (
+              <ConvCard
+                key={r.id}
+                deal={r.discount}
+                locked={false}
+                onOpenQR={() => onOpenQR(r)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
