@@ -55,7 +55,7 @@ export default function DiscountBanner({ restaurantId }) {
 
   if (discountLoading || !discount) return null
 
-  const isExpired = new Date(discount.valid_until) < new Date()
+  const isExpired = !!discount.valid_until && new Date(discount.valid_until) < new Date()
   const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
 
   if (isExpired || isMaxed) return null
@@ -85,11 +85,13 @@ export default function DiscountBanner({ restaurantId }) {
     }
   }
 
-  const validUntil = new Date(discount.valid_until).toLocaleDateString('it-IT', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const validUntil = discount.valid_until
+    ? new Date(discount.valid_until).toLocaleDateString('it-IT', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null
 
   return (
     <>
@@ -154,10 +156,12 @@ export default function DiscountBanner({ restaurantId }) {
             </p>
           )}
 
-          {/* Valid until */}
-          <p className="text-xs text-secondary mb-4 pl-9">
-            {t('discount.validUntil')} {validUntil}
-          </p>
+          {/* Valid until — niente riga se lo sconto non ha scadenza */}
+          {validUntil && (
+            <p className="text-xs text-secondary mb-4 pl-9">
+              {t('discount.validUntil')} {validUntil}
+            </p>
+          )}
 
           {/* Il bottone è lo stesso per tutti: "Sblocca sconto".
               Prima chi non era registrato leggeva "Registrati per sbloccare",

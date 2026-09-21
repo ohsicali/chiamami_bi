@@ -29,7 +29,7 @@ export default function ScontoTab({ form, restaurantId }) {
         .select('id, title, description, conditions, discount_value, discount_type, drop_time, valid_from, valid_until, is_active, max_redemptions, total_redeemed')
         .eq('restaurant_id', restaurantId)
         .eq('is_active', true)
-        .gt('valid_until', nowIso)
+        .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
         .order('drop_time', { ascending: false, nullsFirst: false })
         .limit(1)
       if (cancelled) return

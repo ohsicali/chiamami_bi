@@ -83,7 +83,7 @@ export function useRestaurantDiscount(restaurantId) {
       .select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order)')
       .eq('restaurant_id', restaurantId)
       .eq('is_active', true)
-      .gt('valid_until', new Date().toISOString())
+      .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
       .order('created_at', { ascending: false })
       .limit(1)
       .then(({ data }) => {
@@ -280,7 +280,7 @@ function fetchActiveDiscounts() {
     .from('discounts')
     .select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
     .eq('is_active', true)
-    .gt('valid_until', new Date().toISOString())
+    .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
     .order('created_at', { ascending: false })
     .then(({ data }) => {
       const fresh = data || []
@@ -459,8 +459,9 @@ export async function verifyQRCode(qrCode, pinCode) {
     }
   }
 
-  // 3. Check if expired
-  if (redemption.status === 'expired' || new Date(redemption.discount?.valid_until) < new Date()) {
+  // 3. Check if expired (nessuna valid_until = sconto senza scadenza)
+  const discountValidUntil = redemption.discount?.valid_until
+  if (redemption.status === 'expired' || (discountValidUntil && new Date(discountValidUntil) < new Date())) {
     return {
       valid: false,
       error: 'expired',

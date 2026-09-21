@@ -86,7 +86,7 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
 
   if (!discount && discountLoading) return null
   if (!discount) return null
-  const isExpired = new Date(discount.valid_until) < new Date()
+  const isExpired = !!discount.valid_until && new Date(discount.valid_until) < new Date()
   const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
   if (isExpired || isMaxed || dismissed) return null
 

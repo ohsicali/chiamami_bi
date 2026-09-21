@@ -251,7 +251,7 @@ export default function AdminRestaurants() {
         .from('discounts')
         .select('id, restaurant_id, discount_value, drop_time, is_active, valid_until')
         .eq('is_active', true)
-        .gt('valid_until', nowIso)
+        .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
       if (cancelled) return
       const map = {}
       ;(data || []).forEach((d) => {
