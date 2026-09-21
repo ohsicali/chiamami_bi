@@ -159,6 +159,29 @@ nulli), `npm run build` pulito, lint sui file toccati invariato (34
 problemi prima e dopo, confrontato con `git stash` — tutti preesistenti,
 nessuno introdotto qui).
 
+## 21/09 — sedi multiple: seguiti, "premium" e nome per la sede principale
+
+Tre giri di feedback dopo il primo merge:
+
+1. **Design più premium**: il blocco "N sedi" aveva uno sfondo corallo
+   tenue, registro da avviso più che da informazione. Rifatto in stile
+   `DiscountRules` (la card "Lo sconto vale su / Quando / Da sapere"):
+   card bianca, eyebrow oro maiuscolo (non corallo — qui non è urgenza),
+   righe con badge numerato oro/crema e icone SVG al posto delle emoji.
+   Nuovo file `RestaurantLocationsNote.css`.
+2. **Niente più "Sede 1"**: prima il fallback per una sede senza nome era
+   sempre "Sede N" — anche per la principale, che sulla maggior parte dei
+   ristoranti è l'UNICA sede e non aveva alcun modo di essere nominata (solo
+   le sedi extra avevano un campo etichetta in admin). Aggiunta la colonna
+   `restaurants.location_label` (`supabase/restaurant-location-label-2026-09-21.sql`,
+   eseguita) + campo "Nome della sede principale" in admin (`DettagliTab.jsx`,
+   dentro il blocco "Sedi", sopra l'elenco delle sedi extra). Il fallback
+   quando non è impostato è ora `defaultLocationLabel()` in
+   `src/lib/utils/restaurantLocations.js` — "Sede principale" per la prima,
+   "Sede N" solo per le extra senza nome (stessa funzione usata sia sulla
+   scheda pubblica sia come placeholder nel form admin, un solo posto per il
+   fallback). Cache ristoranti bumpata a `cb_restaurants_v7`.
+
 ## 21/09 — sedi multiple (due indirizzi per lo stesso locale)
 
 Richiesta: un ristorante con due sedi (stesso locale, due indirizzi) deve

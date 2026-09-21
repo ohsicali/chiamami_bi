@@ -19,7 +19,8 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // v6: aggiunto `locations` (sedi extra, tabella `restaurant_locations`) —
 // senza il bump, chi aveva la v5 in cache non vedrebbe le sedi extra finché
 // non svuota la cache.
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v6'
+// v7: aggiunto `location_label` (nome della sede principale).
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v7'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
@@ -434,6 +435,7 @@ export function useRestaurants(userPosition = null) {
         // (`our_review`, etc.) that aren't read on list views.
         const RESTAURANT_COLUMNS = [
           'id', 'name', 'slug', 'city', 'country', 'address', 'neighborhood',
+          'location_label',
           'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
           'category', 'cuisine_type', 'price_range', 'our_rating',
           'our_review', 'our_tip', 'recommended_for', 'tagline',

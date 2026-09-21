@@ -1,4 +1,4 @@
-import { getAllLocations, hasMultipleLocations, locationMapsUrl } from '../../lib/utils/restaurantLocations'
+import { getAllLocations, hasMultipleLocations, locationMapsUrl, defaultLocationLabel } from '../../lib/utils/restaurantLocations'
 import { formatAddress } from '../../lib/utils/formatAddress'
 import './RestaurantLocationsNote.css'
 
@@ -23,7 +23,7 @@ export default function RestaurantLocationsNote({ restaurant }) {
         {locations.map((loc, i) => {
           const addr = formatAddress(loc.address) || loc.address
           const url = locationMapsUrl(loc)
-          const label = loc.label || `Sede ${i + 1}`
+          const label = loc.label || defaultLocationLabel(i)
           const Row = url ? 'a' : 'div'
           return (
             <Row
