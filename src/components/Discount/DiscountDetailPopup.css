@@ -588,6 +588,37 @@
   letter-spacing: 0.1px;
 }
 
+/* Tasto "Info sconto": stesso bottone discreto del "Chiudi" sotto, non un
+   CTA — chi vuole il QR e basta non deve nemmeno vederlo aprirsi. */
+.ddp-info-toggle {
+  margin-top: 2px;
+  background: transparent;
+  border: 0;
+  color: #5C4F54;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+.ddp-info-chev { transition: transform 0.2s ease; }
+.ddp-info-chev.is-open { transform: rotate(180deg); }
+
+/* Il pannello riusa esattamente i pezzi della scheda LOCKED (DiscountRules,
+   la card "Scopri il ristorante"): stessa forma, non una versione
+   ridotta — chi lo apre da qui deve vedere le stesse regole di chi le
+   legge prima di sbloccare. */
+.ddp-qr-info-panel {
+  width: 100%;
+  align-self: stretch;
+  text-align: left;
+  animation: ddpFadeIn 0.18s ease;
+}
+.ddp-qr-info-panel .ddp-lead { margin-top: 0; }
+
 .ddp-footer-actions {
   padding: 14px 20px 22px;
   background: #fff;

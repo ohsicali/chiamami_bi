@@ -164,6 +164,7 @@ export default function DiscountDetailPopup({
             deal={deal}
             redemption={redemption}
             photoUrl={photoUrl}
+            restaurantUrl={restaurantUrl}
             onClose={onClose}
             onDownloadPDF={handleDownload}
             pdfBusy={pdfBusy}
@@ -378,7 +379,7 @@ function DetailLockedView({ deal, status, photoUrl, restaurantUrl, onClose, onUn
 /* ============================================================================
    Stato 2: UNLOCKED — QR inline
    ============================================================================ */
-function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pdfBusy, pdfError }) {
+function UnlockedQRView({ deal, redemption, photoUrl, restaurantUrl, onClose, onDownloadPDF, pdfBusy, pdfError }) {
   const r = deal?.restaurant
   const cuisine = r?.cuisine_type || r?.category?.[0]
   const address = shortAddress(r?.address)
@@ -399,6 +400,13 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
   const reassuranceText = isDrop && cd
     ? `Salvato in I miei vantaggi · Scade in ${cd}`
     : 'Salvato in I miei vantaggi · Sempre valido'
+
+  // Il QR è la cosa che serve al banco, quindi resta la prima cosa che si
+  // vede — ma chi vuole ricontrollare condizioni o giorni prima di uscire
+  // di casa non deve chiudere il popup e riaprirlo dal catalogo per
+  // trovarle: un tasto le apre qui sotto, chiuse di default.
+  const [showInfo, setShowInfo] = useState(false)
+  const description = deal?.description && deal.description !== deal.title ? deal.description : null
 
   return (
     <>
@@ -449,6 +457,37 @@ function UnlockedQRView({ deal, redemption, photoUrl, onClose, onDownloadPDF, pd
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
           {reassuranceText}
         </div>
+
+        <button
+          type="button"
+          className="ddp-info-toggle"
+          aria-expanded={showInfo}
+          onClick={() => setShowInfo((v) => !v)}
+        >
+          {showInfo ? 'Nascondi info sconto' : 'Info sconto'}
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" className={`ddp-info-chev ${showInfo ? 'is-open' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+
+        {showInfo && (
+          <div className="ddp-qr-info-panel">
+            {description && <p className="ddp-lead">{description}</p>}
+            <DiscountRules deal={deal} className="ddp-rules" />
+            {restaurantUrl && (
+              <Link to={restaurantUrl} className="ddp-restaurant-link" onClick={onClose}>
+                <div className="ddp-rl-thumb">
+                  {photoUrl && <img src={photoUrl} alt="" loading="lazy" decoding="async" />}
+                </div>
+                <div className="ddp-rl-info">
+                  <strong>Scopri il ristorante</strong>
+                  <div className="ddp-rl-name">{r?.name || ''}</div>
+                </div>
+                <div className="ddp-rl-arrow">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                </div>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ddp-footer-actions">

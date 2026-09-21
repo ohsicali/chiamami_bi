@@ -8,7 +8,6 @@ import { PhotoOrEmoji } from '../../components/UI/SmartImage'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
-import SconteQRPopup from '../../components/Discount/SconteQRPopup'
 import SconteAuthGate from '../../components/Discount/SconteAuthGate'
 import { readAndClearPendingDiscountId } from '../../lib/utils/pendingDiscount'
 import MetaTags from '../../components/SEO/MetaTags'
@@ -41,31 +40,6 @@ function shortAddress(addr) {
 
 function dropDeadline(deal) {
   return deal?.drop_ends_at || deal?.valid_until || null
-}
-
-function compactCountdown(targetIso) {
-  if (!targetIso) return null
-  const diff = new Date(targetIso).getTime() - Date.now()
-  if (diff <= 0) return null
-  const d = Math.floor(diff / 86400000)
-  const h = Math.floor((diff % 86400000) / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  if (d > 0) return `${d}g ${h}h`
-  if (h > 0) return `${h}h ${m}m`
-  return `${m}m`
-}
-
-function shortExpiryLine(deal) {
-  if (!deal) return null
-  if (deal.is_drop) {
-    const cd = compactCountdown(dropDeadline(deal))
-    return cd ? `Scade tra ${cd}` : null
-  }
-  if (!deal.valid_until) return null
-  const diffDays = (new Date(deal.valid_until).getTime() - Date.now()) / 86400000
-  if (diffDays > 365) return null
-  if (diffDays <= 0) return 'Sconto scaduto'
-  return `Scade ${new Date(deal.valid_until).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}`
 }
 
 function categoryEmoji(name) {
@@ -507,7 +481,6 @@ function SconteRedesignPageInner() {
               user={user}
               items={myActive}
               onOpenQR={openMyQR}
-              onCardClick={goTo}
             />
           )}
           {tab === 'miei' && sub === 'utilizzati' && (
@@ -525,20 +498,14 @@ function SconteRedesignPageInner() {
       {isDesktop && <Footer />}
 
       {qrPopup && (
-        <SconteQRPopup
-          redemptionId={qrPopup.redemption.id}
-          qrCode={qrPopup.redemption.qr_code}
-          shortCode={qrPopup.redemption.short_code}
-          qrPayload={`${window.location.origin}/verify?code=${qrPopup.redemption.qr_code}`}
-          restaurantName={qrPopup.deal?.restaurant?.name || 'Ristorante'}
-          restaurantSubtitle={[
-            qrPopup.deal?.restaurant?.cuisine_type || qrPopup.deal?.restaurant?.category?.[0],
-            shortAddress(qrPopup.deal?.restaurant?.address),
-          ].filter(Boolean).join(' · ')}
+        <DiscountDetailPopup
+          deal={qrPopup.deal}
+          initialUnlocked
+          initialRedemption={qrPopup.redemption}
           photoUrl={getPhoto(qrPopup.deal?.restaurant, { w: 1200 })}
-          discountValue={dealBadgeText(qrPopup.deal) || freebieLabel(qrPopup.deal)}
-          discountTitle={qrPopup.deal?.title}
-          expiresLabel={shortExpiryLine(qrPopup.deal)}
+          restaurantUrl={qrPopup.deal?.restaurant?.slug
+            ? `/restaurant/${qrPopup.deal.restaurant.slug}`
+            : `/restaurant/${slugify(qrPopup.deal?.restaurant?.name || '')}`}
           onClose={() => setQrPopup(null)}
         />
       )}
@@ -972,7 +939,7 @@ function ProductDots({ items }) {
   )
 }
 
-function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
+function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
   if (!user) {
     return (
       <div className="sc-empty">
@@ -1007,7 +974,7 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
     <section className="sc-section">
       <div className="sc-section-head">
         <strong>Pronti da usare</strong>
-        <small>tap "Apri QR" per mostrarlo al locale</small>
+        <small>tap per vedere il QR e le info</small>
       </div>
       <div className="sc-mine-list">
         {items.map((r) => (
@@ -1015,7 +982,6 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
             key={r.id}
             redemption={r}
             onOpenQR={() => onOpenQR(r)}
-            onClick={() => onCardClick(r.discount?.restaurant)}
           />
         ))}
       </div>
@@ -1023,7 +989,7 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
   )
 }
 
-function MineRow({ redemption, onOpenQR, onClick }) {
+function MineRow({ redemption, onOpenQR }) {
   const deal = redemption.discount
   const r = deal?.restaurant
   const photo = getPhoto(r)
@@ -1035,13 +1001,16 @@ function MineRow({ redemption, onOpenQR, onClick }) {
   const validityPill = expired ? 'Scaduto' : formatShortPill(deal, validityStatus)
   const pctBadge = dealBadgeText(deal) || freebieLabel(deal)
 
+  // Clic sulla riga: stessa azione del bottone "Apri QR" — apre il popup
+  // col QR e, da lì, chi vuole può aprire anche le info dello sconto.
+  // Prima portava dritti alla pagina del locale, saltando lo sconto stesso.
   return (
     <div
       className={`sc-mine-row ${expired ? 'is-expired' : ''}`}
       role="button"
       tabIndex={0}
-      onClick={(e) => { if (!e.defaultPrevented) onClick() }}
-      onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
+      onClick={(e) => { if (!e.defaultPrevented && !expired) onOpenQR() }}
+      onKeyDown={(e) => { if (e.key === 'Enter' && !expired) onOpenQR() }}
     >
       <div className="sc-ph-mini">
         <PhotoOrEmoji src={photo} alt="" emoji={categoryEmoji(cuisine)} fallbackStyle={{ fontSize: 22 }} />

@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-20 (performance RLS: auth_rls_initplan 15→0, multiple_permissive_policies 32→7)
+Ultima modifica: 2026-09-21 ("I miei vantaggi" disponibili: il tap apre il QR invece di andare al locale, banner QR unificato su DiscountDetailPopup)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -20,6 +20,47 @@ dove siamo. Aggiorna a ogni step importante.
 | HANDOFF v10 — Blocchi 0-10 | #212 | 🚧 In review | Branch: `claude/sito-backup-before-changes-ga8zbe`. Backup pre-lavori: branch `backup-pre-v10-2026-09-08` (commit `3256ddb`). Vedi sezione "HANDOFF v10" sotto. |
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
+| Sconti — tap su "I miei vantaggi" + banner QR unificato | — | ✅ Done | Vedi sezione "21/09" sotto. |
+
+## 21/09 — "I miei vantaggi" disponibili: il tap portava al locale, non allo sconto
+
+Richiesta: sui "vantaggi disponibili" (`/sconti?tab=miei`) poter cliccare sullo
+sconto per vederne le info, e ridisegnare il banner che apre "Apri QR" perché
+non era coerente col resto (era rimasto lo stile vecchio, `SconteQRPopup`,
+mentre il resto della pagina sconti usa `DiscountDetailPopup`).
+
+**Prima**: `MineRow` (la riga di uno sconto già sbloccato, sotto "Disponibili"
+dentro "I miei vantaggi") mandava il click sulla riga a `onCardClick` → dritto
+alla pagina del locale, saltando lo sconto. Il bottone "Apri QR" apriva invece
+`SconteQRPopup`, un componente a parte con le sue classi CSS (`sc-qr-*`),
+diverso nel disegno da `DiscountDetailPopup` (usato per il catalogo e per le
+convenzioni).
+
+**Fatto**:
+- `MineRow`: il click sulla riga ora fa la stessa cosa del bottone "Apri QR"
+  (apre il popup con QR + info) invece di navigare al locale. Restava
+  comunque raggiungibile da lì: il link "Scopri il ristorante" dentro il
+  popup, vedi sotto.
+- `SconteQRPopup.jsx` eliminato. Il popup che si apre su "Apri QR" (sia da "I
+  miei vantaggi" sia dal claim di un drop/convenzione appena sbloccato) ora è
+  `DiscountDetailPopup` montato con `initialUnlocked` + `initialRedemption`:
+  stesso componente, stesso disegno del resto della pagina sconti, una sola
+  fonte di verità per lo stato "sbloccato" invece di due.
+- `DiscountDetailPopup` → `UnlockedQRView`: aggiunto un tasto "Info sconto"
+  sotto la rassicurazione ("Salvato in I miei vantaggi…"), chiuso di default
+  per non far ingombro sopra al QR (quello resta la prima cosa che si vede,
+  è quello che serve al banco). Aprendolo esce lo stesso pannello regole
+  della scheda LOCKED — `DiscountRules`, descrizione se c'è, e la card
+  "Scopri il ristorante" — non una versione ridotta.
+- CSS morto rimosso da `SconteRedesignPage.css`: tutto il blocco
+  `.sc-qr-overlay`/`.sc-qr-sheet`/`.sc-action-btn` (era usato solo da
+  `SconteQRPopup`), e i riferimenti nella media query
+  `prefers-reduced-motion`.
+
+Non toccato: `QRBlockedView` (si apre quando lo sconto non è valido adesso,
+spiega già da sé perché e quando torna valido) e `MieiUtilizzatiView`/
+`UsedRow` (storico, il tap continua a portare al locale — non c'è un QR da
+mostrare per uno sconto già usato).
 
 ## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
 
