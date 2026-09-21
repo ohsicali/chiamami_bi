@@ -59,7 +59,7 @@ export default function EditRestaurant() {
     ;(async () => {
       const { data, error } = await supabase
         .from('restaurants')
-        .select('*, restaurant_photos(photo_url, thumb_url, caption, sort_order)')
+        .select('*, restaurant_photos(photo_url, thumb_url, caption, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)')
         .eq('id', restaurantId)
         .single()
       if (cancelled) return
@@ -121,6 +121,27 @@ export default function EditRestaurant() {
           }
         }
 
+        // Save extra locations to restaurant_locations (delete + re-insert,
+        // stesso pattern delle foto). Righe senza indirizzo o coordinate
+        // vengono scartate: una sede a metà compilata non deve comparire
+        // come pin fantasma sulla mappa.
+        await supabase.from('restaurant_locations').delete().eq('restaurant_id', restaurantId)
+        if (form.locations?.length > 0) {
+          const locationRows = form.locations
+            .map((l, i) => ({
+              restaurant_id: restaurantId,
+              label: l.label || null,
+              address: l.address || '',
+              latitude: l.latitude !== '' && l.latitude != null ? parseFloat(l.latitude) : null,
+              longitude: l.longitude !== '' && l.longitude != null ? parseFloat(l.longitude) : null,
+              sort_order: i,
+            }))
+            .filter((l) => l.address && l.latitude != null && l.longitude != null)
+          if (locationRows.length > 0) {
+            await supabase.from('restaurant_locations').insert(locationRows)
+          }
+        }
+
         setDirty(false)
         setToast({
           kind: 'ok',
@@ -176,7 +197,7 @@ export default function EditRestaurant() {
     if (!restaurantId) return
     setDeleting(true)
     try {
-      // Photo, sconti, partner sono in ON DELETE CASCADE — basta eliminare
+      // Photo, sconti, partner, sedi extra sono in ON DELETE CASCADE — basta eliminare
       // la riga di restaurants.
       const { error } = await supabase.from('restaurants').delete().eq('id', restaurantId)
       if (error) throw error
@@ -1073,6 +1094,18 @@ function toFormState(r) {
     moments: Array.isArray(r.moments) ? r.moments : [],
     latitude: r.latitude != null ? String(r.latitude) : '',
     longitude: r.longitude != null ? String(r.longitude) : '',
+    locations: Array.isArray(r.restaurant_locations)
+      ? r.restaurant_locations
+          .slice()
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .map((l) => ({
+            id: l.id,
+            label: l.label || '',
+            address: l.address || '',
+            latitude: l.latitude != null ? String(l.latitude) : '',
+            longitude: l.longitude != null ? String(l.longitude) : '',
+          }))
+      : [],
     photos: Array.isArray(r.restaurant_photos)
       ? r.restaurant_photos
           .slice()

@@ -10,6 +10,8 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { proxyImg } from '../../lib/supabase'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
+import { hasMultipleLocations } from '../../lib/utils/restaurantLocations'
+import RestaurantLocationsNote from './RestaurantLocationsNote'
 import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
 import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
@@ -331,8 +333,15 @@ export default function DesktopRestaurantSheet({
 
             {/* Address */}
             {addrLine && (
-              <div style={{ fontSize: 14, color: INK70, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
+              <div style={{ fontSize: 14, color: INK70, display: 'flex', alignItems: 'center', gap: 6, marginBottom: hasMultipleLocations(restaurant) ? 10 : 18 }}>
                 📍 {addrLine}
+              </div>
+            )}
+
+            {/* Due sedi — solo se il locale ne ha più di una */}
+            {hasMultipleLocations(restaurant) && (
+              <div style={{ marginBottom: 18 }}>
+                <RestaurantLocationsNote restaurant={restaurant} align="left" />
               </div>
             )}
 

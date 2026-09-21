@@ -19,6 +19,8 @@ import { useActiveDiscounts, useRestaurantDiscount, useUserRedemption } from '..
 import { useAuth } from '../../lib/hooks/useAuth'
 import { getDistance, formatDistance } from '../../lib/utils/distance'
 import { formatAddress } from '../../lib/utils/formatAddress'
+import { hasMultipleLocations } from '../../lib/utils/restaurantLocations'
+import RestaurantLocationsNote from './RestaurantLocationsNote'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import { useGeolocation } from '../../lib/hooks/useGeolocation'
 import { useIsDesktop } from '../../lib/hooks/useMediaQuery'
@@ -715,6 +717,13 @@ export default function RestaurantSheet({
                   <span style={{ color: 'var(--color-ink-40)' }}> · {formatDistance(distance)}</span>
                 )}
               </motion.div>
+
+              {/* Due sedi — solo se il locale ne ha più di una */}
+              {hasMultipleLocations(restaurant) && (
+                <motion.div variants={itemVariants} style={{ marginBottom: 14 }}>
+                  <RestaurantLocationsNote restaurant={restaurant} align="center" />
+                </motion.div>
+              )}
 
               {/* Categories + price — pills */}
               <motion.div className="sec-chips" variants={itemVariants} style={{

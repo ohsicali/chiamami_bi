@@ -16,7 +16,10 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // falsi positivi: il filtro "Pesce" pescava brunch/pizza solo perché la
 // recensione menzionava "salmone" o "pesce"). Ora il match si basa solo su
 // categories + recommended_for (tag strutturati lato admin).
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v5'
+// v6: aggiunto `locations` (sedi extra, tabella `restaurant_locations`) —
+// senza il bump, chi aveva la v5 in cache non vedrebbe le sedi extra finché
+// non svuota la cache.
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v6'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
@@ -440,7 +443,7 @@ export function useRestaurants(userPosition = null) {
         ].join(', ')
         const { data, error: dbError } = await supabase
           .from('restaurants')
-          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, sort_order)`)
+          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
           .eq('is_published', true)
           .order('name')
         if (dbError) {
@@ -449,10 +452,14 @@ export function useRestaurants(userPosition = null) {
           throw dbError
         }
         const mapped = (data || []).map(r => {
-          const { restaurant_photos, ...rest } = r
+          const { restaurant_photos, restaurant_locations, ...rest } = r
           return {
             ...rest,
             photos: (restaurant_photos || []).sort((a, b) => a.sort_order - b.sort_order),
+            // Sedi EXTRA oltre a quella principale (address/latitude/longitude
+            // sulla riga stessa) — vuoto per la stragrande maggioranza dei
+            // ristoranti, che hanno una sola sede.
+            locations: (restaurant_locations || []).sort((a, b) => a.sort_order - b.sort_order),
           }
         })
         setAllRestaurants(mapped)
