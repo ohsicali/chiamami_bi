@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 ("I miei vantaggi" disponibili: stesse card ricche del catalogo Disponibili — DropCard/ConvCard — invece della lista compatta)
+Ultima modifica: 2026-09-21 (banner "Apri QR" ridisegnato come biglietto con perforazione)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -74,6 +74,21 @@ comportamento invariato nel catalogo). Aggiunta anche una piccola animazione
 d'ingresso (check + QR con un pop) sul banner "Sbloccato!" di
 `DiscountDetailPopup`, per rendere il momento dello sblocco più vivo. CSS
 morto di `MineRow`/`.sc-qr-btn` rimosso da `SconteRedesignPage.css`.
+
+**Secondo giro di feedback**: confermato che le card dei drop presi vanno
+bene, ma il banner QR (`UnlockedQRView` dentro `DiscountDetailPopup`) andava
+ridisegnato di nuovo — l'aggiunta del tasto "Info sconto" e delle due
+animazioni pop del giro precedente non erano un vero redesign, solo rifiniture
+sullo stesso layout (due riquadri bianchi separati: identità locale sopra,
+QR sotto). Rifatto come un **biglietto unico**: striscia corallo in cima,
+foto/nome/badge nella metà superiore, una perforazione tratteggiata con due
+semicerchi "strappati" ai lati (stesso colore di sfondo della sezione — è
+quello che li fa sembrare un buco vero) a separarla dal QR nella metà
+inferiore. Preso in prestito dall'estetica del biglietto da evento, coerente
+col tono "membership" del Bi Club (stesso registro dei blocchi "Secondo Bi").
+Verificato visivamente con uno snapshot HTML/CSS isolato (stesse regole,
+dati finti, screenshot locale) prima di committare, perché il preview Vercel
+non è raggiungibile da questa sessione (proxy).
 
 ## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
 
