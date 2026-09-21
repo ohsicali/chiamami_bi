@@ -80,6 +80,20 @@ Resend per conto proprio (si passa da `_email/send.js`). È così che erano nate
 tre testate diverse e tre email senza versione a solo testo.
 Anteprima: `node scripts/email-preview.mjs` → `docs/email-preview/index.html`.
 
+Dalla revisione v11 (21/09) se ne aggiunge una terza, ed è quella che si
+sbaglia più facilmente: **il colore dice il tipo di sconto**. Corallo pieno
+`#E8453C` solo per i **drop** — scadono, i posti finiscono, e l'email ha la
+card con la barra e il countdown. Le **convenzioni** (`is_drop = false`) hanno
+il blocco crema con il filetto d'oro, il chip "sempre valido", e **niente**
+barra, countdown o conteggio posti. Vestire da drop uno sconto permanente
+brucia l'urgenza anche sui drop veri. Il bottone invece resta corallo in tutti
+e due: è il colore dell'azione, non quello dello sconto.
+
+Le formattazioni non si fanno nei template: taglio del testo di Bi (su frase
+intera, mai a metà parola), prezzo in `€€`, indirizzo e countdown stanno in
+`_email/content.js`. E se tocchi `render.js` o `blocks.js`, rilancia
+`node supabase/email-templates/build.mjs`.
+
 ## Convenzioni contenuti sconti (per riferimento futuro)
 - **Offerte "paghi X prendi Y"** (es. 3 al posto di 2): scrivere sempre in formato `AxB` (es. `3x2`, `2x1`), mai per esteso ("Paghi 2 prendi 3 Veneziane"). Vale per `title` e `discount_value` del record in `discounts`.
 - **Sticker/badge sconto** (percentuale o importo fisso su foto/card): devono sempre avere il segno meno davanti al valore, es. `-20%`, `-1€`. Gestito centralmente da `formatDiscountBadge()` / `formatDiscountBadgeShort()` in `src/lib/utils/discountFormat.js` — quando si aggiunge un nuovo punto che mostra uno sticker sconto, usare sempre queste funzioni (mai `formatDiscountValue()` da solo, che non mette il segno).

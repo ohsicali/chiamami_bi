@@ -14,6 +14,8 @@ import { applyCors } from './_cors.js'
 import { newDiscountEmail, newRestaurantEmail } from './_email/templates.js'
 import { sendBatch, buildMessage, recipientsFor, unsubscribeUrl } from './_email/send.js'
 import { formatDiscountBadge, pickPerk } from './_email/discount.js'
+import { countdownWords } from './_email/content.js'
+import { claimedCount, remainingCount, discountEndsAt } from '../src/lib/discounts.js'
 
 const SITE_URL = 'https://chiamamibi.com'
 
@@ -147,19 +149,19 @@ async function loadPayload(admin, type, id) {
   if (type === 'restaurant') {
     const { data: r, error } = await admin
       .from('restaurants')
-      .select('id, name, slug, address, city, tagline, our_review, our_tip, is_published, cuisine_type, price_range')
+      .select('id, name, slug, address, neighborhood, city, tagline, our_review, our_tip, is_published, cuisine_type, price_range')
       .eq('id', id)
       .single()
     if (error || !r) throw new Error('Restaurant not found')
     if (!r.is_published) throw new Error('Restaurant is not published — publish it before sending')
 
-    return { restaurant: r, photo: await firstPhoto(admin, id) }
+    return { restaurant: r, ...(await photoSet(admin, id)) }
   }
 
   if (type === 'discount' || type === 'drop') {
     const { data: d, error } = await admin
       .from('discounts')
-      .select('id, title, description, conditions, discount_type, discount_value, valid_until, is_drop, drop_starts_at, restaurant_id, is_active')
+      .select('id, title, description, conditions, discount_type, discount_value, valid_until, is_drop, drop_starts_at, drop_ends_at, max_quantity, max_redemptions, claimed_count, total_redeemed, restaurant_id, is_active')
       .eq('id', id)
       .single()
     if (error || !d) throw new Error('Discount not found')
@@ -172,33 +174,40 @@ async function loadPayload(admin, type, id) {
     // l'unica parte che nessun altro potrebbe aver scritto.
     const { data: r } = await admin
       .from('restaurants')
-      .select('id, name, slug, address, city, cuisine_type, tagline, our_review')
+      .select('id, name, slug, address, neighborhood, city, cuisine_type, price_range, tagline, our_review')
       .eq('id', d.restaurant_id)
       .single()
     if (!r) throw new Error('Restaurant linked to discount not found')
 
-    return { discount: d, restaurant: r, photo: await firstPhoto(admin, r.id) }
+    return { discount: d, restaurant: r, ...(await photoSet(admin, r.id)) }
   }
 
   throw new Error('Unknown type')
 }
 
 /**
- * La prima foto del locale, a piena risoluzione.
+ * Le foto del locale: le prime quattro, più quante ne esistono in tutto.
  *
- * Prima si prendeva `thumb_url` per primo — che è il ritaglio da 400px usato
- * nelle card — e finiva dentro una fascia larga 600: in posta arrivava
- * sgranata. Il ridimensionamento lo fa `/api/img` a valle (vedi
- * `croppedPhoto` in _email/blocks.js), quindi qui serve la foto grande.
+ * Prima se ne prendeva una sola, perché una sola ne entrava: l'email aveva
+ * una fascia in cima e basta. Adesso "nuovo in guida" e le convenzioni
+ * mostrano un mosaico 1+3, e il conteggio totale serve al "+N" sull'ultima
+ * tessera — senza, il badge direbbe sempre lo stesso numero o non ci
+ * sarebbe affatto.
+ *
+ * Qui serve la foto grande, non la `thumb_url`: quella è il ritaglio da
+ * 400px delle card, e dentro una fascia larga 600 arrivava sgranata. Il
+ * ridimensionamento lo fa `/api/img` a valle (vedi `croppedPhoto` in
+ * _email/blocks.js).
  */
-async function firstPhoto(admin, restaurantId) {
-  const { data: photos } = await admin
+async function photoSet(admin, restaurantId) {
+  const { data, count } = await admin
     .from('restaurant_photos')
-    .select('photo_url, thumb_url, sort_order')
+    .select('photo_url, thumb_url, sort_order', { count: 'exact' })
     .eq('restaurant_id', restaurantId)
     .order('sort_order', { ascending: true })
-    .limit(1)
-  return photos?.[0]?.photo_url || photos?.[0]?.thumb_url || null
+    .limit(4)
+  const photos = (data || []).map((r) => r.photo_url || r.thumb_url).filter(Boolean)
+  return { photos, photoCount: count ?? photos.length, photo: photos[0] || null }
 }
 
 // ---------------------------------------------------------------
@@ -222,8 +231,11 @@ function buildMail(type, p, unsubUrl) {
       review: r.our_review,
       city: r.city,
       cuisine: r.cuisine_type,
-      price: r.price_range,
-      photoUrl: p.photo,
+      priceRange: r.price_range,
+      address: r.address,
+      neighborhood: r.neighborhood,
+      photos: p.photos,
+      photoCount: p.photoCount,
       href: SLUG_URL(r.slug),
       unsubscribeUrl: unsubUrl,
     })
@@ -231,6 +243,14 @@ function buildMail(type, p, unsubUrl) {
 
   const d = p.discount
   const r = p.restaurant
+  // È `is_drop` a scegliere il template, non il `type` della chiamata: il
+  // colore dell'email dice che tipo di sconto è (corallo = scade, crema e
+  // oro = non scade), e sbagliarlo brucia l'urgenza anche sui drop veri.
+  const isDrop = type === 'drop' || !!d.is_drop
+  // I posti restano nel drop e solo lì. `remainingCount` torna null quando
+  // lo sconto non ha un tetto: la barra allora non si disegna, perché una
+  // barra su una quantità illimitata racconterebbe una scarsità inventata.
+  const left = isDrop ? remainingCount(d) : null
   return newDiscountEmail({
     value: formatDiscountBadge(d),
     restaurantName: r.name,
@@ -239,20 +259,17 @@ function buildMail(type, p, unsubUrl) {
     review: (r.our_review || r.tagline || '').trim() || null,
     city: r.city,
     cuisine: r.cuisine_type,
-    photoUrl: p.photo,
+    priceRange: r.price_range,
+    address: r.address,
+    neighborhood: r.neighborhood,
+    photos: p.photos,
+    photoCount: p.photoCount,
     href: `${SITE_URL}/sconti`,
-    isDrop: type === 'drop' || !!d.is_drop,
-    countdown: dropCountdown(d),
+    scheda: r.slug ? SLUG_URL(r.slug) : null,
+    isDrop,
+    countdown: isDrop ? countdownWords(discountEndsAt(d)) : null,
+    taken: left === null ? null : claimedCount(d),
+    left,
     unsubscribeUrl: unsubUrl,
   })
-}
-
-/** "3g 2h" — quanto manca alla scadenza del drop. */
-function dropCountdown(d) {
-  if (!d?.valid_until) return null
-  const ms = new Date(d.valid_until).getTime() - Date.now()
-  if (!Number.isFinite(ms) || ms <= 0) return null
-  const h = Math.floor(ms / 3_600_000)
-  const days = Math.floor(h / 24)
-  return days > 0 ? `${days}g ${h % 24}h` : `${h}h`
 }

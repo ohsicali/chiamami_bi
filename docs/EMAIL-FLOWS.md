@@ -20,7 +20,7 @@
 >   `Nuova candidatura partner: X` a `[Bi] Nuova candidatura: X`: **se hai un
 >   filtro in Gmail su quella dicitura, aggiornalo.**
 
-**Ultimo aggiornamento:** 24 aprile 2026 (impianto) · 15 settembre 2026 (revisione)
+**Ultimo aggiornamento:** 24 aprile 2026 (impianto) · 15 settembre 2026 (revisione) · 21 settembre 2026 (v11: veste e contenuti)
 **Provider:** [Resend](https://resend.com) (account già configurato pre-v4)
 **Dominio mittente:** `chiamamibi.com` (verificato via DKIM + SPF + DMARC dal 23/04/2026)
 **Mittente default:** `Bi <ciao@chiamamibi.com>`
@@ -44,7 +44,8 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 5 | Ristoratore candida il locale via form pubblico | `info@chiamamibi.com` (reply-to candidato) | ~~`Nuova candidatura partner: {restaurant_name}`~~ → `[Bi] Nuova candidatura: {restaurant_name}` | `POST /api/partner-application` | `src/pages/public/PartnerLandingPage.jsx` |
 | 6a | Utente chiede cambio email account | Email di recupero utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/SettingsPage.jsx` |
 | 6b | Utente chiede reset password (forgot) | Email utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/LoginPage.jsx` |
-| 7 | Admin pubblica un nuovo drop | Tutti gli iscritti newsletter (batch) | Variabile (compilato in notify-subscribers.js) | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
+| 7 | Admin pubblica un nuovo drop | Iscritti agli avvisi sconti (batch) | `Ho acceso un drop da {Locale}` | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
+| 7b | Admin pubblica una convenzione (sconto non-drop) | Iscritti agli avvisi sconti | `Da oggi hai il {valore} da {Locale}` | `POST /api/notify-subscribers` type=`discount` | `src/pages/admin/DiscountManager.jsx` |
 | 8 | Admin invia newsletter manuale (edge function) | Tutti gli iscritti newsletter | Variabile (passato nel body) | Supabase Edge Function `send-newsletter` | **Non ci sono callsite client attivi** — è un endpoint amministrativo |
 
 ### Trigger dormant / gap identificati
@@ -293,5 +294,37 @@ Vedi `docs/email-sistema.md`. In sintesi, quello che tocca questo file:
 - **Anteprima:** `node scripts/email-preview.mjs` genera `docs/email-preview/`
   con tutte e dodici le email; il pannello admin adesso ne può mandare dodici
   di prova invece di cinque.
+
+---
+
+## 21/09 — revisione v11: dove vivono i template
+
+Censimento richiesto dall'handoff, cioè **dove si compone l'HTML prima della
+chiamata a Resend**. Non c'è più nessun HTML dentro un endpoint: tutto passa
+da `api/_email/`.
+
+| Cosa | File | Funzione |
+|---|---|---|
+| Guscio (testata, card, piè di pagina, preheader) | `api/_email/render.js` | `emailHeader`, `emailFooter`, `renderEmail` |
+| Mattoni (mosaico, card drop, blocco convenzione, bottone, testi) | `api/_email/blocks.js` | una funzione per blocco |
+| Colori, misure, claim | `api/_email/theme.js` | `COLORS`, `MOSAIC`, `DROP_PHOTO`, `CLAIM` |
+| Regole di contenuto (taglio, prezzo, indirizzo, countdown) | `api/_email/content.js` | `clipSentences`, `priceSymbols`, `metaFor`, `countdownWords` |
+| Le quattordici email | `api/_email/templates.js` | una funzione per email |
+| Invio (Resend, intestazioni, batch, destinatari) | `api/_email/send.js` | `sendEmail`, `sendBatch`, `recipientsFor` |
+| Le due di Supabase | `supabase/email-templates/build.mjs` | generate dagli stessi blocchi |
+
+**Rifatti in questo giro (blocco centrale nuovo):** nuovo in guida (#9), drop
+(#7), convenzione (#7b), benvenuto Bi Club (#1).
+
+**Guscio nuovo, blocco centrale ancora quello di settembre** — da allineare
+subito dopo, vedi `docs/email-sistema.md` §8: sconto preso (#5 della tabella
+in email-sistema), sconto usato, benvenuto ristoratore (#2), conferma
+suggerimento (#3), conferma candidatura, codice di recupero (#6a/#6b), le due
+interne (#4, #5), e le due di Supabase.
+
+**Non toccato:** trigger, condizioni d'invio, destinatari, dedup su
+`email_notifications_log`, intestazioni `List-Unsubscribe`, batch Resend.
+
+---
 
 *File auto-generato da audit manuale sorgente `main` HEAD `7e6f406`. Aggiornare quando si toccano gli endpoint `/api/send-email`, `/api/partner-application`, `/api/recovery-otp`, `/api/notify-subscribers`, o la edge function `send-newsletter`.*

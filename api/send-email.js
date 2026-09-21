@@ -278,7 +278,13 @@ async function handlePreview(req, res) {
   const u = unsubscribeUrl(token)
   const built = {
     welcome: () => welcomeEmail({ ...SAMPLE.welcome, name: ctx.name || SAMPLE.welcome.name, unsubscribeUrl: u }),
+    // Drop e convenzione sono due email diverse, non la stessa con un flag:
+    // si provano tutte e due, o la seconda non la guarda nessuno finché non
+    // arriva a un iscritto vero.
     'new-discount': () => newDiscountEmail({ ...SAMPLE.newDiscount, unsubscribeUrl: u }),
+    'new-convention': () => newDiscountEmail({
+      ...SAMPLE.newDiscount, isDrop: false, countdown: null, taken: null, left: null, unsubscribeUrl: u,
+    }),
     'new-place': () => newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: u }),
     'discount-claimed': () => discountClaimedEmail(SAMPLE.discountClaimed),
     'discount-used': () => discountUsedEmail(SAMPLE.discountUsed),
@@ -368,6 +374,11 @@ async function handleUserWelcome(req, res) {
   // service role key perché qui la chiamata arriva subito dopo la
   // registrazione, quando il browser una sessione valida può non averla ancora.
   let token = null
+  // Quanti sconti attivi ci sono adesso: il bottone dice il numero ("Guarda
+  // i 6 sconti attivi"), che è l'esca — la stessa che il sito usa già sul
+  // gate di registrazione. Se il conteggio non arriva il bottone resta
+  // senza numero, che è l'unica cosa peggiore di dirne uno sbagliato.
+  let attivi = null
   try {
     const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
     const service = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -376,10 +387,16 @@ async function handleUserWelcome(req, res) {
       const { data: prof } = await admin
         .from('profiles').select('id').eq('email', String(email).trim().toLowerCase()).maybeSingle()
       if (prof?.id) token = await tokenForUser(admin, prof.id)
+      const { count } = await admin
+        .from('discounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .gt('valid_until', new Date().toISOString())
+      attivi = Number.isFinite(count) ? count : null
     }
   } catch { /* il benvenuto parte comunque */ }
 
-  const mail = welcomeEmail({ name, unsubscribeUrl: unsubscribeUrl(token) })
+  const mail = welcomeEmail({ name, attivi, unsubscribeUrl: unsubscribeUrl(token) })
   const r = await sendEmail({ to: email, ...mail, headers: listUnsubscribeHeaders(token) })
   if (!r.ok) {
     console.error('[send-email user] ', r.error)

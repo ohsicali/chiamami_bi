@@ -53,7 +53,10 @@ test('reggono dove i client di posta sono severi', () => {
     assert.ok(!/rgba\(/.test(body), `${t.file}: rgba() — Outlook lo scarta`)
     assert.ok(!/display:\s*flex/.test(body), `${t.file}: flex non esiste nella posta`)
     assert.ok(!/display:\s*grid/.test(body), `${t.file}: grid non esiste nella posta`)
-    assert.ok(body.includes('email-assets/'), `${t.file}: manca il logo`)
+    // La testata non porta più il logo PNG: dopo la revisione v11 è testo,
+    // e non a caso — chi tiene le immagini spente (in Gmail è la
+    // maggioranza) al posto del marchio vedeva un riquadro vuoto.
+    assert.ok(body.includes('LA GUIDA DI BI'), `${t.file}: manca la testata`)
     assert.ok(body.includes('Poppins'), `${t.file}: manca il carattere del sito`)
   }
 })

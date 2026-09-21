@@ -15,7 +15,8 @@ import { supabase } from '../../lib/supabase'
 
 const TEMPLATES = [
   { key: 'welcome', label: 'Registrazione completata', hint: 'Quando qualcuno crea l’account.' },
-  { key: 'new-discount', label: 'Nuovo sconto / drop', hint: 'Parte da sola quando pubblichi uno sconto attivo.' },
+  { key: 'new-discount', label: 'Nuovo drop', hint: 'Parte da sola quando pubblichi un drop: card corallo, barra dei posti.' },
+  { key: 'new-convention', label: 'Nuova convenzione', hint: 'Lo sconto che non scade: crema e oro, senza countdown.' },
   { key: 'new-place', label: 'Nuovo locale', hint: 'Parte da sola quando pubblichi un locale.' },
   { key: 'discount-claimed', label: 'Sconto preso (col codice)', hint: 'Quando l’utente sblocca uno sconto.' },
   { key: 'discount-used', label: 'Sconto usato', hint: 'Quando il locale scansiona il QR.' },
