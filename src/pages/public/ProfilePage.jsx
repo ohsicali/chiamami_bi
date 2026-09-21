@@ -3,7 +3,7 @@ import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useSavedRestaurants } from '../../lib/hooks/useSavedRestaurants'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { TAB_BAR_HEIGHT } from '../../components/Layout/MobileTabBar'
 import Footer from '../../components/Layout/Footer'
 import MobileLogoHeader from '../../components/Layout/MobileLogoHeader'
@@ -25,8 +25,6 @@ export default function ProfilePage() {
   const [stats, setStats] = useState({ savedCount: 0, redemptionsCount: 0, totalSaved: 0, visitedCount: 0 })
   const [showSuggest, setShowSuggest] = useState(false)
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
-  const [newsletterEnabled, setNewsletterEnabled] = useState(false)
-  const [loadingNewsletter, setLoadingNewsletter] = useState(true)
   const { city: currentCity } = useCity()
   const isDesktop = useIsDesktop()
 
@@ -55,19 +53,12 @@ export default function ProfilePage() {
       })
   }, [user?.id, savedIds.size])
 
-  // Newsletter status
-  useEffect(() => {
-    if (!user?.email || !isSupabaseConfigured()) { setLoadingNewsletter(false); return }
-    supabase.from('newsletter_subscribers').select('id').eq('email', user.email).single()
-      .then(({ data }) => { setNewsletterEnabled(!!data); setLoadingNewsletter(false) })
-  }, [user?.email])
-
-  const handleToggleNewsletter = async () => {
-    const newState = !newsletterEnabled
-    setNewsletterEnabled(newState)
-    if (newState) { await supabase.from('newsletter_subscribers').upsert({ email: user.email, source: 'profile_toggle' }, { onConflict: 'email' }) }
-    else { await supabase.from('newsletter_subscribers').delete().eq('email', user.email) }
-  }
+  // L'interruttore "Newsletter" non c'è più, ed è una scelta, non una
+  // semplificazione: chi ha un account riceve gli aggiornamenti, punto. Era
+  // un'iscrizione a parte e spenta di default — su sette registrati uno solo
+  // l'aveva accesa — quindi prometteva una lista che in pratica non esisteva.
+  // La via d'uscita resta, ed è la stessa di ogni altra email: il link in
+  // fondo al messaggio, che porta a /preferenze-email.
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -507,38 +498,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ── Newsletter TOGGLE — mobile only (desktop version is full-width below) ── */}
-      {!isDesktop && (
-      <div style={{
-        marginBottom: 16, padding: '18px 20px',
-        marginLeft: 22, marginRight: 22,
-        background: '#fff', borderRadius: 20,
-        border: '1px solid var(--color-bordo)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</div>
-          <div style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</div>
-        </div>
-        <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
-          position: 'relative', width: 48, height: 28, borderRadius: 14,
-          background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
-          border: 'none', cursor: 'pointer', transition: 'background 0.2s',
-          flexShrink: 0,
-        }}>
-          <motion.div
-            style={{
-              position: 'absolute', top: 2, width: 24, height: 24,
-              borderRadius: 12, background: '#fff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-            }}
-            animate={{ left: newsletterEnabled ? 22 : 2 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          />
-        </button>
-      </div>
-      )}
-
       {/* ── 4 LINK BUTTONS — 2x2 on desktop and mobile ── */}
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
@@ -641,39 +600,6 @@ export default function ProfilePage() {
       </div>{/* end right col */}
 
       </div>{/* end centered container */}
-
-      {/* ── NEWSLETTER — full-width below grid (desktop only) ── */}
-      {isDesktop && (
-        <div style={{ maxWidth: 1080, margin: '0 auto', width: '100%', padding: '0 40px 32px' }}>
-          <div style={{
-            padding: '18px 24px',
-            background: '#fff', borderRadius: 20,
-            border: '1px solid var(--color-bordo)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>Newsletter</div>
-              <div style={{ fontSize: 12, color: 'var(--color-secondary)', marginTop: 2 }}>Ricevi novità e offerte esclusive</div>
-            </div>
-            <button onClick={handleToggleNewsletter} disabled={loadingNewsletter} style={{
-              position: 'relative', width: 48, height: 28, borderRadius: 14,
-              background: newsletterEnabled ? 'var(--color-accent)' : '#D1D5DB',
-              border: 'none', cursor: 'pointer', transition: 'background 0.2s',
-              flexShrink: 0,
-            }}>
-              <motion.div
-                style={{
-                  position: 'absolute', top: 2, width: 24, height: 24,
-                  borderRadius: 12, background: '#fff',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-                }}
-                animate={{ left: newsletterEnabled ? 22 : 2 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── FOOTER MINIMAL — mobile only ── */}
       <div className="md:hidden" style={{ flex: 1 }} />

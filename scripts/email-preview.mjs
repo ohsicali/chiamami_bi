@@ -28,16 +28,20 @@ import {
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'email-preview')
 const UNSUB = 'https://chiamamibi.com/preferenze-email?t=anteprima'
 
-// La fascia della foto: un file locale con lo stesso rapporto del ritaglio
-// che fa /api/img in produzione (600×250), così l'anteprima mostra lo spazio
-// vero che la foto si prende e non uno inventato.
+// Le foto del mosaico. In produzione sono indirizzi di Supabase che passano
+// dal proxy `/api/img`; qui è un file locale ripetuto, perché l'anteprima
+// serve a vedere l'impaginazione — le proporzioni del ritaglio le decide il
+// proxy e sono le stesse per tutte e quattro.
 const FOTO = './foto-esempio.jpg'
+const FOTO4 = [FOTO, FOTO, FOTO, FOTO]
 
 const EMAIL = [
   ['Registrazione completata', 'benvenuto', welcomeEmail({ ...SAMPLE.welcome, unsubscribeUrl: UNSUB })],
   ['Drop nuovo', 'drop', newDiscountEmail({ ...SAMPLE.newDiscount, photoUrl: FOTO, unsubscribeUrl: UNSUB })],
-  ['Sconto nuovo (non drop)', 'sconto', newDiscountEmail({ ...SAMPLE.newDiscount, photoUrl: FOTO, isDrop: false, countdown: null, unsubscribeUrl: UNSUB })],
-  ['Locale nuovo in guida', 'locale', newRestaurantEmail({ ...SAMPLE.newRestaurant, photoUrl: FOTO, unsubscribeUrl: UNSUB })],
+  ['Convenzione (non scade)', 'convenzione', newDiscountEmail({ ...SAMPLE.newDiscount, photos: FOTO4, photoCount: 7, isDrop: false, countdown: null, taken: null, left: null, unsubscribeUrl: UNSUB })],
+  ['Locale nuovo in guida', 'locale', newRestaurantEmail({ ...SAMPLE.newRestaurant, photos: FOTO4, photoCount: 6, unsubscribeUrl: UNSUB })],
+  ['Locale nuovo — una foto sola', 'locale-1foto', newRestaurantEmail({ ...SAMPLE.newRestaurant, photos: [FOTO], photoCount: 1, unsubscribeUrl: UNSUB })],
+  ['Locale nuovo — senza foto', 'locale-0foto', newRestaurantEmail({ ...SAMPLE.newRestaurant, photos: [], photoCount: 0, unsubscribeUrl: UNSUB })],
   ['Sconto preso — col codice', 'codice', discountClaimedEmail(SAMPLE.discountClaimed)],
   ['Sconto usato', 'usato', discountUsedEmail(SAMPLE.discountUsed)],
   ['Benvenuto ristoratore — col PIN', 'ristoratore', partnerWelcomeEmail(SAMPLE.partnerWelcome)],
@@ -64,7 +68,11 @@ mkdirSync(OUT, { recursive: true })
 for (const nome of ['guida-bi-ink.png', 'guida-bi-white.png', 'guida-bi-coral.png']) {
   copyFileSync(join(OUT, '..', '..', 'public', 'email-assets', nome), join(OUT, nome))
 }
-const locale = (html) => html.replaceAll('https://chiamamibi.com/email-assets/', './')
+// Il proxy delle foto non gira in locale: nell'anteprima gli indirizzi
+// /api/img tornano a puntare al file di esempio, così si vede l'impaginazione
+// invece di quattro riquadri rotti.
+const foto = (html) => html.replace(/https:\/\/chiamamibi\.com\/api\/img\?[^"]*/g, FOTO)
+const locale = (html) => foto(html.replaceAll('https://chiamamibi.com/email-assets/', './'))
 
 for (const [, slug, mail] of EMAIL) {
   writeFileSync(join(OUT, `${slug}.html`), locale(mail.html))

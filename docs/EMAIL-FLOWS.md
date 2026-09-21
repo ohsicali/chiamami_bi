@@ -20,7 +20,7 @@
 >   `Nuova candidatura partner: X` a `[Bi] Nuova candidatura: X`: **se hai un
 >   filtro in Gmail su quella dicitura, aggiornalo.**
 
-**Ultimo aggiornamento:** 24 aprile 2026 (impianto) · 15 settembre 2026 (revisione)
+**Ultimo aggiornamento:** 24 aprile 2026 (impianto) · 15 settembre 2026 (revisione) · 21 settembre 2026 (v11: veste e contenuti)
 **Provider:** [Resend](https://resend.com) (account già configurato pre-v4)
 **Dominio mittente:** `chiamamibi.com` (verificato via DKIM + SPF + DMARC dal 23/04/2026)
 **Mittente default:** `Bi <ciao@chiamamibi.com>`
@@ -44,8 +44,9 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
 | 5 | Ristoratore candida il locale via form pubblico | `info@chiamamibi.com` (reply-to candidato) | ~~`Nuova candidatura partner: {restaurant_name}`~~ → `[Bi] Nuova candidatura: {restaurant_name}` | `POST /api/partner-application` | `src/pages/public/PartnerLandingPage.jsx` |
 | 6a | Utente chiede cambio email account | Email di recupero utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/SettingsPage.jsx` |
 | 6b | Utente chiede reset password (forgot) | Email utente | ~~`{otp} — Codice di recupero ChiamamiBi`~~ → `{otp} è il tuo codice ChiamamiBi` | `POST /api/recovery-otp` | `src/pages/public/LoginPage.jsx` |
-| 7 | Admin pubblica un nuovo drop | Tutti gli iscritti newsletter (batch) | Variabile (compilato in notify-subscribers.js) | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
-| 8 | Admin invia newsletter manuale (edge function) | Tutti gli iscritti newsletter | Variabile (passato nel body) | Supabase Edge Function `send-newsletter` | **Non ci sono callsite client attivi** — è un endpoint amministrativo |
+| 7 | Admin pubblica un nuovo drop | Iscritti agli avvisi sconti (batch) | `Ho acceso un drop da {Locale}` | `POST /api/notify-subscribers` type=`drop` | `src/pages/admin/DiscountManager.jsx` |
+| 7b | Admin pubblica una convenzione (sconto non-drop) | Iscritti agli avvisi sconti | `Da oggi hai il {valore} da {Locale}` | `POST /api/notify-subscribers` type=`discount` | `src/pages/admin/DiscountManager.jsx` |
+| ~~8~~ | ~~Newsletter manuale (edge function)~~ | — | — | ~~Edge Function `send-newsletter`~~ | **Rimossa il 21/09/2026** — vedi §"Chi riceve le email" |
 
 ### Trigger dormant / gap identificati
 
@@ -141,13 +142,33 @@ Questo doc descrive **cosa parte quando e perché**. Serve per:
   - Se chiami senza `force: true` e la combinazione type+id è già stata notificata, restituisce errore → serve a evitare doppi invii per errore.
 - **Mittente:** `Bi <ciao@chiamamibi.com>` · **Reply-to:** `info@chiamamibi.com`
 
-### 8. Newsletter standalone (edge function Supabase)
+### ~~8. Newsletter standalone (edge function Supabase)~~ · RIMOSSA il 21/09/2026
 
-- **Quando:** attualmente nessun client UI la invoca. È un endpoint ops che Augusto può chiamare via curl/Supabase Studio per mandare una newsletter manuale.
-- **Dove:** `supabase/functions/send-newsletter/index.ts`
-- **Body:** `{ subject, template, variables? }` — il template è HTML, `variables` sono sostituibili con handlebar-like.
-- **Vantaggio vs notify-subscribers:** non conta nel cap Vercel Hobby (12 functions), è deployato su Supabase. Utile se in futuro la newsletter diventa periodica e Vercel è pieno.
-- **Tabella iscritti:** `newsletter_subscribers` (stessa di notify-subscribers).
+`supabase/functions/send-newsletter/index.ts` non esiste più. Perché, in
+ordine di gravità:
+
+- **non era deployata**: sul progetto live le edge function attive sono
+  `resolve-maps` e `moderate-review`, non c'era;
+- **mandava a una lista quasi vuota**: leggeva `newsletter_subscribers`, che
+  è un'iscrizione a parte e spenta di default — un iscritto su sette
+  registrati. Gli annunci veri partono da `email_preferences`, dove tutti
+  sono dentro per impostazione predefinita;
+- **i link erano su `chiamamibi.it`**, che non è il nostro dominio, e il
+  mittente era `noreply@chiamamibi.it`: senza DKIM/SPF su quel dominio ogni
+  messaggio sarebbe finito in spam o tornato indietro;
+- **saltava tutte le protezioni**: niente versione a solo testo, niente
+  `List-Unsubscribe`, niente disiscrizione a un clic, corallo `#FF5757`
+  invece di `#E8453C`. Cioè esattamente le cose per cui esiste
+  `api/_email/send.js`.
+
+Se e quando serve una newsletter, si fa **dove si fanno le altre**: un
+`type` in più in `api/notify-subscribers.js`, che già ha i destinatari
+giusti (`recipientsFor`), il registro anti-doppio-invio, l'invio a blocchi e
+la disiscrizione a un clic. Non serve una funzione nuova e non si tocca il
+cap Vercel.
+
+Il codice rimosso resta nella storia di git se dovesse servire come
+riferimento.
 
 ---
 
@@ -238,7 +259,56 @@ Non è cryptographically secure. Basso rischio perché OTP 6-digit + TTL 10min +
 
 ### Gap E — Newsletter periodica
 
-Template #4 del manifesto email (`docs/v4-email-manifesto.md`) non ancora implementato. La edge function `send-newsletter` esiste ma manca il frontend per comporre/schedulare una newsletter + meccanismo double opt-in per gli iscritti.
+Template #4 del manifesto email (`docs/v4-email-manifesto.md`) non ancora
+implementato. La edge function `send-newsletter` **è stata rimossa** il
+21/09 (vedi sopra): quando la newsletter servirà davvero, si aggiunge come
+`type` in `api/notify-subscribers.js`.
+
+**Niente double opt-in**, e non è una dimenticanza: la regola decisa il
+21/09 è che chi ha un account riceve gli aggiornamenti, e l'unica scelta che
+gli si chiede è quella di smettere. Vedi la sezione qui sotto.
+
+---
+
+## Chi riceve le email, e come si smette (decisione del 21/09/2026)
+
+**La regola:** chi ha un account su ChiamamiBi riceve gli aggiornamenti.
+Non c'è niente a cui iscriversi. L'unica scelta è smettere, e sta in fondo a
+ogni messaggio.
+
+**Com'è garantita.** Il trigger `on_auth_user_created_email_prefs` su
+`auth.users` crea una riga in `email_preferences` a ogni registrazione, e le
+tre colonne (`new_discounts`, `new_places`, `my_discounts`) hanno
+`default true`. Verificato sul progetto live: 7 profili, 7 righe, zero
+scoperti. Non è fortuna, è il database. `recipientsFor()` in
+`api/_email/send.js` legge di lì, quindi nessun punto d'invio può
+dimenticarsi di applicare il filtro — ma nemmeno può escludere qualcuno che
+non ha mai toccato niente.
+
+**Cosa è stato tolto il 21/09:** l'interruttore "Newsletter" nella pagina
+profilo (mobile e desktop). Era un'iscrizione separata, **spenta di
+default**, su una tabella diversa (`newsletter_subscribers`): prometteva una
+lista che in pratica non esisteva — un iscritto su sette — e contraddiceva
+la regola. Tolto anche `NewsletterForm.jsx`, che non era importato da
+nessuna parte.
+
+**Cosa resta, e deve restare:**
+
+- il **link in fondo a ogni annuncio** ("Scegli cosa ricevere" →
+  `/preferenze-email`);
+- l'intestazione **`List-Unsubscribe` con `One-Click`**, che fa comparire
+  "Annulla iscrizione" accanto al mittente in Gmail e Apple Mail e che dal
+  2024 è obbligatoria per chi manda a molti indirizzi;
+- la **pagina delle preferenze** con gli interruttori separati. Non è in
+  contraddizione con "tutti iscritti": lì non ci si iscrive, ci si toglie.
+  Ed è quella che tiene basse le segnalazioni di spam — chi non vuole più un
+  tipo di email lo spegne invece di premere "segnala come spam", che è il
+  colpo peggiore che un dominio possa prendere. Toglierla farebbe salire le
+  segnalazioni, cioè esattamente il contrario di quello che serve.
+
+**La tabella `newsletter_subscribers` resta** — la scrive `useAuth.js` alla
+registrazione, la legge l'admin per l'export CSV, e `delete-account.js` la
+ripulisce. Non è più una porta d'ingresso: è un registro.
 
 ---
 
@@ -293,5 +363,37 @@ Vedi `docs/email-sistema.md`. In sintesi, quello che tocca questo file:
 - **Anteprima:** `node scripts/email-preview.mjs` genera `docs/email-preview/`
   con tutte e dodici le email; il pannello admin adesso ne può mandare dodici
   di prova invece di cinque.
+
+---
+
+## 21/09 — revisione v11: dove vivono i template
+
+Censimento richiesto dall'handoff, cioè **dove si compone l'HTML prima della
+chiamata a Resend**. Non c'è più nessun HTML dentro un endpoint: tutto passa
+da `api/_email/`.
+
+| Cosa | File | Funzione |
+|---|---|---|
+| Guscio (testata, card, piè di pagina, preheader) | `api/_email/render.js` | `emailHeader`, `emailFooter`, `renderEmail` |
+| Mattoni (mosaico, card drop, blocco convenzione, bottone, testi) | `api/_email/blocks.js` | una funzione per blocco |
+| Colori, misure, claim | `api/_email/theme.js` | `COLORS`, `MOSAIC`, `DROP_PHOTO`, `CLAIM` |
+| Regole di contenuto (taglio, prezzo, indirizzo, countdown) | `api/_email/content.js` | `clipSentences`, `priceSymbols`, `metaFor`, `countdownWords` |
+| Le quattordici email | `api/_email/templates.js` | una funzione per email |
+| Invio (Resend, intestazioni, batch, destinatari) | `api/_email/send.js` | `sendEmail`, `sendBatch`, `recipientsFor` |
+| Le due di Supabase | `supabase/email-templates/build.mjs` | generate dagli stessi blocchi |
+
+**Rifatti in questo giro (blocco centrale nuovo):** nuovo in guida (#9), drop
+(#7), convenzione (#7b), benvenuto Bi Club (#1).
+
+**Guscio nuovo, blocco centrale ancora quello di settembre** — da allineare
+subito dopo, vedi `docs/email-sistema.md` §8: sconto preso (#5 della tabella
+in email-sistema), sconto usato, benvenuto ristoratore (#2), conferma
+suggerimento (#3), conferma candidatura, codice di recupero (#6a/#6b), le due
+interne (#4, #5), e le due di Supabase.
+
+**Non toccato:** trigger, condizioni d'invio, destinatari, dedup su
+`email_notifications_log`, intestazioni `List-Unsubscribe`, batch Resend.
+
+---
 
 *File auto-generato da audit manuale sorgente `main` HEAD `7e6f406`. Aggiornare quando si toccano gli endpoint `/api/send-email`, `/api/partner-application`, `/api/recovery-otp`, `/api/notify-subscribers`, o la edge function `send-newsletter`.*

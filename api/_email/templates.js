@@ -19,22 +19,26 @@
  * locale, invece, è la cosa che fa aprire.
  */
 
-import { BRAND, COLORS, SITE_URL } from './theme.js'
+import { BRAND, CLAIM, COLORS, SITE_URL } from './theme.js'
 import { renderEmail } from './render.js'
 import {
-  h1, h2, p, lede, eyebrow, divider, button, offerCard, codeBlock,
-  successBox, heroPhoto, signature, checklist, steps, quote, note,
-  dataTable, esc,
+  h1, h2, p, lede, eyebrow, metaLine, divider, button, offerCard, codeBlock,
+  successBox, photoMosaic, dropCard, conventionOffer, microNote,
+  textLink, signature, checklist, checkRows, steps, note, dataTable, spacer,
+  esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
+import { clipSentences, metaFor, perkBeyondValue } from './content.js'
 
 const firstName = (name) => String(name || '').trim().split(/\s+/)[0] || ''
 
-/** Il testo tagliato a una lunghezza che non manda a capo tre volte. */
-const clip = (s, n) => {
-  const t = String(s || '').trim()
-  return t.length > n ? `${t.slice(0, n).trimEnd()}…` : t
-}
+/**
+ * Il testo di Bi, tagliato su una frase intera.
+ *
+ * Il taglio secco a N caratteri è quello che produceva "…carne, verdu…" in
+ * posta: la regola vera sta in content.js, qui c'è solo il nome corto.
+ */
+const clip = (s, n = 180) => clipSentences(s, n)
 
 /**
  * Il vantaggio detto in due parole, per l'oggetto.
@@ -67,48 +71,53 @@ const MOTIVO = {
 /*  1. Registrazione completata                                        */
 /* ================================================================== */
 
-export function welcomeEmail({ name, unsubscribeUrl }) {
+export function welcomeEmail({ name, unsubscribeUrl, attivi = null }) {
   const n = firstName(name)
-  const hi = n ? `Ciao ${n},` : 'Ciao,'
+  // Il numero nel bottone è l'esca: "Guarda i 6 sconti attivi" si tocca più
+  // di "Guarda gli sconti attivi", ed è la stessa regola che il sito applica
+  // già sul gate di registrazione. Quando il conteggio non arriva, la frase
+  // regge lo stesso senza numeri inventati.
+  const quanti = Number.isFinite(attivi) && attivi > 0 ? attivi : null
+  const cta = quanti ? `Guarda i ${quanti} sconti attivi →` : 'Guarda gli sconti attivi →'
   return {
     subject: n ? `${n}, da adesso sei nel Bi Club` : 'Da adesso sei nel Bi Club',
     ...renderEmail({
-      preheader: 'Gli sconti dei locali dove vado a mangiare io, a partire da stasera.',
+      preheader: quanti
+        ? `${quanti} sconti attivi ti aspettano nei locali che ho provato io.`
+        : 'Gli sconti dei locali dove vado a mangiare io, a partire da stasera.',
       reason: MOTIVO.account,
       unsubscribeUrl,
-      unsubscribeLabel: 'Vuoi ricevere meno email?',
+      claim: CLAIM.club,
       blocks: [
-        eyebrow('Il Bi Club'),
-        h1('Ci sei.'),
-        lede(`${hi} da adesso hai accesso a tutti gli sconti del Bi Club — quelli veri, nei locali che ho provato di persona.`),
-        button('Guarda gli sconti attivi', `${SITE_URL}/sconti`, { bg: COLORS.corallo }),
-        divider({ gold: true }),
-        h2('Cosa puoi fare'),
-        checklist([
-          'Prendere uno sconto e mostrarlo al locale: niente da stampare, basta il telefono.',
-          'Salvare i posti che ti piacciono e organizzarli in liste tue.',
-          'Chiedermi un consiglio a parole: ti dico dove andare stasera.',
+        eyebrow('Il Bi Club', { padding: '24px 20px 0' }),
+        h1(n ? `Ci sei, ${n}.` : 'Ci sei.', { size: 30 }),
+        lede('Da adesso hai accesso a tutti gli sconti del Bi Club — quelli veri, nei locali che ho provato di persona.'),
+        button(cta, `${SITE_URL}/sconti`, { padding: '18px 20px 0' }),
+        // Tre cose, una riga ciascuna, dentro un riquadro solo. Prima erano
+        // tre blocchi con gli spazi in mezzo: duecento pixel per dire quello
+        // che qui sta in novanta.
+        checkRows([
+          'Prendi uno sconto e mostralo al locale',
+          'Salva i posti e organizzali in liste tue',
+          'Chiedimi un consiglio a parole, ti dico dove andare',
         ]),
-        divider(),
-        quote('I locali qui dentro li scelgo io e ci torno. Niente sponsorizzazioni, niente scambi di favori: se un posto non mi è piaciuto, non lo trovi.'),
-        note(`Se ti serve qualcosa, rispondi a questa email: dall'altra parte ci sono io. <a href="mailto:${BRAND.contact}" style="color:${COLORS.coralloInk};">${BRAND.contact}</a>`),
-        signature('— Bi'),
+        // Il manifesto resta: in questa email è il motivo per cui ti fidi
+        // del Club. Ma è testo normale, non una citazione incorniciata.
+        p(`I locali qui dentro li scelgo io e ci torno. Niente sponsorizzazioni, niente scambi di favori.${SIGN}`, { size: 13.5, padding: '18px 20px 0' }),
+        spacer(22),
       ],
       text: [
-        hi,
+        n ? `Ci sei, ${n}.` : 'Ci sei.',
         '',
-        'Ci sei: da adesso hai accesso a tutti gli sconti del Bi Club, nei locali che ho provato di persona.',
+        'Da adesso hai accesso a tutti gli sconti del Bi Club, nei locali che ho provato di persona.',
         '',
-        `Gli sconti attivi: ${SITE_URL}/sconti`,
+        `${cta.replace(' →', '')}: ${SITE_URL}/sconti`,
         '',
-        'COSA PUOI FARE',
-        '- Prendere uno sconto e mostrarlo al locale, direttamente dal telefono',
-        '- Salvare i posti che ti piacciono e organizzarli in liste tue',
-        '- Chiedermi un consiglio a parole',
+        '- Prendi uno sconto e mostralo al locale',
+        '- Salva i posti e organizzali in liste tue',
+        '- Chiedimi un consiglio a parole, ti dico dove andare',
         '',
-        'I locali qui dentro li scelgo io e ci torno. Niente sponsorizzazioni, niente scambi di favori: se un posto non mi è piaciuto, non lo trovi.',
-        '',
-        `Se ti serve qualcosa, rispondi a questa email: dall'altra parte ci sono io.`,
+        'I locali qui dentro li scelgo io e ci torno. Niente sponsorizzazioni, niente scambi di favori.',
         '',
         '— Bi',
       ].join('\n'),
@@ -117,96 +126,137 @@ export function welcomeEmail({ name, unsubscribeUrl }) {
 }
 
 /* ================================================================== */
-/*  2. Nuovo sconto pubblicato                                         */
+/*  2. Nuovo sconto pubblicato — drop oppure convenzione               */
 /* ================================================================== */
 
 /**
- * @param {object} o
- * @param {string} o.value          il badge del valore ("−30%", "3x2")
- * @param {string} o.restaurantName
- * @param {string} [o.perk]         il vantaggio in parole
- * @param {string} [o.conditions]   il vincolo, che non è il vantaggio
- * @param {string} [o.review]       cosa dice Bi del locale: è l'unica parte
- *                                  che una macchina non saprebbe scrivere
- * @param {boolean} [o.isDrop]      scade, e questo cambia tutto il messaggio
+ * Due email, non una: il tipo di sconto sceglie il vestito.
+ *
+ * **Drop** (`isDrop`): card corallo piena con la foto dentro, il badge a
+ * cavallo del bordo, la pillola "scade tra…" e la barra dei posti. Scade, i
+ * posti finiscono, e il corallo pieno se lo guadagna perché c'è davvero
+ * qualcosa da perdere.
+ *
+ * **Convenzione**: mosaico di foto, blocco crema con il filetto d'oro, la
+ * percentuale grande e il chip mint "sempre valido". Niente barra, niente
+ * conto alla rovescia, niente conteggio posti — non c'è un numero che
+ * scende, e metterlo sarebbe una bugia che si smaschera da sola alla
+ * seconda email. Da lì in poi l'urgenza non funziona più nemmeno sui drop
+ * veri, che sono quelli per cui serve.
+ *
+ * Il bottone resta corallo in tutti e due: il corallo è il colore
+ * dell'azione, cambia il blocco dello sconto, non la chiamata.
+ *
+ * @param {object}   o
+ * @param {string}   o.value          il badge del valore ("−30%", "3x2")
+ * @param {string}   o.restaurantName
+ * @param {string}   [o.perk]         il vantaggio in parole
+ * @param {string}   [o.conditions]   il vincolo, che non è il vantaggio
+ * @param {string}   [o.review]       cosa dice Bi del locale: l'unica parte
+ *                                    che una macchina non saprebbe scrivere
+ * @param {boolean}  [o.isDrop]       scade, e questo cambia tutta l'email
+ * @param {string}   [o.countdown]    "3 giorni", già a parole
+ * @param {number}   [o.taken]        posti già presi (solo drop)
+ * @param {number}   [o.left]         posti rimasti (solo drop, null = senza tetto)
+ * @param {string[]} [o.photos]       le foto del locale, in ordine
+ * @param {number}   [o.photoCount]   quante ne esistono, per il "+N"
  */
 export function newDiscountEmail({
   value, restaurantName, perk, conditions, city, cuisine, review,
-  photoUrl, href, isDrop, countdown, unsubscribeUrl,
+  address, neighborhood, priceRange, photoUrl, photos, photoCount,
+  href, scheda, isDrop, countdown, taken = null, left = null, unsubscribeUrl,
 }) {
-  const meta = [cuisine, city].filter(Boolean).join(' · ')
   const phrase = offerPhrase(value)
-  const luogo = city || 'Torino'
+  const plain = String(value || '').replace(/^[−-]\s*/, '').trim()
+  const meta = metaFor({ cuisine, priceRange, address, neighborhood, city })
+  const testo = clip(review)
+  const lista = photos?.length ? photos : [photoUrl].filter(Boolean)
+  const link = href || `${SITE_URL}/sconti`
+  // Il valore è già la cosa più grande dell'email: la riga del vantaggio
+  // resta solo se dice qualcosa in più. Sul database metà dei titoli sono
+  // la percentuale e basta ("30% di sconto"), e ripeterla sotto il badge è
+  // il difetto che l'handoff chiama "il drop dice lo sconto due volte".
+  const vantaggio = perkBeyondValue(perk, plain)
+
+  /* ── Drop ─────────────────────────────────────────────────────── */
+  if (isDrop) {
+    const posti = Number.isFinite(left) && left !== null ? `${left} posti` : 'posti limitati'
+    return {
+      subject: `Ho acceso un drop da ${restaurantName}`,
+      ...renderEmail({
+        preheader: `${phrase ? `${phrase}, ` : ''}${posti}. Quando finiscono, finiscono.`,
+        reason: MOTIVO.sconti,
+        unsubscribeUrl,
+        city,
+        blocks: [
+          dropCard({
+            badge: plain && isBareDiscountValue(plain) ? `−${plain}` : '',
+            restaurantName,
+            perk: vantaggio,
+            meta: [meta, conditions].filter(Boolean).join(' · '),
+            countdown,
+            taken, left,
+            photoUrl: lista[0] || null,
+            cuisine,
+            href: link,
+          }),
+          testo ? p(`${esc(testo)}${SIGN}`, { padding: '16px 20px 0' }) : '',
+          scheda ? textLink(`Scopri ${restaurantName} →`, scheda) : '',
+          spacer(20),
+        ],
+        text: [
+          `Ho acceso un drop da ${restaurantName}.`,
+          '',
+          [phrase, vantaggio].filter(Boolean).join(' — '),
+          meta,
+          conditions || '',
+          countdown ? `Scade tra ${countdown}.` : '',
+          Number.isFinite(left) && left !== null ? `${left} rimasti su ${left + (taken || 0)}.` : '',
+          '',
+          'Prendi il codice, ordina, mostralo alla cassa.',
+          `Prendilo qui: ${link}`,
+          '',
+          testo ? `${testo}\n\n— Bi` : '— Bi',
+        ].filter((l) => l !== '').join('\n'),
+      }),
+    }
+  }
+
+  /* ── Convenzione ──────────────────────────────────────────────── */
+  const soggetto = plain && isBareDiscountValue(plain)
+    ? `Da oggi hai il ${plain} da ${restaurantName}`
+    : (phrase ? `Da oggi da ${restaurantName}: ${phrase}` : `Uno sconto nuovo da ${restaurantName}`)
 
   return {
-    // Senza valore leggibile (capita con un omaggio salvato senza titolo)
-    // l'oggetto composto verrebbe "Locale: , finché dura": meglio una frase
-    // che regge da sola, il nome del locale c'è comunque.
-    subject: phrase
-      ? (isDrop
-        ? `${restaurantName}: ${phrase}, finché dura`
-        : `${restaurantName}: ${phrase}, da oggi nel Club`)
-      : (isDrop
-        ? `Un drop da ${restaurantName}, e scade presto`
-        : `Uno sconto nuovo da ${restaurantName}`),
+    subject: soggetto,
     ...renderEmail({
-      preheader: isDrop
-        ? `${countdown ? `Restano ${countdown}. ` : 'Posti limitati. '}${perk || phrase}${conditions ? ` — ${conditions}` : ''}`
-        : `${perk || phrase}${conditions ? ` — ${conditions}` : ''}. Vale quando vuoi, senza fretta.`,
+      preheader: 'Sempre valido, ogni volta che ci vai. Nessuna scadenza.',
       reason: MOTIVO.sconti,
       unsubscribeUrl,
-      unsubscribeLabel: 'Puoi spegnerli quando vuoi:',
+      city,
       blocks: [
-        heroPhoto(photoUrl, restaurantName),
-        eyebrow(isDrop ? `Drop · ${luogo}` : `Nuovo sconto · ${luogo}`),
-        h1(isDrop
-          ? `Ho acceso un drop da ${restaurantName}.`
-          : `Da ${restaurantName} si sconta.`),
-        lede(isDrop
-          ? 'I drop hanno posti limitati e una scadenza: quando finiscono, finiscono.'
-          : 'Uno sconto in più fra quelli che puoi usare quando vuoi, senza scadenza addosso.'),
-        offerCard({
-          value,
-          restaurantName: `da ${restaurantName}`,
-          perk,
-          meta: [conditions, meta].filter(Boolean).join(' · '),
-          countdown: isDrop ? (countdown ? `Drop live · restano ${countdown}` : 'Drop live') : null,
-        }),
-        button(isDrop ? 'Prendilo adesso' : 'Prendi lo sconto', href, { bg: COLORS.corallo }),
-        review ? divider({ gold: true }) : '',
-        review ? h2('Perché ci mando te') : '',
-        review ? quote(clip(review, 240)) : '',
-        divider(),
-        h2('Come funziona'),
-        steps([
-          'Apri il Bi Club e prendi lo sconto: diventa un codice tuo.',
-          'Vai al locale e ordina come fai di solito.',
-          'Al momento di pagare mostri il codice, lo scalano loro.',
-        ]),
-        signature('— Bi'),
+        photoMosaic({ photos: lista, total: photoCount || lista.length, alt: restaurantName, cuisine }),
+        eyebrow('Nuova convenzione', { color: COLORS.oroDeep }),
+        h1(restaurantName),
+        metaLine(meta),
+        conventionOffer({ value: plain, perk: vantaggio, conditions }),
+        button('Aggiungilo ai tuoi sconti →', link, { padding: '18px 20px 0', block: true }),
+        microNote('Resta nel tuo Bi Club. Lo mostri alla cassa ogni volta che ci vai.'),
+        testo ? p(`${esc(testo)}${SIGN}`, { padding: '18px 20px 0' }) : '',
+        spacer(22),
       ],
       text: [
-        isDrop ? `Ho acceso un drop da ${restaurantName}.` : `Da ${restaurantName} si sconta.`,
+        soggetto,
+        meta,
         '',
-        isDrop
-          ? 'I drop hanno posti limitati e una scadenza: quando finiscono, finiscono.'
-          : 'Uno sconto in più fra quelli che puoi usare quando vuoi.',
+        [plain, vantaggio].filter(Boolean).join(' — '),
+        conditions || '',
+        'Sempre valido, nessuna scadenza.',
         '',
-        `${value} da ${restaurantName}`,
-        perk || '',
-        [conditions, meta].filter(Boolean).join(' · '),
-        isDrop && countdown ? `Restano ${countdown}.` : '',
+        'Resta nel tuo Bi Club. Lo mostri alla cassa ogni volta che ci vai.',
+        `Aggiungilo qui: ${link}`,
         '',
-        `Prendilo qui: ${href}`,
-        '',
-        review ? `PERCHÉ CI MANDO TE\n${clip(review, 240)}` : '',
-        '',
-        'COME FUNZIONA',
-        '1. Apri il Bi Club e prendi lo sconto: diventa un codice tuo.',
-        '2. Vai al locale e ordina come fai di solito.',
-        '3. Al momento di pagare mostri il codice, lo scalano loro.',
-        '',
-        '— Bi',
+        testo ? `${testo}\n\n— Bi` : '— Bi',
       ].filter((l) => l !== '').join('\n'),
     }),
   }
@@ -216,38 +266,41 @@ export function newDiscountEmail({
 /*  3. Nuovo locale nella guida                                        */
 /* ================================================================== */
 
-export function newRestaurantEmail({ restaurantName, tagline, review, city, cuisine, price, photoUrl, href, unsubscribeUrl }) {
-  const meta = [cuisine, price, city].filter(Boolean).join(' · ')
-  const short = clip(review || tagline || '', 260)
+export function newRestaurantEmail({
+  restaurantName, tagline, review, city, cuisine, price, priceRange,
+  address, neighborhood, photoUrl, photos, photoCount, href, unsubscribeUrl,
+}) {
+  // `price` arrivava già in simboli da qualche chiamante, `priceRange` è il
+  // numero grezzo del database: si accettano tutti e due, e il numero passa
+  // sempre da formatPrice — è il "Spagnolo · 2 · Torino" che si leggeva in
+  // posta.
+  const meta = metaFor({ cuisine, priceRange: priceRange ?? price, address, neighborhood, city })
+  const testo = clip(review || tagline || '')
+  const lista = photos?.length ? photos : [photoUrl].filter(Boolean)
   return {
     subject: `In guida da oggi: ${restaurantName}`,
     ...renderEmail({
-      preheader: short || `${restaurantName}${meta ? ` — ${meta}` : ''}`,
+      preheader: testo || `${restaurantName}${meta ? ` — ${meta}` : ''}`,
       reason: MOTIVO.locali,
       unsubscribeUrl,
-      unsubscribeLabel: 'Puoi spegnerli quando vuoi:',
+      city,
       blocks: [
-        heroPhoto(photoUrl, restaurantName),
-        eyebrow(`Nuovo in guida · ${city || 'Torino'}`),
+        photoMosaic({ photos: lista, total: photoCount || lista.length, alt: restaurantName, cuisine }),
+        eyebrow('Nuovo in guida'),
         h1(restaurantName),
-        meta ? p(`<span style="color:${COLORS.oroDeep};font-weight:700;letter-spacing:0.4px;">${esc(meta)}</span>`, { padding: '0 32px 18px', size: 14 }) : '',
-        short ? quote(short) : '',
-        button('Guarda la scheda', href, { bg: COLORS.corallo }),
-        divider(),
-        p('Ci sono stato, ho pagato il conto come tutti e ci tornerei: è l\'unico motivo per cui un posto finisce qui dentro.', { size: 15 }),
-        signature('— Bi'),
+        metaLine(meta),
+        testo ? p(`${esc(testo)}${SIGN}`) : '',
+        button('Guarda la scheda →', href, { padding: '20px 20px 0' }),
+        spacer(22),
       ],
       text: [
         `In guida da oggi: ${restaurantName}`,
         meta,
         '',
-        short,
+        testo,
+        testo ? '— Bi' : '',
         '',
         `La scheda: ${href}`,
-        '',
-        'Ci sono stato, ho pagato il conto come tutti e ci tornerei: è l\'unico motivo per cui un posto finisce qui dentro.',
-        '',
-        '— Bi',
       ].filter((l) => l !== '').join('\n'),
     }),
   }
@@ -292,6 +345,7 @@ export function discountClaimedEmail({ value, restaurantName, perk, conditions, 
           'Lo sconto lo applicano loro sul conto.',
         ]),
         note(`Se al locale ti dicono che non sanno niente, scrivimi a <a href="mailto:${BRAND.contact}" style="color:${COLORS.coralloInk};">${BRAND.contact}</a> e ci penso io.`),
+        spacer(22),
       ],
       text: [
         'Sconto tuo.',
@@ -340,6 +394,7 @@ export function discountUsedEmail({ value, restaurantName, whenLabel, href = `${
         divider({ gold: true }),
         p(`Com'è andata da ${esc(restaurantName)}? Rispondi a questa email e dimmelo: mi serve per decidere chi resta nella guida.`, { size: 15 }),
         signature('— Bi'),
+        spacer(22),
       ],
       text: [
         'Sconto applicato.',
@@ -392,6 +447,7 @@ export function partnerWelcomeEmail({ nomeLocale, pin, verifyUrl }) {
         ]),
         note(`Il dispositivo viene ricordato: il PIN lo reinserite solo se cambiate telefono. Se qualcosa non torna — una foto sbagliata, un orario che cambia — scrivete a <a href="mailto:${BRAND.contact}" style="color:${COLORS.coralloInk};">${BRAND.contact}</a>. Rispondo io.`),
         signature('— Bi'),
+        spacer(22),
       ],
       text: [
         'Ciao, sono Bi.',
@@ -435,6 +491,7 @@ export function suggestionConfirmationEmail({ nomeUtente, nomeLocale }) {
         p('Le segnalazioni le leggo una per una, anche quelle che poi non passano il mio filtro. Se te ne viene in mente un altro, sai dove trovarmi.'),
         button('Torna alla guida', SITE_URL, { bg: COLORS.corallo }),
         signature('— Bi'),
+        spacer(22),
       ],
       text: [
         hi,
@@ -471,6 +528,7 @@ export function partnerApplicationConfirmationEmail({ nomeReferente, nomeAttivit
         divider({ gold: true }),
         p('Nel frattempo, se vuoi raccontarmi qualcosa in più del locale, rispondi pure a questa email.', { size: 15 }),
         signature('— Bi'),
+        spacer(22),
       ],
       text: [
         hi,
@@ -510,6 +568,7 @@ export function recoveryOtpEmail({ name, otp, actionText }) {
         codeBlock({ code: otp, label: 'Codice', note: 'Scade fra dieci minuti.' }),
         note('Se non sei stato tu, non fare niente: senza questo codice non cambia nulla. Se succede spesso, scrivimi.'),
         signature('— Bi'),
+        spacer(22),
       ],
       text: [
         hi,
@@ -554,6 +613,7 @@ export function internalSuggestionEmail({ nomeLocale, address, tags, description
         description ? h2('Nota di chi lo segnala') : '',
         description ? p(esc(description), { size: 15 }) : '',
         button('Apri in admin', urlAdmin, { bg: COLORS.ink }),
+        spacer(22),
       ],
       text: [
         `Nuovo suggerimento: ${nomeLocale}`,
@@ -592,6 +652,7 @@ export function internalPartnerApplicationEmail({
         motivation ? p(esc(motivation), { size: 15 }) : '',
         button('Apri le candidature', urlAdmin, { bg: COLORS.ink }),
         note('Rispondendo a questa email scrivi direttamente al referente.'),
+        spacer(22),
       ],
       text: [
         `Nuova candidatura: ${restaurantName}`,
@@ -617,18 +678,21 @@ export function internalPartnerApplicationEmail({
 
 /** Dati finti coerenti, per l'anteprima e per il bottone "mandami una prova". */
 export const SAMPLE = {
-  welcome: { name: 'Giulia Rossi' },
+  welcome: { name: 'Giulia Rossi', attivi: 6 },
   newDiscount: {
-    value: '−50%', restaurantName: 'Bar Stampa', perk: '50% di sconto',
+    value: '−50%', restaurantName: 'Bar Stampa', perk: '50% su tutto il conto',
     conditions: 'Valido solo sull’acquisto del tramezzino base',
-    city: 'Torino', cuisine: 'Tramezzini',
-    review: 'Il tramezzino è quello classico torinese, alto e morbido, e qui lo fanno come si deve. Ci vado quando ho quindici minuti e voglio mangiare bene lo stesso.',
-    href: `${SITE_URL}/sconti`, isDrop: true, countdown: '3g 2h',
+    city: 'Torino', cuisine: 'Tramezzini', priceRange: 1,
+    address: 'Via Antonio Giuseppe Bertola 2, 10122 Torino TO, Italy',
+    review: 'Il tramezzino è quello classico torinese, alto e morbido, e qui lo fanno come si deve. Ci vado quando ho quindici minuti e voglio mangiare bene lo stesso, e non mi è mai capitato di pentirmene.',
+    href: `${SITE_URL}/sconti`, scheda: `${SITE_URL}/restaurant/bar-stampa`,
+    isDrop: true, countdown: '3 giorni', taken: 4, left: 6,
   },
   newRestaurant: {
     restaurantName: 'Bomaki Murazzi', tagline: 'Sushi fusion sul Po',
-    review: 'Sushi fusion fatto bene, sotto i Murazzi. La cosa da prendere è il tacos di tonno: lo fanno solo qui e ci torno apposta.',
-    city: 'Torino', cuisine: 'Sushi', price: '€€€',
+    review: 'Sushi fusion fatto bene, sotto i Murazzi. La cosa da prendere è il tacos di tonno: lo fanno solo qui e ci torno apposta. Il resto del menù è buono ma non indimenticabile.',
+    city: 'Torino', cuisine: 'Sushi', priceRange: 3,
+    address: 'Murazzi del Po Arturo Olivieri 37, 10124 Torino TO, Italy',
     href: `${SITE_URL}/restaurant/bomaki-murazzi`,
   },
   discountClaimed: {

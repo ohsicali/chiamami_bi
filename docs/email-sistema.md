@@ -1,7 +1,7 @@
 # Il sistema delle email
 
-**Ultimo aggiornamento:** 15 settembre 2026
-**Codice:** `api/_email/` (tema, blocchi, guscio, invio) · `api/_email/templates.js` (le email)
+**Ultimo aggiornamento:** 21 settembre 2026 (revisione v11)
+**Codice:** `api/_email/` (tema, blocchi, guscio, contenuto, invio) · `api/_email/templates.js` (le email)
 **Anteprima:** `node scripts/email-preview.mjs` → apri `docs/email-preview/index.html`
 **Prova vera:** pannello admin → Impostazioni → *Anteprima email* → "Provala"
 
@@ -36,78 +36,170 @@ Cosa c'era davvero, verificato nel codice:
 
 ## 2. Com'è fatta un'email adesso
 
-Una sola testata per tutte, una sola tavolozza, un solo piè di pagina.
+Una sola testata per tutte, una sola tavolozza, un solo piè di pagina, un solo
+divisore.
 
 ```
-┌─ crema #F3EDE4 ───────────────────────────┐
-│ ┌─ bianco, angoli 24 ───────────────────┐ │
-│ │        LA GUIDA DI BI   (logo PNG)    │ │  testata
-│ │            T O R I N O   (oro)        │ │
-│ │ ───────────────────────────────────── │ │
-│ │ [ fascia foto 600×250, ritagliata ]   │ │  solo negli annunci
-│ │ DROP · TORINO            (occhiello)  │ │
-│ │ Ho acceso un drop da Pan y Pata.      │ │  titolo
-│ │ Una riga che spiega.                  │ │  apertura
-│ │ ┌─ inchiostro, filo d'oro ─────────┐  │ │
-│ │ │ drop live · restano 3g 2h        │  │ │  la card dell'offerta
-│ │ │ −30%                             │  │ │
-│ │ │ da Pan y Pata          (oro)     │  │ │
-│ │ └──────────────────────────────────┘  │ │
-│ │ ( Prendilo adesso )      (corallo)    │ │  un solo bottone
-│ │ ▌ Quello che Bi dice del posto        │ │  il filo d'oro a lato
-│ │ ① ② ③ Come funziona                   │ │
-│ │ — Bi                                  │ │
-│ ├─ crema #F7F2E9 ───────────────────────┤ │
-│ │ logo · tagline · link · perché ricevi │ │  piè di pagina
-│ │ questa email · indirizzo · © anno     │ │
+┌─ crema #F5F0E4 ───────────────────────────┐
+│ ┌─ bianco, angoli 16 ───────────────────┐ │
+│ │ LA GUIDA DI BI               TORINO   │ │  testata, 44px, una riga
+│ │ ───────────────────────────────────── │ │  l'unico divisore
+│ │ ┌───────────────────────────────────┐ │ │
+│ │ │        foto grande, 16:9          │ │ │  mosaico 1+3
+│ │ ├─────────┬─────────┬───────────────┤ │ │  (nuovo in guida,
+│ │ │  92px   │  92px   │  92px    +3   │ │ │   convenzioni)
+│ │ └─────────┴─────────┴───────────────┘ │ │
+│ │ NUOVO IN GUIDA           (occhiello)  │ │
+│ │ El Bonito Torino              (27px)  │ │  titolo
+│ │ Spagnolo · €€ · Piazza Madama (oro)   │ │  meta
+│ │ Due frasi di Bi, e in coda — Bi       │ │  la firma sta nella frase
+│ │ ( Guarda la scheda → )    (corallo)   │ │  un solo bottone
 │ └───────────────────────────────────────┘ │
+│   Il sito · Bi Club · Instagram           │  piè di pagina, ~96px,
+│   Ci sono stato, ho pagato il conto…      │  fuori dalla card,
+│   Perché ricevi · Scegli cosa ricevere    │  niente secondo logo
+│   ChiamamiBi · Torino · info@ · © 2026    │
 └───────────────────────────────────────────┘
 ```
 
 **Le scelte che fanno la differenza fra "guida" e "volantino":**
 
-- **Il corallo è un accento, non un fondo.** Occhiello, bottone, poco altro. I
-  blocchi grandi stanno sull'inchiostro `#22181C` con il filo d'oro `#D9B476`.
-  Il corallo pieno a tutta larghezza è il colore dei volantini del supermercato.
-- **L'oro esisteva già** nei token del sito (`--color-oro`) e nelle email non
-  c'era mai arrivato. È quello che fa sembrare un messaggio stampato invece che
-  generato.
-- **La foto è una fascia, non una parete** (§3).
-- **C'è del testo vero.** Negli annunci di sconto adesso entra `our_review` del
-  locale: la riga in cui Bi dice perché quel posto merita. Serve a chi legge e
-  serve al filtro, che il rapporto fra immagini e parole lo misura.
-- **Un solo bottone primario** per email.
-- **Gerarchia larga:** occhiello 11px spaziato, titolo 31px, apertura 17.5px,
-  corpo 16px. I salti piccoli sono quelli che fanno "fatto in fretta".
+- **Una email = una cosa da guardare, una da capire, una da toccare.** Tutto
+  quello che non è la foto, il nome, il motivo e il bottone è stato tolto o
+  ridotto a una riga. Da ~2.900px a ~1.250, e con più foto, non meno.
+- **Un logo solo, e non è un'immagine.** La testata è testo: chi tiene le foto
+  spente (in Gmail è la maggioranza) prima vedeva un riquadro vuoto al posto
+  del marchio. Il secondo logo, quello del piè di pagina, non c'è più — al suo
+  posto c'è il claim, che è quello che il logo avrebbe voluto dire.
+- **Il colore dice il tipo di sconto, e non è decorazione.** Corallo pieno
+  `#E8453C` **solo per i drop** (scadono, i posti finiscono): card con la foto
+  dentro, badge a cavallo del bordo, pillola "scade tra…", barra dei posti.
+  Crema `#FAF7F2` con il filetto d'oro `#8E6B3E` **per le convenzioni** (non
+  scadono): niente barra, niente countdown, niente conteggio — al loro posto il
+  chip mint "✓ sempre valido". Vestire da drop uno sconto permanente brucia
+  l'urgenza anche sui drop veri: dopo due email chi legge impara che la fretta
+  è finta. **Il bottone resta corallo in tutti e due**: il corallo è il colore
+  dell'azione, cambia il blocco dello sconto, non la chiamata.
+- **La voce di Bi passa da tre blocchi a una riga.** Prima: citazione
+  incorniciata col filetto, più firma su tre righe, più riquadro. Adesso il
+  testo è semplicemente il testo dell'email, e `— Bi` sta in coda all'ultimo
+  paragrafo — che è dove finisce naturalmente chi scrive di suo pugno.
+- **Un solo divisore**, quello sotto la testata. Lo stacco lo fa lo spazio.
+- **Gerarchia:** logo 12/800 · occhiello 10/800/.15em · titolo 27-30/800 ·
+  meta 13/600 oro · testo 14/1.6 · bottone 15/700 · piè di pagina 10.5-12px.
+  Nessuno spazio oltre i 24px dentro il corpo.
+- **Niente Caveat**, come sul sito: il corsivo scritto a mano resta ai tip
+  dentro la scheda. La firma `— Bi` è Poppins 700 in oro.
 
 I mattoni stanno in `api/_email/blocks.js`, uno per funzione: `eyebrow`, `h1`,
-`lede`, `quote`, `offerCard`, `codeBlock`, `steps`, `checklist`, `note`,
-`dataTable`, `heroPhoto`, `signature`. Un'email nuova si scrive mettendoli in
-fila, non scrivendo HTML.
+`metaLine`, `lede`, `p`, `photoMosaic`, `dropCard`, `conventionOffer`,
+`button`, `microNote`, `textLink`, `checkRows`, `offerCard`, `codeBlock`,
+`steps`, `note`, `dataTable`. Il guscio — testata, card, piè di pagina — sta in
+`render.js` (`emailHeader`, `emailFooter`, `renderEmail`). Un'email nuova si
+scrive mettendo i blocchi in fila, non scrivendo HTML.
 
 ---
 
-## 3. La foto
+## 3. Le foto
+
+### Il mosaico 1+3
+
+Va su **"nuovo in guida"** e sulle **convenzioni**: una foto grande 16:9 e
+sotto fino a tre quadrate, staccate da tre pixel di bianco. È l'eco del
+mosaico della scheda sul sito, e in un'email che presenta un locale le foto
+*sono* il contenuto — è l'unico punto in cui questa revisione rimette dentro
+altezza di proposito.
+
+**Non** va sul drop: lì la foto sta dentro la card corallo con il badge a
+cavallo del bordo, e un mosaico spaccherebbe il componente. Le email senza
+locale (benvenuto, segnalazione, ristoratore) non hanno foto affatto.
+
+Tre regole tecniche che non si saltano, in `photoMosaic`:
+
+1. `font-size:0; line-height:0` su **ogni** cella che contiene un'immagine.
+   Senza, i client aggiungono qualche pixel sotto ogni foto (l'immagine è un
+   elemento di riga e si porta dietro lo spazio del rigo) e le tessere si
+   sfalsano.
+2. I distacchi sono `border` bianchi da 3px **sulle celle** — non padding, non
+   spacer gif: il padding dentro una cella con un'immagine al 100% in Outlook
+   allarga la tabella invece di stringere la foto.
+3. `border-collapse:collapse` sulle due tabelle, o i bordi si sommano al
+   `cellspacing` e i distacchi diventano sei pixel.
+
+**I quattro fallback**, tutti obbligatori e tutti coperti da
+`tests/emails.test.mjs`:
+
+| Foto | Cosa esce |
+|---|---|
+| 0 | una fascia sola a gradiente caldo con l'emoji della categoria — **mai un rettangolo grigio** |
+| 1 | solo la grande, la riga sotto non si renderizza |
+| 2 | la grande e una fascia 2:1 sotto |
+| 3 | la grande e due tessere al 50% |
+| 4 o più | mosaico pieno, con `+N` sull'ultima (`N = totale − 4`; se `N ≤ 0` il badge non si mette) |
+
+> L'handoff v11 scriveva "2 foto → grande + due tessere al 50%", che sono tre
+> immagini con due foto. La scala qui sopra è quella coerente, e rispetta la
+> regola che conta: mai una tessera vuota, mai un buco.
+
+Il badge `+N` e il badge `−30%` del drop usano `position:absolute`, che il
+motore di Word non sa posizionare: stanno dentro un `<!--[if !mso]>` così in
+Outlook non cadono in mezzo alla pagina. Il badge del drop ha anche una
+versione `<!--[if mso]>` dentro la riga della pill, a destra; il `+N` no,
+perché lì la foto pulita è già il caso buono.
+
+### Il ritaglio
 
 Il ritaglio non si può fare nel client di posta: `object-fit` in Outlook non
 esiste, e mettere un'altezza fissa senza ritagliare schiaccia la foto. Quindi
 lo fa il server, con il proxy che c'era già:
 
 ```
-/api/img?url=<foto>&w=1200&h=500&fit=cover&fm=jpg
+/api/img?url=<foto>&w=1200&h=676&fit=cover&fm=jpg&q=78
 ```
 
 - `fit=cover` con `position: 'attention'` — sharp tiene la parte con più
   contenuto invece del centro geometrico. Provato: su un fotogramma verticale
-  1080×1920 con bande nere sopra e sotto, restituisce 1200×500 di sola foto.
-- `w`/`h` al doppio delle dimensioni finali (600×250), per gli schermi a
-  doppia densità.
+  1080×1920 con bande nere sopra e sotto, restituisce sola foto.
+- Le misure sono al doppio di quelle finali, per gli schermi a doppia densità:
+  la grande `1200×676` (16:9 di 600), le tessere `420×420`.
+- `q=78` sul mosaico. Gmail tronca il messaggio quando HTML più immagini
+  superano una soglia, e la prima cosa che sparisce è il piè di pagina — cioè
+  il link per disiscriversi, che non è facoltativo. Le quattro foto insieme
+  devono stare sotto i ~400KB.
 - `fm=jpg` perché il WebP che il proxy servirebbe di sua iniziativa, in Outlook
   2016 e in qualche webmail, resta un riquadro vuoto.
-- La sorgente è `photo_url` (piena) e non più `thumb_url` (400px).
+- La sorgente è `photo_url` (piena) e non `thumb_url` (400px).
+- **`alt` sempre valorizzato**: molti client bloccano le foto di default, e al
+  loro posto restava un buco bianco.
 
-Risultato: la fascia si prende ~250px su un telefono invece di due schermate,
-e il messaggio comincia sopra la piega.
+---
+
+## 3-bis. Il contenuto: le regole in `api/_email/content.js`
+
+Quattro cose che in posta si vedevano più di tutto il resto, e che non erano
+un problema di disegno ma di formattazioni fatte al volo dentro i template.
+
+- **`clipSentences`** — il testo di Bi si taglia **su una frase intera**, mai a
+  metà parola. Massimo due frasi e ~180 caratteri; se la seconda sfora si tiene
+  solo la prima. Prima in posta si leggeva «…paella (sempre di pesce, carne,
+  verdu…»: tagliare a caso non fa sembrare il testo lungo, fa sembrare il
+  prodotto rotto.
+- **`priceSymbols`** — la fascia di prezzo esce in `€`/`€€`/`€€€`, non come
+  numero grezzo. Prima: «Spagnolo · **2** · Torino».
+- **`formatAddress`** — riusato dal sito, non riscritto: via e civico oppure
+  piazza, niente CAP, niente "Torino TO, Italy".
+- **`countdownWords`** — «3 giorni», «domani», «poche ore» invece di «3g 2h»,
+  che è una sigla da cruscotto. In un'email si legge una volta sola e di fretta.
+- **`perkBeyondValue`** — lo sconto detto una volta sola. Sul database metà
+  dei titoli **sono** la percentuale e basta («30% di sconto»), e in un'email
+  dove il numero è già il pezzo più grande ripeterlo sotto il badge lo
+  diluisce. La riga del vantaggio resta solo quando dice qualcosa in più
+  («10% sulle bevande Matcha», «1€ di sconto sui tramezzini»).
+
+**Il preheader** è obbligatorio in ogni template: è la riga che decide se
+aprono, e prima era sprecata sul logo («LA GUIDA DI BI BY CHIAMAMI BI»). Sta
+in due `<div>` nascosti subito dopo `<body>` — il testo nel primo, quaranta
+caratteri invisibili nel secondo, così il client non pesca anche la testata.
 
 ---
 
@@ -256,7 +348,18 @@ questi numeri, non serve.
    `src/components/admin/EmailPreviewTool.jsx`, così si può guardare.
 8. `npm test` — le prove in `tests/emails.test.mjs` controllano che il motivo
    ci sia, che l'oggetto non cominci male, che non ci siano `rgba()` (Outlook
-   le butta) e che gli apostrofi di un nome non spacchino l'HTML.
+   le butta) e che gli apostrofi di un nome non spacchino l'HTML. Dopo la v11
+   controllano anche che il marchio compaia una volta sola, che il divisore
+   sia uno, che il testo di Bi non si tagli a metà parola, che il prezzo esca
+   in €, che ogni immagine abbia un `alt` e che il mosaico gestisca tutti e
+   quattro i casi di fallback.
+9. Se il locale c'entra, passa le foto (`photos` + `photoCount`) e non una
+   sola `photoUrl`, e passa `address`/`neighborhood`/`priceRange` grezzi: la
+   formattazione la fa `content.js`, non il chiamante.
+10. Se tocchi `render.js` o `blocks.js`, rilancia
+    `node supabase/email-templates/build.mjs` — i due template di Supabase
+    sono generati da lì, e `tests/supabase-templates.test.mjs` diventa rosso
+    se restano indietro.
 
 ---
 
@@ -265,8 +368,8 @@ questi numeri, non serve.
 | # | Quando | A chi | Oggetto | Disiscrizione |
 |---|---|---|---|---|
 | 1 | Registrazione completata | utente | `{Nome}, da adesso sei nel Bi Club` | sì |
-| 2 | Drop pubblicato | lista sconti | `{Locale}: {valore} in meno, finché dura` | sì |
-| 3 | Sconto non-drop pubblicato | lista sconti | `{Locale}: {valore} in meno, da oggi nel Club` | sì |
+| 2 | Drop pubblicato | lista sconti | `Ho acceso un drop da {Locale}` | sì |
+| 3 | Convenzione pubblicata | lista sconti | `Da oggi hai il {valore} da {Locale}` | sì |
 | 4 | Locale nuovo pubblicato | lista locali | `In guida da oggi: {Locale}` | sì |
 | 5 | Sconto preso | chi l'ha preso | `Il tuo codice per {Locale}` | no (ricevuta) |
 | 6 | QR scansionato | chi l'ha usato | `Sconto usato da {Locale}` | no (ricevuta) |
@@ -281,6 +384,27 @@ Più le due che manda Supabase (conferma registrazione, cambio indirizzo):
 vivono nel suo pannello ma sono generate dagli stessi blocchi con
 `node supabase/email-templates/build.mjs`, e vanno **reincollate nel dashboard
 Supabase** quando si rigenerano.
+
+---
+
+---
+
+## 8. Cosa resta fuori dalla revisione v11
+
+I quattro template rifatti sono **nuovo in guida**, **drop**, **convenzione** e
+**benvenuto Bi Club**. Gli altri otto hanno preso il guscio nuovo (testata,
+piè di pagina, scala tipografica, gronda da 20px) perché il guscio è condiviso,
+ma il **blocco centrale è ancora quello di settembre**: la card dell'offerta
+sull'inchiostro, il riquadro del codice, i passi numerati.
+
+Da allineare subito dopo, cambiando solo il blocco centrale:
+
+- **codice sconto preso** → blocco corallo o crema secondo il tipo di sconto,
+  con il codice grande al posto della barra;
+- **drop in scadenza** → card corallo, pill "scade domani", barra quasi piena;
+- **segnalazione ricevuta** e **candidatura** → solo testo, niente foto;
+- **email al ristoratore** → testata identica, corpo più asciutto e niente
+  claim di Bi in fondo, che è voce rivolta agli utenti.
 
 ---
 

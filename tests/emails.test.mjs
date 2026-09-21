@@ -122,13 +122,166 @@ test('l’oggetto dice la cosa concreta, non la categoria', () => {
 test('un drop si annuncia come drop, una convenzione no', () => {
   const drop = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: true, unsubscribeUrl: UNSUB })
   const conv = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: false, countdown: null, unsubscribeUrl: UNSUB })
-  // L'oggetto non porta più il prefisso "Drop:": un prefisso fisso su ogni
+  // L'oggetto non porta il prefisso "Drop:": un prefisso fisso su ogni
   // messaggio è la firma delle email automatiche, e in elenco il nome del
-  // locale è la cosa che fa aprire. La fretta resta, ma detta a parole.
-  assert.match(drop.subject, /finché dura/, 'un drop scade, e l’oggetto deve dirlo')
-  assert.ok(!/finché dura/.test(conv.subject), 'una convenzione non scade, non va annunciata come drop')
+  // locale è la cosa che fa aprire. Il drop è un evento ("ho acceso"), la
+  // convenzione è un possesso ("da oggi hai"): è la differenza che deve
+  // leggersi in elenco, prima ancora di aprire.
+  assert.match(drop.subject, /^Ho acceso un drop da /, 'il drop è un evento')
+  assert.match(conv.subject, /^Da oggi /, 'la convenzione è un possesso, non un evento')
+  assert.ok(!/drop/i.test(conv.subject), 'una convenzione non va annunciata come drop')
   assert.match(drop.subject, /Bar Stampa/)
   assert.match(conv.subject, /Bar Stampa/)
+  // E la fretta finisce nel preheader, che è la riga che decide se aprono.
+  assert.match(drop.html, /Quando finiscono, finiscono/)
+  assert.match(conv.html, /Nessuna scadenza/)
+})
+
+/* ── Il colore dice il tipo di sconto ──────────────────────────────── */
+
+test('il corallo pieno è solo dei drop, la convenzione è crema e oro', () => {
+  // Non è decorazione: vestire da drop uno sconto che non scade brucia
+  // l'urgenza anche sui drop veri, e dopo due email non funziona più
+  // nemmeno quando la scadenza c'è davvero.
+  const drop = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: true, taken: 4, left: 6, countdown: '3 giorni', unsubscribeUrl: UNSUB })
+  const conv = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: false, countdown: null, unsubscribeUrl: UNSUB })
+
+  assert.match(drop.html, /background-color:#E8453C/i, 'il drop ha la card corallo piena')
+  assert.match(drop.html, /DROP LIVE · SCADE TRA 3 GIORNI/, 'la scadenza sta nella pill')
+  assert.match(drop.html, /6 rimasti/, 'la barra dei posti è quello che spinge davvero')
+
+  assert.ok(!/background-color:#E8453C/i.test(conv.html), 'la convenzione non indossa il corallo pieno')
+  assert.match(conv.html, /border-left:4px solid #8E6B3E/i, 'la convenzione ha il filetto oro')
+  assert.match(conv.html, /SEMPRE VALIDO · NESSUNA SCADENZA/)
+  assert.ok(!/DROP LIVE|rimasti|SCADE TRA/.test(conv.html), 'niente barra, niente countdown, niente posti')
+  // Il bottone invece resta corallo in tutti e due: il corallo è il colore
+  // dell'azione, cambia il blocco dello sconto, non la chiamata.
+  assert.match(conv.html, /bgcolor="#E8453C"/i)
+  assert.match(drop.html, /Prendilo adesso/)
+  assert.match(conv.html, /Aggiungilo ai tuoi sconti/)
+})
+
+test('un drop senza tetto non disegna una scarsità che non esiste', () => {
+  const m = newDiscountEmail({ ...SAMPLE.newDiscount, isDrop: true, taken: null, left: null, unsubscribeUrl: UNSUB })
+  assert.ok(!/rimasti|presi/.test(m.html), 'senza un tetto la barra racconterebbe una bugia')
+  assert.match(m.html, /DROP LIVE/, 'ma resta un drop')
+})
+
+test('lo sconto è detto una volta sola, non due', () => {
+  // Sul database metà dei titoli sono la percentuale e basta ("30% di
+  // sconto"): il badge faceva "−30%" e la riga sotto "30% di sconto", che
+  // non aggiunge niente e diluisce la prima. La riga resta solo quando dice
+  // davvero qualcosa in più.
+  const base = { ...SAMPLE.newDiscount, unsubscribeUrl: UNSUB }
+
+  for (const isDrop of [true, false]) {
+    const muto = newDiscountEmail({ ...base, value: '−30%', perk: '30% di sconto', isDrop })
+    assert.ok(!/30% di sconto/.test(muto.html), 'il valore ripetuto va tolto')
+    assert.ok(!/30% di sconto/.test(muto.text), 'anche dalla versione a solo testo')
+
+    const parlante = newDiscountEmail({ ...base, value: '−1€', perk: '1€ di sconto sui tramezzini', isDrop })
+    assert.match(parlante.html, /sui tramezzini/, 'un titolo che dice di più resta')
+  }
+})
+
+/* ── I bug di contenuto che si vedevano a occhio nudo ──────────────── */
+
+test('il testo di Bi non si taglia mai a metà parola', () => {
+  // In posta si leggeva "…paella (sempre di pesce, carne, verdu…" e
+  // "…Menzione d'onore anche ai p…": tagliare a caso non fa sembrare il
+  // testo lungo, fa sembrare il prodotto rotto.
+  const lungo = 'Ristorantino spagnolo molto carino, dentro intimo e con un bel dehor sulla piazza che d’estate è la cosa migliore. Tapas di carne, pesce o verdure a prezzi più che onesti, e la paella del sabato vale il viaggio. Menzione d’onore anche ai panini.'
+  for (const m of [
+    newRestaurantEmail({ ...SAMPLE.newRestaurant, review: lungo, unsubscribeUrl: UNSUB }),
+    newDiscountEmail({ ...SAMPLE.newDiscount, review: lungo, unsubscribeUrl: UNSUB }),
+  ]) {
+    const tagliato = m.text.split('\n').find((r) => r.startsWith('Ristorantino'))
+    assert.ok(tagliato, 'il testo di Bi deve esserci')
+    assert.ok(!/…/.test(tagliato), `taglio a metà parola: ${tagliato.slice(-40)}`)
+    assert.match(tagliato, /[.!?]$/, 'si taglia su una frase intera')
+    assert.ok(tagliato.length <= 180, `troppo lungo: ${tagliato.length}`)
+  }
+})
+
+test('la fascia di prezzo esce in €, non come numero grezzo', () => {
+  // In posta si leggeva "Spagnolo · 2 · Torino".
+  const m = newRestaurantEmail({
+    ...SAMPLE.newRestaurant, price: undefined, priceRange: 2,
+    address: 'Piazza Madama Cristina 5, 10125 Torino TO, Italy',
+    unsubscribeUrl: UNSUB,
+  })
+  assert.match(m.html, /Sushi · €€ · Piazza Madama Cristina 5/)
+  // E l'indirizzo passa da formatAddress: niente CAP, niente "Torino TO, Italy".
+  assert.ok(!/10125|Italy/.test(m.html), 'il CAP e la coda di Google non vanno in posta')
+})
+
+/* ── Il mosaico ────────────────────────────────────────────────────── */
+
+test('il mosaico gestisce tutti e quattro i casi di fallback', () => {
+  const foto = (n) => Array.from({ length: n }, (_, i) => `https://x.supabase.co/storage/v1/f${i}.jpg`)
+  const build = (n, total) => newRestaurantEmail({
+    ...SAMPLE.newRestaurant, photos: foto(n), photoCount: total ?? n, unsubscribeUrl: UNSUB,
+  })
+  const conta = (html) => (html.match(/<img/g) || []).length
+
+  // 0 foto → fondo caldo con l'emoji, mai un rettangolo grigio.
+  const vuoto = build(0)
+  assert.equal(conta(vuoto.html), 0)
+  assert.match(vuoto.html, /linear-gradient/, 'serve il fondo caldo di ripiego')
+  assert.match(vuoto.html, /background-color:#/, 'e il colore pieno per Outlook, che il gradiente lo ignora')
+
+  // La riga sotto si divide in parti uguali fra le tessere che ci sono: mai
+  // una tessera vuota, mai un buco a destra.
+  assert.equal(conta(build(1).html), 1, '1 foto → solo la grande, niente riga sotto')
+  assert.ok(!/width="100%" style="width:100%;padding:0/.test(build(1).html))
+  assert.equal(conta(build(2).html), 2, '2 foto → grande + una fascia sotto')
+  assert.equal(conta(build(3).html), 3, '3 foto → grande + due al 50%')
+  assert.match(build(3).html, /width="50%"/)
+  assert.equal(conta(build(4).html), 4, '4 o più → mosaico pieno')
+  assert.match(build(4).html, /width="33.33%"/)
+
+  // "+N" è totale − 4, e sotto zero non si mette.
+  assert.match(build(4, 7).html, />\+3</, 'con altre tre foto il badge dice +3')
+  assert.ok(!/>\+\d/.test(build(4, 4).html), 'senza altre foto niente badge')
+  assert.ok(!/>\+\d/.test(build(3, 3).html))
+})
+
+test('ogni immagine porta un alt: con le foto spente resta il nome del locale', () => {
+  const m = newRestaurantEmail({
+    ...SAMPLE.newRestaurant,
+    photos: ['https://x.supabase.co/storage/v1/a.jpg'],
+    unsubscribeUrl: UNSUB,
+  })
+  for (const tag of m.html.match(/<img[^>]*>/g) || []) {
+    assert.match(tag, /alt="/, `immagine senza alt: ${tag.slice(0, 70)}`)
+  }
+  assert.match(m.html, /alt="Bomaki Murazzi"/)
+})
+
+/* ── Il guscio condiviso ───────────────────────────────────────────── */
+
+test('un logo solo, e il piè di pagina non ne porta un secondo', () => {
+  // Prima ce n'erano due: "LA GUIDA DI BI · BY CHIAMAMI BI" in cima e lo
+  // stesso marchio in fondo, cioè un piè di pagina che si era messo il
+  // vestito della testata.
+  for (const [nome, build] of TUTTE) {
+    const { html } = build()
+    assert.equal((html.match(/LA GUIDA DI BI/g) || []).length, 1, `${nome}: il marchio compare più di una volta`)
+    assert.ok(!/email-assets\/guida-bi/.test(html), `${nome}: il logo PNG è tornato`)
+  }
+})
+
+test('un solo divisore per email: quello sotto la testata', () => {
+  for (const [nome, build] of TUTTE) {
+    const { html } = build()
+    const filetti = (html.match(/border-bottom:1px solid #EEE7DA/gi) || []).length
+    assert.equal(filetti, 1, `${nome}: ${filetti} divisori invece di uno`)
+  }
+})
+
+test('il claim sostituisce il secondo logo, in fondo a ogni email', () => {
+  const m = newRestaurantEmail({ ...SAMPLE.newRestaurant, unsubscribeUrl: UNSUB })
+  assert.match(m.html, /Ci sono stato, ho pagato il conto e ci tornerei/)
 })
 
 test('l’oggetto non comincia con il segno meno o la percentuale', () => {

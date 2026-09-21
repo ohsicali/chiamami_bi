@@ -13,7 +13,7 @@
  * sembrava messo insieme di fretta.
  */
 
-import { BRAND, COLORS, FONT_BODY, FONT_DISPLAY, FONT_FILES, LOGO, SITE_URL, WIDTH } from './theme.js'
+import { BRAND, CLAIM, COLORS, FONT_BODY, FONT_DISPLAY, FONT_FILES, SITE_URL, WIDTH } from './theme.js'
 import { esc } from './blocks.js'
 
 /**
@@ -26,69 +26,66 @@ import { esc } from './blocks.js'
  */
 function preheaderBlock(text) {
   if (!text) return ''
-  const pad = '&#847;&zwnj;&nbsp;'.repeat(60)
-  return `<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">${esc(text)}${pad}</div>`
+  const pad = '&#847;&zwnj;&nbsp;'.repeat(40)
+  // Due blocchi e non uno: il primo porta il testo, il secondo il
+  // riempimento di caratteri invisibili. Separati, perché un client che
+  // decide di mostrare il primo per intero non si porta dietro anche
+  // quaranta caratteri vuoti in coda all'anteprima.
+  return `<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">${esc(text)}</div>
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;overflow:hidden;mso-hide:all;">${pad}</div>`
 }
 
 /**
- * La testata: marchio al centro, "by Chiamami Bi" sotto, filo.
+ * La testata: una riga sola, 44px.
  *
- * Il logo è un PNG e non del testo perché il carattere del marchio (Alfa
- * Slab One) in Gmail e Outlook non si carica, e al suo posto comparirebbe
- * un Times qualunque — cioè il marchio di qualcun altro. Corallo e la riga
- * "by Chiamami Bi" sotto: la stessa testata che il sito mostra in navbar,
- * footer e header mobile (vedi Navbar.jsx / Footer.jsx / MobileLogoHeader.jsx).
- */
-function masthead() {
-  return `<tr><td style="background:${COLORS.white};padding:30px 32px 0;" align="center">
-    <a href="${SITE_URL}" style="text-decoration:none;">
-      <img src="${LOGO.coral}" width="150" alt="La Guida di Bi" style="display:block;width:150px;max-width:150px;height:auto;border:0;outline:none;" />
-    </a>
-    <div style="font-family:${FONT_BODY};font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:${COLORS.ink45};padding:10px 0 22px;">by Chiamami Bi</div>
-  </td></tr>
-  <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:${COLORS.line};font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>`
-}
-
-/**
- * Il piè di pagina.
+ * Prima era una fascia da 90px con il logo grande al centro e "by Chiamami
+ * Bi" sotto. Il logo in cima a un'email è spazio pagato per dire una cosa
+ * che chi legge sa già — gliel'hai mandata tu, il mittente è scritto sopra
+ * l'oggetto. Adesso: il nome a sinistra in corallo, la città a destra, e il
+ * filo sotto. È l'unico divisore che resta in tutta l'email.
  *
- * Tre cose ci stanno per obbligo, non per gusto: chi manda (con un indirizzo
- * fisico), perché questo messaggio è arrivato proprio a te, e come farlo
- * smettere in un clic. Mancavano tutte e tre, e sono fra i primi segnali che
- * Gmail guarda per decidere se un messaggio è posta o pubblicità non
- * richiesta. `unsubscribeUrl` non è facoltativo per le email che annunciano
- * qualcosa: mandare promozioni senza una via d'uscita a un clic è fuori
- * legge in UE. Per le email che rispondono a un gesto della persona (hai
- * preso lo sconto, l'hai usato, ecco il tuo codice) il link non serve e non
- * c'è — ma il motivo dell'invio sì, sempre.
+ * Il logo PNG è sparito anche da qui, e non è una perdita: era un'immagine,
+ * e chi tiene le foto spente (cioè la maggioranza, in Gmail) vedeva un
+ * riquadro vuoto al posto della testata. Questo è testo, si vede sempre.
  */
-function footer({ unsubscribeUrl, unsubscribeLabel, reason }) {
-  const link = (href, label) => `<a href="${href}" style="color:${COLORS.ink70};text-decoration:none;border-bottom:1px solid ${COLORS.line};">${label}</a>`
-  return `<tr><td style="background:${COLORS.cream};padding:30px 32px 34px;" align="center">
-    <img src="${LOGO.coral}" width="104" alt="ChiamamiBi" style="display:block;width:104px;max-width:104px;height:auto;border:0;outline:none;" />
-    <div style="font-family:${FONT_BODY};font-size:13px;line-height:1.6;color:${COLORS.ink70};padding-top:14px;">
-      ${esc(BRAND.tagline)}
-    </div>
-    <div style="font-family:${FONT_BODY};font-size:13px;line-height:2;padding-top:14px;">
-      ${link(SITE_URL, 'Il sito')}
-      &nbsp;&nbsp;·&nbsp;&nbsp;
-      ${link(`${SITE_URL}/sconti`, 'Bi Club')}
-      &nbsp;&nbsp;·&nbsp;&nbsp;
-      ${link(BRAND.instagram, 'Instagram')}
-      &nbsp;&nbsp;·&nbsp;&nbsp;
-      ${link(`${SITE_URL}/privacy`, 'Privacy')}
-    </div>
-    <table role="presentation" width="200" cellpadding="0" cellspacing="0" border="0" style="width:200px;margin:22px auto 0;"><tr><td style="height:1px;background:${COLORS.line};font-size:0;line-height:0;">&nbsp;</td></tr></table>
-    <div style="font-family:${FONT_BODY};font-size:12px;line-height:1.7;color:${COLORS.ink45};padding-top:18px;">
-      ${esc(reason || `Ricevi questa email perché hai un account su ${BRAND.name}.`)}
-      ${unsubscribeUrl ? `<br />${esc(unsubscribeLabel || 'Non vuoi più ricevere queste email?')} <a href="${esc(unsubscribeUrl)}" style="color:${COLORS.ink70};text-decoration:underline;">Scegli cosa ricevere</a>.` : ''}
-    </div>
-    <div style="font-family:${FONT_BODY};font-size:11.5px;line-height:1.7;color:${COLORS.ink45};padding-top:14px;">
-      ${esc(BRAND.postal)}<br />
-      <a href="mailto:${BRAND.contact}" style="color:${COLORS.ink45};text-decoration:underline;">${BRAND.contact}</a>
-      &nbsp;·&nbsp; © ${new Date().getFullYear()} ${esc(BRAND.name)}
-    </div>
+export function emailHeader({ city = 'TORINO' } = {}) {
+  return `<tr><td style="padding:14px 20px;border-bottom:1px solid ${COLORS.line};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td align="left" style="font-family:${FONT_BODY};font-size:12px;line-height:1.3;font-weight:800;letter-spacing:.09em;color:${COLORS.corallo};">LA GUIDA DI BI</td>
+      <td align="right" style="font-family:${FONT_BODY};font-size:9.5px;line-height:1.3;font-weight:700;letter-spacing:.16em;color:${COLORS.mastheadCity};">${esc(String(city).toUpperCase())}</td>
+    </tr></table>
   </td></tr>`
+}
+
+/**
+ * Il piè di pagina: quattro righe, fuori dalla card bianca.
+ *
+ * Prima era alto quanto il contenuto — un secondo logo, il claim, quattro
+ * link, un divisore, tre righe di spiegazione, indirizzo, email e
+ * copyright: su iPhone quasi uno schermo pieno di roba che nessuno legge.
+ * Adesso: i link, il claim, il motivo dell'invio con la via d'uscita, e la
+ * riga di chi manda. Il secondo logo non c'è più; al suo posto c'è la
+ * promessa ("ci sono stato, ho pagato il conto"), che è quello che il logo
+ * avrebbe voluto dire.
+ *
+ * Restano per obbligo, non per gusto: chi manda con un indirizzo fisico,
+ * perché il messaggio è arrivato proprio a te, e come farlo smettere in un
+ * clic. Sono fra i primi segnali che Gmail guarda per decidere se un
+ * messaggio è posta o pubblicità non richiesta.
+ */
+export function emailFooter({ unsubscribeUrl, unsubscribeLabel, reason, claim = CLAIM.utenti }) {
+  const link = (href, label) => `<a href="${href}" style="color:${COLORS.oroDeep};text-decoration:none;font-weight:600;">${label}</a>`
+  const fine = (href, label) => `<a href="${href}" style="color:${COLORS.footerFine};text-decoration:underline;">${label}</a>`
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:${WIDTH}px;">
+    <tr><td align="center" style="padding:18px 20px 6px;font-family:${FONT_BODY};font-size:12px;line-height:1.9;color:${COLORS.oroDeep};">
+      ${link(SITE_URL, 'Il sito')} &nbsp;·&nbsp; ${link(`${SITE_URL}/sconti`, 'Bi Club')} &nbsp;·&nbsp; ${link(BRAND.instagram, 'Instagram')}
+    </td></tr>
+    <tr><td align="center" style="padding:0 24px 12px;font-family:${FONT_BODY};font-size:12px;line-height:1.6;font-style:italic;color:${COLORS.footerClaim};">${claim}</td></tr>
+    <tr><td align="center" style="padding:0 24px 20px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.75;color:${COLORS.footerFine};">
+      ${esc(reason || `Ricevi questa email perché hai un account su ${BRAND.name}.`)}${unsubscribeUrl ? ` · ${fine(esc(unsubscribeUrl), esc(unsubscribeLabel || 'Scegli cosa ricevere'))}` : ''}<br />
+      ${esc(BRAND.postal)} · ${fine(`mailto:${BRAND.contact}`, BRAND.contact)} · © ${new Date().getFullYear()}
+    </td></tr>
+  </table>`
 }
 
 /**
@@ -99,8 +96,10 @@ function footer({ unsubscribeUrl, unsubscribeLabel, reason }) {
  * @param {string}   [o.unsubscribeUrl]
  * @param {string}   [o.unsubscribeLabel]
  * @param {string}   [o.text]      versione a solo testo
+ * @param {string}   [o.city]      la città in testata, a destra
+ * @param {string}   [o.claim]     il claim in corsivo del piè di pagina
  */
-export function renderEmail({ preheader, blocks, reason, unsubscribeUrl, unsubscribeLabel, text }) {
+export function renderEmail({ preheader, blocks, reason, unsubscribeUrl, unsubscribeLabel, text, city, claim }) {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="it">
 <head>
@@ -133,22 +132,20 @@ ${FONT_FILES.map((w) => `  @font-face {
   a { color:${COLORS.coralloInk}; }
   @media only screen and (max-width:620px) {
     .cb-col { width:100% !important; }
-    .cb-pad { padding-left:22px !important; padding-right:22px !important; }
-    .cb-h1 { font-size:27px !important; }
+    .cb-pad { padding-left:16px !important; padding-right:16px !important; }
+    .cb-h1 { font-size:24px !important; }
   }
 </style>
 </head>
 <body style="margin:0;padding:0;background:${COLORS.page};">
 ${preheaderBlock(preheader)}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${COLORS.page};">
-  <tr><td align="center" style="padding:28px 12px 36px;">
-    <table role="presentation" class="cb-col" width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" style="width:${WIDTH}px;max-width:${WIDTH}px;background:${COLORS.white};border-radius:24px;overflow:hidden;">
-      ${masthead()}
-      <tr><td style="padding:30px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        ${blocks.filter(Boolean).join('\n')}
-      </table></td></tr>
-      ${footer({ unsubscribeUrl, unsubscribeLabel, reason })}
+  <tr><td align="center" style="padding:18px 12px 24px;">
+    <table role="presentation" class="cb-col" width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" style="width:${WIDTH}px;max-width:${WIDTH}px;background:${COLORS.white};border-radius:16px;overflow:hidden;">
+      ${emailHeader({ city })}
+      ${blocks.filter(Boolean).join('\n')}
     </table>
+    ${emailFooter({ unsubscribeUrl, unsubscribeLabel, reason, claim })}
   </td></tr>
 </table>
 </body>
