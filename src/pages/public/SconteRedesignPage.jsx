@@ -16,7 +16,7 @@ import ValidityPill from '../../components/Discount/ValidityPill'
 import QRBlockedView from '../../components/Discount/QRBlockedView'
 import DiscountDetailPopup from '../../components/Discount/DiscountDetailPopup'
 import { checkValidity, formatShortPill, formatDays } from '../../lib/validity'
-import { filterActiveDrops, filterVisibleDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut, isDrop } from '../../lib/discounts'
+import { filterActiveDrops, filterVisibleDrops, filterActiveConventions, sortByExpiry, msUntilEnd, isSoldOut } from '../../lib/discounts'
 import DropCard from '../../components/Discount/DropCard'
 import AdSlot from '../../components/Ads/AdBanner'
 import { LIST_AD_AFTER } from '../../lib/adSlots'
@@ -471,7 +471,6 @@ function SconteRedesignPageInner() {
               user={user}
               items={myActive}
               onOpenQR={openMyQR}
-              onCardClick={goTo}
             />
           )}
           {tab === 'miei' && sub === 'utilizzati' && (
@@ -961,13 +960,14 @@ function ProductDots({ items }) {
 }
 
 /**
- * "I miei vantaggi" → Disponibili: STESSE card del catalogo "Disponibili"
- * (`DropSection` per i drop, `ConvCard` per le convenzioni) — non una lista
- * ridotta a parte. La sola differenza è lo stato: qui ogni voce è già presa
- * (`redemptionByDealId` ha sempre una riga con `status: 'generated'`), quindi
- * la card nasce già nello stato "Apri QR" invece di "Sblocca".
+ * "I miei vantaggi" → Disponibili: un'unica lista di card `ConvCard`, drop e
+ * convenzioni mescolati — non due sezioni separate con un trattamento
+ * diverso per i drop (niente pillola "DROP LIVE"/countdown qui: quello ha
+ * senso nel catalogo, dove serve creare urgenza; qui lo sconto è già preso,
+ * l'unica cosa che conta è aprirlo). Ogni card nasce con `locked={false}`,
+ * quindi già nello stato "Apri QR" invece di "Sblocca".
  */
-function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
+function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
   if (!user) {
     return (
       <div className="sc-empty">
@@ -998,43 +998,23 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR, onCardClick }) {
     )
   }
 
-  const dropItems = items.filter((r) => isDrop(r.discount))
-  const convItems = items.filter((r) => !isDrop(r.discount))
-  const dropDeals = dropItems.map((r) => r.discount)
-  const dropRedemptionById = new Map(dropItems.map((r) => [r.discount_id, r]))
-
   return (
-    <div className="sc-catalogo">
-      {dropDeals.length > 0 && (
-        <DropSection
-          drops={dropDeals}
-          claiming={null}
-          redemptionByDealId={dropRedemptionById}
-          onClaim={() => {}}
-          onOpenQR={onOpenQR}
-          onCardClick={onCardClick}
-        />
-      )}
-
-      {convItems.length > 0 && (
-        <section className="sc-section">
-          <div className="sc-section-head">
-            <strong>Convenzioni</strong>
-            <small>{convItems.length} pront{convItems.length === 1 ? 'a' : 'e'} da usare</small>
-          </div>
-          <div className="sc-conv-list">
-            {convItems.map((r) => (
-              <ConvCard
-                key={r.id}
-                deal={r.discount}
-                locked={false}
-                onOpenQR={() => onOpenQR(r)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
+    <section className="sc-section">
+      <div className="sc-section-head">
+        <strong>Pronti da usare</strong>
+        <small>{items.length} pront{items.length === 1 ? 'o' : 'i'} · tap "Apri QR" per mostrarlo al locale</small>
+      </div>
+      <div className="sc-conv-list">
+        {items.map((r) => (
+          <ConvCard
+            key={r.id}
+            deal={r.discount}
+            locked={false}
+            onOpenQR={() => onOpenQR(r)}
+          />
+        ))}
+      </div>
+    </section>
   )
 }
 
