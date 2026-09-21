@@ -11,6 +11,7 @@ import OrariLocale from './OrariLocale'
 import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
+import OtherDiscountsSheet from '../Discount/OtherDiscountsSheet'
 import SconteAuthGate from '../Discount/SconteAuthGate'
 import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import { PRICE_LABELS, getCategoryInfo } from '../../lib/hooks/useRestaurants'
@@ -72,23 +73,59 @@ function discountBlockedMessage(discount) {
 }
 
 /* ── Floating Discount Bar (Airbnb-style white bottom bar) ── */
-function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
+/**
+ * Un locale può avere più sconti attivi insieme (vedi `restaurantDiscounts`
+ * nel componente padre). La barra fissa in basso ne mostra sempre UNO solo
+ * — non c'è spazio per elencarli tutti in una pillola — ma nessuno resta
+ * nascosto: un tag "+N altri" apre `OtherDiscountsSheet` con il resto, e
+ * scegliendone uno diventa lui il nuovo sconto "in primo piano".
+ *
+ * `activeDealId` (non `discounts[0]` fisso) è cosa tiene tutto insieme:
+ * la stessa variabile decide sia cosa mostra la barra sia quale sconto
+ * `useUserRedemption` sta seguendo, così sbloccare/mostrare il QR
+ * funziona per QUALUNQUE sconto scelto, non solo per il primo.
+ */
+function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId }) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
-  const discount = discountFromParent || fetchedDiscount
-  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
+  const discounts = (discountsFromParent && discountsFromParent.length > 0)
+    ? discountsFromParent
+    : (fetchedDiscount ? [fetchedDiscount] : [])
+
+  // Filtro di sicurezza locale (gli sconti arrivano già attivi da
+  // `useActiveDiscounts`, ma `fetchedDiscount` — il fallback — passa da
+  // `useRestaurantDiscount`, che non applica lo stesso filtro lato client).
+  const usableDiscounts = discounts.filter((d) => {
+    if (!d) return false
+    const expired = !!d.valid_until && new Date(d.valid_until) < new Date()
+    const maxed = d.max_redemptions && d.total_redeemed >= d.max_redemptions
+    return !expired && !maxed
+  })
+  const primary = usableDiscounts[0] || null
+
+  const [activeDealId, setActiveDealId] = useState(primary?.id || null)
   const [generating, setGenerating] = useState(false)
   const [popupOpen, setPopupOpen] = useState(false)
   const [blockedMessage, setBlockedMessage] = useState(null)
   const [dismissed, setDismissed] = useState(false)
   const [authGate, setAuthGate] = useState(false)
+  const [showOthers, setShowOthers] = useState(false)
+
+  // Se il locale cambia (o gli sconti finiscono di caricare), riallinea
+  // quale sconto è "in primo piano" — altrimenti resterebbe agganciato
+  // all'id di un locale precedente.
+  useEffect(() => {
+    setActiveDealId(primary?.id || null)
+  }, [primary?.id])
+
+  const discount = usableDiscounts.find((d) => d.id === activeDealId) || primary
+  const otherDiscounts = usableDiscounts.filter((d) => d.id !== discount?.id)
+
+  const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
 
   if (!discount && discountLoading) return null
-  if (!discount) return null
-  const isExpired = !!discount.valid_until && new Date(discount.valid_until) < new Date()
-  const isMaxed = discount.max_redemptions && discount.total_redeemed >= discount.max_redemptions
-  if (isExpired || isMaxed || dismissed) return null
+  if (!discount || dismissed) return null
 
   const isRedeemed = redemption?.status === 'redeemed'
   const isGenerated = redemption?.status === 'generated'
@@ -133,6 +170,15 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
     } else {
       setBlockedMessage(null)
     }
+    setPopupOpen(true)
+  }
+
+  // Scelto dalla lista "+N altri": diventa lui il nuovo sconto in primo
+  // piano, e si apre direttamente il suo popup info/sblocco.
+  const handleSelectOther = (d) => {
+    setActiveDealId(d.id)
+    setShowOthers(false)
+    setBlockedMessage(null)
     setPopupOpen(true)
   }
 
@@ -188,11 +234,28 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           }}>
             {displayTitle}
           </span>
-          <span style={{
-            fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 700,
-            color: 'rgba(34,24,28,.72)', marginTop: 2, letterSpacing: '0.02em',
-          }}>
-            {displaySub}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <span style={{
+              fontFamily: 'var(--font-sans)', fontSize: 10.5, fontWeight: 700,
+              color: 'rgba(34,24,28,.72)', letterSpacing: '0.02em',
+            }}>
+              {displaySub}
+            </span>
+            {otherDiscounts.length > 0 && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowOthers(true) }}
+                style={{
+                  flexShrink: 0,
+                  fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 800,
+                  color: '#22181C', background: 'rgba(255,255,255,0.55)',
+                  border: 'none', borderRadius: 999, padding: '2px 8px',
+                  cursor: 'pointer', letterSpacing: '0.01em',
+                }}
+              >
+                +{otherDiscounts.length} altri
+              </button>
+            )}
           </span>
         </div>
 
@@ -257,6 +320,16 @@ function FloatingDiscountBar({ discount: discountFromParent, restaurantId }) {
           onClose={() => setAuthGate(false)}
         />
       )}
+
+      <AnimatePresence>
+        {showOthers && (
+          <OtherDiscountsSheet
+            discounts={otherDiscounts}
+            onSelect={handleSelectOther}
+            onClose={() => setShowOthers(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }
@@ -342,7 +415,13 @@ export default function RestaurantSheet({
   const phoneUrl = restaurant.phone ? `tel:${restaurant.phone.replace(/\s/g, '')}` : null
   const reviewText = restaurant.our_review || ''
   const tipText = restaurant.our_tip || null
-  const discount = activeDiscounts.find(d => d.restaurant_id === restaurant.id)
+  // Un locale può avere più sconti attivi insieme: qui prendiamo tutti,
+  // `FloatingDiscountBar` sceglie da sola quale mettere in primo piano e
+  // offre un "+N altri" per il resto. `discount` resta il primo per la
+  // pillola sulla foto e l'header sticky, che sono teaser non interattivi
+  // e non hanno spazio per elencarli tutti.
+  const restaurantDiscounts = activeDiscounts.filter(d => d.restaurant_id === restaurant.id)
+  const discount = restaurantDiscounts[0] || null
   const discountTitle = discount?.title || discount?.discount_value
   const distance = position && restaurant.latitude && restaurant.longitude
     ? getDistance(position.lat, position.lng, restaurant.latitude, restaurant.longitude) : null
@@ -1103,7 +1182,7 @@ export default function RestaurantSheet({
         </div>
 
         {/* Floating discount bar — Airbnb style white bottom bar */}
-        <FloatingDiscountBar discount={discount} restaurantId={restaurant.id} />
+        <FloatingDiscountBar discounts={restaurantDiscounts} restaurantId={restaurant.id} />
       </motion.div>
     </div>
   )

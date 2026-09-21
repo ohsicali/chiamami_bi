@@ -745,14 +745,10 @@ export default function DiscountManager() {
     }
 
     if (!editing) {
-      // `isActive` (in cima al file) copre già "nessuna scadenza" = mai
-      // scaduto, quindi anche uno sconto senza fine viene visto qui e blocca
-      // il duplicato come farebbe uno con data.
-      const existing = discounts.find((d) => d.restaurant_id === restId && isActive(d))
-      if (existing) {
-        setSaveError(`${existing.restaurant?.name || 'Questo ristorante'} ha già uno sconto attivo. Disattiva o elimina quello esistente prima.`)
-        return
-      }
+      // Un locale può avere più sconti attivi insieme — niente più blocco
+      // "ha già uno sconto attivo" qui. Restano solo i controlli di
+      // sanità sulla data.
+      //
       // Guard di sanità: se c'è una data di fine, deve essere nel futuro.
       // Nessuna data (sconto senza scadenza) salta il controllo.
       if (form.ends_at && new Date(form.ends_at) <= new Date()) {
