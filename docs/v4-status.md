@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 (sedi multiple — due pin sulla mappa per lo stesso locale)
+Ultima modifica: 2026-09-21 (sconti/drop senza data di fine)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -22,6 +22,75 @@ dove siamo. Aggiorna a ogni step importante.
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
 | Sconti — tap su "I miei vantaggi" + banner QR unificato | — | ✅ Done | Vedi sezione "21/09" sotto. |
 | Sedi multiple (due indirizzi per lo stesso locale) | — | ✅ Done | Vedi sezione "21/09 — sedi multiple" sotto. SQL eseguito. |
+| Sconti/drop senza data di fine | — | ✅ Done | Vedi sezione "21/09 — sconti/drop senza data di fine" sotto. SQL eseguito. |
+
+## 21/09 — sconti/drop senza data di fine
+
+Richiesta: poter creare uno sconto o un drop senza dirgli quando finisce —
+resta valido finché qualcuno (admin) non lo disattiva o elimina a mano.
+
+**Il blocco vero non era nel form**: `discounts.valid_until` era `NOT NULL`
+fin dallo schema originale (`phase2-discounts.sql`), quindi anche togliendo
+la richiesta lato UI il salvataggio sarebbe fallito lì. La RPC che decide se
+uno sconto è valido ADESSO al momento dello scan (`verify_redeem_qr`, in
+`verify-redeem-short-code-2026-09-18.sql`) gestiva già `valid_until IS NULL`
+come "nessuna scadenza" — quella parte era pronta da prima, semplicemente
+non poteva mai capitare.
+
+**SQL** (`supabase/discount-optional-end-date-2026-09-21.sql`, ✅ eseguito
+via connettore Supabase sul progetto `Chiamami_bi` il 21/09):
+- `ALTER TABLE discounts ALTER COLUMN valid_until DROP NOT NULL` — `valid_from`
+  resta obbligatoria (uno sconto ha sempre un inizio), la fine no.
+- La policy RLS di lettura pubblica su `discount_products`
+  (`discount-products-2026-09-18.sql`) guardava `d.valid_until > now()`: con
+  `valid_until` nullo quel confronto è sempre falso in SQL, e le foto
+  prodotto di uno sconto senza scadenza sarebbero rimaste invisibili anche
+  se lo sconto stesso era pubblico. Riscritta come
+  `d.valid_until IS NULL OR d.valid_until > now()`.
+
+**Il bug silente che il giro di codice ha scoperto**: praticamente ogni
+punto che decide "questo sconto è ancora valido?" lo faceva con
+`new Date(x.valid_until) < new Date()` o una query `.gt('valid_until', now)`.
+Nessuno dei due gestisce un `valid_until` nullo come "mai scade" — il primo
+perché `new Date(null)` è l'epoca 1970 (sempre nel passato, quindi "sempre
+scaduto"), il secondo perché in Postgres un confronto con NULL non è mai
+vero (la riga sparisce dal risultato). Corretti ovunque comparissero:
+- Filtri "sconto ancora attivo" (`.gt('valid_until', …)` → `.or('valid_until.is.null,valid_until.gt.…')`)
+  in `useDiscounts.js` (le due query più usate: sconto di un locale e
+  catalogo attivi), `VerifyPage.jsx` (dashboard del ristoratore, 2 punti),
+  `SavedPage.jsx`, `AdminRestaurants.jsx`, `AdminLayout.jsx` (contatore
+  sidebar), `ScontoTab.jsx`, `api/ai.js`.
+- Calcoli diretti `new Date(valid_until) < new Date()` in
+  `DiscountManager.jsx` (isExpired, il controllo anti-duplicato alla
+  creazione, il countdown della riga), `DiscountBanner.jsx`,
+  `RestaurantSheet.jsx` (banner sconto sulla scheda), `useDiscounts.js`
+  (`verifyQRCode`), `AdminDashboard.jsx` (countdown del box "Drop in
+  corso").
+- `DiscountManager.jsx` non definiva più la sua isExpired/isActive in
+  proprio: ora riusa `isExpired`/`discountEndsAt` da `lib/discounts.js`,
+  la fonte unica del progetto (vedi commento in cima a quel file — è lo
+  stesso bug delle "tre definizioni diverse" che aveva causato il Blocco 0).
+
+**Il resto del codice pubblico** (`SconteRedesignPage.jsx`,
+`DiscountDetailPopup.jsx`, `SconteSchemaOrg.jsx`, `api/discount-pdf.js`,
+`api/notify-subscribers.js`, `api/send-email.js`) leggeva già
+`deal?.drop_ends_at || deal?.valid_until` con un `if (!end) return null` a
+valle — pattern già null-safe, non toccato.
+
+**Form admin** (`DiscountManager.jsx`): il campo "Fine"/"Valido fino al" non
+è più obbligatorio. Aggiunta una checkbox "Nessuna data di fine" sotto il
+date picker: selezionata, nasconde il picker e forza `ends_at` a vuoto. In
+salvataggio un `ends_at` vuoto scrive `null` su `valid_until`/`drop_ends_at`
+invece di passare una stringa vuota a `new Date()` (che darebbe Invalid
+Date). Il guard "la data di fine deve essere nel futuro" si applica solo
+se una data è stata scelta. In modifica, uno sconto già senza scadenza
+riapre il form con la checkbox già segnata.
+
+**Verificato**: `npm test` 126/126 (nuovo test in `tests/discounts.test.mjs`
+che copre esplicitamente sconto e drop con `valid_until`/`drop_ends_at`
+nulli), `npm run build` pulito, lint sui file toccati invariato (34
+problemi prima e dopo, confrontato con `git stash` — tutti preesistenti,
+nessuno introdotto qui).
 
 ## 21/09 — sedi multiple (due indirizzi per lo stesso locale)
 

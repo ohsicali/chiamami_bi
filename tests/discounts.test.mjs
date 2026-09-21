@@ -115,6 +115,17 @@ test('per un drop vale drop_ends_at, non valid_until', () => {
   assert.equal(isActiveDrop(drop, NOW), false)
 })
 
+test('sconto o drop senza data di fine non è mai "scaduto"', () => {
+  // La richiesta: poter non mettere una data di fine. `valid_until` e
+  // `drop_ends_at` nulli non devono leggersi come "scaduto da sempre"
+  // (rischio concreto: `new Date(null)` è l'epoca 1970).
+  assert.equal(isExpired(d({ valid_until: null }), NOW), false)
+  assert.equal(isActiveDiscount(d({ valid_until: null }), NOW), true)
+  const dropSenzaFine = d({ is_drop: true, drop_ends_at: null, valid_until: null })
+  assert.equal(isExpired(dropSenzaFine, NOW), false)
+  assert.equal(isActiveDrop(dropSenzaFine, NOW), true)
+})
+
 test('esaurito esclude; senza tetto non è mai esaurito', () => {
   assert.equal(isSoldOut(d({ max_quantity: 10, claimed_count: 10 })), true)
   assert.equal(isSoldOut(d({ max_quantity: 10, claimed_count: 3 })), false)

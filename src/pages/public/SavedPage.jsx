@@ -99,7 +99,7 @@ export default function SavedPage() {
         .in('restaurant_id', ids)
         .eq('is_active', true)
         .lte('valid_from', new Date().toISOString())
-        .gte('valid_until', new Date().toISOString()),
+        .or(`valid_until.is.null,valid_until.gte.${new Date().toISOString()}`),
     ]).then(([resResult, discResult]) => {
       if (resResult.data) setRestaurants(resResult.data)
       if (discResult.data) {

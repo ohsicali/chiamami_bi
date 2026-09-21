@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured, proxyImg } from '../../lib/supabase'
 import AdminLayout from '../../components/Layout/AdminLayout'
 import KpiCard from '../../components/admin/KpiCard'
-import { filterActive, filterActiveDrops, sortByExpiry, findUnreachableDiscounts } from '../../lib/discounts'
+import { filterActive, filterActiveDrops, sortByExpiry, findUnreachableDiscounts, discountEndsAt } from '../../lib/discounts'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -56,6 +56,7 @@ function toSparkHeights(buckets) {
 }
 
 function countdown(target) {
+  if (!target) return '∞'
   const diff = new Date(target).getTime() - Date.now()
   if (diff <= 0) return 'Scaduto'
   const d = Math.floor(diff / DAY_MS)
@@ -725,7 +726,7 @@ function DropSpotlight({ drop }) {
         }}
       >
         <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 900, fontSize: 32, letterSpacing: '-0.03em', color: 'var(--color-ink)' }}>
-          {countdown(drop.valid_until)}
+          {countdown(discountEndsAt(drop))}
         </div>
         <div
           style={{

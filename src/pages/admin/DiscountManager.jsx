@@ -8,11 +8,21 @@ import PillTab from '../../components/admin/PillTab'
 import EmptyState from '../../components/admin/EmptyState'
 import PrettyDatePicker from '../../components/admin/PrettyDatePicker'
 import { ProductsEditor, ValidityPicker } from '../../components/admin/DiscountRulesFields'
+import { isExpired as isDiscountExpired, discountEndsAt } from '../../lib/discounts'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
+/*                                                                      */
+/*  isExpired/isActive riusano `lib/discounts.js` invece di rifare il   */
+/*  confronto qui: quella è già la definizione unica del progetto, e     */
+/*  gestisce da sola uno sconto/drop senza data di fine (valid_until    */
+/*  e drop_ends_at nulli → mai scaduto). Rifarlo qui con `new            */
+/*  Date(d.valid_until) < new Date()` è esattamente il bug che ha       */
+/*  già causato "tre definizioni diverse" una volta (vedi commento in   */
+/*  cima a discounts.js) — con un end date nullo sarebbe tornato a      */
+/*  `new Date(null)` = epoca 1970, cioè "sempre scaduto".               */
 /* ------------------------------------------------------------------ */
-const isExpired = (d) => new Date(d.valid_until) < new Date()
+const isExpired = (d) => isDiscountExpired(d)
 const isActive = (d) => d.is_active && !isExpired(d)
 
 const formatDate = (iso) => {
@@ -40,6 +50,7 @@ const EMPTY_FORM = {
   kind: 'discount', // 'discount' | 'featured' | 'drop'
   starts_at: new Date().toISOString().split('T')[0],
   ends_at: '',
+  no_end_date: false, // true → ends_at resta vuoto apposta, non "non ancora scelto"
   max_uses: '',
   is_active: true,
 }
@@ -55,6 +66,7 @@ const toInputDate = (iso, isDrop) => {
 /*  DropCard — mockup frame 4 style (responsive, replaces table+mobile)*/
 /* ------------------------------------------------------------------ */
 function countdown(target) {
+  if (!target) return { label: 'Scadenza', value: '∞' }
   const diff = new Date(target).getTime() - Date.now()
   if (diff <= 0) return { label: 'Scaduto', value: '—' }
   const d = Math.floor(diff / 86400000)
@@ -67,7 +79,7 @@ function countdown(target) {
 function DropCard({ d, selected, notifyLog, notifying, active, onSelect, onEdit, onNotify, onToggleActive, onDelete }) {
   const isDrop = d.is_drop
   const isFeatured = d.is_featured && !d.is_drop
-  const ttl = countdown(d.valid_until)
+  const ttl = countdown(discountEndsAt(d))
   const pct = d.max_redemptions
     ? Math.min(100, Math.round(((d.redeemed_count || 0) / d.max_redemptions) * 100))
     : null
@@ -657,6 +669,7 @@ export default function DiscountManager() {
   const handleEdit = (d) => {
     const kind = d.is_drop ? 'drop' : d.is_featured ? 'featured' : 'discount'
     const isDrop = kind === 'drop'
+    const endSource = isDrop ? (d.drop_ends_at || d.valid_until) : d.valid_until
     setForm({
       restaurant_id: d.restaurant_id,
       title: d.title,
@@ -669,7 +682,8 @@ export default function DiscountManager() {
       products: [...(d.products || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
       kind,
       starts_at: toInputDate(isDrop ? (d.drop_starts_at || d.valid_from) : d.valid_from, isDrop),
-      ends_at: toInputDate(isDrop ? (d.drop_ends_at || d.valid_until) : d.valid_until, isDrop),
+      ends_at: toInputDate(endSource, isDrop),
+      no_end_date: !endSource,
       max_uses: (isDrop ? (d.max_quantity || d.max_redemptions) : d.max_redemptions) || '',
       is_active: d.is_active,
     })
@@ -710,7 +724,7 @@ export default function DiscountManager() {
 
   const handleSave = async () => {
     const restId = form.restaurant_id || newPartner?.id
-    if (!restId || !form.title || !form.discount_value || !form.ends_at) return
+    if (!restId || !form.title || !form.discount_value) return
 
     // Vincolo: PIN partner attivo è prerequisito per creare uno sconto.
     // newPartner viene creato con un PIN automaticamente, quindi ok.
@@ -731,16 +745,17 @@ export default function DiscountManager() {
     }
 
     if (!editing) {
-      const endIsoCheck = new Date(form.ends_at).toISOString()
-      const existing = discounts.find(
-        (d) => d.restaurant_id === restId && d.is_active && new Date(d.valid_until) > new Date()
-      )
+      // `isActive` (in cima al file) copre già "nessuna scadenza" = mai
+      // scaduto, quindi anche uno sconto senza fine viene visto qui e blocca
+      // il duplicato come farebbe uno con data.
+      const existing = discounts.find((d) => d.restaurant_id === restId && isActive(d))
       if (existing) {
         setSaveError(`${existing.restaurant?.name || 'Questo ristorante'} ha già uno sconto attivo. Disattiva o elimina quello esistente prima.`)
         return
       }
-      // Guard di sanità: la data di fine deve essere nel futuro.
-      if (new Date(endIsoCheck) <= new Date()) {
+      // Guard di sanità: se c'è una data di fine, deve essere nel futuro.
+      // Nessuna data (sconto senza scadenza) salta il controllo.
+      if (form.ends_at && new Date(form.ends_at) <= new Date()) {
         setSaveError('La data di fine deve essere nel futuro.')
         return
       }
@@ -784,7 +799,10 @@ export default function DiscountManager() {
     const isDrop = form.kind === 'drop'
     const isFeatured = form.kind === 'featured'
     const startIso = form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString()
-    const endIso = new Date(form.ends_at).toISOString()
+    // Campo vuoto → null, non una stringa vuota passata a `new Date()`
+    // (tornerebbe Invalid Date): nessuna data di fine è una scelta valida,
+    // non un errore di digitazione.
+    const endIso = form.ends_at ? new Date(form.ends_at).toISOString() : null
     const uses = form.max_uses ? parseInt(form.max_uses) : null
 
     const payload = {
@@ -1600,13 +1618,41 @@ export default function DiscountManager() {
                       />
                     </FormField>
                     <FormField label={form.kind === 'drop' ? 'Fine' : 'Valido fino al'}>
-                      <PrettyDatePicker
-                        value={form.ends_at}
-                        onChange={(v) => setForm((f) => ({ ...f, ends_at: v }))}
-                        withTime={form.kind === 'drop'}
-                        minDate={form.starts_at?.split('T')[0]}
-                        placeholder="Scegli data"
-                      />
+                      {form.no_end_date ? (
+                        <div style={{ ...inputStyle, color: 'var(--color-ink-55, rgba(34,24,28,0.55))', display: 'flex', alignItems: 'center' }}>
+                          Nessuna scadenza
+                        </div>
+                      ) : (
+                        <PrettyDatePicker
+                          value={form.ends_at}
+                          onChange={(v) => setForm((f) => ({ ...f, ends_at: v }))}
+                          withTime={form.kind === 'drop'}
+                          minDate={form.starts_at?.split('T')[0]}
+                          placeholder="Scegli data"
+                        />
+                      )}
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          marginTop: 7,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.no_end_date}
+                          onChange={(e) =>
+                            setForm((f) => ({ ...f, no_end_date: e.target.checked, ends_at: e.target.checked ? '' : f.ends_at }))
+                          }
+                          style={{ accentColor: '#E8453C', width: 13, height: 13, cursor: 'pointer' }}
+                        />
+                        Nessuna data di fine
+                      </label>
                     </FormField>
                   </div>
 
@@ -1683,7 +1729,7 @@ export default function DiscountManager() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value || !form.ends_at}
+                    disabled={saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value}
                     style={{
                       padding: '9px 18px',
                       borderRadius: 8,
@@ -1693,7 +1739,7 @@ export default function DiscountManager() {
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: saving ? 'not-allowed' : 'pointer',
-                      opacity: saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value || !form.ends_at ? 0.5 : 1,
+                      opacity: saving || !(form.restaurant_id || newPartner?.id) || !form.title || !form.discount_value ? 0.5 : 1,
                       fontFamily: "var(--font-sans)",
                     }}
                   >

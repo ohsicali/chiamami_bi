@@ -1223,7 +1223,7 @@ async function attachDiscounts(admin, candidates) {
     .from('discounts')
     .select('restaurant_id, title, discount_type, discount_value, valid_until')
     .eq('is_active', true)
-    .gt('valid_until', nowIso)
+    .or(`valid_until.is.null,valid_until.gt.${nowIso}`)
     .in('restaurant_id', candidates.map((r) => r.id))
   if (error) { console.warn('[ai] sconti non caricati:', error.message); return }
 

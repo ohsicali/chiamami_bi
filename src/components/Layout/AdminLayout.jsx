@@ -833,7 +833,7 @@ export default function AdminLayout({ children, title }) {
             .from('discounts')
             .select('id', { count: 'exact', head: true })
             .eq('is_active', true)
-            .gt('valid_until', nowIso),
+            .or(`valid_until.is.null,valid_until.gt.${nowIso}`),
           supabase
             .from('restaurant_suggestions')
             .select('id', { count: 'exact', head: true })
