@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { LoadingSpinner } from '../../components/UI/LoadingSpinner'
 import { LogoFull } from '../../components/UI/Logo'
+import MetaTags from '../../components/SEO/MetaTags'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -49,6 +50,7 @@ export default function AdminLogin() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
+        <MetaTags noindex />
         <LoadingSpinner />
       </div>
     )
@@ -56,6 +58,7 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+      <MetaTags noindex />
       {/* Subtle background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />

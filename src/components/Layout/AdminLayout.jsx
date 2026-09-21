@@ -3,6 +3,7 @@ import { Link, useLocation, Navigate, useNavigate, useSearchParams } from 'react
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import MetaTags from '../SEO/MetaTags'
 
 /* ------------------------------------------------------------------ */
 /*  SVG Icons                                                          */
@@ -864,27 +865,30 @@ export default function AdminLayout({ children, title }) {
 
   if (authLoading) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#fafafa',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <>
+        <MetaTags noindex />
         <div
           style={{
-            width: 32,
-            height: 32,
-            border: '3px solid #E8453C',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
+            minHeight: '100vh',
+            background: '#fafafa',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              border: '3px solid #E8453C',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </>
     )
   }
 
@@ -902,6 +906,7 @@ export default function AdminLayout({ children, title }) {
         WebkitOverflowScrolling: 'touch',
       }}
     >
+      <MetaTags noindex />
       {/* ── Desktop sidebar ── */}
       <aside
         className="hidden md:flex"
