@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 (terzo giro feedback: annullato il redesign a biglietto del banner QR, "I miei vantaggi" in un'unica lista senza sezione Drop separata)
+Ultima modifica: 2026-09-21 (tocca il QR per ingrandirlo a schermo pieno con sfondo sfocato)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -107,6 +107,24 @@ davvero**: due correzioni.
    catalogo (spinge a sbloccare), non qui (è già sbloccato). `MieiDisponibiliView`
    ora è una singola lista di `ConvCard` (`locked={false}`) per tutto,
    niente più split drop/convenzioni né sezione "Drop a tempo".
+
+**Quarto giro — tocca il QR per ingrandirlo**: richiesta esplicita per quando
+il ristoratore non riesce a scansionare il codice piccolo dentro il popup.
+Aggiunto in `UnlockedQRView` (`DiscountDetailPopup.jsx`): tap sul
+`.ddp-qr-frame` (badge d'angolo a segnalare che è cliccabile) apre un
+overlay a tutto schermo — QR a 260-300px, sfondo sfocato con
+`backdrop-filter: blur(22px)` invece di un tendone scuro piatto, così
+l'occhio (e l'autofocus della fotocamera) vanno dritti sul codice. Si
+chiude toccando ovunque intorno, col bottone ✕, o con Escape.
+
+Un dettaglio tecnico non ovvio: l'Escape dello zoom doveva chiudere SOLO lo
+zoom, non l'intero popup — ma il popup registra già il proprio handler
+Escape su `document` (in `DiscountDetailPopup`, non in questo componente
+figlio), quindi un secondo listener bubble-phase su `document` sarebbe
+comunque scattato dopo, chiudendo tutto. Risolto registrando l'handler dello
+zoom in fase di **cattura** (`addEventListener(..., true)`) con
+`stopImmediatePropagation()`: scatta prima e impedisce all'altro listener
+sullo stesso nodo di girare.
 
 ## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
 
