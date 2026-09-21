@@ -153,7 +153,7 @@ export default function DropCard({
             {view.soldOut ? (
               <div className="dropcard__counts dropcard__counts--soldout">
                 <i className="dropcard__soldout-rule" aria-hidden="true" />
-                <span>Tutti i posti sono stati presi</span>
+                <span>{view.max === 1 ? '1 sconto preso' : `${view.max} sconti su ${view.max} presi`}</span>
                 <i className="dropcard__soldout-rule" aria-hidden="true" />
               </div>
             ) : (
@@ -224,7 +224,7 @@ function buildView(deal, now, { showAlwaysValid = true } = {}) {
   // posti e dicono quello che sono, senza fingersi urgenti.
   const drop = isDrop(deal)
   const pillLabel = drop
-    ? (soldOut ? 'ESAURITO' : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'))
+    ? (soldOut ? 'SCONTO ESAURITO' : (countdown ? `DROP LIVE · ${countdown}` : 'DROP LIVE'))
     : (showAlwaysValid ? 'SEMPRE VALIDO' : '')
 
   // La riga piccola: prima la condizione d'uso, poi categoria e indirizzo.
