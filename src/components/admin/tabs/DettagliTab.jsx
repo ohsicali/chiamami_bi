@@ -43,6 +43,7 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
   const { categories } = useCategories()
   const ai = useAiCorrect()
   const [geocoding, setGeocoding] = useState(false)
+  const [locationGeocoding, setLocationGeocoding] = useState(null) // index in lavorazione, o null
   const [customTag, setCustomTag] = useState('')
   const [catDropdownOpen, setCatDropdownOpen] = useState(false)
   const catDropdownRef = useRef(null)
@@ -84,6 +85,37 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
 
   function handleAddressBlur() {
     if (!form.latitude && !form.longitude) runGeocode()
+  }
+
+  /* ── Sedi extra (oltre a quella principale qui sopra) ── */
+  function updateLocation(i, patch) {
+    const current = Array.isArray(form.locations) ? form.locations : []
+    onChange({ locations: current.map((l, idx) => (idx === i ? { ...l, ...patch } : l)) })
+  }
+
+  function addLocation() {
+    const current = Array.isArray(form.locations) ? form.locations : []
+    onChange({ locations: [...current, { label: '', address: '', latitude: '', longitude: '' }] })
+  }
+
+  function removeLocation(i) {
+    const current = Array.isArray(form.locations) ? form.locations : []
+    onChange({ locations: current.filter((_, idx) => idx !== i) })
+  }
+
+  async function runLocationGeocode(i) {
+    const loc = form.locations?.[i]
+    if (!loc?.address?.trim()) return
+    setLocationGeocoding(i)
+    const fullAddress = `${loc.address}, ${form.city || 'Torino'}`
+    const result = await geocodeAddress(fullAddress)
+    if (result) updateLocation(i, { latitude: String(result.latitude), longitude: String(result.longitude) })
+    setLocationGeocoding(null)
+  }
+
+  function handleLocationBlur(i) {
+    const loc = form.locations?.[i]
+    if (loc && !loc.latitude && !loc.longitude) runLocationGeocode(i)
   }
 
   function toggleMoment(key) {
@@ -264,6 +296,112 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
             })}
           </div>
         </FField>
+      </FGroup>
+
+      {/* ── SEDI — solo per chi ha più di un locale ── */}
+      <FGroup
+        title="Sedi"
+        count={
+          (form.locations?.length || 0) === 0
+            ? 'una sola sede'
+            : `${form.locations.length + 1} sedi`
+        }
+      >
+        <div style={{ fontSize: 12, color: 'var(--color-ink-70, rgba(34,24,28,.7))', marginBottom: 10, lineHeight: 1.45 }}>
+          L'indirizzo in Anagrafica resta la sede principale. Aggiungi qui le
+          altre sedi dello stesso locale: sulla mappa comparirà un pin per
+          ciascuna, entrambi verso questa stessa scheda, e lo sconto varrà in
+          tutte le sedi.
+        </div>
+        {(form.locations || []).map((loc, i) => (
+          <div
+            key={i}
+            style={{
+              border: '1px dashed var(--color-line, #EAE3D7)',
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 10,
+            }}
+          >
+            <FRow>
+              <FField label="Etichetta (opzionale)" hint="Es. «Sede Lingotto» — mostrata sulla scheda">
+                <FInput value={loc.label} onChange={(v) => updateLocation(i, { label: v })} placeholder="Sede Lingotto" />
+              </FField>
+              <FField label="Indirizzo">
+                <FInput
+                  value={loc.address}
+                  onChange={(v) => updateLocation(i, { address: v })}
+                  onBlur={() => handleLocationBlur(i)}
+                  placeholder="Via Nizza 230, Torino"
+                />
+              </FField>
+            </FRow>
+            <FRow>
+              <FField label="Latitudine">
+                <FInput value={String(loc.latitude ?? '')} onChange={(v) => updateLocation(i, { latitude: v })} placeholder="45.0324" />
+              </FField>
+              <FField label="Longitudine">
+                <FInput value={String(loc.longitude ?? '')} onChange={(v) => updateLocation(i, { longitude: v })} placeholder="7.6606" />
+              </FField>
+            </FRow>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={() => runLocationGeocode(i)}
+                disabled={locationGeocoding === i || !loc.address?.trim()}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--color-corallo, #E8453C)',
+                  color: 'var(--color-corallo, #E8453C)',
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  cursor: locationGeocoding === i ? 'wait' : 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  opacity: !loc.address?.trim() || locationGeocoding === i ? 0.5 : 1,
+                }}
+              >
+                {locationGeocoding === i ? '⏳ Cerco coordinate…' : '📍 Trova coordinate da indirizzo'}
+              </button>
+              <button
+                type="button"
+                onClick={() => removeLocation(i)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--color-line, #EAE3D7)',
+                  color: 'var(--color-ink-55, rgba(34,24,28,0.55))',
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
+                ✕ Rimuovi sede
+              </button>
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addLocation}
+          style={{
+            background: 'var(--color-ink, #22181C)',
+            color: '#fff',
+            border: 0,
+            padding: '9px 16px',
+            borderRadius: 10,
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          + Aggiungi un'altra sede
+        </button>
       </FGroup>
 
       {/* ── 2. CATEGORIE — dropdown raggruppata ── */}

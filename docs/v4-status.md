@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 (tocca il QR per ingrandirlo a schermo pieno con sfondo sfocato)
+Ultima modifica: 2026-09-21 (sedi multiple — due pin sulla mappa per lo stesso locale)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -21,6 +21,65 @@ dove siamo. Aggiorna a ogni step importante.
 | Pubblicità — circuito banner | #211 | 🚧 In review | Branch: `claude/banner-ad-dimensions-uqazb1`. 3 posizioni (`home_hero` hero in home, `list_inline` elenco locali mobile + colonna mappa desktop, `deals_mid` pagina sconti), rotazione pesata tra più clienti, metriche impression/click/CTR, admin `/admin/placements` rifatto. Slot definiti in `src/lib/adSlots.js`. |
 | Sconti — foto prodotti e regole | #245 | ✅ Merged (47cffee) | SQL `supabase/discount-products-2026-09-18.sql` già eseguito. Scheda `DiscountRules`, anteprima in lista, campi admin. Restano da caricare le foto dal pannello. |
 | Sconti — tap su "I miei vantaggi" + banner QR unificato | — | ✅ Done | Vedi sezione "21/09" sotto. |
+| Sedi multiple (due indirizzi per lo stesso locale) | — | ✅ Done | Vedi sezione "21/09 — sedi multiple" sotto. SQL eseguito. |
+
+## 21/09 — sedi multiple (due indirizzi per lo stesso locale)
+
+Richiesta: un ristorante con due sedi (stesso locale, due indirizzi) deve
+avere due pin sulla mappa, entrambi verso la STESSA scheda, con lo sconto
+utilizzabile in entrambe le sedi e la scheda che lo dice chiaramente.
+
+**Scelta di modello**: `restaurants` resta UNA riga per locale — indirizzo
+principale, sconto, PIN di verifica, tutto come prima. Una nuova tabella
+`restaurant_locations` (`supabase/restaurant-locations-2026-09-21.sql`,
+eseguita sul progetto `Chiamami_bi`) aggiunge SOLO le sedi **extra**: 0
+righe = ristorante normale (comportamento identico a oggi), 1+ righe = "ha
+anche un'altra sede". Niente seconda riga `restaurants` — sarebbe stata la
+via più ovvia ma avrebbe rotto l'unicità di PIN/sconto/riscatto, che sono
+già legati a un solo `restaurant_id` (`discounts.restaurant_id`,
+`verified_devices.restaurant_id`, `verify_redeem_qr`): **nessuna modifica
+lì**, lo sconto è già valido per il ristorante indipendentemente da quale
+sede lo riscatta, un solo PIN funziona già da entrambi i banconi.
+
+**Dove**:
+- `src/lib/hooks/useRestaurants.js` — join su `restaurant_locations`,
+  esposto come `restaurant.locations` (array, vuoto per la maggior parte).
+  Cache bumpata a `cb_restaurants_v6` (stessa ragione delle altre volte:
+  la forma della select è cambiata).
+- `src/components/Map/MapView.jsx` — `buildIndex()` genera un punto
+  Supercluster per la sede principale + uno per ogni sede extra, tutti con
+  lo stesso `properties.id` (il ristorante) così il click porta sempre alla
+  stessa pagina; `properties.locationId` distingue i pin come chiave
+  marker (`pin-${id}-${locationId}`) altrimenti Supercluster/il Map li
+  vedrebbe come lo stesso punto. Selezione e fly-to restano per `id`, quindi
+  selezionare il locale evidenzia entrambi i pin. `isRestaurantVisible()`
+  (nuovo helper) conta un locale come "in vista" anche se solo la sede
+  extra è nei bounds — altrimenti la lista sotto la mappa lo perdeva
+  spostandosi sul secondo pin.
+- `src/lib/utils/restaurantLocations.js` (nuovo) — `getAllLocations`,
+  `hasMultipleLocations`, `locationMapsUrl`: normalizzato in un posto solo
+  (com'è per `discountProducts.js`) così scheda mobile, scheda desktop e
+  admin non possono raccontare due liste di sedi diverse.
+- `src/components/Restaurant/RestaurantLocationsNote.jsx` (nuovo) — il
+  blocco "Questo locale ha N sedi — lo sconto vale in entrambe" con
+  indirizzo e link maps per ciascuna. Montato subito sotto l'indirizzo in
+  `RestaurantSheet.jsx` (mobile) e `DesktopRestaurantSheet.jsx` (desktop);
+  non renderizza nulla se non ci sono sedi extra.
+- `src/components/admin/tabs/DettagliTab.jsx` — nuovo blocco "Sedi" nella
+  tab Dettagli: righe ripetibili (etichetta opzionale, indirizzo, lat/lng,
+  stesso bottone "Trova coordinate da indirizzo" della sede principale).
+  `src/pages/admin/EditRestaurant.jsx` — select include
+  `restaurant_locations`, `toFormState` le mappa, salvataggio con lo
+  stesso pattern delle foto (delete + re-insert su save, righe senza
+  indirizzo/coordinate scartate).
+
+**Non toccato**: `discounts`, `discount_redemptions`, `verified_devices`,
+`verify_redeem_qr`, `JsonLd` (SEO schema.org resta sulla sede principale —
+fuori scope, non richiesto).
+
+**Verificato**: `npm run build` pulito, `npm test` 125/125, lint sui file
+nuovi 0 errori (i lint pre-esistenti negli altri file toccati sono
+identici prima/dopo, confrontati con `git stash`).
 
 ## 21/09 — "I miei vantaggi" disponibili: il tap portava al locale, non allo sconto
 

@@ -90,6 +90,14 @@ function ensureStyles() {
 /* ------------------------------------------------------------------ */
 /*  Create DOM elements for markers                                    */
 /* ------------------------------------------------------------------ */
+// Un ristorante è "visibile" se la sede principale O una qualsiasi sede
+// extra cade nei bounds — altrimenti chi sposta la mappa sul secondo pin
+// di un ristorante a due sedi lo vedrebbe sparire dalla lista sotto la mappa.
+function isRestaurantVisible(r, bounds) {
+  if (r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude])) return true
+  return (r.locations || []).some((loc) => loc.latitude && loc.longitude && bounds.contains([loc.longitude, loc.latitude]))
+}
+
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -273,13 +281,28 @@ const MapView = forwardRef(function MapView({
   const buildIndex = useCallback(() => {
     const rests = restaurantsRef.current || []
     const saved = savedIdsRef.current
-    const points = rests
-      .filter((r) => r.latitude && r.longitude)
-      .map((r) => ({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
-        properties: { id: r.id, saved: saved?.has(r.id) ? true : false },
-      }))
+    const points = []
+    for (const r of rests) {
+      const isSaved = saved?.has(r.id) ? true : false
+      if (r.latitude && r.longitude) {
+        points.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
+          properties: { id: r.id, locationId: 'primary', saved: isSaved },
+        })
+      }
+      // Sedi extra (stesso ristorante, stessa scheda): un pin in più per
+      // ognuna, stesso `id` di ristorante così il click porta alla stessa
+      // pagina — `locationId` le distingue solo come chiave del marker.
+      for (const loc of r.locations || []) {
+        if (!loc.latitude || !loc.longitude) continue
+        points.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [loc.longitude, loc.latitude] },
+          properties: { id: r.id, locationId: loc.id, saved: isSaved },
+        })
+      }
+    }
 
     const index = new Supercluster({ radius: 60, maxZoom: 16 })
     index.load(points)
@@ -316,7 +339,7 @@ const MapView = forwardRef(function MapView({
     for (const f of features) {
       const key = f.properties.cluster
         ? `cluster-${f.properties.cluster_id}`
-        : `pin-${f.properties.id}`
+        : `pin-${f.properties.id}-${f.properties.locationId}`
       newKeys.set(key, f)
     }
 
@@ -435,7 +458,7 @@ const MapView = forwardRef(function MapView({
     // Notify parent
     if (onVisibleRef.current) {
       const allVisibleIds = rests
-        .filter((r) => r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude]))
+        .filter((r) => isRestaurantVisible(r, bounds))
         .map((r) => r.id)
       const center = m.getCenter()
       onVisibleRef.current(allVisibleIds, { lng: center.lng, lat: center.lat })
@@ -494,7 +517,7 @@ const MapView = forwardRef(function MapView({
           const rests = restaurantsRef.current || []
           const bounds = m.getBounds()
           const ids = rests
-            .filter((r) => r.latitude && r.longitude && bounds.contains([r.longitude, r.latitude]))
+            .filter((r) => isRestaurantVisible(r, bounds))
             .map((r) => r.id)
           const center = m.getCenter()
           onVisibleRef.current(ids, { lng: center.lng, lat: center.lat })
