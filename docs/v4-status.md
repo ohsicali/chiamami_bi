@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 ("I miei vantaggi" disponibili: il tap apre il QR invece di andare al locale, banner QR unificato su DiscountDetailPopup)
+Ultima modifica: 2026-09-21 ("I miei vantaggi" disponibili: stesse card ricche del catalogo Disponibili — DropCard/ConvCard — invece della lista compatta)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -61,6 +61,19 @@ Non toccato: `QRBlockedView` (si apre quando lo sconto non è valido adesso,
 spiega già da sé perché e quando torna valido) e `MieiUtilizzatiView`/
 `UsedRow` (storico, il tap continua a portare al locale — non c'è un QR da
 mostrare per uno sconto già usato).
+
+**Feedback dopo il primo giro**: la lista compatta (`MineRow`) restava comunque
+troppo diversa, visivamente, dalle card di "Disponibili" — chiesto di renderle
+identiche, non solo di sistemare il click. `MineRow` eliminato: "I miei
+vantaggi" → Disponibili ora riusa `DropSection`/`DropCard` per i drop e
+`ConvCard` per le convenzioni, esattamente le stesse card del catalogo. La
+differenza è solo di stato: `redemptionByDealId`/`ConvCard locked={false}`
+fanno nascere la card già in "Apri QR" invece che "Sblocca", perché lo sconto
+è già preso. `ConvCard` ha guadagnato il prop `locked` (default `true`,
+comportamento invariato nel catalogo). Aggiunta anche una piccola animazione
+d'ingresso (check + QR con un pop) sul banner "Sbloccato!" di
+`DiscountDetailPopup`, per rendere il momento dello sblocco più vivo. CSS
+morto di `MineRow`/`.sc-qr-btn` rimosso da `SconteRedesignPage.css`.
 
 ## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
 
