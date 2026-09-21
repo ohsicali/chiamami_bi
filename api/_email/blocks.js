@@ -447,7 +447,7 @@ export function conventionOffer({ value, perk, conditions }) {
       <tr><td style="padding:16px 18px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
           ${value ? `<td valign="middle" style="font-family:${FONT_DISPLAY};font-size:38px;line-height:1;font-weight:800;letter-spacing:-1.5px;color:${COLORS.ink};padding-right:12px;white-space:nowrap;">${esc(value)}</td>` : ''}
-          <td valign="middle" style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink};">${esc(perk || '')}${conditions ? `<span style="display:block;font-size:11.5px;font-weight:500;color:${COLORS.ink70};margin-top:2px;">${esc(conditions)}</span>` : ''}</td>
+          <td valign="middle" style="font-family:${FONT_BODY};font-size:14px;line-height:1.35;font-weight:700;color:${COLORS.ink};">${esc(perk || conditions || '')}${perk && conditions ? `<span style="display:block;font-size:11.5px;font-weight:500;color:${COLORS.ink70};margin-top:2px;">${esc(conditions)}</span>` : ''}</td>
         </tr></table>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:13px 0 0;"><tr>
           <td style="background-color:${COLORS.mint};border-radius:999px;padding:5px 12px;font-family:${FONT_BODY};font-size:10.5px;line-height:1.2;font-weight:800;letter-spacing:.06em;color:${COLORS.ink};">✓ SEMPRE VALIDO · NESSUNA SCADENZA</td>

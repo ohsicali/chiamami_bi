@@ -99,3 +99,33 @@ export function countdownWords(endsAt, now = new Date()) {
   if (ore >= 2) return `${ore} ore`
   return 'poche ore'
 }
+
+/**
+ * Il vantaggio, ma solo se aggiunge qualcosa al valore già scritto grande.
+ *
+ * Il difetto che l'handoff v11 chiama "il drop dice lo sconto due volte":
+ * il badge fa "−30%" e la riga sotto fa "30% di sconto", che non aggiunge
+ * niente e diluisce la prima. Non è un problema di template ma di dati —
+ * sul database metà dei titoli **sono** la percentuale e basta ("30% di
+ * sconto", "20% di sconto"), e `pickPerk` giustamente li restituisce,
+ * perché in una card del sito quella riga il posto ce l'ha.
+ *
+ * In un'email dove il numero è già il pezzo più grande, no: qui la riga si
+ * tiene solo quando dice una cosa in più ("10% sulle bevande Matcha",
+ * "1€ di sconto sui tramezzini"). Se è il valore ripetuto con del
+ * riempimento intorno, sparisce — meglio una riga in meno che una riga che
+ * ripete.
+ */
+export function perkBeyondValue(perk, value) {
+  const t = String(perk || '').trim()
+  if (!t) return ''
+  const nudo = (s) => String(s || '')
+    .toLowerCase()
+    .replace(/^[−-]\s*/, '')
+    // Il riempimento che sta fra il numero e il nulla.
+    .replace(/\b(di|in|il|lo|la|uno|una)\s+(sconto|meno|omaggio)\b/g, '')
+    .replace(/\b(sconto|omaggio)\b/g, '')
+    .replace(/[^a-z0-9àèéìòù%€]/g, '')
+  const resto = nudo(t)
+  return resto && resto !== nudo(value) ? t : ''
+}

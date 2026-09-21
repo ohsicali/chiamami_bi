@@ -28,7 +28,7 @@ import {
   esc, SIGN,
 } from './blocks.js'
 import { isBareDiscountValue } from './discount.js'
-import { clipSentences, metaFor } from './content.js'
+import { clipSentences, metaFor, perkBeyondValue } from './content.js'
 
 const firstName = (name) => String(name || '').trim().split(/\s+/)[0] || ''
 
@@ -172,6 +172,11 @@ export function newDiscountEmail({
   const testo = clip(review)
   const lista = photos?.length ? photos : [photoUrl].filter(Boolean)
   const link = href || `${SITE_URL}/sconti`
+  // Il valore è già la cosa più grande dell'email: la riga del vantaggio
+  // resta solo se dice qualcosa in più. Sul database metà dei titoli sono
+  // la percentuale e basta ("30% di sconto"), e ripeterla sotto il badge è
+  // il difetto che l'handoff chiama "il drop dice lo sconto due volte".
+  const vantaggio = perkBeyondValue(perk, plain)
 
   /* ── Drop ─────────────────────────────────────────────────────── */
   if (isDrop) {
@@ -187,7 +192,7 @@ export function newDiscountEmail({
           dropCard({
             badge: plain && isBareDiscountValue(plain) ? `−${plain}` : '',
             restaurantName,
-            perk: perk || phrase,
+            perk: vantaggio,
             meta: [meta, conditions].filter(Boolean).join(' · '),
             countdown,
             taken, left,
@@ -202,7 +207,7 @@ export function newDiscountEmail({
         text: [
           `Ho acceso un drop da ${restaurantName}.`,
           '',
-          [phrase, perk].filter(Boolean).join(' — '),
+          [phrase, vantaggio].filter(Boolean).join(' — '),
           meta,
           conditions || '',
           countdown ? `Scade tra ${countdown}.` : '',
@@ -234,7 +239,7 @@ export function newDiscountEmail({
         eyebrow('Nuova convenzione', { color: COLORS.oroDeep }),
         h1(restaurantName),
         metaLine(meta),
-        conventionOffer({ value: plain, perk: perk || phrase, conditions }),
+        conventionOffer({ value: plain, perk: vantaggio, conditions }),
         button('Aggiungilo ai tuoi sconti →', link, { padding: '18px 20px 0', block: true }),
         microNote('Resta nel tuo Bi Club. Lo mostri alla cassa ogni volta che ci vai.'),
         testo ? p(`${esc(testo)}${SIGN}`, { padding: '18px 20px 0' }) : '',
@@ -244,7 +249,7 @@ export function newDiscountEmail({
         soggetto,
         meta,
         '',
-        [plain, perk].filter(Boolean).join(' — '),
+        [plain, vantaggio].filter(Boolean).join(' — '),
         conditions || '',
         'Sempre valido, nessuna scadenza.',
         '',

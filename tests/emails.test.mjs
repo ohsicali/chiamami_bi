@@ -167,6 +167,23 @@ test('un drop senza tetto non disegna una scarsità che non esiste', () => {
   assert.match(m.html, /DROP LIVE/, 'ma resta un drop')
 })
 
+test('lo sconto è detto una volta sola, non due', () => {
+  // Sul database metà dei titoli sono la percentuale e basta ("30% di
+  // sconto"): il badge faceva "−30%" e la riga sotto "30% di sconto", che
+  // non aggiunge niente e diluisce la prima. La riga resta solo quando dice
+  // davvero qualcosa in più.
+  const base = { ...SAMPLE.newDiscount, unsubscribeUrl: UNSUB }
+
+  for (const isDrop of [true, false]) {
+    const muto = newDiscountEmail({ ...base, value: '−30%', perk: '30% di sconto', isDrop })
+    assert.ok(!/30% di sconto/.test(muto.html), 'il valore ripetuto va tolto')
+    assert.ok(!/30% di sconto/.test(muto.text), 'anche dalla versione a solo testo')
+
+    const parlante = newDiscountEmail({ ...base, value: '−1€', perk: '1€ di sconto sui tramezzini', isDrop })
+    assert.match(parlante.html, /sui tramezzini/, 'un titolo che dice di più resta')
+  }
+})
+
 /* ── I bug di contenuto che si vedevano a occhio nudo ──────────────── */
 
 test('il testo di Bi non si taglia mai a metà parola', () => {

@@ -190,6 +190,11 @@ un problema di disegno ma di formattazioni fatte al volo dentro i template.
   piazza, niente CAP, niente "Torino TO, Italy".
 - **`countdownWords`** — «3 giorni», «domani», «poche ore» invece di «3g 2h»,
   che è una sigla da cruscotto. In un'email si legge una volta sola e di fretta.
+- **`perkBeyondValue`** — lo sconto detto una volta sola. Sul database metà
+  dei titoli **sono** la percentuale e basta («30% di sconto»), e in un'email
+  dove il numero è già il pezzo più grande ripeterlo sotto il badge lo
+  diluisce. La riga del vantaggio resta solo quando dice qualcosa in più
+  («10% sulle bevande Matcha», «1€ di sconto sui tramezzini»).
 
 **Il preheader** è obbligatorio in ogni template: è la riga che decide se
 aprono, e prima era sprecata sul logo («LA GUIDA DI BI BY CHIAMAMI BI»). Sta

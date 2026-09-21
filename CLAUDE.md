@@ -90,8 +90,8 @@ brucia l'urgenza anche sui drop veri. Il bottone invece resta corallo in tutti
 e due: è il colore dell'azione, non quello dello sconto.
 
 Le formattazioni non si fanno nei template: taglio del testo di Bi (su frase
-intera, mai a metà parola), prezzo in `€€`, indirizzo e countdown stanno in
-`_email/content.js`. E se tocchi `render.js` o `blocks.js`, rilancia
+intera, mai a metà parola), prezzo in `€€`, indirizzo, countdown e la regola
+che evita di dire lo sconto due volte stanno in `_email/content.js`. E se tocchi `render.js` o `blocks.js`, rilancia
 `node supabase/email-templates/build.mjs`.
 
 ## Convenzioni contenuti sconti (per riferimento futuro)
