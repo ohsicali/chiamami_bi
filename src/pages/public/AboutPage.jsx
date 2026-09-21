@@ -172,10 +172,10 @@ export default function AboutPage() {
               fontSize: isDesktop ? 26 : 20, letterSpacing: '-0.02em',
               lineHeight: 1.1,
             }}>
-              Beatrice, 22, Torino
+              Beatrice Rigato
             </div>
             <div style={{ fontSize: isDesktop ? 13 : 12, color: 'rgba(255,255,255,.85)', marginTop: 6, lineHeight: 1.45 }}>
-              Studentessa di giurisprudenza e food creator. Una delle voci più seguite del food popolare italiano.
+              Studentessa di giurisprudenza e food influencer, metà piemontese e metà siciliana. Una delle voci più seguite del food popolare italiano.
             </div>
 
             {/* Inline stats */}
