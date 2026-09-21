@@ -91,7 +91,16 @@ e due: è il colore dell'azione, non quello dello sconto.
 
 Le formattazioni non si fanno nei template: taglio del testo di Bi (su frase
 intera, mai a metà parola), prezzo in `€€`, indirizzo, countdown e la regola
-che evita di dire lo sconto due volte stanno in `_email/content.js`. E se tocchi `render.js` o `blocks.js`, rilancia
+che evita di dire lo sconto due volte stanno in `_email/content.js`.
+
+**Chi le riceve (deciso il 21/09):** chi ha un account. Non c'è niente a cui
+iscriversi — il trigger `on_auth_user_created_email_prefs` crea la riga in
+`email_preferences` con tutti gli interruttori a `true`, e `recipientsFor()`
+legge di lì. L'unica scelta è smettere, e sta in fondo al messaggio: link
+"Scegli cosa ricevere" più l'intestazione `List-Unsubscribe` a un clic. Non
+aggiungere caselle di iscrizione e non togliere la pagina delle preferenze:
+è quella che fa spegnere un tipo di email invece di premere "segnala come
+spam", che è il colpo peggiore che il dominio possa prendere. E se tocchi `render.js` o `blocks.js`, rilancia
 `node supabase/email-templates/build.mjs`.
 
 ## Convenzioni contenuti sconti (per riferimento futuro)
