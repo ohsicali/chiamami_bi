@@ -14,10 +14,37 @@ import { useMediaQuery } from './lib/hooks/useMediaQuery'
 // entry chunk if imported eagerly.
 const CookieConsent = lazy(() => import('react-cookie-consent'))
 
+// Un nuovo deploy rinomina i file delle pagine caricate con `lazy()`
+// (hash diverso nel nome). Chi ha il sito già aperto e naviga verso una
+// pagina non ancora scaricata prova a prendere il vecchio file: Vercel non
+// lo trova più e restituisce la pagina HTML del routing SPA al suo posto,
+// da cui il "text/html is not a valid JavaScript MIME type". Non è un bug
+// dell'app, è il sito vecchio in mano all'utente: un ricaricamento prende
+// l'HTML nuovo con i riferimenti giusti e risolve. `RELOAD_KEY` evita di
+// ricaricare in loop se il problema fosse un altro.
+const CHUNK_ERROR_PATTERN = /dynamically imported module|is not a valid JavaScript MIME type|Importing a module script failed|Failed to fetch dynamically imported module|Unable to preload CSS/i
+const RELOAD_KEY = 'chiamamibi-chunk-reload'
+
+function isChunkLoadError(error) {
+  return CHUNK_ERROR_PATTERN.test(error?.message || '')
+}
+
 class ErrorBoundary extends Component {
   state = { hasError: false, error: null }
   static getDerivedStateFromError(error) {
     return { hasError: true, error }
+  }
+  componentDidCatch(error) {
+    if (!isChunkLoadError(error)) return
+    let alreadyTried = false
+    try {
+      alreadyTried = sessionStorage.getItem(RELOAD_KEY) === '1'
+      if (!alreadyTried) sessionStorage.setItem(RELOAD_KEY, '1')
+    } catch {
+      // storage non disponibile (privacy mode ecc.): mostra il fallback normale
+      return
+    }
+    if (!alreadyTried) window.location.reload()
   }
   render() {
     if (this.state.hasError) {
@@ -84,6 +111,18 @@ const preloadRestaurantPage = () => import('./pages/public/RestaurantPage')
 
 export default function App() {
   const location = useLocation()
+
+  // Siamo arrivati fin qui senza che l'ErrorBoundary scattasse: la pagina è
+  // sana, quindi un eventuale chunk error futuro merita un altro tentativo
+  // di ricaricamento (vedi RELOAD_KEY sopra).
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(RELOAD_KEY)
+    } catch {
+      // storage non disponibile, nessun problema: il flag semplicemente non si azzera
+    }
+  }, [])
+
   // 1024 e non 768: sotto i 1024 le due home si assomigliano (una colonna,
   // riga che scorre), e la piega a due colonne — quella che non piaceva —
   // è esattamente quella che nasce da lì in su.
