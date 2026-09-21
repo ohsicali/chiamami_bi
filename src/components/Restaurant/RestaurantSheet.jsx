@@ -720,8 +720,8 @@ export default function RestaurantSheet({
 
               {/* Due sedi — solo se il locale ne ha più di una */}
               {hasMultipleLocations(restaurant) && (
-                <motion.div variants={itemVariants} style={{ marginBottom: 14 }}>
-                  <RestaurantLocationsNote restaurant={restaurant} align="center" />
+                <motion.div variants={itemVariants} style={{ marginBottom: 16 }}>
+                  <RestaurantLocationsNote restaurant={restaurant} />
                 </motion.div>
               )}
 

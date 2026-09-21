@@ -340,8 +340,8 @@ export default function DesktopRestaurantSheet({
 
             {/* Due sedi — solo se il locale ne ha più di una */}
             {hasMultipleLocations(restaurant) && (
-              <div style={{ marginBottom: 18 }}>
-                <RestaurantLocationsNote restaurant={restaurant} align="left" />
+              <div style={{ marginBottom: 18, maxWidth: 380 }}>
+                <RestaurantLocationsNote restaurant={restaurant} />
               </div>
             )}
 

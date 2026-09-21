@@ -1,55 +1,63 @@
 import { getAllLocations, hasMultipleLocations, locationMapsUrl } from '../../lib/utils/restaurantLocations'
 import { formatAddress } from '../../lib/utils/formatAddress'
+import './RestaurantLocationsNote.css'
 
 /**
- * "Questo locale ha 2 sedi" — compare solo se `restaurant.locations` (sedi
- * extra oltre a quella principale) non è vuoto. Stesso componente per
- * mobile (RestaurantSheet, centrato) e desktop (DesktopRestaurantSheet,
- * allineato a sinistra) così le due schede non possono raccontare due sedi
- * diverse.
+ * "N sedi — lo sconto vale in entrambe" sulla scheda del locale. Compare
+ * solo se `restaurant.locations` (sedi extra oltre a quella principale) non
+ * è vuoto. Stesso componente per mobile (RestaurantSheet) e desktop
+ * (DesktopRestaurantSheet) così le due schede non possono raccontare due
+ * liste di sedi diverse.
  */
-export default function RestaurantLocationsNote({ restaurant, align = 'center' }) {
+export default function RestaurantLocationsNote({ restaurant }) {
   if (!hasMultipleLocations(restaurant)) return null
   const locations = getAllLocations(restaurant)
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-        textAlign: align,
-        alignItems: align === 'center' ? 'center' : 'flex-start',
-        background: 'rgba(232,69,60,0.06)',
-        border: '1px solid rgba(232,69,60,0.18)',
-        borderRadius: 12,
-        padding: '10px 14px',
-        fontSize: 12.5,
-        color: 'var(--color-ink-70, rgba(34,24,28,.7))',
-        fontWeight: 600,
-        lineHeight: 1.5,
-      }}
-    >
-      <div style={{ fontWeight: 800, color: 'var(--color-corallo-ink, #C23A32)' }}>
-        📍 Questo locale ha {locations.length} sedi — lo sconto vale in entrambe
+    <div className="rln">
+      <div className="rln-eyebrow">
+        <PinIcon size={11} />
+        <span>{locations.length} sedi — lo sconto vale in entrambe</span>
       </div>
-      {locations.map((loc, i) => {
-        const addr = formatAddress(loc.address) || loc.address
-        const url = locationMapsUrl(loc)
-        const label = loc.label || `Sede ${i + 1}`
-        return (
-          <div key={loc.id || i}>
-            <b>{label}:</b>{' '}
-            {url ? (
-              <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
-                {addr}
-              </a>
-            ) : (
-              addr
-            )}
-          </div>
-        )
-      })}
+      <div className="rln-list">
+        {locations.map((loc, i) => {
+          const addr = formatAddress(loc.address) || loc.address
+          const url = locationMapsUrl(loc)
+          const label = loc.label || `Sede ${i + 1}`
+          const Row = url ? 'a' : 'div'
+          return (
+            <Row
+              key={loc.id || i}
+              className="rln-row"
+              {...(url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              <span className="rln-badge" aria-hidden="true">{i + 1}</span>
+              <span className="rln-info">
+                <span className="rln-label">{label}</span>
+                <span className="rln-addr">{addr}</span>
+              </span>
+              {url && <GoIcon className="rln-go" />}
+            </Row>
+          )
+        })}
+      </div>
     </div>
+  )
+}
+
+function PinIcon({ size = 13 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
+
+function GoIcon({ className }) {
+  return (
+    <svg className={className} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 17L17 7M17 7H9M17 7V15" />
+    </svg>
   )
 }
