@@ -424,29 +424,38 @@ function UnlockedQRView({ deal, redemption, photoUrl, restaurantUrl, onClose, on
         <button type="button" className="ddp-close ddp-close-on-banner" aria-label="Chiudi" onClick={onClose}>✕</button>
       </div>
 
-      {/* QR section */}
+      {/* QR section — un biglietto, non due riquadri slegati: identità del
+          locale sopra, QR sotto, una perforazione a separarli. È lo stesso
+          oggetto che si mostra al banco, non un modulo di sistema. */}
       <div className="ddp-qr-section">
-        <div className="ddp-qr-place">
-          {photoUrl && (
-            <div className="ddp-qrp-thumb">
-              <img src={photoUrl} alt="" loading="lazy" decoding="async" />
+        <div className="ddp-ticket">
+          <div className="ddp-ticket-stripe" aria-hidden="true" />
+          <div className="ddp-ticket-top">
+            {photoUrl && (
+              <div className="ddp-qrp-thumb">
+                <img src={photoUrl} alt="" loading="lazy" decoding="async" />
+              </div>
+            )}
+            <div className="ddp-qrp-info">
+              <h3>{r?.name || deal?.title}</h3>
+              <div className="ddp-qrp-meta">{[cuisine, address].filter(Boolean).join(' · ')}</div>
             </div>
-          )}
-          <div className="ddp-qrp-info">
-            <h3>{r?.name || deal?.title}</h3>
-            <div className="ddp-qrp-meta">{[cuisine, address].filter(Boolean).join(' · ')}</div>
+            <span className="ddp-qrp-pct">{pctNum(deal)}</span>
           </div>
-          <span className="ddp-qrp-pct">{pctNum(deal)}</span>
-        </div>
 
-        <div className="ddp-qr-frame">
-          {qrPayload ? <QRCanvas value={qrPayload} size={170} /> : <div className="ddp-qr-loading">Genero QR…</div>}
-        </div>
+          <div className="ddp-ticket-perf" aria-hidden="true" />
 
-        <div className="ddp-qr-hint">Mostra al ristoratore</div>
-        <div className="ddp-qr-info">
-          Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br />
-          Codice valido una sola volta.
+          <div className="ddp-ticket-bottom">
+            <div className="ddp-qr-frame">
+              {qrPayload ? <QRCanvas value={qrPayload} size={170} /> : <div className="ddp-qr-loading">Genero QR…</div>}
+            </div>
+
+            <div className="ddp-qr-hint">Mostra al ristoratore</div>
+            <div className="ddp-qr-info">
+              Lui scansiona il codice e <strong>attiva lo sconto</strong>.<br />
+              Codice valido una sola volta.
+            </div>
+          </div>
         </div>
 
         {/* Il piano B del QR: se la fotocamera del locale non collabora, il
