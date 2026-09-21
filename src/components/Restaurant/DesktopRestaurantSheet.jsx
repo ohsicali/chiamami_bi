@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { getCategoryInfo, PRICE_LABELS } from '../../lib/hooks/useRestaurants'
@@ -15,6 +15,7 @@ import RestaurantLocationsNote from './RestaurantLocationsNote'
 import SmartImage from '../UI/SmartImage'
 import RestaurantCard from './RestaurantCard'
 import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
+import OtherDiscountsSheet from '../Discount/OtherDiscountsSheet'
 import SconteAuthGate from '../Discount/SconteAuthGate'
 import { checkValidity, computeNextValidWindow } from '../../lib/validity'
 import AdSlot from '../Ads/AdBanner'
@@ -90,11 +91,22 @@ export default function DesktopRestaurantSheet({
   const [popupOpen, setPopupOpen] = useState(false)
   const [blockedMessage, setBlockedMessage] = useState(null)
   const [authGate, setAuthGate] = useState(false)
+  const [showOthers, setShowOthers] = useState(false)
   const { handleShare } = useShare(restaurant)
   const { discounts: activeDiscounts } = useActiveDiscounts()
   const { status: orariStatus, data: orariData, hasVerified: orariVerified } = useOrariStatus(restaurant)
 
-  const discount = activeDiscounts.find(d => d.restaurant_id === restaurant?.id)
+  // Un locale può avere più sconti attivi insieme: qui in primo piano ne
+  // va uno solo (banner inline sopra la piega), il resto è raggiungibile
+  // dal tag "+N altri" — stesso pattern di `RestaurantSheet` (mobile).
+  const restaurantDiscounts = activeDiscounts.filter(d => d.restaurant_id === restaurant?.id)
+  const [activeDealId, setActiveDealId] = useState(restaurantDiscounts[0]?.id || null)
+  useEffect(() => {
+    setActiveDealId(restaurantDiscounts[0]?.id || null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurant?.id])
+  const discount = restaurantDiscounts.find(d => d.id === activeDealId) || restaurantDiscounts[0] || null
+  const otherDiscounts = restaurantDiscounts.filter(d => d.id !== discount?.id)
   const { redemption, loading: redemptionLoading, generateRedemption } = useUserRedemption(discount?.id, user?.id)
 
   if (!restaurant) return null
@@ -189,6 +201,15 @@ export default function DesktopRestaurantSheet({
     } else {
       setBlockedMessage(null)
     }
+    setPopupOpen(true)
+  }
+
+  // Scelto dalla lista "+N altri": diventa lui il nuovo sconto in primo
+  // piano nel banner, e si apre direttamente il suo popup info/sblocco.
+  const handleSelectOtherDiscount = (d) => {
+    setActiveDealId(d.id)
+    setShowOthers(false)
+    setBlockedMessage(null)
     setPopupOpen(true)
   }
 
@@ -455,8 +476,24 @@ export default function DesktopRestaurantSheet({
                 color: INK,
               }}>
                 <div>
-                  <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(34,24,28,.7)', marginBottom: 4 }}>
-                    Sconto attivo per te
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(34,24,28,.7)' }}>
+                      Sconto attivo per te
+                    </div>
+                    {otherDiscounts.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowOthers(true)}
+                        style={{
+                          fontFamily: 'var(--font-sans, "Poppins", sans-serif)',
+                          fontSize: 10.5, fontWeight: 800, color: INK,
+                          background: 'rgba(255,255,255,.55)', border: 0,
+                          borderRadius: 999, padding: '2px 9px', cursor: 'pointer',
+                        }}
+                      >
+                        +{otherDiscounts.length} altri
+                      </button>
+                    )}
                   </div>
                   <div style={{ fontWeight: 800, fontSize: 15.5, letterSpacing: '-.01em' }}>
                     {discountMainText}
@@ -735,6 +772,16 @@ export default function DesktopRestaurantSheet({
           onClose={() => setAuthGate(false)}
         />
       )}
+
+      <AnimatePresence>
+        {showOthers && (
+          <OtherDiscountsSheet
+            discounts={otherDiscounts}
+            onSelect={handleSelectOtherDiscount}
+            onClose={() => setShowOthers(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── STICKY PILL SCONTO (desktop only — mobile uses its own bar) ── */}
       {discount && (

@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 (sconti/drop senza data di fine)
+Ultima modifica: 2026-09-21 (più sconti attivi per lo stesso locale)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -23,6 +23,73 @@ dove siamo. Aggiorna a ogni step importante.
 | Sconti — tap su "I miei vantaggi" + banner QR unificato | — | ✅ Done | Vedi sezione "21/09" sotto. |
 | Sedi multiple (due indirizzi per lo stesso locale) | — | ✅ Done | Vedi sezione "21/09 — sedi multiple" sotto. SQL eseguito. |
 | Sconti/drop senza data di fine | — | ✅ Done | Vedi sezione "21/09 — sconti/drop senza data di fine" sotto. SQL eseguito. |
+| Più sconti attivi per lo stesso locale | — | ✅ Done | Vedi sezione "21/09 — più sconti attivi per lo stesso locale" sotto. |
+
+## 21/09 — più sconti attivi per lo stesso locale
+
+Richiesta: poter avere più di uno sconto attivo insieme sullo stesso
+ristorante (es. un drop a tempo + uno sconto sempre attivo).
+
+**Il blocco era intenzionale, non un bug**: `DiscountManager.jsx`
+(`handleSave`, alla creazione) rifiutava un nuovo sconto se il locale ne
+aveva già uno attivo — «ha già uno sconto attivo. Disattiva o elimina
+quello esistente prima». Tolto quel controllo: resta solo il guard di
+sanità sulla data di fine (deve essere nel futuro, se c'è).
+
+**Cosa NON serviva toccare**: il catalogo pubblico (`/sconti`,
+`SconteRedesignPage.jsx`) elenca già ogni sconto come riga a sé —
+`useActiveDiscounts()` non deduplica mai per `restaurant_id` — quindi due
+sconti dello stesso locale comparivano già come due card distinte, senza
+bisogno di alcuna modifica. Lo stesso per l'admin (`/admin/discounts`):
+lista piatta, un `DropCard` a riga.
+
+**Cosa serviva invece**: la scheda del locale (mappa/lista → apri
+ristorante) assumeva UN sconto per locale ovunque —
+`activeDiscounts.find(d => d.restaurant_id === restaurant.id)`, sia
+mobile (`RestaurantSheet.jsx`) sia desktop (`DesktopRestaurantSheet.jsx`).
+Con due sconti attivi, il secondo sarebbe rimasto invisibile su quella
+pagina (anche se già raggiungibile dal catalogo).
+
+**Scelta di design** (chiesta esplicitamente, non assunta): la barra
+fissa mobile e il banner desktop restano com'erano — UN sconto in primo
+piano, quello più recente — con l'aggiunta di un tag "+N altri" che apre
+`OtherDiscountsSheet` (nuovo, `src/components/Discount/`), un elenco
+compatto degli altri sconti attivi del locale. Selezionare una riga lo
+porta in primo piano al posto di chi c'era prima — stessa card, stesso
+bottone "Scopri di più"/QR, cambia solo quale sconto sta guidando.
+
+**Dove**:
+- `RestaurantSheet.jsx` (mobile) — `restaurantDiscounts` (filter, non più
+  find) passato a `FloatingDiscountBar`, che sceglie da sé quale mostrare
+  tramite `activeDealId` — la stessa variabile decide sia cosa c'è in
+  barra sia quale sconto segue `useUserRedemption`, così sblocco/QR
+  funzionano per qualunque sconto scelto dalla lista, non solo il primo.
+- `DesktopRestaurantSheet.jsx` — stesso pattern sul banner inline "Sconto
+  attivo per te". La sticky pill in fondo (`.dsk-sticky-pill`) è codice
+  morto da B6 (`display:none` fisso, lo sconto vive solo nel banner sopra
+  la piega) — non toccata, non serviva.
+- `OtherDiscountsSheet.jsx` — condiviso fra i due, stessa cornice overlay
+  di `DiscountQuickPopup` (sfondo scuro sfocato, card bianca centrata).
+- La pillola informativa sulla foto (teaser, non interattiva) e l'header
+  sticky mostrano solo il primo sconto — non hanno spazio per un "+N
+  altri" e restano un semplice indizio, il posto per vederli tutti è la
+  barra/banner sotto.
+- Non toccati: le mappe `restaurant_id → un solo sconto` usate per i
+  badge nelle card di liste/home/salvati (`HomePage`, `HomeFeedV4`,
+  `DesktopExplorePage`, `DesktopSavedPage`, `ListView`, `SavedPage`,
+  `AdminRestaurants`) — un badge piccolo in una card non ha spazio per
+  elencarne più di uno, restano sul "primo trovato" com'era già prima
+  (non è una regressione: prima non poteva comunque essercene un
+  secondo). Stesso discorso per `ScontoTab.jsx` (riepilogo rapido in
+  admin) e la dashboard del ristoratore in `VerifyPage.jsx`: mostrano
+  ancora un solo sconto (`.limit(1)`), tutti gli altri restano comunque
+  visibili e gestibili da `/admin/discounts`.
+
+**Verificato**: `npm test` 126/126, `npm run build` pulito, lint
+invariato sui file toccati (stessi problemi preesistenti, confrontato con
+`git stash` — l'unico nuovo è il falso positivo "'motion' is defined but
+never used" su `<motion.div>`, già presente identico su altri file del
+progetto che fanno lo stesso import).
 
 ## 21/09 — sconti/drop senza data di fine
 
