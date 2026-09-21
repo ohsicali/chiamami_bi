@@ -61,8 +61,10 @@
 }
 
 /* Il respiro a metà codice cade dove cade nella lettura ad alta voce
-   (`K48 213`): tre caratteri per volta si tengono a mente, sei di fila no. */
-.shortcode-cell:nth-child(3) {
+   (`K48 213`): tre caratteri per volta si tengono a mente, sei di fila no.
+   nth-child(4) e non (3): lo span per lo screen reader è il primo figlio di
+   `.shortcode-digits`, quindi la terza casella visibile è il quarto figlio. */
+.shortcode-cell:nth-child(4) {
   margin-right: 12px;
 }
 
