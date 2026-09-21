@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-21 (banner "Apri QR" ridisegnato come biglietto con perforazione)
+Ultima modifica: 2026-09-21 (terzo giro feedback: annullato il redesign a biglietto del banner QR, "I miei vantaggi" in un'unica lista senza sezione Drop separata)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -89,6 +89,24 @@ col tono "membership" del Bi Club (stesso registro dei blocchi "Secondo Bi").
 Verificato visivamente con uno snapshot HTML/CSS isolato (stesse regole,
 dati finti, screenshot locale) prima di committare, perché il preview Vercel
 non è raggiungibile da questa sessione (proxy).
+
+**Terzo giro di feedback — bocciato il biglietto, chiarito cosa serviva
+davvero**: due correzioni.
+
+1. Il biglietto perforato non piaceva. Commit revertito (`git revert`) di
+   netto: `UnlockedQRView` torna alla versione precedente (due riquadri
+   bianchi separati — identità locale, poi QR — col tasto "Info sconto" e le
+   animazioni pop, quelli non erano in discussione).
+2. Frainteso cosa intendeva "le card dei drop presi devono essere come le
+   altre" nel primo giro: avevo riusato `DropSection`/`DropCard`, cioè il
+   trattamento grande del catalogo con la pillola "DROP LIVE · countdown" —
+   e quello *è* "quel barre grosso in alto" di cui si lamentava. L'idea era
+   un'altra: un drop già preso deve stare **nella stessa lista** delle
+   convenzioni già prese, con la stessa card compatta, non in una sezione a
+   parte con un trattamento speciale — l'urgenza del countdown ha senso nel
+   catalogo (spinge a sbloccare), non qui (è già sbloccato). `MieiDisponibiliView`
+   ora è una singola lista di `ConvCard` (`locked={false}`) per tutto,
+   niente più split drop/convenzioni né sezione "Drop a tempo".
 
 ## 20/09 — performance RLS: auth.uid() ricalcolato per riga, policy duplicate
 
