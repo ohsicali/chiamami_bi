@@ -1,6 +1,6 @@
 // ChiamamiBi Service Worker — Push + Offline Shell
 // Bump version to invalidate old caches on deploy.
-const VERSION = 'v5-home-categories-fix'
+const VERSION = 'v6-no-html-asset-cache'
 const STATIC_CACHE = `chiamamibi-static-${VERSION}`
 const RUNTIME_CACHE = `chiamamibi-runtime-${VERSION}`
 const IMAGE_CACHE = `chiamamibi-img-${VERSION}`
@@ -21,6 +21,16 @@ const SHELL_ASSETS = [
 // Hard cap so we don't fill the device storage with restaurant images.
 // Bumped to fit hero photos served via /api/img on top of local assets.
 const IMAGE_CACHE_LIMIT = 150
+
+// Un file sparito dopo un deploy (vecchio hash non più su Vercel) torna come
+// la pagina HTML del routing SPA con status 200, non un 404: senza questo
+// controllo finirebbe in cache al posto del JS/CSS/font atteso, e ci
+// resterebbe fino al prossimo bump di VERSION anche se nel frattempo la
+// pagina si ricarica con i riferimenti giusti.
+function isRealAsset(res) {
+  const type = res.headers.get('content-type') || ''
+  return res.ok && !type.includes('text/html')
+}
 
 async function trimCache(name, max) {
   const cache = await caches.open(name)
@@ -108,7 +118,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then((cached) => {
         if (cached) return cached
         return fetch(request).then((res) => {
-          if (res.ok) {
+          if (isRealAsset(res)) {
             const copy = res.clone()
             caches.open(STATIC_CACHE).then((c) => c.put(request, copy)).catch(() => {})
           }
@@ -127,7 +137,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then((cached) => {
         if (cached) return cached
         return fetch(request).then((res) => {
-          if (res.ok) {
+          if (isRealAsset(res)) {
             const copy = res.clone()
             caches.open(IMAGE_CACHE).then(async (c) => {
               await c.put(request, copy)
@@ -147,7 +157,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then((cached) => {
         if (cached) return cached
         return fetch(request).then((res) => {
-          if (res.ok) {
+          if (isRealAsset(res)) {
             const copy = res.clone()
             caches.open(STATIC_CACHE).then((c) => c.put(request, copy)).catch(() => {})
           }
