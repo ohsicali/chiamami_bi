@@ -497,58 +497,16 @@
   flex: 1;
   overflow-y: auto;
 }
-/* Il biglietto: un solo oggetto — identità del locale sopra, QR sotto,
-   una perforazione a separarli invece di due riquadri slegati. La striscia
-   corallo in cima e i due semicerchi "strappati" ai lati della perforazione
-   (colorati come lo sfondo della sezione, non come il biglietto: è quello
-   che li fa sembrare un buco, non un decoro) sono presi in prestito
-   dall'estetica del biglietto da evento — coerente col tono "membership"
-   del Bi Club altrove nell'app. */
-.ddp-ticket {
-  position: relative;
+.ddp-qr-place {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   align-self: stretch;
   width: 100%;
   background: #fff;
   border: 1px solid #EFE7DD;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(34, 24, 28, 0.1);
-  overflow: visible;
-}
-.ddp-ticket-stripe {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, #E8453C, #B92E26);
-  border-radius: 18px 18px 0 0;
-}
-.ddp-ticket-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 14px 14px;
-}
-.ddp-ticket-perf {
-  position: relative;
-  border-top: 2px dashed #E5DBCE;
-}
-.ddp-ticket-perf::before,
-.ddp-ticket-perf::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 22px; height: 22px;
-  background: var(--color-page, #FAF7F2);
-  border-radius: 50%;
-  transform: translateY(-50%);
-}
-.ddp-ticket-perf::before { left: -12px; }
-.ddp-ticket-perf::after { right: -12px; }
-.ddp-ticket-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 16px 20px;
+  border-radius: 12px;
+  padding: 10px 12px;
 }
 .ddp-qrp-thumb {
   width: 42px; height: 42px;
@@ -590,6 +548,7 @@
   border: 2px solid #22181C;
   border-radius: 14px;
   padding: 14px;
+  margin-top: 6px;
   animation: ddpQrPop 0.4s 0.1s cubic-bezier(.2,.8,.25,1) both;
 }
 @keyframes ddpQrPop {
@@ -615,6 +574,7 @@
   color: #E8453C;
   font-weight: 600;
   line-height: 1;
+  margin-top: 4px;
 }
 .ddp-qr-info {
   font-size: 11.5px;
