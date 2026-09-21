@@ -2065,3 +2065,27 @@ prosa, dove il segno meno non è la convenzione): il fallback titolo in
 sconto in `DesktopRestaurantSheet.jsx` (`discount.title || discount.discount_value`).
 `src/components/Discount/DiscountBanner.jsx` mostra `discount_value` grezzo
 ma non è importato da nessuna pagina — componente morto, non toccato.
+
+## 21/09 — noindex su admin e verify
+
+`robots.txt` già disallowava `/admin` e `/verify`, ma un Disallow non
+impedisce l'indicizzazione: Google può comunque mettere in indice un URL
+linkato da fuori (mostrando "nessuna informazione disponibile"), perché
+un crawler bloccato da robots.txt non legge mai il tag `<meta
+name="robots">` della pagina. `index.html` porta di default
+`index, follow` e nessuna pagina admin/verify lo sovrascriveva (a
+differenza delle pagine pubbliche, che passano tutte da `MetaTags` — vedi
+`src/components/SEO/MetaTags.jsx`).
+
+Fix: `<MetaTags noindex />` (già supportava la prop, non era il caso di
+crearne una nuova) aggiunto in:
+- `src/components/Layout/AdminLayout.jsx` — copre tutte le pagine admin
+  tranne il login, che ci passa tutte (unico wrapper condiviso).
+- `src/pages/admin/AdminLogin.jsx` — l'unica pagina admin che non passa
+  da `AdminLayout`.
+- `src/pages/public/VerifyPage.jsx` — area ristoratori (PIN + dashboard
+  verifica sconti).
+
+Non toccate `/profile`, `/saved`, `/settings`, `/reset-password` — sono
+già in Disallow su robots.txt ma non erano nello scope di questa
+richiesta.

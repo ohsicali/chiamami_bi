@@ -10,6 +10,7 @@ import AlreadyUsedResult from '../../components/Verify/AlreadyUsedResult'
 import ShortCodeInput from '../../components/Verify/ShortCodeInput'
 import { formatDiscountValue } from '../../lib/utils/discountFormat'
 import { SHORT_CODE_LENGTH, isShortCode, normalizeShortCode } from '../../lib/shortCode'
+import MetaTags from '../../components/SEO/MetaTags'
 
 
 function normalizeRestaurant(r) {
@@ -355,7 +356,12 @@ export default function VerifyPage() {
     )
   }
 
-  return body
+  return (
+    <>
+      <MetaTags noindex title="Area ristoratori" />
+      {body}
+    </>
+  )
 }
 
 /* ------------------------------------------------------------------ */
