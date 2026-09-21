@@ -26,7 +26,7 @@ import Reveal from '../../components/UI/Reveal'
 import { STAGGER, staggerDelay } from '../../lib/motion'
 import { formatDiscountBadge } from '../../lib/utils/discountFormat'
 import DropCard from '../../components/Discount/DropCard'
-import { isDrop, isExpired, isSoldOut, sortByExpiry } from '../../lib/discounts'
+import { isExpired, isSoldOut, sortByExpiry, filterVisibleDrops } from '../../lib/discounts'
 import { formatPrice } from '../../lib/utils/price'
 
 
@@ -538,9 +538,13 @@ export default function HomeFeedV4() {
       return true
     }))
   }, [discounts, redemptionByDealId])
+  // Un drop esaurito invece resta in vetrina: sparire subito butterebbe via
+  // la scarsità appena raccontata (fa FOMO per il prossimo drop), quindi qui
+  // — a differenza di `activeDeals` sopra — si guarda anche tra i drop
+  // esauriti (`filterVisibleDrops`, la stessa regola del Bi Club).
   const featuredDrop = useMemo(
-    () => activeDeals.find((d) => isDrop(d)) || activeDeals[0] || null,
-    [activeDeals]
+    () => sortByExpiry(filterVisibleDrops(discounts))[0] || activeDeals[0] || null,
+    [discounts, activeDeals]
   )
   // Tutti gli altri, non i primi otto: su desktop è una lista verticale che
   // fa da spalla a "Ultimi aggiunti", e tagliarla lasciava la mezza pagina
@@ -612,6 +616,10 @@ export default function HomeFeedV4() {
     const status = redemption?.status
     if (status === 'redeemed') return { ctaLabel: 'Già usato', ctaDisabled: true }
     if (status === 'generated') return { ctaLabel: 'Apri il QR', ctaDisabled: false }
+    // Il drop esaurito resta in vetrina (vedi featuredDrop) ma non si sblocca
+    // più: senza questo il bottone continuava a dire "Sblocca sconto" su un
+    // drop che non ha più pezzi.
+    if (isSoldOut(deal)) return { ctaLabel: 'Esaurito', ctaDisabled: true }
     return { ctaLabel: undefined, ctaDisabled: false }
   }
 
