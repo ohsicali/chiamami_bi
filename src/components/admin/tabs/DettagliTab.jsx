@@ -6,6 +6,7 @@ import { useAiCorrect, AiCorrectButton, AiSuggestionBox } from './_AiCorrect'
 import GoogleMapsImportBlock from '../GoogleMapsImportBlock'
 import GooglePlacesBlock from '../GooglePlacesBlock'
 import { geocodeAddress } from '../../../lib/utils/geocoding'
+import { defaultLocationLabel } from '../../../lib/utils/restaurantLocations'
 
 const PRICE_LEVELS = [
   { value: 1, label: '€', desc: 'economico' },
@@ -313,6 +314,19 @@ export default function DettagliTab({ form, onChange, restaurantId, isNew }) {
           ciascuna, entrambi verso questa stessa scheda, e lo sconto varrà in
           tutte le sedi.
         </div>
+
+        <FField label="Nome della sede principale (opzionale)" hint="Mostrato sulla scheda solo se il locale ha anche altre sedi — senza nome compare «Sede principale»">
+          <FInput
+            value={form.location_label}
+            onChange={(v) => onChange({ location_label: v })}
+            placeholder={defaultLocationLabel(0)}
+          />
+        </FField>
+
+        {(form.locations?.length || 0) > 0 && (
+          <div style={{ height: 1, background: 'var(--color-line, #EAE3D7)', margin: '14px 0' }} />
+        )}
+
         {(form.locations || []).map((loc, i) => (
           <div
             key={i}

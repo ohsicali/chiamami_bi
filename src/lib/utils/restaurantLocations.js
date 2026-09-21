@@ -11,7 +11,7 @@ export function getAllLocations(restaurant) {
   if (!restaurant) return []
   const primary = {
     id: 'primary',
-    label: null,
+    label: restaurant.location_label || null,
     address: restaurant.address,
     latitude: restaurant.latitude,
     longitude: restaurant.longitude,
@@ -23,6 +23,16 @@ export function getAllLocations(restaurant) {
 
 export function hasMultipleLocations(restaurant) {
   return getAllLocations(restaurant).length > 1
+}
+
+/**
+ * Nome da mostrare quando la sede non ne ha uno suo. Mai "Sede 1" — un
+ * segnaposto numerato non è un nome, e la sede principale lo è ancora meno
+ * essendo l'unica su un ristorante normale. Usato sia sulla scheda pubblica
+ * sia come placeholder nel form admin, così il fallback resta uno solo.
+ */
+export function defaultLocationLabel(index) {
+  return index === 0 ? 'Sede principale' : `Sede ${index + 1}`
 }
 
 export function locationMapsUrl(location) {
