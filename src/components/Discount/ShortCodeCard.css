@@ -151,3 +151,24 @@
     transform: none;
   }
 }
+
+/* ── Compatta: il tagliando sotto il QR in QRPass ──────────────────────── */
+.shortcode-card.is-compact .shortcode-label {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  margin-bottom: 9px;
+}
+.shortcode-card.is-compact .shortcode-digits { gap: 5px; }
+.shortcode-card.is-compact .shortcode-cell:nth-child(4) { margin-right: 10px; }
+.shortcode-card.is-compact .shortcode-cell {
+  /* Si stringe sui telefoni da 320px invece di uscire dal pass. */
+  width: clamp(32px, 9.5vw, 38px);
+  height: 46px;
+  border-radius: 10px;
+  font-size: 21px;
+}
+.shortcode-card.is-compact .shortcode-copy {
+  margin-top: 11px;
+  padding: 7px 14px;
+  font-size: 12px;
+}

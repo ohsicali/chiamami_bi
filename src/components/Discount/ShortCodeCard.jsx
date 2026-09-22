@@ -11,7 +11,15 @@ import './ShortCodeCard.css'
  * il segno a metà) e a chi ascolta dall'altra parte del bancone; la prima
  * è colorata perché è l'unica lettera, e si vede da che verso si legge.
  */
-export default function ShortCodeCard({ code, tone = 'light', divider = true }) {
+export default function ShortCodeCard({
+  code,
+  tone = 'light',
+  divider = true,
+  // `compact`: dentro il tagliando di QRPass — caselle più basse, niente
+  // riga di spiegazione (la dice già l'etichetta).
+  compact = false,
+  label = 'Detta questo codice',
+}) {
   const normalized = normalizeShortCode(code)
   const [copied, setCopied] = useState(false)
   const timerRef = useRef(null)
@@ -39,14 +47,14 @@ export default function ShortCodeCard({ code, tone = 'light', divider = true }) 
   }
 
   return (
-    <div className={`shortcode-card shortcode-${tone}`}>
+    <div className={`shortcode-card shortcode-${tone} ${compact ? 'is-compact' : ''}`}>
       {divider && (
         <div className="shortcode-or" aria-hidden="true">
           <span>oppure</span>
         </div>
       )}
 
-      <div className="shortcode-label">Detta questo codice</div>
+      <div className="shortcode-label">{label}</div>
 
       <div className="shortcode-digits">
         {/* Le caselle sono decorazione: allo screen reader diamo il codice
@@ -81,9 +89,11 @@ export default function ShortCodeCard({ code, tone = 'light', divider = true }) 
         )}
       </button>
 
-      <p className="shortcode-hint">
-        Il ristoratore può digitarlo al posto di scansionare il QR.
-      </p>
+      {!compact && (
+        <p className="shortcode-hint">
+          Il ristoratore può digitarlo al posto di scansionare il QR.
+        </p>
+      )}
     </div>
   )
 }

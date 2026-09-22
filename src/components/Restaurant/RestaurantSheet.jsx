@@ -11,6 +11,7 @@ import OrariLocale from './OrariLocale'
 import HoursPill from '../HoursPill'
 import { useOrariStatus } from '../../lib/hooks/useOrariStatus'
 import DiscountQuickPopup from '../Discount/DiscountQuickPopup'
+import { passHeaderFromRestaurant } from '../../lib/utils/passHeader'
 import OtherDiscountsSheet from '../Discount/OtherDiscountsSheet'
 import SconteAuthGate from '../Discount/SconteAuthGate'
 import { checkValidity, computeNextValidWindow } from '../../lib/validity'
@@ -85,7 +86,7 @@ function discountBlockedMessage(discount) {
  * `useUserRedemption` sta seguendo, così sbloccare/mostrare il QR
  * funziona per QUALUNQUE sconto scelto, non solo per il primo.
  */
-function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId }) {
+function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId, restaurant }) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const { discount: fetchedDiscount, loading: discountLoading } = useRestaurantDiscount(restaurantId)
@@ -310,6 +311,7 @@ function FloatingDiscountBar({ discounts: discountsFromParent, restaurantId }) {
             blockedMessage={blockedMessage}
             onClaim={handleClaim}
             onClose={() => { setPopupOpen(false); setBlockedMessage(null) }}
+            {...passHeaderFromRestaurant(restaurant)}
           />
         )}
       </AnimatePresence>
@@ -1182,7 +1184,7 @@ export default function RestaurantSheet({
         </div>
 
         {/* Floating discount bar — Airbnb style white bottom bar */}
-        <FloatingDiscountBar discounts={restaurantDiscounts} restaurantId={restaurant.id} />
+        <FloatingDiscountBar discounts={restaurantDiscounts} restaurantId={restaurant.id} restaurant={restaurant} />
       </motion.div>
     </div>
   )
