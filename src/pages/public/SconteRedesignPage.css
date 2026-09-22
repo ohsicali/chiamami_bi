@@ -87,58 +87,132 @@
   .sc-page-head p { font-size: 13px; max-width: 520px; }
 }
 
-/* ============= segment LIVELLO 1 ============= */
+/* ============= barra dei tab agganciata =============
+   Resta in alto mentre si scorre. Su mobile si aggancia sotto
+   MobileLogoHeader (69px + tacca dell'iPhone), su desktop sotto la navbar
+   flottante (top 16 + altezza 68 = 84px). Se cambiano quelle due altezze,
+   vanno cambiate anche qui. Il fondo è quello della pagina, velato come
+   l'header, così le card che ci scorrono sotto non si leggono attraverso. */
+.sc-tabs-sticky {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 69px);
+  z-index: 40;
+  padding: 10px 16px;
+  margin-top: 4px;
+  background: rgba(250, 247, 242, 0.94);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  transition: box-shadow var(--dur-fast, 150ms) var(--ease-out, ease-out);
+}
+.sc-tabs-sticky.is-stuck {
+  box-shadow: 0 1px 0 rgba(34, 24, 28, 0.06), 0 8px 18px -12px rgba(34, 24, 28, 0.25);
+}
+@media (min-width: 768px) {
+  .sc-tabs-sticky {
+    top: 84px;
+    padding: 12px 0;
+    margin-top: 10px;
+    display: flex;
+    /* Pieno: su desktop dietro ci scorrono card larghe e i loro bottoni
+       scuri si vedrebbero attraverso il velo. */
+    background: var(--sc-page);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ============= segment LIVELLO 1 =============
+   Due posti, non un filtro: ogni tab ha il nome e sotto una riga che dice
+   cosa c'è dentro ("12 da sbloccare", "2 pronti da usare"). */
 .sc-segment {
   display: flex;
+  gap: 4px;
   background: var(--sc-grigio-bg);
-  border-radius: 99px;
+  border-radius: 18px;
   padding: 4px;
-  margin: 14px 16px 0;
+  margin: 0;
 }
 .sc-segment .sc-seg {
+  position: relative;
   flex: 1;
-  text-align: center;
-  padding: 11px 8px;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
+  min-width: 0;
+  padding: 10px 8px 9px;
+  border-radius: 14px;
   color: var(--sc-ink-2);
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 2px;
   background: transparent;
   border: 0;
   font-family: inherit;
+  transition: background var(--dur-fast, 150ms) var(--ease-out, ease-out), color var(--dur-fast, 150ms) var(--ease-out, ease-out);
+}
+.sc-segment .sc-seg-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.sc-segment .sc-seg-title svg { flex-shrink: 0; }
+.sc-segment .sc-seg-hint {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sc-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .sc-segment .sc-seg.is-active {
   background: var(--sc-ink);
   color: #fff;
   box-shadow: 0 2px 8px rgba(34, 24, 28, 0.18);
 }
-.sc-segment .sc-seg .sc-ct {
-  background: rgba(232, 69, 60, 0.15);
-  color: var(--sc-corallo-ink);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 99px;
+.sc-segment .sc-seg.is-active .sc-seg-hint {
+  color: rgba(255, 255, 255, 0.72);
 }
-.sc-segment .sc-seg.is-active .sc-ct {
-  background: rgba(255, 255, 255, 0.18);
+/* Pallino corallo sul tab dei vantaggi quando non ci sei dentro: è lì che
+   finisce lo sconto appena sbloccato. */
+.sc-segment .sc-seg-badge {
+  position: absolute;
+  top: -5px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--sc-corallo);
   color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--sc-page);
+  animation: scBadgePop 420ms var(--ease-out, cubic-bezier(.2,.8,.2,1));
+}
+@keyframes scBadgePop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
 }
 @media (min-width: 768px) {
   .sc-segment { margin: 0; padding: 5px; flex-shrink: 0; }
-  .sc-segment .sc-seg { padding: 11px 22px; flex: 0 0 auto; }
+  .sc-segment .sc-seg { padding: 10px 26px 9px; flex: 0 0 auto; min-width: 190px; }
+  .sc-segment .sc-seg-title { font-size: 14px; }
+  .sc-segment .sc-seg-hint { font-size: 12px; }
 }
 
 /* ============= sub-segment LIVELLO 2 ============= */
 .sc-sub-segment {
   display: flex;
   gap: 6px;
-  padding: 14px 16px 4px;
+  padding: 6px 16px 4px;
 }
 .sc-sub-segment .sc-sub {
   font-size: 12px;
@@ -172,8 +246,126 @@
   color: #fff;
 }
 @media (min-width: 768px) {
-  .sc-sub-segment { padding: 0; margin: 12px 0 22px; gap: 8px; }
+  .sc-sub-segment { padding: 0; margin: 8px 0 22px; gap: 8px; }
   .sc-sub-segment .sc-sub { padding: 8px 16px; font-size: 12.5px; }
+}
+
+/* ============= guida in testa al catalogo ============= */
+/* Tre passi per chi non ha ancora sbloccato niente: il percorso
+   sblocca → «I miei vantaggi» → QR al locale è quello che non si capiva. */
+.sc-howto {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px 16px 0;
+  padding: 12px;
+  background: var(--sc-paper);
+  border: 1px solid var(--sc-line);
+  border-radius: 16px;
+}
+.sc-howto li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--sc-ink-2);
+  font-weight: 500;
+}
+.sc-howto b {
+  width: 22px;
+  height: 22px;
+  border-radius: 99px;
+  background: var(--sc-corallo-soft);
+  color: var(--sc-corallo-ink);
+  font-size: 11.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sc-howto em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--sc-ink);
+}
+@media (min-width: 768px) {
+  .sc-howto {
+    margin: 8px 0 28px;
+    padding: 14px 18px;
+    gap: 20px;
+  }
+  .sc-howto li {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+  }
+  .sc-howto b { width: 26px; height: 26px; font-size: 13px; flex-shrink: 0; }
+}
+
+/* Chi ha sconti pronti: quanti sono e dove stanno, con un tasto per andarci. */
+.sc-wallet-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 32px);
+  margin: 6px 16px 0;
+  padding: 12px 14px;
+  background: var(--sc-paper);
+  border: 1px solid var(--sc-line);
+  border-left: 4px solid var(--sc-corallo);
+  border-radius: 16px;
+  text-align: left;
+  font-family: inherit;
+  color: var(--sc-ink);
+  cursor: pointer;
+  transition: transform var(--dur-fast, 150ms) var(--ease-out, ease-out), box-shadow var(--dur-fast, 150ms) var(--ease-out, ease-out);
+}
+.sc-wallet-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(34, 24, 28, 0.08);
+}
+.sc-wallet-ic {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--sc-corallo-soft);
+  color: var(--sc-corallo-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sc-wallet-ic svg { width: 18px; height: 18px; }
+.sc-wallet-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sc-wallet-txt strong { font-size: 13.5px; font-weight: 800; letter-spacing: -0.01em; }
+.sc-wallet-txt small { font-size: 11.5px; color: var(--sc-ink-3); font-weight: 500; line-height: 1.3; }
+.sc-wallet-go {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sc-corallo);
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .sc-wallet-banner { width: 100%; margin: 8px 0 28px; padding: 14px 18px; }
+  .sc-wallet-txt strong { font-size: 15px; }
+  .sc-wallet-txt small { font-size: 13px; }
+}
+
+/* Link dentro la riga di stato di una sezione ("quelle già sbloccate sono
+   in I miei vantaggi"): stesso corpo del testo, sottolineato. */
+.sc-inline-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--sc-corallo-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 }
 
 /* ============= body / sections ============= */
@@ -1403,8 +1595,20 @@
 .sc-empty p {
   font-size: 12.5px;
   line-height: 1.5;
-  max-width: 230px;
+  max-width: 260px;
   margin: 0 auto;
+}
+.sc-empty-cta {
+  margin-top: 16px;
+  padding: 11px 20px;
+  border-radius: 99px;
+  border: 0;
+  background: var(--sc-corallo);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 @keyframes scFadeIn { from { opacity: 0 } to { opacity: 1 } }
@@ -1429,6 +1633,25 @@
   z-index: 200;
   animation: scFadeIn var(--dur-pop) var(--ease-out);
 }
+/* Toast con azione ("Salvato in «I miei vantaggi»  Vedi"). */
+.sc-toast.has-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 18px;
+  white-space: nowrap;
+}
+.sc-toast-action {
+  border: 0;
+  border-radius: 99px;
+  padding: 7px 14px;
+  background: var(--sc-corallo);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
 @media (min-width: 768px) {
   .sc-toast { bottom: 30px; }
 }
@@ -1442,6 +1665,7 @@
   }
   /* Lampeggi e shimmer che girano all'infinito: puro ornamento. */
   .sc-badge-live::before,
+  .sc-segment .sc-seg-badge,
   .sc-drop .sc-progress .sc-bar i::after,
   .sc-drop-hero-live i {
     animation: none !important;
