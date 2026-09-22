@@ -1,0 +1,509 @@
+/* ============================================================================
+   QRPass / QRPassSheet — lo sconto sbloccato (vedi QRPass.jsx).
+   Variante "A · Selettore": testa col locale, card con selettore QR/Codice,
+   due bottoni grandi (Info sconto, Scarica PDF). Unico disegno del QR sul
+   sito; il PDF in api/discount-pdf.js ne ricopia la forma.
+   ============================================================================ */
+
+.qrp,
+.qrp-sheet,
+.qrp-present,
+.qrp-drawer-wrap {
+  --qrp-ink: var(--color-ink, #22181C);
+  --qrp-ink-70: var(--color-ink-70, rgba(34, 24, 28, 0.7));
+  --qrp-ink-soft: var(--color-ink-64, rgba(34, 24, 28, 0.64));
+  --qrp-line: var(--color-line, #EAE3D7);
+  --qrp-cream: var(--color-cream, #F5F0E4);
+  --qrp-corallo: var(--color-corallo, #E8453C);
+  --qrp-oro-deep: var(--color-oro-deep, #8E6B3E);
+  /* Il lato del QR: si stringe anche in altezza, così su un iPhone con le
+     barre di Safari aperte card e bottoni stanno nello stesso schermo. */
+  --qrp-qr: clamp(176px, min(62vw, 30dvh), 236px);
+}
+
+/* ── La schermata ──────────────────────────────────────────────────────── */
+.qrp-sheet {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  background: var(--color-page, #FAF7F2);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  color: var(--qrp-ink);
+}
+.qrp-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px 14px 20px;
+  flex-shrink: 0;
+}
+.qrp-thumb {
+  width: 46px; height: 46px;
+  border-radius: 13px;
+  background: #F1E3D3;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mark, 'Alfa Slab One', Georgia, serif);
+  font-size: 21px;
+  color: var(--qrp-corallo);
+}
+.qrp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qrp-sheet-titles { flex: 1; min-width: 0; }
+.qrp-sheet-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qrp-sheet-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--qrp-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qrp-sheet-close {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--qrp-line);
+  background: #FFFFFF;
+  color: var(--qrp-ink);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform var(--dur-press, 120ms) var(--ease-out, ease-out);
+}
+.qrp-sheet-close:active { transform: scale(0.94); }
+
+.qrp-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 16px calc(22px + var(--safe-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 768px) {
+  .qrp-sheet-head { padding: 20px 20px 16px 24px; }
+  .qrp-sheet-body { padding: 0 22px 24px; }
+}
+
+/* ── La card ───────────────────────────────────────────────────────────── */
+.qrp {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--qrp-line);
+  border-radius: 24px;
+  box-shadow:
+    0 1px 2px rgba(34, 24, 28, 0.04),
+    0 22px 44px -28px rgba(34, 24, 28, 0.4);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  color: var(--qrp-ink);
+  animation: qrpIn var(--dur-reveal, 240ms) var(--ease-out, ease-out) both;
+}
+@keyframes qrpIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.qrp-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.qrp-top-txt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+/* Il badge verde degli sconti, lo stesso di card, mappa e scheda locale. */
+.qrp-badge {
+  flex-shrink: 0;
+  background: var(--gradient-sconto, linear-gradient(135deg, #A3E635 0%, #4ADE80 100%));
+  color: var(--color-sconto-ink, #1A4731);
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  padding: 9px 12px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.qrp-perk {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--qrp-ink);
+}
+.qrp-chip {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* Corallo solo per i drop (scadono), oro per le convenzioni. */
+.qrp-chip.is-drop { background: var(--color-corallo-wash, #FDEDEB); color: var(--color-corallo-ink, #C53A33); }
+.qrp-chip.is-conv { background: #F0E4D2; color: var(--color-oro-deep, #8E6B3E); }
+
+/* ── Selettore QR / Codice ─────────────────────────────────────────────── */
+.qrp-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #F2ECE2;
+}
+.qrp-seg-btn {
+  flex: 1 1 0;
+  height: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--qrp-ink-soft);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--dur-pop, 180ms) var(--ease-out, ease-out),
+    color var(--dur-pop, 180ms) var(--ease-out, ease-out),
+    box-shadow var(--dur-pop, 180ms) var(--ease-out, ease-out);
+}
+.qrp-seg-btn.is-on {
+  background: #FFFFFF;
+  color: var(--qrp-ink);
+  box-shadow: 0 2px 8px rgba(34, 24, 28, 0.12);
+}
+.qrp-seg-btn:focus-visible { outline: 2px solid var(--qrp-corallo); outline-offset: 2px; }
+
+/* ── Il riquadro: stessa altezza per QR e codice ───────────────────────── */
+.qrp-stage {
+  min-height: calc(var(--qrp-qr) + 70px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qrp-stage-in {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: qrpFade 0.2s ease both;
+}
+@keyframes qrpFade { from { opacity: 0; } to { opacity: 1; } }
+
+.qrp-code {
+  position: relative;
+  width: var(--qrp-qr);
+  aspect-ratio: 1;
+  /* ~3 moduli di zona muta fra il codice e gli angoli di mira. */
+  padding: 14px;
+  background: #FFFFFF;
+  border: 0;
+  border-radius: 16px;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-press, 120ms) var(--ease-out, ease-out);
+}
+.qrp-code:active:not(:disabled) { transform: scale(0.97); }
+.qrp-code:focus-visible { outline: 2px solid var(--qrp-corallo); outline-offset: 6px; }
+.qrp-code:disabled { cursor: default; }
+
+/* I quattro angoli di mira: dicono "questo si inquadra" senza una cornice
+   piena che la fotocamera potrebbe scambiare per parte del codice. */
+.qrp-corners i {
+  position: absolute;
+  width: 24px; height: 24px;
+  border: 0 solid var(--qrp-ink);
+  pointer-events: none;
+}
+.qrp-corners i:nth-child(1) { top: -4px; left: -4px; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 12px; }
+.qrp-corners i:nth-child(2) { top: -4px; right: -4px; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 12px; }
+.qrp-corners i:nth-child(3) { bottom: -4px; left: -4px; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 12px; }
+.qrp-corners i:nth-child(4) { bottom: -4px; right: -4px; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 12px; }
+
+.qrp-svg { display: block; width: 100%; height: 100%; }
+.qrp-svg svg { display: block; width: 100%; height: 100%; }
+.qrp-svg.is-loading {
+  border-radius: 8px;
+  background: linear-gradient(100deg, var(--qrp-cream) 30%, #FBF8F2 50%, var(--qrp-cream) 70%);
+  background-size: 300% 100%;
+  animation: qrpShimmer 1.2s linear infinite;
+}
+@keyframes qrpShimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+.qrp-instr {
+  margin: 12px 0 0;
+  font-family: var(--font-hand, 'Caveat', cursive);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--qrp-corallo);
+  text-align: center;
+}
+.qrp-hint {
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--qrp-ink-soft);
+}
+
+/* ── Riga sotto la card ────────────────────────────────────────────────── */
+.qrp-once {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--qrp-ink-soft);
+  text-align: center;
+}
+.qrp-once.is-new { color: var(--color-ok, #2C7A4A); }
+.qrp-once-ok {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--color-ok, #2C7A4A);
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  animation: qrpCheckPop 0.45s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+@keyframes qrpCheckPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── I due bottoni ─────────────────────────────────────────────────────── */
+.qrp-actions {
+  display: flex;
+  gap: 10px;
+}
+.qrp-action {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 56px;
+  border-radius: 18px;
+  border: 1px solid var(--qrp-line);
+  background: #FFFFFF;
+  color: var(--qrp-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-press, 120ms) var(--ease-out, ease-out);
+}
+.qrp-action:active:not(:disabled) { transform: scale(0.97); }
+.qrp-action:disabled { opacity: 0.6; cursor: progress; }
+.qrp-pdf-error {
+  margin: -4px 0 0;
+  font-size: 11.5px;
+  color: var(--color-corallo-ink, #C53A33);
+  text-align: center;
+}
+
+/* ── Info sconto: pannello dal basso ───────────────────────────────────── */
+.qrp-drawer-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  color: var(--qrp-ink);
+}
+.qrp-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(34, 24, 28, 0.45);
+  cursor: pointer;
+  animation: qrpFade 0.2s ease both;
+}
+.qrp-drawer {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-radius: 26px 26px 0 0;
+  box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.2);
+  animation: qrpRise var(--dur-sheet, 320ms) var(--ease-drawer, cubic-bezier(.32, .72, 0, 1)) both;
+}
+@keyframes qrpRise { from { transform: translateY(100%); } to { transform: none; } }
+.qrp-drawer-grip {
+  width: 40px; height: 4px;
+  border-radius: 99px;
+  background: #E5DBCE;
+  margin: 10px auto 6px;
+  flex-shrink: 0;
+}
+.qrp-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 18px 12px 22px;
+  flex-shrink: 0;
+}
+.qrp-drawer-head h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.qrp-drawer-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 22px calc(26px + var(--safe-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .qrp-drawer-wrap { justify-content: center; padding: 30px; }
+  .qrp-drawer { border-radius: 24px; animation: qrpIn 0.22s ease both; }
+  .qrp-drawer-grip { display: none; }
+  .qrp-drawer-head { padding-top: 18px; }
+}
+
+/* Schermi bassi (iPhone con le barre di Safari aperte): scorre tutta la
+   schermata, testa compresa, invece di un pezzo solo. */
+@media (max-height: 700px) {
+  .qrp-sheet { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .qrp-sheet-body { flex: none; overflow: visible; }
+}
+
+/* ============================================================================
+   Tutto schermo
+   ============================================================================ */
+.qrp-present {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: calc(24px + var(--safe-top, 0px)) 24px calc(24px + var(--safe-bottom, 0px));
+  font-family: var(--font-sans, 'Poppins', system-ui, sans-serif);
+  color: var(--qrp-ink);
+  cursor: pointer;
+  animation: qrpFade 0.18s ease both;
+}
+.qrp-present-close {
+  position: absolute;
+  top: calc(16px + var(--safe-top, 0px));
+  right: 16px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--qrp-line);
+  background: var(--qrp-cream);
+  color: var(--qrp-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.qrp-present-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+.qrp-present-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qrp-present-code {
+  width: min(84vw, 56vh, 380px);
+  aspect-ratio: 1;
+  animation: qrpZoom 0.28s var(--ease-out, ease-out) both;
+}
+@keyframes qrpZoom {
+  from { opacity: 0; transform: scale(0.86); }
+  to   { opacity: 1; transform: none; }
+}
+.qrp-present-short {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.qrp-present-short-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--qrp-ink-soft);
+}
+.qrp-present-short-value {
+  font-family: 'SF Mono', 'SFMono-Regular', ui-monospace, 'Menlo', monospace;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-feature-settings: 'tnum' 1;
+  white-space: pre;
+}
+.qrp-present-short-value b { color: var(--qrp-corallo); font-weight: 700; }
+.qrp-present-hint {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--qrp-ink-soft);
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .qrp,
+  .qrp-stage-in,
+  .qrp-once-ok,
+  .qrp-drawer,
+  .qrp-drawer-scrim,
+  .qrp-present,
+  .qrp-present-code,
+  .qrp-svg.is-loading { animation: none !important; }
+}
+.qrp-drawer-body > :first-child { margin-top: 0; }
