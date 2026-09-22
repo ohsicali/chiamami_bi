@@ -77,8 +77,16 @@ function resolveAd(ad) {
     // −15%" non ci sta, e lo sconto ha già il suo posto accanto al titolo.
     ctaShort: ad.cta_label || 'Scopri',
     initials: initialsOf(ad.headline || ad.brand_name || r?.name || ''),
-    cover: ad.cover_image_url || proxyImg(r?.photos?.[0]?.photo_url || r?.photos?.[0]?.thumb_url, { w: 1200 }),
-    logo: ad.logo_image_url || proxyImg(r?.photos?.[0]?.thumb_url || r?.photos?.[0]?.photo_url, { w: 320 }),
+    // Il proxy sta FUORI dall'`||`, non solo sul ramo di ripiego. Quando
+    // l'inserzionista carica una sua immagine questa e' la piu' grande della
+    // pagina — la cover dell'hero e' spesso anche l'elemento LCP — e finiva
+    // servita grezza: la campagna attiva oggi manda 2,2 MB di PNG per un box
+    // alto 178 px, meta' del peso dell'intera home. Passando da `/api/img`
+    // diventa AVIF ridimensionata come tutte le altre foto del sito.
+    // `proxyImg` lascia intatto cio' che non sta sul nostro storage, quindi
+    // una creativita' ospitata altrove continua a funzionare com'e'.
+    cover: proxyImg(ad.cover_image_url || r?.photos?.[0]?.photo_url || r?.photos?.[0]?.thumb_url, { w: 1200 }),
+    logo: proxyImg(ad.logo_image_url || r?.photos?.[0]?.thumb_url || r?.photos?.[0]?.photo_url, { w: 320 }),
     priceLabel: formatPrice(r?.price_range),
     hours: getHoursStatus(r?.hours_cache),
     // Su una campagna esterna con ristorante collegato la scheda sul sito

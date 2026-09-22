@@ -26,6 +26,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Più sconti attivi per lo stesso locale | — | ✅ Done | Vedi sezione "21/09 — più sconti attivi per lo stesso locale" sotto. |
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
+| Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
 
 ## 22/09 — GRANT mancante su `location_label`: la home non caricava i locali
 
@@ -83,6 +84,108 @@ finché qualcuno non usa quella colonna in una query pubblica — e quando
 compare, si porta via l'intera tabella, non solo la colonna nuova.
 
 
+## 22/09 — audit prestazioni pre-lancio (PR #276)
+
+Misurata la home da telefono su chiamamibi.com prima di toccare niente:
+**4,4 MB** in tutto — 2,66 MB di immagini, 1031 kB di JS, 580 kB di JSON,
+78 kB di CSS, 67 kB di font. Tre cose trovate, in ordine di peso.
+
+### 1. Il banner pubblicitario mandava 2,2 MB (il 50% della pagina)
+
+Di quei 2,66 MB di immagini, **2,2 stavano in un file solo**: la cover della
+campagna attiva nello slot `home_hero`, un PNG da 2.281.807 byte servito
+grezzo per un riquadro alto 178 px. Le altre dieci immagini erano gia' a
+posto (proxy, AVIF, 45-101 kB).
+
+Colpa della precedenza dell'`||` in `AdBanner.jsx`:
+
+    cover: ad.cover_image_url || proxyImg(r?.photos?.[0]?.photo_url, ...)
+
+il proxy avvolgeva **solo il ramo di ripiego**. L'immagine caricata
+dall'inserzionista — il caso normale quando la campagna e' vera, ed e' anche
+la piu' grande della pagina perche' e' l'hero — saltava `/api/img`. Ora il
+proxy sta fuori dall'`||`: **2.281.807 → 158.880 byte, -93%**.
+
+**Da tenere a mente**: ogni volta che si aggiunge un punto che mostra
+un'immagine caricata da fuori (inserzionista, ristoratore, utente), il
+`proxyImg` va messo sul risultato finale, non su un ramo solo.
+
+### 2. `hours_cache`: si scaricava il blob grezzo di Google
+
+La query che riempie home, lista, mappa e salvati pesava **544 kB di JSON**.
+`hours_cache` da sola ne faceva 230. L'app ne legge due rami
+(`regularOpeningHours`, `utcOffsetMinutes`); il resto viaggiava per niente:
+
+- `currentOpeningHours`, **140 kB**, con l'oggetto `date` completo su ogni
+  periodo. E' il fallback per quando manca `regularOpeningHours` — ma nel DB
+  non c'e' **una sola riga** in quel caso, quindi non e' mai scattato;
+- `displayName` (copia di `name`) e una seconda copia di
+  `weekdayDescriptions`.
+
+PostgREST sa proiettare dentro il JSONB, quindi ora si chiedono i due rami
+separati (`hours_regular:hours_cache->regularOpeningHours`) e si ricompone la
+stessa forma di prima nel mapper: **nessun consumatore e' stato toccato**.
+
+**557 kB → 404 kB non compressi, 139 → 110 kB gzip, 2,19 s → 1,47 s.**
+
+Chiave di cache a `cb_restaurants_v8`.
+
+Verificato per costruzione: `getHoursStatus` e `isOpenForMoment` confrontati
+fra vecchia e nuova forma su tutti i 97 locali × 168 ore della settimana ×
+5 momenti = **97.776 confronti, zero differenze**.
+
+### 3. Il `modulepreload` toglieva React dalla prima ondata
+
+⚠️ **Da sapere prima di toccare `vite.config.js`**: con rolldown **il nome di
+un chunk non dice cosa c'e' dentro**. Verificato aprendo i file in `dist`:
+`cookie-consent-*.js` contiene il **core di React**
+(`Symbol.for('react.transitional.element')`), e `dnd-kit-*.js` contiene
+codice del reconciler React. Nessuno dei due e' il pacchetto del nome.
+
+Il filtro `modulePreload.resolveDependencies` sceglieva per nome, e quindi
+sceglieva male: quello su `dnd-kit` — che c'era gia' ed era vivo in
+produzione — toglieva dal preload un chunk che la home usa subito, quindi non
+lo evitava, lo faceva scoprire un giro di rete piu' tardi.
+
+Ora resta il solo filtro su `qr-*.js`, l'unico verificato come davvero solo
+suo (qrcode/qr-scanner, zero React).
+
+### Risultato
+
+**~4,4 MB → ~2,1 MB** sulla home da telefono. Test 136/136, lint identico
+alla baseline di `main` (221 preesistenti), tutte le rotte pubbliche girate in
+un Chromium vero su telefono e desktop senza errori.
+
+### Cosa NON ho toccato, e perche'
+
+- **`qrcode` importato in cima a `DiscountQuickPopup`/`DiscountDetailPopup`**:
+  tira 82 kB sulla home (ci arriva col preload volontario di `RestaurantPage`).
+  Si toglie con un `import('qrcode')` dentro l'effetto di `QRCanvas`, meglio se
+  scaldato al montaggio del popup. Non fatto il 22/09 perche' e' il flusso di
+  riscatto sconto e non era provabile end-to-end senza un utente loggato.
+- **`our_review`/`our_tip` nella lista** (42 kB): si tolgono solo se
+  `RestaurantPage` si carica la riga da se', ma oggi la scheda dipende dalla
+  lista anche per le foto — spostarla peggiorerebbe la LCP della scheda.
+  Da fare insieme, non a pezzi.
+
+### 🔴 Sicurezza — da guardare dopo il lancio
+
+`verify_login(p_pin, p_user_agent)` e' chiamabile da `anon` via
+`/rest/v1/rpc/verify_login`. Il PIN e' di **6 cifre** e il blocco dei
+tentativi sta **solo in `localStorage`** (`readLockout` in `VerifyPage.jsx`):
+chiamando l'endpoint direttamente il blocco non esiste, e in SQL non c'e'
+nessun freno. Chi indovina il PIN valida gli sconti al posto del ristoratore.
+Rimedio: tabella dei tentativi per `restaurant_id` + IP con ritardo
+progressivo dentro `verify_login`, oppure PIN piu' lungo. Stesso discorso per
+`register_verified_device`.
+
+Minori, dagli advisor: `email_sent_log` ha RLS acceso e nessuna policy;
+`set_sponsored_placements_updated_at` e `touch_ai_user_preferences` senza
+`search_path` fisso; protezione password compromesse spenta in Supabase Auth
+(un interruttore).
+
+
+## 22/09 — sito online
 
 Richiesta: pubblicare il sito, farlo indicizzare, togliere il PIN di
 accesso.

@@ -17,10 +17,22 @@ export default defineConfig({
     // Strip the ones that are admin- / verify-only so mobile users on the
     // public home don't download ~130 kB they'll never use.
     modulePreload: {
+      // ⚠️ Qui si filtra per NOME del file, ma con rolldown il nome di un
+      // chunk non dice cosa c'e' dentro. Verificato aprendo i file in `dist`:
+      // `cookie-consent-*.js` contiene il core di React
+      // (`Symbol.for('react.transitional.element')`), e `dnd-kit-*.js`
+      // contiene codice del reconciler React insieme a dnd-kit. Sono due
+      // chunk che la home usa subito: toglierli da qui non li evita, li fa
+      // solo scoprire un giro di rete piu' tardi, quando il browser parsa il
+      // modulo che li importa. Il filtro su `dnd-kit` faceva gia' questo.
+      // Prima di aggiungere una riga qui, apri il chunk e guarda cosa
+      // contiene davvero — il nome non basta.
       resolveDependencies(_filename, deps) {
         return deps.filter(d => {
+          // `qr-*.js` e' l'unico verificato come davvero solo suo: dentro c'e'
+          // qrcode/qr-scanner e nessun React. Serve alla riscossione dello
+          // sconto e alla pagina di verifica, mai al primo disegno.
           if (/\/qr-[A-Za-z0-9_-]+\.js$/.test(d)) return false
-          if (/\/dnd-kit-[A-Za-z0-9_-]+\.js$/.test(d)) return false
           return true
         })
       },
