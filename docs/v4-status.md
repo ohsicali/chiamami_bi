@@ -58,6 +58,13 @@ Fatto (solo front-end, nessun SQL):
 - dopo uno sblocco dal catalogo, alla chiusura del popup QR: toast
   "Salvato in «I miei vantaggi»" con bottone **Vedi**.
 - stati vuoti di "I miei vantaggi" con bottone "Guarda gli sconti".
+- la barra dei tab **resta agganciata in alto** mentre si scorre
+  (`.sc-tabs-sticky`): su mobile sotto `MobileLogoHeader` (69px + tacca
+  iPhone), su desktop sotto la navbar flottante (84px). Se cambiano quelle
+  altezze va aggiornato il `top` in `SconteRedesignPage.css`. Su desktop la
+  barra ora sta sotto il titolo e non più accanto: il `sticky` non esce dal
+  contenitore di riga in cui stava. Cambiando tab dalla barra agganciata la
+  pagina risale all'inizio della lista.
 
 Verificato con screenshot locali (dati reali del catalogo, utente simulato)
 su mobile 390px e desktop 1366px.

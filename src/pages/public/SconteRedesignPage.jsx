@@ -183,6 +183,43 @@ function SconteRedesignPageInner() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // La barra "Tutti gli sconti / I miei vantaggi" resta agganciata in alto
+  // mentre si scorre: le due metà del Bi Club devono restare sempre a un tap.
+  // `stuck` accende solo l'ombra sotto la barra quando è agganciata. Il
+  // segnaposto vuoto subito prima della barra resta dove la barra starebbe
+  // senza aggancio: quando sale oltre il punto d'aggancio, la barra è ferma.
+  const tabsRef = useRef(null)
+  const tabsAnchorRef = useRef(null)
+  const [tabsStuck, setTabsStuck] = useState(false)
+  const stickyTop = () => parseFloat(getComputedStyle(tabsRef.current).top) || 0
+  useEffect(() => {
+    let raf = 0
+    const check = () => {
+      raf = 0
+      if (!tabsRef.current || !tabsAnchorRef.current) return
+      setTabsStuck(tabsAnchorRef.current.getBoundingClientRect().top < stickyTop())
+    }
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(check) }
+    check()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  // Cambiando tab dalla barra agganciata, la lista nuova deve partire
+  // dall'inizio, non a metà: si risale fin dove la barra si aggancia.
+  const changeTab = (next) => {
+    if (tabsStuck && tabsRef.current && tabsAnchorRef.current) {
+      const y = tabsAnchorRef.current.getBoundingClientRect().top + window.scrollY - stickyTop()
+      window.scrollTo({ top: Math.max(0, y) })
+    }
+    setTab(next)
+  }
+
   // After login redirect: auto-claim a pending discount saved before the gate.
   // Wait until catalogue & "I miei" are loaded so we know if it's already claimed.
   const [autoClaimed, setAutoClaimed] = useState(false)
@@ -457,12 +494,16 @@ function SconteRedesignPageInner() {
             <h2 className="sc-page-h2">Sconti e vantaggi nei ristoranti di Torino</h2>
             <p>Sblocchi lo sconto qui, lo ritrovi in «I miei vantaggi» e al locale mostri il QR.</p>
           </header>
+        </div>
+
+        <div ref={tabsAnchorRef} aria-hidden="true" />
+        <div ref={tabsRef} className={`sc-tabs-sticky ${tabsStuck ? 'is-stuck' : ''}`}>
           <Segment
             tab={tab}
             user={user}
             countDaSbloccare={countDaSbloccare}
             countPronti={myActive.length}
-            onChange={setTab}
+            onChange={changeTab}
           />
         </div>
 

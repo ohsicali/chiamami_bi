@@ -87,6 +87,40 @@
   .sc-page-head p { font-size: 13px; max-width: 520px; }
 }
 
+/* ============= barra dei tab agganciata =============
+   Resta in alto mentre si scorre. Su mobile si aggancia sotto
+   MobileLogoHeader (69px + tacca dell'iPhone), su desktop sotto la navbar
+   flottante (top 16 + altezza 68 = 84px). Se cambiano quelle due altezze,
+   vanno cambiate anche qui. Il fondo è quello della pagina, velato come
+   l'header, così le card che ci scorrono sotto non si leggono attraverso. */
+.sc-tabs-sticky {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 69px);
+  z-index: 40;
+  padding: 10px 16px;
+  margin-top: 4px;
+  background: rgba(250, 247, 242, 0.94);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  transition: box-shadow var(--dur-fast, 150ms) var(--ease-out, ease-out);
+}
+.sc-tabs-sticky.is-stuck {
+  box-shadow: 0 1px 0 rgba(34, 24, 28, 0.06), 0 8px 18px -12px rgba(34, 24, 28, 0.25);
+}
+@media (min-width: 768px) {
+  .sc-tabs-sticky {
+    top: 84px;
+    padding: 12px 0;
+    margin-top: 10px;
+    display: flex;
+    /* Pieno: su desktop dietro ci scorrono card larghe e i loro bottoni
+       scuri si vedrebbero attraverso il velo. */
+    background: var(--sc-page);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 /* ============= segment LIVELLO 1 =============
    Due posti, non un filtro: ogni tab ha il nome e sotto una riga che dice
    cosa c'è dentro ("12 da sbloccare", "2 pronti da usare"). */
@@ -96,7 +130,7 @@
   background: var(--sc-grigio-bg);
   border-radius: 18px;
   padding: 4px;
-  margin: 14px 16px 0;
+  margin: 0;
 }
 .sc-segment .sc-seg {
   position: relative;
@@ -178,7 +212,7 @@
 .sc-sub-segment {
   display: flex;
   gap: 6px;
-  padding: 14px 16px 4px;
+  padding: 6px 16px 4px;
 }
 .sc-sub-segment .sc-sub {
   font-size: 12px;
@@ -212,7 +246,7 @@
   color: #fff;
 }
 @media (min-width: 768px) {
-  .sc-sub-segment { padding: 0; margin: 12px 0 22px; gap: 8px; }
+  .sc-sub-segment { padding: 0; margin: 8px 0 22px; gap: 8px; }
   .sc-sub-segment .sc-sub { padding: 8px 16px; font-size: 12.5px; }
 }
 
@@ -224,7 +258,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin: 16px 16px 0;
+  margin: 6px 16px 0;
   padding: 12px;
   background: var(--sc-paper);
   border: 1px solid var(--sc-line);
@@ -259,7 +293,7 @@
 }
 @media (min-width: 768px) {
   .sc-howto {
-    margin: 20px 0 28px;
+    margin: 8px 0 28px;
     padding: 14px 18px;
     gap: 20px;
   }
@@ -278,7 +312,7 @@
   align-items: center;
   gap: 12px;
   width: calc(100% - 32px);
-  margin: 16px 16px 0;
+  margin: 6px 16px 0;
   padding: 12px 14px;
   background: var(--sc-paper);
   border: 1px solid var(--sc-line);
@@ -316,7 +350,7 @@
   flex-shrink: 0;
 }
 @media (min-width: 768px) {
-  .sc-wallet-banner { width: 100%; margin: 20px 0 28px; padding: 14px 18px; }
+  .sc-wallet-banner { width: 100%; margin: 8px 0 28px; padding: 14px 18px; }
   .sc-wallet-txt strong { font-size: 15px; }
   .sc-wallet-txt small { font-size: 13px; }
 }
