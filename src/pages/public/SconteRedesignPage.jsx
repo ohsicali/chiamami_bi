@@ -1,4 +1,4 @@
-import { Fragment, useState, useMemo, useCallback, useEffect } from 'react'
+import { Fragment, useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useActiveDiscounts, useMyDiscounts } from '../../lib/hooks/useDiscounts'
@@ -97,10 +97,9 @@ function SconteRedesignPageInner() {
   // Torino selezionata — 6 sconti attivi in admin, 4 visibili qui.
   // La selezione è corretta solo in home (unica vetrina curata).
   // I drop esauriti restano in lista (stato "sold out" nella card) invece di
-  // sparire: solo `activeDropsCount` — usato per il conteggio nel tab e per
-  // i dati strutturati — resta sulla definizione stretta di "attivo".
+  // sparire: solo il conteggio nel tab (`countDaSbloccare`, sotto) resta
+  // sulla definizione stretta di "attivo".
   const drops = useMemo(() => sortByExpiry(filterVisibleDrops(allRaw)), [allRaw])
-  const activeDropsCount = useMemo(() => filterActiveDrops(allRaw).length, [allRaw])
   const conv = useMemo(() => filterActiveConventions(allRaw), [allRaw])
   // Backward-compat per auto-claim post login
   void allActiveDrops; void allFeatured; void allRegular
@@ -127,14 +126,23 @@ function SconteRedesignPageInner() {
     [conv, redemptionByDealId]
   )
 
-  const countDisponibili = activeDropsCount + convAvailable.length
+  // Il numero sul tab del catalogo conta solo quello che si può ancora
+  // sbloccare: un drop già preso resta in lista (col bottone "Apri il QR"),
+  // ma contarlo tra i "da sbloccare" direbbe una cosa falsa.
+  const countDaSbloccare = useMemo(
+    () => filterActiveDrops(allRaw).filter((d) => !redemptionByDealId.has(d.id)).length + convAvailable.length,
+    [allRaw, redemptionByDealId, convAvailable]
+  )
+  // Le convenzioni prese spariscono dal catalogo (vedi `convAvailable`):
+  // quante sono serve per dire DOVE sono finite, invece di farle svanire.
+  const convTakenCount = conv.length - convAvailable.length
   const countTuttiIMiei = myActive.length + myUsed.length
 
   const [claiming, setClaiming] = useState(null)
   const [qrPopup, setQrPopup] = useState(null) // { redemption, deal }
   const [qrBlocked, setQrBlocked] = useState(null) // deal | null
   const [authGate, setAuthGate] = useState(null) // pendingDiscountId | null
-  const [toast, setToast] = useState(null)
+  const [toast, setToast] = useState(null) // { text, goMiei? } | null
   const [infoDeal, setInfoDeal] = useState(null) // deal | null per dialog dettagli
 
   // Il riscatto si salva sempre — si può sbloccare in anticipo, resta in
@@ -153,9 +161,27 @@ function SconteRedesignPageInner() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 3500)
+    const t = setTimeout(() => setToast(null), toast.goMiei ? 6000 : 3500)
     return () => clearTimeout(t)
   }, [toast])
+
+  // "Dove è finito lo sconto che ho sbloccato?" era la domanda che arrivava
+  // più spesso: una convenzione presa sparisce dal catalogo e niente diceva
+  // che adesso sta in "I miei vantaggi". Quando si chiude il popup del QR
+  // dopo uno sblocco fatto dal catalogo, un toast lo dice e porta lì.
+  const justSavedRef = useRef(false)
+  const announceSaved = () => {
+    if (!justSavedRef.current) return
+    justSavedRef.current = false
+    if (tab !== 'disponibili') return
+    setToast({ text: 'Salvato in «I miei vantaggi»', goMiei: true })
+  }
+
+  const goToMiei = () => {
+    setToast(null)
+    setTab('miei')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // After login redirect: auto-claim a pending discount saved before the gate.
   // Wait until catalogue & "I miei" are loaded so we know if it's already claimed.
@@ -286,10 +312,12 @@ function SconteRedesignPageInner() {
           .limit(1)
           .maybeSingle()
         if (!recovered) throw error
+        justSavedRef.current = true
         showClaimedQR(deal, recovered)
         return
       }
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
+      justSavedRef.current = true
 
       // La ricevuta con il codice, per email. Parte e basta: se la posta non
       // esce, lo sconto è comunque preso e il QR è già sullo schermo — non
@@ -317,11 +345,12 @@ function SconteRedesignPageInner() {
           .limit(1)
           .maybeSingle()
         if (recovered?.qr_code) {
+          justSavedRef.current = true
           showClaimedQR(deal, recovered)
           return
         }
       } catch { /* recovery best-effort */ }
-      setToast('Non sono riuscito a salvare lo sconto. Riprova.')
+      setToast({ text: 'Non sono riuscito a salvare lo sconto. Riprova.' })
     } finally {
       setClaiming(null)
     }
@@ -381,10 +410,11 @@ function SconteRedesignPageInner() {
           .order('generated_at', { ascending: false })
           .limit(1)
           .maybeSingle()
-        if (recovered) return recovered
+        if (recovered) { justSavedRef.current = true; return recovered }
         throw error
       }
       await supabase.rpc('increment_discount_redeemed', { discount_uuid: deal.id }).catch(() => {})
+      justSavedRef.current = true
       return data
     } catch (e) {
       console.error('Claim failed:', e)
@@ -401,9 +431,9 @@ function SconteRedesignPageInner() {
           .order('generated_at', { ascending: false })
           .limit(1)
           .maybeSingle()
-        if (recovered?.qr_code) return recovered
+        if (recovered?.qr_code) { justSavedRef.current = true; return recovered }
       } catch { /* recovery best-effort */ }
-      setToast('Non sono riuscito a salvare lo sconto. Riprova.')
+      setToast({ text: 'Non sono riuscito a salvare lo sconto. Riprova.' })
       return null
     } finally {
       setClaiming(null)
@@ -425,12 +455,13 @@ function SconteRedesignPageInner() {
           <header className="sc-page-head">
             <h1>Bi Club</h1>
             <h2 className="sc-page-h2">Sconti e vantaggi nei ristoranti di Torino</h2>
-            <p>Drop a tempo, convenzioni sempre valide, e i vantaggi pronti da usare.</p>
+            <p>Sblocchi lo sconto qui, lo ritrovi in «I miei vantaggi» e al locale mostri il QR.</p>
           </header>
           <Segment
             tab={tab}
-            countDisponibili={countDisponibili}
-            countTuttiIMiei={countTuttiIMiei}
+            user={user}
+            countDaSbloccare={countDaSbloccare}
+            countPronti={myActive.length}
             onChange={setTab}
           />
         </div>
@@ -455,6 +486,11 @@ function SconteRedesignPageInner() {
             <CatalogoView
               loading={loading}
               myLoading={myLoading}
+              user={user}
+              countPronti={myActive.length}
+              countTuttiIMiei={countTuttiIMiei}
+              convTakenCount={convTakenCount}
+              onGoMiei={goToMiei}
               drops={dropsAvailable}
               conv={convAvailable}
               claiming={claiming}
@@ -471,6 +507,7 @@ function SconteRedesignPageInner() {
               user={user}
               items={myActive}
               onOpenQR={openMyQR}
+              onGoCatalogo={() => setTab('disponibili')}
             />
           )}
           {tab === 'miei' && sub === 'utilizzati' && (
@@ -480,6 +517,7 @@ function SconteRedesignPageInner() {
               items={myUsed}
               isDesktop={isDesktop}
               onCardClick={goTo}
+              onGoCatalogo={() => setTab('disponibili')}
             />
           )}
         </div>
@@ -496,7 +534,7 @@ function SconteRedesignPageInner() {
           restaurantUrl={qrPopup.deal?.restaurant?.slug
             ? `/restaurant/${qrPopup.deal.restaurant.slug}`
             : `/restaurant/${slugify(qrPopup.deal?.restaurant?.name || '')}`}
-          onClose={() => setQrPopup(null)}
+          onClose={() => { setQrPopup(null); announceSaved() }}
         />
       )}
 
@@ -527,7 +565,7 @@ function SconteRedesignPageInner() {
             }
             return result
           }}
-          onClose={() => setInfoDeal(null)}
+          onClose={() => { setInfoDeal(null); announceSaved() }}
         />
       )}
 
@@ -541,11 +579,20 @@ function SconteRedesignPageInner() {
             shortAddress(qrBlocked.restaurant?.address),
           ].filter(Boolean).join(' · ')}
           discountValue={dealBadgeText(qrBlocked) || freebieLabel(qrBlocked)}
-          onClose={() => setQrBlocked(null)}
+          onClose={() => { setQrBlocked(null); announceSaved() }}
         />
       )}
 
-      {toast && <div className="sc-toast" role="status">{toast}</div>}
+      {toast && (
+        <div className={`sc-toast ${toast.goMiei ? 'has-action' : ''}`} role="status">
+          <span>{toast.text}</span>
+          {toast.goMiei && (
+            <button type="button" className="sc-toast-action" onClick={goToMiei}>
+              Vedi
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -553,9 +600,25 @@ function SconteRedesignPageInner() {
 /* ============================================================================
    Section components
    ============================================================================ */
-function Segment({ tab, countDisponibili, countTuttiIMiei, onChange }) {
+/**
+ * Le due metà del Bi Club. Prima era una pillola "Disponibili | I miei
+ * vantaggi" con dentro, di nuovo, "Disponibili | Utilizzati": la stessa
+ * parola a due livelli, e un controllo che sembrava un filtro invece di due
+ * posti diversi. Ora ogni tab dice in una riga cosa c'è dentro, e quello dei
+ * vantaggi mostra solo il numero che conta — quanti sono pronti da usare —
+ * non la somma con quelli già usati.
+ */
+function Segment({ tab, user, countDaSbloccare, countPronti, onChange }) {
+  const catalogHint = countDaSbloccare > 0
+    ? `${countDaSbloccare} da sbloccare`
+    : 'Da sbloccare'
+  const mineHint = !user
+    ? 'Quelli che sblocchi'
+    : countPronti > 0
+      ? `${countPronti} ${countPronti === 1 ? 'pronto' : 'pronti'} da usare`
+      : 'Ancora nessuno'
   return (
-    <div className="sc-segment" role="tablist">
+    <div className="sc-segment" role="tablist" aria-label="Sezioni del Bi Club">
       <button
         type="button"
         role="tab"
@@ -563,7 +626,8 @@ function Segment({ tab, countDisponibili, countTuttiIMiei, onChange }) {
         className={`sc-seg ${tab === 'disponibili' ? 'is-active' : ''}`}
         onClick={() => onChange('disponibili')}
       >
-        Disponibili {countDisponibili > 0 && <span className="sc-ct">{countDisponibili}</span>}
+        <span className="sc-seg-title"><TagIcon />Tutti gli sconti</span>
+        <span className="sc-seg-hint">{catalogHint}</span>
       </button>
       <button
         type="button"
@@ -572,7 +636,13 @@ function Segment({ tab, countDisponibili, countTuttiIMiei, onChange }) {
         className={`sc-seg ${tab === 'miei' ? 'is-active' : ''}`}
         onClick={() => onChange('miei')}
       >
-        I miei vantaggi {countTuttiIMiei > 0 && <span className="sc-ct">{countTuttiIMiei}</span>}
+        <span className="sc-seg-title"><TicketIcon />I miei vantaggi</span>
+        <span className="sc-seg-hint">{mineHint}</span>
+        {/* `key` sul numero: ogni sblocco rimonta il pallino e ne fa
+            ripartire l'animazione, così l'occhio va dove è finito lo sconto. */}
+        {countPronti > 0 && tab !== 'miei' && (
+          <span key={countPronti} className="sc-seg-badge" aria-hidden="true">{countPronti}</span>
+        )}
       </button>
     </div>
   )
@@ -580,7 +650,7 @@ function Segment({ tab, countDisponibili, countTuttiIMiei, onChange }) {
 
 function SubSegment({ sub, countSaved, countUsed, onChange }) {
   return (
-    <div className="sc-sub-segment" role="tablist">
+    <div className="sc-sub-segment" role="tablist" aria-label="I miei vantaggi">
       <button
         type="button"
         role="tab"
@@ -588,7 +658,7 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
         className={`sc-sub ${sub === 'disponibili' ? 'is-active' : ''}`}
         onClick={() => onChange('disponibili')}
       >
-        Disponibili {countSaved > 0 && <span className="sc-ct">{countSaved}</span>}
+        Da usare {countSaved > 0 && <span className="sc-ct">{countSaved}</span>}
       </button>
       <button
         type="button"
@@ -597,13 +667,46 @@ function SubSegment({ sub, countSaved, countUsed, onChange }) {
         className={`sc-sub ${sub === 'utilizzati' ? 'is-active' : ''}`}
         onClick={() => onChange('utilizzati')}
       >
-        Utilizzati {countUsed > 0 && <span className="sc-ct">{countUsed}</span>}
+        Già usati {countUsed > 0 && <span className="sc-ct">{countUsed}</span>}
       </button>
     </div>
   )
 }
 
-function CatalogoView({ loading, myLoading, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
+/**
+ * In testa al catalogo, una cosa sola a seconda di chi guarda:
+ * - chi non ha ancora sbloccato niente (o non è entrato) vede i tre passi
+ *   — sblocchi, lo ritrovi in «I miei vantaggi», mostri il QR — perché è
+ *   esattamente il percorso che non si capiva;
+ * - chi ha sconti pronti vede quanti sono e un tasto che porta lì.
+ * Chi ha solo sconti già usati non vede niente: sa già come funziona.
+ */
+function ClubGuide({ user, countPronti, countTuttiIMiei, onGoMiei }) {
+  if (user && countPronti > 0) {
+    return (
+      <button type="button" className="sc-wallet-banner" onClick={onGoMiei}>
+        <span className="sc-wallet-ic" aria-hidden="true"><TicketIcon /></span>
+        <span className="sc-wallet-txt">
+          <strong>
+            Hai {countPronti} {countPronti === 1 ? 'sconto pronto' : 'sconti pronti'} da usare
+          </strong>
+          <small>Quelli che sblocchi li ritrovi in «I miei vantaggi», con il QR</small>
+        </span>
+        <span className="sc-wallet-go" aria-hidden="true">→</span>
+      </button>
+    )
+  }
+  if (user && countTuttiIMiei > 0) return null
+  return (
+    <ol className="sc-howto" aria-label="Come funziona">
+      <li><b>1</b><span>Scegli uno sconto e tocca <em>Sblocca</em></span></li>
+      <li><b>2</b><span>Lo ritrovi in <em>I miei vantaggi</em></span></li>
+      <li><b>3</b><span>Al locale mostri il QR</span></li>
+    </ol>
+  )
+}
+
+function CatalogoView({ loading, myLoading, user, countPronti, countTuttiIMiei, convTakenCount, onGoMiei, drops, conv, claiming, redemptionByDealId, onClaim, onOpenQR, onCardClick, onInfo }) {
   // Il catalogo (`loading`) arriva quasi subito dalla cache locale, "I miei
   // riscatti" (`myLoading`) no — è una fetch di rete senza cache. Dipingere
   // le card prima che risponda vuol dire mostrare "Sblocca sconto" su un
@@ -628,6 +731,18 @@ function CatalogoView({ loading, myLoading, drops, conv, claiming, redemptionByD
 
   const empty = drops.length === 0 && conv.length === 0
   if (empty) {
+    // Catalogo vuoto perché le ha già prese tutte: non è "nessuno sconto",
+    // sono tutti nel suo portafoglio.
+    if (convTakenCount > 0) {
+      return (
+        <div className="sc-empty">
+          <div className="sc-ic">🎟️</div>
+          <strong>Li hai già sbloccati tutti</strong>
+          <p>Sono in «I miei vantaggi», pronti da mostrare al locale.</p>
+          <button type="button" className="sc-empty-cta" onClick={onGoMiei}>Vai a I miei vantaggi</button>
+        </div>
+      )
+    }
     return (
       <div className="sc-empty">
         <div className="sc-ic">🎟️</div>
@@ -639,6 +754,13 @@ function CatalogoView({ loading, myLoading, drops, conv, claiming, redemptionByD
 
   return (
     <div className="sc-catalogo">
+      <ClubGuide
+        user={user}
+        countPronti={countPronti}
+        countTuttiIMiei={countTuttiIMiei}
+        onGoMiei={onGoMiei}
+      />
+
       {drops.length > 0 && (
         <DropSection
           drops={drops}
@@ -654,7 +776,17 @@ function CatalogoView({ loading, myLoading, drops, conv, claiming, redemptionByD
         <section className="sc-section">
           <div className="sc-section-head">
             <strong>Convenzioni</strong>
-            <small>{conv.length} sempre {conv.length === 1 ? 'valida' : 'valide'}</small>
+            <small>
+              {conv.length} sempre {conv.length === 1 ? 'valida' : 'valide'}
+              {convTakenCount > 0 && (
+                <>
+                  {' · '}
+                  <button type="button" className="sc-inline-link" onClick={onGoMiei}>
+                    {convTakenCount === 1 ? 'quella già sbloccata è' : `le ${convTakenCount} già sbloccate sono`} in I miei vantaggi
+                  </button>
+                </>
+              )}
+            </small>
           </div>
           <div className="sc-conv-list">
             {conv.map((d, i) => (
@@ -840,6 +972,24 @@ function LockIcon() {
   )
 }
 
+function TagIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />
+      <circle cx="7.5" cy="7.5" r="1.3" />
+    </svg>
+  )
+}
+
+function TicketIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z" />
+      <path d="M14 6v2M14 11v2M14 16v2" />
+    </svg>
+  )
+}
+
 function QRIcon() {
   return (
     <svg
@@ -967,13 +1117,14 @@ function ProductDots({ items }) {
  * l'unica cosa che conta è aprirlo). Ogni card nasce con `locked={false}`,
  * quindi già nello stato "Apri QR" invece di "Sblocca".
  */
-function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
+function MieiDisponibiliView({ loading, user, items, onOpenQR, onGoCatalogo }) {
   if (!user) {
     return (
       <div className="sc-empty">
         <div className="sc-ic">🔐</div>
-        <strong>Accedi per vedere i tuoi sconti</strong>
-        <p>Una volta dentro trovi qui i QR pronti da mostrare.</p>
+        <strong>Qui finiscono gli sconti che sblocchi</strong>
+        <p>Scegline uno da «Tutti gli sconti»: ti chiedo di entrare e lo ritrovi qui, con il QR da mostrare.</p>
+        <button type="button" className="sc-empty-cta" onClick={onGoCatalogo}>Guarda gli sconti</button>
       </div>
     )
   }
@@ -992,8 +1143,9 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
     return (
       <div className="sc-empty">
         <div className="sc-ic">🏷️</div>
-        <strong>Nessuno sconto pronto</strong>
-        <p>Prendi uno sconto da "Disponibili" e tornerai qui per usarlo.</p>
+        <strong>Nessuno sconto da usare</strong>
+        <p>Quando sblocchi uno sconto da «Tutti gli sconti» lo ritrovi qui, con il QR da mostrare al locale.</p>
+        <button type="button" className="sc-empty-cta" onClick={onGoCatalogo}>Guarda gli sconti</button>
       </div>
     )
   }
@@ -1002,7 +1154,7 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
     <section className="sc-section">
       <div className="sc-section-head">
         <strong>Pronti da usare</strong>
-        <small>{items.length} pront{items.length === 1 ? 'o' : 'i'} · tap "Apri QR" per mostrarlo al locale</small>
+        <small>Li hai sbloccati tu · al locale tocca «Apri QR» e mostralo</small>
       </div>
       <div className="sc-conv-list">
         {items.map((r) => (
@@ -1018,7 +1170,7 @@ function MieiDisponibiliView({ loading, user, items, onOpenQR }) {
   )
 }
 
-function MieiUtilizzatiView({ loading, user, items, isDesktop, onCardClick }) {
+function MieiUtilizzatiView({ loading, user, items, isDesktop, onCardClick, onGoCatalogo }) {
   if (!user) {
     return (
       <div className="sc-empty">
@@ -1043,8 +1195,9 @@ function MieiUtilizzatiView({ loading, user, items, isDesktop, onCardClick }) {
     return (
       <div className="sc-empty">
         <div className="sc-ic">✨</div>
-        <strong>Nessuno sconto utilizzato</strong>
-        <p>Quando userai uno sconto, lo trovi qui.</p>
+        <strong>Nessuno sconto usato</strong>
+        <p>Quando il locale scansiona il tuo QR, lo sconto passa qui.</p>
+        <button type="button" className="sc-empty-cta" onClick={onGoCatalogo}>Guarda gli sconti</button>
       </div>
     )
   }
@@ -1053,7 +1206,7 @@ function MieiUtilizzatiView({ loading, user, items, isDesktop, onCardClick }) {
     <section className="sc-section">
       <div className="sc-section-head">
         <strong>Storico</strong>
-        <small>già usati · per riusarli prendili dai Disponibili</small>
+        <small>Sconti che il locale ha già scansionato</small>
       </div>
       <div className="sc-used-list">
         {items.map((r) => (

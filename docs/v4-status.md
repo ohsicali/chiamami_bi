@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-22 (lancio: Supabase saturo, letture pubbliche dietro cache CDN)
+Ultima modifica: 2026-09-22 (Bi Club: si capisce dove finiscono gli sconti sbloccati)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -29,6 +29,38 @@ dove siamo. Aggiorna a ogni step importante.
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
 | Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
 | Admin — sconti presi/utilizzati in tempo reale | #284 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
+| Bi Club — chiarezza "Tutti gli sconti" / "I miei vantaggi" | — | 🚧 In review | Branch `claude/club-bi-discounts-clarity-pgek0j`. Nessun SQL. Vedi sezione "22/09 — Bi Club: dove finiscono gli sconti" sotto. |
+
+## 22/09 — Bi Club: dove finiscono gli sconti sbloccati
+
+Feedback utenti: su `/sconti` non si capiva quali sconti sono disponibili,
+dove finiscono quando li sblocchi, e che esistono due sezioni distinte.
+
+Cause trovate in `SconteRedesignPage.jsx`:
+- la parola **"Disponibili"** era sia il primo tab sia il sotto-tab dentro
+  "I miei vantaggi" → non si capiva in quale dei due si era;
+- una convenzione sbloccata **spariva dal catalogo** (`convAvailable`)
+  senza dire dove fosse finita;
+- il selettore sembrava un filtro, e il numero su "I miei vantaggi"
+  sommava pronti + già usati.
+
+Fatto (solo front-end, nessun SQL):
+- tab rinominati **"Tutti gli sconti"** / **"I miei vantaggi"**, ognuno con
+  una riga sotto che dice cosa contiene ("6 da sbloccare", "2 pronti da
+  usare"). Il numero dei "da sbloccare" esclude i drop già presi. Pallino
+  corallo su "I miei vantaggi" con animazione a ogni nuovo sblocco.
+- sotto-tab rinominati **"Da usare"** / **"Già usati"**.
+- in testa al catalogo (`ClubGuide`): chi non ha mai sbloccato nulla vede i
+  3 passi (Sblocca → lo ritrovi in I miei vantaggi → mostri il QR); chi ha
+  sconti pronti vede "Hai N sconti pronti da usare →" che porta lì.
+- riga sezione Convenzioni: "le N già sbloccate sono in I miei vantaggi"
+  (link). Se il catalogo è vuoto perché le ha prese tutte, lo dice.
+- dopo uno sblocco dal catalogo, alla chiusura del popup QR: toast
+  "Salvato in «I miei vantaggi»" con bottone **Vedi**.
+- stati vuoti di "I miei vantaggi" con bottone "Guarda gli sconti".
+
+Verificato con screenshot locali (dati reali del catalogo, utente simulato)
+su mobile 390px e desktop 1366px.
 
 ## 22/09 — admin: sconti presi e utilizzati in tempo reale
 
