@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { DUR, EASE_OUT, SPRING_SNAP, staggerDelay } from '../../lib/motion'
-import { memo, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import SaveButton from './SaveButton'
 import { getCategoryInfo } from '../../lib/hooks/useRestaurants'
 import { getPublicCategoryNames } from '../../lib/hooks/useCategories'
@@ -28,6 +28,31 @@ const cardVariants = {
   }),
 }
 
+
+/**
+ * La riga in fondo a una card `tile` (nei Salvati: le liste del locale).
+ *
+ * Sta fuori dalla zona che apre la scheda, e in più ferma il `pointerdown`
+ * prima che arrivi alla card: il `whileTap` di Framer Motion è sulla card
+ * intera, e senza questo premere la riga la faceva rimpicciolire come se si
+ * stesse aprendo il ristorante. Il listener è nativo perché Framer ascolta
+ * direttamente sull'elemento, prima che React veda l'evento.
+ */
+function TileFooter({ dense, children }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const stop = (e) => e.stopPropagation()
+    el.addEventListener('pointerdown', stop)
+    return () => el.removeEventListener('pointerdown', stop)
+  }, [])
+  return (
+    <div ref={ref} style={{ padding: dense ? '0 11px' : '0 15px' }}>
+      {children}
+    </div>
+  )
+}
 
 function RestaurantCard({
   restaurant,
@@ -114,7 +139,17 @@ function RestaurantCard({
         whileTap={{ transform: 'scale(0.98)' }}
         transition={SPRING_SNAP}
       >
-        {/* Il bottone che apre la scheda copre la card senza contenerla: il
+        {/* La zona che apre la scheda: foto e testo, NON la riga in fondo.
+            Prima il bottone-lenzuolo copriva tutta la card e la riga ci
+            stava sopra con uno z-index più alto: col mouse e in Chromium
+            bastava, ma Safari su iPhone "aggiusta" il tocco verso l'elemento
+            cliccabile che gli sembra più probabile, e fra una riga alta 28px
+            e un bottone grande quanto la card sceglieva spesso il secondo:
+            "Metti in una lista" apriva il ristorante, o non faceva niente.
+            Con la riga fuori da questa zona, sotto di lei non c'è
+            nient'altro da toccare. */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {/* Il bottone che apre la scheda copre la zona senza contenerla: il
             cuore è un secondo bottone, e un <button> dentro un altro è HTML
             non valido (in lettura vocale diventa un comando solo). */}
         <button
@@ -257,11 +292,9 @@ function RestaurantCard({
               )}
             </div>
           )}
-          {/* Sopra al bottone-lenzuolo che apre la scheda, se no il tocco
-              finirebbe lì sotto e aprirebbe il ristorante invece di fare
-              quello che c'è scritto. */}
-          {footer && <div style={{ position: 'relative', zIndex: 2 }}>{footer}</div>}
         </div>
+        </div>
+        {footer && <TileFooter dense={dense}>{footer}</TileFooter>}
       </motion.div>
     )
   }
