@@ -21,6 +21,11 @@ export default defineConfig({
         return deps.filter(d => {
           if (/\/qr-[A-Za-z0-9_-]+\.js$/.test(d)) return false
           if (/\/dnd-kit-[A-Za-z0-9_-]+\.js$/.test(d)) return false
+          // Il banner cookie e' `lazy()` e App.jsx lo monta solo quando il
+          // browser e' in idle, apposta per non contendere la LCP. Ma restava
+          // in questa lista: il preload lo scaricava comunque nella prima
+          // ondata, insieme al resto dell'avvio, annullando il rinvio.
+          if (/\/cookie-consent-[A-Za-z0-9_-]+\.js$/.test(d)) return false
           return true
         })
       },

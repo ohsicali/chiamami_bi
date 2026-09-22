@@ -20,7 +20,11 @@ export const PRICE_LABELS = ['', '€', '€€', '€€€', '€€€€']
 // senza il bump, chi aveva la v5 in cache non vedrebbe le sedi extra finché
 // non svuota la cache.
 // v7: aggiunto `location_label` (nome della sede principale).
-const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v7'
+// v8: `hours_cache` non e' piu' il blob grezzo di Google ma solo i due rami
+// che leggiamo (`regularOpeningHours` + `utcOffsetMinutes`) — senza il bump
+// chi aveva la v7 si terrebbe in localStorage il blob intero.
+
+const RESTAURANTS_CACHE_KEY = 'cb_restaurants_v8'
 function readRestaurantsCache() {
   try {
     const raw = typeof localStorage !== 'undefined' && localStorage.getItem(RESTAURANTS_CACHE_KEY)
@@ -439,13 +443,27 @@ export function useRestaurants(userPosition = null) {
           'latitude', 'longitude', 'phone', 'website', 'google_maps_url',
           'category', 'cuisine_type', 'price_range', 'our_rating',
           'our_review', 'our_tip', 'recommended_for', 'tagline',
-          'tiktok_url', 'instagram_reel', 'hours_cache', 'moments',
+          'tiktok_url', 'instagram_reel', 'moments',
           'place_id', 'place_id_verified_at', 'opening_hours',
           'is_published', 'created_at', 'updated_at',
         ].join(', ')
+        // `hours_cache` e' la risposta grezza di Google Places e pesa da sola
+        // 230 kB sui 544 kB della query: dentro ci sono `currentOpeningHours`
+        // (140 kB, ogni periodo con il suo oggetto `date` completo),
+        // `displayName` (copia di `name`) e una seconda copia di
+        // `weekdayDescriptions`. Di tutto questo l'app legge solo
+        // `regularOpeningHours` e `utcOffsetMinutes` (vedi `getHoursStatus` in
+        // lib/hours.js, `useOrariStatus` e OrariLocale): `currentOpeningHours`
+        // e' scritto come fallback per quando manca `regularOpeningHours`, ma
+        // in tutto il DB non c'e' una sola riga in quel caso — il ramo non
+        // scatta mai. PostgREST sa proiettare dentro il JSONB, quindi ce li
+        // facciamo dare gia' separati e ricomponiamo sotto la stessa forma di
+        // prima, cosi' nessun consumatore cambia.
+        const HOURS_PROJECTION =
+          'hours_regular:hours_cache->regularOpeningHours, hours_offset:hours_cache->utcOffsetMinutes'
         const { data, error: dbError } = await supabase
           .from('restaurants')
-          .select(`${RESTAURANT_COLUMNS}, restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
+          .select(`${RESTAURANT_COLUMNS}, ${HOURS_PROJECTION}, restaurant_photos(id, photo_url, thumb_url, sort_order), restaurant_locations(id, label, address, latitude, longitude, sort_order)`)
           .eq('is_published', true)
           .order('name')
         if (dbError) {
@@ -454,9 +472,16 @@ export function useRestaurants(userPosition = null) {
           throw dbError
         }
         const mapped = (data || []).map(r => {
-          const { restaurant_photos, restaurant_locations, ...rest } = r
+          const { restaurant_photos, restaurant_locations, hours_regular, hours_offset, ...rest } = r
           return {
             ...rest,
+            // Rimesso nella forma di prima: chi legge continua a vedere
+            // `hours_cache.regularOpeningHours` / `.utcOffsetMinutes`. Quando
+            // il locale non ha orari da Google resta `null`, esattamente come
+            // prima — `getHoursStatus` lo traduce in stato "unknown".
+            hours_cache: hours_regular
+              ? { regularOpeningHours: hours_regular, utcOffsetMinutes: hours_offset }
+              : null,
             photos: (restaurant_photos || []).sort((a, b) => a.sort_order - b.sort_order),
             // Sedi EXTRA oltre a quella principale (address/latitude/longitude
             // sulla riga stessa) — vuoto per la stragrande maggioranza dei
