@@ -27,9 +27,11 @@ import { MOMENT_KEYS, MOMENT_SLOTS } from '../../lib/hours'
  */
 export default function MomentTabs({ activeKey, onChange, className = '' }) {
   const reduce = useReducedMotion()
+  const scrollerRef = useRef(null)
   const trackRef = useRef(null)
   const btnRefs = useRef([])
   const [clip, setClip] = useState(null)
+  const didRevealRef = useRef(false)
 
   const measure = useCallback(() => {
     const track = trackRef.current
@@ -47,6 +49,52 @@ export default function MomentTabs({ activeKey, onChange, className = '' }) {
   }, [activeKey])
 
   useLayoutEffect(() => { measure() }, [measure])
+
+  // Su mobile la fila scorre in orizzontale e le fasce della sera
+  // (Cena, Dopo cena) stanno oltre il bordo destro: alle 21:50 la pill
+  // accesa era fuori schermo. Qui la fila scorre fino a mostrare per
+  // intero la fascia attiva, con un po' d'aria per far intuire che c'è
+  // altro di lato. Si muove solo il contenitore (scrollTo, non
+  // scrollIntoView, che scrollerebbe anche la pagina) e solo se serve:
+  // se la fascia è già tutta visibile non tocca niente. Su desktop la
+  // fila non scorre (overflow visible) e il calcolo non fa nulla.
+  // La prima volta è istantaneo — chi apre la home deve trovarla già lì,
+  // non vederla scivolare — poi segue il tap con uno scroll morbido.
+  const reveal = useCallback((smooth) => {
+    const scroller = scrollerRef.current
+    const el = btnRefs.current[MOMENT_KEYS.indexOf(activeKey)]
+    if (!scroller || !el) return
+    const max = scroller.scrollWidth - scroller.clientWidth
+    if (max <= 0) return
+    const s = scroller.getBoundingClientRect()
+    const b = el.getBoundingClientRect()
+    const air = 24
+    const view = scroller.scrollLeft
+    const left = b.left - s.left + view
+    const right = b.right - s.left + view
+    let target = view
+    if (right + air > view + scroller.clientWidth) target = right + air - scroller.clientWidth
+    if (left - air < target) target = left - air
+    target = Math.max(0, Math.min(max, Math.round(target)))
+    if (Math.abs(target - view) < 1) return
+    scroller.scrollTo({ left: target, behavior: smooth && !reduce ? 'smooth' : 'auto' })
+  }, [activeKey, reduce])
+
+  const revealRef = useRef(reveal)
+  useLayoutEffect(() => {
+    revealRef.current = reveal
+    reveal(didRevealRef.current)
+    didRevealRef.current = true
+  }, [reveal])
+
+  // Col font di fallback le pill sono più strette: quando arriva quello
+  // vero la fascia attiva può tornare mezza fuori. Si ricontrolla una volta.
+  useEffect(() => {
+    if (typeof document === 'undefined' || !document.fonts?.ready) return
+    let alive = true
+    document.fonts.ready.then(() => { if (alive) revealRef.current(false) })
+    return () => { alive = false }
+  }, [])
 
   // Il riquadro cambia quando la fila va a capo (desktop), quando il
   // font finisce di caricare o quando si ruota il telefono.
@@ -97,6 +145,7 @@ export default function MomentTabs({ activeKey, onChange, className = '' }) {
 
   return (
     <div
+      ref={scrollerRef}
       className={`hfv4-moment-tabs-scroll ${className}`}
       style={{
         display: 'flex',
