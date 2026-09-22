@@ -28,7 +28,7 @@ dove siamo. Aggiorna a ogni step importante.
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
 | Lancio — Supabase saturo, letture in cache CDN | #278, #280, #281 | ✅ Merged | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
-| Admin — sconti presi/utilizzati in tempo reale | — | 🚧 In review | Branch: `claude/admin-discount-monitoring-smak5r`. Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
+| Admin — sconti presi/utilizzati in tempo reale | #284 | ✅ Merged | Nessun SQL. Vedi sezione "22/09 — admin: sconti in diretta" sotto. |
 
 ## 22/09 — admin: sconti presi e utilizzati in tempo reale
 
