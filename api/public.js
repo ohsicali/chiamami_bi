@@ -59,8 +59,11 @@ export default async function handler(req, res) {
     const maxAge = MAX_AGE[resource] || 60
     // Il browser non la tiene (max-age=0): la cache vive sulla CDN, che si
     // rinnova da sola; così un cambio fatto dall'admin arriva a tutti entro
-    // `maxAge` secondi.
-    res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${maxAge}, stale-while-revalidate=${STALE}`)
+    // `maxAge` secondi. `stale-if-error`: se al rinnovo Supabase risponde con
+    // un errore (riavvio per cambio compute, sovraccarico) la CDN continua a
+    // dare l'ultima copia buona invece del 502/504 — senza, il 22/09 durante
+    // il passaggio a Small i visitatori nuovi vedevano la lista vuota.
+    res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${maxAge}, stale-while-revalidate=${STALE}, stale-if-error=${STALE}`)
     return res.status(200).json(data)
   } catch (err) {
     console.error(`public ${resource} error:`, err?.name || '', err?.message || err)
