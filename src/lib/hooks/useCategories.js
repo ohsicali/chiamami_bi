@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
+import { fetchPublic, isAdminPath } from '../publicQueries'
 
 // Gruppi categorie (nuovi) — l'ordine è quello mostrato nei dropdown
 export const CATEGORY_GROUPS = [
@@ -129,10 +130,19 @@ export function useCategories() {
       setLoading(false)
       return
     }
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('sort_order', { ascending: true })
+    // Copia in cache CDN prima (vedi lib/publicQueries.js), query diretta se
+    // non risponde o se siamo nel pannello admin (serve il dato appena salvato).
+    let data = null
+    let error = null
+    if (!isAdminPath()) {
+      try { data = await fetchPublic('categories') } catch { data = null }
+    }
+    if (!data) {
+      ;({ data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order', { ascending: true }))
+    }
 
     if (!error && data && data.length > 0) {
       const cats = data.map(fromDb)

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../supabase'
+import { ACTIVE_DISCOUNTS_SELECT, fetchPublic, isAdminPath } from '../publicQueries'
 
 // Stale-while-revalidate cache for the active discounts list. Painted at mount
 // from localStorage so the home and deals page render instantly on repeat
@@ -276,13 +277,21 @@ let activeDiscountsInFlight = null
 
 function fetchActiveDiscounts() {
   if (activeDiscountsInFlight) return activeDiscountsInFlight
-  activeDiscountsInFlight = supabase
+  // Copia in cache CDN prima (vedi lib/publicQueries.js); query diretta se
+  // l'endpoint non risponde o se siamo nel pannello admin.
+  const direct = () => supabase
     .from('discounts')
-    .select('*, products:discount_products(id, name, note, photo_url, thumb_url, sort_order), restaurant:restaurants(id, name, slug, city, address, cuisine_type, category, price_range, tagline, latitude, longitude, photos:restaurant_photos(id, photo_url, thumb_url, sort_order))')
+    .select(ACTIVE_DISCOUNTS_SELECT)
     .eq('is_active', true)
     .or(`valid_until.is.null,valid_until.gt.${new Date().toISOString()}`)
     .order('created_at', { ascending: false })
-    .then(({ data }) => {
+    .then(({ data }) => data)
+  const viaCache = isAdminPath()
+    ? Promise.resolve(null)
+    : fetchPublic('discounts').catch(() => null)
+  activeDiscountsInFlight = viaCache
+    .then((data) => data || direct())
+    .then((data) => {
       const fresh = data || []
       writeActiveDiscountsCache(fresh)
       return fresh

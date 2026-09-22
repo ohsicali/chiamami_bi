@@ -1,6 +1,6 @@
 # v4 — Stato Track
 
-Ultima modifica: 2026-09-22 (fix GRANT mancante su `location_label` — home non caricava i locali)
+Ultima modifica: 2026-09-22 (lancio: Supabase saturo, letture pubbliche dietro cache CDN)
 
 File di memoria per Claude: leggi questo a inizio sessione per sapere
 dove siamo. Aggiorna a ogni step importante.
@@ -27,6 +27,51 @@ dove siamo. Aggiorna a ogni step importante.
 | Sito online — rimosso gate manutenzione/PIN | — | ✅ Done | Vedi sezione "22/09 — sito online" sotto. |
 | Home non caricava "aperti nella fascia" / "ultimi aggiunti" | — | ✅ Fix (SQL eseguito) | Vedi sezione "22/09 — GRANT mancante su location_label" sotto. |
 | Audit prestazioni pre-lancio | #276 | 🚧 In review | Home da 4,4 MB a ~2,1 MB. Vedi sezione "22/09 — audit prestazioni" sotto. |
+| Lancio — Supabase saturo, letture in cache CDN | — | 🚧 In review | Vedi sezione "22/09 — lancio: Supabase saturo" sotto. |
+
+## 22/09 — lancio: Supabase saturo, sito vuoto e registrazioni ferme
+
+**Sintomo** (dalle 17:00 UTC, uscita pubblica): il sito si apriva ma senza
+locali, e nessuno riusciva a registrarsi. Nelle 3 ore del picco una sola
+registrazione riuscita; tutti i `POST /auth/v1/signup` in 504/522.
+
+**Cosa dicevano i log**: Postgres quasi fermo (nessuna query lenta, nessun
+lock, 22 MB di DB), ma PostgREST e GoTrue sulla stessa macchina bloccati:
+"Warp server error: Thread killed by timeout manager" a centinaia,
+`PGRST002` (schema cache), 522 da Cloudflare, `auth/v1/health` senza
+risposta per 20 s, una `categories` da 1 riga tornata dopo 228 s. La status
+page di Supabase era verde: era la macchina del progetto (compute piccolo,
+`max_connections=60`, `shared_buffers` 224 MB) sotto il traffico.
+
+**Da dove veniva il carico** (edge logs, 40 minuti di picco): prima voce
+`POST page_views` (~1700), poi le letture pubbliche che ogni visitatore
+rifaceva da sé — `restaurants`, `discounts`, `categories`,
+`sponsored_placements` — più i relativi preflight OPTIONS. In più
+`usePageTracking` chiamava `supabase.auth.getUser()` (richiesta al server
+auth) a **ogni cambio pagina**, e se `/api/track` rispondeva 5xx rifaceva
+l'insert dal browser: più Supabase rallentava, più richieste riceveva.
+
+**Fix nel codice**:
+- `api/public.js` + `src/lib/publicQueries.js`: le quattro letture pubbliche
+  passano da un endpoint con `s-maxage` (30 s sconti, 120 s ristoranti e
+  banner, 600 s categorie) e `stale-while-revalidate` di un giorno. La CDN di
+  Vercel serve tutti i visitatori; Supabase vede una richiesta per risorsa
+  ogni tanto. Stessa chiave anon del browser, stesso perimetro GRANT/RLS. Gli
+  hook ripiegano sulla query diretta se l'endpoint non risponde, e nel
+  pannello admin vanno sempre diretti (serve il dato appena salvato).
+- `usePageTracking`: `getSession()` (locale) al posto di `getUser()`, e
+  ripiego sull'insert diretto solo se `/api/track` non esiste (404, sviluppo
+  locale), non quando risponde 5xx.
+- `api/track.js`: timeout di 4 s verso Supabase e log dell'errore tagliato
+  (prima finiva nei log l'intera pagina HTML di Cloudflare).
+
+**Fuori dal codice (dashboard, solo il titolare)**: alzare il compute del
+progetto (Project Settings → Compute and Disk) e/o "Restart project" per
+sbloccare PostgREST/GoTrue appesi.
+
+**Da tenere a mente**: una nuova lettura pubblica fatta a ogni visita va
+aggiunta a `publicQueries.js` e servita da `/api/public`, non chiesta a
+Supabase da ogni browser.
 
 ## 22/09 — GRANT mancante su `location_label`: la home non caricava i locali
 
