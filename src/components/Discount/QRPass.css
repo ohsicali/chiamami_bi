@@ -133,7 +133,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 5px;
+  gap: 6px;
 }
 /* Il badge verde degli sconti, lo stesso di card, mappa e scheda locale. */
 .qrp-badge {
@@ -156,18 +156,59 @@
   line-height: 1.25;
   color: var(--qrp-ink);
 }
-.qrp-chip {
-  padding: 4px 9px;
-  border-radius: 999px;
-  font-size: 10px;
+.qrp-when {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--qrp-ink-70);
+}
+/* Le lettere dei giorni: accese quelle in cui vale (col verde scuro degli
+   sconti), spente le altre, oggi sottolineato. */
+.qrp-days {
+  display: inline-flex;
+  gap: 3px;
+}
+.qrp-day {
+  position: relative;
+  width: 13px;
+  text-align: center;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: rgba(34, 24, 28, 0.25);
+}
+.qrp-day.is-on { color: var(--color-sconto-ink, #1A4731); }
+.qrp-day.is-today::after {
+  content: '';
+  position: absolute;
+  left: 2px; right: 2px;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.qrp-note {
+  margin: 0;
+  max-width: 100%;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--qrp-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Corallo solo per i drop (scadono), oro per le convenzioni. */
-.qrp-chip.is-drop { background: var(--color-corallo-wash, #FDEDEB); color: var(--color-corallo-ink, #C53A33); }
-.qrp-chip.is-conv { background: #F0E4D2; color: var(--color-oro-deep, #8E6B3E); }
+/* Corallo solo per i drop: scadono, e lo dice il countdown. */
+.qrp-drop {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--color-corallo-ink, #C53A33);
+}
 
 /* ── Selettore QR / Codice ─────────────────────────────────────────────── */
 .qrp-seg {
